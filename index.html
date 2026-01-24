@@ -61,6 +61,8 @@
     .hidden{display:none}
     .note{font-size:12px;color:var(--muted);line-height:1.4}
     .sep{height:1px;background:var(--line);margin:12px 0}
+
+    .badge { display:inline-flex; padding:4px 8px; border-radius:999px; border:1px solid var(--line); background:rgba(255,255,255,.03); font-size:12px; color:var(--muted); }
   </style>
 </head>
 <body>
@@ -94,6 +96,7 @@
             <button class="btn primary" data-view="home">Início</button>
             <button class="btn" data-view="new">Nova solicitação</button>
             <button class="btn" data-view="list">Lista</button>
+            <button class="btn" data-view="team">Equipe</button>
             <button class="btn" data-view="governance">Governança</button>
           </div>
           <div class="sep"></div>
@@ -136,6 +139,7 @@
                   <li>Lista com ações</li>
                   <li>Indicadores (KPIs)</li>
                   <li>Persistência local (LocalStorage)</li>
+                  <li>Cadastro de Equipe (papéis, área, unidade)</li>
                 </ul>
               </div>
             </div>
@@ -223,6 +227,84 @@
           </div>
         </div>
 
+        <!-- TEAM -->
+        <div id="view-team" class="hidden">
+          <div class="hd">
+            <h2 style="margin:0;font-size:18px">Equipe</h2>
+            <div class="muted">Cadastro simples de pessoas e papéis. Salvo no navegador.</div>
+          </div>
+          <div class="bd">
+            <div class="row2">
+              <div>
+                <label for="team_name">Nome</label>
+                <input id="team_name" placeholder="Ex.: Agatha Silva" />
+              </div>
+              <div>
+                <label for="team_email">E-mail</label>
+                <input id="team_email" placeholder="ex.: agatha@empresa.com" />
+              </div>
+            </div>
+
+            <div class="row2">
+              <div>
+                <label for="team_role">Papel</label>
+                <select id="team_role">
+                  <option value="requester">Solicitante</option>
+                  <option value="approver">Aprovador</option>
+                  <option value="admin">Admin</option>
+                  <option value="auditor">Auditor</option>
+                </select>
+              </div>
+              <div>
+                <label for="team_area">Área</label>
+                <input id="team_area" placeholder="Ex.: RH, Financeiro, Operações" />
+              </div>
+            </div>
+
+            <div class="row2">
+              <div>
+                <label for="team_unit">Unidade / Diretoria</label>
+                <input id="team_unit" placeholder="Ex.: Centro / Norte 1 / etc." />
+              </div>
+              <div>
+                <label for="team_phone">Telefone</label>
+                <input id="team_phone" placeholder="Ex.: (11) 99999-9999" />
+              </div>
+            </div>
+
+            <div class="sep"></div>
+            <button class="btn primary" id="btnTeamAdd">Adicionar membro</button>
+            <span class="note" id="teamMsg" style="margin-left:10px"></span>
+
+            <div class="sep"></div>
+
+            <div class="row2">
+              <div>
+                <label for="team_filter_role">Filtrar por papel</label>
+                <select id="team_filter_role">
+                  <option value="ALL">Todos</option>
+                  <option value="requester">Solicitante</option>
+                  <option value="approver">Aprovador</option>
+                  <option value="admin">Admin</option>
+                  <option value="auditor">Auditor</option>
+                </select>
+              </div>
+              <div>
+                <label for="team_q">Buscar</label>
+                <input id="team_q" placeholder="Buscar por nome/área/unidade..." />
+              </div>
+            </div>
+
+            <div class="sep"></div>
+
+            <table>
+              <tbody id="team_rows"></tbody>
+            </table>
+
+            <div class="note" id="teamEmptyMsg"></div>
+          </div>
+        </div>
+
         <!-- GOVERNANCE -->
         <div id="view-governance" class="hidden">
           <div class="hd">
@@ -235,12 +317,13 @@
               <li><strong>Padronização:</strong> todo pedido tem título, tipo, descrição e solicitante.</li>
               <li><strong>Status controlado:</strong> SUBMITTED → IN_REVIEW → APPROVED/REJECTED → DONE.</li>
               <li><strong>Auditoria:</strong> registrar quem mudou o status e quando (no MVP fica local).</li>
-              <li><strong>Responsável:</strong> cada tipo tem um aprovador padrão (fase 2).</li>
+              <li><strong>RBAC:</strong> equipe com papéis (solicitante, aprovador, admin, auditor).</li>
+              <li><strong>Classificação:</strong> marcar dados pessoais (e-mail, telefone) como sensíveis (fase 2).</li>
               <li><strong>Retenção:</strong> definir prazo (ex.: 12 meses) e política de exclusão (fase 2).</li>
             </ul>
             <div class="sep"></div>
             <div class="note">
-              Próximo upgrade (quando você quiser): login (RBAC), banco (Postgres), trilha de auditoria imutável,
+              Próximo upgrade: login (RBAC), banco (Postgres), trilha de auditoria imutável,
               anexos e métricas por SLA.
             </div>
           </div>
@@ -251,6 +334,9 @@
   </main>
 
   <script>
+    // ---------------------------
+    // Requests
+    // ---------------------------
     const KEY = "portal_mvp_requests_v1";
 
     function nowISO() { return new Date().toISOString(); }
@@ -265,15 +351,15 @@
     }
 
     function setView(name) {
-      const views = ["home","new","list","governance"];
+      const views = ["home","new","list","team","governance"];
       for (const v of views) {
         document.getElementById("view-" + v).classList.toggle("hidden", v !== name);
       }
       if (name === "list") renderList();
+      if (name === "team") renderTeam();
     }
 
     function auditLocal(item, action, details) {
-      // No MVP, a auditoria fica no próprio objeto (depois vira tabela audit_log no backend)
       item.audit = item.audit || [];
       item.audit.push({ at: nowISO(), action, details });
     }
@@ -310,7 +396,6 @@
       items.unshift(item);
       saveAll(items);
 
-      // limpar form
       document.getElementById("title").value = "";
       document.getElementById("desc").value = "";
       document.getElementById("requester").value = "";
@@ -371,21 +456,19 @@
 
         const left = document.createElement("td");
         left.innerHTML = `
-          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
-            <div>
-              <div style="font-weight:750">${escapeHtml(item.title)}</div>
-              <div class="muted" style="margin-top:4px">
-                <span class="pill" style="margin-right:8px">${escapeHtml(item.type)}</span>
-                <span class="status ${item.status}">${item.status}</span>
-              </div>
-              <div class="note" style="margin-top:8px">${escapeHtml(item.description)}</div>
-              <div class="muted" style="margin-top:8px">
-                Solicitante: <strong style="color:var(--text)">${escapeHtml(item.requester)}</strong>
-                ${item.approver ? ` • Aprovador: <strong style="color:var(--text)">${escapeHtml(item.approver)}</strong>` : ""}
-              </div>
-              <div class="muted" style="margin-top:6px">
-                Criado: ${fmt(item.created_at)} • Atualizado: ${fmt(item.updated_at)}
-              </div>
+          <div>
+            <div style="font-weight:750">${escapeHtml(item.title)}</div>
+            <div class="muted" style="margin-top:4px">
+              <span class="pill" style="margin-right:8px">${escapeHtml(item.type)}</span>
+              <span class="status ${item.status}">${item.status}</span>
+            </div>
+            <div class="note" style="margin-top:8px">${escapeHtml(item.description)}</div>
+            <div class="muted" style="margin-top:8px">
+              Solicitante: <strong style="color:var(--text)">${escapeHtml(item.requester)}</strong>
+              ${item.approver ? ` • Aprovador: <strong style="color:var(--text)">${escapeHtml(item.approver)}</strong>` : ""}
+            </div>
+            <div class="muted" style="margin-top:6px">
+              Criado: ${fmt(item.created_at)} • Atualizado: ${fmt(item.updated_at)}
             </div>
           </div>
         `;
@@ -426,6 +509,116 @@
       document.getElementById("kpiApproved").textContent = String(approved);
     }
 
+    // ---------------------------
+    // Team
+    // ---------------------------
+    const TEAM_KEY = "portal_mvp_team_v1";
+
+    function loadTeam() {
+      try { return JSON.parse(localStorage.getItem(TEAM_KEY) || "[]"); }
+      catch { return []; }
+    }
+    function saveTeam(items) {
+      localStorage.setItem(TEAM_KEY, JSON.stringify(items));
+    }
+
+    function addTeamMember() {
+      const name = document.getElementById("team_name").value.trim();
+      const email = document.getElementById("team_email").value.trim();
+      const role = document.getElementById("team_role").value;
+      const area = document.getElementById("team_area").value.trim();
+      const unit = document.getElementById("team_unit").value.trim();
+      const phone = document.getElementById("team_phone").value.trim();
+      const msg = document.getElementById("teamMsg");
+
+      if (!name) {
+        msg.textContent = "Informe o nome.";
+        msg.style.color = "var(--bad)";
+        return;
+      }
+
+      const items = loadTeam();
+      const item = { id: uid(), name, email, role, area, unit, phone, created_at: nowISO() };
+
+      items.unshift(item);
+      saveTeam(items);
+
+      document.getElementById("team_name").value = "";
+      document.getElementById("team_email").value = "";
+      document.getElementById("team_area").value = "";
+      document.getElementById("team_unit").value = "";
+      document.getElementById("team_phone").value = "";
+
+      msg.textContent = "Membro adicionado.";
+      msg.style.color = "var(--ok)";
+
+      renderTeam();
+    }
+
+    function removeTeamMember(id) {
+      const items = loadTeam().filter(x => x.id !== id);
+      saveTeam(items);
+      renderTeam();
+    }
+
+    function renderTeam() {
+      const tbody = document.getElementById("team_rows");
+      const empty = document.getElementById("teamEmptyMsg");
+      const filterRole = document.getElementById("team_filter_role").value;
+      const q = document.getElementById("team_q").value.trim().toLowerCase();
+
+      const items = loadTeam().filter(item => {
+        const okRole = (filterRole === "ALL") || (item.role === filterRole);
+        const hay = (item.name + " " + (item.area||"") + " " + (item.unit||"") + " " + (item.email||"")).toLowerCase();
+        const okQ = !q || hay.includes(q);
+        return okRole && okQ;
+      });
+
+      tbody.innerHTML = "";
+      if (items.length === 0) {
+        empty.textContent = "Nenhum membro cadastrado.";
+        return;
+      }
+      empty.textContent = "";
+
+      for (const m of items) {
+        const tr = document.createElement("tr");
+
+        const left = document.createElement("td");
+        left.innerHTML = `
+          <div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <div style="font-weight:750">${escapeHtml(m.name)}</div>
+              <span class="badge">${escapeHtml(m.role)}</span>
+              ${m.area ? `<span class="badge">${escapeHtml(m.area)}</span>` : ""}
+              ${m.unit ? `<span class="badge">${escapeHtml(m.unit)}</span>` : ""}
+            </div>
+            <div class="muted" style="margin-top:8px">
+              ${m.email ? `E-mail: <strong style="color:var(--text)">${escapeHtml(m.email)}</strong>` : ""}
+              ${m.phone ? ` ${m.email ? "•" : ""} Telefone: <strong style="color:var(--text)">${escapeHtml(m.phone)}</strong>` : ""}
+            </div>
+            <div class="muted" style="margin-top:6px">Criado: ${fmt(m.created_at)}</div>
+          </div>
+        `;
+        tr.appendChild(left);
+
+        const right = document.createElement("td");
+        right.className = "td-actions";
+        right.innerHTML = `
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn danger small" data-act="DELETE">Excluir</button>
+          </div>
+        `;
+        right.querySelector("button").addEventListener("click", () => removeTeamMember(m.id));
+        tr.appendChild(right);
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    // ---------------------------
+    // Utils
+    // ---------------------------
     function fmt(iso) {
       try {
         const d = new Date(iso);
@@ -439,7 +632,9 @@
       }[c]));
     }
 
-    // NAV wiring
+    // ---------------------------
+    // Wiring
+    // ---------------------------
     document.querySelectorAll("[data-view]").forEach(btn => {
       btn.addEventListener("click", () => setView(btn.getAttribute("data-view")));
     });
@@ -449,11 +644,17 @@
     document.getElementById("filterStatus").addEventListener("change", renderList);
     document.getElementById("q").addEventListener("input", renderList);
 
+    document.getElementById("btnTeamAdd").addEventListener("click", addTeamMember);
+    document.getElementById("team_filter_role").addEventListener("change", renderTeam);
+    document.getElementById("team_q").addEventListener("input", renderTeam);
+
     document.getElementById("btnReset").addEventListener("click", () => {
       if (!confirm("Tem certeza que deseja apagar todos os dados locais?")) return;
       localStorage.removeItem(KEY);
+      localStorage.removeItem(TEAM_KEY);
       updateKpis();
       renderList();
+      renderTeam();
       setView("home");
     });
 

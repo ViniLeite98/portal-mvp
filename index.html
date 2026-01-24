@@ -1,4 +1,465 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal MVP</title>
+  <style>
+    :root { --bg:#0b1220; --card:#111a2e; --text:#e8eefc; --muted:#a9b6d6; --line:#22304f; --accent:#6aa6ff; --ok:#53d7a3; --bad:#ff6b6b; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+    header{position:sticky;top:0;background:rgba(11,18,32,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);z-index:10}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .brand{display:flex;gap:10px;align-items:center}
+    .logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#6aa6ff,#9b7bff)}
+    h1{margin:0;font-size:18px}
+    .muted{color:var(--muted);font-size:13px}
 
-<style> /* aparência */ </style>
-<body>  <!-- tela --> </body>
-<script> // comportamento </script>
+    .grid{display:grid;grid-template-columns:260px 1fr;gap:16px}
+    @media (max-width:860px){.grid{grid-template-columns:1fr}}
+
+    .card{background:rgba(17,26,46,.9);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+    .hd{padding:14px 14px 0 14px}
+    .bd{padding:14px}
+    .ft{padding:14px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+
+    .btn{border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--text);
+      padding:10px 12px;border-radius:14px;cursor:pointer;font-weight:650;display:inline-flex;gap:10px;align-items:center}
+    .btn:hover{border-color:rgba(106,166,255,.55);background:rgba(255,255,255,.06)}
+    .btn.primary{border-color:rgba(106,166,255,.7);background:rgba(106,166,255,.12)}
+    .btn.danger{border-color:rgba(255,107,107,.55);background:rgba(255,107,107,.10)}
+    .btn.small{padding:8px 10px;border-radius:12px;font-weight:600}
+    .nav{display:flex;flex-direction:column;gap:10px}
+    .nav .btn{justify-content:flex-start;width:100%}
+
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);font-size:12px;color:var(--muted)}
+    .status{font-weight:700}
+    .status.SUBMITTED{color:var(--accent)}
+    .status.IN_REVIEW{color:#ffd166}
+    .status.APPROVED{color:var(--ok)}
+    .status.REJECTED{color:var(--bad)}
+    .status.DONE{color:#cdb4ff}
+
+    label{display:block;margin:10px 0 6px;font-size:13px;color:var(--muted)}
+    input, textarea, select{
+      width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--line);
+      background:rgba(255,255,255,.03);color:var(--text);outline:none
+    }
+    textarea{min-height:110px;resize:vertical}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:700px){.row2{grid-template-columns:1fr}}
+
+    table{width:100%;border-collapse:separate;border-spacing:0 10px}
+    td{padding:12px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+    tr td:first-child{border-radius:14px 0 0 14px}
+    tr td:last-child{border-radius:0 14px 14px 0}
+    .td-actions{white-space:nowrap;text-align:right}
+    .kpi{display:flex;gap:10px;flex-wrap:wrap}
+    .kpi .pill strong{color:var(--text)}
+
+    .hidden{display:none}
+    .note{font-size:12px;color:var(--muted);line-height:1.4}
+    .sep{height:1px;background:var(--line);margin:12px 0}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="top">
+        <div class="brand">
+          <div class="logo"></div>
+          <div>
+            <h1>Portal MVP</h1>
+            <div class="muted">HTML puro • Responsivo • Salva no navegador (LocalStorage)</div>
+          </div>
+        </div>
+
+        <div class="kpi">
+          <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
+          <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
+          <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- NAV -->
+      <section class="card">
+        <div class="hd"><div class="muted">Navegação</div></div>
+        <div class="bd">
+          <div class="nav">
+            <button class="btn primary" data-view="home">Início</button>
+            <button class="btn" data-view="new">Nova solicitação</button>
+            <button class="btn" data-view="list">Lista</button>
+            <button class="btn" data-view="governance">Governança</button>
+          </div>
+          <div class="sep"></div>
+          <div class="note">
+            Dica: este MVP é “estático”. Depois a gente coloca login, banco e auditoria real.
+          </div>
+        </div>
+        <div class="ft">
+          <button class="btn danger small" id="btnReset">Zerar dados</button>
+          <span class="note">Somente local</span>
+        </div>
+      </section>
+
+      <!-- CONTENT -->
+      <section class="card">
+        <!-- HOME -->
+        <div id="view-home">
+          <div class="hd">
+            <h2 style="margin:0;font-size:18px">Início</h2>
+            <div class="muted">Fluxo mínimo: criar solicitação → mudar status → registrar ações (local).</div>
+          </div>
+          <div class="bd">
+            <div class="note">
+              Este é um MVP para funcionar em celular e PC sem backend. Quando você estiver confortável,
+              a próxima etapa é: autenticação + Postgres + trilha de auditoria + RBAC.
+            </div>
+            <div class="sep"></div>
+            <div class="row2">
+              <div>
+                <div class="pill">Objetivo</div>
+                <p class="note">
+                  Centralizar pedidos, acompanhar status e criar um padrão de governança (mesmo simples).
+                </p>
+              </div>
+              <div>
+                <div class="pill">O que já tem</div>
+                <ul class="note" style="margin:8px 0 0 18px">
+                  <li>Menu e páginas</li>
+                  <li>Cadastro de solicitação</li>
+                  <li>Lista com ações</li>
+                  <li>Indicadores (KPIs)</li>
+                  <li>Persistência local (LocalStorage)</li>
+                </ul>
+              </div>
+            </div>
+            <div class="sep"></div>
+            <button class="btn primary" data-view="new">Criar primeira solicitação</button>
+          </div>
+        </div>
+
+        <!-- NEW -->
+        <div id="view-new" class="hidden">
+          <div class="hd">
+            <h2 style="margin:0;font-size:18px">Nova solicitação</h2>
+            <div class="muted">Preencha e salve. Depois você altera o status na lista.</div>
+          </div>
+          <div class="bd">
+            <div class="row2">
+              <div>
+                <label for="title">Título</label>
+                <input id="title" placeholder="Ex.: Pedido de material / Ajuste de agenda" />
+              </div>
+              <div>
+                <label for="type">Tipo</label>
+                <select id="type">
+                  <option value="RH">RH</option>
+                  <option value="Materiais">Materiais</option>
+                  <option value="Agenda">Agenda</option>
+                  <option value="Financeiro">Financeiro</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+            </div>
+
+            <label for="desc">Descrição</label>
+            <textarea id="desc" placeholder="Descreva o pedido, contexto e urgência..."></textarea>
+
+            <div class="row2">
+              <div>
+                <label for="requester">Solicitante</label>
+                <input id="requester" placeholder="Ex.: Gabriel" />
+              </div>
+              <div>
+                <label for="approver">Aprovador (texto)</label>
+                <input id="approver" placeholder="Ex.: Coordenação / Gestão" />
+              </div>
+            </div>
+
+            <div class="sep"></div>
+            <button class="btn primary" id="btnCreate">Salvar solicitação</button>
+            <span class="note" id="createMsg" style="margin-left:10px"></span>
+          </div>
+        </div>
+
+        <!-- LIST -->
+        <div id="view-list" class="hidden">
+          <div class="hd">
+            <h2 style="margin:0;font-size:18px">Lista de solicitações</h2>
+            <div class="muted">Ações: mudar status e excluir. Tudo fica salvo no navegador.</div>
+          </div>
+          <div class="bd">
+            <div class="row2">
+              <div>
+                <label for="filterStatus">Filtrar por status</label>
+                <select id="filterStatus">
+                  <option value="ALL">Todos</option>
+                  <option value="SUBMITTED">SUBMITTED</option>
+                  <option value="IN_REVIEW">IN_REVIEW</option>
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="REJECTED">REJECTED</option>
+                  <option value="DONE">DONE</option>
+                </select>
+              </div>
+              <div>
+                <label for="q">Buscar</label>
+                <input id="q" placeholder="Buscar por título/descrição/solicitante..." />
+              </div>
+            </div>
+
+            <div class="sep"></div>
+
+            <table>
+              <tbody id="rows"></tbody>
+            </table>
+
+            <div class="note" id="emptyMsg"></div>
+          </div>
+        </div>
+
+        <!-- GOVERNANCE -->
+        <div id="view-governance" class="hidden">
+          <div class="hd">
+            <h2 style="margin:0;font-size:18px">Governança (versão MVP)</h2>
+            <div class="muted">Regras simples que viram “produto” quando tiver backend.</div>
+          </div>
+          <div class="bd">
+            <div class="pill">Regras mínimas recomendadas</div>
+            <ul class="note" style="margin:10px 0 0 18px; line-height:1.6">
+              <li><strong>Padronização:</strong> todo pedido tem título, tipo, descrição e solicitante.</li>
+              <li><strong>Status controlado:</strong> SUBMITTED → IN_REVIEW → APPROVED/REJECTED → DONE.</li>
+              <li><strong>Auditoria:</strong> registrar quem mudou o status e quando (no MVP fica local).</li>
+              <li><strong>Responsável:</strong> cada tipo tem um aprovador padrão (fase 2).</li>
+              <li><strong>Retenção:</strong> definir prazo (ex.: 12 meses) e política de exclusão (fase 2).</li>
+            </ul>
+            <div class="sep"></div>
+            <div class="note">
+              Próximo upgrade (quando você quiser): login (RBAC), banco (Postgres), trilha de auditoria imutável,
+              anexos e métricas por SLA.
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const KEY = "portal_mvp_requests_v1";
+
+    function nowISO() { return new Date().toISOString(); }
+    function uid() { return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
+
+    function loadAll() {
+      try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+      catch { return []; }
+    }
+    function saveAll(items) {
+      localStorage.setItem(KEY, JSON.stringify(items));
+    }
+
+    function setView(name) {
+      const views = ["home","new","list","governance"];
+      for (const v of views) {
+        document.getElementById("view-" + v).classList.toggle("hidden", v !== name);
+      }
+      if (name === "list") renderList();
+    }
+
+    function auditLocal(item, action, details) {
+      // No MVP, a auditoria fica no próprio objeto (depois vira tabela audit_log no backend)
+      item.audit = item.audit || [];
+      item.audit.push({ at: nowISO(), action, details });
+    }
+
+    function createRequest() {
+      const title = document.getElementById("title").value.trim();
+      const type = document.getElementById("type").value;
+      const description = document.getElementById("desc").value.trim();
+      const requester = document.getElementById("requester").value.trim();
+      const approver = document.getElementById("approver").value.trim();
+      const msg = document.getElementById("createMsg");
+
+      if (!title || !description || !requester) {
+        msg.textContent = "Preencha Título, Descrição e Solicitante.";
+        msg.style.color = "var(--bad)";
+        return;
+      }
+
+      const items = loadAll();
+      const item = {
+        id: uid(),
+        title,
+        type,
+        description,
+        requester,
+        approver,
+        status: "SUBMITTED",
+        created_at: nowISO(),
+        updated_at: nowISO(),
+        audit: []
+      };
+      auditLocal(item, "create", { status: "SUBMITTED" });
+
+      items.unshift(item);
+      saveAll(items);
+
+      // limpar form
+      document.getElementById("title").value = "";
+      document.getElementById("desc").value = "";
+      document.getElementById("requester").value = "";
+      document.getElementById("approver").value = "";
+
+      msg.textContent = "Solicitação salva.";
+      msg.style.color = "var(--ok)";
+
+      updateKpis();
+      setView("list");
+    }
+
+    function changeStatus(id, newStatus) {
+      const items = loadAll();
+      const idx = items.findIndex(x => x.id === id);
+      if (idx < 0) return;
+
+      const before = items[idx].status;
+      items[idx].status = newStatus;
+      items[idx].updated_at = nowISO();
+      auditLocal(items[idx], "status_change", { from: before, to: newStatus });
+
+      saveAll(items);
+      renderList();
+      updateKpis();
+    }
+
+    function removeRequest(id) {
+      const items = loadAll();
+      const next = items.filter(x => x.id !== id);
+      saveAll(next);
+      renderList();
+      updateKpis();
+    }
+
+    function renderList() {
+      const tbody = document.getElementById("rows");
+      const empty = document.getElementById("emptyMsg");
+      const filterStatus = document.getElementById("filterStatus").value;
+      const q = document.getElementById("q").value.trim().toLowerCase();
+
+      const items = loadAll().filter(item => {
+        const okStatus = (filterStatus === "ALL") || (item.status === filterStatus);
+        const hay = (item.title + " " + item.description + " " + item.requester + " " + item.type).toLowerCase();
+        const okQ = !q || hay.includes(q);
+        return okStatus && okQ;
+      });
+
+      tbody.innerHTML = "";
+      if (items.length === 0) {
+        empty.textContent = "Nenhuma solicitação encontrada.";
+        return;
+      }
+      empty.textContent = "";
+
+      for (const item of items) {
+        const tr = document.createElement("tr");
+
+        const left = document.createElement("td");
+        left.innerHTML = `
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+            <div>
+              <div style="font-weight:750">${escapeHtml(item.title)}</div>
+              <div class="muted" style="margin-top:4px">
+                <span class="pill" style="margin-right:8px">${escapeHtml(item.type)}</span>
+                <span class="status ${item.status}">${item.status}</span>
+              </div>
+              <div class="note" style="margin-top:8px">${escapeHtml(item.description)}</div>
+              <div class="muted" style="margin-top:8px">
+                Solicitante: <strong style="color:var(--text)">${escapeHtml(item.requester)}</strong>
+                ${item.approver ? ` • Aprovador: <strong style="color:var(--text)">${escapeHtml(item.approver)}</strong>` : ""}
+              </div>
+              <div class="muted" style="margin-top:6px">
+                Criado: ${fmt(item.created_at)} • Atualizado: ${fmt(item.updated_at)}
+              </div>
+            </div>
+          </div>
+        `;
+        tr.appendChild(left);
+
+        const right = document.createElement("td");
+        right.className = "td-actions";
+        right.innerHTML = `
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn small" data-act="IN_REVIEW">Revisar</button>
+            <button class="btn small" data-act="APPROVED">Aprovar</button>
+            <button class="btn small" data-act="REJECTED">Rejeitar</button>
+            <button class="btn small" data-act="DONE">Concluir</button>
+            <button class="btn danger small" data-act="DELETE">Excluir</button>
+          </div>
+        `;
+        right.querySelectorAll("button").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const act = btn.getAttribute("data-act");
+            if (act === "DELETE") removeRequest(item.id);
+            else changeStatus(item.id, act);
+          });
+        });
+
+        tr.appendChild(right);
+        tbody.appendChild(tr);
+      }
+    }
+
+    function updateKpis() {
+      const items = loadAll();
+      const total = items.length;
+      const open = items.filter(x => x.status === "SUBMITTED" || x.status === "IN_REVIEW").length;
+      const approved = items.filter(x => x.status === "APPROVED").length;
+
+      document.getElementById("kpiTotal").textContent = String(total);
+      document.getElementById("kpiOpen").textContent = String(open);
+      document.getElementById("kpiApproved").textContent = String(approved);
+    }
+
+    function fmt(iso) {
+      try {
+        const d = new Date(iso);
+        return d.toLocaleString("pt-BR");
+      } catch { return iso; }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+      }[c]));
+    }
+
+    // NAV wiring
+    document.querySelectorAll("[data-view]").forEach(btn => {
+      btn.addEventListener("click", () => setView(btn.getAttribute("data-view")));
+    });
+
+    document.getElementById("btnCreate").addEventListener("click", createRequest);
+
+    document.getElementById("filterStatus").addEventListener("change", renderList);
+    document.getElementById("q").addEventListener("input", renderList);
+
+    document.getElementById("btnReset").addEventListener("click", () => {
+      if (!confirm("Tem certeza que deseja apagar todos os dados locais?")) return;
+      localStorage.removeItem(KEY);
+      updateKpis();
+      renderList();
+      setView("home");
+    });
+
+    // init
+    updateKpis();
+    setView("home");
+  </script>
+</body>
+</html>

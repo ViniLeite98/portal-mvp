@@ -1,1 +1,138 @@
 
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal MVP • Nova solicitação</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="top">
+        <div class="brand">
+          <div class="logo"></div>
+          <div>
+            <h1>Portal MVP</h1>
+            <div class="muted">Nova solicitação</div>
+          </div>
+        </div>
+
+        <div class="kpi">
+          <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
+          <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
+          <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <section class="card">
+        <div class="hd"><div class="muted">Navegação</div></div>
+        <div class="bd">
+          <div class="nav" id="nav"></div>
+        </div>
+        <div class="ft">
+          <button class="btn danger small" id="btnReset">Zerar dados</button>
+          <span class="note">Somente local</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd">
+          <h2 style="margin:0;font-size:18px">Nova solicitação</h2>
+          <div class="muted">Preencha e salve. Depois você altera o status na lista.</div>
+        </div>
+        <div class="bd">
+          <div class="row2">
+            <div>
+              <label for="title">Título</label>
+              <input id="title" placeholder="Ex.: Pedido de material / Ajuste de agenda" />
+            </div>
+            <div>
+              <label for="type">Tipo</label>
+              <select id="type">
+                <option value="RH">RH</option>
+                <option value="Materiais">Materiais</option>
+                <option value="Agenda">Agenda</option>
+                <option value="Financeiro">Financeiro</option>
+                <option value="Outro">Outro</option>
+              </select>
+            </div>
+          </div>
+
+          <label for="desc">Descrição</label>
+          <textarea id="desc" placeholder="Descreva o pedido, contexto e urgência..."></textarea>
+
+          <div class="row2">
+            <div>
+              <label for="requester">Solicitante</label>
+              <input id="requester" placeholder="Ex.: Gabriel" />
+            </div>
+            <div>
+              <label for="approver">Aprovador (texto)</label>
+              <input id="approver" placeholder="Ex.: Coordenação / Gestão" />
+            </div>
+          </div>
+
+          <div class="sep"></div>
+          <button class="btn primary" id="btnCreate">Salvar solicitação</button>
+          <span class="note" id="createMsg" style="margin-left:10px"></span>
+
+          <div class="sep"></div>
+          <a class="btn" href="./solicitacoes.html">Ir para lista</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { renderNav, renderKpis, wireResetButton, loadJSON, saveJSON, REQ_KEY, uid, nowISO } from "./app.js";
+
+    renderNav("new");
+    renderKpis();
+    wireResetButton();
+
+    function createRequest(){
+      const title = document.getElementById("title").value.trim();
+      const type = document.getElementById("type").value;
+      const description = document.getElementById("desc").value.trim();
+      const requester = document.getElementById("requester").value.trim();
+      const approver = document.getElementById("approver").value.trim();
+      const msg = document.getElementById("createMsg");
+
+      if (!title || !description || !requester) {
+        msg.textContent = "Preencha Título, Descrição e Solicitante.";
+        msg.style.color = "var(--bad)";
+        return;
+      }
+
+      const items = loadJSON(REQ_KEY, []);
+      items.unshift({
+        id: uid(),
+        title, type, description, requester, approver,
+        status: "SUBMITTED",
+        created_at: nowISO(),
+        updated_at: nowISO(),
+        audit: [{ at: nowISO(), action: "create", details: { status: "SUBMITTED" } }]
+      });
+      saveJSON(REQ_KEY, items);
+
+      msg.textContent = "Solicitação salva.";
+      msg.style.color = "var(--ok)";
+
+      document.getElementById("title").value = "";
+      document.getElementById("desc").value = "";
+      document.getElementById("requester").value = "";
+      document.getElementById("approver").value = "";
+
+      renderKpis();
+    }
+
+    document.getElementById("btnCreate").addEventListener("click", createRequest);
+  </script>
+</body>
+</html>

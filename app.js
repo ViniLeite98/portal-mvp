@@ -1,33 +1,33 @@
 // ---------- Utils ----------
-export function nowISO(){ return new Date().toISOString(); }
-export function uid(){ return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
-export function fmt(iso){ try { return new Date(iso).toLocaleString("pt-BR"); } catch { return iso; } }
-export function escapeHtml(s){
+function nowISO(){ return new Date().toISOString(); }
+function uid(){ return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
+function fmt(iso){ try { return new Date(iso).toLocaleString("pt-BR"); } catch { return iso; } }
+function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, (c) => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[c]));
 }
-export function onlyDigits(s){ return (s||"").replace(/\D/g,""); }
+function onlyDigits(s){ return (s||"").replace(/\D/g,""); }
 
 // ---------- Storage helper ----------
-export function loadJSON(key, fallback){
+function loadJSON(key, fallback){
   try {
     const v = JSON.parse(localStorage.getItem(key) || "null");
     return v ?? fallback;
   } catch { return fallback; }
 }
-export function saveJSON(key, value){
+function saveJSON(key, value){
   localStorage.setItem(key, JSON.stringify(value));
 }
 
 // ---------- Keys ----------
-export const REQ_KEY = "portal_mvp_requests_v1";
-export const TEAM_KEY = "portal_mvp_team_v1";
-export const TH_KEY = "portal_mvp_therapists_v1";
-export const CERT_KEY = "portal_mvp_cert_options_v1";
+const REQ_KEY = "portal_mvp_requests_v1";
+const TEAM_KEY = "portal_mvp_team_v1";
+const TH_KEY = "portal_mvp_therapists_v1";
+const CERT_KEY = "portal_mvp_cert_options_v1";
 
-// ---------- Nav rendering (mesmo menu em todas páginas) ----------
-export function renderNav(active){
+// ---------- Nav rendering ----------
+function renderNav(active){
   const el = document.getElementById("nav");
   if (!el) return;
 
@@ -45,7 +45,7 @@ export function renderNav(active){
 }
 
 // ---------- Header KPIs ----------
-export function renderKpis(){
+function renderKpis(){
   const items = loadJSON(REQ_KEY, []);
   const total = items.length;
   const open = items.filter(x => x.status==="SUBMITTED" || x.status==="IN_REVIEW").length;
@@ -60,7 +60,7 @@ export function renderKpis(){
 }
 
 // ---------- Reset ----------
-export function wireResetButton(){
+function wireResetButton(){
   const btn = document.getElementById("btnReset");
   if (!btn) return;
   btn.addEventListener("click", () => {
@@ -73,3 +73,10 @@ export function wireResetButton(){
   });
 }
 
+// Expor no window (para todas páginas usarem)
+window.App = {
+  nowISO, uid, fmt, escapeHtml, onlyDigits,
+  loadJSON, saveJSON,
+  REQ_KEY, TEAM_KEY, TH_KEY, CERT_KEY,
+  renderNav, renderKpis, wireResetButton
+};

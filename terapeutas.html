@@ -65,7 +65,7 @@
             </div>
 
             <div class="sep"></div>
-            <button class="btn primary" id="btnThNew">Novo terapeuta</button>
+            <button class="btn primary" id="btnThNew">Nova terapeuta</button>
 
             <div class="sep"></div>
 
@@ -220,7 +220,6 @@
               <span class="note" id="th_formMsg"></span>
             </div>
           </div>
-
         </div>
       </section>
     </div>
@@ -237,8 +236,16 @@
     renderKpis();
     wireResetButton();
 
-    const DEFAULT_UNITS = ["Unidade 1","Unidade 2","Unidade 3"];
-    const DEFAULT_CERTS = ["Massagem Nuru","Massagem Vivência","Podolatria","Massagem Casais","Massagem Feminina"];
+    // Ajuste aqui para as suas unidades reais (ou depois puxar de um cadastro)
+    const UNITS = ["Unidade 1","Unidade 2","Unidade 3"];
+
+    const DEFAULT_CERTS = [
+      "Massagem Nuru",
+      "Massagem Vivência",
+      "Podolatria",
+      "Massagem Casais",
+      "Massagem Feminina"
+    ];
 
     let editingId = null;
 
@@ -251,13 +258,14 @@
     function populateUnits(){
       const sel = document.getElementById("th_unit");
       sel.innerHTML = "";
-      for (const u of DEFAULT_UNITS){
+      for (const u of UNITS){
         const opt = document.createElement("option");
         opt.value = u; opt.textContent = u;
         sel.appendChild(opt);
       }
     }
 
+    // dropdown de horários (de 30 em 30)
     function populateTimes(){
       const start = document.getElementById("th_startTime");
       const end = document.getElementById("th_endTime");
@@ -303,6 +311,7 @@
         grid.appendChild(wrap);
       }
     }
+
     function selectedCerts(){
       const out=[];
       document.querySelectorAll('#th_certsGrid input[type="checkbox"]').forEach(cb => { if (cb.checked) out.push(cb.value); });
@@ -321,7 +330,7 @@
       document.getElementById("th_newCert").value = "";
 
       showForm(true);
-      document.getElementById("th_title").textContent = editingId ? "Editar Terapeuta" : "Novo Terapeuta";
+      document.getElementById("th_title").textContent = editingId ? "Editar Terapeuta" : "Nova Terapeuta";
 
       if (!editingId){
         document.getElementById("th_fullName").value = "";
@@ -329,7 +338,7 @@
         document.getElementById("th_birth").value = "";
         document.getElementById("th_cpf").value = "";
         document.getElementById("th_email").value = "";
-        document.getElementById("th_unit").value = DEFAULT_UNITS[0] || "";
+        document.getElementById("th_unit").value = UNITS[0] || "";
         document.getElementById("th_address").value = "";
         document.getElementById("th_contact").value = "";
         document.getElementById("th_emergency").value = "";
@@ -355,7 +364,7 @@
       document.getElementById("th_birth").value = t.birth || "";
       document.getElementById("th_cpf").value = t.cpf || "";
       document.getElementById("th_email").value = t.email || "";
-      document.getElementById("th_unit").value = t.unit || (DEFAULT_UNITS[0] || "");
+      document.getElementById("th_unit").value = t.unit || (UNITS[0] || "");
       document.getElementById("th_address").value = t.address || "";
       document.getElementById("th_contact").value = t.contact || "";
       document.getElementById("th_emergency").value = t.emergency || "";
@@ -443,7 +452,7 @@
     }
 
     function removeTherapist(id){
-      if (!confirm("Excluir este terapeuta?")) return;
+      if (!confirm("Excluir esta terapeuta?")) return;
       saveJSON(TH_KEY, loadJSON(TH_KEY, []).filter(x => x.id !== id));
       renderList();
     }
@@ -462,7 +471,7 @@
       });
 
       tbody.innerHTML = "";
-      if (!items.length){ empty.textContent = "Nenhum terapeuta cadastrado."; return; }
+      if (!items.length){ empty.textContent = "Nenhuma terapeuta cadastrada."; return; }
       empty.textContent = "";
 
       for (const t of items){
@@ -535,8 +544,16 @@
     document.getElementById("btnThCancel").addEventListener("click", cancelForm);
     document.getElementById("btnThSave").addEventListener("click", saveTherapist);
     document.getElementById("btnAddCert").addEventListener("click", addCertOption);
-
     document.getElementById("th_filter_status").addEventListener("change", renderList);
     document.getElementById("th_q").addEventListener("input", renderList);
-    docume
+    document.getElementById("th_hasWeeklyOff").addEventListener("change", syncDayOffEnabled);
 
+    // init
+    populateUnits();
+    populateTimes();
+    syncDayOffEnabled();
+    renderCertCheckboxes([]);
+    renderList();
+  </script>
+</body>
+</html>

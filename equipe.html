@@ -1,1 +1,220 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal MVP • Equipe</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="top">
+        <div class="brand">
+          <div class="logo"></div>
+          <div>
+            <h1>Portal MVP</h1>
+            <div class="muted">Equipe</div>
+          </div>
+        </div>
+
+        <div class="kpi">
+          <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
+          <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
+          <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <section class="card">
+        <div class="hd"><div class="muted">Navegação</div></div>
+        <div class="bd">
+          <div class="nav" id="nav"></div>
+        </div>
+        <div class="ft">
+          <button class="btn danger small" id="btnReset">Zerar dados</button>
+          <span class="note">Somente local</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd">
+          <h2 style="margin:0;font-size:18px">Equipe</h2>
+          <div class="muted">Cadastro simples de pessoas e papéis. Salvo no navegador.</div>
+        </div>
+        <div class="bd">
+          <div class="row2">
+            <div>
+              <label for="team_name">Nome</label>
+              <input id="team_name" placeholder="Ex.: Agatha Silva" />
+            </div>
+            <div>
+              <label for="team_email">E-mail</label>
+              <input id="team_email" placeholder="ex.: agatha@empresa.com" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div>
+              <label for="team_role">Papel</label>
+              <select id="team_role">
+                <option value="requester">Solicitante</option>
+                <option value="approver">Aprovador</option>
+                <option value="admin">Admin</option>
+                <option value="auditor">Auditor</option>
+              </select>
+            </div>
+            <div>
+              <label for="team_area">Área</label>
+              <input id="team_area" placeholder="Ex.: RH, Financeiro, Operações" />
+            </div>
+          </div>
+
+          <div class="row2">
+            <div>
+              <label for="team_unit">Unidade / Diretoria</label>
+              <input id="team_unit" placeholder="Ex.: Centro / Norte 1 / etc." />
+            </div>
+            <div>
+              <label for="team_phone">Telefone</label>
+              <input id="team_phone" placeholder="Ex.: (11) 99999-9999" />
+            </div>
+          </div>
+
+          <div class="sep"></div>
+          <button class="btn primary" id="btnTeamAdd">Adicionar membro</button>
+          <span class="note" id="teamMsg" style="margin-left:10px"></span>
+
+          <div class="sep"></div>
+
+          <div class="row2">
+            <div>
+              <label for="team_filter_role">Filtrar por papel</label>
+              <select id="team_filter_role">
+                <option value="ALL">Todos</option>
+                <option value="requester">Solicitante</option>
+                <option value="approver">Aprovador</option>
+                <option value="admin">Admin</option>
+                <option value="auditor">Auditor</option>
+              </select>
+            </div>
+            <div>
+              <label for="team_q">Buscar</label>
+              <input id="team_q" placeholder="Buscar por nome/área/unidade..." />
+            </div>
+          </div>
+
+          <div class="sep"></div>
+
+          <table>
+            <tbody id="team_rows"></tbody>
+          </table>
+
+          <div class="note" id="teamEmptyMsg"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { renderNav, renderKpis, wireResetButton, loadJSON, saveJSON, TEAM_KEY, uid, nowISO, fmt, escapeHtml } from "./app.js";
+
+    renderNav("team");
+    renderKpis();
+    wireResetButton();
+
+    function addTeamMember(){
+      const name = document.getElementById("team_name").value.trim();
+      const email = document.getElementById("team_email").value.trim();
+      const role = document.getElementById("team_role").value;
+      const area = document.getElementById("team_area").value.trim();
+      const unit = document.getElementById("team_unit").value.trim();
+      const phone = document.getElementById("team_phone").value.trim();
+      const msg = document.getElementById("teamMsg");
+
+      if (!name) {
+        msg.textContent = "Informe o nome.";
+        msg.style.color = "var(--bad)";
+        return;
+      }
+
+      const items = loadJSON(TEAM_KEY, []);
+      items.unshift({ id: uid(), name, email, role, area, unit, phone, created_at: nowISO() });
+      saveJSON(TEAM_KEY, items);
+
+      document.getElementById("team_name").value = "";
+      document.getElementById("team_email").value = "";
+      document.getElementById("team_area").value = "";
+      document.getElementById("team_unit").value = "";
+      document.getElementById("team_phone").value = "";
+
+      msg.textContent = "Membro adicionado.";
+      msg.style.color = "var(--ok)";
+      render();
+    }
+
+    function removeTeamMember(id){
+      saveJSON(TEAM_KEY, loadJSON(TEAM_KEY, []).filter(x => x.id !== id));
+      render();
+    }
+
+    function render(){
+      const tbody = document.getElementById("team_rows");
+      const empty = document.getElementById("teamEmptyMsg");
+      const filterRole = document.getElementById("team_filter_role").value;
+      const q = document.getElementById("team_q").value.trim().toLowerCase();
+
+      const items = loadJSON(TEAM_KEY, []).filter(item => {
+        const okRole = (filterRole === "ALL") || (item.role === filterRole);
+        const hay = (item.name + " " + (item.area||"") + " " + (item.unit||"") + " " + (item.email||"")).toLowerCase();
+        const okQ = !q || hay.includes(q);
+        return okRole && okQ;
+      });
+
+      tbody.innerHTML = "";
+      if (items.length === 0) { empty.textContent = "Nenhum membro cadastrado."; return; }
+      empty.textContent = "";
+
+      for (const m of items) {
+        const tr = document.createElement("tr");
+
+        const left = document.createElement("td");
+        left.innerHTML = `
+          <div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <div style="font-weight:750">${escapeHtml(m.name)}</div>
+              <span class="badge">${escapeHtml(m.role)}</span>
+              ${m.area ? `<span class="badge">${escapeHtml(m.area)}</span>` : ""}
+              ${m.unit ? `<span class="badge">${escapeHtml(m.unit)}</span>` : ""}
+            </div>
+            <div class="muted" style="margin-top:8px">
+              ${m.email ? `E-mail: <strong style="color:var(--text)">${escapeHtml(m.email)}</strong>` : ""}
+              ${m.phone ? ` ${m.email ? "•" : ""} Telefone: <strong style="color:var(--text)">${escapeHtml(m.phone)}</strong>` : ""}
+            </div>
+            <div class="muted" style="margin-top:6px">Criado: ${fmt(m.created_at)}</div>
+          </div>
+        `;
+        tr.appendChild(left);
+
+        const right = document.createElement("td");
+        right.className = "td-actions";
+        right.innerHTML = `<button class="btn danger small">Excluir</button>`;
+        right.querySelector("button").addEventListener("click", () => removeTeamMember(m.id));
+        tr.appendChild(right);
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    document.getElementById("btnTeamAdd").addEventListener("click", addTeamMember);
+    document.getElementById("team_filter_role").addEventListener("change", render);
+    document.getElementById("team_q").addEventListener("input", render);
+
+    render();
+  </script>
+</body>
+</html>
 

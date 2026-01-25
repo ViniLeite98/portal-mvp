@@ -25,6 +25,7 @@ const REQ_KEY = "portal_mvp_requests_v1";
 const TEAM_KEY = "portal_mvp_team_v1";
 const TH_KEY = "portal_mvp_therapists_v1";
 const CERT_KEY = "portal_mvp_cert_options_v1";
+const UNIT_KEY = "portal_mvp_units_v1";
 
 // ---------- Nav rendering ----------
 function renderNav(active){
@@ -69,6 +70,7 @@ function wireResetButton(){
     localStorage.removeItem(TEAM_KEY);
     localStorage.removeItem(TH_KEY);
     localStorage.removeItem(CERT_KEY);
+    localStorage.removeItem(UNIT_KEY);
     location.reload();
   });
 }
@@ -77,6 +79,6 @@ function wireResetButton(){
 window.App = {
   nowISO, uid, fmt, escapeHtml, onlyDigits,
   loadJSON, saveJSON,
-  REQ_KEY, TEAM_KEY, TH_KEY, CERT_KEY,
+  REQ_KEY, TEAM_KEY, TH_KEY, CERT_KEY, UNIT_KEY,
   renderNav, renderKpis, wireResetButton
 };

@@ -1,1 +1,542 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal MVP • Terapeutas</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="top">
+        <div class="brand">
+          <div class="logo"></div>
+          <div>
+            <h1>Portal MVP</h1>
+            <div class="muted">Terapeutas</div>
+          </div>
+        </div>
+
+        <div class="kpi">
+          <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
+          <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
+          <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <section class="card">
+        <div class="hd"><div class="muted">Navegação</div></div>
+        <div class="bd">
+          <div class="nav" id="nav"></div>
+        </div>
+        <div class="ft">
+          <button class="btn danger small" id="btnReset">Zerar dados</button>
+          <span class="note">Somente local</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd">
+          <h2 style="margin:0;font-size:18px" id="th_title">Terapeutas</h2>
+          <div class="muted" id="th_subtitle">Lista + criar/editar (campos completos) + certificações dinâmicas.</div>
+        </div>
+
+        <div class="bd">
+          <!-- LISTA -->
+          <div id="th_list_block">
+            <div class="row2">
+              <div>
+                <label for="th_filter_status">Filtrar por status</label>
+                <select id="th_filter_status">
+                  <option value="ALL">Todos</option>
+                  <option value="ACTIVE">Ativo</option>
+                  <option value="INACTIVE">Inativo</option>
+                </select>
+              </div>
+              <div>
+                <label for="th_q">Buscar</label>
+                <input id="th_q" placeholder="Buscar por nome, unidade, CPF, e-mail..." />
+              </div>
+            </div>
+
+            <div class="sep"></div>
+            <button class="btn primary" id="btnThNew">Novo terapeuta</button>
+
+            <div class="sep"></div>
+
+            <table>
+              <tbody id="th_rows"></tbody>
+            </table>
+
+            <div class="note" id="th_emptyMsg"></div>
+          </div>
+
+          <!-- FORM -->
+          <div id="th_form_block" style="display:none">
+            <div class="note" style="margin-bottom:10px">Preencha os dados da terapeuta</div>
+
+            <div class="row2">
+              <div>
+                <label for="th_fullName">Nome Completo *</label>
+                <input id="th_fullName" />
+              </div>
+              <div>
+                <label for="th_profName">Nome profissional *</label>
+                <input id="th_profName" />
+              </div>
+            </div>
+
+            <div class="row4">
+              <div>
+                <label for="th_birth">Data de Nascimento *</label>
+                <input id="th_birth" type="date" />
+              </div>
+              <div>
+                <label for="th_cpf">CPF* (11 dígitos)</label>
+                <input id="th_cpf" inputmode="numeric" maxlength="11" placeholder="Somente números" />
+              </div>
+              <div>
+                <label for="th_email">Email *</label>
+                <input id="th_email" type="email" />
+              </div>
+              <div>
+                <label for="th_unit">Unidade *</label>
+                <select id="th_unit"></select>
+              </div>
+            </div>
+
+            <div class="row3">
+              <div>
+                <label for="th_address">Endereço</label>
+                <input id="th_address" />
+              </div>
+              <div>
+                <label for="th_contact">Contato *</label>
+                <input id="th_contact" inputmode="numeric" placeholder="Somente números" />
+              </div>
+              <div>
+                <label for="th_emergency">Contato Emergência</label>
+                <input id="th_emergency" inputmode="numeric" placeholder="Somente números" />
+              </div>
+            </div>
+
+            <div class="row4">
+              <div>
+                <label for="th_pixType">Tipo de Chave Pix</label>
+                <select id="th_pixType">
+                  <option value="CPF">CPF</option>
+                  <option value="EMAIL">E-mail</option>
+                  <option value="TELEFONE">Telefone</option>
+                  <option value="ALEATORIA">Aleatória</option>
+                </select>
+              </div>
+              <div>
+                <label for="th_pixKey">Chave Pix</label>
+                <input id="th_pixKey" />
+              </div>
+              <div>
+                <label for="th_hasWeeklyOff">Tem folga semanal? *</label>
+                <select id="th_hasWeeklyOff">
+                  <option value="SIM">Sim</option>
+                  <option value="NAO">Não</option>
+                </select>
+              </div>
+              <div>
+                <label for="th_dayOff">Dia da Folga</label>
+                <select id="th_dayOff">
+                  <option value="">—</option>
+                  <option>Segunda</option><option>Terça</option><option>Quarta</option>
+                  <option>Quinta</option><option>Sexta</option><option>Sábado</option><option>Domingo</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row4">
+              <div>
+                <label for="th_startTime">Horário de Entrada *</label>
+                <select id="th_startTime"></select>
+              </div>
+              <div>
+                <label for="th_endTime">Horário de Saída *</label>
+                <select id="th_endTime"></select>
+              </div>
+              <div>
+                <label for="th_startDate">Data de Início *</label>
+                <input id="th_startDate" type="date" />
+              </div>
+              <div>
+                <label for="th_blood">Tipo Sanguíneo</label>
+                <select id="th_blood">
+                  <option value="">—</option>
+                  <option>A+</option><option>A-</option>
+                  <option>B+</option><option>B-</option>
+                  <option>AB+</option><option>AB-</option>
+                  <option>O+</option><option>O-</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row2">
+              <div>
+                <label>Status *</label>
+                <div class="radioRow">
+                  <label><input type="radio" name="th_status" value="ACTIVE" checked /> Ativo</label>
+                  <label><input type="radio" name="th_status" value="INACTIVE" /> Inativo</label>
+                </div>
+              </div>
+              <div>
+                <label>&nbsp;</label>
+                <div class="note">Campos com * são obrigatórios.</div>
+              </div>
+            </div>
+
+            <div class="sep"></div>
+
+            <h3 style="margin:0 0 8px 0;font-size:18px">Certificações</h3>
+
+            <div class="row2">
+              <div>
+                <label for="th_newCert">Incluir nova certificação</label>
+                <input id="th_newCert" placeholder="Ex.: Massagem Desportiva" />
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-end">
+                <button class="btn" id="btnAddCert">Adicionar certificação</button>
+                <span class="note" id="th_certMsg"></span>
+              </div>
+            </div>
+
+            <div class="checkboxGrid" id="th_certsGrid"></div>
+
+            <div class="sep"></div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn primary" id="btnThSave">Salvar</button>
+              <button class="btn" id="btnThCancel">Cancelar</button>
+              <span class="note" id="th_formMsg"></span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import {
+      renderNav, renderKpis, wireResetButton,
+      loadJSON, saveJSON, TH_KEY, CERT_KEY,
+      uid, nowISO, fmt, escapeHtml, onlyDigits
+    } from "./app.js";
+
+    renderNav("therapists");
+    renderKpis();
+    wireResetButton();
+
+    const DEFAULT_UNITS = ["Unidade 1","Unidade 2","Unidade 3"];
+    const DEFAULT_CERTS = ["Massagem Nuru","Massagem Vivência","Podolatria","Massagem Casais","Massagem Feminina"];
+
+    let editingId = null;
+
+    function loadCertOptions(){
+      const v = loadJSON(CERT_KEY, null);
+      return Array.isArray(v) && v.length ? v : DEFAULT_CERTS.slice();
+    }
+    function saveCertOptions(items){ saveJSON(CERT_KEY, items); }
+
+    function populateUnits(){
+      const sel = document.getElementById("th_unit");
+      sel.innerHTML = "";
+      for (const u of DEFAULT_UNITS){
+        const opt = document.createElement("option");
+        opt.value = u; opt.textContent = u;
+        sel.appendChild(opt);
+      }
+    }
+
+    function populateTimes(){
+      const start = document.getElementById("th_startTime");
+      const end = document.getElementById("th_endTime");
+      start.innerHTML = ""; end.innerHTML = "";
+      for (let h=6; h<=23; h++){
+        for (let m=0; m<60; m+=30){
+          const t = String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+          const o1 = document.createElement("option"); o1.value=t; o1.textContent=t;
+          const o2 = document.createElement("option"); o2.value=t; o2.textContent=t;
+          start.appendChild(o1); end.appendChild(o2);
+        }
+      }
+      start.value = "09:00";
+      end.value = "17:00";
+    }
+
+    function getStatus(){
+      for (const r of document.querySelectorAll('input[name="th_status"]')) if (r.checked) return r.value;
+      return "ACTIVE";
+    }
+    function setStatus(v){
+      document.querySelectorAll('input[name="th_status"]').forEach(r => r.checked = (r.value===v));
+    }
+
+    function syncDayOffEnabled(){
+      const has = document.getElementById("th_hasWeeklyOff").value;
+      const day = document.getElementById("th_dayOff");
+      day.disabled = (has !== "SIM");
+      if (has !== "SIM") day.value = "";
+      if (has === "SIM" && !day.value) day.value = "Terça";
+    }
+
+    function renderCertCheckboxes(selected=[]){
+      const grid = document.getElementById("th_certsGrid");
+      const opts = loadCertOptions();
+      grid.innerHTML = "";
+      for (const name of opts){
+        const wrap = document.createElement("label");
+        wrap.className = "checkItem";
+        wrap.innerHTML = `<input type="checkbox" value="${escapeHtml(name)}"><span>${escapeHtml(name)}</span>`;
+        const cb = wrap.querySelector("input");
+        cb.checked = selected.includes(name);
+        grid.appendChild(wrap);
+      }
+    }
+    function selectedCerts(){
+      const out=[];
+      document.querySelectorAll('#th_certsGrid input[type="checkbox"]').forEach(cb => { if (cb.checked) out.push(cb.value); });
+      return out;
+    }
+
+    function showForm(on){
+      document.getElementById("th_list_block").style.display = on ? "none" : "block";
+      document.getElementById("th_form_block").style.display = on ? "block" : "none";
+    }
+
+    function openForm(id){
+      editingId = id || null;
+      document.getElementById("th_formMsg").textContent = "";
+      document.getElementById("th_certMsg").textContent = "";
+      document.getElementById("th_newCert").value = "";
+
+      showForm(true);
+      document.getElementById("th_title").textContent = editingId ? "Editar Terapeuta" : "Novo Terapeuta";
+
+      if (!editingId){
+        document.getElementById("th_fullName").value = "";
+        document.getElementById("th_profName").value = "";
+        document.getElementById("th_birth").value = "";
+        document.getElementById("th_cpf").value = "";
+        document.getElementById("th_email").value = "";
+        document.getElementById("th_unit").value = DEFAULT_UNITS[0] || "";
+        document.getElementById("th_address").value = "";
+        document.getElementById("th_contact").value = "";
+        document.getElementById("th_emergency").value = "";
+        document.getElementById("th_pixType").value = "CPF";
+        document.getElementById("th_pixKey").value = "";
+        document.getElementById("th_hasWeeklyOff").value = "SIM";
+        document.getElementById("th_dayOff").value = "Terça";
+        document.getElementById("th_startTime").value = "09:00";
+        document.getElementById("th_endTime").value = "17:00";
+        document.getElementById("th_startDate").value = "";
+        document.getElementById("th_blood").value = "";
+        setStatus("ACTIVE");
+        renderCertCheckboxes([]);
+        syncDayOffEnabled();
+        return;
+      }
+
+      const t = loadJSON(TH_KEY, []).find(x => x.id === editingId);
+      if (!t){ cancelForm(); return; }
+
+      document.getElementById("th_fullName").value = t.fullName || "";
+      document.getElementById("th_profName").value = t.profName || "";
+      document.getElementById("th_birth").value = t.birth || "";
+      document.getElementById("th_cpf").value = t.cpf || "";
+      document.getElementById("th_email").value = t.email || "";
+      document.getElementById("th_unit").value = t.unit || (DEFAULT_UNITS[0] || "");
+      document.getElementById("th_address").value = t.address || "";
+      document.getElementById("th_contact").value = t.contact || "";
+      document.getElementById("th_emergency").value = t.emergency || "";
+      document.getElementById("th_pixType").value = t.pixType || "CPF";
+      document.getElementById("th_pixKey").value = t.pixKey || "";
+      document.getElementById("th_hasWeeklyOff").value = t.hasWeeklyOff || "SIM";
+      document.getElementById("th_dayOff").value = t.dayOff || "";
+      document.getElementById("th_startTime").value = t.startTime || "09:00";
+      document.getElementById("th_endTime").value = t.endTime || "17:00";
+      document.getElementById("th_startDate").value = t.startDate || "";
+      document.getElementById("th_blood").value = t.blood || "";
+      setStatus(t.status || "ACTIVE");
+      renderCertCheckboxes(t.certs || []);
+      syncDayOffEnabled();
+    }
+
+    function cancelForm(){
+      editingId = null;
+      showForm(false);
+      document.getElementById("th_title").textContent = "Terapeutas";
+      renderList();
+    }
+
+    function validate(d){
+      const errs = [];
+      if (!d.fullName) errs.push("Nome Completo");
+      if (!d.profName) errs.push("Nome profissional");
+      if (!d.birth) errs.push("Data de Nascimento");
+      if (!d.email) errs.push("Email");
+      if (!d.unit) errs.push("Unidade");
+      if (!d.contact) errs.push("Contato");
+      if (!d.startTime) errs.push("Horário de Entrada");
+      if (!d.endTime) errs.push("Horário de Saída");
+      if (!d.startDate) errs.push("Data de Início");
+      if (onlyDigits(d.cpf).length !== 11) errs.push("CPF (11 dígitos)");
+      if (d.hasWeeklyOff === "SIM" && !d.dayOff) errs.push("Dia da Folga");
+      if (onlyDigits(d.contact).length < 8) errs.push("Contato (mín. 8 dígitos)");
+      return errs;
+    }
+
+    function saveTherapist(){
+      const msg = document.getElementById("th_formMsg");
+      msg.textContent = "";
+
+      const d = {
+        id: editingId || uid(),
+        fullName: document.getElementById("th_fullName").value.trim(),
+        profName: document.getElementById("th_profName").value.trim(),
+        birth: document.getElementById("th_birth").value,
+        cpf: onlyDigits(document.getElementById("th_cpf").value),
+        email: document.getElementById("th_email").value.trim(),
+        unit: document.getElementById("th_unit").value,
+        address: document.getElementById("th_address").value.trim(),
+        contact: onlyDigits(document.getElementById("th_contact").value),
+        emergency: onlyDigits(document.getElementById("th_emergency").value),
+        pixType: document.getElementById("th_pixType").value,
+        pixKey: document.getElementById("th_pixKey").value.trim(),
+        hasWeeklyOff: document.getElementById("th_hasWeeklyOff").value,
+        dayOff: document.getElementById("th_dayOff").value,
+        startTime: document.getElementById("th_startTime").value,
+        endTime: document.getElementById("th_endTime").value,
+        startDate: document.getElementById("th_startDate").value,
+        blood: document.getElementById("th_blood").value,
+        status: getStatus(),
+        certs: selectedCerts(),
+        updated_at: nowISO()
+      };
+
+      const errs = validate(d);
+      if (errs.length){
+        msg.textContent = "Preencha corretamente: " + errs.join(", ") + ".";
+        msg.style.color = "var(--bad)";
+        return;
+      }
+
+      const items = loadJSON(TH_KEY, []);
+      const idx = items.findIndex(x => x.id === d.id);
+      if (idx >= 0) items[idx] = { ...items[idx], ...d };
+      else { d.created_at = nowISO(); items.unshift(d); }
+      saveJSON(TH_KEY, items);
+
+      msg.textContent = "Salvo.";
+      msg.style.color = "var(--ok)";
+      cancelForm();
+    }
+
+    function removeTherapist(id){
+      if (!confirm("Excluir este terapeuta?")) return;
+      saveJSON(TH_KEY, loadJSON(TH_KEY, []).filter(x => x.id !== id));
+      renderList();
+    }
+
+    function renderList(){
+      const tbody = document.getElementById("th_rows");
+      const empty = document.getElementById("th_emptyMsg");
+      const filter = document.getElementById("th_filter_status").value;
+      const q = document.getElementById("th_q").value.trim().toLowerCase();
+
+      const items = loadJSON(TH_KEY, []).filter(t => {
+        const ok = (filter === "ALL") || (t.status === filter);
+        const hay = (t.fullName+" "+t.profName+" "+t.unit+" "+t.cpf+" "+t.email).toLowerCase();
+        const okQ = !q || hay.includes(q);
+        return ok && okQ;
+      });
+
+      tbody.innerHTML = "";
+      if (!items.length){ empty.textContent = "Nenhum terapeuta cadastrado."; return; }
+      empty.textContent = "";
+
+      for (const t of items){
+        const tr = document.createElement("tr");
+
+        const left = document.createElement("td");
+        left.innerHTML = `
+          <div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <div style="font-weight:750">${escapeHtml(t.profName || t.fullName)}</div>
+              <span class="badge">${escapeHtml(t.unit || "")}</span>
+              <span class="status ${t.status}">${t.status==="ACTIVE" ? "Ativo" : "Inativo"}</span>
+            </div>
+            <div class="muted" style="margin-top:8px">
+              Nome completo: <strong style="color:var(--text)">${escapeHtml(t.fullName || "")}</strong>
+            </div>
+            <div class="muted" style="margin-top:6px">
+              CPF: <strong style="color:var(--text)">${escapeHtml(t.cpf || "")}</strong>
+              • Email: <strong style="color:var(--text)">${escapeHtml(t.email || "")}</strong>
+            </div>
+            <div class="muted" style="margin-top:6px">
+              Entrada: <strong style="color:var(--text)">${escapeHtml(t.startTime || "")}</strong>
+              • Saída: <strong style="color:var(--text)">${escapeHtml(t.endTime || "")}</strong>
+              • Início: <strong style="color:var(--text)">${escapeHtml(t.startDate || "")}</strong>
+            </div>
+          </div>
+        `;
+        tr.appendChild(left);
+
+        const right = document.createElement("td");
+        right.className = "td-actions";
+        right.innerHTML = `
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn small" data-act="EDIT">Editar</button>
+            <button class="btn danger small" data-act="DELETE">Excluir</button>
+          </div>
+        `;
+        right.querySelector('[data-act="EDIT"]').addEventListener("click", () => openForm(t.id));
+        right.querySelector('[data-act="DELETE"]').addEventListener("click", () => removeTherapist(t.id));
+        tr.appendChild(right);
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    function addCertOption(){
+      const input = document.getElementById("th_newCert");
+      const msg = document.getElementById("th_certMsg");
+      const name = (input.value || "").trim();
+
+      msg.textContent = "";
+      if (!name){ msg.textContent = "Digite um nome."; msg.style.color = "var(--bad)"; return; }
+
+      const opts = loadCertOptions();
+      if (opts.some(x => x.toLowerCase() === name.toLowerCase())){
+        msg.textContent = "Já existe."; msg.style.color = "var(--bad)"; return;
+      }
+      opts.push(name);
+      saveCertOptions(opts);
+
+      input.value = "";
+      msg.textContent = "Adicionada."; msg.style.color = "var(--ok)";
+
+      const selected = selectedCerts();
+      renderCertCheckboxes(selected);
+    }
+
+    // wiring
+    document.getElementById("btnThNew").addEventListener("click", () => openForm(null));
+    document.getElementById("btnThCancel").addEventListener("click", cancelForm);
+    document.getElementById("btnThSave").addEventListener("click", saveTherapist);
+    document.getElementById("btnAddCert").addEventListener("click", addCertOption);
+
+    document.getElementById("th_filter_status").addEventListener("change", renderList);
+    document.getElementById("th_q").addEventListener("input", renderList);
+    docume
 

@@ -280,4 +280,298 @@
       for (let h=6; h<=23; h++){
         for (let m=0; m<60; m+=30){
           const t = String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
-          const o1 = document.createElement("option"); o1.value=t; o1.textC
+          const o1 = document.createElement("option"); o1.value=t; o1.textContent=t;
+          const o2 = document.createElement("option"); o2.value=t; o2.textContent=t;
+          start.appendChild(o1); end.appendChild(o2);
+        }
+      }
+      start.value = "09:00";
+      end.value = "17:00";
+    }
+
+    function getStatus(){
+      for (const r of document.querySelectorAll('input[name="th_status"]')) if (r.checked) return r.value;
+      return "ACTIVE";
+    }
+    function setStatus(v){
+      document.querySelectorAll('input[name="th_status"]').forEach(r => r.checked = (r.value===v));
+    }
+
+    function syncDayOffEnabled(){
+      const has = document.getElementById("th_hasWeeklyOff").value;
+      const day = document.getElementById("th_dayOff");
+      day.disabled = (has !== "SIM");
+      if (has !== "SIM") day.value = "";
+      if (has === "SIM" && !day.value) day.value = "Terça";
+    }
+
+    function renderCertCheckboxes(selected=[]){
+      const grid = document.getElementById("th_certsGrid");
+      const opts = loadCertOptions();
+      grid.innerHTML = "";
+      for (const name of opts){
+        const wrap = document.createElement("label");
+        wrap.className = "checkItem";
+        wrap.innerHTML = `<input type="checkbox" value="${escapeHtml(name)}"><span>${escapeHtml(name)}</span>`;
+        const cb = wrap.querySelector("input");
+        cb.checked = selected.includes(name);
+        grid.appendChild(wrap);
+      }
+    }
+
+    function selectedCerts(){
+      const out = [];
+      document.querySelectorAll('#th_certsGrid input[type="checkbox"]').forEach(cb => {
+        if (cb.checked) out.push(cb.value);
+      });
+      return out;
+    }
+
+    function showForm(on){
+      document.getElementById("th_list_block").style.display = on ? "none" : "block";
+      document.getElementById("th_form_block").style.display = on ? "block" : "none";
+    }
+
+    function openForm(id){
+      editingId = id || null;
+      document.getElementById("th_formMsg").textContent = "";
+      document.getElementById("th_certMsg").textContent = "";
+      document.getElementById("th_newCert").value = "";
+
+      showForm(true);
+      document.getElementById("th_title").textContent = editingId ? "Editar Terapeuta" : "Nova Terapeuta";
+
+      if (!editingId){
+        document.getElementById("th_fullName").value = "";
+        document.getElementById("th_profName").value = "";
+        document.getElementById("th_birth").value = "";
+        document.getElementById("th_cpf").value = "";
+        document.getElementById("th_email").value = "";
+        populateUnits();
+        document.getElementById("th_address").value = "";
+        document.getElementById("th_contact").value = "";
+        document.getElementById("th_emergency").value = "";
+        document.getElementById("th_pixType").value = "CPF";
+        document.getElementById("th_pixKey").value = "";
+        document.getElementById("th_hasWeeklyOff").value = "SIM";
+        document.getElementById("th_dayOff").value = "Terça";
+        document.getElementById("th_startTime").value = "09:00";
+        document.getElementById("th_endTime").value = "17:00";
+        document.getElementById("th_startDate").value = "";
+        document.getElementById("th_blood").value = "";
+        setStatus("ACTIVE");
+        renderCertCheckboxes([]);
+        syncDayOffEnabled();
+        return;
+      }
+
+      const t = loadJSON(TH_KEY, []).find(x => x.id === editingId);
+      if (!t){ cancelForm(); return; }
+
+      document.getElementById("th_fullName").value = t.fullName || "";
+      document.getElementById("th_profName").value = t.profName || "";
+      document.getElementById("th_birth").value = t.birth || "";
+      document.getElementById("th_cpf").value = t.cpf || "";
+      document.getElementById("th_email").value = t.email || "";
+      populateUnits(t.unit);
+
+      document.getElementById("th_address").value = t.address || "";
+      document.getElementById("th_contact").value = t.contact || "";
+      document.getElementById("th_emergency").value = t.emergency || "";
+      document.getElementById("th_pixType").value = t.pixType || "CPF";
+      document.getElementById("th_pixKey").value = t.pixKey || "";
+      document.getElementById("th_hasWeeklyOff").value = t.hasWeeklyOff || "SIM";
+      document.getElementById("th_dayOff").value = t.dayOff || "";
+      document.getElementById("th_startTime").value = t.startTime || "09:00";
+      document.getElementById("th_endTime").value = t.endTime || "17:00";
+      document.getElementById("th_startDate").value = t.startDate || "";
+      document.getElementById("th_blood").value = t.blood || "";
+      setStatus(t.status || "ACTIVE");
+      renderCertCheckboxes(t.certs || []);
+      syncDayOffEnabled();
+    }
+
+    function cancelForm(){
+      editingId = null;
+      showForm(false);
+      document.getElementById("th_title").textContent = "Terapeutas";
+      renderList();
+    }
+
+    function validate(d){
+      const errs = [];
+      if (!d.fullName) errs.push("Nome Completo");
+      if (!d.profName) errs.push("Nome profissional");
+      if (!d.birth) errs.push("Data de Nascimento");
+      if (!d.email) errs.push("Email");
+      if (!d.unit) errs.push("Unidade");
+      if (!d.contact) errs.push("Contato");
+      if (!d.startTime) errs.push("Horário de Entrada");
+      if (!d.endTime) errs.push("Horário de Saída");
+      if (!d.startDate) errs.push("Data de Início");
+      if (onlyDigits(d.cpf).length !== 11) errs.push("CPF (11 dígitos)");
+      if (d.hasWeeklyOff === "SIM" && !d.dayOff) errs.push("Dia da Folga");
+      if (onlyDigits(d.contact).length < 8) errs.push("Contato (mín. 8 dígitos)");
+      return errs;
+    }
+
+    function saveTherapist(){
+      const msg = document.getElementById("th_formMsg");
+      msg.textContent = "";
+
+      const d = {
+        id: editingId || uid(),
+        fullName: document.getElementById("th_fullName").value.trim(),
+        profName: document.getElementById("th_profName").value.trim(),
+        birth: document.getElementById("th_birth").value,
+        cpf: onlyDigits(document.getElementById("th_cpf").value),
+        email: document.getElementById("th_email").value.trim(),
+        unit: document.getElementById("th_unit").value,
+
+        address: document.getElementById("th_address").value.trim(),
+        contact: onlyDigits(document.getElementById("th_contact").value),
+        emergency: onlyDigits(document.getElementById("th_emergency").value),
+
+        pixType: document.getElementById("th_pixType").value,
+        pixKey: document.getElementById("th_pixKey").value.trim(),
+
+        hasWeeklyOff: document.getElementById("th_hasWeeklyOff").value,
+        dayOff: document.getElementById("th_dayOff").value,
+
+        startTime: document.getElementById("th_startTime").value,
+        endTime: document.getElementById("th_endTime").value,
+        startDate: document.getElementById("th_startDate").value,
+
+        blood: document.getElementById("th_blood").value,
+        status: getStatus(),
+        certs: selectedCerts(),
+
+        updated_at: nowISO()
+      };
+
+      const errs = validate(d);
+      if (errs.length){
+        msg.textContent = "Preencha corretamente: " + errs.join(", ") + ".";
+        msg.style.color = "var(--bad)";
+        return;
+      }
+
+      const items = loadJSON(TH_KEY, []);
+      const idx = items.findIndex(x => x.id === d.id);
+      if (idx >= 0) items[idx] = { ...items[idx], ...d };
+      else { d.created_at = nowISO(); items.unshift(d); }
+
+      saveJSON(TH_KEY, items);
+
+      msg.textContent = "Salvo.";
+      msg.style.color = "var(--ok)";
+      cancelForm();
+    }
+
+    function removeTherapist(id){
+      if (!confirm("Excluir esta terapeuta?")) return;
+      saveJSON(TH_KEY, loadJSON(TH_KEY, []).filter(x => x.id !== id));
+      renderList();
+    }
+
+    function renderList(){
+      const tbody = document.getElementById("th_rows");
+      const empty = document.getElementById("th_emptyMsg");
+      const filter = document.getElementById("th_filter_status").value;
+      const q = document.getElementById("th_q").value.trim().toLowerCase();
+
+      const items = loadJSON(TH_KEY, []).filter(t => {
+        const ok = (filter === "ALL") || (t.status === filter);
+        const hay = (t.fullName+" "+t.profName+" "+t.unit+" "+t.cpf+" "+t.email).toLowerCase();
+        const okQ = !q || hay.includes(q);
+        return ok && okQ;
+      });
+
+      tbody.innerHTML = "";
+      if (!items.length){ empty.textContent = "Nenhuma terapeuta cadastrada."; return; }
+      empty.textContent = "";
+
+      for (const t of items){
+        const tr = document.createElement("tr");
+
+        const left = document.createElement("td");
+        left.innerHTML = `
+          <div>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <div style="font-weight:750">${escapeHtml(t.profName || t.fullName)}</div>
+              <span class="badge">${escapeHtml(t.unit || "")}</span>
+              <span class="status ${t.status}">${t.status==="ACTIVE" ? "Ativo" : "Inativo"}</span>
+            </div>
+            <div class="muted" style="margin-top:8px">
+              Nome completo: <strong style="color:var(--text)">${escapeHtml(t.fullName || "")}</strong>
+            </div>
+            <div class="muted" style="margin-top:6px">
+              CPF: <strong style="color:var(--text)">${escapeHtml(t.cpf || "")}</strong>
+              • Email: <strong style="color:var(--text)">${escapeHtml(t.email || "")}</strong>
+            </div>
+            <div class="muted" style="margin-top:6px">
+              Entrada: <strong style="color:var(--text)">${escapeHtml(t.startTime || "")}</strong>
+              • Saída: <strong style="color:var(--text)">${escapeHtml(t.endTime || "")}</strong>
+              • Início: <strong style="color:var(--text)">${escapeHtml(t.startDate || "")}</strong>
+            </div>
+          </div>
+        `;
+        tr.appendChild(left);
+
+        const right = document.createElement("td");
+        right.className = "td-actions";
+        right.innerHTML = `
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn small" data-act="EDIT">Editar</button>
+            <button class="btn danger small" data-act="DELETE">Excluir</button>
+          </div>
+        `;
+        right.querySelector('[data-act="EDIT"]').addEventListener("click", () => openForm(t.id));
+        right.querySelector('[data-act="DELETE"]').addEventListener("click", () => removeTherapist(t.id));
+        tr.appendChild(right);
+
+        tbody.appendChild(tr);
+      }
+    }
+
+    function addCertOption(){
+      const input = document.getElementById("th_newCert");
+      const msg = document.getElementById("th_certMsg");
+      const name = (input.value || "").trim();
+
+      msg.textContent = "";
+      if (!name){ msg.textContent = "Digite um nome."; msg.style.color = "var(--bad)"; return; }
+
+      const opts = loadCertOptions();
+      if (opts.some(x => x.toLowerCase() === name.toLowerCase())){
+        msg.textContent = "Já existe."; msg.style.color = "var(--bad)"; return;
+      }
+
+      opts.push(name);
+      saveCertOptions(opts);
+
+      input.value = "";
+      msg.textContent = "Adicionada."; msg.style.color = "var(--ok)";
+
+      const selected = selectedCerts();
+      renderCertCheckboxes(selected);
+    }
+
+    // wiring
+    document.getElementById("btnThNew").addEventListener("click", () => openForm(null));
+    document.getElementById("btnThCancel").addEventListener("click", cancelForm);
+    document.getElementById("btnThSave").addEventListener("click", saveTherapist);
+    document.getElementById("btnAddCert").addEventListener("click", addCertOption);
+    document.getElementById("th_filter_status").addEventListener("change", renderList);
+    document.getElementById("th_q").addEventListener("input", renderList);
+    document.getElementById("th_hasWeeklyOff").addEventListener("change", syncDayOffEnabled);
+
+    // init
+    populateUnits();
+    populateTimes();
+    syncDayOffEnabled();
+    renderCertCheckboxes([]);
+    renderList();
+  </script>
+</body>
+</html>

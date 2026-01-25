@@ -1,1 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Portal MVP • Solicitações</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="top">
+        <div class="brand">
+          <div class="logo"></div>
+          <div>
+            <h1>Portal MVP</h1>
+            <div class="muted">Solicitações</div>
+          </div>
+        </div>
+
+        <div class="kpi">
+          <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
+          <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
+          <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <section class="card">
+        <div class="hd"><div class="muted">Navegação</div></div>
+        <div class="bd">
+          <div class="nav" id="nav"></div>
+        </div>
+        <div class="ft">
+          <button class="btn danger small" id="btnReset">Zerar dados</button>
+          <span class="note">Somente local</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd">
+          <h2 style="margin:0;font-size:18px">Lista de solicitações</h2>
+          <div class="muted">Ações: mudar status e excluir. Tudo fica salvo no navegador.</div>
+        </div>
+        <div class="bd">
+          <div class="row2">
+            <div>
+              <label for="filterStatus">Filtrar por status</label>
+              <select id="filterStatus">
+                <option value="ALL">Todos</option>
+                <option value="SUBMITTED">SUBMITTED</option>
+                <option value="IN_REVIEW">IN_REVIEW</option>
+                <option value="APPROVED">APPROVED</option>
+                <option value="REJECTED">REJECTED</option>
+                <option value="DONE">DONE</option>
+              </select>
+            </div>
+            <div>
+              <label for="q">Buscar</label>
+              <input id="q" placeholder="Buscar por título/descrição/solicitante..." />
+            </div>
+          </div>
+
+          <div class="sep"></div>
+          <a class="btn primary" href="./nova-solicitacao.html">Nova solicitação</a>
+
+          <div class="sep"></div>
+
+          <table>
+            <tbody id="rows"></tbody>
+          </table>
+          <div class="note" id="emptyMsg"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { renderNav, renderKpis, wireResetButton, loadJSON, saveJSON, REQ_KEY, fmt, escapeHtml, nowISO } from "./app.js";
+
+    renderNav("list");
+    renderKpis();
+    wireResetButton();
+
+    function changeStatus(id, newStatus){
+      const items = loadJSON(REQ_KEY, []);
+      const idx = items.findIndex(x => x.id === id);
+      if (idx < 0) return;
+      const before = items[idx].status;
+      items[idx].status = newStatus;
+      items[idx].updated_at = nowISO();
+      items[idx].audit = items[idx].audit || [];
+      items[idx].audit.push({ at: nowISO(), action: "status_change", details: { from: before, to: newStatus } });
+      saveJSON(REQ_KEY, items);
+      render();
+      renderKpis();
+    }
+
+    function removeRequest(id){
+      const items = loadJSON(REQ_KEY, []).filter(x => x.id !== id);
+      saveJSON(REQ_KEY, items);
+      render();
+      renderKpis();
+    }
+
+    function render(){
+      const tbody = document.getElementById("rows");
+      const empty = document.getElementById("emptyMsg");
+      const filterStatus = document.getElementById("filterStatus").value;
+      const q = document.getElementById("q").value.trim().toLowerCase();
+
+      const items = loadJSON(REQ_KEY, []).filter(item => {
+        const okStatus = (filterStatus === "ALL") || (item.status === filterStatus);
+        const hay = (item.title + " " + item.description + " " + item.requester + " " + item.type).toLowerCase();
+        const okQ = !q || hay.includes(q);
+        return okStatus && okQ;
+      });
+
+      tbody.innerHTML = "";
+      if (items.length === 0) { empty.textContent = "Nenhuma solicitação encontrada."; return; }
+      empty.textContent = "";
+
+      for (const item of items) {
+        const tr = document.createElement("tr");
+
+        const left = document.createElement("td");
+        left.innerHTML = `
+          <div>
+            <div style="font-weight:750">${escapeHtml(item.title)}</div>
+            <div class="muted" style="margin-top:4px">
+              <span class="pill" style="margin-right:8px">${escapeHtml(item.type)}</span>
+              <span class="status ${item.status}">${item.status}</span>
+            </div>
+            <div class="note" style="margin-top:8px">${escapeHtml(item.description)}</div>
+            <div class="muted" style="margin-top:8px">
+              Solicitante: <strong style="color:var(--text)">${escapeHtml(item.requester)}</strong>
+              ${item.approver ? ` • Aprovador: <strong style="color:var(--text)">${escapeHtml(item.approver)}</strong>` : ""}
+            </div>
+            <div class="muted" style="margin-top:6px">
+              Criado: ${fmt(item.created_at)} • Atualizado: ${fmt(item.updated_at)}
+            </div>
+          </div>
+        `;
+        tr.appendChild(left);
+
+        const right = document.createElement("td");
+        right.className = "td-actions";
+        right.innerHTML = `
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+            <button class="btn small" data-act="IN_REVIEW">Revisar</button>
+            <button class="btn small" data-act="APPROVED">Aprovar</button>
+            <button class="btn small" data-act="REJECTED">Rejeitar</button>
+            <button class="btn small" data-act="DONE">Concluir</button>
+            <button class="btn danger small" data-act="DELETE">Excluir</button>
+          </div>
+        `;
+        right.querySelectorAll("button").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const act = btn.getAttribute("data-act");
+            if (act === "DELETE") removeRequest(item.id);
+            else changeStatus(item.id, act);
+          });
+        });
+
+        tr.appendChild(right);
+        tbody.appendChild(tr);
+      }
+    }
+
+    document.getElementById("filterStatus").addEventListener("change", render);
+    document.getElementById("q").addEventListener("input", render);
+
+    render();
+  </script>
+</body>
+</html>
 

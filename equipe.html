@@ -7,95 +7,108 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header>
-    <div class="wrap">
-      <div class="top">
-        <div class="brand">
-          <div class="logo"></div>
-          <div><h1>Portal MVP</h1><div class="muted">Equipe</div></div>
-        </div>
-        <div class="kpi">
-          <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
-          <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
-          <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Portal MVP</h1>
+          <div class="muted">Equipe</div>
         </div>
       </div>
+      <div class="kpi">
+        <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
+        <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
+        <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+      </div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="wrap">
-    <div class="grid">
-      <section class="card">
-        <div class="hd"><div class="muted">Navegação</div></div>
-        <div class="bd"><div class="nav" id="nav"></div></div>
-        <div class="ft">
-          <button class="btn danger small" id="btnReset">Zerar dados</button>
-          <span class="note">Somente local</span>
+<main class="wrap">
+  <div class="grid">
+    <section class="card">
+      <div class="hd"><div class="muted">Navegação</div></div>
+      <div class="bd">
+        <div class="nav">
+          <a class="btn" href="./index.html">Início</a>
+          <a class="btn" href="./nova-solicitacao.html">Nova solicitação</a>
+          <a class="btn" href="./solicitacoes.html">Solicitações</a>
+          <a class="btn primary" href="./equipe.html">Equipe</a>
         </div>
-      </section>
+      </div>
+      <div class="ft">
+        <button class="btn danger small" id="btnReset">Zerar dados</button>
+        <span class="note">Somente local</span>
+      </div>
+    </section>
 
-      <section class="card">
-        <div class="hd">
-          <h2 style="margin:0;font-size:18px">Equipe</h2>
-          <div class="muted">Cadastro simples.</div>
-        </div>
+    <section class="card">
+      <div class="hd">
+        <h2 style="margin:0;font-size:18px">Equipe</h2>
+        <div class="muted">Cadastro simples.</div>
+      </div>
 
-        <div class="bd">
-          <div class="row2">
-            <div>
-              <label for="tm_name">Nome *</label>
-              <input id="tm_name" />
-            </div>
-            <div>
-              <label for="tm_role">Cargo</label>
-              <input id="tm_role" />
-            </div>
+      <div class="bd">
+        <div class="row2">
+          <div>
+            <label for="tm_name">Nome *</label>
+            <input id="tm_name" />
           </div>
-
-          <div class="sep"></div>
-
-          <button class="btn primary" id="btnAdd">Adicionar</button>
-          <div class="sep"></div>
-
-          <table><tbody id="tm_rows"></tbody></table>
-          <div class="note" id="tm_empty"></div>
+          <div>
+            <label for="tm_role">Cargo</label>
+            <input id="tm_role" />
+          </div>
         </div>
-      </section>
-    </div>
-  </main>
 
-  <script src="./app.js"></script>
-  <script>
-    const { renderNav, renderKpis, wireResetButton, loadJSON, saveJSON, TEAM_KEY, uid, nowISO, escapeHtml } = window.App;
-    renderNav("team"); renderKpis(); wireResetButton();
+        <div class="sep"></div>
 
-    function render(){
-      const items = loadJSON(TEAM_KEY, []);
-      const tbody = document.getElementById("tm_rows");
-      const empty = document.getElementById("tm_empty");
-      tbody.innerHTML = "";
-      if (!items.length){ empty.textContent = "Sem registros."; return; }
-      empty.textContent = "";
-      for (const p of items){
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td><div style="font-weight:750">${escapeHtml(p.name||"")}</div><div class="muted">${escapeHtml(p.role||"")}</div></td>`;
-        tbody.appendChild(tr);
-      }
+        <button class="btn primary" id="btnAdd">Adicionar</button>
+
+        <div class="sep"></div>
+
+        <table><tbody id="tm_rows"></tbody></table>
+        <div class="note" id="tm_empty"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="./app.js?v=1"></script>
+<script>
+  const { loadJSON, saveJSON, TEAM_KEY, uid, nowISO, escapeHtml } = window.App;
+
+  window.App.renderKpis();
+  window.App.wireResetButton();
+
+  function render(){
+    const items = loadJSON(TEAM_KEY, []);
+    const tbody = document.getElementById("tm_rows");
+    const empty = document.getElementById("tm_empty");
+    tbody.innerHTML = "";
+    if (!items.length){ empty.textContent = "Sem registros."; return; }
+    empty.textContent = "";
+    for (const p of items){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td><div style="font-weight:750">${escapeHtml(p.name||"")}</div><div class="muted">${escapeHtml(p.role||"")}</div></td>`;
+      tbody.appendChild(tr);
     }
+  }
 
-    document.getElementById("btnAdd").addEventListener("click", () => {
-      const name = document.getElementById("tm_name").value.trim();
-      const role = document.getElementById("tm_role").value.trim();
-      if (!name) return alert("Nome é obrigatório.");
-      const items = loadJSON(TEAM_KEY, []);
-      items.unshift({ id: uid(), name, role, created_at: nowISO() });
-      saveJSON(TEAM_KEY, items);
-      document.getElementById("tm_name").value = "";
-      document.getElementById("tm_role").value = "";
-      render();
-    });
-
+  document.getElementById("btnAdd").addEventListener("click", () => {
+    const name = document.getElementById("tm_name").value.trim();
+    const role = document.getElementById("tm_role").value.trim();
+    if (!name) return alert("Nome é obrigatório.");
+    const items = loadJSON(TEAM_KEY, []);
+    items.unshift({ id: uid(), name, role, created_at: nowISO() });
+    saveJSON(TEAM_KEY, items);
+    document.getElementById("tm_name").value = "";
+    document.getElementById("tm_role").value = "";
     render();
-  </script>
+  });
+
+  render();
+</script>
 </body>
 </html>

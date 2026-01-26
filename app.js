@@ -21,9 +21,9 @@ function saveJSON(key, value){
 }
 
 // ---------- Keys ----------
-const REQ_KEY = "portal_mvp_requests_v1";
+const REQ_KEY  = "portal_mvp_requests_v1";
 const TEAM_KEY = "portal_mvp_team_v1";
-const TH_KEY = "portal_mvp_therapists_v1";
+const TH_KEY   = "portal_mvp_therapists_v1";
 const CERT_KEY = "portal_mvp_cert_options_v1";
 const UNIT_KEY = "portal_mvp_units_v1";
 
@@ -64,6 +64,7 @@ function renderKpis(){
 function wireResetButton(){
   const btn = document.getElementById("btnReset");
   if (!btn) return;
+
   btn.addEventListener("click", () => {
     if (!confirm("Tem certeza que deseja apagar todos os dados locais?")) return;
     localStorage.removeItem(REQ_KEY);

@@ -1,7 +1,6 @@
 // ---------- Utils ----------
 function nowISO(){ return new Date().toISOString(); }
 function uid(){ return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16); }
-function fmt(iso){ try { return new Date(iso).toLocaleString("pt-BR"); } catch { return iso; } }
 function escapeHtml(s){
   return String(s).replace(/[&<>"']/g, (c) => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
@@ -76,9 +75,8 @@ function wireResetButton(){
   });
 }
 
-// Expor no window (para todas páginas usarem)
 window.App = {
-  nowISO, uid, fmt, escapeHtml, onlyDigits,
+  nowISO, uid, escapeHtml, onlyDigits,
   loadJSON, saveJSON,
   REQ_KEY, TEAM_KEY, TH_KEY, CERT_KEY, UNIT_KEY,
   renderNav, renderKpis, wireResetButton

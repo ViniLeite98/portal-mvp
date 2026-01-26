@@ -7,145 +7,140 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header>
-    <div class="wrap">
-      <div class="top">
-        <div class="brand">
-          <div class="logo"></div>
-          <div>
-            <h1>Portal MVP</h1>
-            <div class="muted">Nova solicitação</div>
-          </div>
-        </div>
-        <div class="kpi">
-          <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
-          <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
-          <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Portal MVP</h1>
+          <div class="muted">Nova solicitação</div>
         </div>
       </div>
+      <div class="kpi">
+        <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
+        <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
+        <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+      </div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="wrap">
-    <div class="grid">
-      <section class="card">
-        <div class="hd"><div class="muted">Navegação</div></div>
-        <div class="bd">
-          <div class="nav" id="nav"></div>
+<main class="wrap">
+  <div class="grid">
+    <section class="card">
+      <div class="hd"><div class="muted">Navegação</div></div>
+      <div class="bd">
+        <div class="nav">
+          <a class="btn" href="./index.html">Início</a>
+          <a class="btn primary" href="./nova-solicitacao.html">Nova solicitação</a>
+          <a class="btn" href="./solicitacoes.html">Solicitações</a>
+          <a class="btn" href="./equipe.html">Equipe</a>
         </div>
-        <div class="ft">
-          <button class="btn danger small" id="btnReset">Zerar dados</button>
-          <span class="note">Somente local</span>
-        </div>
-      </section>
+      </div>
+      <div class="ft">
+        <button class="btn danger small" id="btnReset">Zerar dados</button>
+        <span class="note">Somente local</span>
+      </div>
+    </section>
 
-      <section class="card">
-        <div class="hd">
-          <h2 style="margin:0;font-size:18px">Nova solicitação</h2>
-          <div class="muted">Preencha e salve. Depois você altera o status na lista.</div>
-        </div>
+    <section class="card">
+      <div class="hd">
+        <h2 style="margin:0;font-size:18px">Nova solicitação</h2>
+        <div class="muted">Preencha e salve. Depois altere o status na lista.</div>
+      </div>
 
-        <div class="bd">
-          <div class="row2">
-            <div>
-              <label for="rq_title">Título *</label>
-              <input id="rq_title" placeholder="Ex.: Pedido de material / Ajuste de agenda" />
-            </div>
-            <div>
-              <label for="rq_type">Tipo *</label>
-              <select id="rq_type">
-                <option value="RH">RH</option>
-                <option value="Financeiro">Financeiro</option>
-                <option value="Operação">Operação</option>
-                <option value="TI">TI</option>
-                <option value="Outros">Outros</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="sep"></div>
-
+      <div class="bd">
+        <div class="row2">
           <div>
-            <label for="rq_desc">Descrição</label>
-            <textarea id="rq_desc" rows="6" placeholder="Descreva o pedido, contexto e urgência..."></textarea>
+            <label for="rq_title">Título *</label>
+            <input id="rq_title" placeholder="Ex.: Pedido de material / Ajuste de agenda" />
           </div>
-
-          <div class="sep"></div>
-
-          <div class="row2">
-            <div>
-              <label for="rq_requester">Solicitante *</label>
-              <input id="rq_requester" placeholder="Ex.: Gabriel" />
-            </div>
-            <div>
-              <label for="rq_approver">Aprovador (texto)</label>
-              <input id="rq_approver" placeholder="Ex.: Coordenação / Gestão" />
-            </div>
-          </div>
-
-          <div class="sep"></div>
-
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn primary" id="btnSaveRq">Salvar solicitação</button>
-            <a class="btn" href="./solicitacoes.html">Ir para lista</a>
-            <span class="note" id="rq_msg"></span>
+          <div>
+            <label for="rq_type">Tipo *</label>
+            <select id="rq_type">
+              <option value="RH">RH</option>
+              <option value="Financeiro">Financeiro</option>
+              <option value="Operação">Operação</option>
+              <option value="TI">TI</option>
+              <option value="Outros">Outros</option>
+            </select>
           </div>
         </div>
-      </section>
-    </div>
-  </main>
 
-  <script src="./app.js"></script>
-  <script>
-    const { renderNav, renderKpis, wireResetButton, loadJSON, saveJSON, REQ_KEY, uid, nowISO } = window.App;
+        <div class="sep"></div>
 
-    renderNav("new");
-    renderKpis();
-    wireResetButton();
+        <div>
+          <label for="rq_desc">Descrição</label>
+          <textarea id="rq_desc" rows="6" placeholder="Descreva o pedido, contexto e urgência..."></textarea>
+        </div>
 
-    function saveRequest(){
-      const msg = document.getElementById("rq_msg");
-      msg.textContent = "";
-      msg.style.color = "var(--text)";
+        <div class="sep"></div>
 
-      const title = document.getElementById("rq_title").value.trim();
-      const type = document.getElementById("rq_type").value;
-      const desc = document.getElementById("rq_desc").value.trim();
-      const requester = document.getElementById("rq_requester").value.trim();
-      const approver = document.getElementById("rq_approver").value.trim();
+        <div class="row2">
+          <div>
+            <label for="rq_requester">Solicitante *</label>
+            <input id="rq_requester" placeholder="Ex.: Gabriel" />
+          </div>
+          <div>
+            <label for="rq_approver">Aprovador (texto)</label>
+            <input id="rq_approver" placeholder="Ex.: Coordenação / Gestão" />
+          </div>
+        </div>
 
-      const errs = [];
-      if (!title) errs.push("Título");
-      if (!type) errs.push("Tipo");
-      if (!requester) errs.push("Solicitante");
+        <div class="sep"></div>
 
-      if (errs.length){
-        msg.textContent = "Preencha: " + errs.join(", ") + ".";
-        msg.style.color = "var(--bad)";
-        return;
-      }
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn primary" id="btnSaveRq">Salvar solicitação</button>
+          <a class="btn" href="./solicitacoes.html">Ir para lista</a>
+          <span class="note" id="rq_msg"></span>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
 
-      const items = loadJSON(REQ_KEY, []);
-      items.unshift({
-        id: uid(),
-        title, type, desc, requester, approver,
-        status: "SUBMITTED",
-        created_at: nowISO(),
-        updated_at: nowISO()
-      });
-      saveJSON(REQ_KEY, items);
+<script src="./app.js?v=1"></script>
+<script>
+  const { loadJSON, saveJSON, REQ_KEY, uid, nowISO } = window.App;
 
-      document.getElementById("rq_title").value = "";
-      document.getElementById("rq_desc").value = "";
-      document.getElementById("rq_requester").value = "";
-      document.getElementById("rq_approver").value = "";
+  window.App.renderKpis();
+  window.App.wireResetButton();
 
-      msg.textContent = "Solicitação salva.";
-      msg.style.color = "var(--ok)";
-      renderKpis();
+  function saveRequest(){
+    const msg = document.getElementById("rq_msg");
+    msg.textContent = "";
+
+    const title = document.getElementById("rq_title").value.trim();
+    const type = document.getElementById("rq_type").value;
+    const desc = document.getElementById("rq_desc").value.trim();
+    const requester = document.getElementById("rq_requester").value.trim();
+    const approver = document.getElementById("rq_approver").value.trim();
+
+    if (!title || !type || !requester){
+      msg.textContent = "Preencha: Título, Tipo e Solicitante.";
+      return;
     }
 
-    document.getElementById("btnSaveRq").addEventListener("click", saveRequest);
-  </script>
+    const items = loadJSON(REQ_KEY, []);
+    items.unshift({
+      id: uid(),
+      title, type, desc, requester, approver,
+      status: "SUBMITTED",
+      created_at: nowISO(),
+      updated_at: nowISO()
+    });
+    saveJSON(REQ_KEY, items);
+
+    document.getElementById("rq_title").value = "";
+    document.getElementById("rq_desc").value = "";
+    document.getElementById("rq_requester").value = "";
+    document.getElementById("rq_approver").value = "";
+    msg.textContent = "Salvo.";
+    window.App.renderKpis();
+  }
+
+  document.getElementById("btnSaveRq").addEventListener("click", saveRequest);
+</script>
 </body>
 </html>

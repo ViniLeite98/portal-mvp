@@ -12,12 +12,8 @@
       <div class="top">
         <div class="brand">
           <div class="logo"></div>
-          <div>
-            <h1>Portal MVP</h1>
-            <div class="muted">Equipe</div>
-          </div>
+          <div><h1>Portal MVP</h1><div class="muted">Equipe</div></div>
         </div>
-
         <div class="kpi">
           <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
           <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
@@ -29,64 +25,39 @@
 
   <main class="wrap">
     <div class="grid">
-      <!-- NAV -->
       <section class="card">
         <div class="hd"><div class="muted">Navegação</div></div>
-        <div class="bd">
-          <div class="nav" id="nav"></div>
-        </div>
+        <div class="bd"><div class="nav" id="nav"></div></div>
         <div class="ft">
           <button class="btn danger small" id="btnReset">Zerar dados</button>
           <span class="note">Somente local</span>
         </div>
       </section>
 
-      <!-- CONTENT -->
       <section class="card">
         <div class="hd">
           <h2 style="margin:0;font-size:18px">Equipe</h2>
-          <div class="muted">Cadastro simples de pessoas (para crescer depois).</div>
+          <div class="muted">Cadastro simples.</div>
         </div>
 
         <div class="bd">
           <div class="row2">
             <div>
               <label for="tm_name">Nome *</label>
-              <input id="tm_name" placeholder="Ex.: Carla" />
+              <input id="tm_name" />
             </div>
             <div>
-              <label for="tm_role">Cargo / Função</label>
-              <input id="tm_role" placeholder="Ex.: Coordenação" />
-            </div>
-          </div>
-
-          <div class="row2" style="margin-top:10px">
-            <div>
-              <label for="tm_contact">Contato</label>
-              <input id="tm_contact" placeholder="Telefone / e-mail" />
-            </div>
-            <div>
-              <label for="tm_status">Status</label>
-              <select id="tm_status">
-                <option value="ACTIVE">Ativo</option>
-                <option value="INACTIVE">Inativo</option>
-              </select>
+              <label for="tm_role">Cargo</label>
+              <input id="tm_role" />
             </div>
           </div>
 
           <div class="sep"></div>
 
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn primary" id="btnAdd">Adicionar</button>
-            <span class="note" id="tm_msg"></span>
-          </div>
-
+          <button class="btn primary" id="btnAdd">Adicionar</button>
           <div class="sep"></div>
 
-          <table>
-            <tbody id="tm_rows"></tbody>
-          </table>
-
+          <table><tbody id="tm_rows"></tbody></table>
           <div class="note" id="tm_empty"></div>
         </div>
       </section>
@@ -96,90 +67,35 @@
   <script src="./app.js"></script>
   <script>
     const { renderNav, renderKpis, wireResetButton, loadJSON, saveJSON, TEAM_KEY, uid, nowISO, escapeHtml } = window.App;
+    renderNav("team"); renderKpis(); wireResetButton();
 
-    renderNav("team");
-    renderKpis();
-    wireResetButton();
-
-    function add(){
-      const msg = document.getElementById("tm_msg");
-      msg.textContent = "";
-
-      const name = document.getElementById("tm_name").value.trim();
-      const role = document.getElementById("tm_role").value.trim();
-      const contact = document.getElementById("tm_contact").value.trim();
-      const status = document.getElementById("tm_status").value;
-
-      if (!name){
-        msg.textContent = "Nome é obrigatório.";
-        msg.style.color = "var(--bad)";
-        return;
-      }
-
+    function render(){
       const items = loadJSON(TEAM_KEY, []);
-      items.unshift({ id: uid(), name, role, contact, status, created_at: nowISO(), updated_at: nowISO() });
-      saveJSON(TEAM_KEY, items);
-
-      document.getElementById("tm_name").value = "";
-      document.getElementById("tm_role").value = "";
-      document.getElementById("tm_contact").value = "";
-      document.getElementById("tm_status").value = "ACTIVE";
-
-      msg.textContent = "Adicionado.";
-      msg.style.color = "var(--ok)";
-      renderList();
-    }
-
-    function removeItem(id){
-      if (!confirm("Excluir pessoa da equipe?")) return;
-      saveJSON(TEAM_KEY, loadJSON(TEAM_KEY, []).filter(x => x.id !== id));
-      renderList();
-    }
-
-    function renderList(){
       const tbody = document.getElementById("tm_rows");
       const empty = document.getElementById("tm_empty");
-      const items = loadJSON(TEAM_KEY, []);
-
       tbody.innerHTML = "";
-      if (!items.length){
-        empty.textContent = "Nenhum registro.";
-        return;
-      }
+      if (!items.length){ empty.textContent = "Sem registros."; return; }
       empty.textContent = "";
-
       for (const p of items){
         const tr = document.createElement("tr");
-
-        const left = document.createElement("td");
-        left.innerHTML = `
-          <div>
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-              <div style="font-weight:750">${escapeHtml(p.name||"")}</div>
-              <span class="badge">${escapeHtml(p.role||"")}</span>
-              <span class="status ${p.status}">${p.status==="ACTIVE" ? "Ativo" : "Inativo"}</span>
-            </div>
-            <div class="muted" style="margin-top:6px">${escapeHtml(p.contact||"")}</div>
-          </div>
-        `;
-        tr.appendChild(left);
-
-        const right = document.createElement("td");
-        right.className = "td-actions";
-        right.innerHTML = `
-          <div style="display:flex;gap:8px;justify-content:flex-end">
-            <button class="btn danger small">Excluir</button>
-          </div>
-        `;
-        right.querySelector("button").addEventListener("click", () => removeItem(p.id));
-        tr.appendChild(right);
-
+        tr.innerHTML = `<td><div style="font-weight:750">${escapeHtml(p.name||"")}</div><div class="muted">${escapeHtml(p.role||"")}</div></td>`;
         tbody.appendChild(tr);
       }
     }
 
-    document.getElementById("btnAdd").addEventListener("click", add);
-    renderList();
+    document.getElementById("btnAdd").addEventListener("click", () => {
+      const name = document.getElementById("tm_name").value.trim();
+      const role = document.getElementById("tm_role").value.trim();
+      if (!name) return alert("Nome é obrigatório.");
+      const items = loadJSON(TEAM_KEY, []);
+      items.unshift({ id: uid(), name, role, created_at: nowISO() });
+      saveJSON(TEAM_KEY, items);
+      document.getElementById("tm_name").value = "";
+      document.getElementById("tm_role").value = "";
+      render();
+    });
+
+    render();
   </script>
 </body>
 </html>

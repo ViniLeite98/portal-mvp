@@ -29,6 +29,7 @@
 
   <main class="wrap">
     <div class="grid">
+      <!-- NAV -->
       <section class="card">
         <div class="hd"><div class="muted">Navegação</div></div>
         <div class="bd">
@@ -40,108 +41,117 @@
         </div>
       </section>
 
+      <!-- CONTENT -->
       <section class="card">
         <div class="hd">
-          <h2 style="margin:0;font-size:18px">Lista de solicitações</h2>
-          <div class="muted">Ações: mudar status e excluir. Tudo fica salvo no navegador.</div>
+          <h2 style="margin:0;font-size:18px">Solicitações</h2>
+          <div class="muted">Filtre e altere o status. Tudo fica salvo localmente.</div>
         </div>
+
         <div class="bd">
           <div class="row2">
             <div>
-              <label for="filterStatus">Filtrar por status</label>
-              <select id="filterStatus">
+              <label for="rq_filter">Filtrar por status</label>
+              <select id="rq_filter">
                 <option value="ALL">Todos</option>
-                <option value="SUBMITTED">SUBMITTED</option>
-                <option value="IN_REVIEW">IN_REVIEW</option>
-                <option value="APPROVED">APPROVED</option>
-                <option value="REJECTED">REJECTED</option>
-                <option value="DONE">DONE</option>
+                <option value="SUBMITTED">Abertas</option>
+                <option value="IN_REVIEW">Em análise</option>
+                <option value="APPROVED">Aprovadas</option>
+                <option value="REJECTED">Reprovadas</option>
               </select>
             </div>
             <div>
-              <label for="q">Buscar</label>
-              <input id="q" placeholder="Buscar por título/descrição/solicitante..." />
+              <label for="rq_q">Buscar</label>
+              <input id="rq_q" placeholder="Buscar por título, tipo, solicitante..." />
             </div>
           </div>
 
           <div class="sep"></div>
-          <a class="btn primary" href="./nova-solicitacao.html">Nova solicitação</a>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn primary" href="./nova-solicitacao.html">Nova solicitação</a>
+            <span class="note" id="rq_info"></span>
+          </div>
 
           <div class="sep"></div>
 
           <table>
-            <tbody id="rows"></tbody>
+            <tbody id="rq_rows"></tbody>
           </table>
-          <div class="note" id="emptyMsg"></div>
+
+          <div class="note" id="rq_empty"></div>
         </div>
       </section>
     </div>
   </main>
 
-  <script type="module">
-    import { renderNav, renderKpis, wireResetButton, loadJSON, saveJSON, REQ_KEY, fmt, escapeHtml, nowISO } from "./app.js";
+  <script src="./app.js"></script>
+  <script>
+    const { renderNav, renderKpis, wireResetButton, loadJSON, saveJSON, REQ_KEY, escapeHtml, fmt, nowISO } = window.App;
 
     renderNav("list");
     renderKpis();
     wireResetButton();
 
-    function changeStatus(id, newStatus){
+    function setStatus(id, status){
       const items = loadJSON(REQ_KEY, []);
       const idx = items.findIndex(x => x.id === id);
       if (idx < 0) return;
-      const before = items[idx].status;
-      items[idx].status = newStatus;
+      items[idx].status = status;
       items[idx].updated_at = nowISO();
-      items[idx].audit = items[idx].audit || [];
-      items[idx].audit.push({ at: nowISO(), action: "status_change", details: { from: before, to: newStatus } });
       saveJSON(REQ_KEY, items);
-      render();
       renderKpis();
+      renderList();
     }
 
-    function removeRequest(id){
+    function removeReq(id){
+      if (!confirm("Excluir solicitação?")) return;
       const items = loadJSON(REQ_KEY, []).filter(x => x.id !== id);
       saveJSON(REQ_KEY, items);
-      render();
       renderKpis();
+      renderList();
     }
 
-    function render(){
-      const tbody = document.getElementById("rows");
-      const empty = document.getElementById("emptyMsg");
-      const filterStatus = document.getElementById("filterStatus").value;
-      const q = document.getElementById("q").value.trim().toLowerCase();
+    function renderList(){
+      const tbody = document.getElementById("rq_rows");
+      const empty = document.getElementById("rq_empty");
+      const info = document.getElementById("rq_info");
 
-      const items = loadJSON(REQ_KEY, []).filter(item => {
-        const okStatus = (filterStatus === "ALL") || (item.status === filterStatus);
-        const hay = (item.title + " " + item.description + " " + item.requester + " " + item.type).toLowerCase();
+      const filter = document.getElementById("rq_filter").value;
+      const q = document.getElementById("rq_q").value.trim().toLowerCase();
+
+      const items = loadJSON(REQ_KEY, []).filter(r => {
+        const ok = (filter === "ALL") || (r.status === filter);
+        const hay = (r.title+" "+r.type+" "+r.requester+" "+(r.approver||"")).toLowerCase();
         const okQ = !q || hay.includes(q);
-        return okStatus && okQ;
+        return ok && okQ;
       });
 
+      info.textContent = items.length ? (items.length + " item(ns) filtrado(s).") : "";
+
       tbody.innerHTML = "";
-      if (items.length === 0) { empty.textContent = "Nenhuma solicitação encontrada."; return; }
+      if (!items.length){
+        empty.textContent = "Nenhuma solicitação encontrada.";
+        return;
+      }
       empty.textContent = "";
 
-      for (const item of items) {
+      for (const r of items){
         const tr = document.createElement("tr");
 
         const left = document.createElement("td");
         left.innerHTML = `
           <div>
-            <div style="font-weight:750">${escapeHtml(item.title)}</div>
-            <div class="muted" style="margin-top:4px">
-              <span class="pill" style="margin-right:8px">${escapeHtml(item.type)}</span>
-              <span class="status ${item.status}">${item.status}</span>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <div style="font-weight:750">${escapeHtml(r.title || "")}</div>
+              <span class="badge">${escapeHtml(r.type || "")}</span>
+              <span class="badge">${escapeHtml(r.requester || "")}</span>
             </div>
-            <div class="note" style="margin-top:8px">${escapeHtml(item.description)}</div>
             <div class="muted" style="margin-top:8px">
-              Solicitante: <strong style="color:var(--text)">${escapeHtml(item.requester)}</strong>
-              ${item.approver ? ` • Aprovador: <strong style="color:var(--text)">${escapeHtml(item.approver)}</strong>` : ""}
+              Criado em: <strong style="color:var(--text)">${escapeHtml((r.created_at||"").slice(0,10))}</strong>
+              • Atualizado: <strong style="color:var(--text)">${escapeHtml((r.updated_at||"").slice(0,10))}</strong>
             </div>
-            <div class="muted" style="margin-top:6px">
-              Criado: ${fmt(item.created_at)} • Atualizado: ${fmt(item.updated_at)}
-            </div>
+            ${r.desc ? `<div class="muted" style="margin-top:6px">${escapeHtml(r.desc).slice(0,180)}${r.desc.length>180?"...":""}</div>` : ""}
           </div>
         `;
         tr.appendChild(left);
@@ -149,32 +159,29 @@
         const right = document.createElement("td");
         right.className = "td-actions";
         right.innerHTML = `
-          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn small" data-act="IN_REVIEW">Revisar</button>
-            <button class="btn small" data-act="APPROVED">Aprovar</button>
-            <button class="btn small" data-act="REJECTED">Rejeitar</button>
-            <button class="btn small" data-act="DONE">Concluir</button>
-            <button class="btn danger small" data-act="DELETE">Excluir</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center">
+            <select class="small" data-act="STATUS">
+              <option value="SUBMITTED">Aberta</option>
+              <option value="IN_REVIEW">Em análise</option>
+              <option value="APPROVED">Aprovada</option>
+              <option value="REJECTED">Reprovada</option>
+            </select>
+            <button class="btn danger small" data-act="DEL">Excluir</button>
           </div>
         `;
-        right.querySelectorAll("button").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const act = btn.getAttribute("data-act");
-            if (act === "DELETE") removeRequest(item.id);
-            else changeStatus(item.id, act);
-          });
-        });
+        const sel = right.querySelector('[data-act="STATUS"]');
+        sel.value = r.status || "SUBMITTED";
+        sel.addEventListener("change", () => setStatus(r.id, sel.value));
+        right.querySelector('[data-act="DEL"]').addEventListener("click", () => removeReq(r.id));
 
         tr.appendChild(right);
         tbody.appendChild(tr);
       }
     }
 
-    document.getElementById("filterStatus").addEventListener("change", render);
-    document.getElementById("q").addEventListener("input", render);
-
-    render();
+    document.getElementById("rq_filter").addEventListener("change", renderList);
+    document.getElementById("rq_q").addEventListener("input", renderList);
+    renderList();
   </script>
 </body>
 </html>
-

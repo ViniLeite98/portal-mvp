@@ -42,7 +42,7 @@
         </div>
       </div>
       <div class="ft">
-        <button class="btn danger small" id="btnReset">Zerar dados</button>
+        <button class="btn danger small" id="btnReset" type="button">Zerar dados</button>
         <span class="note">Somente local</span>
       </div>
     </section>
@@ -55,6 +55,8 @@
       </div>
 
       <div class="bd">
+        <div id="jsWarn" class="note" style="display:none;color:var(--bad);margin-bottom:12px"></div>
+
         <!-- LISTA -->
         <div id="viewList">
           <div class="row2">
@@ -74,9 +76,7 @@
 
           <div class="sep"></div>
 
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn primary" id="btnNew">Novo terapeuta</button>
-          </div>
+          <button class="btn primary" id="btnNew" type="button">Novo terapeuta</button>
 
           <div class="sep"></div>
 
@@ -125,6 +125,7 @@
             <div>
               <label for="unit">Unidade *</label>
               <select id="unit"></select>
+
               <div class="muted" style="margin-top:8px">Adicionar unidade (opcional)</div>
               <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
                 <input id="unitNew" placeholder="Ex.: Unidade 3" />
@@ -281,16 +282,41 @@
   </div>
 </main>
 
-<script src="./app.js?v=2"></script>
-<script>
-  const {
-    loadJSON, saveJSON, uid, nowISO, escapeHtml, onlyDigits,
-    TH_KEY, CERT_KEY, UNIT_KEY,
-    renderKpis, wireResetButton
-  } = window.App;
+<!-- IMPORTANTÍSSIMO: app.js precisa existir com esse nome exato (minúsculo) -->
+<script src="./app.js?v=3"></script>
 
-  renderKpis();
-  wireResetButton();
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const warn = (text) => {
+    const el = document.getElementById("jsWarn");
+    el.style.display = "block";
+    el.textContent = text;
+  };
+
+  if (!window.App) {
+    warn("Erro: app.js não carregou. Confira se o arquivo se chama 'app.js' (minúsculo) e se o caminho está './app.js'.");
+    console.error("window.App indefinido -> app.js não carregou.");
+    return;
+  }
+
+  const A = window.App;
+  const $ = (id) => document.getElementById(id);
+
+  // Guardas (se tiver, ótimo; se não tiver, não quebra)
+  if (A.renderKpis) A.renderKpis();
+  if (A.wireResetButton) A.wireResetButton();
+
+  // Chaves
+  const TH_KEY   = A.TH_KEY;
+  const CERT_KEY = A.CERT_KEY;
+  const UNIT_KEY = A.UNIT_KEY;
+
+  const loadJSON = A.loadJSON;
+  const saveJSON = A.saveJSON;
+  const uid = A.uid;
+  const nowISO = A.nowISO;
+  const escapeHtml = A.escapeHtml;
+  const onlyDigits = A.onlyDigits;
 
   // Defaults
   function ensureDefaults(){
@@ -311,8 +337,6 @@
   }
   ensureDefaults();
 
-  const $ = (id) => document.getElementById(id);
-
   function showList(){
     $("viewForm").style.display = "none";
     $("viewList").style.display = "block";
@@ -328,62 +352,30 @@
     const el = document.querySelector('input[name="status"]:checked');
     return el ? el.value : "Ativo";
   }
-
   function setStatusValue(v){
-    const nodes = document.querySelectorAll('input[name="status"]');
-    nodes.forEach(n => n.checked = (n.value === v));
+    document.querySelectorAll('input[name="status"]').forEach(n => n.checked = (n.value === v));
   }
 
   function renderUnits(){
     const units = loadJSON(UNIT_KEY, []);
-    const sel = $("unit");
-    sel.innerHTML = units.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join("");
+    $("unit").innerHTML = units.map(u => `<option value="${escapeHtml(u)}">${escapeHtml(u)}</option>`).join("");
   }
 
   function renderCerts(){
     const certs = loadJSON(CERT_KEY, []);
-    const box = $("certBox");
-    box.innerHTML = certs.map(c => `
+    $("certBox").innerHTML = certs.map(c => `
       <label style="display:flex;gap:8px;align-items:center;color:var(--muted);border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);padding:8px 10px;border-radius:14px;">
         <input type="checkbox" value="${escapeHtml(c)}"> ${escapeHtml(c)}
       </label>
     `).join("");
   }
 
-  function renderCertManage(){
-    const certs = loadJSON(CERT_KEY, []);
-    const wrap = $("certManageList");
-    if (!certs.length){
-      wrap.innerHTML = `<div class="note">Sem certificações.</div>`;
-      return;
-    }
-    wrap.innerHTML = certs.map(c => `
-      <button class="btn small" type="button" data-cert="${escapeHtml(c)}" style="margin:6px 6px 0 0">
-        Remover: ${escapeHtml(c)}
-      </button>
-    `).join("");
-
-    wrap.querySelectorAll("button[data-cert]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const cert = btn.getAttribute("data-cert");
-        const next = loadJSON(CERT_KEY, []).filter(x => x !== cert);
-        saveJSON(CERT_KEY, next);
-        renderCerts();
-        renderCertManage();
-      });
-    });
-  }
-
   function selectedCerts(){
-    return Array.from(document.querySelectorAll("#certBox input[type=checkbox]:checked"))
-      .map(x => x.value);
+    return Array.from(document.querySelectorAll("#certBox input[type=checkbox]:checked")).map(x => x.value);
   }
-
   function applySelectedCerts(arr){
     const set = new Set(arr || []);
-    document.querySelectorAll("#certBox input[type=checkbox]").forEach(cb => {
-      cb.checked = set.has(cb.value);
-    });
+    document.querySelectorAll("#certBox input[type=checkbox]").forEach(cb => cb.checked = set.has(cb.value));
   }
 
   function clearForm(){
@@ -408,39 +400,8 @@
     applySelectedCerts([]);
   }
 
-  function loadForm(id){
-    const items = loadJSON(TH_KEY, []);
-    const t = items.find(x => x.id === id);
-    if (!t) return;
-
-    $("th_id").value = t.id;
-    $("fullName").value = t.fullName || "";
-    $("profName").value = t.profName || "";
-    $("birthDate").value = t.birthDate || "";
-    $("cpf").value = t.cpf || "";
-    $("email").value = t.email || "";
-    $("address").value = t.address || "";
-    $("contact").value = t.contact || "";
-    $("emergency").value = t.emergency || "";
-    $("pixType").value = t.pixType || "CPF";
-    $("pixKey").value = t.pixKey || "";
-    $("hasOff").value = t.hasOff ? "Sim" : "Não";
-    $("offDay").value = t.offDay || "";
-    $("startTime").value = t.startTime || "";
-    $("endTime").value = t.endTime || "";
-    $("startDate").value = t.startDate || "";
-    $("bloodType").value = t.bloodType || "";
-    setStatusValue(t.status || "Ativo");
-
-    renderUnits();
-    $("unit").value = t.unit || "";
-    renderCerts();
-    applySelectedCerts(t.certs || []);
-  }
-
   function validateForm(){
     const errs = [];
-
     const fullName = $("fullName").value.trim();
     const profName = $("profName").value.trim();
     const birthDate = $("birthDate").value;
@@ -513,10 +474,34 @@
     else items.unshift(record);
 
     saveJSON(TH_KEY, items);
-
-    msg.textContent = "Salvo.";
-    msg.style.color = "var(--text)";
     showList();
+  }
+
+  function loadForm(id){
+    const items = loadJSON(TH_KEY, []);
+    const t = items.find(x => x.id === id);
+    if (!t) return;
+
+    $("th_id").value = t.id;
+    $("fullName").value = t.fullName || "";
+    $("profName").value = t.profName || "";
+    $("birthDate").value = t.birthDate || "";
+    $("cpf").value = t.cpf || "";
+    $("email").value = t.email || "";
+    $("address").value = t.address || "";
+    $("contact").value = t.contact || "";
+    $("emergency").value = t.emergency || "";
+    $("pixType").value = t.pixType || "CPF";
+    $("pixKey").value = t.pixKey || "";
+    $("hasOff").value = t.hasOff ? "Sim" : "Não";
+    $("offDay").value = t.offDay || "";
+    $("startTime").value = t.startTime || "";
+    $("endTime").value = t.endTime || "";
+    $("startDate").value = t.startDate || "";
+    $("bloodType").value = t.bloodType || "";
+    setStatusValue(t.status || "Ativo");
+    $("unit").value = t.unit || "";
+    applySelectedCerts(t.certs || []);
   }
 
   function deleteTherapist(id){
@@ -562,10 +547,10 @@
           <button class="btn danger small" type="button" data-del="${t.id}">Excluir</button>
         </td>
       `;
+
       tr.querySelector("[data-edit]").addEventListener("click", () => {
         $("formTitle").textContent = "Editar Terapeuta";
-        renderUnits();
-        renderCerts();
+        renderUnits(); renderCerts();
         loadForm(t.id);
         showForm();
       });
@@ -574,7 +559,7 @@
     }
   }
 
-  // Events
+  // Wire eventos
   $("btnNew").addEventListener("click", () => {
     $("formTitle").textContent = "Nova Terapeuta";
     renderUnits();
@@ -616,10 +601,35 @@
     renderCertManage();
   });
 
+  function renderCertManage(){
+    const certs = loadJSON(CERT_KEY, []);
+    const wrap = $("certManageList");
+    if (!certs.length){
+      wrap.innerHTML = `<div class="note">Sem certificações.</div>`;
+      return;
+    }
+    wrap.innerHTML = certs.map(c => `
+      <button class="btn small" type="button" data-cert="${escapeHtml(c)}" style="margin:6px 6px 0 0">
+        Remover: ${escapeHtml(c)}
+      </button>
+    `).join("");
+
+    wrap.querySelectorAll("button[data-cert]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const cert = btn.getAttribute("data-cert");
+        const next = loadJSON(CERT_KEY, []).filter(x => x !== cert);
+        saveJSON(CERT_KEY, next);
+        renderCerts();
+        renderCertManage();
+      });
+    });
+  }
+
   // Init
   renderUnits();
   renderCerts();
   renderList();
+});
 </script>
 </body>
 </html>

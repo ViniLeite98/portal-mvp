@@ -7,127 +7,136 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <header>
-    <div class="wrap">
-      <div class="top">
-        <div class="brand">
-          <div class="logo"></div>
-          <div>
-            <h1>Portal MVP</h1>
-            <div class="muted">Solicitações</div>
-          </div>
-        </div>
-        <div class="kpi">
-          <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
-          <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
-          <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+<header>
+  <div class="wrap">
+    <div class="top">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>
+          <h1>Portal MVP</h1>
+          <div class="muted">Solicitações</div>
         </div>
       </div>
+      <div class="kpi">
+        <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
+        <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
+        <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+      </div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <main class="wrap">
-    <div class="grid">
-      <section class="card">
-        <div class="hd"><div class="muted">Navegação</div></div>
-        <div class="bd"><div class="nav" id="nav"></div></div>
-        <div class="ft">
-          <button class="btn danger small" id="btnReset">Zerar dados</button>
-          <span class="note">Somente local</span>
+<main class="wrap">
+  <div class="grid">
+    <section class="card">
+      <div class="hd"><div class="muted">Navegação</div></div>
+      <div class="bd">
+        <div class="nav">
+          <a class="btn" href="./index.html">Início</a>
+          <a class="btn" href="./nova-solicitacao.html">Nova solicitação</a>
+          <a class="btn primary" href="./solicitacoes.html">Solicitações</a>
+          <a class="btn" href="./equipe.html">Equipe</a>
         </div>
-      </section>
+      </div>
+      <div class="ft">
+        <button class="btn danger small" id="btnReset">Zerar dados</button>
+        <span class="note">Somente local</span>
+      </div>
+    </section>
 
-      <section class="card">
-        <div class="hd">
-          <h2 style="margin:0;font-size:18px">Solicitações</h2>
-          <div class="muted">Filtre e altere o status.</div>
-        </div>
+    <section class="card">
+      <div class="hd">
+        <h2 style="margin:0;font-size:18px">Solicitações</h2>
+        <div class="muted">Filtre e altere o status.</div>
+      </div>
 
-        <div class="bd">
-          <div class="row2">
-            <div>
-              <label for="rq_filter">Filtrar por status</label>
-              <select id="rq_filter">
-                <option value="ALL">Todos</option>
-                <option value="SUBMITTED">Abertas</option>
-                <option value="IN_REVIEW">Em análise</option>
-                <option value="APPROVED">Aprovadas</option>
-                <option value="REJECTED">Reprovadas</option>
-              </select>
-            </div>
-            <div>
-              <label for="rq_q">Buscar</label>
-              <input id="rq_q" placeholder="Buscar por título, tipo, solicitante..." />
-            </div>
-          </div>
-
-          <div class="sep"></div>
-
-          <table><tbody id="rq_rows"></tbody></table>
-          <div class="note" id="rq_empty"></div>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <script src="./app.js"></script>
-  <script>
-    const { renderNav, renderKpis, wireResetButton, loadJSON, saveJSON, REQ_KEY, escapeHtml, nowISO } = window.App;
-    renderNav("list"); renderKpis(); wireResetButton();
-
-    function setStatus(id, status){
-      const items = loadJSON(REQ_KEY, []);
-      const idx = items.findIndex(x => x.id === id);
-      if (idx < 0) return;
-      items[idx].status = status;
-      items[idx].updated_at = nowISO();
-      saveJSON(REQ_KEY, items);
-      renderKpis();
-      renderList();
-    }
-
-    function renderList(){
-      const tbody = document.getElementById("rq_rows");
-      const empty = document.getElementById("rq_empty");
-      const filter = document.getElementById("rq_filter").value;
-      const q = document.getElementById("rq_q").value.trim().toLowerCase();
-
-      const items = loadJSON(REQ_KEY, []).filter(r => {
-        const ok = (filter === "ALL") || (r.status === filter);
-        const hay = (r.title+" "+r.type+" "+r.requester+" "+(r.approver||"")).toLowerCase();
-        return ok && (!q || hay.includes(q));
-      });
-
-      tbody.innerHTML = "";
-      if (!items.length){ empty.textContent = "Nenhuma solicitação."; return; }
-      empty.textContent = "";
-
-      for (const r of items){
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>
-            <div style="font-weight:750">${escapeHtml(r.title||"")}</div>
-            <div class="muted" style="margin-top:6px">${escapeHtml(r.type||"")} • ${escapeHtml(r.requester||"")}</div>
-          </td>
-          <td class="td-actions">
-            <select class="small" data-id="${r.id}">
-              <option value="SUBMITTED">Aberta</option>
+      <div class="bd">
+        <div class="row2">
+          <div>
+            <label for="rq_filter">Status</label>
+            <select id="rq_filter">
+              <option value="ALL">Todos</option>
+              <option value="SUBMITTED">Abertas</option>
               <option value="IN_REVIEW">Em análise</option>
-              <option value="APPROVED">Aprovada</option>
-              <option value="REJECTED">Reprovada</option>
+              <option value="APPROVED">Aprovadas</option>
+              <option value="REJECTED">Reprovadas</option>
             </select>
-          </td>
-        `;
-        const sel = tr.querySelector("select");
-        sel.value = r.status || "SUBMITTED";
-        sel.addEventListener("change", () => setStatus(r.id, sel.value));
-        tbody.appendChild(tr);
-      }
-    }
+          </div>
+          <div>
+            <label for="rq_q">Buscar</label>
+            <input id="rq_q" placeholder="Buscar por título/tipo/solicitante..." />
+          </div>
+        </div>
 
-    document.getElementById("rq_filter").addEventListener("change", renderList);
-    document.getElementById("rq_q").addEventListener("input", renderList);
+        <div class="sep"></div>
+
+        <table><tbody id="rq_rows"></tbody></table>
+        <div class="note" id="rq_empty"></div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="./app.js?v=1"></script>
+<script>
+  const { loadJSON, saveJSON, REQ_KEY, escapeHtml, nowISO } = window.App;
+
+  window.App.renderKpis();
+  window.App.wireResetButton();
+
+  function setStatus(id, status){
+    const items = loadJSON(REQ_KEY, []);
+    const idx = items.findIndex(x => x.id === id);
+    if (idx < 0) return;
+    items[idx].status = status;
+    items[idx].updated_at = nowISO();
+    saveJSON(REQ_KEY, items);
+    window.App.renderKpis();
     renderList();
-  </script>
+  }
+
+  function renderList(){
+    const tbody = document.getElementById("rq_rows");
+    const empty = document.getElementById("rq_empty");
+    const filter = document.getElementById("rq_filter").value;
+    const q = document.getElementById("rq_q").value.trim().toLowerCase();
+
+    const items = loadJSON(REQ_KEY, []).filter(r => {
+      const ok = (filter === "ALL") || (r.status === filter);
+      const hay = (r.title+" "+r.type+" "+r.requester).toLowerCase();
+      return ok && (!q || hay.includes(q));
+    });
+
+    tbody.innerHTML = "";
+    if (!items.length){ empty.textContent = "Nenhuma solicitação."; return; }
+    empty.textContent = "";
+
+    for (const r of items){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div style="font-weight:750">${escapeHtml(r.title||"")}</div>
+          <div class="muted" style="margin-top:6px">${escapeHtml(r.type||"")} • ${escapeHtml(r.requester||"")}</div>
+        </td>
+        <td class="td-actions">
+          <select class="small">
+            <option value="SUBMITTED">Aberta</option>
+            <option value="IN_REVIEW">Em análise</option>
+            <option value="APPROVED">Aprovada</option>
+            <option value="REJECTED">Reprovada</option>
+          </select>
+        </td>
+      `;
+      const sel = tr.querySelector("select");
+      sel.value = r.status || "SUBMITTED";
+      sel.addEventListener("change", () => setStatus(r.id, sel.value));
+      tbody.appendChild(tr);
+    }
+  }
+
+  document.getElementById("rq_filter").addEventListener("change", renderList);
+  document.getElementById("rq_q").addEventListener("input", renderList);
+  renderList();
+</script>
 </body>
 </html>

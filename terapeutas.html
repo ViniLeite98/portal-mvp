@@ -381,4 +381,245 @@
 
   function applySelectedCerts(arr){
     const set = new Set(arr || []);
-    document.querySelectorAll("#cert
+    document.querySelectorAll("#certBox input[type=checkbox]").forEach(cb => {
+      cb.checked = set.has(cb.value);
+    });
+  }
+
+  function clearForm(){
+    $("th_id").value = "";
+    $("fullName").value = "";
+    $("profName").value = "";
+    $("birthDate").value = "";
+    $("cpf").value = "";
+    $("email").value = "";
+    $("address").value = "";
+    $("contact").value = "";
+    $("emergency").value = "";
+    $("pixType").value = "CPF";
+    $("pixKey").value = "";
+    $("hasOff").value = "Sim";
+    $("offDay").value = "";
+    $("startTime").value = "";
+    $("endTime").value = "";
+    $("startDate").value = "";
+    $("bloodType").value = "";
+    setStatusValue("Ativo");
+    applySelectedCerts([]);
+  }
+
+  function loadForm(id){
+    const items = loadJSON(TH_KEY, []);
+    const t = items.find(x => x.id === id);
+    if (!t) return;
+
+    $("th_id").value = t.id;
+    $("fullName").value = t.fullName || "";
+    $("profName").value = t.profName || "";
+    $("birthDate").value = t.birthDate || "";
+    $("cpf").value = t.cpf || "";
+    $("email").value = t.email || "";
+    $("address").value = t.address || "";
+    $("contact").value = t.contact || "";
+    $("emergency").value = t.emergency || "";
+    $("pixType").value = t.pixType || "CPF";
+    $("pixKey").value = t.pixKey || "";
+    $("hasOff").value = t.hasOff ? "Sim" : "Não";
+    $("offDay").value = t.offDay || "";
+    $("startTime").value = t.startTime || "";
+    $("endTime").value = t.endTime || "";
+    $("startDate").value = t.startDate || "";
+    $("bloodType").value = t.bloodType || "";
+    setStatusValue(t.status || "Ativo");
+
+    renderUnits();
+    $("unit").value = t.unit || "";
+    renderCerts();
+    applySelectedCerts(t.certs || []);
+  }
+
+  function validateForm(){
+    const errs = [];
+
+    const fullName = $("fullName").value.trim();
+    const profName = $("profName").value.trim();
+    const birthDate = $("birthDate").value;
+    const cpf = onlyDigits($("cpf").value);
+    const email = $("email").value.trim();
+    const unit = $("unit").value;
+    const contact = $("contact").value.trim();
+    const startTime = $("startTime").value;
+    const endTime = $("endTime").value;
+    const startDate = $("startDate").value;
+    const hasOff = $("hasOff").value === "Sim";
+    const offDay = $("offDay").value;
+
+    if (!fullName) errs.push("Nome Completo");
+    if (!profName) errs.push("Nome profissional");
+    if (!birthDate) errs.push("Data de Nascimento");
+    if (!cpf || cpf.length !== 11) errs.push("CPF (11 dígitos)");
+    if (!email) errs.push("Email");
+    if (!unit) errs.push("Unidade");
+    if (!contact) errs.push("Contato");
+    if (!startTime) errs.push("Horário de Entrada");
+    if (!endTime) errs.push("Horário de Saída");
+    if (!startDate) errs.push("Data de Início");
+    if (hasOff && !offDay) errs.push("Dia da Folga");
+
+    return { ok: errs.length === 0, errs };
+  }
+
+  function saveTherapist(){
+    const msg = $("formMsg");
+    msg.textContent = "";
+
+    const v = validateForm();
+    if (!v.ok){
+      msg.textContent = "Preencha: " + v.errs.join(", ") + ".";
+      msg.style.color = "var(--bad)";
+      return;
+    }
+
+    const id = $("th_id").value || uid();
+    const items = loadJSON(TH_KEY, []);
+    const idx = items.findIndex(x => x.id === id);
+
+    const record = {
+      id,
+      fullName: $("fullName").value.trim(),
+      profName: $("profName").value.trim(),
+      birthDate: $("birthDate").value,
+      cpf: onlyDigits($("cpf").value),
+      email: $("email").value.trim(),
+      unit: $("unit").value,
+      address: $("address").value.trim(),
+      contact: $("contact").value.trim(),
+      emergency: $("emergency").value.trim(),
+      pixType: $("pixType").value,
+      pixKey: $("pixKey").value.trim(),
+      hasOff: $("hasOff").value === "Sim",
+      offDay: $("offDay").value,
+      startTime: $("startTime").value,
+      endTime: $("endTime").value,
+      startDate: $("startDate").value,
+      bloodType: $("bloodType").value,
+      status: getStatusValue(),
+      certs: selectedCerts(),
+      updated_at: nowISO(),
+      created_at: (idx >= 0 ? items[idx].created_at : nowISO())
+    };
+
+    if (idx >= 0) items[idx] = record;
+    else items.unshift(record);
+
+    saveJSON(TH_KEY, items);
+
+    msg.textContent = "Salvo.";
+    msg.style.color = "var(--text)";
+    showList();
+  }
+
+  function deleteTherapist(id){
+    if (!confirm("Excluir este cadastro?")) return;
+    const items = loadJSON(TH_KEY, []);
+    saveJSON(TH_KEY, items.filter(x => x.id !== id));
+    renderList();
+  }
+
+  function renderList(){
+    const tbody = $("th_rows");
+    const empty = $("th_empty");
+    const filter = $("th_filter").value;
+    const q = $("th_q").value.trim().toLowerCase();
+
+    const items = loadJSON(TH_KEY, []).filter(t => {
+      const ok = (filter === "ALL") || (t.status === filter);
+      const hay = (t.fullName+" "+t.profName+" "+t.unit+" "+t.cpf+" "+t.email).toLowerCase();
+      return ok && (!q || hay.includes(q));
+    });
+
+    tbody.innerHTML = "";
+    if (!items.length){
+      empty.textContent = "Nenhuma terapeuta cadastrada.";
+      return;
+    }
+    empty.textContent = "";
+
+    for (const t of items){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>
+          <div style="font-weight:750">${escapeHtml(t.profName || t.fullName || "")}</div>
+          <div class="muted" style="margin-top:6px">
+            ${escapeHtml(t.fullName||"")} • ${escapeHtml(t.unit||"")} • ${escapeHtml(t.status||"")}
+          </div>
+          <div class="muted" style="margin-top:6px">
+            CPF: ${escapeHtml(t.cpf||"")} • ${escapeHtml(t.email||"")}
+          </div>
+        </td>
+        <td class="td-actions">
+          <button class="btn small" type="button" data-edit="${t.id}">Editar</button>
+          <button class="btn danger small" type="button" data-del="${t.id}">Excluir</button>
+        </td>
+      `;
+      tr.querySelector("[data-edit]").addEventListener("click", () => {
+        $("formTitle").textContent = "Editar Terapeuta";
+        renderUnits();
+        renderCerts();
+        loadForm(t.id);
+        showForm();
+      });
+      tr.querySelector("[data-del]").addEventListener("click", () => deleteTherapist(t.id));
+      tbody.appendChild(tr);
+    }
+  }
+
+  // Events
+  $("btnNew").addEventListener("click", () => {
+    $("formTitle").textContent = "Nova Terapeuta";
+    renderUnits();
+    renderCerts();
+    clearForm();
+    showForm();
+  });
+
+  $("btnCancel").addEventListener("click", showList);
+  $("btnSave").addEventListener("click", saveTherapist);
+
+  $("th_filter").addEventListener("change", renderList);
+  $("th_q").addEventListener("input", renderList);
+
+  $("btnAddUnit").addEventListener("click", () => {
+    const u = $("unitNew").value.trim();
+    if (!u) return;
+    const units = loadJSON(UNIT_KEY, []);
+    if (!units.includes(u)) units.push(u);
+    saveJSON(UNIT_KEY, units);
+    $("unitNew").value = "";
+    renderUnits();
+    $("unit").value = u;
+  });
+
+  $("btnAddCert").addEventListener("click", () => {
+    const c = $("certNew").value.trim();
+    if (!c) return;
+    const certs = loadJSON(CERT_KEY, []);
+    if (!certs.includes(c)) certs.push(c);
+    saveJSON(CERT_KEY, certs);
+    $("certNew").value = "";
+    renderCerts();
+  });
+
+  $("btnManageCerts").addEventListener("click", () => {
+    const box = $("certManage");
+    box.style.display = (box.style.display === "none" ? "block" : "none");
+    renderCertManage();
+  });
+
+  // Init
+  renderUnits();
+  renderCerts();
+  renderList();
+</script>
+</body>
+</html>

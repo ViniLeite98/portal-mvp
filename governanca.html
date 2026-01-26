@@ -150,4 +150,58 @@
     function addUnit(){
       const input = document.getElementById("unitInput");
       const name = (input.value || "").trim();
-      const msg
+      const msg = document.getElementById("unitMsg");
+      msg.textContent = "";
+
+      if (!name) { msg.textContent = "Digite uma unidade."; msg.style.color = "var(--bad)"; return; }
+
+      const items = loadUnits();
+      if (items.some(x => x.toLowerCase() === name.toLowerCase())){
+        msg.textContent = "Já existe."; msg.style.color = "var(--bad)"; return;
+      }
+      items.push(name);
+      saveJSON(UNIT_KEY, items);
+      input.value = "";
+      msg.textContent = "Unidade adicionada."; msg.style.color = "var(--ok)";
+      renderAll();
+    }
+
+    function addCert(){
+      const input = document.getElementById("certInput");
+      const name = (input.value || "").trim();
+      const msg = document.getElementById("certMsg");
+      msg.textContent = "";
+
+      if (!name) { msg.textContent = "Digite uma certificação."; msg.style.color = "var(--bad)"; return; }
+
+      const items = loadCerts();
+      if (items.some(x => x.toLowerCase() === name.toLowerCase())){
+        msg.textContent = "Já existe."; msg.style.color = "var(--bad)"; return;
+      }
+      items.push(name);
+      saveJSON(CERT_KEY, items);
+      input.value = "";
+      msg.textContent = "Certificação adicionada."; msg.style.color = "var(--ok)";
+      renderAll();
+    }
+
+    function resetMasters(){
+      if (!confirm("Restaurar cadastros mestres padrão?")) return;
+      saveJSON(UNIT_KEY, DEFAULT_UNITS.slice());
+      saveJSON(CERT_KEY, DEFAULT_CERTS.slice());
+      renderAll();
+    }
+
+    function renderAll(){
+      renderList("unitList", loadUnits());
+      renderList("certList", loadCerts());
+    }
+
+    document.getElementById("btnAddUnit").addEventListener("click", addUnit);
+    document.getElementById("btnAddCert").addEventListener("click", addCert);
+    document.getElementById("btnResetMasters").addEventListener("click", resetMasters);
+
+    renderAll();
+  </script>
+</body>
+</html>

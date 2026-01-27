@@ -1,3 +1,5 @@
+console.log("✅ app.js carregado");
+
 document.addEventListener("DOMContentLoaded", () => {
   const app = document.getElementById("app");
 
@@ -11,12 +13,12 @@ document.addEventListener("DOMContentLoaded", () => {
       <h2 class="logo">Portal MVP</h2>
 
       <nav>
-        <a href="index.html">🏠 Início</a>
-        <a href="equipe.html">👥 Equipe</a>
-        <a href="solicitacoes.html">📝 Solicitações</a>
-        <a href="disponibilidade.html">📅 Disponibilidade</a>
-        <a href="materias.html">📚 Materiais</a>
-        <a href="financeiro.html">💰 Financeiro</a>
+        <a href="./index.html">🏠 Início</a>
+        <a href="./equipe.html">👥 Equipe</a>
+        <a href="./solicitacoes.html">📝 Solicitações</a>
+        <a href="./disponibilidade.html">📅 Disponibilidade</a>
+        <a href="./materias.html">📚 Materiais</a>
+        <a href="./financeiro.html">💰 Financeiro</a>
       </nav>
     </aside>
   `;

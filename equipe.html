@@ -1,29 +1,325 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Portal MVP — Equipe</title>
+  <meta charset="UTF-8" />
+  <title>Equipe</title>
+
   <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+
+  <style>
+    body { background:#f6f7fb; }
+
+    .card {
+      background:#fff;
+      border-radius:16px;
+      padding:20px;
+      box-shadow:0 1px 6px rgba(0,0,0,.05);
+      margin-bottom:16px;
+    }
+
+    .card-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    .kpi {
+      font-size:32px;
+      font-weight:700;
+    }
+
+    .sub {
+      color:#777;
+      font-size:13px;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:14px;
+    }
+
+    th {
+      text-align:left;
+      padding:10px 6px;
+      border-bottom:1px solid #eee;
+      color:#444;
+      font-weight:600;
+    }
+
+    td {
+      padding:10px 6px;
+      border-bottom:1px solid #f1f1f1;
+    }
+
+    .actions button {
+      border:none;
+      background:none;
+      cursor:pointer;
+      font-size:16px;
+    }
+
+    .btn {
+      background:#4f46e5;
+      color:#fff;
+      border:none;
+      padding:10px 14px;
+      border-radius:10px;
+      cursor:pointer;
+    }
+
+    .btn.secondary {
+      background:#e5e7eb;
+      color:#111;
+    }
+
+    .form-grid {
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+    }
+
+    .form-grid label {
+      font-size:12px;
+      color:#555;
+    }
+
+    .form-grid input,
+    .form-grid select {
+      width:100%;
+      padding:8px;
+      border-radius:8px;
+      border:1px solid #ddd;
+    }
+
+    .hidden { display:none; }
+  </style>
 </head>
+
 <body>
+  <!-- MENU -->
+  <div id="sidebar-container"></div>
 
-<div class="app-container">
-  <div id="sidebar"></div>
-
-  <main class="main-content">
-    <h2>Equipe</h2>
-
+  <!-- CONTEÚDO -->
+  <main class="content">
+    <!-- KPI -->
     <div class="card">
-      <strong>0</strong>
-      <p>Terapeutas ativas</p>
+      <div class="card-header">
+        <div>
+          <h2>👥 Lista de Terapeutas</h2>
+          <div class="sub" id="kpiAtivas">0 terapeutas ativas</div>
+        </div>
+        <button class="btn" onclick="openForm()">＋ Nova Terapeuta</button>
+      </div>
     </div>
 
+    <!-- LISTA -->
     <div class="card">
-      <button class="btn-primary">＋ Nova terapeuta</button>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Folga?</th>
+            <th>Dia</th>
+            <th>Início</th>
+            <th>Horário</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="listaEquipe"></tbody>
+      </table>
+    </div>
+
+    <!-- FORM -->
+    <div class="card hidden" id="formCard">
+      <h3 id="formTitle">Nova Terapeuta</h3>
+
+      <div class="form-grid">
+        <div>
+          <label>Nome Completo</label>
+          <input id="nomeCompleto">
+        </div>
+
+        <div>
+          <label>Nome Profissional</label>
+          <input id="nomeProf">
+        </div>
+
+        <div>
+          <label>CPF</label>
+          <input id="cpf">
+        </div>
+
+        <div>
+          <label>Email</label>
+          <input id="email">
+        </div>
+
+        <div>
+          <label>Unidade</label>
+          <input id="unidade">
+        </div>
+
+        <div>
+          <label>Contato</label>
+          <input id="contato">
+        </div>
+
+        <div>
+          <label>Tem folga semanal?</label>
+          <select id="folga">
+            <option>Sim</option>
+            <option>Não</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Dia da folga</label>
+          <select id="diaFolga">
+            <option></option>
+            <option>Segunda</option>
+            <option>Terça</option>
+            <option>Quarta</option>
+            <option>Quinta</option>
+            <option>Sexta</option>
+            <option>Sábado</option>
+            <option>Domingo</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Status</label>
+          <select id="status">
+            <option>Ativo</option>
+            <option>Inativo</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Horário Entrada</label>
+          <input type="time" id="hEntrada">
+        </div>
+
+        <div>
+          <label>Horário Saída</label>
+          <input type="time" id="hSaida">
+        </div>
+
+        <div>
+          <label>Data de Início</label>
+          <input type="date" id="dataInicio">
+        </div>
+      </div>
+
+      <br>
+
+      <button class="btn" onclick="saveTerapeuta()">Salvar</button>
+      <button class="btn secondary" onclick="closeForm()">Cancelar</button>
     </div>
   </main>
-</div>
 
-<script src="app.js"></script>
+<script>
+/* ---------- MENU DINÂMICO ---------- */
+fetch("sidebar.html")
+  .then(r => r.text())
+  .then(html => document.getElementById("sidebar-container").innerHTML = html);
+
+/* ---------- STORAGE ---------- */
+const KEY = "portal_mvp_therapists_v1";
+let editId = null;
+
+function load() {
+  return JSON.parse(localStorage.getItem(KEY) || "[]");
+}
+function save(data) {
+  localStorage.setItem(KEY, JSON.stringify(data));
+}
+
+/* ---------- RENDER ---------- */
+function render() {
+  const data = load();
+  const tbody = document.getElementById("listaEquipe");
+  tbody.innerHTML = "";
+
+  const ativas = data.filter(t => t.status === "Ativo");
+  document.getElementById("kpiAtivas").innerText =
+    `${ativas.length} terapeutas ativas`;
+
+  data.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.nomeProf}</td>
+      <td>${t.folga}</td>
+      <td>${t.diaFolga || "-"}</td>
+      <td>${t.dataInicio || "-"}</td>
+      <td>${t.hEntrada || ""}–${t.hSaida || ""}</td>
+      <td class="actions">
+        <button onclick="edit('${t.id}')">✏️</button>
+        <button onclick="del('${t.id}')">🗑️</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* ---------- FORM ---------- */
+function openForm() {
+  document.getElementById("formCard").classList.remove("hidden");
+  editId = null;
+}
+function closeForm() {
+  document.getElementById("formCard").classList.add("hidden");
+}
+
+function saveTerapeuta() {
+  const data = load();
+
+  const t = {
+    id: editId || crypto.randomUUID(),
+    nomeCompleto: nomeCompleto.value,
+    nomeProf: nomeProf.value,
+    cpf: cpf.value,
+    email: email.value,
+    unidade: unidade.value,
+    contato: contato.value,
+    folga: folga.value,
+    diaFolga: diaFolga.value,
+    status: status.value,
+    hEntrada: hEntrada.value,
+    hSaida: hSaida.value,
+    dataInicio: dataInicio.value
+  };
+
+  const idx = data.findIndex(x => x.id === editId);
+  if (idx >= 0) data[idx] = t;
+  else data.push(t);
+
+  save(data);
+  closeForm();
+  render();
+}
+
+function edit(id) {
+  const t = load().find(x => x.id === id);
+  if (!t) return;
+
+  editId = id;
+  openForm();
+
+  Object.keys(t).forEach(k => {
+    if (document.getElementById(k)) {
+      document.getElementById(k).value = t[k];
+    }
+  });
+}
+
+function del(id) {
+  if (!confirm("Remover terapeuta?")) return;
+  save(load().filter(x => x.id !== id));
+  render();
+}
+
+render();
+</script>
 </body>
 </html>

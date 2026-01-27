@@ -43,6 +43,16 @@ function renderKpis(){
   if (c) c.textContent = String(approved);
 }
 
+// ---------- KPIs (terapeutas) ----------
+function renderTherapistsKpis(){
+  const el = document.getElementById("kpiTherapistsActive");
+  if (!el) return;
+
+  const therapists = loadJSON(TH_KEY, []);
+  const active = therapists.filter(t => (t.status || "Ativo") === "Ativo").length;
+  el.textContent = String(active);
+}
+
 // ---------- Reset ----------
 function wireResetButton(){
   const btn = document.getElementById("btnReset");
@@ -61,5 +71,6 @@ window.App = {
   nowISO, uid, escapeHtml, onlyDigits,
   loadJSON, saveJSON,
   REQ_KEY, TEAM_KEY, TH_KEY, CERT_KEY, UNIT_KEY, GOV_KEY, GOV_LOG_KEY,
-  renderKpis, wireResetButton
+  renderKpis, renderTherapistsKpis,
+  wireResetButton
 };

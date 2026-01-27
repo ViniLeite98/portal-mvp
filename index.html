@@ -5,15 +5,89 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Portal MVP • Início</title>
   <link rel="stylesheet" href="./styles.css">
+  <style>
+    /* ====== Layout estilo Streamlit ====== */
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 20px;
+    }
+
+    aside.sidebar {
+      background: #ffffff;
+      border: 1px solid #e7e7e7;
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      height: fit-content;
+    }
+
+    .content {
+      background: #ffffff;
+      border: 1px solid #e7e7e7;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .hara-card {
+      border: 1px solid #e7e7e7;
+      border-radius: 18px;
+      padding: 14px 16px;
+      background: #ffffff;
+    }
+
+    .hara-muted { color:#6B6B6B; font-size:12px; }
+    .hara-kpi { font-size:34px; font-weight:700; margin: 6px 0 0 0; }
+    .hara-title { font-size:14px; font-weight:600; margin: 0; }
+
+    .top-cards {
+      display: grid;
+      grid-template-columns: 1.1fr 1.6fr 1.2fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .mid-grid {
+      display: grid;
+      grid-template-columns: 3.2fr 1.3fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+
+    .nav-btn {
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      background: #fafafa;
+      cursor: pointer;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .nav-btn.active {
+      background: #111827;
+      color: #ffffff;
+      border-color: #111827;
+    }
+
+    canvas {
+      width: 100%;
+      height: 260px;
+      background: #f9fafb;
+      border-radius: 10px;
+    }
+  </style>
 </head>
 <body>
 
-<header>
+<header style="padding:14px 0;">
   <div class="wrap">
-    <h1>Portal MVP</h1>
-    <div class="muted">Início</div>
+    <h1 style="margin:0;">Portal MVP</h1>
+    <div class="hara-muted">Início</div>
 
-    <div class="kpis">
+    <div style="margin-top:6px;font-size:14px;">
       Total: <strong id="kpiTotal">0</strong> |
       Abertas: <strong id="kpiOpen">0</strong> |
       Aprovadas: <strong id="kpiApproved">0</strong> |
@@ -25,46 +99,84 @@
 <main class="wrap">
   <div class="layout">
 
-    <!-- MENU -->
-    <aside class="menu">
-      <a class="btn active" href="./index.html">Início</a>
-      <a class="btn" href="./nova-solicitacao.html">Nova solicitação</a>
-      <a class="btn" href="./solicitacoes.html">Solicitações</a>
-      <a class="btn" href="./equipe.html">Equipe</a>
-      <a class="btn" href="./terapeutas.html">Terapeutas</a>
-      <a class="btn" href="./governanca.html">Governança</a>
+    <!-- ===== SIDEBAR (igual Streamlit) ===== -->
+    <aside class="sidebar">
+      <a class="nav-btn active" href="./index.html">Início</a>
+      <a class="nav-btn" href="./nova-solicitacao.html">Nova solicitação</a>
+      <a class="nav-btn" href="./solicitacoes.html">Solicitações</a>
+      <a class="nav-btn" href="./equipe.html">Equipe</a>
+      <a class="nav-btn" href="./terapeutas.html">Terapeutas</a>
+      <a class="nav-btn" href="./governanca.html">Governança</a>
 
-      <button class="btn danger" id="btnReset">Zerar dados</button>
-      <div class="muted">Somente local</div>
+      <hr>
+
+      <button class="nav-btn" id="btnReset">Zerar dados</button>
+      <span class="hara-muted">Somente local</span>
     </aside>
 
-    <!-- CONTEÚDO -->
+    <!-- ===== CONTEÚDO ===== -->
     <section class="content">
-      <h2>Dashboard</h2>
-      <div class="muted">Visão geral</div>
 
-      <h3>Equipe</h3>
-      <div id="cardEquipe">0</div>
+      <!-- TOP CARDS -->
+      <div class="top-cards">
+        <div class="hara-card">
+          <p class="hara-title">Equipe</p>
+          <div class="hara-kpi" id="cardEquipe">0</div>
+          <div class="hara-muted">Funcionárias ativas no sistema</div>
+        </div>
 
-      <h3>Próximas datas</h3>
-      <div id="cardProxBody">Sem datas</div>
+        <div class="hara-card">
+          <p class="hara-title">Próximas Datas</p>
+          <div id="cardProxBody" class="hara-muted">Sem datas cadastradas.</div>
+          <div class="hara-muted" style="margin-top:8px;">Gestão de datas</div>
+        </div>
 
-      <h3>Dias folgados</h3>
-      <div id="cardDiasBody">Sem dados</div>
+        <div class="hara-card">
+          <p class="hara-title">Dias Folgados</p>
+          <div id="cardDiasBody" class="hara-muted">Sem dados ainda.</div>
+          <div class="hara-muted" style="margin-top:8px;">Relatório completo</div>
+        </div>
+      </div>
 
-      <h3>Força de trabalho</h3>
-      <canvas id="workforceCanvas" width="800" height="250"></canvas>
+      <!-- FORÇA DE TRABALHO + RANK -->
+      <div class="mid-grid">
+        <div class="hara-card">
+          <p class="hara-title">Força de Trabalho</p>
+          <canvas id="workforceCanvas" width="900" height="260"></canvas>
+          <div class="hara-muted" style="margin-top:6px;">
+            Distribuição por hora (derivada do horário em Equipe).
+          </div>
+        </div>
 
-      <h3>Carga horária</h3>
-      <div id="rankHorasBody">Sem dados</div>
+        <div class="hara-card">
+          <p class="hara-title">Carga horária</p>
+          <div id="rankHorasBody" class="hara-muted">Sem horários cadastrados ainda.</div>
+          <div class="hara-muted" style="margin-top:8px;">Relatório completo</div>
+        </div>
+      </div>
+
+      <!-- BOTÕES FINAIS -->
+      <div class="mid-grid" style="margin-top:20px;">
+        <div class="hara-card">
+          <p class="hara-title">Gestão de Terapeutas</p>
+          <p class="hara-muted">Cadastrar e editar informações das terapeutas, horários e folgas</p>
+          <a class="nav-btn" href="./equipe.html">Gerir equipe</a>
+        </div>
+
+        <div class="hara-card">
+          <p class="hara-title">Criar Escalas</p>
+          <p class="hara-muted">Distribuição de terapeutas em datas selecionadas</p>
+          <button class="nav-btn" disabled>Criar Escalas</button>
+        </div>
+      </div>
+
     </section>
-
   </div>
 </main>
 
 <script src="./app.js"></script>
 <script>
-  // exatamente como antes
+  // ===== INIT (equivalente ao Streamlit rerun) =====
   wireResetButton();
   renderKpis();
   renderTherapistsKpis();

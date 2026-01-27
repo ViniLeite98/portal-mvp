@@ -3,9 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Portal MVP • Nova solicitação</title>
+  <title>Portal MVP • Materiais</title>
   <link rel="stylesheet" href="./styles.css">
+  <style>
+    .two-col { display:grid; grid-template-columns: 1.05fr 1.25fr; gap:18px; }
+    @media (max-width: 980px){ .two-col { grid-template-columns: 1fr; } }
+
+    .mini { font-size:12px; }
+    .inline { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .tabs { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+    .tab { border:1px solid var(--border); background:#fff; padding:8px 10px; border-radius:10px; cursor:pointer; }
+    .tab.active { border-color:#111; font-weight:700; }
+    .stock-line { display:flex; align-items:center; gap:10px; margin: 10px 0; }
+    .stock-name { min-width: 220px; }
+    .stock-dots { flex:1; border-bottom: 1px dashed #CFCFCF; margin-top: 6px; }
+    .stock-qtd { min-width: 90px; text-align:right; font-weight:600; }
+    .muted2 { color:var(--muted); font-size:12px; }
+    details.adminGate summary { cursor:pointer; user-select:none; }
+    details.adminGate summary::-webkit-details-marker { display:none; }
+    details.adminGate summary { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1px dashed var(--border); border-radius:12px; background:#fafafa; }
+  </style>
 </head>
+
 <body>
 <header>
   <div class="wrap">
@@ -14,15 +33,15 @@
         <div class="logo"></div>
         <div>
           <h1>Portal MVP</h1>
-          <div class="muted">Solicitação • Demanda de Indisponibilidade</div>
+          <div class="muted">Materiais • Controle de utilização e estoque (pós-uso)</div>
         </div>
       </div>
 
       <div class="kpi">
-        <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
-        <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
-        <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
-        <span class="pill">Terapeutas ativas: <strong id="kpiTherapistsActive">0</strong></span>
+        <span class="pill">Materiais ativos: <strong id="kpiMatActive">0</strong></span>
+        <span class="pill">Estoque total: <strong id="kpiStockTotal">0</strong></span>
+        <span class="pill">Movs (30d): <strong id="kpiMov30">0</strong></span>
+        <span class="pill">Última mov: <strong id="kpiLastMov">—</strong></span>
       </div>
     </div>
   </div>
@@ -36,9 +55,9 @@
       <div class="bd">
         <div class="nav">
           <a class="btn" href="./index.html">Início</a>
-          <a class="btn primary" href="./nova-solicitacao.html">Nova solicitação</a>
           <a class="btn" href="./solicitacoes.html">Solicitações</a>
           <a class="btn" href="./equipe.html">Equipe</a>
+          <a class="btn primary" href="./materiais.html">Materiais</a>
           <a class="btn" href="./terapeutas.html">Terapeutas</a>
           <a class="btn" href="./governanca.html">Governança</a>
         </div>
@@ -52,253 +71,870 @@
     <!-- CONTEÚDO -->
     <section class="card">
       <div class="hd">
-        <h2 style="margin:0;font-size:18px">Nova Solicitação</h2>
-        <div class="muted">Registre uma indisponibilidade (falta, férias, viagem etc.).</div>
+        <h2 style="margin:0;font-size:18px">Materiais</h2>
+        <div class="muted">Registro de uso + estoque dinâmico + log + admin (senha)</div>
       </div>
 
       <div class="bd">
+
         <div id="jsWarn" class="note" style="display:none;color:var(--bad);margin-bottom:12px"></div>
 
-        <div id="noCpfBox" class="note" style="display:none;margin-bottom:12px">
-          Nenhum CPF encontrado em <b>Terapeutas</b>. Cadastre a terapeuta com CPF antes de solicitar.
+        <div class="two-col">
+          <!-- ESQUERDA: registrar uso -->
+          <div class="card" style="box-shadow:none">
+            <div class="hd">
+              <h3 style="margin:0;font-size:18px">Registrar uso (pós-uso)</h3>
+              <div class="muted2">Ao salvar, o estoque é reduzido automaticamente.</div>
+            </div>
+
+            <div class="bd">
+              <div class="row2">
+                <div>
+                  <label for="movMaterial">Material *</label>
+                  <select id="movMaterial"></select>
+                  <div class="muted2" id="movMatHint"></div>
+                </div>
+                <div>
+                  <label for="movDate">Data *</label>
+                  <input id="movDate" type="date" />
+                </div>
+              </div>
+
+              <div class="sep"></div>
+
+              <div class="row2">
+                <div id="profWrap">
+                  <label for="movProf">Profissional *</label>
+                  <select id="movProf"></select>
+                  <input id="movProfTxt" style="display:none" />
+                </div>
+                <div id="unitWrap">
+                  <label for="movUnitLocal">Unidade *</label>
+                  <select id="movUnitLocal"></select>
+                  <input id="movUnitLocalTxt" style="display:none" />
+                </div>
+              </div>
+
+              <div class="sep"></div>
+
+              <div class="row2" style="grid-template-columns:0.8fr 1.2fr">
+                <div>
+                  <label for="movQty">Quantidade (saída) *</label>
+                  <input id="movQty" type="number" min="1" step="1" value="1"/>
+                </div>
+                <div>
+                  <label for="movObs">Observação (opcional)</label>
+                  <input id="movObs" placeholder="Ex.: consumo pós atendimento..." />
+                </div>
+              </div>
+
+              <div class="sep"></div>
+
+              <div class="inline">
+                <button class="btn primary" id="btnAddMov" type="button">＋ Adicionar</button>
+                <span class="note" id="movMsg"></span>
+              </div>
+
+              <div class="sep"></div>
+
+              <div class="row2">
+                <div>
+                  <label>Exportar</label>
+                  <select id="exportChoice">
+                    <option value="mov">Movimentações (CSV)</option>
+                    <option value="mat">Materiais (CSV)</option>
+                  </select>
+                </div>
+                <div style="display:flex;align-items:end">
+                  <button class="btn" id="btnExport" type="button">＋ Exportar</button>
+                </div>
+              </div>
+
+              <div class="sep"></div>
+
+              <!-- ADMIN -->
+              <details class="adminGate" id="adminGate">
+                <summary>
+                  <div>
+                    <strong>Editar Materiais (Admin)</strong>
+                    <div class="muted2">Cadastrar / ajustar estoque / remover</div>
+                  </div>
+                  <div class="pill mini" id="adminState">Bloqueado</div>
+                </summary>
+
+                <div style="margin-top:12px">
+                  <div id="adminLogin" class="card" style="box-shadow:none">
+                    <div class="bd">
+                      <div class="row2" style="grid-template-columns:1fr 0.7fr">
+                        <div>
+                          <label for="adminPass">Senha</label>
+                          <input id="adminPass" type="password" placeholder="Digite a senha" />
+                          <div class="muted2">Somente administradores podem acessar esta área.</div>
+                        </div>
+                        <div style="display:flex;align-items:end">
+                          <button class="btn primary" id="btnAdminEnter" type="button">Entrar</button>
+                        </div>
+                      </div>
+                      <div class="note" id="adminMsg"></div>
+                    </div>
+                  </div>
+
+                  <div id="adminPanel" style="display:none">
+                    <div class="tabs">
+                      <button class="tab active" data-tab="add">Adicionar material</button>
+                      <button class="tab" data-tab="adjust">Ajustar estoque</button>
+                      <button class="tab" data-tab="remove">Remover material</button>
+                    </div>
+
+                    <!-- add -->
+                    <div id="tab_add" style="margin-top:12px">
+                      <div class="row2" style="grid-template-columns:1.6fr 0.7fr 0.7fr">
+                        <div>
+                          <label for="admMatName">Nome do material *</label>
+                          <input id="admMatName" placeholder="Ex.: Óleo de massagem" />
+                        </div>
+                        <div>
+                          <label for="admMatUnit">Unidade *</label>
+                          <select id="admMatUnit">
+                            <option>un</option>
+                            <option>ml</option>
+                            <option>g</option>
+                            <option>pct</option>
+                            <option>cx</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label for="admMatStock">Estoque inicial *</label>
+                          <input id="admMatStock" type="number" min="0" step="1" value="0" />
+                        </div>
+                      </div>
+
+                      <div class="sep"></div>
+                      <div class="inline">
+                        <button class="btn primary" id="btnAdmAdd" type="button">Adicionar</button>
+                        <span class="note" id="admAddMsg"></span>
+                      </div>
+                    </div>
+
+                    <!-- adjust -->
+                    <div id="tab_adjust" style="display:none;margin-top:12px">
+                      <div>
+                        <label for="admSelMat">Selecione um material</label>
+                        <select id="admSelMat"></select>
+                        <div class="muted2" id="admSelMatHint"></div>
+                      </div>
+
+                      <div class="sep"></div>
+
+                      <div class="row2" style="grid-template-columns:1fr 1fr">
+                        <div>
+                          <label for="admMode">Tipo de ajuste</label>
+                          <select id="admMode">
+                            <option value="ADD">Adicionar (+)</option>
+                            <option value="REM">Remover (-)</option>
+                            <option value="SET">Definir valor (set)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label for="admQty">Quantidade</label>
+                          <input id="admQty" type="number" min="0" step="1" value="0" />
+                        </div>
+                      </div>
+
+                      <div class="sep"></div>
+
+                      <div>
+                        <label for="admObs">Obs (opcional)</label>
+                        <input id="admObs" placeholder="Ex.: reposição / inventário..." />
+                      </div>
+
+                      <div class="sep"></div>
+                      <div class="inline">
+                        <button class="btn primary" id="btnAdmApply" type="button">Aplicar ajuste</button>
+                        <span class="note" id="admAdjMsg"></span>
+                      </div>
+                    </div>
+
+                    <!-- remove -->
+                    <div id="tab_remove" style="display:none;margin-top:12px">
+                      <div>
+                        <label for="admSelMatRm">Selecione um material</label>
+                        <select id="admSelMatRm"></select>
+                      </div>
+
+                      <div class="sep"></div>
+
+                      <div class="inline">
+                        <label style="display:flex;gap:8px;align-items:center;margin:0">
+                          <input type="radio" name="rmMode" value="DEACT" checked>
+                          Desativar (recomendado)
+                        </label>
+                        <label style="display:flex;gap:8px;align-items:center;margin:0">
+                          <input type="radio" name="rmMode" value="DEL">
+                          Excluir do arquivo
+                        </label>
+                      </div>
+
+                      <div class="sep"></div>
+                      <div class="inline">
+                        <button class="btn danger" id="btnAdmRemove" type="button">Remover</button>
+                        <span class="note" id="admRmMsg"></span>
+                      </div>
+                    </div>
+
+                    <div class="sep"></div>
+                    <div class="inline">
+                      <button class="btn small" id="btnAdminExit" type="button">Sair do Admin</button>
+                      <span class="muted2">Sessão do navegador</span>
+                    </div>
+                  </div>
+                </div>
+              </details>
+
+            </div>
+          </div>
+
+          <!-- DIREITA: estoque -->
+          <div class="card" style="box-shadow:none">
+            <div class="hd">
+              <h3 style="margin:0;font-size:18px">Estoque</h3>
+              <div class="muted2">Mostra apenas materiais ativos.</div>
+            </div>
+            <div class="bd" id="stockList"></div>
+          </div>
         </div>
 
-        <div id="formBox">
-          <div class="row2">
-            <div>
-              <label for="cpfSelect">CPF (identificação) *</label>
-              <select id="cpfSelect"></select>
-            </div>
-            <div>
-              <label for="profissional">Profissional</label>
-              <input id="profissional" disabled />
-            </div>
+        <div class="sep"></div>
+
+        <!-- LOG -->
+        <div class="card" style="box-shadow:none">
+          <div class="hd">
+            <h3 style="margin:0;font-size:18px">Últimas movimentações</h3>
+            <div class="muted2">As 15 mais recentes (saídas e ajustes).</div>
           </div>
-
-          <div class="sep"></div>
-
-          <div class="row2">
-            <div>
-              <label for="dtInicio">Data Início *</label>
-              <input id="dtInicio" type="date" />
-            </div>
-            <div>
-              <label for="dtFim">Data Fim *</label>
-              <input id="dtFim" type="date" />
-            </div>
-          </div>
-
-          <div class="sep"></div>
-
-          <div class="row2">
-            <div>
-              <label for="tipo">Tipo *</label>
-              <select id="tipo">
-                <option>Falta</option>
-                <option>Férias</option>
-                <option>Viagem</option>
-                <option>Atestado</option>
-                <option>Outro</option>
-              </select>
-            </div>
-            <div>
-              <label for="justificativa">Justificativa *</label>
-              <input id="justificativa" placeholder="Ex.: Viagem, Atestado médico..." />
-            </div>
-          </div>
-
-          <div class="sep"></div>
-
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn primary" type="button" id="btnSave">Salvar solicitação</button>
-            <button class="btn" type="button" id="btnClear">Limpar</button>
-            <span class="note" id="msg"></span>
-          </div>
-
-          <div class="sep"></div>
-
-          <div class="note">
-            A solicitação será salva como <b>Pendente</b> (internamente: <code>SUBMITTED</code>), para aparecer como “aberta” no dashboard.
+          <div class="bd">
+            <table>
+              <thead>
+                <tr>
+                  <th>Data/Hora</th>
+                  <th>Material</th>
+                  <th>Qtd</th>
+                  <th>Un</th>
+                  <th>Profissional</th>
+                  <th>Unidade</th>
+                  <th>Tipo</th>
+                  <th>Obs</th>
+                </tr>
+              </thead>
+              <tbody id="movRows"></tbody>
+            </table>
+            <div class="note" id="movEmpty" style="margin-top:10px"></div>
           </div>
         </div>
+
       </div>
     </section>
   </div>
 </main>
 
-<script src="./app.js?v=11"></script>
+<script src="./app.js?v=21"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const warn = (text) => {
-    const el = document.getElementById("jsWarn");
-    el.style.display = "block";
-    el.textContent = text;
-  };
-
-  if (!window.App) {
-    warn("Erro: app.js não carregou. Confira se o arquivo se chama 'app.js' (minúsculo) e se o caminho está './app.js'.");
-    console.error("window.App indefinido -> app.js não carregou.");
-    return;
-  }
-
-  const A = window.App;
   const $ = (id) => document.getElementById(id);
 
-  // KPIs topo (se existirem no seu app.js atual, ótimo)
-  try { A.renderKpis && A.renderKpis(); } catch(e){}
-  try { A.renderTherapistsKpis && A.renderTherapistsKpis(); } catch(e){}
-  try { A.wireResetButton && A.wireResetButton(); } catch(e){}
+  // fallback mínimo (se app.js não carregar)
+  const fallbackApp = {
+    TH_KEY: "portal_mvp_therapists_v1",
+    escapeHtml: (s) => String(s ?? "").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])),
+    nowISO: () => new Date().toISOString().replace("T"," ").slice(0,19),
+    uid: () => (crypto && crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + String(Date.now())),
+    loadJSON: (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } },
+    saveJSON: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+  };
+  const A = window.App || fallbackApp;
+  if (!window.App) { $("jsWarn").style.display="block"; $("jsWarn").textContent="Aviso: app.js não carregou. Vou rodar em modo fallback."; }
 
-  const msg = $("msg");
-  const cpfSelect = $("cpfSelect");
-  const profissional = $("profissional");
-  const dtInicio = $("dtInicio");
-  const dtFim = $("dtFim");
-  const tipo = $("tipo");
-  const justificativa = $("justificativa");
+  // keys
+  const MAT_KEY = "portal_mvp_materials_v1";
+  const MOV_KEY = "portal_mvp_material_moves_v1";
+  const ADMIN_OK = "portal_mvp_admin_ok_v1"; // sessionStorage
 
-  function todayYYYYMMDD(){
+  const ADMIN_PASS = "2026";
+
+  // helpers
+  const toInt = (x, d=0) => {
+    try { return parseInt(String(x).trim().replace(",", "."), 10); } catch { return d; }
+  };
+  const today = () => {
     const d = new Date();
-    const y = d.getFullYear();
-    const m = String(d.getMonth()+1).padStart(2,"0");
-    const dd = String(d.getDate()).padStart(2,"0");
-    return `${y}-${m}-${dd}`;
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  };
+  const within30d = (iso) => {
+    const dt = new Date(String(iso||"").replace(" ", "T"));
+    if (isNaN(dt.getTime())) return false;
+    const now = new Date();
+    const diff = (now - dt) / (1000*60*60*24);
+    return diff >= 0 && diff <= 30;
+  };
+  const download = (filename, text) => {
+    const blob = new Blob([text], {type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  };
+  const csv = (rows, headers) => {
+    const esc = (v) => {
+      const s = String(v ?? "");
+      if (/[",\n;]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+      return s;
+    };
+    const lines = [];
+    lines.push(headers.map(esc).join(","));
+    for (const r of rows){
+      lines.push(headers.map(h => esc(r[h])).join(","));
+    }
+    return lines.join("\n");
+  };
+
+  // seed
+  function seedMaterials(){
+    return [
+      {id:A.uid().slice(0,8), material:"Gel de Massagem", unidade_medida:"un", estoque_atual:36, ativo:"Sim"},
+      {id:A.uid().slice(0,8), material:"Creme de Massagem", unidade_medida:"un", estoque_atual:50, ativo:"Sim"},
+      {id:A.uid().slice(0,8), material:"Refrigerante Coca Zero", unidade_medida:"un", estoque_atual:30, ativo:"Sim"},
+      {id:A.uid().slice(0,8), material:"Refrigerante Coca Original", unidade_medida:"un", estoque_atual:30, ativo:"Sim"},
+      {id:A.uid().slice(0,8), material:"Lenço Umedecido", unidade_medida:"un", estoque_atual:30, ativo:"Sim"},
+      {id:A.uid().slice(0,8), material:"Cápsula de Café", unidade_medida:"un", estoque_atual:30, ativo:"Sim"},
+    ];
   }
 
-  // Defaults datas
-  dtInicio.value = todayYYYYMMDD();
-  dtFim.value = todayYYYYMMDD();
+  function loadMaterials(){
+    let m = A.loadJSON(MAT_KEY, null);
+    if (!m || !Array.isArray(m) || !m.length){
+      m = seedMaterials();
+      A.saveJSON(MAT_KEY, m);
+    }
+    // normaliza
+    return m.map(x => ({
+      id: String(x.id||""),
+      material: String(x.material||""),
+      unidade_medida: String(x.unidade_medida||"un"),
+      estoque_atual: toInt(x.estoque_atual, 0),
+      ativo: String(x.ativo||"Sim"),
+    }));
+  }
+  function saveMaterials(m){ A.saveJSON(MAT_KEY, m); }
 
-  function getTherapistsWithCpf(){
+  function loadMoves(){
+    const mv = A.loadJSON(MOV_KEY, []);
+    if (!Array.isArray(mv)) return [];
+    return mv.map(x => ({
+      id: String(x.id||""),
+      dt_mov: String(x.dt_mov||""),
+      material_id: String(x.material_id||""),
+      material: String(x.material||""),
+      qtd: toInt(x.qtd, 0),
+      unidade: String(x.unidade||""),
+      profissional: String(x.profissional||""),
+      unidade_local: String(x.unidade_local||""),
+      tipo: String(x.tipo||""),
+      obs: String(x.obs||""),
+    }));
+  }
+  function saveMoves(mv){ A.saveJSON(MOV_KEY, mv); }
+
+  function loadEquipeNamesAndUnits(){
     const th = A.loadJSON(A.TH_KEY, []);
-    const list = th
-      .map(t => ({
-        cpf: (t.cpf || "").trim(),
-        nome: (t.profName || t.fullName || "").trim(),
-        status: (t.status || "").trim()
-      }))
-      .filter(x => x.cpf && x.cpf.length === 11); // CPF 11 dígitos
-    list.sort((a,b) => a.cpf.localeCompare(b.cpf));
-    return list;
+    const list = Array.isArray(th) ? th : [];
+    const active = list.filter(t => {
+      const s = String(t.status||"").trim().toLowerCase();
+      return s === "" || s === "ativo";
+    });
+    const profs = [...new Set(active.map(t => String(t.profName||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+    const units = [...new Set(active.map(t => String(t.unit||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"pt-BR"));
+    return {profs, units};
   }
 
-  function renderCpfDropdown(){
-    const list = getTherapistsWithCpf();
+  // UI refs
+  const movMaterial = $("movMaterial");
+  const movMatHint = $("movMatHint");
+  const movDate = $("movDate");
+  const movProf = $("movProf");
+  const movProfTxt = $("movProfTxt");
+  const movUnitLocal = $("movUnitLocal");
+  const movUnitLocalTxt = $("movUnitLocalTxt");
+  const movQty = $("movQty");
+  const movObs = $("movObs");
+  const movMsg = $("movMsg");
+  const stockList = $("stockList");
+  const movRows = $("movRows");
+  const movEmpty = $("movEmpty");
 
-    if (!list.length) {
-      $("noCpfBox").style.display = "block";
-      $("formBox").style.display = "none";
+  const exportChoice = $("exportChoice");
+  const btnExport = $("btnExport");
+
+  const btnReset = $("btnReset");
+
+  // admin refs
+  const adminState = $("adminState");
+  const adminLogin = $("adminLogin");
+  const adminPanel = $("adminPanel");
+  const adminPass = $("adminPass");
+  const btnAdminEnter = $("btnAdminEnter");
+  const btnAdminExit = $("btnAdminExit");
+  const adminMsg = $("adminMsg");
+
+  const tabs = Array.from(document.querySelectorAll(".tab"));
+  const tabAdd = $("tab_add");
+  const tabAdjust = $("tab_adjust");
+  const tabRemove = $("tab_remove");
+
+  const admMatName = $("admMatName");
+  const admMatUnit = $("admMatUnit");
+  const admMatStock = $("admMatStock");
+  const btnAdmAdd = $("btnAdmAdd");
+  const admAddMsg = $("admAddMsg");
+
+  const admSelMat = $("admSelMat");
+  const admSelMatHint = $("admSelMatHint");
+  const admMode = $("admMode");
+  const admQty = $("admQty");
+  const admObs = $("admObs");
+  const btnAdmApply = $("btnAdmApply");
+  const admAdjMsg = $("admAdjMsg");
+
+  const admSelMatRm = $("admSelMatRm");
+  const btnAdmRemove = $("btnAdmRemove");
+  const admRmMsg = $("admRmMsg");
+
+  // tabs behavior
+  function setTab(name){
+    tabs.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+    tabAdd.style.display = (name === "add") ? "block" : "none";
+    tabAdjust.style.display = (name === "adjust") ? "block" : "none";
+    tabRemove.style.display = (name === "remove") ? "block" : "none";
+  }
+  tabs.forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+
+  // admin gate
+  function isAdmin(){ return sessionStorage.getItem(ADMIN_OK) === "1"; }
+  function setAdmin(v){
+    if (v) sessionStorage.setItem(ADMIN_OK, "1");
+    else sessionStorage.removeItem(ADMIN_OK);
+    renderAdmin();
+  }
+  function renderAdmin(){
+    const ok = isAdmin();
+    adminState.textContent = ok ? "Liberado" : "Bloqueado";
+    adminState.style.borderColor = ok ? "var(--good)" : "var(--border)";
+    adminState.style.color = ok ? "var(--good)" : "inherit";
+    adminLogin.style.display = ok ? "none" : "block";
+    adminPanel.style.display = ok ? "block" : "none";
+    adminMsg.textContent = "";
+  }
+
+  btnAdminEnter.addEventListener("click", () => {
+    const pw = String(adminPass.value||"").trim();
+    if (pw === ADMIN_PASS){
+      setAdmin(true);
+      adminPass.value = "";
+      adminMsg.textContent = "Acesso liberado.";
+      adminMsg.style.color = "var(--good)";
+    } else {
+      adminMsg.textContent = "Senha incorreta.";
+      adminMsg.style.color = "var(--bad)";
+    }
+  });
+  btnAdminExit.addEventListener("click", () => setAdmin(false));
+
+  // reset
+  btnReset.addEventListener("click", () => {
+    if (!confirm("Zerar dados locais de materiais/movimentações?")) return;
+    localStorage.removeItem(MAT_KEY);
+    localStorage.removeItem(MOV_KEY);
+    renderAll();
+  });
+
+  // render dropdowns
+  function materialLabel(m){ return `${m.material} (${m.estoque_atual} ${m.unidade_medida})`; }
+
+  function renderMaterialSelect(){
+    const mats = loadMaterials().filter(m => String(m.ativo||"") === "Sim").sort((a,b)=>a.material.localeCompare(b.material,"pt-BR"));
+    movMaterial.innerHTML = "";
+    for (const m of mats){
+      const opt = document.createElement("option");
+      opt.value = m.id;
+      opt.textContent = materialLabel(m);
+      movMaterial.appendChild(opt);
+    }
+    if (!mats.length){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "Nenhum material ativo cadastrado";
+      movMaterial.appendChild(opt);
+    }
+    renderMovMatHint();
+  }
+
+  function renderMovMatHint(){
+    const mats = loadMaterials();
+    const id = movMaterial.value;
+    const m = mats.find(x => x.id === id);
+    if (!m){ movMatHint.textContent = ""; return; }
+    movMatHint.textContent = `Estoque atual: ${m.estoque_atual} ${m.unidade_medida}`;
+  }
+
+  movMaterial.addEventListener("change", renderMovMatHint);
+
+  function renderProfAndUnits(){
+    const {profs, units} = loadEquipeNamesAndUnits();
+
+    // profissionais
+    movProf.innerHTML = "";
+    if (profs.length){
+      movProfTxt.style.display = "none";
+      movProf.style.display = "block";
+      for (const p of profs){
+        const opt = document.createElement("option");
+        opt.value = p; opt.textContent = p;
+        movProf.appendChild(opt);
+      }
+    } else {
+      movProf.style.display = "none";
+      movProfTxt.style.display = "block";
+      movProfTxt.value = "";
+      movProfTxt.placeholder = "Digite o nome da profissional";
+    }
+
+    // unidades
+    movUnitLocal.innerHTML = "";
+    if (units.length){
+      movUnitLocalTxt.style.display = "none";
+      movUnitLocal.style.display = "block";
+      for (const u of units){
+        const opt = document.createElement("option");
+        opt.value = u; opt.textContent = u;
+        movUnitLocal.appendChild(opt);
+      }
+    } else {
+      movUnitLocal.style.display = "none";
+      movUnitLocalTxt.style.display = "block";
+      movUnitLocalTxt.value = "";
+      movUnitLocalTxt.placeholder = "Digite a unidade";
+    }
+  }
+
+  // render stock list
+  function renderStock(){
+    const mats = loadMaterials().filter(m => String(m.ativo||"") === "Sim").sort((a,b)=>a.material.localeCompare(b.material,"pt-BR"));
+    stockList.innerHTML = "";
+    if (!mats.length){
+      stockList.innerHTML = `<div class="note">Sem materiais ativos.</div>`;
       return;
     }
-
-    $("noCpfBox").style.display = "none";
-    $("formBox").style.display = "block";
-
-    cpfSelect.innerHTML = "";
-    for (const t of list){
-      const opt = document.createElement("option");
-      opt.value = t.cpf;
-      opt.textContent = `${t.cpf} — ${t.nome || ""}`;
-      cpfSelect.appendChild(opt);
+    for (const m of mats){
+      const line = document.createElement("div");
+      line.className = "stock-line";
+      line.innerHTML = `
+        <div class="stock-name">${A.escapeHtml(m.material)}</div>
+        <div class="stock-dots"></div>
+        <div class="stock-qtd">${m.estoque_atual} ${A.escapeHtml(m.unidade_medida)}</div>
+      `;
+      stockList.appendChild(line);
     }
-
-    // set profissional
-    const first = list[0];
-    profissional.value = first.nome || "";
   }
 
-  function syncProfissional(){
-    const cpf = cpfSelect.value;
-    const list = getTherapistsWithCpf();
-    const found = list.find(x => x.cpf === cpf);
-    profissional.value = found ? (found.nome || "") : "";
+  // render moves table
+  function renderMoves(){
+    const mv = loadMoves().sort((a,b)=>String(b.dt_mov).localeCompare(String(a.dt_mov)));
+    movRows.innerHTML = "";
+    if (!mv.length){
+      movEmpty.textContent = "Sem movimentações ainda.";
+      return;
+    }
+    movEmpty.textContent = "";
+    for (const r of mv.slice(0,15)){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${A.escapeHtml(r.dt_mov)}</td>
+        <td>${A.escapeHtml(r.material)}</td>
+        <td>${A.escapeHtml(r.qtd)}</td>
+        <td>${A.escapeHtml(r.unidade)}</td>
+        <td>${A.escapeHtml(r.profissional)}</td>
+        <td>${A.escapeHtml(r.unidade_local)}</td>
+        <td>${A.escapeHtml(r.tipo)}</td>
+        <td>${A.escapeHtml(r.obs)}</td>
+      `;
+      movRows.appendChild(tr);
+    }
   }
 
-  cpfSelect.addEventListener("change", syncProfissional);
+  // KPI
+  function renderKpis(){
+    const mats = loadMaterials();
+    const active = mats.filter(m => String(m.ativo||"") === "Sim");
+    const stockTotal = active.reduce((s,m)=>s + toInt(m.estoque_atual,0), 0);
 
-  function clearForm(){
-    msg.textContent = "";
-    justificativa.value = "";
-    tipo.value = "Falta";
-    dtInicio.value = todayYYYYMMDD();
-    dtFim.value = todayYYYYMMDD();
-    cpfSelect.selectedIndex = 0;
-    syncProfissional();
+    const mv = loadMoves();
+    const mv30 = mv.filter(x => within30d(x.dt_mov)).length;
+    const last = mv.sort((a,b)=>String(b.dt_mov).localeCompare(String(a.dt_mov)))[0];
+
+    $("kpiMatActive").textContent = String(active.length);
+    $("kpiStockTotal").textContent = String(stockTotal);
+    $("kpiMov30").textContent = String(mv30);
+    $("kpiLastMov").textContent = last ? String(last.dt_mov).slice(0,16) : "—";
   }
 
-  $("btnClear").addEventListener("click", clearForm);
+  // Add movement (saída pós-uso)
+  $("btnAddMov").addEventListener("click", () => {
+    movMsg.textContent = "";
+    movMsg.style.color = "";
 
-  function parseDate(s){
-    // s = YYYY-MM-DD
-    if (!s) return null;
-    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!m) return null;
-    const d = new Date(+m[1], +m[2]-1, +m[3]);
-    return Number.isNaN(d.getTime()) ? null : d;
-  }
+    const mats = loadMaterials();
+    const id = String(movMaterial.value||"");
+    const m = mats.find(x => x.id === id && String(x.ativo||"") === "Sim");
+    const dt = String(movDate.value||"").trim();
+    const qty = toInt(movQty.value, 0);
 
-  function saveRequest(){
-    msg.textContent = "";
-    msg.style.color = "";
-
-    const cpf = (cpfSelect.value || "").trim();
-    const nome_profissional = (profissional.value || "").trim();
-    const di = (dtInicio.value || "").trim();
-    const df = (dtFim.value || "").trim();
-    const tp = (tipo.value || "").trim();
-    const just = (justificativa.value || "").trim();
+    const prof = (movProf.style.display !== "none") ? String(movProf.value||"").trim() : String(movProfTxt.value||"").trim();
+    const uni = (movUnitLocal.style.display !== "none") ? String(movUnitLocal.value||"").trim() : String(movUnitLocalTxt.value||"").trim();
+    const obs = String(movObs.value||"").trim();
 
     const errors = [];
-    if (!cpf) errors.push("CPF é obrigatório.");
-    if (!just) errors.push("Justificativa é obrigatória.");
-
-    const d1 = parseDate(di);
-    const d2 = parseDate(df);
-    if (!d1) errors.push("Data Início inválida.");
-    if (!d2) errors.push("Data Fim inválida.");
-    if (d1 && d2 && d2 < d1) errors.push("Data Fim não pode ser menor que Data Início.");
+    if (!m) errors.push("Selecione um material.");
+    if (!dt) errors.push("Data é obrigatória.");
+    if (!prof) errors.push("Profissional é obrigatório.");
+    if (!uni) errors.push("Unidade é obrigatória.");
+    if (qty <= 0) errors.push("Quantidade deve ser maior que zero.");
+    if (m && (m.estoque_atual - qty) < 0) errors.push(`Estoque insuficiente. Atual: ${m.estoque_atual} ${m.unidade_medida}.`);
 
     if (errors.length){
-      msg.textContent = errors.join(" ");
-      msg.style.color = "var(--bad)";
+      movMsg.textContent = errors.join(" ");
+      movMsg.style.color = "var(--bad)";
       return;
     }
 
-    const items = A.loadJSON(A.REQ_KEY, []);
+    // baixa estoque
+    const mats2 = mats.map(x => x.id === m.id ? ({...x, estoque_atual: (toInt(x.estoque_atual,0) - qty)}) : x);
+    saveMaterials(mats2);
 
-    const row = {
+    // log
+    const mv = loadMoves();
+    mv.push({
       id: A.uid().slice(0,10),
-      dt_pedido: todayYYYYMMDD(),       // igual Streamlit
-      cpf: cpf,
-      nome_profissional: nome_profissional,
-      dt_inicio: di,
-      dt_fim: df,
-      tipo: tp,
-      justificativa: just,
-      // manter compatível com KPIs do HTML:
-      status: "SUBMITTED",             // interno
-      status_label: "Pendente",        // visual (opcional)
-      aprovador: "",
-      dt_decisao: "",
-      created_at: A.nowISO(),
-      updated_at: A.nowISO()
-    };
+      dt_mov: `${dt} ${new Date().toTimeString().slice(0,5)}`,
+      material_id: m.id,
+      material: m.material,
+      qtd: qty,
+      unidade: m.unidade_medida,
+      profissional: prof,
+      unidade_local: uni,
+      tipo: "SAIDA_POS_USO",
+      obs: obs,
+    });
+    saveMoves(mv);
 
-    items.unshift(row);
-    A.saveJSON(A.REQ_KEY, items);
+    movMsg.textContent = "Registro adicionado e estoque atualizado.";
+    movMsg.style.color = "var(--good)";
 
-    msg.textContent = "Solicitação registrada (status: Pendente).";
-    msg.style.color = "var(--good)";
+    // reset campos
+    movQty.value = 1;
+    movObs.value = "";
 
-    // atualiza KPIs topo
-    try { A.renderKpis && A.renderKpis(); } catch(e){}
-    clearForm();
+    renderAll();
+  });
+
+  // export
+  btnExport.addEventListener("click", () => {
+    const choice = exportChoice.value;
+    if (choice === "mov"){
+      const mv = loadMoves().sort((a,b)=>String(a.dt_mov).localeCompare(String(b.dt_mov)));
+      const headers = ["id","dt_mov","material_id","material","qtd","unidade","profissional","unidade_local","tipo","obs"];
+      download("materiais_mov.csv", csv(mv, headers));
+    } else {
+      const mats = loadMaterials().sort((a,b)=>a.material.localeCompare(b.material,"pt-BR"));
+      const headers = ["id","material","unidade_medida","estoque_atual","ativo"];
+      download("materiais.csv", csv(mats, headers));
+    }
+  });
+
+  // ADMIN: selects
+  function renderAdminSelects(){
+    const mats = loadMaterials().sort((a,b)=>a.material.localeCompare(b.material,"pt-BR"));
+    const label = (m) => `${m.material} | id=${m.id}`;
+
+    // adjust select
+    admSelMat.innerHTML = "";
+    for (const m of mats){
+      const opt = document.createElement("option");
+      opt.value = m.id; opt.textContent = label(m);
+      admSelMat.appendChild(opt);
+    }
+
+    // remove select
+    admSelMatRm.innerHTML = "";
+    for (const m of mats){
+      const opt = document.createElement("option");
+      opt.value = m.id; opt.textContent = label(m);
+      admSelMatRm.appendChild(opt);
+    }
+
+    renderAdmMatHint();
   }
 
-  $("btnSave").addEventListener("click", saveRequest);
+  function renderAdmMatHint(){
+    const mats = loadMaterials();
+    const id = admSelMat.value;
+    const m = mats.find(x => x.id === id);
+    admSelMatHint.textContent = m ? `Estoque atual: ${m.estoque_atual} ${m.unidade_medida} • Ativo: ${m.ativo}` : "";
+  }
+
+  admSelMat.addEventListener("change", renderAdmMatHint);
+
+  // ADMIN: add material
+  btnAdmAdd.addEventListener("click", () => {
+    if (!isAdmin()) return;
+    admAddMsg.textContent = ""; admAddMsg.style.color = "";
+
+    const name = String(admMatName.value||"").trim();
+    const unit = String(admMatUnit.value||"un").trim();
+    const stock = toInt(admMatStock.value, 0);
+
+    if (!name){
+      admAddMsg.textContent = "Nome do material é obrigatório.";
+      admAddMsg.style.color = "var(--bad)";
+      return;
+    }
+
+    const mats = loadMaterials();
+    // evita duplicidade por nome (case-insensitive)
+    const exists = mats.some(m => String(m.material||"").toLowerCase() === name.toLowerCase());
+    if (exists){
+      admAddMsg.textContent = "Já existe um material com esse nome.";
+      admAddMsg.style.color = "var(--bad)";
+      return;
+    }
+
+    mats.push({ id:A.uid().slice(0,8), material:name, unidade_medida:unit, estoque_atual:stock, ativo:"Sim" });
+    saveMaterials(mats);
+
+    admMatName.value = "";
+    admMatStock.value = 0;
+
+    admAddMsg.textContent = "Material cadastrado.";
+    admAddMsg.style.color = "var(--good)";
+
+    renderAll();
+  });
+
+  // ADMIN: adjust
+  btnAdmApply.addEventListener("click", () => {
+    if (!isAdmin()) return;
+    admAdjMsg.textContent=""; admAdjMsg.style.color="";
+
+    const id = String(admSelMat.value||"").trim();
+    const mode = String(admMode.value||"ADD");
+    const qty = toInt(admQty.value, 0);
+    const obs = String(admObs.value||"").trim();
+
+    const mats = loadMaterials();
+    const idx = mats.findIndex(m => m.id === id);
+    if (idx < 0){
+      admAdjMsg.textContent="Material não encontrado.";
+      admAdjMsg.style.color="var(--bad)";
+      return;
+    }
+
+    const cur = toInt(mats[idx].estoque_atual, 0);
+    let next = cur;
+    let tipo = "AJUSTE_SET";
+
+    if (mode === "ADD"){ next = cur + qty; tipo = "AJUSTE_ADD"; }
+    if (mode === "REM"){ next = cur - qty; tipo = "AJUSTE_REM"; }
+    if (mode === "SET"){ next = qty; tipo = "AJUSTE_SET"; }
+
+    if (next < 0){
+      admAdjMsg.textContent="Não é possível ficar negativo.";
+      admAdjMsg.style.color="var(--bad)";
+      return;
+    }
+
+    mats[idx].estoque_atual = next;
+    saveMaterials(mats);
+
+    // log
+    const mv = loadMoves();
+    mv.push({
+      id: A.uid().slice(0,10),
+      dt_mov: A.nowISO(),
+      material_id: mats[idx].id,
+      material: mats[idx].material,
+      qtd: qty,
+      unidade: mats[idx].unidade_medida,
+      profissional: "",
+      unidade_local: "",
+      tipo: tipo,
+      obs: obs,
+    });
+    saveMoves(mv);
+
+    admAdjMsg.textContent="Ajuste aplicado.";
+    admAdjMsg.style.color="var(--good)";
+    admObs.value = "";
+    admQty.value = 0;
+
+    renderAll();
+  });
+
+  // ADMIN: remove
+  btnAdmRemove.addEventListener("click", () => {
+    if (!isAdmin()) return;
+    admRmMsg.textContent=""; admRmMsg.style.color="";
+
+    const id = String(admSelMatRm.value||"").trim();
+    const rmMode = (document.querySelector('input[name="rmMode"]:checked')||{}).value || "DEACT";
+
+    const mats = loadMaterials();
+    const idx = mats.findIndex(m => m.id === id);
+    if (idx < 0){
+      admRmMsg.textContent="Material não encontrado.";
+      admRmMsg.style.color="var(--bad)";
+      return;
+    }
+
+    if (!confirm(rmMode === "DEACT" ? "Desativar este material?" : "Excluir este material?")) return;
+
+    if (rmMode === "DEACT"){
+      mats[idx].ativo = "Não";
+      saveMaterials(mats);
+      admRmMsg.textContent="Material desativado.";
+      admRmMsg.style.color="var(--good)";
+    } else {
+      const mats2 = mats.filter(m => m.id !== id);
+      saveMaterials(mats2);
+      admRmMsg.textContent="Material excluído.";
+      admRmMsg.style.color="var(--good)";
+    }
+
+    renderAll();
+  });
+
+  // render all
+  function renderAll(){
+    renderKpis();
+    renderMaterialSelect();
+    renderProfAndUnits();
+    renderStock();
+    renderMoves();
+    renderAdminSelects();
+    renderAdmin();
+  }
 
   // init
-  renderCpfDropdown();
+  movDate.value = today();
+  renderAll();
 });
 </script>
 </body>

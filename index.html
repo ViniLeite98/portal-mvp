@@ -14,18 +14,28 @@
       <div class="page-header">
         <div>
           <h1>Início</h1>
-          <p class="muted">Visão geral do sistema</p>
+          <p class="muted">Visão geral (mock)</p>
         </div>
       </div>
 
       <section class="grid">
+        <!-- KPI Equipe -->
         <div class="card" style="grid-column: span 4;">
           <h2>Equipe</h2>
           <div class="kpi" id="kpiEquipe">0</div>
           <div class="muted">Terapeutas ativas no sistema</div>
         </div>
 
-        <div class="card" style="grid-column: span 8;">
+        <!-- Dias folgados -->
+        <div class="card" style="grid-column: span 4;">
+          <h2>Dias folgados</h2>
+          <div class="muted">Top 5 (solicitações aprovadas)</div>
+          <div class="list" id="diasList"></div>
+          <div class="muted" id="diasHint" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- Próximos feriados -->
+        <div class="card" style="grid-column: span 4;">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
             <div>
               <h2>Próximos feriados</h2>
@@ -36,6 +46,18 @@
 
           <div class="list" id="feriadosList"></div>
           <div class="muted" id="feriadosHint" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- Atalhos -->
+        <div class="card" style="grid-column: span 12;">
+          <h2>Acessos rápidos</h2>
+          <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+            <a class="btn" href="./equipe.html">Equipe</a>
+            <a class="btn" href="./solicitacoes.html">Solicitações</a>
+            <a class="btn" href="./materiais.html">Materiais</a>
+            <a class="btn" href="./governanca.html">Governança</a>
+          </div>
+          <div class="muted" style="margin-top:10px;">Se algum card ficar vazio, é porque ainda não existem dados salvos no localStorage.</div>
         </div>
       </section>
     </main>
@@ -50,30 +72,49 @@
     // KPI Equipe
     document.getElementById("kpiEquipe").textContent = String(countTerapeutasAtivas());
 
-    // Próximos feriados
-    const listEl = document.getElementById("feriadosList");
-    const hintEl = document.getElementById("feriadosHint");
+    // Dias folgados (Top 5)
+    const diasList = document.getElementById("diasList");
+    const diasHint = document.getElementById("diasHint");
+    const top = diasFolgadosTop(5);
 
+    if (!top.length) {
+      diasList.innerHTML = `<div class="muted" style="margin-top:10px;">Sem dados ainda.</div>`;
+      diasHint.textContent = "Dica: aprove alguma solicitação para aparecer aqui.";
+    } else {
+      diasList.innerHTML = top.map(r => `
+        <div class="row">
+          <div>
+            <div style="font-weight:800;">${r.nome}</div>
+            <div class="muted">Total aprovado</div>
+          </div>
+          <span class="badge">${r.dias} dias</span>
+        </div>
+      `).join("");
+      diasHint.textContent = "Baseado em dt_inicio/dt_fim (intervalo inclusivo).";
+    }
+
+    // Próximos feriados
+    const feriadosList = document.getElementById("feriadosList");
+    const feriadosHint = document.getElementById("feriadosHint");
     const feriados = getFeriados({ prunePast: true, keepToday: true }).slice(0, 6);
 
     if (!feriados.length) {
-      listEl.innerHTML = `<div class="muted" style="margin-top:10px;">Sem feriados cadastrados.</div>`;
-      hintEl.textContent = "Dica: vá em Governança para adicionar.";
+      feriadosList.innerHTML = `<div class="muted" style="margin-top:10px;">Sem feriados cadastrados.</div>`;
+      feriadosHint.textContent = "Dica: vá em Governança para adicionar.";
     } else {
-      listEl.innerHTML = feriados.map(f => {
+      feriadosList.innerHTML = feriados.map(f => {
         const extra = [f.titulo, f.obs].filter(Boolean).join(" • ");
         return `
           <div class="row">
             <div>
-              <div style="font-weight:700;">${fmtDateBR(f.data)} — ${weekdayPT(f.data)}</div>
+              <div style="font-weight:800;">${fmtDateBR(f.data)} — ${weekdayPT(f.data)}</div>
               <div class="muted">${extra || ""}</div>
             </div>
             <span class="badge">${f.data}</span>
           </div>
         `;
       }).join("");
-
-      hintEl.textContent = "Mostrando apenas os próximos (datas passadas são removidas automaticamente).";
+      feriadosHint.textContent = "Mostrando apenas os próximos (datas passadas são removidas automaticamente).";
     }
   </script>
 </body>

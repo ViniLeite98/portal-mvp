@@ -1,71 +1,105 @@
-const STORAGE_KEY = "equipe";
+const STORAGE_KEY = "terapeutas";
+let editCPF = null;
 
-const btnNova = document.getElementById("btnNova");
-const btnCancelar = document.getElementById("btnCancelar");
-const formContainer = document.getElementById("formContainer");
-const form = document.getElementById("formEquipe");
-const lista = document.getElementById("listaEquipe");
-
-btnNova.onclick = () => formContainer.classList.remove("hidden");
-btnCancelar.onclick = () => {
-  form.reset();
-  formContainer.classList.add("hidden");
-};
-
-function carregar() {
-  const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-
-  if (data.length === 0) {
-    lista.innerHTML = `<p class="muted">Nenhuma terapeuta cadastrada.</p>`;
-    return;
-  }
-
-  lista.innerHTML = `
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Unidade</th>
-          <th>Horário</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.map(t => `
-          <tr>
-            <td>${t.nomeProf}</td>
-            <td>${t.unidade}</td>
-            <td>${t.entrada}–${t.saida}</td>
-            <td>${t.status}</td>
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  `;
+function getEquipe() {
+  return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
 }
 
-form.onsubmit = e => {
+function saveEquipe(lista) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+}
+
+function renderEquipe() {
+  const lista = getEquipe().filter(t => t.status === "Ativo");
+  const tbody = document.getElementById("lista-equipe");
+  const qtd = document.getElementById("qtd-terapeutas");
+
+  qtd.innerText = `${lista.length} terapeutas ativas`;
+  tbody.innerHTML = "";
+
+  lista.forEach(t => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${t.nomeProfissional}</td>
+      <td>${t.temFolga}</td>
+      <td>${t.diaFolga || "-"}</td>
+      <td>${t.dataInicio}</td>
+      <td>${t.entrada}–${t.saida}</td>
+      <td>
+        <button onclick="editar('${t.cpf}')">✏️</button>
+        <button onclick="excluir('${t.cpf}')">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function abrirModal() {
+  editCPF = null;
+  document.getElementById("form-terapeuta").reset();
+  document.getElementById("modal").style.display = "flex";
+}
+
+function fecharModal() {
+  document.getElementById("modal").style.display = "none";
+}
+
+document.getElementById("form-terapeuta").onsubmit = e => {
   e.preventDefault();
 
-  const nova = {
-    id: Date.now(),
-    nomeCompleto: nomeCompleto.value,
-    nomeProf: nomeProf.value,
+  const terapeuta = {
     cpf: cpf.value,
+    nomeCompleto: nomeCompleto.value,
+    nomeProfissional: nomeProfissional.value,
+    dataNascimento: dataNascimento.value,
     email: email.value,
     unidade: unidade.value,
+    endereco: endereco.value,
+    contato: contato.value,
+    contatoEmergencia: contatoEmergencia.value,
+    temFolga: temFolga.value,
+    diaFolga: diaFolga.value,
     entrada: entrada.value,
     saida: saida.value,
-    status: document.querySelector("input[name=status]:checked").value
+    dataInicio: dataInicio.value,
+    status: status.value,
+    certs: {
+      nuru: nuru.checked,
+      vivencia: vivencia.checked,
+      podo: podo.checked,
+      casais: casais.checked,
+      feminina: feminina.checked
+    }
   };
 
-  const atual = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  atual.push(nova);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(atual));
+  let lista = getEquipe();
+  lista = lista.filter(t => t.cpf !== terapeuta.cpf);
+  lista.push(terapeuta);
 
-  form.reset();
-  formContainer.classList.add("hidden");
-  carregar();
+  saveEquipe(lista);
+  fecharModal();
+  renderEquipe();
 };
 
-carregar();
+function editar(cpfEdit) {
+  const t = getEquipe().find(t => t.cpf === cpfEdit);
+  if (!t) return;
+
+  Object.keys(t).forEach(k => {
+    if (document.getElementById(k)) {
+      document.getElementById(k).value = t[k];
+    }
+  });
+
+  editCPF = cpfEdit;
+  document.getElementById("modal").style.display = "flex";
+}
+
+function excluir(cpf) {
+  if (!confirm("Excluir terapeuta?")) return;
+  saveEquipe(getEquipe().filter(t => t.cpf !== cpf));
+  renderEquipe();
+}
+
+renderEquipe();

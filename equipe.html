@@ -4,29 +4,125 @@
   <meta charset="UTF-8" />
   <title>Equipe | Portal MVP</title>
 
+  <!-- CSS GLOBAL -->
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- JS GLOBAL (MENU) -->
   <script defer src="app.js"></script>
+
+  <!-- JS DA PÁGINA -->
   <script defer src="equipe.js"></script>
+
+  <style>
+    /* ===== ajustes locais mínimos ===== */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .page-header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .sub {
+      color: #666;
+      font-size: 13px;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      margin-bottom: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 8px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .actions button {
+      margin-right: 6px;
+    }
+
+    /* formulário */
+    #form-terapeuta {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .form-grid input,
+    .form-grid select {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+    }
+
+    .form-actions {
+      margin-top: 12px;
+    }
+  </style>
 </head>
+
 <body>
 
-  <!-- MENU (vem do app.js) -->
+  <!-- 🔥 MENU LATERAL (OBRIGATÓRIO) -->
   <div id="app"></div>
 
+  <!-- 🔥 CONTEÚDO -->
   <main class="content">
-    <div class="card header-card">
+
+    <!-- HEADER -->
+    <div class="page-header">
       <div>
-        <h2>👥 Lista de Terapeutas</h2>
-        <p id="qtd-terapeutas">0 terapeutas ativas</p>
+        <h1>👥 Lista de Terapeutas</h1>
+        <div class="sub">
+          <span id="qtd-ativas">0</span> terapeutas ativas
+        </div>
       </div>
 
-      <button class="btn-primary" onclick="abrirModal()">
+      <button class="btn-primary" id="btnNova">
         ＋ Nova Terapeuta
       </button>
     </div>
 
+    <!-- LISTA -->
     <div class="card">
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th>Nome</th>
@@ -37,76 +133,65 @@
             <th>Ações</th>
           </tr>
         </thead>
-        <tbody id="lista-equipe"></tbody>
+        <tbody id="tabela-terapeutas">
+          <tr>
+            <td colspan="6" style="color:#666;">
+              Nenhuma terapeuta cadastrada
+            </td>
+          </tr>
+        </tbody>
       </table>
     </div>
-  </main>
 
-  <!-- MODAL -->
-  <div class="modal" id="modal">
-    <div class="modal-content">
+    <!-- FORMULÁRIO -->
+    <div class="card" id="form-terapeuta">
       <h3>Cadastro de Terapeuta</h3>
 
-      <form id="form-terapeuta">
-        <div class="grid-2">
-          <input required placeholder="Nome Completo" id="nomeCompleto" />
-          <input required placeholder="Nome Profissional" id="nomeProfissional" />
-        </div>
+      <div class="form-grid">
+        <input placeholder="Nome completo" id="nomeCompleto">
+        <input placeholder="Nome profissional" id="nomeProf">
+        <input placeholder="CPF (11 dígitos)" id="cpf">
+        <input placeholder="Email" id="email">
 
-        <div class="grid-4">
-          <input type="date" id="dataNascimento" />
-          <input placeholder="CPF (11 dígitos)" id="cpf" maxlength="11" />
-          <input placeholder="Email" id="email" />
-          <input placeholder="Unidade" id="unidade" />
-        </div>
+        <input placeholder="Unidade" id="unidade">
+        <input placeholder="Contato" id="contato">
+        <input placeholder="Contato emergência" id="contatoEmerg">
+        <input placeholder="Endereço" id="endereco">
 
-        <div class="grid-3">
-          <input placeholder="Contato" id="contato" />
-          <input placeholder="Contato Emergência" id="contatoEmergencia" />
-          <input placeholder="Endereço" id="endereco" />
-        </div>
+        <select id="temFolga">
+          <option value="">Tem folga semanal?</option>
+          <option>Sim</option>
+          <option>Não</option>
+        </select>
 
-        <div class="grid-3">
-          <select id="temFolga">
-            <option value="Sim">Tem folga semanal?</option>
-            <option value="Não">Não</option>
-          </select>
+        <select id="diaFolga">
+          <option value="">Dia da folga</option>
+          <option>Segunda</option>
+          <option>Terça</option>
+          <option>Quarta</option>
+          <option>Quinta</option>
+          <option>Sexta</option>
+          <option>Sábado</option>
+          <option>Domingo</option>
+        </select>
 
-          <select id="diaFolga">
-            <option value="">Dia da folga</option>
-            <option>Segunda</option><option>Terça</option><option>Quarta</option>
-            <option>Quinta</option><option>Sexta</option>
-            <option>Sábado</option><option>Domingo</option>
-          </select>
+        <input type="time" id="entrada">
+        <input type="time" id="saida">
 
-          <select id="status">
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-          </select>
-        </div>
+        <input type="date" id="dataInicio">
+        <select id="status">
+          <option>Ativo</option>
+          <option>Inativo</option>
+        </select>
+      </div>
 
-        <div class="grid-3">
-          <input type="time" id="entrada" />
-          <input type="time" id="saida" />
-          <input type="date" id="dataInicio" />
-        </div>
-
-        <h4>Certificações</h4>
-        <div class="grid-5">
-          <label><input type="checkbox" id="nuru"> Nuru</label>
-          <label><input type="checkbox" id="vivencia"> Vivência</label>
-          <label><input type="checkbox" id="podo"> Podolatria</label>
-          <label><input type="checkbox" id="casais"> Casais</label>
-          <label><input type="checkbox" id="feminina"> Feminina</label>
-        </div>
-
-        <div class="actions">
-          <button type="submit" class="btn-primary">Salvar</button>
-          <button type="button" onclick="fecharModal()">Cancelar</button>
-        </div>
-      </form>
+      <div class="form-actions">
+        <button class="btn-primary" id="btnSalvar">Salvar</button>
+        <button id="btnCancelar">Cancelar</button>
+      </div>
     </div>
-  </div>
+
+  </main>
 
 </body>
 </html>

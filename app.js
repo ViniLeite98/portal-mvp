@@ -1,25 +1,58 @@
-console.log("✅ app.js carregado");
+/*************************
+ * BASE LOCAL (localStorage)
+ *************************/
 
-document.addEventListener("DOMContentLoaded", () => {
-  const app = document.getElementById("app");
-
-  if (!app) {
-    console.error("❌ DIV #app não encontrada");
-    return;
+// ---------- INIT ----------
+function initStorage() {
+  if (!localStorage.getItem("terapeutas")) {
+    localStorage.setItem("terapeutas", JSON.stringify([]));
   }
+  if (!localStorage.getItem("solicitacoes")) {
+    localStorage.setItem("solicitacoes", JSON.stringify([]));
+  }
+  if (!localStorage.getItem("proximas_datas")) {
+    localStorage.setItem("proximas_datas", JSON.stringify([]));
+  }
+}
 
-  app.innerHTML = `
-    <aside class="sidebar">
-      <h2 class="logo">Portal MVP</h2>
+initStorage();
 
-      <nav>
-        <a href="./index.html">🏠 Início</a>
-        <a href="./equipe.html">👥 Equipe</a>
-        <a href="./solicitacoes.html">📝 Solicitações</a>
-        <a href="./disponibilidade.html">📅 Disponibilidade</a>
-        <a href="./materias.html">📚 Materiais</a>
-        <a href="./financeiro.html">💰 Financeiro</a>
-      </nav>
-    </aside>
-  `;
-});
+// ---------- HELPERS TERAPEUTAS ----------
+function getTerapeutas() {
+  return JSON.parse(localStorage.getItem("terapeutas")) || [];
+}
+
+function saveTerapeutas(lista) {
+  localStorage.setItem("terapeutas", JSON.stringify(lista));
+}
+
+function getTerapeutasAtivas() {
+  return getTerapeutas().filter(t => (t.status || "Ativo") === "Ativo");
+}
+
+// ---------- HELPERS SOLICITAÇÕES ----------
+function getSolicitacoes() {
+  return JSON.parse(localStorage.getItem("solicitacoes")) || [];
+}
+
+function saveSolicitacoes(lista) {
+  localStorage.setItem("solicitacoes", JSON.stringify(lista));
+}
+
+// ---------- HELPERS GERAIS ----------
+function gerarId() {
+  return crypto.randomUUID().slice(0, 8);
+}
+
+function onlyDigits(v) {
+  return (v || "").replace(/\D+/g, "");
+}
+
+function isEmailValido(email) {
+  return email.includes("@") && email.includes(".");
+}
+
+function formatHora(h) {
+  if (!h) return "";
+  return h.slice(0, 5);
+}

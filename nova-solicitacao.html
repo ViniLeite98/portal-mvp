@@ -14,13 +14,15 @@
         <div class="logo"></div>
         <div>
           <h1>Portal MVP</h1>
-          <div class="muted">Nova solicitação</div>
+          <div class="muted">Solicitação • Demanda de Indisponibilidade</div>
         </div>
       </div>
+
       <div class="kpi">
         <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
         <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
         <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
+        <span class="pill">Terapeutas ativas: <strong id="kpiTherapistsActive">0</strong></span>
       </div>
     </div>
   </div>
@@ -28,121 +30,276 @@
 
 <main class="wrap">
   <div class="grid">
+    <!-- MENU -->
     <section class="card">
       <div class="hd"><div class="muted">Navegação</div></div>
       <div class="bd">
-<div class="nav">
-  <a class="btn" href="./index.html">Início</a>
-  <a class="btn primary" href="./nova-solicitacao.html">Nova solicitação</a>
-  <a class="btn" href="./solicitacoes.html">Solicitações</a>
-  <a class="btn" href="./equipe.html">Equipe</a>
-  <a class="btn" href="./terapeutas.html">Terapeutas</a>
-  <a class="btn" href="./governanca.html">Governança</a>
-</div>
-
+        <div class="nav">
+          <a class="btn" href="./index.html">Início</a>
+          <a class="btn primary" href="./nova-solicitacao.html">Nova solicitação</a>
+          <a class="btn" href="./solicitacoes.html">Solicitações</a>
+          <a class="btn" href="./equipe.html">Equipe</a>
+          <a class="btn" href="./terapeutas.html">Terapeutas</a>
+          <a class="btn" href="./governanca.html">Governança</a>
+        </div>
+      </div>
       <div class="ft">
-        <button class="btn danger small" id="btnReset">Zerar dados</button>
+        <button class="btn danger small" id="btnReset" type="button">Zerar dados</button>
         <span class="note">Somente local</span>
       </div>
     </section>
 
+    <!-- CONTEÚDO -->
     <section class="card">
       <div class="hd">
-        <h2 style="margin:0;font-size:18px">Nova solicitação</h2>
-        <div class="muted">Preencha e salve. Depois altere o status na lista.</div>
+        <h2 style="margin:0;font-size:18px">Nova Solicitação</h2>
+        <div class="muted">Registre uma indisponibilidade (falta, férias, viagem etc.).</div>
       </div>
 
       <div class="bd">
-        <div class="row2">
-          <div>
-            <label for="rq_title">Título *</label>
-            <input id="rq_title" placeholder="Ex.: Pedido de material / Ajuste de agenda" />
-          </div>
-          <div>
-            <label for="rq_type">Tipo *</label>
-            <select id="rq_type">
-              <option value="RH">RH</option>
-              <option value="Financeiro">Financeiro</option>
-              <option value="Operação">Operação</option>
-              <option value="TI">TI</option>
-              <option value="Outros">Outros</option>
-            </select>
-          </div>
+        <div id="jsWarn" class="note" style="display:none;color:var(--bad);margin-bottom:12px"></div>
+
+        <div id="noCpfBox" class="note" style="display:none;margin-bottom:12px">
+          Nenhum CPF encontrado em <b>Terapeutas</b>. Cadastre a terapeuta com CPF antes de solicitar.
         </div>
 
-        <div class="sep"></div>
-
-        <div>
-          <label for="rq_desc">Descrição</label>
-          <textarea id="rq_desc" rows="6" placeholder="Descreva o pedido, contexto e urgência..."></textarea>
-        </div>
-
-        <div class="sep"></div>
-
-        <div class="row2">
-          <div>
-            <label for="rq_requester">Solicitante *</label>
-            <input id="rq_requester" placeholder="Ex.: Gabriel" />
+        <div id="formBox">
+          <div class="row2">
+            <div>
+              <label for="cpfSelect">CPF (identificação) *</label>
+              <select id="cpfSelect"></select>
+            </div>
+            <div>
+              <label for="profissional">Profissional</label>
+              <input id="profissional" disabled />
+            </div>
           </div>
-          <div>
-            <label for="rq_approver">Aprovador (texto)</label>
-            <input id="rq_approver" placeholder="Ex.: Coordenação / Gestão" />
+
+          <div class="sep"></div>
+
+          <div class="row2">
+            <div>
+              <label for="dtInicio">Data Início *</label>
+              <input id="dtInicio" type="date" />
+            </div>
+            <div>
+              <label for="dtFim">Data Fim *</label>
+              <input id="dtFim" type="date" />
+            </div>
           </div>
-        </div>
 
-        <div class="sep"></div>
+          <div class="sep"></div>
 
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <button class="btn primary" id="btnSaveRq">Salvar solicitação</button>
-          <a class="btn" href="./solicitacoes.html">Ir para lista</a>
-          <span class="note" id="rq_msg"></span>
+          <div class="row2">
+            <div>
+              <label for="tipo">Tipo *</label>
+              <select id="tipo">
+                <option>Falta</option>
+                <option>Férias</option>
+                <option>Viagem</option>
+                <option>Atestado</option>
+                <option>Outro</option>
+              </select>
+            </div>
+            <div>
+              <label for="justificativa">Justificativa *</label>
+              <input id="justificativa" placeholder="Ex.: Viagem, Atestado médico..." />
+            </div>
+          </div>
+
+          <div class="sep"></div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn primary" type="button" id="btnSave">Salvar solicitação</button>
+            <button class="btn" type="button" id="btnClear">Limpar</button>
+            <span class="note" id="msg"></span>
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="note">
+            A solicitação será salva como <b>Pendente</b> (internamente: <code>SUBMITTED</code>), para aparecer como “aberta” no dashboard.
+          </div>
         </div>
       </div>
     </section>
   </div>
 </main>
 
-<script src="./app.js?v=1"></script>
+<script src="./app.js?v=11"></script>
 <script>
-  const { loadJSON, saveJSON, REQ_KEY, uid, nowISO } = window.App;
+document.addEventListener("DOMContentLoaded", () => {
+  const warn = (text) => {
+    const el = document.getElementById("jsWarn");
+    el.style.display = "block";
+    el.textContent = text;
+  };
 
-  window.App.renderKpis();
-  window.App.wireResetButton();
+  if (!window.App) {
+    warn("Erro: app.js não carregou. Confira se o arquivo se chama 'app.js' (minúsculo) e se o caminho está './app.js'.");
+    console.error("window.App indefinido -> app.js não carregou.");
+    return;
+  }
 
-  function saveRequest(){
-    const msg = document.getElementById("rq_msg");
-    msg.textContent = "";
+  const A = window.App;
+  const $ = (id) => document.getElementById(id);
 
-    const title = document.getElementById("rq_title").value.trim();
-    const type = document.getElementById("rq_type").value;
-    const desc = document.getElementById("rq_desc").value.trim();
-    const requester = document.getElementById("rq_requester").value.trim();
-    const approver = document.getElementById("rq_approver").value.trim();
+  // KPIs topo (se existirem no seu app.js atual, ótimo)
+  try { A.renderKpis && A.renderKpis(); } catch(e){}
+  try { A.renderTherapistsKpis && A.renderTherapistsKpis(); } catch(e){}
+  try { A.wireResetButton && A.wireResetButton(); } catch(e){}
 
-    if (!title || !type || !requester){
-      msg.textContent = "Preencha: Título, Tipo e Solicitante.";
+  const msg = $("msg");
+  const cpfSelect = $("cpfSelect");
+  const profissional = $("profissional");
+  const dtInicio = $("dtInicio");
+  const dtFim = $("dtFim");
+  const tipo = $("tipo");
+  const justificativa = $("justificativa");
+
+  function todayYYYYMMDD(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${dd}`;
+  }
+
+  // Defaults datas
+  dtInicio.value = todayYYYYMMDD();
+  dtFim.value = todayYYYYMMDD();
+
+  function getTherapistsWithCpf(){
+    const th = A.loadJSON(A.TH_KEY, []);
+    const list = th
+      .map(t => ({
+        cpf: (t.cpf || "").trim(),
+        nome: (t.profName || t.fullName || "").trim(),
+        status: (t.status || "").trim()
+      }))
+      .filter(x => x.cpf && x.cpf.length === 11); // CPF 11 dígitos
+    list.sort((a,b) => a.cpf.localeCompare(b.cpf));
+    return list;
+  }
+
+  function renderCpfDropdown(){
+    const list = getTherapistsWithCpf();
+
+    if (!list.length) {
+      $("noCpfBox").style.display = "block";
+      $("formBox").style.display = "none";
       return;
     }
 
-    const items = loadJSON(REQ_KEY, []);
-    items.unshift({
-      id: uid(),
-      title, type, desc, requester, approver,
-      status: "SUBMITTED",
-      created_at: nowISO(),
-      updated_at: nowISO()
-    });
-    saveJSON(REQ_KEY, items);
+    $("noCpfBox").style.display = "none";
+    $("formBox").style.display = "block";
 
-    document.getElementById("rq_title").value = "";
-    document.getElementById("rq_desc").value = "";
-    document.getElementById("rq_requester").value = "";
-    document.getElementById("rq_approver").value = "";
-    msg.textContent = "Salvo.";
-    window.App.renderKpis();
+    cpfSelect.innerHTML = "";
+    for (const t of list){
+      const opt = document.createElement("option");
+      opt.value = t.cpf;
+      opt.textContent = `${t.cpf} — ${t.nome || ""}`;
+      cpfSelect.appendChild(opt);
+    }
+
+    // set profissional
+    const first = list[0];
+    profissional.value = first.nome || "";
   }
 
-  document.getElementById("btnSaveRq").addEventListener("click", saveRequest);
+  function syncProfissional(){
+    const cpf = cpfSelect.value;
+    const list = getTherapistsWithCpf();
+    const found = list.find(x => x.cpf === cpf);
+    profissional.value = found ? (found.nome || "") : "";
+  }
+
+  cpfSelect.addEventListener("change", syncProfissional);
+
+  function clearForm(){
+    msg.textContent = "";
+    justificativa.value = "";
+    tipo.value = "Falta";
+    dtInicio.value = todayYYYYMMDD();
+    dtFim.value = todayYYYYMMDD();
+    cpfSelect.selectedIndex = 0;
+    syncProfissional();
+  }
+
+  $("btnClear").addEventListener("click", clearForm);
+
+  function parseDate(s){
+    // s = YYYY-MM-DD
+    if (!s) return null;
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return null;
+    const d = new Date(+m[1], +m[2]-1, +m[3]);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  function saveRequest(){
+    msg.textContent = "";
+    msg.style.color = "";
+
+    const cpf = (cpfSelect.value || "").trim();
+    const nome_profissional = (profissional.value || "").trim();
+    const di = (dtInicio.value || "").trim();
+    const df = (dtFim.value || "").trim();
+    const tp = (tipo.value || "").trim();
+    const just = (justificativa.value || "").trim();
+
+    const errors = [];
+    if (!cpf) errors.push("CPF é obrigatório.");
+    if (!just) errors.push("Justificativa é obrigatória.");
+
+    const d1 = parseDate(di);
+    const d2 = parseDate(df);
+    if (!d1) errors.push("Data Início inválida.");
+    if (!d2) errors.push("Data Fim inválida.");
+    if (d1 && d2 && d2 < d1) errors.push("Data Fim não pode ser menor que Data Início.");
+
+    if (errors.length){
+      msg.textContent = errors.join(" ");
+      msg.style.color = "var(--bad)";
+      return;
+    }
+
+    const items = A.loadJSON(A.REQ_KEY, []);
+
+    const row = {
+      id: A.uid().slice(0,10),
+      dt_pedido: todayYYYYMMDD(),       // igual Streamlit
+      cpf: cpf,
+      nome_profissional: nome_profissional,
+      dt_inicio: di,
+      dt_fim: df,
+      tipo: tp,
+      justificativa: just,
+      // manter compatível com KPIs do HTML:
+      status: "SUBMITTED",             // interno
+      status_label: "Pendente",        // visual (opcional)
+      aprovador: "",
+      dt_decisao: "",
+      created_at: A.nowISO(),
+      updated_at: A.nowISO()
+    };
+
+    items.unshift(row);
+    A.saveJSON(A.REQ_KEY, items);
+
+    msg.textContent = "Solicitação registrada (status: Pendente).";
+    msg.style.color = "var(--good)";
+
+    // atualiza KPIs topo
+    try { A.renderKpis && A.renderKpis(); } catch(e){}
+    clearForm();
+  }
+
+  $("btnSave").addEventListener("click", saveRequest);
+
+  // init
+  renderCpfDropdown();
+});
 </script>
 </body>
 </html>

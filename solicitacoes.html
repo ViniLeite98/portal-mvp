@@ -1,28 +1,227 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Portal MVP — Solicitações</title>
+  <title>Solicitações • Portal MVP</title>
   <link rel="stylesheet" href="styles.css">
+  <style>
+    .card {
+      background:#fff;
+      border:1px solid #e7e7e7;
+      border-radius:18px;
+      padding:20px;
+      margin-bottom:20px;
+    }
+    table {
+      width:100%;
+      border-collapse:collapse;
+    }
+    th, td {
+      padding:10px 6px;
+      border-bottom:1px solid #eee;
+      font-size:14px;
+    }
+    th { text-align:left; }
+    .btn {
+      background:#3d4b63;
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      padding:10px 16px;
+      cursor:pointer;
+    }
+    .modal {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.4);
+      justify-content:center;
+      align-items:center;
+    }
+    .modal-content {
+      background:#fff;
+      border-radius:16px;
+      padding:24px;
+      width:420px;
+    }
+    label { font-size:12px; }
+    input, select {
+      width:100%;
+      padding:8px;
+      margin-top:4px;
+      margin-bottom:10px;
+      border-radius:8px;
+      border:1px solid #ddd;
+    }
+  </style>
 </head>
 <body>
 
-<div class="app-container">
-  <div id="sidebar"></div>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Portal MVP</h2>
+    <nav>
+      <a href="index.html">🏠 Início</a>
+      <a href="equipe.html">👥 Equipe</a>
+      <a href="solicitacoes.html" class="active">📋 Solicitações</a>
+      <a href="escala.html">📆 Escala</a>
+      <a href="disponibilidade.html">🗓️ Disponibilidade</a>
+      <a href="materias.html">📦 Materiais</a>
+      <a href="financeiro.html">💰 Financeiro</a>
+    </nav>
+  </aside>
 
-  <main class="main-content">
-    <h2>Solicitações</h2>
+  <main class="content">
 
-    <div class="card">
-      <button class="btn-primary">＋ Nova solicitação</button>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+      <h2>Solicitações</h2>
+      <button class="btn" onclick="openForm()">＋ Nova solicitação</button>
     </div>
 
     <div class="card">
-      <p>Nenhuma solicitação registrada</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Terapeuta</th>
+            <th>CPF</th>
+            <th>Período</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
     </div>
+
   </main>
 </div>
 
-<script src="app.js"></script>
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Nova solicitação</h3>
+
+    <label>Terapeuta *</label>
+    <select id="terapeutaSelect"></select>
+
+    <label>CPF</label>
+    <input id="cpf" disabled>
+
+    <label>Data início *</label>
+    <input type="date" id="dtInicio">
+
+    <label>Data fim *</label>
+    <input type="date" id="dtFim">
+
+    <label>Tipo</label>
+    <select id="tipo">
+      <option>Férias</option>
+      <option>Folga</option>
+      <option>Licença</option>
+    </select>
+
+    <label>Justificativa</label>
+    <input id="justificativa">
+
+    <div style="margin-top:10px;">
+      <button class="btn" onclick="save()">Salvar</button>
+      <button class="btn" style="background:#aaa;" onclick="closeForm()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY_SOL = "solicitacoes";
+const KEY_EQ = "terapeutas";
+
+function getEquipe(){
+  return JSON.parse(localStorage.getItem(KEY_EQ) || "[]")
+    .filter(t => t.status === "Ativo");
+}
+
+function getSolic(){
+  return JSON.parse(localStorage.getItem(KEY_SOL) || "[]");
+}
+
+function saveSolic(d){
+  localStorage.setItem(KEY_SOL, JSON.stringify(d));
+}
+
+function render(){
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  getSolic().forEach(s => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${s.nome}</td>
+        <td>${s.cpf}</td>
+        <td>${s.dtInicio} → ${s.dtFim}</td>
+        <td>${s.tipo}</td>
+        <td>${s.status}</td>
+        <td><button onclick="del('${s.id}')">🗑️</button></td>
+      </tr>`;
+  });
+}
+
+function openForm(){
+  const sel = document.getElementById("terapeutaSelect");
+  sel.innerHTML = "<option value=''>Selecione...</option>";
+
+  getEquipe().forEach(t => {
+    sel.innerHTML += `<option value="${t.id}" data-cpf="${t.cpf}">
+      ${t.nomeProf}
+    </option>`;
+  });
+
+  document.getElementById("cpf").value = "";
+  document.getElementById("modal").style.display = "flex";
+}
+
+document.getElementById("terapeutaSelect").addEventListener("change", e => {
+  const opt = e.target.selectedOptions[0];
+  document.getElementById("cpf").value = opt?.dataset.cpf || "";
+});
+
+function closeForm(){
+  document.getElementById("modal").style.display = "none";
+}
+
+function save(){
+  const sel = document.getElementById("terapeutaSelect");
+  const opt = sel.selectedOptions[0];
+
+  if (!opt || !opt.value) {
+    alert("Selecione uma terapeuta");
+    return;
+  }
+
+  const data = getSolic();
+  data.push({
+    id: crypto.randomUUID(),
+    terapeutaId: opt.value,
+    nome: opt.text,
+    cpf: opt.dataset.cpf,
+    dtInicio: dtInicio.value,
+    dtFim: dtFim.value,
+    tipo: tipo.value,
+    justificativa: justificativa.value,
+    status: "Aberta"
+  });
+
+  saveSolic(data);
+  closeForm();
+  render();
+}
+
+function del(id){
+  saveSolic(getSolic().filter(s => s.id !== id));
+  render();
+}
+
+render();
+</script>
+
 </body>
 </html>

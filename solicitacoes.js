@@ -1,72 +1,100 @@
-const btnNova = document.getElementById("btnNova");
-const formContainer = document.getElementById("formContainer");
-const btnCancelar = document.getElementById("btnCancelar");
-const form = document.getElementById("formSolicitacao");
-const lista = document.getElementById("listaSolicitacoes");
+const SOL_KEY = "solicitacoes";
+const EQ_KEY = "terapeutas";
 
-const STORAGE_KEY = "solicitacoes";
-
-btnNova.onclick = () => {
-  formContainer.classList.remove("hidden");
-};
-
-btnCancelar.onclick = () => {
-  form.reset();
-  formContainer.classList.add("hidden");
-};
-
-function carregar() {
-  const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-
-  if (data.length === 0) {
-    lista.innerHTML = `<p class="muted">Nenhuma solicitação registrada.</p>`;
-    return;
-  }
-
-  lista.innerHTML = `
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Tipo</th>
-          <th>Período</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.map(s => `
-          <tr>
-            <td>${s.nome}</td>
-            <td>${s.tipo}</td>
-            <td>${s.inicio} → ${s.fim}</td>
-            <td>${s.status}</td>
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  `;
+function getSolicitacoes() {
+  return JSON.parse(localStorage.getItem(SOL_KEY)) || [];
 }
 
-form.onsubmit = e => {
+function saveSolicitacoes(lista) {
+  localStorage.setItem(SOL_KEY, JSON.stringify(lista));
+}
+
+function getEquipe() {
+  return JSON.parse(localStorage.getItem(EQ_KEY)) || [];
+}
+
+function carregarTerapeutas() {
+  const select = document.getElementById("cpf");
+  select.innerHTML = "<option value=''>Selecione a terapeuta</option>";
+
+  getEquipe()
+    .filter(t => t.status === "Ativo")
+    .forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t.cpf;
+      opt.textContent = `${t.nomeProfissional} — ${t.cpf}`;
+      opt.dataset.nome = t.nomeProfissional;
+      select.appendChild(opt);
+    });
+
+  select.onchange = () => {
+    const nome = select.selectedOptions[0]?.dataset.nome || "";
+    document.getElementById("nome").value = nome;
+  };
+}
+
+function renderSolicitacoes() {
+  const lista = getSolicitacoes();
+  const tbody = document.getElementById("lista-solicitacoes");
+  const qtd = document.getElementById("qtd-solicitacoes");
+
+  qtd.innerText = `${lista.length} solicitações cadastradas`;
+  tbody.innerHTML = "";
+
+  lista.forEach((s, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${s.nome}</td>
+      <td>${s.tipo}</td>
+      <td>${s.inicio} → ${s.fim}</td>
+      <td>
+        <span class="badge ${s.status.toLowerCase()}">${s.status}</span>
+      </td>
+      <td>
+        <button onclick="excluir(${i})">🗑️</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function abrirModal() {
+  document.getElementById("form-solicitacao").reset();
+  document.getElementById("modal").style.display = "flex";
+  carregarTerapeutas();
+}
+
+function fecharModal() {
+  document.getElementById("modal").style.display = "none";
+}
+
+document.getElementById("form-solicitacao").onsubmit = e => {
   e.preventDefault();
 
-  const nova = {
-    id: Date.now(),
+  const solicitacao = {
+    cpf: cpf.value,
     nome: nome.value,
     tipo: tipo.value,
     inicio: inicio.value,
     fim: fim.value,
-    obs: obs.value,
-    status: "Aberta"
+    status: status.value,
+    justificativa: justificativa.value
   };
 
-  const atual = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  atual.push(nova);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(atual));
+  const lista = getSolicitacoes();
+  lista.push(solicitacao);
+  saveSolicitacoes(lista);
 
-  form.reset();
-  formContainer.classList.add("hidden");
-  carregar();
+  fecharModal();
+  renderSolicitacoes();
 };
 
-carregar();
+function excluir(index) {
+  if (!confirm("Excluir solicitação?")) return;
+  const lista = getSolicitacoes();
+  lista.splice(index, 1);
+  saveSolicitacoes(lista);
+  renderSolicitacoes();
+}
+
+renderSolicitacoes();

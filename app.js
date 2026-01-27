@@ -1,6 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
   const app = document.getElementById("app");
-  if (!app) return;
+
+  if (!app) {
+    console.error("❌ DIV #app não encontrada");
+    return;
+  }
 
   app.innerHTML = `
     <aside class="sidebar">

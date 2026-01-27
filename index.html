@@ -1,36 +1,134 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Portal MVP — Início</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <title>Início • Portal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- CSS base -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont;
+      background: #f7f7f7;
+      color: #111;
+    }
+
+    main {
+      margin-left: 240px;
+      padding: 32px;
+    }
+
+    h1 {
+      margin-bottom: 24px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 18px 20px;
+      border: 1px solid #e6e6e6;
+    }
+
+    .card-title {
+      font-size: 14px;
+      color: #555;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-value {
+      font-size: 36px;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .muted {
+      font-size: 12px;
+      color: #777;
+      margin-top: 6px;
+    }
+  </style>
 </head>
+
 <body>
 
-<div class="app-container">
-  <div id="sidebar"></div>
+  <!-- MENU LATERAL -->
+  <aside id="sidebar"></aside>
 
-  <main class="main-content">
-    <h2>Início</h2>
+  <!-- CONTEÚDO -->
+  <main>
+    <h1>Início</h1>
 
-    <div class="card">
-      <h3>Equipe</h3>
-      <strong>0</strong>
-      <p>Funcionárias ativas</p>
-    </div>
+    <section class="cards">
+      <div class="card">
+        <div class="card-title">
+          <span>Equipe ativa</span>
+          <span>👥</span>
+        </div>
+        <div id="kpi-terapeutas" class="card-value">0</div>
+        <div class="muted">Terapeutas ativas no sistema</div>
+      </div>
 
-    <div class="card">
-      <h3>Próximas datas</h3>
-      <p>Sem dados</p>
-    </div>
-
-    <div class="card">
-      <h3>Dias folgados</h3>
-      <p>Sem dados</p>
-    </div>
+      <div class="card">
+        <div class="card-title">
+          <span>Solicitações</span>
+          <span>📝</span>
+        </div>
+        <div id="kpi-solicitacoes" class="card-value">0</div>
+        <div class="muted">Total cadastradas</div>
+      </div>
+    </section>
   </main>
-</div>
 
-<script src="app.js"></script>
+  <!-- ===================== -->
+  <!-- SCRIPT BASE (OBRIGATÓRIO) -->
+  <!-- ===================== -->
+  <script>
+    /* ===== MENU LATERAL ===== */
+    fetch("menu.html")
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById("sidebar").innerHTML = html;
+      });
+
+    /* ===== BASE DE DADOS ===== */
+
+    function getTerapeutas() {
+      return JSON.parse(localStorage.getItem("terapeutas") || "[]");
+    }
+
+    function terapeutasAtivas() {
+      return getTerapeutas().filter(t => {
+        const status = (t.Status || "").toLowerCase().trim();
+        return status === "ativo" || status === "";
+      });
+    }
+
+    function getSolicitacoes() {
+      return JSON.parse(localStorage.getItem("solicitacoes") || "[]");
+    }
+
+    /* ===== KPIs ===== */
+    document.addEventListener("DOMContentLoaded", () => {
+      // KPI – Terapeutas ativas
+      const ativas = terapeutasAtivas();
+      document.getElementById("kpi-terapeutas").innerText = ativas.length;
+
+      // KPI – Solicitações
+      const solicitacoes = getSolicitacoes();
+      document.getElementById("kpi-solicitacoes").innerText = solicitacoes.length;
+    });
+  </script>
+
 </body>
 </html>

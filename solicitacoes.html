@@ -1,227 +1,85 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Solicitações • Portal MVP</title>
-  <link rel="stylesheet" href="styles.css">
-  <style>
-    .card {
-      background:#fff;
-      border:1px solid #e7e7e7;
-      border-radius:18px;
-      padding:20px;
-      margin-bottom:20px;
-    }
-    table {
-      width:100%;
-      border-collapse:collapse;
-    }
-    th, td {
-      padding:10px 6px;
-      border-bottom:1px solid #eee;
-      font-size:14px;
-    }
-    th { text-align:left; }
-    .btn {
-      background:#3d4b63;
-      color:#fff;
-      border:none;
-      border-radius:10px;
-      padding:10px 16px;
-      cursor:pointer;
-    }
-    .modal {
-      display:none;
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,.4);
-      justify-content:center;
-      align-items:center;
-    }
-    .modal-content {
-      background:#fff;
-      border-radius:16px;
-      padding:24px;
-      width:420px;
-    }
-    label { font-size:12px; }
-    input, select {
-      width:100%;
-      padding:8px;
-      margin-top:4px;
-      margin-bottom:10px;
-      border-radius:8px;
-      border:1px solid #ddd;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <title>Solicitações | Portal MVP</title>
+
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="app.js"></script>
+  <script defer src="solicitacoes.js"></script>
 </head>
 <body>
 
-<div class="layout">
-  <aside class="sidebar">
-    <h2>Portal MVP</h2>
-    <nav>
-      <a href="index.html">🏠 Início</a>
-      <a href="equipe.html">👥 Equipe</a>
-      <a href="solicitacoes.html" class="active">📋 Solicitações</a>
-      <a href="escala.html">📆 Escala</a>
-      <a href="disponibilidade.html">🗓️ Disponibilidade</a>
-      <a href="materias.html">📦 Materiais</a>
-      <a href="financeiro.html">💰 Financeiro</a>
-    </nav>
-  </aside>
+  <div id="app"></div>
 
   <main class="content">
+    <div class="card header-card">
+      <div>
+        <h2>📝 Solicitações</h2>
+        <p id="qtd-solicitacoes">0 solicitações cadastradas</p>
+      </div>
 
-    <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
-      <h2>Solicitações</h2>
-      <button class="btn" onclick="openForm()">＋ Nova solicitação</button>
+      <button class="btn-primary" onclick="abrirModal()">
+        ＋ Nova Solicitação
+      </button>
     </div>
 
     <div class="card">
-      <table>
+      <table class="table">
         <thead>
           <tr>
             <th>Terapeuta</th>
-            <th>CPF</th>
-            <th>Período</th>
             <th>Tipo</th>
+            <th>Período</th>
             <th>Status</th>
             <th>Ações</th>
           </tr>
         </thead>
-        <tbody id="lista"></tbody>
+        <tbody id="lista-solicitacoes"></tbody>
       </table>
     </div>
-
   </main>
-</div>
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h3>Nova solicitação</h3>
+  <!-- MODAL -->
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <h3>Nova Solicitação</h3>
 
-    <label>Terapeuta *</label>
-    <select id="terapeutaSelect"></select>
+      <form id="form-solicitacao">
+        <div class="grid-2">
+          <select id="cpf" required></select>
+          <input id="nome" disabled />
+        </div>
 
-    <label>CPF</label>
-    <input id="cpf" disabled>
+        <div class="grid-2">
+          <select id="tipo" required>
+            <option value="">Tipo</option>
+            <option>Folga</option>
+            <option>Férias</option>
+            <option>Afastamento</option>
+          </select>
 
-    <label>Data início *</label>
-    <input type="date" id="dtInicio">
+          <select id="status">
+            <option value="Aberta">Aberta</option>
+            <option value="Aprovada">Aprovada</option>
+            <option value="Rejeitada">Rejeitada</option>
+          </select>
+        </div>
 
-    <label>Data fim *</label>
-    <input type="date" id="dtFim">
+        <div class="grid-2">
+          <input type="date" id="inicio" required />
+          <input type="date" id="fim" required />
+        </div>
 
-    <label>Tipo</label>
-    <select id="tipo">
-      <option>Férias</option>
-      <option>Folga</option>
-      <option>Licença</option>
-    </select>
+        <textarea id="justificativa" placeholder="Justificativa"></textarea>
 
-    <label>Justificativa</label>
-    <input id="justificativa">
-
-    <div style="margin-top:10px;">
-      <button class="btn" onclick="save()">Salvar</button>
-      <button class="btn" style="background:#aaa;" onclick="closeForm()">Cancelar</button>
+        <div class="actions">
+          <button type="submit" class="btn-primary">Salvar</button>
+          <button type="button" onclick="fecharModal()">Cancelar</button>
+        </div>
+      </form>
     </div>
   </div>
-</div>
-
-<script>
-const KEY_SOL = "solicitacoes";
-const KEY_EQ = "terapeutas";
-
-function getEquipe(){
-  return JSON.parse(localStorage.getItem(KEY_EQ) || "[]")
-    .filter(t => t.status === "Ativo");
-}
-
-function getSolic(){
-  return JSON.parse(localStorage.getItem(KEY_SOL) || "[]");
-}
-
-function saveSolic(d){
-  localStorage.setItem(KEY_SOL, JSON.stringify(d));
-}
-
-function render(){
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  getSolic().forEach(s => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${s.nome}</td>
-        <td>${s.cpf}</td>
-        <td>${s.dtInicio} → ${s.dtFim}</td>
-        <td>${s.tipo}</td>
-        <td>${s.status}</td>
-        <td><button onclick="del('${s.id}')">🗑️</button></td>
-      </tr>`;
-  });
-}
-
-function openForm(){
-  const sel = document.getElementById("terapeutaSelect");
-  sel.innerHTML = "<option value=''>Selecione...</option>";
-
-  getEquipe().forEach(t => {
-    sel.innerHTML += `<option value="${t.id}" data-cpf="${t.cpf}">
-      ${t.nomeProf}
-    </option>`;
-  });
-
-  document.getElementById("cpf").value = "";
-  document.getElementById("modal").style.display = "flex";
-}
-
-document.getElementById("terapeutaSelect").addEventListener("change", e => {
-  const opt = e.target.selectedOptions[0];
-  document.getElementById("cpf").value = opt?.dataset.cpf || "";
-});
-
-function closeForm(){
-  document.getElementById("modal").style.display = "none";
-}
-
-function save(){
-  const sel = document.getElementById("terapeutaSelect");
-  const opt = sel.selectedOptions[0];
-
-  if (!opt || !opt.value) {
-    alert("Selecione uma terapeuta");
-    return;
-  }
-
-  const data = getSolic();
-  data.push({
-    id: crypto.randomUUID(),
-    terapeutaId: opt.value,
-    nome: opt.text,
-    cpf: opt.dataset.cpf,
-    dtInicio: dtInicio.value,
-    dtFim: dtFim.value,
-    tipo: tipo.value,
-    justificativa: justificativa.value,
-    status: "Aberta"
-  });
-
-  saveSolic(data);
-  closeForm();
-  render();
-}
-
-function del(id){
-  saveSolic(getSolic().filter(s => s.id !== id));
-  render();
-}
-
-render();
-</script>
 
 </body>
 </html>

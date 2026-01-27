@@ -1,210 +1,131 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Portal MVP • Governança</title>
-  <link rel="stylesheet" href="./styles.css">
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Governança</title>
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand">
-        <div class="logo"></div>
+  <div class="app">
+    <aside id="sidebar"></aside>
+
+    <main class="content">
+      <div class="page-header">
         <div>
-          <h1>Portal MVP</h1>
-          <div class="muted">Governança de dados (MVP)</div>
+          <h1>Governança</h1>
+          <p class="muted">Gestão de feriados e datas relevantes</p>
         </div>
+        <a class="btn" href="./index.html">Voltar ao Início</a>
       </div>
-      <div class="kpi">
-        <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
-        <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
-        <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
-      </div>
-    </div>
+
+      <section class="card">
+        <h2>Cadastrar feriado</h2>
+        <p class="muted">Adicione manualmente e ele aparecerá no Início.</p>
+
+        <form id="formFeriado" class="form" autocomplete="off">
+          <div class="field" style="grid-column: span 3;">
+            <label>Data *</label>
+            <input type="date" id="data" required />
+          </div>
+
+          <div class="field" style="grid-column: span 4;">
+            <label>Título (opcional)</label>
+            <input type="text" id="titulo" placeholder="Ex.: Carnaval / Feriado municipal" />
+          </div>
+
+          <div class="field" style="grid-column: span 5;">
+            <label>Observação (opcional)</label>
+            <input type="text" id="obs" placeholder="Ex.: Unidade Centro / sem expediente" />
+          </div>
+
+          <div class="field" style="grid-column: span 12; display:flex; flex-direction:row; gap:10px; align-items:center;">
+            <button class="btn primary" type="submit">Salvar feriado</button>
+            <span class="muted" id="msg"></span>
+          </div>
+        </form>
+
+        <hr class="hr"/>
+
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <div>
+            <h2>Feriados cadastrados</h2>
+            <div class="muted">Você pode excluir qualquer item.</div>
+          </div>
+          <button class="btn" id="btnRefresh">Atualizar</button>
+        </div>
+
+        <div class="list" id="list"></div>
+      </section>
+    </main>
   </div>
-</header>
 
-<main class="wrap">
-  <div class="grid">
-    <!-- MENU -->
-    <section class="card">
-      <div class="hd"><div class="muted">Navegação</div></div>
-      <div class="bd">
-<div class="nav">
-  <a class="btn" href="./index.html">Início</a>
-  <a class="btn" href="./materiais.html">Materiais</a>
-  <a class="btn" href="./solicitacoes.html">Solicitações</a>
-  <a class="btn" href="./equipe.html">Equipe</a>
-  <a class="btn" href="./terapeutas.html">Terapeutas</a>
-  <a class="btn primary" href="./governanca.html">Governança</a>
-</div>
+  <script src="./layout.js"></script>
+  <script src="./db.js"></script>
+  <script>
+    window.__PAGE__ = "governanca";
+    initLayout();
 
-      </div>
-      <div class="ft">
-        <button class="btn danger small" id="btnReset">Zerar dados</button>
-        <span class="note">Somente local</span>
-      </div>
-    </section>
+    const form = document.getElementById("formFeriado");
+    const msg = document.getElementById("msg");
+    const list = document.getElementById("list");
+    const btnRefresh = document.getElementById("btnRefresh");
 
-    <!-- CONTEÚDO -->
-    <section class="card">
-      <div class="hd">
-        <h2 style="margin:0;font-size:18px">Governança de dados</h2>
-        <div class="muted">Configuração de responsabilidades e políticas (LocalStorage).</div>
-      </div>
+    function render(){
+      const feriados = getFeriados({ prunePast: true, keepToday: true });
 
-      <div class="bd">
-        <div class="row2">
-          <div>
-            <label for="owner">Data Owner (responsável)</label>
-            <input id="owner" placeholder="Ex.: Coordenação" />
+      if (!feriados.length) {
+        list.innerHTML = `<div class="muted" style="margin-top:10px;">Sem feriados cadastrados.</div>`;
+        return;
+      }
+
+      list.innerHTML = feriados.map(f => {
+        const extra = [f.titulo, f.obs].filter(Boolean).join(" • ");
+        return `
+          <div class="row">
+            <div>
+              <div style="font-weight:800;">${fmtDateBR(f.data)} — ${weekdayPT(f.data)}</div>
+              <div class="muted">${extra || ""}</div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <span class="badge">${f.data}</span>
+              <button class="btn danger" data-del="${f.id}">Excluir</button>
+            </div>
           </div>
-          <div>
-            <label for="steward">Data Steward (operacional)</label>
-            <input id="steward" placeholder="Ex.: Administrativo" />
-          </div>
-        </div>
+        `;
+      }).join("");
 
-        <div class="sep"></div>
+      // bind delete
+      [...document.querySelectorAll("[data-del]")].forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          const id = e.currentTarget.getAttribute("data-del");
+          deleteFeriado(id);
+          msg.textContent = "Feriado excluído.";
+          render();
+        });
+      });
+    }
 
-        <div class="row2">
-          <div>
-            <label for="classification">Classificação dos dados</label>
-            <select id="classification">
-              <option value="Público">Público</option>
-              <option value="Interno" selected>Interno</option>
-              <option value="Confidencial">Confidencial</option>
-              <option value="Sensível (LGPD)">Sensível (LGPD)</option>
-            </select>
-          </div>
-          <div>
-            <label for="retention">Retenção (dias)</label>
-            <input id="retention" type="number" min="0" placeholder="Ex.: 365" />
-          </div>
-        </div>
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      msg.textContent = "";
 
-        <div class="sep"></div>
+      const data = document.getElementById("data").value;
+      const titulo = document.getElementById("titulo").value;
+      const obs = document.getElementById("obs").value;
 
-        <div class="row2">
-          <div>
-            <label for="backup">Backups</label>
-            <select id="backup">
-              <option value="Não definido">Não definido</option>
-              <option value="Diário">Diário</option>
-              <option value="Semanal">Semanal</option>
-              <option value="Mensal">Mensal</option>
-            </select>
-          </div>
-          <div>
-            <label for="incident">Contato para incidente</label>
-            <input id="incident" type="email" placeholder="Ex.: suporte@empresa.com" />
-          </div>
-        </div>
-
-        <div class="sep"></div>
-
-        <div>
-          <label for="access">Política de acesso (texto)</label>
-          <textarea id="access" placeholder="Quem pode acessar o quê, critérios de concessão, revisões..."></textarea>
-        </div>
-
-        <div class="sep"></div>
-
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <button class="btn primary" type="button" id="btnSaveGov">Salvar política</button>
-          <span class="note" id="govMsg"></span>
-        </div>
-
-        <div class="sep"></div>
-
-        <h3 style="margin:0 0 8px 0;font-size:18px">Registro de alterações</h3>
-        <div class="muted" style="margin-bottom:10px">Histórico local das mudanças.</div>
-
-        <table><tbody id="govLogRows"></tbody></table>
-        <div class="note" id="govLogEmpty"></div>
-      </div>
-    </section>
-  </div>
-</main>
-
-<script src="./app.js?v=2"></script>
-<script>
-  const { loadJSON, saveJSON, nowISO, escapeHtml, GOV_KEY, GOV_LOG_KEY, renderKpis, wireResetButton } = window.App;
-
-  renderKpis();
-  wireResetButton();
-
-  const $ = (id) => document.getElementById(id);
-
-  function loadPolicy(){
-    const p = loadJSON(GOV_KEY, {
-      owner: "", steward: "", classification: "Interno", retention: "", backup: "Não definido",
-      incident: "", access: "", updated_at: ""
+      try{
+        addFeriado({ data, titulo, obs });
+        form.reset();
+        msg.textContent = "Feriado salvo.";
+        render();
+      }catch(err){
+        msg.textContent = err?.message || "Erro ao salvar.";
+      }
     });
 
-    $("owner").value = p.owner || "";
-    $("steward").value = p.steward || "";
-    $("classification").value = p.classification || "Interno";
-    $("retention").value = p.retention || "";
-    $("backup").value = p.backup || "Não definido";
-    $("incident").value = p.incident || "";
-    $("access").value = p.access || "";
-  }
-
-  function renderLog(){
-    const rows = $("govLogRows");
-    const empty = $("govLogEmpty");
-    const log = loadJSON(GOV_LOG_KEY, []);
-    rows.innerHTML = "";
-
-    if (!log.length){
-      empty.textContent = "Sem alterações registradas.";
-      return;
-    }
-    empty.textContent = "";
-
-    for (const e of log){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>
-          <div style="font-weight:750">${escapeHtml(e.at || "")}</div>
-          <div class="muted" style="margin-top:6px">${escapeHtml(e.summary || "")}</div>
-        </td>
-      `;
-      rows.appendChild(tr);
-    }
-  }
-
-  function savePolicy(){
-    const p = {
-      owner: $("owner").value.trim(),
-      steward: $("steward").value.trim(),
-      classification: $("classification").value,
-      retention: $("retention").value,
-      backup: $("backup").value,
-      incident: $("incident").value.trim(),
-      access: $("access").value.trim(),
-      updated_at: nowISO()
-    };
-    saveJSON(GOV_KEY, p);
-
-    const log = loadJSON(GOV_LOG_KEY, []);
-    log.unshift({
-      at: new Date().toLocaleString(),
-      summary: `Política atualizada • Classificação: ${p.classification} • Backup: ${p.backup} • Retenção: ${p.retention || "-"} dias`
-    });
-    saveJSON(GOV_LOG_KEY, log.slice(0, 50)); // limita 50
-
-    $("govMsg").textContent = "Salvo.";
-    renderLog();
-  }
-
-  $("btnSaveGov").addEventListener("click", savePolicy);
-
-  loadPolicy();
-  renderLog();
-</script>
+    btnRefresh.addEventListener("click", () => render());
+    render();
+  </script>
 </body>
 </html>

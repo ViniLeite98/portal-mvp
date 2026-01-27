@@ -7,387 +7,67 @@
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>
-          <h1>Portal MVP</h1>
-          <div class="muted">Início</div>
-        </div>
-      </div>
 
-      <div class="kpi">
-        <span class="pill">Total: <strong id="kpiTotal">0</strong></span>
-        <span class="pill">Abertas: <strong id="kpiOpen">0</strong></span>
-        <span class="pill">Aprovadas: <strong id="kpiApproved">0</strong></span>
-        <span class="pill">Terapeutas ativas: <strong id="kpiTherapistsActive">0</strong></span>
-      </div>
-    </div>
-  </div>
-</header>
+<header id="app-header"></header>
 
 <main class="wrap">
   <div class="grid">
-    <!-- MENU -->
-    <section class="card">
-      <div class="hd"><div class="muted">Navegação</div></div>
-      <div class="bd">
-        <div class="nav">
-          <a class="btn primary" href="./index.html">Início</a>
-          <a class="btn" href="./nova-solicitacao.html">Nova solicitação</a>
-          <a class="btn" href="./solicitacoes.html">Solicitações</a>
-          <a class="btn" href="./equipe.html">Equipe</a>
-          <a class="btn" href="./terapeutas.html">Terapeutas</a>
-          <a class="btn" href="./governanca.html">Governança</a>
-        </div>
-      </div>
-      <div class="ft">
-        <button class="btn danger small" id="btnReset" type="button">Zerar dados</button>
-        <span class="note">Somente local</span>
-      </div>
-    </section>
+    <aside id="app-menu"></aside>
 
-    <!-- CONTEÚDO -->
     <section class="card">
       <div class="hd">
-        <h2 style="margin:0;font-size:18px">Dashboard</h2>
-        <div class="muted">Visão geral (parecido com seu Streamlit)</div>
+        <h2>Dashboard</h2>
+        <div class="muted">Visão geral</div>
       </div>
 
       <div class="bd">
-        <!-- TOP CARDS (3) -->
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="topCards">
-          <div class="card" style="box-shadow:none">
-            <div class="hd" style="display:flex;justify-content:space-between;align-items:center">
-              <div style="font-weight:750">Equipe</div>
-              <div>👥</div>
-            </div>
-            <div class="bd">
-              <div style="font-size:34px;font-weight:800" id="cardEquipe">0</div>
-              <div class="muted">Funcionárias ativas no sistema</div>
-            </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <div class="card">
+            <div class="card-number" id="cardEquipe">0</div>
+            <div class="muted">Equipe ativa</div>
           </div>
 
-          <div class="card" style="box-shadow:none">
-            <div class="hd" style="display:flex;justify-content:space-between;align-items:center">
-              <div style="font-weight:750">Próximas Datas</div>
-              <div>📅</div>
-            </div>
-            <div class="bd">
-              <div id="cardProxBody" class="muted">Sem datas cadastradas.</div>
-              <div class="muted" style="margin-top:10px">Gestão de datas (abaixo)</div>
-            </div>
+          <div class="card">
+            <div class="muted">Próximas datas</div>
+            <div id="cardProxBody" class="muted">Sem datas</div>
           </div>
 
-          <div class="card" style="box-shadow:none">
-            <div class="hd" style="display:flex;justify-content:space-between;align-items:center">
-              <div style="font-weight:750">Dias Folgados</div>
-              <div>🏆</div>
-            </div>
-            <div class="bd">
-              <div id="cardDiasBody" class="muted">Sem dados ainda.</div>
-              <div class="muted" style="margin-top:10px">Base: solicitações aprovadas</div>
-            </div>
+          <div class="card">
+            <div class="muted">Dias folgados</div>
+            <div id="cardDiasBody" class="muted">Sem dados</div>
           </div>
         </div>
 
         <div class="sep"></div>
 
-        <!-- FORÇA DE TRABALHO + CARGA HORÁRIA -->
-        <div style="display:grid;grid-template-columns:3fr 1.2fr;gap:12px" id="midGrid">
-          <div class="card" style="box-shadow:none">
+        <div style="display:grid;grid-template-columns:3fr 1.2fr;gap:16px">
+          <div class="card">
             <div class="hd">
-              <div style="font-weight:750">Força de Trabalho</div>
-              <div class="muted">Distribuição por hora (09:00–22:00) a partir dos horários cadastrados</div>
+              <b>Força de trabalho</b>
+              <div class="muted">Distribuição por hora</div>
             </div>
-            <div class="bd">
-              <canvas id="workforceCanvas" width="900" height="280" style="width:100%;height:280px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(0,0,0,.15)"></canvas>
-            </div>
+            <canvas id="workforceCanvas" width="900" height="260"></canvas>
           </div>
 
-          <div class="card" style="box-shadow:none">
+          <div class="card">
             <div class="hd">
-              <div style="font-weight:750">Carga horária</div>
-              <div class="muted">Top 5 por duração diária</div>
+              <b>Carga horária</b>
+              <div class="muted">Top 5</div>
             </div>
-            <div class="bd" id="rankHorasBody">
-              <div class="muted">Sem horários cadastrados ainda.</div>
-            </div>
+            <div id="rankHorasBody" class="muted">Sem dados</div>
           </div>
-        </div>
-
-        <div class="sep"></div>
-
-        <!-- GERIR PRÓXIMAS DATAS -->
-        <details class="card" style="box-shadow:none">
-          <summary class="hd" style="cursor:pointer;user-select:none">
-            <span style="font-weight:750">Gerir Próximas Datas (adicionar / remover)</span>
-            <div class="muted">Datas passadas são removidas automaticamente (mantém hoje)</div>
-          </summary>
-          <div class="bd">
-            <div class="row2">
-              <div>
-                <label for="proxDate">Data</label>
-                <input id="proxDate" type="date" />
-              </div>
-              <div>
-                <label for="proxTitle">Título / Observação</label>
-                <input id="proxTitle" placeholder="Ex.: Feriado, reunião, treinamento..." />
-              </div>
-            </div>
-
-            <div class="sep"></div>
-
-            <div class="row2">
-              <div>
-                <label for="proxObs">Detalhe (opcional)</label>
-                <input id="proxObs" placeholder="Ex.: Unidade Centro, 14h..." />
-              </div>
-              <div style="display:flex;align-items:end;gap:10px;flex-wrap:wrap">
-                <button class="btn primary" type="button" id="btnAddProx">Adicionar</button>
-                <span class="note" id="proxMsg"></span>
-              </div>
-            </div>
-
-            <div class="sep"></div>
-
-            <div>
-              <label for="proxSelect">Selecione uma data para remover</label>
-              <select id="proxSelect"></select>
-              <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
-                <button class="btn danger" type="button" id="btnDelProx">🗑️ Remover</button>
-              </div>
-            </div>
-          </div>
-        </details>
-
-        <div class="sep"></div>
-
-        <!-- BOTÕES DE NAVEGAÇÃO -->
-        <div class="row2">
-          <a class="btn primary" href="./terapeutas.html">Gerir equipe</a>
-          <button class="btn" type="button" disabled>Criar escalas (em breve)</button>
         </div>
       </div>
     </section>
   </div>
 </main>
 
-<script src="./app.js?v=10"></script>
+<script src="./app.js"></script>
+<script src="./layout.js"></script>
 <script>
-  // ---------- Helpers UI ----------
-  const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
-  const dias = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
-
-  function fmtCardDate(dt){
-    const d = dt.getDate();
-    const m = meses[dt.getMonth()];
-    const w = dias[dt.getDay()];
-    return String(d).padStart(2,"0") + " " + (m.charAt(0).toUpperCase()+m.slice(1)) + " — " + w;
-  }
-
-  function drawWorkforce(canvas, hist){
-    const ctx = canvas.getContext("2d");
-    const W = canvas.width;
-    const H = canvas.height;
-
-    ctx.clearRect(0,0,W,H);
-
-    // padding
-    const padL = 40, padR = 10, padT = 18, padB = 36;
-    const plotW = W - padL - padR;
-    const plotH = H - padT - padB;
-
-    const max = Math.max(1, ...hist.map(x => x.count));
-    const n = hist.length;
-    const barW = plotW / n;
-
-    // axis
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(padL, padT + plotH, plotW, 1);
-    ctx.fillRect(padL, padT, 1, plotH+1);
-    ctx.globalAlpha = 1;
-
-    // bars
-    for (let i=0; i<n; i++){
-      const v = hist[i].count;
-      const bh = Math.round((v / max) * (plotH - 4));
-      const x = padL + i*barW + 2;
-      const y = padT + plotH - bh;
-
-      ctx.globalAlpha = 0.9;
-      ctx.fillStyle = "rgba(255,255,255,0.25)";
-      ctx.fillRect(x, y, Math.max(1, barW-4), bh);
-
-      // label hour
-      ctx.globalAlpha = 0.6;
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "11px ui-sans-serif, system-ui";
-      const label = String(hist[i].hour).padStart(2,"0");
-      ctx.fillText(label, x + 2, padT + plotH + 22);
-
-      // value on top (se tiver)
-      if (v > 0){
-        ctx.globalAlpha = 0.85;
-        ctx.fillText(String(v), x + 2, y - 6);
-      }
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  // ---------- Render ----------
-  function renderHome(){
-    // KPIs do header
-    window.App.renderKpis();
-    window.App.renderTherapistsKpis();
-    window.App.wireResetButton();
-
-    // Equipe (ativas)
-    const active = window.App.getActiveTherapists();
-    document.getElementById("cardEquipe").textContent = String(active.length);
-
-    // Próximas datas
-    const prox = window.App.prunePastProx(true)
-      .map(e => ({...e, dt: window.App.parseYYYYMMDD(e.date)}))
-      .filter(e => e.dt)
-      .sort((a,b) => a.dt - b.dt);
-
-    const proxBody = document.getElementById("cardProxBody");
-    if (!prox.length){
-      proxBody.innerHTML = `<div class="muted">Sem datas cadastradas.</div>`;
-    } else {
-      const lines = prox.slice(0,4).map(e => {
-        const extra = [e.title, e.obs].filter(Boolean).join(" • ");
-        return `
-          <div style="margin-top:10px">
-            <b>${fmtCardDate(e.dt)}</b><br/>
-            <span class="muted">${extra || ""}</span>
-          </div>
-        `;
-      }).join("");
-      proxBody.innerHTML = `<div style="margin-top:2px">${lines}</div>`;
-    }
-
-    // Dias folgados (top 5)
-    const rank = window.App.daysOffRank(5);
-    const diasBody = document.getElementById("cardDiasBody");
-    if (!rank.length){
-      diasBody.innerHTML = `<div class="muted">Sem dados ainda.</div>`;
-    } else {
-      diasBody.innerHTML = rank.map(r => `
-        <div style="margin-top:10px"><b>${window.App.escapeHtml(r.name)}</b>: ${r.days} dias</div>
-      `).join("");
-    }
-
-    // Força de trabalho (hist)
-    const hist = window.App.workforceHist(active, 9, 22);
-    const canvas = document.getElementById("workforceCanvas");
-    drawWorkforce(canvas, hist);
-
-    // Carga horária (top 5)
-    const rankHoras = window.App.workloadRank(active, 5);
-    const rankBox = document.getElementById("rankHorasBody");
-    if (!rankHoras.length){
-      rankBox.innerHTML = `<div class="muted">Sem horários cadastrados ainda.</div>`;
-    } else {
-      rankBox.innerHTML = rankHoras.map(r => `
-        <div style="margin-top:10px"><b>${window.App.escapeHtml(r.name)}</b><br/><span class="muted">${r.hhmm}</span></div>
-      `).join("");
-    }
-
-    // Gerir próximas datas (select)
-    const sel = document.getElementById("proxSelect");
-    sel.innerHTML = "";
-    if (!prox.length){
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "Sem datas";
-      sel.appendChild(opt);
-    } else {
-      for (const e of prox){
-        const opt = document.createElement("option");
-        opt.value = e.id;
-        const extra = [e.title, e.obs].filter(Boolean).join(" • ");
-        opt.textContent = `${fmtCardDate(e.dt)}${extra ? " — " + extra : ""}`;
-        sel.appendChild(opt);
-      }
-    }
-  }
-
-  // ---------- CRUD Próximas Datas ----------
-  function wireProxCrud(){
-    const dateEl = document.getElementById("proxDate");
-    const titleEl = document.getElementById("proxTitle");
-    const obsEl = document.getElementById("proxObs");
-    const msgEl = document.getElementById("proxMsg");
-
-    // default: hoje
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth()+1).padStart(2,"0");
-    const dd = String(today.getDate()).padStart(2,"0");
-    dateEl.value = `${yyyy}-${mm}-${dd}`;
-
-    document.getElementById("btnAddProx").addEventListener("click", () => {
-      msgEl.textContent = "";
-      const date = dateEl.value;
-      const title = titleEl.value.trim();
-      const obs = obsEl.value.trim();
-
-      if (!window.App.parseYYYYMMDD(date)){
-        msgEl.textContent = "Data inválida.";
-        return;
-      }
-
-      const items = window.App.loadJSON(window.App.PROX_KEY, []);
-      items.push({
-        id: window.App.uid().slice(0,10),
-        date,
-        title,
-        obs,
-        created_at: new Date().toLocaleString()
-      });
-      window.App.saveJSON(window.App.PROX_KEY, items);
-
-      titleEl.value = "";
-      obsEl.value = "";
-      msgEl.textContent = "Adicionado.";
-      renderHome();
-    });
-
-    document.getElementById("btnDelProx").addEventListener("click", () => {
-      msgEl.textContent = "";
-      const sel = document.getElementById("proxSelect");
-      const id = sel.value;
-      if (!id) return;
-
-      const items = window.App.loadJSON(window.App.PROX_KEY, []);
-      window.App.saveJSON(window.App.PROX_KEY, items.filter(x => x.id !== id));
-
-      msgEl.textContent = "Removido.";
-      renderHome();
-    });
-  }
-
-  // ---------- Init ----------
-  wireProxCrud();
+  initLayout("index.html");
   renderHome();
-
-  // Ajustes responsivos simples
-  function responsiveTweaks(){
-    if (window.innerWidth < 900){
-      document.getElementById("topCards").style.gridTemplateColumns = "1fr";
-      document.getElementById("midGrid").style.gridTemplateColumns = "1fr";
-    } else {
-      document.getElementById("topCards").style.gridTemplateColumns = "repeat(3,1fr)";
-      document.getElementById("midGrid").style.gridTemplateColumns = "3fr 1.2fr";
-    }
-  }
-  window.addEventListener("resize", responsiveTweaks);
-  responsiveTweaks();
 </script>
+
 </body>
 </html>

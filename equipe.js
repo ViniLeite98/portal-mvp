@@ -1,38 +1,71 @@
-function renderList() {
-  const data = ativas();
+const STORAGE_KEY = "equipe";
 
-  document.getElementById("countAtivas").textContent =
-    `${data.length} terapeutas ativas`;
+const btnNova = document.getElementById("btnNova");
+const btnCancelar = document.getElementById("btnCancelar");
+const formContainer = document.getElementById("formContainer");
+const form = document.getElementById("formEquipe");
+const lista = document.getElementById("listaEquipe");
 
-  if (!data.length) {
-    listBox.innerHTML = `<div class="team-muted" style="padding:12px 0">
-      Nenhuma terapeuta cadastrada.
-    </div>`;
+btnNova.onclick = () => formContainer.classList.remove("hidden");
+btnCancelar.onclick = () => {
+  form.reset();
+  formContainer.classList.add("hidden");
+};
+
+function carregar() {
+  const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+  if (data.length === 0) {
+    lista.innerHTML = `<p class="muted">Nenhuma terapeuta cadastrada.</p>`;
     return;
   }
 
-  listBox.innerHTML = data.map(t => `
-    <div class="team-row">
-      <div>
-        <b>${escapeHtml(t.profName)}</b>
-      </div>
-
-      <div>
-        ${t.weekOff === "Sim" ? `<span class="badge-sim">Sim</span>` : ""}
-      </div>
-
-      <div class="team-muted">
-        ${t.weekDay || ""}
-      </div>
-
-      <div class="team-muted">
-        ${t.startHour || ""}${t.endHour ? "–" + t.endHour : ""}
-      </div>
-
-      <div class="team-actions">
-        <button class="btn small" onclick="edit('${t.id}')">✏️</button>
-        <button class="btn danger small" onclick="removeItem('${t.id}')">🗑️</button>
-      </div>
-    </div>
-  `).join("");
+  lista.innerHTML = `
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Unidade</th>
+          <th>Horário</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map(t => `
+          <tr>
+            <td>${t.nomeProf}</td>
+            <td>${t.unidade}</td>
+            <td>${t.entrada}–${t.saida}</td>
+            <td>${t.status}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
 }
+
+form.onsubmit = e => {
+  e.preventDefault();
+
+  const nova = {
+    id: Date.now(),
+    nomeCompleto: nomeCompleto.value,
+    nomeProf: nomeProf.value,
+    cpf: cpf.value,
+    email: email.value,
+    unidade: unidade.value,
+    entrada: entrada.value,
+    saida: saida.value,
+    status: document.querySelector("input[name=status]:checked").value
+  };
+
+  const atual = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  atual.push(nova);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(atual));
+
+  form.reset();
+  formContainer.classList.add("hidden");
+  carregar();
+};
+
+carregar();

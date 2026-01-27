@@ -1,27 +1,19 @@
-<script>
-/* =========================
-   BASE DE DADOS – TERAPEUTAS
-========================= */
+document.addEventListener("DOMContentLoaded", () => {
+  const app = document.getElementById("app");
+  if (!app) return;
 
-function getTerapeutas() {
-  return JSON.parse(localStorage.getItem("terapeutas") || "[]");
-}
+  app.innerHTML = `
+    <aside class="sidebar">
+      <h2 class="logo">Portal MVP</h2>
 
-function terapeutasAtivas() {
-  const equipe = getTerapeutas();
-  return equipe.filter(t => {
-    const status = (t.Status || "").toLowerCase().trim();
-    return status === "ativo" || status === "";
-  });
-}
-
-function terapeutasPorCPF() {
-  const map = {};
-  getTerapeutas().forEach(t => {
-    if (t.CPF) {
-      map[t.CPF] = t;
-    }
-  });
-  return map;
-}
-</script>
+      <nav>
+        <a href="index.html">🏠 Início</a>
+        <a href="equipe.html">👥 Equipe</a>
+        <a href="solicitacoes.html">📝 Solicitações</a>
+        <a href="disponibilidade.html">📅 Disponibilidade</a>
+        <a href="materias.html">📚 Materiais</a>
+        <a href="financeiro.html">💰 Financeiro</a>
+      </nav>
+    </aside>
+  `;
+});

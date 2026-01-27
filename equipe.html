@@ -1,180 +1,216 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Equipe</title>
-
-  <link rel="stylesheet" href="styles.css">
-  <script src="app.js" defer></script>
-
+  <meta charset="UTF-8" />
+  <title>Equipe • Portal MVP</title>
+  <link rel="stylesheet" href="styles.css" />
   <style>
-    body { background:#f6f7fb; }
-
     .card {
       background:#fff;
+      border:1px solid #e7e7e7;
       border-radius:18px;
       padding:20px;
-      margin-bottom:16px;
-      box-shadow:0 1px 6px rgba(0,0,0,.06);
+      margin-bottom:20px;
     }
-
     .header {
       display:flex;
       justify-content:space-between;
       align-items:center;
+      gap:20px;
     }
-
-    .kpi {
-      font-size:32px;
-      font-weight:700;
-    }
-
     .sub {
-      color:#6b7280;
+      color:#666;
       font-size:13px;
+      margin-top:4px;
     }
-
     table {
       width:100%;
       border-collapse:collapse;
-      font-size:14px;
+      margin-top:10px;
     }
-
     th {
       text-align:left;
-      padding:10px;
-      border-bottom:1px solid #e5e7eb;
-    }
-
-    td {
-      padding:10px;
-      border-bottom:1px solid #f1f5f9;
-    }
-
-    .btn {
-      background:#4f46e5;
-      color:#fff;
-      border:none;
-      padding:10px 14px;
-      border-radius:10px;
-      cursor:pointer;
-    }
-
-    .btn.secondary {
-      background:#e5e7eb;
+      font-size:13px;
       color:#111;
+      border-bottom:1px solid #e7e7e7;
+      padding-bottom:8px;
     }
-
+    td {
+      padding:12px 4px;
+      border-bottom:1px solid #f0f0f0;
+      font-size:14px;
+    }
     .actions button {
       background:none;
       border:none;
       cursor:pointer;
       font-size:16px;
+      margin-right:6px;
     }
-
+    .btn {
+      background:#3d4b63;
+      color:#fff;
+      border:none;
+      border-radius:10px;
+      padding:10px 18px;
+      cursor:pointer;
+      font-size:14px;
+    }
+    .modal {
+      display:none;
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.4);
+      justify-content:center;
+      align-items:center;
+      z-index:999;
+    }
+    .modal-content {
+      background:#fff;
+      border-radius:16px;
+      padding:24px;
+      width:900px;
+      max-height:90vh;
+      overflow:auto;
+    }
     .grid {
       display:grid;
-      grid-template-columns:repeat(3,1fr);
+      grid-template-columns:repeat(4,1fr);
       gap:14px;
     }
-
-    label {
-      font-size:12px;
-      color:#374151;
-    }
-
+    label { font-size:12px; color:#444; }
     input, select {
       width:100%;
       padding:8px;
       border-radius:8px;
-      border:1px solid #d1d5db;
+      border:1px solid #ddd;
     }
-
-    .section {
-      margin-top:20px;
-      padding-top:10px;
-      border-top:1px solid #e5e7eb;
-    }
-
-    .hidden { display:none; }
+    .row { grid-column:span 4; }
+    .certs { display:flex; gap:18px; flex-wrap:wrap; }
   </style>
 </head>
-
 <body>
 
-<div id="sidebar-container"></div>
+<!-- MENU LATERAL (o seu atual) -->
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Portal MVP</h2>
+    <nav>
+      <a href="index.html">🏠 Início</a>
+      <a href="equipe.html" class="active">👥 Equipe</a>
+      <a href="solicitacoes.html">📋 Solicitações</a>
+      <a href="escala.html">📆 Escala</a>
+      <a href="disponibilidade.html">🗓️ Disponibilidade</a>
+      <a href="materias.html">📦 Materiais</a>
+      <a href="financeiro.html">💰 Financeiro</a>
+    </nav>
+  </aside>
 
-<main class="content">
+  <main class="content">
 
-  <!-- KPI -->
-  <div class="card">
-    <div class="header">
-      <div>
-        <h2>👥 Lista de Terapeutas</h2>
-        <div class="sub" id="kpiAtivas">0 terapeutas ativas</div>
+    <!-- HEADER / KPI -->
+    <div class="card">
+      <div class="header">
+        <div style="display:flex;gap:14px;align-items:center;">
+          <span style="font-size:28px;">👥</span>
+          <div>
+            <h2 style="margin:0;">Lista de Terapeutas</h2>
+            <div class="sub" id="kpiAtivas">0 terapeutas ativas</div>
+          </div>
+        </div>
+        <button class="btn" onclick="openForm()">＋ Nova Terapeuta</button>
       </div>
-      <button class="btn" onclick="openForm()">＋ Nova Terapeuta</button>
     </div>
-  </div>
 
-  <!-- TABELA -->
-  <div class="card">
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Folga?</th>
-          <th>Dia</th>
-          <th>Data início</th>
-          <th>Horário</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
-  </div>
+    <!-- TABELA -->
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Folga Semanal</th>
+            <th>Dia da Folga</th>
+            <th>Data de Início</th>
+            <th>Horário</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
+    </div>
 
-  <!-- FORMULÁRIO -->
-  <div class="card hidden" id="formCard">
-    <h3 id="formTitle">Nova Terapeuta</h3>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Nova Terapeuta</h3>
 
     <div class="grid">
-      <div><label>Nome Completo</label><input id="nomeCompleto"></div>
-      <div><label>Nome Profissional</label><input id="nomeProf"></div>
-      <div><label>CPF</label><input id="cpf"></div>
-
-      <div><label>Email</label><input id="email"></div>
-      <div><label>Unidade</label><input id="unidade"></div>
-      <div><label>Contato</label><input id="contato"></div>
-
-      <div><label>Contato Emergência</label><input id="contatoEmerg"></div>
-      <div><label>Endereço</label><input id="endereco"></div>
-      <div><label>Data de Nascimento</label><input type="date" id="dataNasc"></div>
-    </div>
-
-    <div class="section grid">
       <div>
-        <label>Tem folga semanal?</label>
+        <label>Nome Completo *</label>
+        <input id="nomeCompleto">
+      </div>
+      <div>
+        <label>Nome profissional *</label>
+        <input id="nomeProf">
+      </div>
+      <div>
+        <label>Data de Nascimento *</label>
+        <input type="date" id="nasc">
+      </div>
+      <div>
+        <label>CPF *</label>
+        <input id="cpf">
+      </div>
+
+      <div>
+        <label>Email *</label>
+        <input id="email">
+      </div>
+      <div>
+        <label>Unidade *</label>
+        <input id="unidade">
+      </div>
+      <div>
+        <label>Contato *</label>
+        <input id="contato">
+      </div>
+      <div>
+        <label>Contato Emergência</label>
+        <input id="contatoEmerg">
+      </div>
+
+      <div>
+        <label>Folga semanal?</label>
         <select id="folga">
           <option>Sim</option>
           <option>Não</option>
         </select>
       </div>
-
       <div>
-        <label>Dia da Folga</label>
+        <label>Dia da folga</label>
         <select id="diaFolga">
           <option></option>
-          <option>Segunda</option>
-          <option>Terça</option>
-          <option>Quarta</option>
-          <option>Quinta</option>
-          <option>Sexta</option>
-          <option>Sábado</option>
-          <option>Domingo</option>
+          <option>Segunda</option><option>Terça</option><option>Quarta</option>
+          <option>Quinta</option><option>Sexta</option><option>Sábado</option><option>Domingo</option>
         </select>
       </div>
 
+      <div>
+        <label>Horário Entrada *</label>
+        <input type="time" id="hEntrada">
+      </div>
+      <div>
+        <label>Horário Saída *</label>
+        <input type="time" id="hSaida">
+      </div>
+
+      <div>
+        <label>Data de Início *</label>
+        <input type="date" id="dataInicio">
+      </div>
       <div>
         <label>Status</label>
         <select id="status">
@@ -182,115 +218,80 @@
           <option>Inativo</option>
         </select>
       </div>
-    </div>
 
-    <div class="section grid">
-      <div><label>Horário Entrada</label><input type="time" id="hEntrada"></div>
-      <div><label>Horário Saída</label><input type="time" id="hSaida"></div>
-      <div><label>Data de Início</label><input type="date" id="dataInicio"></div>
-    </div>
-
-    <div class="section">
-      <h4>Certificações</h4>
-      <div class="grid">
-        <label><input type="checkbox" id="certNuru"> Massagem Nuru</label>
-        <label><input type="checkbox" id="certViv"> Massagem Vivência</label>
-        <label><input type="checkbox" id="certPodo"> Podolatria</label>
-        <label><input type="checkbox" id="certCasais"> Massagem Casais</label>
-        <label><input type="checkbox" id="certFem"> Massagem Feminina</label>
+      <div class="row">
+        <label>Certificações</label>
+        <div class="certs">
+          <label><input type="checkbox" id="c1"> Massagem Nuru</label>
+          <label><input type="checkbox" id="c2"> Vivência</label>
+          <label><input type="checkbox" id="c3"> Podolatria</label>
+          <label><input type="checkbox" id="c4"> Casais</label>
+          <label><input type="checkbox" id="c5"> Feminina</label>
+        </div>
       </div>
     </div>
 
-    <br>
-    <button class="btn" onclick="save()">Salvar</button>
-    <button class="btn secondary" onclick="closeForm()">Cancelar</button>
+    <div style="margin-top:20px;">
+      <button class="btn" onclick="save()">Salvar</button>
+      <button class="btn" style="background:#aaa;" onclick="closeForm()">Cancelar</button>
+    </div>
   </div>
-
-</main>
+</div>
 
 <script>
-fetch("sidebar.html")
-  .then(r=>r.text())
-  .then(t=>document.getElementById("sidebar-container").innerHTML=t);
+const KEY = "terapeutas";
+let editId = null;
 
-const KEY="portal_mvp_team_v1";
-let editId=null;
-
-function load(){return JSON.parse(localStorage.getItem(KEY)||"[]")}
-function saveStore(v){localStorage.setItem(KEY,JSON.stringify(v))}
+function load(){ return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+function saveAll(d){ localStorage.setItem(KEY, JSON.stringify(d)); }
 
 function render(){
-  const data=load();
-  const tbody=document.getElementById("lista");
-  tbody.innerHTML="";
-  const ativas=data.filter(t=>t.status==="Ativo");
-  document.getElementById("kpiAtivas").innerText=`${ativas.length} terapeutas ativas`;
+  const data = load();
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  const ativas = data.filter(t => t.status === "Ativo");
+  document.getElementById("kpiAtivas").innerText =
+    `${ativas.length} terapeutas ativas`;
 
   data.forEach(t=>{
-    tbody.innerHTML+=`
+    tbody.innerHTML += `
       <tr>
         <td>${t.nomeProf}</td>
-        <td>${t.folga}</td>
-        <td>${t.diaFolga||"-"}</td>
-        <td>${t.dataInicio||"-"}</td>
-        <td>${t.hEntrada||""}–${t.hSaida||""}</td>
+        <td>${t.folga==="Sim"?"Sim":"—"}</td>
+        <td>${t.folga==="Sim"?t.diaFolga||"—":"—"}</td>
+        <td>${t.dataInicio}</td>
+        <td>${t.hEntrada}–${t.hSaida}</td>
         <td class="actions">
-          <button onclick="edit('${t.id}')">✏️</button>
           <button onclick="del('${t.id}')">🗑️</button>
         </td>
       </tr>`;
   });
 }
 
-function openForm(){document.getElementById("formCard").classList.remove("hidden")}
-function closeForm(){document.getElementById("formCard").classList.add("hidden");editId=null}
+function openForm(){ document.getElementById("modal").style.display="flex"; }
+function closeForm(){ document.getElementById("modal").style.display="none"; }
 
 function save(){
-  const d=load();
-  const t={
-    id:editId||crypto.randomUUID(),
-    nomeCompleto:nomeCompleto.value,
-    nomeProf:nomeProf.value,
-    cpf:cpf.value,
-    email:email.value,
-    unidade:unidade.value,
-    contato:contato.value,
-    contatoEmerg:contatoEmerg.value,
-    endereco:endereco.value,
-    dataNasc:dataNasc.value,
-    folga:folga.value,
-    diaFolga:diaFolga.value,
-    status:status.value,
-    hEntrada:hEntrada.value,
-    hSaida:hSaida.value,
-    dataInicio:dataInicio.value,
-    certNuru:certNuru.checked,
-    certViv:certViv.checked,
-    certPodo:certPodo.checked,
-    certCasais:certCasais.checked,
-    certFem:certFem.checked
-  };
-  const i=d.findIndex(x=>x.id===editId);
-  i>=0?d[i]=t:d.push(t);
-  saveStore(d);closeForm();render();
-}
-
-function edit(id){
-  const t=load().find(x=>x.id===id);
-  editId=id;openForm();
-  Object.keys(t).forEach(k=>{if(window[k]!==undefined)window[k].value=t[k]});
-  certNuru.checked=t.certNuru;
-  certViv.checked=t.certViv;
-  certPodo.checked=t.certPodo;
-  certCasais.checked=t.certCasais;
-  certFem.checked=t.certFem;
+  const data = load();
+  data.push({
+    id: crypto.randomUUID(),
+    nomeProf: nomeProf.value,
+    folga: folga.value,
+    diaFolga: diaFolga.value,
+    dataInicio: dataInicio.value,
+    hEntrada: hEntrada.value,
+    hSaida: hSaida.value,
+    status: status.value
+  });
+  saveAll(data);
+  closeForm();
+  render();
 }
 
 function del(id){
-  if(confirm("Remover terapeuta?")){
-    saveStore(load().filter(x=>x.id!==id));
-    render();
-  }
+  saveAll(load().filter(t=>t.id!==id));
+  render();
 }
 
 render();

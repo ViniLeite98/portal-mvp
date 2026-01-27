@@ -1,23 +1,27 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const sidebarContainer = document.getElementById("sidebar");
+<script>
+/* =========================
+   BASE DE DADOS – TERAPEUTAS
+========================= */
 
-  if (!sidebarContainer) return;
+function getTerapeutas() {
+  return JSON.parse(localStorage.getItem("terapeutas") || "[]");
+}
 
-  fetch("sidebar.html")
-    .then(res => res.text())
-    .then(html => {
-      sidebarContainer.innerHTML = html;
+function terapeutasAtivas() {
+  const equipe = getTerapeutas();
+  return equipe.filter(t => {
+    const status = (t.Status || "").toLowerCase().trim();
+    return status === "ativo" || status === "";
+  });
+}
 
-      // marca item ativo automaticamente
-      const page = location.pathname.split("/").pop().replace(".html", "") || "index";
-
-      document.querySelectorAll(".menu a").forEach(link => {
-        if (link.dataset.page === page) {
-          link.classList.add("active");
-        }
-      });
-    })
-    .catch(err => {
-      console.error("Erro ao carregar sidebar:", err);
-    });
-});
+function terapeutasPorCPF() {
+  const map = {};
+  getTerapeutas().forEach(t => {
+    if (t.CPF) {
+      map[t.CPF] = t;
+    }
+  });
+  return map;
+}
+</script>

@@ -2,28 +2,159 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Indisponibilidades</title>
+<title>Solicitações</title>
+
 <link rel="stylesheet" href="assets/css/style.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
 <body>
+
+<!-- MENU -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
-  <a href="index.html">Dashboard</a>
-  <a href="equipe.html">Gestão da Equipe</a>
-  <a href="solicitacoes.html">Indisponibilidades</a>
+  <a href="index.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+  <a href="equipe.html"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
+  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
+  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
+  <a href="disponibilidade.html"><i class="fa-solid fa-table-cells"></i> Disponibilidade</a>
+  <a href="materiais.html"><i class="fa-solid fa-boxes-stacked"></i> Materiais</a>
+  <a href="financeiro.html"><i class="fa-solid fa-dollar-sign"></i> Financeiro</a>
 </nav>
 
 <div class="content">
-  <h1>Solicitações de Indisponibilidade</h1>
+  <h1>Solicitações</h1>
+  <p>Solicitação de indisponibilidade de terapeutas</p>
 
+  <!-- NOVA SOLICITAÇÃO -->
   <div class="card">
-    Maria — 16/01 a 18/01
+    <h3>Nova Solicitação</h3>
+
+    <label>Terapeuta</label><br>
+    <select id="terapeuta"></select><br><br>
+
+    <label>Data do Pedido</label><br>
+    <input type="date" id="dataPedido"><br><br>
+
+    <label>Período de Indisponibilidade</label><br>
+    <input type="date" id="inicio">
+    até
+    <input type="date" id="fim"><br><br>
+
+    <label>Motivo</label><br>
+    <textarea id="motivo" style="width:100%;"></textarea><br><br>
+
+    <button onclick="salvar()">Enviar Solicitação</button>
   </div>
+
+  <!-- PAINEL DE APROVAÇÃO -->
   <div class="card">
-    Joana — 20/01
+    <h3>Painel de Aprovação</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Terapeuta</th>
+          <th>Data Pedido</th>
+          <th>Período</th>
+          <th>Motivo</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
   </div>
 </div>
-</body>
-</html>
+
+<script>
+// 🔽 CARREGA TERAPEUTAS
+function carregarTerapeutas() {
+  const select = document.getElementById("terapeuta");
+  select.innerHTML = "";
+
+  const terapeutas =
+    JSON.parse(localStorage.getItem("terapeutas")) || [];
+
+  terapeutas.forEach(t => {
+    const option = document.createElement("option");
+    option.value = t.id;
+    option.text =
+      t.nomeProfissional || t.nomeCompleto || "Sem nome";
+    select.appendChild(option);
+  });
+}
+
+// 💾 SALVAR SOLICITAÇÃO
+function salvar() {
+  const solicitacoes =
+    JSON.parse(localStorage.getItem("solicitacoes")) || [];
+
+  solicitacoes.push({
+    id: Date.now(),
+    terapeutaId: terapeuta.value,
+    terapeutaNome: terapeuta.options[terapeuta.selectedIndex].text,
+    dataPedido: dataPedido.value,
+    inicio: inicio.value,
+    fim: fim.value,
+    motivo: motivo.value,
+    status: "Pendente"
+  });
+
+  localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
+
+  alert("Solicitação enviada!");
+  location.reload();
+}
+
+// 📋 LISTAR SOLICITAÇÕES
+function carregarSolicitacoes() {
+  const lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  const solicitacoes =
+    JSON.parse(localStorage.getItem("solicitacoes")) || [];
+
+  if (solicitacoes.length === 0) {
+    lista.innerHTML =
+      `<tr><td colspan="6">Nenhuma solicitação registrada</td></tr>`;
+    return;
+  }
+
+  solicitacoes.forEach(s => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${s.terapeutaNome}</td>
+      <td>${s.dataPedido}</td>
+      <td>${s.inicio} → ${s.fim}</td>
+      <td>${s.motivo || "-"}</td>
+      <td>${s.status}</td>
+      <td>
+        <button onclick="aprovar(${s.id})">✅</button>
+        <button onclick="rejeitar(${s.id})">❌</button>
+      </td>
+    `;
+    lista.appendChild(row);
+  });
+}
+
+// ✅ APROVAR
+function aprovar(id) {
+  atualizarStatus(id, "Aprovado");
+}
+
+// ❌ REJEITAR
+function rejeitar(id) {
+  atualizarStatus(id, "Rejeitado");
+}
+
+function atualizarStatus(id, status) {
+  let solicitacoes =
+    JSON.parse(localStorage.getItem("solicitacoes")) || [];
+
+  solicitacoes = solicitacoes.map(s =>
+    s.id === id ? { ...s, status } : s
+  );
+
+  localStorage.

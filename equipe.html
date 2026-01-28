@@ -9,11 +9,20 @@
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
+/* Wrapper igual ao PPT */
+.page-box {
+  background: #ffffff;
+  border-radius: 22px;
+  border: 1px solid #e5e7eb;
+  padding: 22px;
+}
+
+/* Header */
 .header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .header-row a {
@@ -26,10 +35,10 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   text-decoration: underline;
 }
 
+/* Tabela */
 .table-card {
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 0 8px rgba(0,0,0,.05);
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
   overflow: hidden;
 }
 
@@ -44,12 +53,7 @@ thead {
 
 th, td {
   padding: 12px;
-  text-align: left;
   font-size: 14px;
-}
-
-th {
-  font-weight: 600;
 }
 
 tbody tr {
@@ -59,10 +63,10 @@ tbody tr {
 .actions button {
   background: none;
   border: 1px solid #9ca3af;
-  border-radius: 4px;
-  padding: 4px 6px;
+  border-radius: 6px;
+  padding: 4px 7px;
   cursor: pointer;
-  margin-right: 4px;
+  margin-right: 6px;
 }
 
 .actions button:hover {
@@ -96,74 +100,77 @@ tbody tr {
 
 <!-- CONTEÚDO -->
 <div class="content">
-  <h1>Gestão da Equipe</h1>
-  <p class="small">Gerir informações das terapeutas, horários e folgas</p>
 
-  <div class="header-row">
-    <div>
-      <b id="contadorAtivas">0</b> terapeutas ativas
+  <div class="page-box">
+
+    <h1>Gestão da Equipe</h1>
+    <p class="small">Gerir informações das terapeutas, horários e folgas</p>
+
+    <div class="header-row">
+      <div>
+        <b id="contadorAtivas">0</b> terapeutas ativas
+      </div>
+      <a href="nova-terapeuta.html">+ Nova Terapeuta</a>
     </div>
-    <a href="nova-terapeuta.html">+ Nova Terapeuta</a>
+
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome Profissional</th>
+            <th>Nome Completo</th>
+            <th>Unidade</th>
+            <th>Folga Semanal</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
+    </div>
+
   </div>
 
-  <div class="table-card">
-    <table>
-      <thead>
-        <tr>
-          <th>Nome Profissional</th>
-          <th>Nome Completo</th>
-          <th>Unidade</th>
-          <th>Folga Semanal</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
-  </div>
 </div>
 
 <script>
-// ============================
-// HELPERS (NÃO RESETAM)
-// ============================
+// =======================
+// STORAGE HELPERS
+// =======================
 function getTerapeutas() {
-  const data = localStorage.getItem("terapeutas");
-  return data ? JSON.parse(data) : [];
+  const d = localStorage.getItem("terapeutas");
+  return d ? JSON.parse(d) : [];
 }
 
 function saveTerapeutas(lista) {
   localStorage.setItem("terapeutas", JSON.stringify(lista));
 }
 
-// ============================
-// CORREÇÃO DAS TERAPEUTAS ANTIGAS
-// ============================
+// =======================
+// MIGRAÇÃO (IDs)
+/// ======================
 let terapeutas = getTerapeutas();
-let alterou = false;
+let mudou = false;
 
 terapeutas = terapeutas.map(t => {
   if (!t.id) {
-    alterou = true;
+    mudou = true;
     return { ...t, id: Date.now() + Math.random() };
   }
   return t;
 });
 
-if (alterou) {
-  saveTerapeutas(terapeutas);
-}
+if (mudou) saveTerapeutas(terapeutas);
 
-// ============================
+// =======================
 // RENDER
-// ============================
+// =======================
 function carregar() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
   const dados = getTerapeutas();
 
-  // Contar somente ATIVAS
   const ativas = dados.filter(t =>
     !t.status || t.status === "Ativo"
   );
@@ -176,9 +183,9 @@ function carregar() {
   }
 
   dados.forEach(t => {
-    const row = document.createElement("tr");
+    const tr = document.createElement("tr");
 
-    row.innerHTML = `
+    tr.innerHTML = `
       <td>${t.nomeProfissional || "-"}</td>
       <td>${t.nomeCompleto || "-"}</td>
       <td>${t.unidade || "-"}</td>
@@ -189,14 +196,13 @@ function carregar() {
         <button onclick="excluir(${t.id})">🗑️</button>
       </td>
     `;
-
-    lista.appendChild(row);
+    lista.appendChild(tr);
   });
 }
 
-// ============================
+// =======================
 // AÇÕES
-// ============================
+// =======================
 function editar(id) {
   localStorage.setItem("editarTerapeutaId", id);
   location.href = "nova-terapeuta.html";
@@ -204,10 +210,9 @@ function editar(id) {
 
 function excluir(id) {
   if (!confirm("Deseja excluir esta terapeuta?")) return;
-
-  let lista = getTerapeutas();
-  lista = lista.filter(t => t.id !== id);
-  saveTerapeutas(lista);
+  let dados = getTerapeutas();
+  dados = dados.filter(t => t.id !== id);
+  saveTerapeutas(dados);
   carregar();
 }
 

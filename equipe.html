@@ -9,7 +9,6 @@
 <style>
 body { margin:0; font-family:Arial; background:#f5f7fb; }
 
-/* ===== SIDEBAR ===== */
 .sidebar {
   width:230px; background:#1f2937; color:#fff;
   height:100vh; position:fixed; padding:20px;
@@ -24,70 +23,102 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
   background:#374151; color:#fff;
 }
 
-/* ===== CONTENT ===== */
 .content { margin-left:260px; padding:30px; }
 
 .card {
-  background:#fff; border-radius:26px;
-  padding:20px; box-shadow:0 0 8px rgba(0,0,0,.05);
+  background:#fff;
+  border-radius:26px;
+  padding:20px;
+  box-shadow:0 0 8px rgba(0,0,0,.05);
 }
 
 .header {
-  display:flex; justify-content:space-between; align-items:center;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
 }
 
 button.primary {
-  background:#1f2937; color:#fff;
-  border:none; padding:10px 16px;
-  border-radius:10px; cursor:pointer;
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+  cursor:pointer;
 }
 
-/* ===== TABLE ===== */
-table { width:100%; border-collapse:collapse; margin-top:16px; }
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+}
 th {
-  text-align:left; font-size:13px;
-  border-bottom:1px solid #ddd; padding-bottom:8px;
+  text-align:left;
+  font-size:13px;
+  border-bottom:1px solid #ddd;
+  padding-bottom:8px;
 }
-td { padding:10px 0; border-bottom:1px solid #eee; }
-.actions button {
-  background:none; border:none; cursor:pointer; font-size:16px;
+td {
+  padding:10px 0;
+  border-bottom:1px solid #eee;
 }
-.actions .delete { color:red; }
 
-/* ===== MODAL ===== */
-.modal {
-  position:fixed; inset:0; background:rgba(0,0,0,.4);
-  display:none; align-items:center; justify-content:center; z-index:999;
+.actions button {
+  background:none;
+  border:none;
+  cursor:pointer;
+  font-size:16px;
 }
+.actions .delete { color:#dc2626; }
+
+/* MODAL */
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
 .modal-box {
-  background:#fff; border-radius:20px;
-  padding:24px; width:800px; max-width:95%;
+  background:#fff;
+  border-radius:20px;
+  padding:24px;
+  width:820px;
+  max-width:95%;
 }
 
 .form-grid {
-  display:grid; grid-template-columns:1fr 1fr;
+  display:grid;
+  grid-template-columns:1fr 1fr;
   gap:16px;
 }
-.form-grid label { font-size:13px; font-weight:600; }
-.form-grid input, .form-grid select {
-  width:100%; padding:8px;
-  border-radius:8px; border:1px solid #ccc;
+.form-grid label {
+  font-size:13px;
+  font-weight:600;
+}
+.form-grid input,
+.form-grid select {
+  width:100%;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ccc;
 }
 
 .modal-actions {
-  margin-top:20px; display:flex; gap:12px;
+  margin-top:20px;
+  display:flex;
+  gap:12px;
 }
-.modal-actions button {
-  padding:10px 16px; border-radius:10px; border:none;
-}
-.save { background:#1f2937; color:#fff; }
-.cancel { background:#9ca3af; }
+.save { background:#1f2937; color:#fff; border:none; padding:10px 16px; border-radius:10px; }
+.cancel { background:#9ca3af; border:none; padding:10px 16px; border-radius:10px; }
 </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
   <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
@@ -98,7 +129,6 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
   <a href="financeiro.html"><i class="fa-solid fa-coins"></i> Financeiro</a>
 </nav>
 
-<!-- CONTENT -->
 <div class="content">
   <h1>Gestão da Equipe</h1>
   <p>Gerir informações das terapeutas, horários e folgas</p>
@@ -202,30 +232,38 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
 <script>
 let editIndex = null;
 
-function horarios(sel){
+function gerarHorarios(sel){
+  sel.innerHTML="";
   for(let h=0;h<24;h++){
     for(let m=0;m<60;m+=15){
       sel.innerHTML+=`<option>${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}</option>`;
     }
   }
 }
-horarios(entrada); horarios(saida);
+gerarHorarios(entrada);
+gerarHorarios(saida);
 
-function dados(){ return JSON.parse(localStorage.getItem("terapeutas"))||[] }
-function salvarDados(d){ localStorage.setItem("terapeutas",JSON.stringify(d)) }
+function getDados(){
+  return JSON.parse(localStorage.getItem("terapeutas")) || [];
+}
+function setDados(d){
+  localStorage.setItem("terapeutas", JSON.stringify(d));
+}
 
 function render(){
-  const d=dados(); lista.innerHTML="";
-  contador.innerText=d.filter(x=>x.status==="Ativo").length+" terapeutas ativas";
+  const d = getDados();
+  lista.innerHTML="";
+  contador.innerText = d.filter(t => (t.status || "Ativo") === "Ativo").length + " terapeutas ativas";
+
   d.forEach((t,i)=>{
-    lista.innerHTML+=`
+    lista.innerHTML += `
       <tr>
-        <td>${t.nomeProfissional}</td>
-        <td>${t.unidade}</td>
-        <td>${t.temFolga}</td>
-        <td>${t.diaFolga||"-"}</td>
-        <td>${t.entrada} – ${t.saida}</td>
-        <td>${t.status}</td>
+        <td>${t.nomeProfissional || ""}</td>
+        <td>${t.unidade || ""}</td>
+        <td>${t.temFolga || "Não"}</td>
+        <td>${t.diaFolga || "-"}</td>
+        <td>${t.entrada || ""} – ${t.saida || ""}</td>
+        <td>${t.status || "Ativo"}</td>
         <td class="actions">
           <button onclick="editar(${i})">✏️</button>
           <button class="delete" onclick="excluir(${i})">🗑️</button>
@@ -235,42 +273,67 @@ function render(){
 }
 
 function nova(){
-  editIndex=null; tituloModal.innerText="Nova Terapeuta";
-  document.querySelectorAll("input").forEach(i=>i.value="");
-  temFolga.value="Sim"; toggleDiaFolga();
+  editIndex=null;
+  tituloModal.innerText="Nova Terapeuta";
+  document.querySelectorAll(".modal input").forEach(i=>i.value="");
+  temFolga.value="Sim";
+  diaFolga.value="";
+  status.value="Ativo";
+  toggleDiaFolga();
   modal.style.display="flex";
 }
 
 function editar(i){
-  const t=dados()[i]; editIndex=i;
+  const t=getDados()[i];
+  editIndex=i;
   tituloModal.innerText="Editar Terapeuta";
-  nomeCompleto.value=t.nomeCompleto;
-  nomeProfissional.value=t.nomeProfissional;
-  cpf.value=t.cpf; email.value=t.email; unidade.value=t.unidade;
-  temFolga.value=t.temFolga; diaFolga.value=t.diaFolga||"";
-  entrada.value=t.entrada; saida.value=t.saida; status.value=t.status;
-  toggleDiaFolga(); modal.style.display="flex";
+  nomeCompleto.value=t.nomeCompleto||"";
+  nomeProfissional.value=t.nomeProfissional||"";
+  cpf.value=t.cpf||"";
+  email.value=t.email||"";
+  unidade.value=t.unidade||"";
+  temFolga.value=t.temFolga||"Não";
+  diaFolga.value=t.diaFolga||"";
+  entrada.value=t.entrada||"";
+  saida.value=t.saida||"";
+  status.value=t.status||"Ativo";
+  toggleDiaFolga();
+  modal.style.display="flex";
 }
 
 function salvar(){
-  const d=dados();
+  const d=getDados();
   const obj={
     nomeCompleto:nomeCompleto.value,
     nomeProfissional:nomeProfissional.value,
-    cpf:cpf.value, email:email.value, unidade:unidade.value,
+    cpf:cpf.value,
+    email:email.value,
+    unidade:unidade.value,
     temFolga:temFolga.value,
     diaFolga:temFolga.value==="Sim"?diaFolga.value:"",
-    entrada:entrada.value, saida:saida.value,
-    status:status.value
+    entrada:entrada.value,
+    saida:saida.value,
+    status:status.value || "Ativo"
   };
-  editIndex!==null?d[editIndex]=obj:d.push(obj);
-  salvarDados(d); fechar(); render();
+  editIndex!==null ? d[editIndex]=obj : d.push(obj);
+  setDados(d);
+  fechar();
+  render();
 }
 
-function excluir(i){ const d=dados(); d.splice(i,1); salvarDados(d); render(); }
-function fechar(){ modal.style.display="none"; }
+function excluir(i){
+  const d=getDados();
+  d.splice(i,1);
+  setDados(d);
+  render();
+}
+
+function fechar(){
+  modal.style.display="none";
+}
+
 function toggleDiaFolga(){
-  boxDiaFolga.style.display=temFolga.value==="Sim"?"block":"none";
+  boxDiaFolga.style.display = temFolga.value === "Sim" ? "block" : "none";
 }
 
 render();

@@ -3,149 +3,229 @@
 <head>
 <meta charset="UTF-8">
 <title>Gestão da Equipe</title>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-body{margin:0;font-family:Arial;background:#f5f7fb}
-.sidebar{width:230px;background:#1f2937;color:#fff;height:100vh;position:fixed;padding:20px}
-.sidebar a{display:flex;gap:10px;color:#cbd5e1;text-decoration:none;padding:10px;border-radius:10px;margin-bottom:6px}
-.sidebar a.active,.sidebar a:hover{background:#374151;color:#fff}
-.content{margin-left:260px;padding:30px}
+body { margin:0; font-family:Arial; background:#f5f7fb; }
 
-.card{background:#fff;border-radius:18px;padding:20px;box-shadow:0 0 8px rgba(0,0,0,.05)}
-table{width:100%;border-collapse:collapse;margin-top:10px}
-th,td{padding:10px;border-bottom:1px solid #e5e7eb;font-size:14px}
-th{background:#f3f4f6;text-align:left}
-tr:hover{background:#f9fafb}
+.sidebar {
+  width:230px; background:#1f2937; color:#fff;
+  height:100vh; position:fixed; padding:20px;
+}
+.sidebar h2 { margin-bottom:30px; }
+.sidebar a {
+  display:flex; align-items:center; gap:10px;
+  color:#cbd5e1; text-decoration:none;
+  padding:10px; border-radius:10px; margin-bottom:6px;
+}
+.sidebar a.active, .sidebar a:hover { background:#374151; color:#fff; }
 
-button{padding:6px 10px;border-radius:8px;border:none;cursor:pointer}
-.btn-primary{background:#1f2937;color:#fff}
-.btn-danger{background:#ef4444;color:#fff}
-.btn-secondary{background:#6b7280;color:#fff}
+.content { margin-left:260px; padding:30px; }
 
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-input,select{padding:8px;border-radius:8px;border:1px solid #d1d5db}
+.card {
+  background:#fff;
+  border-radius:26px;
+  padding:20px;
+  box-shadow:0 0 8px rgba(0,0,0,.05);
+  margin-bottom:20px;
+}
+
+.card h3 { margin-top:0; }
+
+.grid { display:grid; gap:14px; }
+.grid-2 { grid-template-columns:1fr 1fr; }
+.grid-3 { grid-template-columns:1fr 1fr 1fr; }
+.grid-4 { grid-template-columns:1fr 1fr 1fr 1fr; }
+
+label { font-size:13px; font-weight:600; }
+input, select {
+  width:100%;
+  padding:8px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+button {
+  padding:10px 16px;
+  border:none;
+  border-radius:10px;
+  background:#1f2937;
+  color:#fff;
+  cursor:pointer;
+}
+
+.table-row {
+  display:grid;
+  grid-template-columns:2fr 2fr 1.2fr 1fr 1fr;
+  padding:10px 0;
+  border-bottom:1px solid #eee;
+  align-items:center;
+}
+.actions button {
+  background:none;
+  color:#111;
+  font-size:16px;
+}
+.actions button:hover { color:#ef4444; }
 </style>
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
-  <a href="index.html"><i class="fa-solid fa-house"></i>Início</a>
-  <a href="equipe.html" class="active"><i class="fa-solid fa-users"></i>Gestão da Equipe</a>
-  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i>Solicitações</a>
-  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i>Escalas</a>
-  <a href="materiais.html"><i class="fa-solid fa-box-open"></i>Materiais</a>
-  <a href="financeiro.html"><i class="fa-solid fa-coins"></i>Financeiro</a>
+  <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
+  <a href="equipe.html" class="active"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
+  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
+  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
+  <a href="materiais.html"><i class="fa-solid fa-box-open"></i> Materiais</a>
+  <a href="financeiro.html"><i class="fa-solid fa-coins"></i> Financeiro</a>
 </nav>
 
+<!-- CONTENT -->
 <div class="content">
-  <h1>Gestão da Equipe</h1>
 
-  <div class="card">
-    <h3>Nova Terapeuta</h3>
+<h1>Gestão da Equipe</h1>
+<p>Gerir informações das terapeutas, horários e folgas</p>
 
-    <div class="form-row">
-      <input id="nomeProf" placeholder="Nome profissional">
-      <input id="nomeComp" placeholder="Nome completo">
-      <input id="entrada" placeholder="Hora entrada (ex: 09:00)">
-      <input id="saida" placeholder="Hora saída (ex: 18:00)">
+<!-- LISTA -->
+<div class="card">
+  <h3>Terapeutas Ativas</h3>
+  <div id="listaEquipe"></div>
+</div>
+
+<!-- FORM -->
+<div class="card">
+  <h3>Nova Terapeuta</h3>
+  <p>Preencha os dados da terapeuta</p>
+
+  <div class="grid grid-2">
+    <div>
+      <label>Nome Completo</label>
+      <input id="nomeCompleto">
     </div>
+    <div>
+      <label>Nome Profissional</label>
+      <input id="nomeProfissional">
+    </div>
+  </div>
 
-    <div class="form-row">
-      <select id="status">
-        <option value="Ativo">Ativo</option>
-        <option value="Inativo">Inativo</option>
-      </select>
-      <button class="btn-primary" onclick="salvar()">Salvar</button>
+  <div class="grid grid-4">
+    <div>
+      <label>Data de Nascimento</label>
+      <input type="date" id="dataNasc">
+    </div>
+    <div>
+      <label>CPF</label>
+      <input id="cpf">
+    </div>
+    <div>
+      <label>Email</label>
+      <input id="email">
+    </div>
+    <div>
+      <label>Unidade</label>
+      <input id="unidade">
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div>
+      <label>Horário de Entrada</label>
+      <select id="horaEntrada"></select>
+    </div>
+    <div>
+      <label>Horário de Saída</label>
+      <select id="horaSaida"></select>
     </div>
   </div>
 
   <br>
+  <button onclick="salvar()">Salvar</button>
+</div>
 
-  <div class="card">
-    <h3>Equipe</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Nome Profissional</th>
-          <th>Horário</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
-  </div>
 </div>
 
 <script>
-let terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
-let editId = null;
+let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
+let editIndex = null;
 
-function salvar() {
+// ---------- horários 15/15 ----------
+function gerarHorarios() {
+  const sel1 = document.getElementById("horaEntrada");
+  const sel2 = document.getElementById("horaSaida");
+  for (let h=0; h<24; h++) {
+    for (let m=0; m<60; m+=15) {
+      const v = String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+      sel1.innerHTML += `<option>${v}</option>`;
+      sel2.innerHTML += `<option>${v}</option>`;
+    }
+  }
+}
+gerarHorarios();
+
+// ---------- render ----------
+function render() {
+  const div = document.getElementById("listaEquipe");
+  div.innerHTML = `
+    <div class="table-row"><b>Profissional</b><b>Nome</b><b>Unidade</b><b>Horário</b><b>Ações</b></div>
+  `;
+  terapeutas.forEach((t,i)=>{
+    div.innerHTML += `
+      <div class="table-row">
+        <div>${t.nomeProfissional}</div>
+        <div>${t.nomeCompleto}</div>
+        <div>${t.unidade||"-"}</div>
+        <div>${t.horaEntrada}–${t.horaSaida}</div>
+        <div class="actions">
+          <button onclick="editar(${i})">✏️</button>
+          <button onclick="excluir(${i})">🗑️</button>
+        </div>
+      </div>
+    `;
+  });
+}
+render();
+
+// ---------- CRUD ----------
+function salvar(){
   const t = {
-    id: editId ?? Date.now(),
-    nomeProfissional: nomeProf.value,
-    nomeCompleto: nomeComp.value,
-    horaEntrada: entrada.value,
-    horaSaida: saida.value,
-    status: status.value
+    nomeCompleto: nomeCompleto.value,
+    nomeProfissional: nomeProfissional.value,
+    unidade: unidade.value,
+    horaEntrada: horaEntrada.value,
+    horaSaida: horaSaida.value,
+    status: "Ativo"
   };
-
-  if (!t.nomeProfissional) return alert("Nome profissional obrigatório");
-
-  if (editId) {
-    terapeutas = terapeutas.map(x => x.id === editId ? t : x);
-    editId = null;
+  if (editIndex !== null) {
+    terapeutas[editIndex] = t;
+    editIndex = null;
   } else {
     terapeutas.push(t);
   }
-
-  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  limpar();
-  render();
-}
-
-function editar(id) {
-  const t = terapeutas.find(x => x.id === id);
-  nomeProf.value = t.nomeProfissional;
-  nomeComp.value = t.nomeCompleto;
-  entrada.value = t.horaEntrada;
-  saida.value = t.horaSaida;
-  status.value = t.status;
-  editId = id;
-}
-
-function excluir(id) {
-  if (!confirm("Excluir terapeuta?")) return;
-  terapeutas = terapeutas.filter(x => x.id !== id);
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   render();
 }
 
-function limpar() {
-  nomeProf.value = nomeComp.value = entrada.value = saida.value = "";
+function editar(i){
+  const t = terapeutas[i];
+  nomeCompleto.value = t.nomeCompleto;
+  nomeProfissional.value = t.nomeProfissional;
+  unidade.value = t.unidade;
+  horaEntrada.value = t.horaEntrada;
+  horaSaida.value = t.horaSaida;
+  editIndex = i;
 }
 
-function render() {
-  lista.innerHTML = "";
-  terapeutas.forEach(t => {
-    lista.innerHTML += `
-      <tr>
-        <td>${t.nomeProfissional}</td>
-        <td>${t.horaEntrada || "-"} → ${t.horaSaida || "-"}</td>
-        <td>${t.status}</td>
-        <td>
-          <button class="btn-secondary" onclick="editar(${t.id})">✏️</button>
-          <button class="btn-danger" onclick="excluir(${t.id})">🗑️</button>
-        </td>
-      </tr>`;
-  });
+function excluir(i){
+  if (confirm("Excluir terapeuta?")) {
+    terapeutas.splice(i,1);
+    localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+    render();
+  }
 }
-
-render();
 </script>
 
 </body>

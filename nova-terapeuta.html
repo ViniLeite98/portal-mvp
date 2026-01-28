@@ -17,10 +17,10 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 </nav>
 
 <div class="content">
-  <h1>Nova Terapeuta</h1>
+  <h1 id="titulo">Nova Terapeuta</h1>
 
   <label>Nome</label><br>
-  <input id="nome" placeholder="Ex: Maria"><br><br>
+  <input id="nome"><br><br>
 
   <label>Folga semanal</label><br>
   <select id="folga">
@@ -34,44 +34,64 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   </select><br><br>
 
   <label>Dias de folga / ano</label><br>
-  <input id="dias" type="number" value="15"><br><br>
+  <input id="dias" type="number"><br><br>
 
-  <button onclick="salvar()">Salvar Terapeuta</button>
-
-  <p id="msg" style="color:green;"></p>
+  <button onclick="salvar()">Salvar</button>
 </div>
 
 <script>
-function salvar() {
-  const nome = document.getElementById("nome").value.trim();
-  const folga = document.getElementById("folga").value;
-  const dias = document.getElementById("dias").value;
+let editandoId = null;
 
-  if (!nome) {
-    alert("Informe o nome da terapeuta");
-    return;
-  }
+function carregarEdicao() {
+  const id = localStorage.getItem("editarTerapeutaId");
+  if (!id) return;
+
+  editandoId = Number(id);
+  document.getElementById("titulo").innerText = "Editar Terapeuta";
 
   const terapeutas =
     JSON.parse(localStorage.getItem("terapeutas")) || [];
 
-  terapeutas.push({
-    id: Date.now(),
-    nome: nome,
-    folga: folga,
-    dias: dias,
-    status: "Ativa"
-  });
+  const t = terapeutas.find(x => x.id === editandoId);
+  if (!t) return;
+
+  nome.value = t.nome;
+  folga.value = t.folga;
+  dias.value = t.dias;
+}
+
+function salvar() {
+  const nomeVal = nome.value.trim();
+  if (!nomeVal) {
+    alert("Informe o nome");
+    return;
+  }
+
+  let terapeutas =
+    JSON.parse(localStorage.getItem("terapeutas")) || [];
+
+  if (editandoId) {
+    terapeutas = terapeutas.map(t =>
+      t.id === editandoId
+        ? { ...t, nome: nomeVal, folga: folga.value, dias: dias.value }
+        : t
+    );
+    localStorage.removeItem("editarTerapeutaId");
+  } else {
+    terapeutas.push({
+      id: Date.now(),
+      nome: nomeVal,
+      folga: folga.value,
+      dias: dias.value,
+      status: "Ativa"
+    });
+  }
 
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-
-  document.getElementById("msg").innerText =
-    "Terapeuta salva com sucesso!";
-
-  setTimeout(() => {
-    window.location.href = "equipe.html";
-  }, 800);
+  window.location.href = "equipe.html";
 }
+
+carregarEdicao();
 </script>
 
 </body>

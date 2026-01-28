@@ -8,7 +8,8 @@
 <style>
 body{margin:0;font-family:Arial;background:#f5f7fb}
 .sidebar{width:230px;background:#1f2937;color:#fff;height:100vh;position:fixed;padding:20px}
-.sidebar a{display:flex;gap:10px;color:#cbd5e1;text-decoration:none;padding:10px;border-radius:10px}
+.sidebar h2{margin-bottom:30px}
+.sidebar a{display:flex;gap:10px;color:#cbd5e1;text-decoration:none;padding:10px;border-radius:10px;margin-bottom:6px}
 .sidebar a.active,.sidebar a:hover{background:#374151;color:#fff}
 .content{margin-left:260px;padding:30px}
 .card{background:#fff;border-radius:28px;padding:26px;box-shadow:0 0 8px rgba(0,0,0,.05)}
@@ -16,7 +17,7 @@ body{margin:0;font-family:Arial;background:#f5f7fb}
 button{padding:10px 18px;border-radius:10px;border:none;background:#1f2937;color:#fff;cursor:pointer}
 table{width:100%;border-collapse:collapse;margin-top:20px}
 th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14px}
-.actions i{cursor:pointer;margin-right:10px}
+.actions i{cursor:pointer;margin-right:12px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center}
 .modal-content{background:#fff;border-radius:28px;padding:30px;width:900px;max-height:90vh;overflow:auto}
 .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
@@ -33,6 +34,8 @@ th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14p
   <h2>Hara Spa</h2>
   <a href="index.html"><i class="fa fa-house"></i> Início</a>
   <a class="active"><i class="fa fa-users"></i> Gestão da Equipe</a>
+  <a href="solicitacoes.html"><i class="fa fa-calendar-xmark"></i> Solicitações</a>
+  <a href="escalas.html"><i class="fa fa-calendar-days"></i> Escalas</a>
 </nav>
 
 <div class="content">
@@ -42,7 +45,7 @@ th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14p
         <h2>Gestão da Equipe</h2>
         <small>Gerir informações das terapeutas</small>
       </div>
-      <button onclick="nova()">＋ Nova Terapeuta</button>
+      <button onclick="abrirNova()">＋ Nova Terapeuta</button>
     </div>
 
     <table>
@@ -50,8 +53,9 @@ th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14p
         <tr>
           <th>Nome</th>
           <th>Folga Semanal</th>
-          <th>Status</th>
+          <th>Data de Início</th>
           <th>Horário</th>
+          <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -68,20 +72,34 @@ th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14p
     <div class="form-grid">
       <div class="form-group col-2">
         <label>Nome Completo</label>
-        <input id="nome">
+        <input id="nomeCompleto">
       </div>
       <div class="form-group col-2">
         <label>Nome Profissional</label>
-        <input id="nomeProf">
+        <input id="nomeProfissional">
       </div>
 
       <div class="form-group">
         <label>Folga semanal</label>
-        <select id="folga">
+        <select id="folgaSemanal">
           <option></option>
           <option>Segunda</option><option>Terça</option><option>Quarta</option>
           <option>Quinta</option><option>Sexta</option><option>Sábado</option><option>Domingo</option>
         </select>
+      </div>
+
+      <div class="form-group">
+        <label>Data de Início</label>
+        <input type="date" id="dataInicio">
+      </div>
+
+      <div class="form-group">
+        <label>Horário de Entrada</label>
+        <input type="time" step="900" id="horarioEntrada">
+      </div>
+      <div class="form-group">
+        <label>Horário de Saída</label>
+        <input type="time" step="900" id="horarioSaida">
       </div>
 
       <div class="form-group">
@@ -90,15 +108,6 @@ th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;font-size:14p
           <option>Ativo</option>
           <option>Inativo</option>
         </select>
-      </div>
-
-      <div class="form-group">
-        <label>Entrada</label>
-        <input type="time" step="900" id="entrada">
-      </div>
-      <div class="form-group">
-        <label>Saída</label>
-        <input type="time" step="900" id="saida">
       </div>
     </div>
 
@@ -116,13 +125,15 @@ let editIndex = null;
 function render(){
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
+
   terapeutas.forEach((t,i)=>{
     tbody.innerHTML += `
       <tr>
-        <td>${t.nomeProf}</td>
-        <td>${t.folga || "-"}</td>
-        <td>${t.status}</td>
-        <td>${t.entrada}–${t.saida}</td>
+        <td>${t.nomeProfissional || ""}</td>
+        <td>${t.folgaSemanal || "-"}</td>
+        <td>${t.dataInicio || "-"}</td>
+        <td>${t.horarioEntrada || ""} – ${t.horarioSaida || ""}</td>
+        <td>${t.status || "Ativo"}</td>
         <td class="actions">
           <i class="fa fa-pen" onclick="editar(${i})"></i>
           <i class="fa fa-trash" onclick="excluir(${i})"></i>
@@ -131,20 +142,22 @@ function render(){
   });
 }
 
-function nova(){
-  editIndex=null;
-  document.getElementById("modal").style.display="flex";
+function abrirNova(){
+  editIndex = null;
+  document.getElementById("titulo").innerText = "Nova Terapeuta";
+  modal.style.display="flex";
 }
 
 function editar(i){
-  editIndex=i;
-  const t=terapeutas[i];
-  nome.value=t.nome;
-  nomeProf.value=t.nomeProf;
-  folga.value=t.folga;
-  status.value=t.status;
-  entrada.value=t.entrada;
-  saida.value=t.saida;
+  editIndex = i;
+  const t = terapeutas[i];
+  nomeCompleto.value = t.nomeCompleto || "";
+  nomeProfissional.value = t.nomeProfissional || "";
+  folgaSemanal.value = t.folgaSemanal || "";
+  dataInicio.value = t.dataInicio || "";
+  horarioEntrada.value = t.horarioEntrada || "";
+  horarioSaida.value = t.horarioSaida || "";
+  status.value = t.status || "Ativo";
   modal.style.display="flex";
 }
 
@@ -156,22 +169,25 @@ function excluir(i){
 }
 
 function salvar(){
-  const obj={
-    nome:nome.value,
-    nomeProf:nomeProf.value,
-    folga:folga.value,
-    status:status.value,
-    entrada:entrada.value,
-    saida:saida.value
+  const obj = {
+    nomeCompleto: nomeCompleto.value,
+    nomeProfissional: nomeProfissional.value,
+    folgaSemanal: folgaSemanal.value,
+    dataInicio: dataInicio.value,
+    horarioEntrada: horarioEntrada.value,
+    horarioSaida: horarioSaida.value,
+    status: status.value
   };
-  if(editIndex===null) terapeutas.push(obj);
-  else terapeutas[editIndex]=obj;
+
+  if(editIndex === null) terapeutas.push(obj);
+  else terapeutas[editIndex] = obj;
+
   salvarLocal();
   fechar();
 }
 
 function salvarLocal(){
-  localStorage.setItem("terapeutas",JSON.stringify(terapeutas));
+  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   render();
 }
 

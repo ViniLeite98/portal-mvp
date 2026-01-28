@@ -34,6 +34,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         <th>Folga</th>
         <th>Dias/Ano</th>
         <th>Status</th>
+        <th>Ações</th>
       </tr>
     </thead>
     <tbody id="lista"></tbody>
@@ -55,9 +56,30 @@ function carregar() {
       <td>${t.folga}</td>
       <td>${t.dias}</td>
       <td>${t.status}</td>
+      <td>
+        <button onclick="editar(${t.id})">✏️</button>
+        <button onclick="excluir(${t.id})">🗑️</button>
+      </td>
     `;
     lista.appendChild(row);
   });
+}
+
+function excluir(id) {
+  if (!confirm("Deseja excluir esta terapeuta?")) return;
+
+  let terapeutas =
+    JSON.parse(localStorage.getItem("terapeutas")) || [];
+
+  terapeutas = terapeutas.filter(t => t.id !== id);
+
+  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+  carregar();
+}
+
+function editar(id) {
+  localStorage.setItem("editarTerapeutaId", id);
+  window.location.href = "nova-terapeuta.html";
 }
 
 carregar();

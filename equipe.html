@@ -9,7 +9,6 @@
 <style>
 body { margin:0; font-family:Arial; background:#f5f7fb; }
 
-/* SIDEBAR */
 .sidebar {
   width:230px; background:#1f2937; color:#fff;
   height:100vh; position:fixed; padding:20px;
@@ -24,7 +23,6 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
   background:#374151; color:#fff;
 }
 
-/* CONTENT */
 .content { margin-left:260px; padding:30px; }
 
 .card {
@@ -49,7 +47,6 @@ button.primary {
   cursor:pointer;
 }
 
-/* TABLE */
 table { width:100%; border-collapse:collapse; margin-top:16px; }
 th {
   text-align:left;
@@ -77,7 +74,6 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
   justify-content:center;
   z-index:999;
 }
-
 .modal-box {
   background:#fff;
   border-radius:20px;
@@ -85,7 +81,6 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
   width:820px;
   max-width:95%;
 }
-
 .form-grid {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -98,25 +93,13 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
   border-radius:8px;
   border:1px solid #ccc;
 }
-
 .modal-actions {
   margin-top:20px;
   display:flex;
   gap:12px;
 }
-.save {
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  padding:10px 16px;
-  border-radius:10px;
-}
-.cancel {
-  background:#9ca3af;
-  border:none;
-  padding:10px 16px;
-  border-radius:10px;
-}
+.save { background:#1f2937; color:#fff; border:none; padding:10px 16px; border-radius:10px; }
+.cancel { background:#9ca3af; border:none; padding:10px 16px; border-radius:10px; }
 </style>
 </head>
 
@@ -134,7 +117,6 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
 
 <div class="content">
   <h1>Gestão da Equipe</h1>
-  <p>Gerir informações das terapeutas, horários e folgas</p>
 
   <div class="card">
     <div class="header">
@@ -150,7 +132,7 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
         <tr>
           <th>Nome</th>
           <th>Folga semanal?</th>
-          <th>Dia da folga</th>
+          <th>Dias de folga</th>
           <th>Data de início</th>
           <th>Horário</th>
           <th>Ações</th>
@@ -167,10 +149,6 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
     <h2 id="tituloModal">Nova Terapeuta</h2>
 
     <div class="form-grid">
-      <div>
-        <label>Nome Completo</label>
-        <input id="nomeCompleto">
-      </div>
       <div>
         <label>Nome Profissional</label>
         <input id="nomeProfissional">
@@ -200,7 +178,6 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
       <div id="boxDiaFolga">
         <label>Dia da folga</label>
         <select id="diaFolga">
-          <option></option>
           <option>Segunda</option>
           <option>Terça</option>
           <option>Quarta</option>
@@ -213,12 +190,12 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
 
       <div>
         <label>Horário Entrada</label>
-        <select id="entrada"></select>
+        <input type="time" step="900" id="entrada">
       </div>
 
       <div>
         <label>Horário Saída</label>
-        <select id="saida"></select>
+        <input type="time" step="900" id="saida">
       </div>
     </div>
 
@@ -232,39 +209,59 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
 <script>
 let editIndex = null;
 
-/* horários 15 em 15 */
-function gerarHorarios(sel){
-  sel.innerHTML="";
-  for(let h=0;h<24;h++){
-    for(let m=0;m<60;m+=15){
-      sel.innerHTML+=`<option>${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}</option>`;
-    }
-  }
-}
-gerarHorarios(entrada);
-gerarHorarios(saida);
+/* util */
+function getDados(){ return JSON.parse(localStorage.getItem("terapeutas"))||[] }
+function setDados(d){ localStorage.setItem("terapeutas",JSON.stringify(d)) }
+function getSolic(){ return JSON.parse(localStorage.getItem("solicitacoes"))||[] }
 
-/* storage */
-function getDados(){
-  return JSON.parse(localStorage.getItem("terapeutas")) || [];
+/* cálculo de dias */
+function contarDiasSemana(inicio, diaSemana){
+  const map = {
+    "Domingo":0,"Segunda":1,"Terça":2,"Quarta":3,
+    "Quinta":4,"Sexta":5,"Sábado":6
+  };
+  let d = new Date(inicio);
+  const hoje = new Date();
+  let c = 0;
+  while(d <= hoje){
+    if(d.getDay() === map[diaSemana]) c++;
+    d.setDate(d.getDate()+1);
+  }
+  return c;
 }
-function setDados(d){
-  localStorage.setItem("terapeutas", JSON.stringify(d));
+
+function diasSolicitacoes(nome){
+  return getSolic()
+    .filter(s => s.status==="Aprovado" && s.nome_profissional===nome)
+    .reduce((acc,s)=>{
+      const i=new Date(s.dt_inicio), f=new Date(s.dt_fim);
+      return acc + Math.floor((f-i)/86400000)+1;
+    },0);
 }
 
 /* render */
 function render(){
-  const d = getDados();
+  const d=getDados();
   lista.innerHTML="";
-  contador.innerText = d.filter(t => t.status === "Ativo").length + " terapeutas ativas";
+  contador.innerText = d.filter(t=>t.status==="Ativo").length+" terapeutas ativas";
 
   d.forEach((t,i)=>{
-    lista.innerHTML += `
+    let dias=0;
+    if(t.temFolga==="Sim" && t.status==="Ativo"){
+      const ini = new Date(Math.max(
+        new Date(t.dataInicio),
+        new Date(new Date().getFullYear(),0,1)
+      ));
+      dias += contarDiasSemana(ini, t.diaFolga);
+    }
+    dias += diasSolicitacoes(t.nomeProfissional);
+
+    lista.innerHTML+=`
       <tr>
-        <td>${t.nomeProfissional || ""}</td>
+        <td>${t.nomeProfissional}</td>
         <td>${t.temFolga}</td>
-        <td>${t.diaFolga || "-"}</td>
-        <td>${t.dataInicio || ""}</td>
+        <td>${dias}</td>
+        <td>${t.dataInicio}</td>
         <td>${t.entrada} – ${t.saida}</td>
         <td class="actions">
           <button onclick="editar(${i})">✏️</button>
@@ -274,64 +271,51 @@ function render(){
   });
 }
 
-/* ações */
+/* CRUD */
 function nova(){
-  editIndex = null;
-  tituloModal.innerText = "Nova Terapeuta";
-  nomeCompleto.value = "";
-  nomeProfissional.value = "";
-  dataInicio.value = "";
-  status.value = "Ativo";
-  temFolga.value = "Sim";
-  diaFolga.value = "";
+  editIndex=null;
+  tituloModal.innerText="Nova Terapeuta";
+  nomeProfissional.value="";
+  dataInicio.value="";
+  status.value="Ativo";
+  temFolga.value="Sim";
+  diaFolga.value="Segunda";
+  entrada.value="09:00";
+  saida.value="18:00";
   toggleDiaFolga();
-  modal.style.display = "flex";
+  modal.style.display="flex";
 }
 
 function editar(i){
-  const t = getDados()[i];
-  editIndex = i;
-  tituloModal.innerText = "Editar Terapeuta";
-  nomeCompleto.value = t.nomeCompleto || "";
-  nomeProfissional.value = t.nomeProfissional || "";
-  dataInicio.value = t.dataInicio || "";
-  status.value = t.status;
-  temFolga.value = t.temFolga;
-  diaFolga.value = t.diaFolga || "";
-  entrada.value = t.entrada;
-  saida.value = t.saida;
+  const t=getDados()[i];
+  editIndex=i;
+  nomeProfissional.value=t.nomeProfissional;
+  dataInicio.value=t.dataInicio;
+  status.value=t.status;
+  temFolga.value=t.temFolga;
+  diaFolga.value=t.diaFolga;
+  entrada.value=t.entrada;
+  saida.value=t.saida;
   toggleDiaFolga();
-  modal.style.display = "flex";
+  modal.style.display="flex";
 }
 
 function salvar(){
-  const d = getDados();
-  const obj = {
-    nomeCompleto: nomeCompleto.value,
-    nomeProfissional: nomeProfissional.value,
-    dataInicio: dataInicio.value,
-    status: status.value,          // 🔴 SEMPRE EXISTE
-    temFolga: temFolga.value,
-    diaFolga: temFolga.value==="Sim" ? diaFolga.value : "",
-    entrada: entrada.value,
-    saida: saida.value
+  const d=getDados();
+  const obj={
+    nomeProfissional:nomeProfissional.value,
+    dataInicio:dataInicio.value,
+    status:status.value,
+    temFolga:temFolga.value,
+    diaFolga:temFolga.value==="Sim"?diaFolga.value:"",
+    entrada:entrada.value,
+    saida:saida.value
   };
-
-  if (editIndex !== null) d[editIndex] = obj;
-  else d.push(obj);
-
-  setDados(d);
-  fechar();
-  render();
+  editIndex!==null?d[editIndex]=obj:d.push(obj);
+  setDados(d); fechar(); render();
 }
 
-function excluir(i){
-  const d = getDados();
-  d.splice(i,1);
-  setDados(d);
-  render();
-}
-
+function excluir(i){ const d=getDados(); d.splice(i,1); setDados(d); render(); }
 function fechar(){ modal.style.display="none"; }
 function toggleDiaFolga(){
   boxDiaFolga.style.display = temFolga.value==="Sim" ? "block" : "none";

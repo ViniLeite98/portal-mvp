@@ -7,77 +7,175 @@
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.header-row a {
+  color: #6d28d9;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.header-row a:hover {
+  text-decoration: underline;
+}
+
+.table-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 0 8px rgba(0,0,0,.05);
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead {
+  background: #f3f4f6;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  font-weight: 600;
+}
+
+tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.actions button {
+  background: none;
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  margin-right: 4px;
+}
+
+.actions button:hover {
+  background: #f3f4f6;
+}
+</style>
 </head>
 
 <body>
 
-<!-- MENU LATERAL -->
+<!-- MENU -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
 
-  <a href="index.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-  <a href="equipe.html"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
-  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Indisponibilidades</a>
-  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
-  <a href="disponibilidade.html"><i class="fa-solid fa-table-cells"></i> Disponibilidade</a>
-  <a href="materiais.html"><i class="fa-solid fa-boxes-stacked"></i> Materiais</a>
-  <a href="financeiro.html"><i class="fa-solid fa-dollar-sign"></i> Financeiro</a>
+  <a href="index.html">
+    <i class="fa-solid fa-house"></i> Início
+  </a>
+
+  <a href="equipe.html" class="active">
+    <i class="fa-solid fa-users"></i> Gestão da Equipe
+  </a>
+
+  <a href="solicitacoes.html">
+    <i class="fa-solid fa-calendar-xmark"></i> Solicitações
+  </a>
+
+  <a href="escalas.html">
+    <i class="fa-solid fa-calendar-days"></i> Escalas
+  </a>
 </nav>
 
 <!-- CONTEÚDO -->
 <div class="content">
   <h1>Gestão da Equipe</h1>
-  <p>Gerir informações das terapeutas, horários e folgas</p>
+  <p class="small">Gerir informações das terapeutas, horários e folgas</p>
 
-  <a href="nova-terapeuta.html"
-     style="display:inline-block;margin-bottom:15px;">
-    + Nova Terapeuta
-  </a>
+  <div class="header-row">
+    <div>
+      <b id="contadorAtivas">0</b> terapeutas ativas
+    </div>
+    <a href="nova-terapeuta.html">+ Nova Terapeuta</a>
+  </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Nome Profissional</th>
-        <th>Nome Completo</th>
-        <th>Unidade</th>
-        <th>Folga Semanal</th>
-        <th>Status</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody id="lista"></tbody>
-  </table>
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome Profissional</th>
+          <th>Nome Completo</th>
+          <th>Unidade</th>
+          <th>Folga Semanal</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
+// ============================
+// HELPERS (NÃO RESETAM)
+// ============================
+function getTerapeutas() {
+  const data = localStorage.getItem("terapeutas");
+  return data ? JSON.parse(data) : [];
+}
+
+function saveTerapeutas(lista) {
+  localStorage.setItem("terapeutas", JSON.stringify(lista));
+}
+
+// ============================
+// CORREÇÃO DAS TERAPEUTAS ANTIGAS
+// ============================
+let terapeutas = getTerapeutas();
+let alterou = false;
+
+terapeutas = terapeutas.map(t => {
+  if (!t.id) {
+    alterou = true;
+    return { ...t, id: Date.now() + Math.random() };
+  }
+  return t;
+});
+
+if (alterou) {
+  saveTerapeutas(terapeutas);
+}
+
+// ============================
+// RENDER
+// ============================
 function carregar() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  let terapeutas =
-    JSON.parse(localStorage.getItem("terapeutas")) || [];
+  const dados = getTerapeutas();
 
-  // 🔧 CORREÇÃO AUTOMÁTICA PARA REGISTROS ANTIGOS (SEM ID)
-  let alterou = false;
-  terapeutas = terapeutas.map(t => {
-    if (!t.id) {
-      alterou = true;
-      return { ...t, id: Date.now() + Math.random() };
-    }
-    return t;
-  });
+  // Contar somente ATIVAS
+  const ativas = dados.filter(t =>
+    !t.status || t.status === "Ativo"
+  );
+  document.getElementById("contadorAtivas").innerText = ativas.length;
 
-  if (alterou) {
-    localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  }
-
-  if (terapeutas.length === 0) {
+  if (dados.length === 0) {
     lista.innerHTML =
       `<tr><td colspan="6">Nenhuma terapeuta cadastrada</td></tr>`;
     return;
   }
 
-  terapeutas.forEach(t => {
+  dados.forEach(t => {
     const row = document.createElement("tr");
 
     row.innerHTML = `
@@ -86,9 +184,9 @@ function carregar() {
       <td>${t.unidade || "-"}</td>
       <td>${t.temFolga === "Sim" ? (t.diaFolga || "-") : "Não"}</td>
       <td>${t.status || "-"}</td>
-      <td>
-        <button onclick="editar(${t.id})" title="Editar">✏️</button>
-        <button onclick="excluir(${t.id})" title="Excluir">🗑️</button>
+      <td class="actions">
+        <button onclick="editar(${t.id})">✏️</button>
+        <button onclick="excluir(${t.id})">🗑️</button>
       </td>
     `;
 
@@ -96,24 +194,23 @@ function carregar() {
   });
 }
 
+// ============================
+// AÇÕES
+// ============================
 function editar(id) {
   localStorage.setItem("editarTerapeutaId", id);
-  window.location.href = "nova-terapeuta.html";
+  location.href = "nova-terapeuta.html";
 }
 
 function excluir(id) {
   if (!confirm("Deseja excluir esta terapeuta?")) return;
 
-  let terapeutas =
-    JSON.parse(localStorage.getItem("terapeutas")) || [];
-
-  terapeutas = terapeutas.filter(t => t.id !== id);
-
-  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+  let lista = getTerapeutas();
+  lista = lista.filter(t => t.id !== id);
+  saveTerapeutas(lista);
   carregar();
 }
 
-// 🚀 INICIALIZA
 carregar();
 </script>
 

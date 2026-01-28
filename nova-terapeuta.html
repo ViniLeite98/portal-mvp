@@ -7,6 +7,33 @@
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+.form-grid label {
+  font-weight: bold;
+}
+.form-grid input, .form-grid select {
+  width: 100%;
+}
+.full { grid-column: span 4; }
+.half { grid-column: span 2; }
+.third { grid-column: span 1; }
+.card-form {
+  background:#fff;
+  padding:25px;
+  border-radius:12px;
+  box-shadow:0 0 10px rgba(0,0,0,.05);
+}
+.certificacoes {
+  display:flex;
+  gap:20px;
+}
+</style>
 </head>
 
 <body>
@@ -17,81 +44,165 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 </nav>
 
 <div class="content">
-  <h1 id="titulo">Nova Terapeuta</h1>
+  <h1>Nova Terapeuta</h1>
+  <p>Preencha os dados da terapeuta</p>
 
-  <label>Nome</label><br>
-  <input id="nome"><br><br>
+  <div class="card-form">
+    <div class="form-grid">
 
-  <label>Folga semanal</label><br>
-  <select id="folga">
-    <option>Segunda</option>
-    <option>Terça</option>
-    <option>Quarta</option>
-    <option>Quinta</option>
-    <option>Sexta</option>
-    <option>Sábado</option>
-    <option>Domingo</option>
-  </select><br><br>
+      <div class="half">
+        <label>Nome Completo</label>
+        <input id="nomeCompleto">
+      </div>
 
-  <label>Dias de folga / ano</label><br>
-  <input id="dias" type="number"><br><br>
+      <div class="half">
+        <label>Nome Profissional</label>
+        <input id="nomeProfissional">
+      </div>
 
-  <button onclick="salvar()">Salvar</button>
+      <div class="third">
+        <label>Data de Nascimento</label>
+        <input type="date" id="nascimento">
+      </div>
+
+      <div class="third">
+        <label>CPF</label>
+        <input id="cpf">
+      </div>
+
+      <div class="half">
+        <label>Email</label>
+        <input id="email">
+      </div>
+
+      <div class="third">
+        <label>Unidade</label>
+        <input id="unidade">
+      </div>
+
+      <div class="full">
+        <label>Endereço</label>
+        <input id="endereco">
+      </div>
+
+      <div class="third">
+        <label>Contato</label>
+        <input id="contato">
+      </div>
+
+      <div class="third">
+        <label>Contato Emergência</label>
+        <input id="contatoEmergencia">
+      </div>
+
+      <div class="third">
+        <label>Tipo de Chave</label>
+        <input id="tipoChave">
+      </div>
+
+      <div class="half">
+        <label>Chave Pix</label>
+        <input id="chavePix">
+      </div>
+
+      <div class="third">
+        <label>Tem folga semanal?</label>
+        <select id="temFolga">
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
+      </div>
+
+      <div class="third">
+        <label>Dia da Folga</label>
+        <input id="diaFolga">
+      </div>
+
+      <div class="third">
+        <label>Horário de Entrada</label>
+        <input type="time" id="horaEntrada">
+      </div>
+
+      <div class="third">
+        <label>Horário de Saída</label>
+        <input type="time" id="horaSaida">
+      </div>
+
+      <div class="third">
+        <label>Data de Início</label>
+        <input type="date" id="dataInicio">
+      </div>
+
+      <div class="third">
+        <label>Tipo Sanguíneo</label>
+        <input id="tipoSanguineo">
+      </div>
+
+      <div class="third">
+        <label>Status</label><br>
+        <input type="radio" name="status" value="Ativo" checked> Ativo
+        <input type="radio" name="status" value="Inativo"> Inativo
+      </div>
+
+      <div class="full">
+        <label>Certificações</label>
+        <div class="certificacoes">
+          <label><input type="checkbox" value="Nuru"> Massagem Nuru</label>
+          <label><input type="checkbox" value="Vivência"> Massagem Vivência</label>
+          <label><input type="checkbox" value="Podolatria"> Podolatria</label>
+          <label><input type="checkbox" value="Casais"> Massagem Casais</label>
+          <label><input type="checkbox" value="Feminina"> Massagem Feminina</label>
+        </div>
+      </div>
+
+    </div>
+
+    <br>
+    <button onclick="salvar()">Salvar</button>
+  </div>
 </div>
 
 <script>
-let editandoId = null;
+let editId = localStorage.getItem("editarTerapeutaId");
 
-function carregarEdicao() {
-  const id = localStorage.getItem("editarTerapeutaId");
-  if (!id) return;
-
-  editandoId = Number(id);
-  document.getElementById("titulo").innerText = "Editar Terapeuta";
-
+function salvar() {
   const terapeutas =
     JSON.parse(localStorage.getItem("terapeutas")) || [];
 
-  const t = terapeutas.find(x => x.id === editandoId);
-  if (!t) return;
+  const certificacoes = [...document.querySelectorAll(".certificacoes input:checked")]
+    .map(c => c.value);
 
-  nome.value = t.nome;
-  folga.value = t.folga;
-  dias.value = t.dias;
+  const dados = {
+    id: editId ? Number(editId) : Date.now(),
+    nomeCompleto: nomeCompleto.value,
+    nomeProfissional: nomeProfissional.value,
+    nascimento: nascimento.value,
+    cpf: cpf.value,
+    email: email.value,
+    unidade: unidade.value,
+    endereco: endereco.value,
+    contato: contato.value,
+    contatoEmergencia: contatoEmergencia.value,
+    tipoChave: tipoChave.value,
+    chavePix: chavePix.value,
+    temFolga: temFolga.value,
+    diaFolga: diaFolga.value,
+    horaEntrada: horaEntrada.value,
+    horaSaida: horaSaida.value,
+    dataInicio: dataInicio.value,
+    tipoSanguineo: tipoSanguineo.value,
+    status: document.querySelector('input[name="status"]:checked').value,
+    certificacoes
+  };
+
+  const atualizados = editId
+    ? terapeutas.map(t => t.id == editId ? dados : t)
+    : [...terapeutas, dados];
+
+  localStorage.setItem("terapeutas", JSON.stringify(atualizados));
+  localStorage.removeItem("editarTerapeutaId");
+  location.href = "equipe.html";
 }
-
-function salvar() {
-  const nomeVal = nome.value.trim();
-  if (!nomeVal) {
-    alert("Informe o nome");
-    return;
-  }
-
-  let terapeutas =
-    JSON.parse(localStorage.getItem("terapeutas")) || [];
-
-  if (editandoId) {
-    terapeutas = terapeutas.map(t =>
-      t.id === editandoId
-        ? { ...t, nome: nomeVal, folga: folga.value, dias: dias.value }
-        : t
-    );
-    localStorage.removeItem("editarTerapeutaId");
-  } else {
-    terapeutas.push({
-      id: Date.now(),
-      nome: nomeVal,
-      folga: folga.value,
-      dias: dias.value,
-      status: "Ativa"
-    });
-  }
-
-  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  window.location.href = "equipe.html";
-}
-
-carregarEdicao();
 </script>
 
 </body>

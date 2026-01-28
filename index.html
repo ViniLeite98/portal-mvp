@@ -4,13 +4,54 @@
 <meta charset="UTF-8">
 <title>Início</title>
 
-<link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+/* ===== LAYOUT ===== */
+body {
+  margin: 0;
+  font-family: Inter, Arial, sans-serif;
+  background: #f5f7fb;
+}
+
+.sidebar {
+  width: 230px;
+  background: #1f2937;
+  color: #fff;
+  height: 100vh;
+  position: fixed;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  margin-bottom: 30px;
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 10px;
+  border-radius: 10px;
+  margin-bottom: 6px;
+}
+
+.sidebar a.active,
+.sidebar a:hover {
+  background: #374151;
+  color: #fff;
+}
+
+.content {
+  margin-left: 260px;
+  padding: 30px;
+}
+
+/* ===== CARDS ===== */
 .cards {
   display: grid;
   grid-template-columns: 1.1fr 1.6fr 1.2fr;
@@ -19,14 +60,14 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 .card {
   background: #fff;
-  padding: 16px;
   border-radius: 18px;
+  padding: 18px;
   box-shadow: 0 0 8px rgba(0,0,0,.05);
 }
 
 .card h3 {
-  margin: 0;
   font-size: 14px;
+  margin: 0;
 }
 
 .kpi {
@@ -37,18 +78,51 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 .small {
   font-size: 12px;
-  color: #666;
+  color: #6b7280;
 }
 
+/* ===== GRÁFICOS ===== */
 .section-row {
   display: grid;
   grid-template-columns: 3.2fr 1.3fr;
   gap: 16px;
+  margin-top: 20px;
 }
 
-.rank div {
+/* ===== AÇÕES ===== */
+.section-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.action-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 0 8px rgba(0,0,0,.05);
+}
+
+.action-card h3 {
+  font-size: 15px;
   margin-bottom: 6px;
+}
+
+.action-card p {
   font-size: 13px;
+  color: #666;
+  margin-bottom: 14px;
+}
+
+.action-card button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: #1f2937;
+  color: #fff;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -88,9 +162,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
   </div>
 
-  <br>
-
-  <!-- FORÇA DE TRABALHO + CARGA HORÁRIA -->
+  <!-- FORÇA + CARGA -->
   <div class="section-row">
 
     <div class="card">
@@ -101,32 +173,46 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
     <div class="card">
       <h3>Carga Horária</h3>
-      <div id="rankHoras" class="rank"></div>
+      <div id="rankHoras" class="small"></div>
     </div>
 
   </div>
+
+  <!-- AÇÕES (IGUAL PPT) -->
+  <div class="section-actions">
+
+    <div class="action-card">
+      <h3>Gestão de Terapeutas</h3>
+      <p>Cadastrar, editar e gerenciar informações das terapeutas.</p>
+      <button onclick="location.href='equipe.html'">Gerir equipe</button>
+    </div>
+
+    <div class="action-card">
+      <h3>Solicitações</h3>
+      <p>Registrar faltas, férias, viagens e acompanhar aprovações.</p>
+      <button onclick="location.href='solicitacoes.html'">Ver solicitações</button>
+    </div>
+
+    <div class="action-card">
+      <h3>Escalas</h3>
+      <p>Distribuição de terapeutas por data e horário.</p>
+      <button onclick="location.href='escalas.html'">Criar escalas</button>
+    </div>
+
+  </div>
+
 </div>
 
 <script>
-// =========================
-// LOAD STORAGE
-// =========================
-const terapeutas =
-  JSON.parse(localStorage.getItem("terapeutas")) || [];
-const solicitacoes =
-  JSON.parse(localStorage.getItem("solicitacoes")) || [];
+// ===== STORAGE =====
+const terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
+const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
 
-// =========================
-// KPI EQUIPE (ATIVAS)
-// =========================
-const ativas = terapeutas.filter(t =>
-  !t.status || t.status === "Ativo"
-);
+// ===== KPI EQUIPE =====
+const ativas = terapeutas.filter(t => !t.status || t.status === "Ativo");
 document.getElementById("kpiEquipe").innerText = ativas.length;
 
-// =========================
-// DIAS FOLGADOS (CORRIGIDO)
-// =========================
+// ===== DIAS FOLGADOS =====
 const diasPorPessoa = {};
 
 solicitacoes
@@ -134,53 +220,45 @@ solicitacoes
   .forEach(s => {
     if (!s.dtInicio || !s.dtFim) return;
 
-    const inicio = new Date(s.dtInicio);
+    const ini = new Date(s.dtInicio);
     const fim = new Date(s.dtFim);
+    if (isNaN(ini) || isNaN(fim)) return;
 
-    if (isNaN(inicio) || isNaN(fim)) return;
-
-    const dias =
-      Math.floor((fim - inicio) / (1000 * 60 * 60 * 24)) + 1;
-
+    const dias = Math.floor((fim - ini) / 86400000) + 1;
     if (dias <= 0) return;
 
-    const nome = s.terapeutaNome || "—";
-    diasPorPessoa[nome] =
-      (diasPorPessoa[nome] || 0) + dias;
+    diasPorPessoa[s.terapeutaNome] =
+      (diasPorPessoa[s.terapeutaNome] || 0) + dias;
   });
 
 const folgaDiv = document.getElementById("diasFolga");
-
 const ranking = Object.entries(diasPorPessoa)
-  .sort((a, b) => b[1] - a[1])
-  .slice(0, 5);
+  .sort((a,b) => b[1] - a[1])
+  .slice(0,5);
 
 if (ranking.length === 0) {
-  folgaDiv.innerHTML = "Sem dados ainda.";
+  folgaDiv.innerText = "Sem dados ainda.";
 } else {
   ranking.forEach(([nome, dias]) => {
     folgaDiv.innerHTML += `<div><b>${nome}</b>: ${dias} dias</div>`;
   });
 }
 
-// =========================
-// FORÇA DE TRABALHO
-// =========================
-const horas = Array.from({ length: 14 }, (_, i) => i + 9);
-
-const contagem = horas.map(h => {
-  return ativas.filter(t => {
+// ===== FORÇA DE TRABALHO =====
+const horas = Array.from({length:14}, (_,i)=>i+9);
+const contagem = horas.map(h =>
+  ativas.filter(t => {
     if (!t.horaEntrada || !t.horaSaida) return false;
     const he = Number(t.horaEntrada.split(":")[0]);
     const hs = Number(t.horaSaida.split(":")[0]);
     return h >= he && h < hs;
-  }).length;
-});
+  }).length
+);
 
 new Chart(document.getElementById("grafico"), {
   type: "bar",
   data: {
-    labels: horas.map(h => `${h}:00`),
+    labels: horas.map(h=>`${h}:00`),
     datasets: [{
       label: "Terapeutas ativas",
       data: contagem,
@@ -188,33 +266,17 @@ new Chart(document.getElementById("grafico"), {
     }]
   },
   options: {
-    scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1 } }
-    }
+    scales: { y: { beginAtZero:true, ticks:{stepSize:1} } }
   }
 });
 
-// =========================
-// CARGA HORÁRIA
-// =========================
-const horasRank = ativas
-  .map(t => {
-    if (!t.horaEntrada || !t.horaSaida) return null;
-    const horas =
-      Number(t.horaSaida.split(":")[0]) -
-      Number(t.horaEntrada.split(":")[0]);
-    return {
-      nome: t.nomeProfissional || t.nomeCompleto,
-      horas
-    };
-  })
-  .filter(Boolean)
-  .sort((a, b) => b.horas - a.horas)
-  .slice(0, 5);
-
+// ===== CARGA HORÁRIA =====
 const rankDiv = document.getElementById("rankHoras");
-horasRank.forEach(r => {
-  rankDiv.innerHTML += `<div>${r.nome}: ${r.horas}h</div>`;
+ativas.forEach(t => {
+  if (!t.horaEntrada || !t.horaSaida) return;
+  const h = Number(t.horaSaida.split(":")[0]) -
+            Number(t.horaEntrada.split(":")[0]);
+  rankDiv.innerHTML += `<div>${t.nomeProfissional}: ${h}h</div>`;
 });
 </script>
 

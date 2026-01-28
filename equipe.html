@@ -3,220 +3,149 @@
 <head>
 <meta charset="UTF-8">
 <title>Gestão da Equipe</title>
-
-<link rel="stylesheet" href="assets/css/style.css">
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-/* Wrapper igual ao PPT */
-.page-box {
-  background: #ffffff;
-  border-radius: 22px;
-  border: 1px solid #e5e7eb;
-  padding: 22px;
-}
+body{margin:0;font-family:Arial;background:#f5f7fb}
+.sidebar{width:230px;background:#1f2937;color:#fff;height:100vh;position:fixed;padding:20px}
+.sidebar a{display:flex;gap:10px;color:#cbd5e1;text-decoration:none;padding:10px;border-radius:10px;margin-bottom:6px}
+.sidebar a.active,.sidebar a:hover{background:#374151;color:#fff}
+.content{margin-left:260px;padding:30px}
 
-/* Header */
-.header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
+.card{background:#fff;border-radius:18px;padding:20px;box-shadow:0 0 8px rgba(0,0,0,.05)}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+th,td{padding:10px;border-bottom:1px solid #e5e7eb;font-size:14px}
+th{background:#f3f4f6;text-align:left}
+tr:hover{background:#f9fafb}
 
-.header-row a {
-  color: #6d28d9;
-  font-weight: 600;
-  text-decoration: none;
-}
+button{padding:6px 10px;border-radius:8px;border:none;cursor:pointer}
+.btn-primary{background:#1f2937;color:#fff}
+.btn-danger{background:#ef4444;color:#fff}
+.btn-secondary{background:#6b7280;color:#fff}
 
-.header-row a:hover {
-  text-decoration: underline;
-}
-
-/* Tabela */
-.table-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  overflow: hidden;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-thead {
-  background: #f3f4f6;
-}
-
-th, td {
-  padding: 12px;
-  font-size: 14px;
-}
-
-tbody tr {
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.actions button {
-  background: none;
-  border: 1px solid #9ca3af;
-  border-radius: 6px;
-  padding: 4px 7px;
-  cursor: pointer;
-  margin-right: 6px;
-}
-
-.actions button:hover {
-  background: #f3f4f6;
-}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+input,select{padding:8px;border-radius:8px;border:1px solid #d1d5db}
 </style>
 </head>
 
 <body>
 
-<!-- MENU -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
-
-  <a href="index.html">
-    <i class="fa-solid fa-house"></i> Início
-  </a>
-
-  <a href="equipe.html" class="active">
-    <i class="fa-solid fa-users"></i> Gestão da Equipe
-  </a>
-
-  <a href="solicitacoes.html">
-    <i class="fa-solid fa-calendar-xmark"></i> Solicitações
-  </a>
-
-  <a href="escalas.html">
-    <i class="fa-solid fa-calendar-days"></i> Escalas
-  </a>
+  <a href="index.html"><i class="fa-solid fa-house"></i>Início</a>
+  <a href="equipe.html" class="active"><i class="fa-solid fa-users"></i>Gestão da Equipe</a>
+  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i>Solicitações</a>
+  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i>Escalas</a>
+  <a href="materiais.html"><i class="fa-solid fa-box-open"></i>Materiais</a>
+  <a href="financeiro.html"><i class="fa-solid fa-coins"></i>Financeiro</a>
 </nav>
 
-<!-- CONTEÚDO -->
 <div class="content">
+  <h1>Gestão da Equipe</h1>
 
-  <div class="page-box">
+  <div class="card">
+    <h3>Nova Terapeuta</h3>
 
-    <h1>Gestão da Equipe</h1>
-    <p class="small">Gerir informações das terapeutas, horários e folgas</p>
-
-    <div class="header-row">
-      <div>
-        <b id="contadorAtivas">0</b> terapeutas ativas
-      </div>
-      <a href="nova-terapeuta.html">+ Nova Terapeuta</a>
+    <div class="form-row">
+      <input id="nomeProf" placeholder="Nome profissional">
+      <input id="nomeComp" placeholder="Nome completo">
+      <input id="entrada" placeholder="Hora entrada (ex: 09:00)">
+      <input id="saida" placeholder="Hora saída (ex: 18:00)">
     </div>
 
-    <div class="table-card">
-      <table>
-        <thead>
-          <tr>
-            <th>Nome Profissional</th>
-            <th>Nome Completo</th>
-            <th>Unidade</th>
-            <th>Folga Semanal</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="lista"></tbody>
-      </table>
+    <div class="form-row">
+      <select id="status">
+        <option value="Ativo">Ativo</option>
+        <option value="Inativo">Inativo</option>
+      </select>
+      <button class="btn-primary" onclick="salvar()">Salvar</button>
     </div>
-
   </div>
 
+  <br>
+
+  <div class="card">
+    <h3>Equipe</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome Profissional</th>
+          <th>Horário</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
-// =======================
-// STORAGE HELPERS
-// =======================
-function getTerapeutas() {
-  const d = localStorage.getItem("terapeutas");
-  return d ? JSON.parse(d) : [];
-}
+let terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
+let editId = null;
 
-function saveTerapeutas(lista) {
-  localStorage.setItem("terapeutas", JSON.stringify(lista));
-}
+function salvar() {
+  const t = {
+    id: editId ?? Date.now(),
+    nomeProfissional: nomeProf.value,
+    nomeCompleto: nomeComp.value,
+    horaEntrada: entrada.value,
+    horaSaida: saida.value,
+    status: status.value
+  };
 
-// =======================
-// MIGRAÇÃO (IDs)
-/// ======================
-let terapeutas = getTerapeutas();
-let mudou = false;
+  if (!t.nomeProfissional) return alert("Nome profissional obrigatório");
 
-terapeutas = terapeutas.map(t => {
-  if (!t.id) {
-    mudou = true;
-    return { ...t, id: Date.now() + Math.random() };
-  }
-  return t;
-});
-
-if (mudou) saveTerapeutas(terapeutas);
-
-// =======================
-// RENDER
-// =======================
-function carregar() {
-  const lista = document.getElementById("lista");
-  lista.innerHTML = "";
-
-  const dados = getTerapeutas();
-
-  const ativas = dados.filter(t =>
-    !t.status || t.status === "Ativo"
-  );
-  document.getElementById("contadorAtivas").innerText = ativas.length;
-
-  if (dados.length === 0) {
-    lista.innerHTML =
-      `<tr><td colspan="6">Nenhuma terapeuta cadastrada</td></tr>`;
-    return;
+  if (editId) {
+    terapeutas = terapeutas.map(x => x.id === editId ? t : x);
+    editId = null;
+  } else {
+    terapeutas.push(t);
   }
 
-  dados.forEach(t => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${t.nomeProfissional || "-"}</td>
-      <td>${t.nomeCompleto || "-"}</td>
-      <td>${t.unidade || "-"}</td>
-      <td>${t.temFolga === "Sim" ? (t.diaFolga || "-") : "Não"}</td>
-      <td>${t.status || "-"}</td>
-      <td class="actions">
-        <button onclick="editar(${t.id})">✏️</button>
-        <button onclick="excluir(${t.id})">🗑️</button>
-      </td>
-    `;
-    lista.appendChild(tr);
-  });
+  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+  limpar();
+  render();
 }
 
-// =======================
-// AÇÕES
-// =======================
 function editar(id) {
-  localStorage.setItem("editarTerapeutaId", id);
-  location.href = "nova-terapeuta.html";
+  const t = terapeutas.find(x => x.id === id);
+  nomeProf.value = t.nomeProfissional;
+  nomeComp.value = t.nomeCompleto;
+  entrada.value = t.horaEntrada;
+  saida.value = t.horaSaida;
+  status.value = t.status;
+  editId = id;
 }
 
 function excluir(id) {
-  if (!confirm("Deseja excluir esta terapeuta?")) return;
-  let dados = getTerapeutas();
-  dados = dados.filter(t => t.id !== id);
-  saveTerapeutas(dados);
-  carregar();
+  if (!confirm("Excluir terapeuta?")) return;
+  terapeutas = terapeutas.filter(x => x.id !== id);
+  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+  render();
 }
 
-carregar();
+function limpar() {
+  nomeProf.value = nomeComp.value = entrada.value = saida.value = "";
+}
+
+function render() {
+  lista.innerHTML = "";
+  terapeutas.forEach(t => {
+    lista.innerHTML += `
+      <tr>
+        <td>${t.nomeProfissional}</td>
+        <td>${t.horaEntrada || "-"} → ${t.horaSaida || "-"}</td>
+        <td>${t.status}</td>
+        <td>
+          <button class="btn-secondary" onclick="editar(${t.id})">✏️</button>
+          <button class="btn-danger" onclick="excluir(${t.id})">🗑️</button>
+        </td>
+      </tr>`;
+  });
+}
+
+render();
 </script>
 
 </body>

@@ -9,6 +9,7 @@
 <style>
 body { margin:0; font-family:Arial; background:#f5f7fb; }
 
+/* SIDEBAR */
 .sidebar {
   width:230px; background:#1f2937; color:#fff;
   height:100vh; position:fixed; padding:20px;
@@ -23,6 +24,7 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
   background:#374151; color:#fff;
 }
 
+/* CONTENT */
 .content { margin-left:260px; padding:30px; }
 
 .card {
@@ -47,21 +49,15 @@ button.primary {
   cursor:pointer;
 }
 
-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-top:16px;
-}
+/* TABLE */
+table { width:100%; border-collapse:collapse; margin-top:16px; }
 th {
   text-align:left;
   font-size:13px;
   border-bottom:1px solid #ddd;
   padding-bottom:8px;
 }
-td {
-  padding:10px 0;
-  border-bottom:1px solid #eee;
-}
+td { padding:10px 0; border-bottom:1px solid #eee; }
 
 .actions button {
   background:none;
@@ -95,12 +91,8 @@ td {
   grid-template-columns:1fr 1fr;
   gap:16px;
 }
-.form-grid label {
-  font-size:13px;
-  font-weight:600;
-}
-.form-grid input,
-.form-grid select {
+.form-grid label { font-size:13px; font-weight:600; }
+.form-grid input, .form-grid select {
   width:100%;
   padding:8px;
   border-radius:8px;
@@ -112,13 +104,25 @@ td {
   display:flex;
   gap:12px;
 }
-.save { background:#1f2937; color:#fff; border:none; padding:10px 16px; border-radius:10px; }
-.cancel { background:#9ca3af; border:none; padding:10px 16px; border-radius:10px; }
+.save {
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+}
+.cancel {
+  background:#9ca3af;
+  border:none;
+  padding:10px 16px;
+  border-radius:10px;
+}
 </style>
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
   <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
@@ -232,6 +236,7 @@ td {
 <script>
 let editIndex = null;
 
+/* ===== HORÁRIOS 15 EM 15 ===== */
 function gerarHorarios(sel){
   sel.innerHTML="";
   for(let h=0;h<24;h++){
@@ -243,6 +248,7 @@ function gerarHorarios(sel){
 gerarHorarios(entrada);
 gerarHorarios(saida);
 
+/* ===== STORAGE ===== */
 function getDados(){
   return JSON.parse(localStorage.getItem("terapeutas")) || [];
 }
@@ -250,10 +256,25 @@ function setDados(d){
   localStorage.setItem("terapeutas", JSON.stringify(d));
 }
 
+/* ===== NORMALIZA STATUS (dados antigos) ===== */
+function normalizarStatus(){
+  const d = getDados();
+  let mudou = false;
+  d.forEach(t => {
+    if (t.status !== "Ativo" && t.status !== "Inativo") {
+      t.status = "Ativo";
+      mudou = true;
+    }
+  });
+  if (mudou) setDados(d);
+}
+
+/* ===== RENDER ===== */
 function render(){
   const d = getDados();
   lista.innerHTML="";
-  contador.innerText = d.filter(t => (t.status || "Ativo") === "Ativo").length + " terapeutas ativas";
+  contador.innerText =
+    d.filter(t => t.status === "Ativo").length + " terapeutas ativas";
 
   d.forEach((t,i)=>{
     lista.innerHTML += `
@@ -263,7 +284,7 @@ function render(){
         <td>${t.temFolga || "Não"}</td>
         <td>${t.diaFolga || "-"}</td>
         <td>${t.entrada || ""} – ${t.saida || ""}</td>
-        <td>${t.status || "Ativo"}</td>
+        <td>${t.status}</td>
         <td class="actions">
           <button onclick="editar(${i})">✏️</button>
           <button class="delete" onclick="excluir(${i})">🗑️</button>
@@ -272,6 +293,7 @@ function render(){
   });
 }
 
+/* ===== AÇÕES ===== */
 function nova(){
   editIndex=null;
   tituloModal.innerText="Nova Terapeuta";
@@ -284,7 +306,7 @@ function nova(){
 }
 
 function editar(i){
-  const t=getDados()[i];
+  const t = getDados()[i];
   editIndex=i;
   tituloModal.innerText="Editar Terapeuta";
   nomeCompleto.value=t.nomeCompleto||"";
@@ -302,8 +324,8 @@ function editar(i){
 }
 
 function salvar(){
-  const d=getDados();
-  const obj={
+  const d = getDados();
+  const obj = {
     nomeCompleto:nomeCompleto.value,
     nomeProfissional:nomeProfissional.value,
     cpf:cpf.value,
@@ -313,7 +335,7 @@ function salvar(){
     diaFolga:temFolga.value==="Sim"?diaFolga.value:"",
     entrada:entrada.value,
     saida:saida.value,
-    status:status.value || "Ativo"
+    status:status.value
   };
   editIndex!==null ? d[editIndex]=obj : d.push(obj);
   setDados(d);
@@ -328,14 +350,13 @@ function excluir(i){
   render();
 }
 
-function fechar(){
-  modal.style.display="none";
-}
-
+function fechar(){ modal.style.display="none"; }
 function toggleDiaFolga(){
-  boxDiaFolga.style.display = temFolga.value === "Sim" ? "block" : "none";
+  boxDiaFolga.style.display = temFolga.value==="Sim" ? "block" : "none";
 }
 
+/* INIT */
+normalizarStatus();
 render();
 </script>
 

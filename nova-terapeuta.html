@@ -12,11 +12,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 15px;
+  gap: 14px;
 }
-.form-grid label {
-  font-weight: bold;
-}
+.form-grid label { font-weight:600; }
 .form-grid input, .form-grid select {
   width: 100%;
 }
@@ -25,13 +23,14 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 .third { grid-column: span 1; }
 .card-form {
   background:#fff;
-  padding:25px;
-  border-radius:12px;
-  box-shadow:0 0 10px rgba(0,0,0,.05);
+  padding:22px;
+  border-radius:14px;
+  box-shadow:0 0 8px rgba(0,0,0,.05);
 }
 .certificacoes {
   display:flex;
-  gap:20px;
+  gap:18px;
+  flex-wrap: wrap;
 }
 </style>
 </head>
@@ -44,7 +43,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 </nav>
 
 <div class="content">
-  <h1>Nova Terapeuta</h1>
+  <h1 id="titulo">Nova Terapeuta</h1>
   <p>Preencha os dados da terapeuta</p>
 
   <div class="card-form">
@@ -163,11 +162,65 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 </div>
 
 <script>
-let editId = localStorage.getItem("editarTerapeutaId");
+// =======================
+// HELPERS (NÃO RESETAM)
+// =======================
+function getTerapeutas() {
+  const data = localStorage.getItem("terapeutas");
+  return data ? JSON.parse(data) : [];
+}
 
+function saveTerapeutas(lista) {
+  localStorage.setItem("terapeutas", JSON.stringify(lista));
+}
+
+// =======================
+// EDIÇÃO (se existir)
+// =======================
+const editId = localStorage.getItem("editarTerapeutaId");
+
+if (editId) {
+  document.getElementById("titulo").innerText = "Editar Terapeuta";
+
+  const terapeutas = getTerapeutas();
+  const t = terapeutas.find(x => x.id === Number(editId));
+
+  if (t) {
+    nomeCompleto.value = t.nomeCompleto || "";
+    nomeProfissional.value = t.nomeProfissional || "";
+    nascimento.value = t.nascimento || "";
+    cpf.value = t.cpf || "";
+    email.value = t.email || "";
+    unidade.value = t.unidade || "";
+    endereco.value = t.endereco || "";
+    contato.value = t.contato || "";
+    contatoEmergencia.value = t.contatoEmergencia || "";
+    tipoChave.value = t.tipoChave || "";
+    chavePix.value = t.chavePix || "";
+    temFolga.value = t.temFolga || "Sim";
+    diaFolga.value = t.diaFolga || "";
+    horaEntrada.value = t.horaEntrada || "";
+    horaSaida.value = t.horaSaida || "";
+    dataInicio.value = t.dataInicio || "";
+    tipoSanguineo.value = t.tipoSanguineo || "";
+
+    document
+      .querySelector(`input[name="status"][value="${t.status || "Ativo"}"]`)
+      .checked = true;
+
+    document
+      .querySelectorAll(".certificacoes input")
+      .forEach(c => {
+        c.checked = (t.certificacoes || []).includes(c.value);
+      });
+  }
+}
+
+// =======================
+// SALVAR (SEM SOBRESCREVER)
+// =======================
 function salvar() {
-  const terapeutas =
-    JSON.parse(localStorage.getItem("terapeutas")) || [];
+  let terapeutas = getTerapeutas();
 
   const certificacoes = [...document.querySelectorAll(".certificacoes input:checked")]
     .map(c => c.value);
@@ -195,12 +248,16 @@ function salvar() {
     certificacoes
   };
 
-  const atualizados = editId
-    ? terapeutas.map(t => t.id == editId ? dados : t)
-    : [...terapeutas, dados];
+  if (editId) {
+    terapeutas = terapeutas.map(t =>
+      t.id === Number(editId) ? dados : t
+    );
+    localStorage.removeItem("editarTerapeutaId");
+  } else {
+    terapeutas.push(dados);
+  }
 
-  localStorage.setItem("terapeutas", JSON.stringify(atualizados));
-  localStorage.removeItem("editarTerapeutaId");
+  saveTerapeutas(terapeutas);
   location.href = "equipe.html";
 }
 </script>

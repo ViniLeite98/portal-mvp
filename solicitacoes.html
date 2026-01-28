@@ -9,17 +9,19 @@
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
+/* CONTAINER PRINCIPAL (igual PPT) */
 .page-box {
-  background: #fff;
+  background: #ffffff;
   border-radius: 22px;
   border: 1px solid #e5e7eb;
   padding: 22px;
 }
 
+/* TABS */
 .tabs {
   display: flex;
   gap: 10px;
-  margin-bottom: 16px;
+  margin: 16px 0;
 }
 
 .tabs button {
@@ -28,40 +30,59 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   padding: 8px 14px;
   border-radius: 8px;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .tabs button.active {
   background: #1f2937;
-  color: #fff;
+  color: #ffffff;
 }
 
+/* FORM */
 .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.table-card {
+/* LISTAS */
+.list-box {
+  background: #f9fafb;
   border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  overflow: hidden;
-  margin-top: 12px;
+  border-radius: 16px;
+  padding: 14px;
+  margin-top: 10px;
 }
 
+/* TABELA */
 table {
   width: 100%;
   border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-th, td {
+th {
+  background: #f3f4f6;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 10px;
+  text-align: left;
+}
+
+td {
   padding: 10px;
   font-size: 14px;
   border-bottom: 1px solid #e5e7eb;
 }
 
-th {
-  background: #f3f4f6;
-  text-align: left;
+tbody tr:nth-child(even) {
+  background: #fafafa;
+}
+
+tbody tr:hover {
+  background: #f1f5f9;
 }
 
 .actions button {
@@ -81,6 +102,7 @@ th {
   <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
 </nav>
 
+<!-- CONTEÚDO -->
 <div class="content">
   <div class="page-box">
 
@@ -90,13 +112,12 @@ th {
     <!-- TABS -->
     <div class="tabs">
       <button class="active" onclick="showTab('nova')">Nova Solicitação</button>
-      <button onclick="showTab('aprovacoes')">Lista de Aprovações</button>
-      <button onclick="showTab('gerenciar')">Gerenciar Solicitações</button>
+      <button onclick="showTab('aprovacoes')">Lista de aprovações</button>
+      <button onclick="showTab('gerenciar')">Gerenciar solicitações</button>
     </div>
 
     <!-- NOVA SOLICITAÇÃO -->
     <div id="tab-nova">
-
       <div class="form-row">
         <div>
           <label>Terapeuta *</label>
@@ -123,197 +144,3 @@ th {
           <label>Data Fim *</label>
           <input type="date" id="dtFim">
         </div>
-      </div>
-
-      <br>
-      <label>Justificativa *</label>
-      <input id="justificativa">
-
-      <br><br>
-      <button onclick="salvarSolicitacao()">Salvar Solicitação</button>
-    </div>
-
-    <!-- LISTA DE APROVAÇÕES -->
-    <div id="tab-aprovacoes" style="display:none;">
-      <h3>Solicitações Pendentes</h3>
-      <div class="table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>Profissional</th>
-              <th>Período</th>
-              <th>Tipo</th>
-              <th>Justificativa</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="listaPendentes"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- GERENCIAR -->
-    <div id="tab-gerenciar" style="display:none;">
-      <h3>Histórico Completo</h3>
-      <div class="table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>Profissional</th>
-              <th>Período</th>
-              <th>Tipo</th>
-              <th>Status</th>
-              <th>Aprovador</th>
-            </tr>
-          </thead>
-          <tbody id="listaTodas"></tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<script>
-// ==========================
-// HELPERS
-// ==========================
-function getTerapeutas() {
-  return JSON.parse(localStorage.getItem("terapeutas")) || [];
-}
-
-function getSolicitacoes() {
-  return JSON.parse(localStorage.getItem("solicitacoes")) || [];
-}
-
-function saveSolicitacoes(lista) {
-  localStorage.setItem("solicitacoes", JSON.stringify(lista));
-}
-
-// ==========================
-// TABS
-// ==========================
-function showTab(tab) {
-  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll("[id^=tab-]").forEach(t => t.style.display = "none");
-
-  document.querySelector(`.tabs button[onclick="showTab('${tab}')"]`).classList.add("active");
-  document.getElementById("tab-" + tab).style.display = "block";
-}
-
-// ==========================
-// LOAD TERAPEUTAS ATIVAS
-// ==========================
-const terapeutaSelect = document.getElementById("terapeutaSelect");
-const terapeutas = getTerapeutas().filter(t => !t.status || t.status === "Ativo");
-
-terapeutas.forEach(t => {
-  const opt = document.createElement("option");
-  opt.value = t.id;
-  opt.textContent = t.nomeProfissional || t.nomeCompleto;
-  terapeutaSelect.appendChild(opt);
-});
-
-// ==========================
-// NOVA SOLICITAÇÃO
-// ==========================
-function salvarSolicitacao() {
-  const idTerapeuta = terapeutaSelect.value;
-  const tipo = document.getElementById("tipo").value;
-  const dtInicio = document.getElementById("dtInicio").value;
-  const dtFim = document.getElementById("dtFim").value;
-  const justificativa = document.getElementById("justificativa").value;
-
-  if (!idTerapeuta || !dtInicio || !dtFim || !justificativa) {
-    alert("Preencha todos os campos obrigatórios.");
-    return;
-  }
-
-  const terapeuta = terapeutas.find(t => t.id == idTerapeuta);
-
-  const nova = {
-    id: Date.now(),
-    terapeutaId: idTerapeuta,
-    terapeutaNome: terapeuta.nomeProfissional || terapeuta.nomeCompleto,
-    dtInicio,
-    dtFim,
-    tipo,
-    justificativa,
-    status: "Pendente",
-    aprovador: ""
-  };
-
-  const lista = getSolicitacoes();
-  lista.push(nova);
-  saveSolicitacoes(lista);
-
-  alert("Solicitação registrada.");
-  location.reload();
-}
-
-// ==========================
-// LISTAS
-// ==========================
-function render() {
-  const pend = document.getElementById("listaPendentes");
-  const all = document.getElementById("listaTodas");
-  pend.innerHTML = "";
-  all.innerHTML = "";
-
-  getSolicitacoes().forEach(s => {
-    // Pendentes
-    if (s.status === "Pendente") {
-      pend.innerHTML += `
-        <tr>
-          <td>${s.terapeutaNome}</td>
-          <td>${s.dtInicio} → ${s.dtFim}</td>
-          <td>${s.tipo}</td>
-          <td>${s.justificativa}</td>
-          <td class="actions">
-            <button onclick="aprovar(${s.id})">✅</button>
-            <button onclick="rejeitar(${s.id})">❌</button>
-          </td>
-        </tr>`;
-    }
-
-    // Todas
-    all.innerHTML += `
-      <tr>
-        <td>${s.terapeutaNome}</td>
-        <td>${s.dtInicio} → ${s.dtFim}</td>
-        <td>${s.tipo}</td>
-        <td>${s.status}</td>
-        <td>${s.aprovador || "-"}</td>
-      </tr>`;
-  });
-}
-
-function aprovar(id) {
-  const nome = prompt("Nome do aprovador:");
-  if (!nome) return;
-
-  const lista = getSolicitacoes();
-  const s = lista.find(x => x.id === id);
-  s.status = "Aprovado";
-  s.aprovador = nome;
-  saveSolicitacoes(lista);
-  render();
-}
-
-function rejeitar(id) {
-  const nome = prompt("Nome do aprovador:");
-  if (!nome) return;
-
-  const lista = getSolicitacoes();
-  const s = lista.find(x => x.id === id);
-  s.status = "Rejeitado";
-  s.aprovador = nome;
-  saveSolicitacoes(lista);
-  render();
-}
-
-render();
-</script>
-
-</body>
-</html>

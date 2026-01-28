@@ -63,8 +63,8 @@ html, body {
 }
 
 button {
-  padding: 10px 14px;
-  border-radius: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
   border: none;
   background: #1f2937;
   color: #fff;
@@ -79,7 +79,6 @@ table {
 th, td {
   padding: 12px;
   border-bottom: 1px solid #e5e7eb;
-  text-align: left;
   font-size: 14px;
 }
 
@@ -107,7 +106,7 @@ th {
   background: #fff;
   border-radius: 18px;
   padding: 25px;
-  width: 700px;
+  width: 680px;
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -147,7 +146,7 @@ th {
   <div class="card header-row">
     <div>
       <h2>👥 Gestão da Equipe</h2>
-      <small>Somente terapeutas ativas aparecem no início</small>
+      <small>Somente terapeutas ativas impactam os indicadores</small>
     </div>
     <button onclick="abrirModal()">＋ Nova Terapeuta</button>
   </div>
@@ -195,6 +194,8 @@ th {
           <option value="Quarta">Quarta</option>
           <option value="Quinta">Quinta</option>
           <option value="Sexta">Sexta</option>
+          <option value="Sábado">Sábado</option>
+          <option value="Domingo">Domingo</option>
         </select>
       </label>
 
@@ -203,11 +204,11 @@ th {
       </label>
 
       <label>Entrada
-        <input type="time" id="entrada">
+        <input type="time" id="entrada" step="900">
       </label>
 
       <label>Saída
-        <input type="time" id="saida">
+        <input type="time" id="saida" step="900">
       </label>
     </div>
 
@@ -218,86 +219,147 @@ th {
 </div>
 
 <script>
+/* =======================
+   DADOS
+======================= */
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
 let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
 let editIndex = null;
 
-function abrirModal(i=null){
+/* =======================
+   MAPA DIAS DA SEMANA
+======================= */
+const mapSemana = {
+  "domingo": 0,
+  "segunda": 1,
+  "segunda-feira": 1,
+  "terça": 2,
+  "terca": 2,
+  "terça-feira": 2,
+  "quarta": 3,
+  "quarta-feira": 3,
+  "quinta": 4,
+  "quinta-feira": 4,
+  "sexta": 5,
+  "sexta-feira": 5,
+  "sábado": 6,
+  "sabado": 6
+};
+
+/* =======================
+   FUNÇÕES
+======================= */
+function abrirModal(i = null) {
   editIndex = i;
-  document.getElementById("modal").style.display="flex";
-  if(i!==null){
-    const t=terapeutas[i];
-    nome.value=t.nome;
-    status.value=t.status;
-    folga.value=t.folga||"";
-    inicio.value=t.inicio;
-    entrada.value=t.entrada;
-    saida.value=t.saida;
+  document.getElementById("modal").style.display = "flex";
+
+  if (i !== null) {
+    const t = terapeutas[i];
+    nome.value = t.nome;
+    status.value = t.status || "Ativo";
+    folga.value = t.folga || "";
+    inicio.value = t.inicio || "";
+    entrada.value = t.entrada || "";
+    saida.value = t.saida || "";
   } else {
-    nome.value=""; status.value="Ativo"; folga.value="";
-    inicio.value=""; entrada.value=""; saida.value="";
+    nome.value = "";
+    status.value = "Ativo";
+    folga.value = "";
+    inicio.value = "";
+    entrada.value = "";
+    saida.value = "";
   }
 }
 
-function fecharModal(){
-  document.getElementById("modal").style.display="none";
+function fecharModal() {
+  document.getElementById("modal").style.display = "none";
 }
 
-function contarFolgas(t){
-  let total=0;
-  if(t.folga){
-    const start=new Date(t.inicio||new Date().getFullYear()+"-01-01");
-    const today=new Date();
-    for(let d=new Date(start); d<=today; d.setDate(d.getDate()+1)){
-      if(d.toLocaleDateString("pt-BR",{weekday:"long"}).toLowerCase().includes(t.folga.toLowerCase()))
-        total++;
+function calcularDiasFolga(t) {
+  let total = 0;
+
+  // Folga semanal
+  if (t.folga) {
+    const diaFolga = mapSemana[t.folga.toLowerCase()];
+    if (diaFolga !== undefined) {
+      const hoje = new Date();
+      const inicio = t.inicio
+        ? new Date(t.inicio)
+        : new Date(hoje.getFullYear(), 0, 1);
+
+      for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate() + 1)) {
+        if (d.getDay() === diaFolga) total++;
+      }
     }
   }
-  solicitacoes.filter(s=>s.status==="Aprovado" && s.terapeuta===t.nome)
-    .forEach(s=>{
-      total+= (new Date(s.fim)-new Date(s.inicio))/86400000+1;
+
+  // Solicitações aprovadas
+  solicitacoes
+    .filter(s =>
+      s.status === "Aprovado" &&
+      s.terapeuta &&
+      s.terapeuta.toLowerCase() === t.nome.toLowerCase()
+    )
+    .forEach(s => {
+      const ini = new Date(s.inicio);
+      const fim = new Date(s.fim);
+      const dias = Math.floor((fim - ini) / 86400000) + 1;
+      if (!isNaN(dias)) total += dias;
     });
+
   return total;
 }
 
-function salvar(){
-  const t={
-    nome:nome.value,
-    status:status.value,
-    folga:folga.value,
-    inicio:inicio.value,
-    entrada:entrada.value,
-    saida:saida.value
+function salvar() {
+  const terapeuta = {
+    nome: nome.value.trim(),
+    status: status.value,
+    folga: folga.value,
+    inicio: inicio.value,
+    entrada: entrada.value,
+    saida: saida.value
   };
-  if(editIndex!==null) terapeutas[editIndex]=t;
-  else terapeutas.push(t);
 
-  localStorage.setItem("terapeutas",JSON.stringify(terapeutas));
+  if (!terapeuta.nome) {
+    alert("Nome é obrigatório");
+    return;
+  }
+
+  if (editIndex !== null) {
+    terapeutas[editIndex] = terapeuta;
+  } else {
+    terapeutas.push(terapeuta);
+  }
+
+  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   fecharModal();
   render();
 }
 
-function excluir(i){
-  terapeutas.splice(i,1);
-  localStorage.setItem("terapeutas",JSON.stringify(terapeutas));
+function excluir(i) {
+  if (!confirm("Excluir terapeuta?")) return;
+  terapeutas.splice(i, 1);
+  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   render();
 }
 
-function render(){
-  const tbody=document.getElementById("listaEquipe");
-  tbody.innerHTML="";
-  terapeutas.forEach((t,i)=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
+function render() {
+  const tbody = document.getElementById("listaEquipe");
+  tbody.innerHTML = "";
+
+  terapeutas.forEach((t, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
       <td>${t.nome}</td>
-      <td>${t.folga||"—"}</td>
-      <td>${contarFolgas(t)}</td>
-      <td>${t.inicio||"—"}</td>
-      <td>${t.entrada||"—"}–${t.saida||"—"}</td>
+      <td>${t.folga || "—"}</td>
+      <td>${calcularDiasFolga(t)}</td>
+      <td>${t.inicio || "—"}</td>
+      <td>${t.entrada || "—"}–${t.saida || "—"}</td>
       <td class="actions">
         <button onclick="abrirModal(${i})">✏️</button>
         <button onclick="excluir(${i})">🗑️</button>
-      </td>`;
+      </td>
+    `;
     tbody.appendChild(tr);
   });
 }

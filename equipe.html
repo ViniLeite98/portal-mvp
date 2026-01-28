@@ -11,6 +11,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <body>
 
+<!-- MENU LATERAL -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
 
@@ -23,6 +24,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   <a href="financeiro.html"><i class="fa-solid fa-dollar-sign"></i> Financeiro</a>
 </nav>
 
+<!-- CONTEÚDO -->
 <div class="content">
   <h1>Gestão da Equipe</h1>
   <p>Gerir informações das terapeutas, horários e folgas</p>
@@ -52,8 +54,22 @@ function carregar() {
   const lista = document.getElementById("lista");
   lista.innerHTML = "";
 
-  const terapeutas =
+  let terapeutas =
     JSON.parse(localStorage.getItem("terapeutas")) || [];
+
+  // 🔧 CORREÇÃO AUTOMÁTICA PARA REGISTROS ANTIGOS (SEM ID)
+  let alterou = false;
+  terapeutas = terapeutas.map(t => {
+    if (!t.id) {
+      alterou = true;
+      return { ...t, id: Date.now() + Math.random() };
+    }
+    return t;
+  });
+
+  if (alterou) {
+    localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+  }
 
   if (terapeutas.length === 0) {
     lista.innerHTML =
@@ -68,8 +84,8 @@ function carregar() {
       <td>${t.nomeProfissional || "-"}</td>
       <td>${t.nomeCompleto || "-"}</td>
       <td>${t.unidade || "-"}</td>
-      <td>${t.temFolga === "Sim" ? t.diaFolga || "-" : "Não"}</td>
-      <td>${t.status}</td>
+      <td>${t.temFolga === "Sim" ? (t.diaFolga || "-") : "Não"}</td>
+      <td>${t.status || "-"}</td>
       <td>
         <button onclick="editar(${t.id})" title="Editar">✏️</button>
         <button onclick="excluir(${t.id})" title="Excluir">🗑️</button>
@@ -97,6 +113,7 @@ function excluir(id) {
   carregar();
 }
 
+// 🚀 INICIALIZA
 carregar();
 </script>
 

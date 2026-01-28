@@ -3,9 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <title>Nova Terapeuta</title>
+
 <link rel="stylesheet" href="assets/css/style.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
+
 <body>
 
 <nav class="sidebar">
@@ -17,7 +20,7 @@
   <h1>Nova Terapeuta</h1>
 
   <label>Nome</label><br>
-  <input id="nome"><br><br>
+  <input id="nome" placeholder="Ex: Maria"><br><br>
 
   <label>Folga semanal</label><br>
   <select id="folga">
@@ -33,22 +36,41 @@
   <label>Dias de folga / ano</label><br>
   <input id="dias" type="number" value="15"><br><br>
 
-  <button onclick="salvar()">Salvar</button>
+  <button onclick="salvar()">Salvar Terapeuta</button>
+
+  <p id="msg" style="color:green;"></p>
 </div>
 
 <script>
 function salvar() {
-  const terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
+  const nome = document.getElementById("nome").value.trim();
+  const folga = document.getElementById("folga").value;
+  const dias = document.getElementById("dias").value;
+
+  if (!nome) {
+    alert("Informe o nome da terapeuta");
+    return;
+  }
+
+  const terapeutas =
+    JSON.parse(localStorage.getItem("terapeutas")) || [];
 
   terapeutas.push({
-    nome: nome.value,
-    folga: folga.value,
-    dias: dias.value,
+    id: Date.now(),
+    nome: nome,
+    folga: folga,
+    dias: dias,
     status: "Ativa"
   });
 
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  location.href = "equipe.html";
+
+  document.getElementById("msg").innerText =
+    "Terapeuta salva com sucesso!";
+
+  setTimeout(() => {
+    window.location.href = "equipe.html";
+  }, 800);
 }
 </script>
 

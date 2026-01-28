@@ -1,129 +1,127 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Início</title>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-body { margin:0; font-family:Arial; background:#f5f7fb; }
-.sidebar {
-  width:230px; background:#1f2937; color:#fff;
-  height:100vh; position:fixed; padding:20px;
-}
-.sidebar h2 { margin-bottom:30px; }
-.sidebar a {
-  display:flex; align-items:center; gap:10px;
-  color:#cbd5e1; text-decoration:none;
-  padding:10px; border-radius:10px; margin-bottom:6px;
-}
-.sidebar a.active, .sidebar a:hover { background:#374151; color:#fff; }
-
-.content { margin-left:260px; padding:30px; }
-
-.cards { display:grid; grid-template-columns:1.1fr 1.6fr 1.2fr; gap:16px; }
-.card {
-  background:#fff; border-radius:18px;
-  padding:18px; box-shadow:0 0 8px rgba(0,0,0,.05);
-}
-.kpi { font-size:34px; font-weight:700; }
-.small { font-size:12px; color:#6b7280; }
-
-.section-row { display:grid; grid-template-columns:3.2fr 1.3fr; gap:16px; margin-top:20px; }
-.section-actions { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:30px; }
-
-button {
-  width:100%; padding:10px; border-radius:10px;
-  border:none; background:#1f2937; color:#fff; cursor:pointer;
-}
-</style>
-</head>
-
-<body>
-
-<nav class="sidebar">
-  <h2>Hara Spa</h2>
-  <a href="index.html" class="active"><i class="fa-solid fa-house"></i> Início</a>
-  <a href="equipe.html"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
-  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
-  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
-  <a href="materiais.html"><i class="fa-solid fa-box-open"></i> Materiais</a>
-  <a href="financeiro.html"><i class="fa-solid fa-coins"></i> Financeiro</a>
-</nav>
-
-<div class="content">
-  <h1>Início</h1>
-
-  <div class="cards">
-    <div class="card">
-      <h3>Equipe 👥</h3>
-      <div id="kpiEquipe" class="kpi">0</div>
-      <div class="small">Funcionárias ativas</div>
-    </div>
-
-    <div class="card">
-      <h3>Próximas Datas 📅</h3>
-      <div class="small">—</div>
-    </div>
-
-    <div class="card">
-      <h3>Dias Folgados 🏆</h3>
-      <div id="diasFolga" class="small"></div>
-    </div>
-  </div>
-
-  <div class="section-row">
-    <div class="card">
-      <h3>Força de Trabalho</h3>
-      <canvas id="grafico"></canvas>
-      <div class="small">Distribuição por hora</div>
-    </div>
-
-    <div class="card">
-      <h3>Carga Horária</h3>
-      <div id="rankHoras" class="small"></div>
-    </div>
-  </div>
-
-  <div class="section-actions">
-    <div class="card">
-      <h3>Gestão de Terapeutas</h3>
-      <p class="small">Cadastrar e editar terapeutas</p>
-      <button onclick="location.href='equipe.html'">Gerir equipe</button>
-    </div>
-
-    <div class="card">
-      <h3>Solicitações</h3>
-      <p class="small">Faltas, férias e viagens</p>
-      <button onclick="location.href='solicitacoes.html'">Ver solicitações</button>
-    </div>
-
-    <div class="card">
-      <h3>Escalas</h3>
-      <p class="small">Distribuição por data</p>
-      <button onclick="location.href='escalas.html'">Criar escalas</button>
-    </div>
-  </div>
-</div>
-
 <script>
-const terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
-const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
+/* ===============================
+   LOAD STORAGE
+================================ */
+const terapeutas =
+  JSON.parse(localStorage.getItem("terapeutas")) || [];
+const solicitacoes =
+  JSON.parse(localStorage.getItem("solicitacoes")) || [];
 
-const ativas = terapeutas.filter(t => !t.status || t.status === "Ativo");
+/* ===============================
+   HELPERS
+================================ */
+function horaParaNumero(h) {
+  if (!h || !h.includes(":")) return null;
+  const [hh, mm] = h.split(":").map(Number);
+  if (isNaN(hh) || isNaN(mm)) return null;
+  return hh + mm / 60;
+}
+
+/* ===============================
+   EQUIPE ATIVA
+================================ */
+const ativas = terapeutas.filter(t =>
+  (!t.status || t.status === "Ativo")
+);
+
 document.getElementById("kpiEquipe").innerText = ativas.length;
 
-const dias = {};
-solicitacoes.filter(s=>s.status==="Aprovado").forEach(s=>{
-  const ini=new Date(s.dtInicio), fim=new Date(s.dtFim);
-  const d=Math.floor((fim-ini)/86400000)+1;
-  dias[s.terapeutaNome]=(dias[s.terapeutaNome]||0)+d;
-});
-document.getElementById("diasFolga").innerHTML =
-  Object.entries(dias).map(([n,v])=>`<div><b>${n}</b>: ${v} dias</div>`).join("") || "—";
-</script>
+/* ===============================
+   DIAS FOLGADOS
+================================ */
+const diasPorPessoa = {};
 
-</body>
-</html>
+solicitacoes
+  .filter(s => s.status === "Aprovado")
+  .forEach(s => {
+    if (!s.dtInicio || !s.dtFim) return;
+
+    const ini = new Date(s.dtInicio);
+    const fim = new Date(s.dtFim);
+    if (isNaN(ini) || isNaN(fim)) return;
+
+    const dias =
+      Math.floor((fim - ini) / 86400000) + 1;
+    if (dias <= 0) return;
+
+    const nome = s.terapeutaNome || "—";
+    diasPorPessoa[nome] =
+      (diasPorPessoa[nome] || 0) + dias;
+  });
+
+const folgaDiv = document.getElementById("diasFolga");
+const rankingFolga = Object.entries(diasPorPessoa)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5);
+
+folgaDiv.innerHTML =
+  rankingFolga.length === 0
+    ? "—"
+    : rankingFolga
+        .map(([n, d]) => `<div><b>${n}</b>: ${d} dias</div>`)
+        .join("");
+
+/* ===============================
+   FORÇA DE TRABALHO
+================================ */
+const horas = Array.from({ length: 14 }, (_, i) => i + 9);
+
+const contagem = horas.map(hora => {
+  return ativas.filter(t => {
+    const ini = horaParaNumero(t.horaEntrada);
+    const fim = horaParaNumero(t.horaSaida);
+    if (ini === null || fim === null) return false;
+    return hora >= ini && hora < fim;
+  }).length;
+});
+
+const ctx = document.getElementById("grafico");
+if (ctx) {
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: horas.map(h => `${h}:00`),
+      datasets: [{
+        label: "Terapeutas ativas",
+        data: contagem,
+        backgroundColor: "#3b82f6"
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1 }
+        }
+      }
+    }
+  });
+}
+
+/* ===============================
+   CARGA HORÁRIA
+================================ */
+const carga = {};
+
+ativas.forEach(t => {
+  const ini = horaParaNumero(t.horaEntrada);
+  const fim = horaParaNumero(t.horaSaida);
+  if (ini === null || fim === null || fim <= ini) return;
+
+  const horasTrab = fim - ini;
+  const nome = t.nomeProfissional || t.nomeCompleto || "—";
+
+  carga[nome] = (carga[nome] || 0) + horasTrab;
+});
+
+const rankDiv = document.getElementById("rankHoras");
+rankDiv.innerHTML = "";
+
+Object.entries(carga)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 5)
+  .forEach(([nome, h]) => {
+    rankDiv.innerHTML += `<div>${nome}: ${h.toFixed(1)}h</div>`;
+  });
+</script>

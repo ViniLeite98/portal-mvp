@@ -122,7 +122,6 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
 
 <body>
 
-<!-- SIDEBAR -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
   <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
@@ -150,11 +149,10 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
       <thead>
         <tr>
           <th>Nome</th>
-          <th>Unidade</th>
           <th>Folga semanal?</th>
           <th>Dia da folga</th>
+          <th>Data de início</th>
           <th>Horário</th>
-          <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -177,25 +175,28 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
         <label>Nome Profissional</label>
         <input id="nomeProfissional">
       </div>
+
       <div>
-        <label>CPF</label>
-        <input id="cpf">
+        <label>Data de Início</label>
+        <input type="date" id="dataInicio">
       </div>
+
       <div>
-        <label>Email</label>
-        <input id="email">
+        <label>Status</label>
+        <select id="status">
+          <option value="Ativo">Ativo</option>
+          <option value="Inativo">Inativo</option>
+        </select>
       </div>
-      <div>
-        <label>Unidade</label>
-        <input id="unidade">
-      </div>
+
       <div>
         <label>Tem folga semanal?</label>
         <select id="temFolga" onchange="toggleDiaFolga()">
-          <option>Sim</option>
-          <option>Não</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
         </select>
       </div>
+
       <div id="boxDiaFolga">
         <label>Dia da folga</label>
         <select id="diaFolga">
@@ -209,20 +210,15 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
           <option>Domingo</option>
         </select>
       </div>
+
       <div>
         <label>Horário Entrada</label>
         <select id="entrada"></select>
       </div>
+
       <div>
         <label>Horário Saída</label>
         <select id="saida"></select>
-      </div>
-      <div>
-        <label>Status</label>
-        <select id="status">
-          <option>Ativo</option>
-          <option>Inativo</option>
-        </select>
       </div>
     </div>
 
@@ -236,19 +232,19 @@ td { padding:10px 0; border-bottom:1px solid #eee; }
 <script>
 let editIndex = null;
 
-/* ===== HORÁRIOS 15 EM 15 ===== */
+/* horários 15 em 15 */
 function gerarHorarios(sel){
   sel.innerHTML="";
   for(let h=0;h<24;h++){
     for(let m=0;m<60;m+=15){
-      sel.innerHTML+=`<option>${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}</option>`;
+      sel.innerHTML+=`<option>${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}</option>`;
     }
   }
 }
 gerarHorarios(entrada);
 gerarHorarios(saida);
 
-/* ===== STORAGE ===== */
+/* storage */
 function getDados(){
   return JSON.parse(localStorage.getItem("terapeutas")) || [];
 }
@@ -256,35 +252,20 @@ function setDados(d){
   localStorage.setItem("terapeutas", JSON.stringify(d));
 }
 
-/* ===== NORMALIZA STATUS (dados antigos) ===== */
-function normalizarStatus(){
-  const d = getDados();
-  let mudou = false;
-  d.forEach(t => {
-    if (t.status !== "Ativo" && t.status !== "Inativo") {
-      t.status = "Ativo";
-      mudou = true;
-    }
-  });
-  if (mudou) setDados(d);
-}
-
-/* ===== RENDER ===== */
+/* render */
 function render(){
   const d = getDados();
   lista.innerHTML="";
-  contador.innerText =
-    d.filter(t => t.status === "Ativo").length + " terapeutas ativas";
+  contador.innerText = d.filter(t => t.status === "Ativo").length + " terapeutas ativas";
 
   d.forEach((t,i)=>{
     lista.innerHTML += `
       <tr>
         <td>${t.nomeProfissional || ""}</td>
-        <td>${t.unidade || ""}</td>
-        <td>${t.temFolga || "Não"}</td>
+        <td>${t.temFolga}</td>
         <td>${t.diaFolga || "-"}</td>
-        <td>${t.entrada || ""} – ${t.saida || ""}</td>
-        <td>${t.status}</td>
+        <td>${t.dataInicio || ""}</td>
+        <td>${t.entrada} – ${t.saida}</td>
         <td class="actions">
           <button onclick="editar(${i})">✏️</button>
           <button class="delete" onclick="excluir(${i})">🗑️</button>
@@ -293,58 +274,59 @@ function render(){
   });
 }
 
-/* ===== AÇÕES ===== */
+/* ações */
 function nova(){
-  editIndex=null;
-  tituloModal.innerText="Nova Terapeuta";
-  document.querySelectorAll(".modal input").forEach(i=>i.value="");
-  temFolga.value="Sim";
-  diaFolga.value="";
-  status.value="Ativo";
+  editIndex = null;
+  tituloModal.innerText = "Nova Terapeuta";
+  nomeCompleto.value = "";
+  nomeProfissional.value = "";
+  dataInicio.value = "";
+  status.value = "Ativo";
+  temFolga.value = "Sim";
+  diaFolga.value = "";
   toggleDiaFolga();
-  modal.style.display="flex";
+  modal.style.display = "flex";
 }
 
 function editar(i){
   const t = getDados()[i];
-  editIndex=i;
-  tituloModal.innerText="Editar Terapeuta";
-  nomeCompleto.value=t.nomeCompleto||"";
-  nomeProfissional.value=t.nomeProfissional||"";
-  cpf.value=t.cpf||"";
-  email.value=t.email||"";
-  unidade.value=t.unidade||"";
-  temFolga.value=t.temFolga||"Não";
-  diaFolga.value=t.diaFolga||"";
-  entrada.value=t.entrada||"";
-  saida.value=t.saida||"";
-  status.value=t.status||"Ativo";
+  editIndex = i;
+  tituloModal.innerText = "Editar Terapeuta";
+  nomeCompleto.value = t.nomeCompleto || "";
+  nomeProfissional.value = t.nomeProfissional || "";
+  dataInicio.value = t.dataInicio || "";
+  status.value = t.status;
+  temFolga.value = t.temFolga;
+  diaFolga.value = t.diaFolga || "";
+  entrada.value = t.entrada;
+  saida.value = t.saida;
   toggleDiaFolga();
-  modal.style.display="flex";
+  modal.style.display = "flex";
 }
 
 function salvar(){
   const d = getDados();
   const obj = {
-    nomeCompleto:nomeCompleto.value,
-    nomeProfissional:nomeProfissional.value,
-    cpf:cpf.value,
-    email:email.value,
-    unidade:unidade.value,
-    temFolga:temFolga.value,
-    diaFolga:temFolga.value==="Sim"?diaFolga.value:"",
-    entrada:entrada.value,
-    saida:saida.value,
-    status:status.value
+    nomeCompleto: nomeCompleto.value,
+    nomeProfissional: nomeProfissional.value,
+    dataInicio: dataInicio.value,
+    status: status.value,          // 🔴 SEMPRE EXISTE
+    temFolga: temFolga.value,
+    diaFolga: temFolga.value==="Sim" ? diaFolga.value : "",
+    entrada: entrada.value,
+    saida: saida.value
   };
-  editIndex!==null ? d[editIndex]=obj : d.push(obj);
+
+  if (editIndex !== null) d[editIndex] = obj;
+  else d.push(obj);
+
   setDados(d);
   fechar();
   render();
 }
 
 function excluir(i){
-  const d=getDados();
+  const d = getDados();
   d.splice(i,1);
   setDados(d);
   render();
@@ -355,8 +337,6 @@ function toggleDiaFolga(){
   boxDiaFolga.style.display = temFolga.value==="Sim" ? "block" : "none";
 }
 
-/* INIT */
-normalizarStatus();
 render();
 </script>
 

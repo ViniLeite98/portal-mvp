@@ -11,16 +11,52 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-.cards { display:grid; grid-template-columns:1.1fr 1.6fr 1.2fr; gap:16px; }
-.card h3 { margin:0; font-size:14px; }
-.kpi { font-size:34px; font-weight:bold; }
-.small { font-size:12px; color:#666; }
-.rank div { margin-bottom:6px; }
+.cards {
+  display: grid;
+  grid-template-columns: 1.1fr 1.6fr 1.2fr;
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 18px;
+  box-shadow: 0 0 8px rgba(0,0,0,.05);
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.kpi {
+  font-size: 34px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.small {
+  font-size: 12px;
+  color: #666;
+}
+
+.section-row {
+  display: grid;
+  grid-template-columns: 3.2fr 1.3fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.rank div {
+  margin-bottom: 6px;
+  font-size: 13px;
+}
 </style>
 </head>
 
 <body>
 
+<!-- MENU -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
   <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
@@ -29,10 +65,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
 </nav>
 
+<!-- CONTEÚDO -->
 <div class="content">
   <h1>Início</h1>
 
-  <!-- CARDS TOPO -->
+  <!-- KPIs -->
   <div class="cards">
 
     <div class="card">
@@ -43,48 +80,62 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
     <div class="card">
       <h3>Próximas Datas 📅</h3>
-      <div id="proxDatas" class="small"></div>
+      <div id="proxDatas" class="small" style="margin-top:8px;"></div>
+      <div class="small" style="margin-top:10px;">Gestão de datas</div>
     </div>
 
     <div class="card">
       <h3>Dias Folgados 🏆</h3>
-      <div id="diasFolga" class="small"></div>
+      <div id="diasFolga" class="small" style="margin-top:8px;"></div>
+      <div class="small" style="margin-top:10px;">Relatório completo</div>
     </div>
 
   </div>
 
   <br>
 
-  <!-- FORÇA DE TRABALHO -->
-  <div class="card">
-    <h3>Força de Trabalho</h3>
-    <canvas id="grafico"></canvas>
-    <div class="small">Distribuição por hora (derivada do horário em Equipe).</div>
-  </div>
+  <!-- FORÇA DE TRABALHO + CARGA HORÁRIA -->
+  <div class="section-row">
 
-  <br>
+    <!-- GRÁFICO -->
+    <div class="card">
+      <h3>Força de Trabalho</h3>
+      <canvas id="grafico"></canvas>
+      <div class="small">
+        Distribuição por hora (derivada do horário em Equipe).
+      </div>
+    </div>
 
-  <!-- CARGA HORÁRIA -->
-  <div class="card">
-    <h3>Carga Horária</h3>
-    <div id="rankHoras" class="rank small"></div>
+    <!-- RANKING -->
+    <div class="card">
+      <h3>Carga Horária</h3>
+      <div id="rankHoras" class="rank"></div>
+      <div class="small" style="margin-top:10px;">Relatório completo</div>
+    </div>
+
   </div>
 
 </div>
 
 <script>
-// ---------- LOAD ----------
+// =========================
+// LOAD STORAGE
+// =========================
 const terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
 const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
 const proximas = JSON.parse(localStorage.getItem("proximas_datas")) || [];
 
-// ---------- KPI EQUIPE ----------
+// =========================
+// KPI EQUIPE
+// =========================
 const ativas = terapeutas.filter(t =>
   !t.status || t.status === "Ativo"
 );
 document.getElementById("kpiEquipe").innerText = ativas.length;
 
-// ---------- PRÓXIMAS DATAS ----------
+// =========================
+// PRÓXIMAS DATAS
+// =========================
 const proxDiv = document.getElementById("proxDatas");
 if (proximas.length === 0) {
   proxDiv.innerHTML = "Sem datas cadastradas.";
@@ -93,11 +144,16 @@ if (proximas.length === 0) {
     .sort((a,b) => new Date(a.data) - new Date(b.data))
     .slice(0,4)
     .forEach(p => {
-      proxDiv.innerHTML += `<div><b>${p.data}</b><br>${p.titulo || ""}</div>`;
+      proxDiv.innerHTML += `
+        <div style="margin-bottom:6px;">
+          <b>${p.data}</b><br>${p.titulo || ""}
+        </div>`;
     });
 }
 
-// ---------- DIAS FOLGADOS ----------
+// =========================
+// DIAS FOLGADOS
+// =========================
 const aprovadas = solicitacoes.filter(s => s.status === "Aprovado");
 const diasPorPessoa = {};
 
@@ -117,13 +173,16 @@ Object.entries(diasPorPessoa)
     folgaDiv.innerHTML += `<div><b>${nome}</b>: ${dias} dias</div>`;
   });
 
-// ---------- FORÇA DE TRABALHO ----------
+// =========================
+// FORÇA DE TRABALHO (GRÁFICO)
+// =========================
 const horas = Array.from({length:14}, (_,i)=>i+9);
 const contagem = horas.map(h => {
   return ativas.filter(t => {
     if (!t.horaEntrada || !t.horaSaida) return false;
-    return h >= Number(t.horaEntrada.split(":")[0]) &&
-           h <  Number(t.horaSaida.split(":")[0]);
+    const he = Number(t.horaEntrada.split(":")[0]);
+    const hs = Number(t.horaSaida.split(":")[0]);
+    return h >= he && h < hs;
   }).length;
 });
 
@@ -133,17 +192,27 @@ new Chart(document.getElementById("grafico"), {
     labels: horas.map(h => `${h}:00`),
     datasets: [{
       label: "Terapeutas ativas",
-      data: contagem
+      data: contagem,
+      backgroundColor: "#3b82f6"
     }]
+  },
+  options: {
+    plugins: { legend: { display: true } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    }
   }
 });
 
-// ---------- CARGA HORÁRIA ----------
+// =========================
+// CARGA HORÁRIA (RANKING)
+// =========================
 const horasRank = ativas.map(t => {
   if (!t.horaEntrada || !t.horaSaida) return null;
-  const h = Number(t.horaSaida.split(":")[0]) -
-            Number(t.horaEntrada.split(":")[0]);
-  return { nome: t.nomeProfissional, horas: h };
+  const h =
+    Number(t.horaSaida.split(":")[0]) -
+    Number(t.horaEntrada.split(":")[0]);
+  return { nome: t.nomeProfissional || t.nomeCompleto, horas: h };
 }).filter(Boolean);
 
 horasRank

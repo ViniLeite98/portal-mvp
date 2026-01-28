@@ -50,10 +50,10 @@ html, body {
 
 .card {
   background: #fff;
-  border-radius: 18px;
-  padding: 20px;
+  border-radius: 26px;
+  padding: 24px;
   box-shadow: 0 0 8px rgba(0,0,0,.05);
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .header-row {
@@ -63,8 +63,8 @@ html, body {
 }
 
 button {
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
   border: none;
   background: #1f2937;
   color: #fff;
@@ -100,21 +100,22 @@ th {
   display: none;
   align-items: center;
   justify-content: center;
+  z-index: 10;
 }
 
 .modal-content {
   background: #fff;
-  border-radius: 18px;
-  padding: 25px;
-  width: 680px;
+  border-radius: 26px;
+  padding: 30px;
+  width: 900px;
   max-height: 90vh;
   overflow-y: auto;
 }
 
 .form-grid {
   display: grid;
-  grid-template-columns: repeat(2,1fr);
-  gap: 12px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
 }
 
 .form-grid label {
@@ -124,9 +125,24 @@ th {
 
 .form-grid input,
 .form-grid select {
+  width: 100%;
   padding: 8px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
+}
+
+.full {
+  grid-column: span 4;
+}
+.half {
+  grid-column: span 2;
+}
+
+.cert-grid {
+  display: grid;
+  grid-template-columns: repeat(5,1fr);
+  gap: 10px;
+  margin-top: 10px;
 }
 </style>
 </head>
@@ -143,14 +159,16 @@ th {
 
 <div class="content">
 
+  <!-- HEADER -->
   <div class="card header-row">
     <div>
-      <h2>👥 Gestão da Equipe</h2>
-      <small>Somente terapeutas ativas impactam os indicadores</small>
+      <h2>Gestão da Equipe</h2>
+      <small>Gerir informações das terapeutas, horários e folgas</small>
     </div>
     <button onclick="abrirModal()">＋ Nova Terapeuta</button>
   </div>
 
+  <!-- LISTA -->
   <div class="card">
     <table>
       <thead>
@@ -172,198 +190,189 @@ th {
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <h3>Cadastro de Terapeuta</h3>
+
+    <h3>Nova Terapeuta</h3>
+    <p>Preencha os dados da terapeuta</p>
 
     <div class="form-grid">
-      <label>Nome profissional
-        <input id="nome">
+
+      <label class="half">Nome Completo
+        <input id="nomeCompleto">
+      </label>
+
+      <label class="half">Nome profissional
+        <input id="nomeProf">
+      </label>
+
+      <label>Data de Nascimento
+        <input type="date" id="nascimento">
+      </label>
+
+      <label>CPF
+        <input id="cpf">
+      </label>
+
+      <label>Email
+        <input id="email">
+      </label>
+
+      <label>Unidade
+        <input id="unidade">
+      </label>
+
+      <label class="full">Endereço
+        <input id="endereco">
+      </label>
+
+      <label>Contato
+        <input id="contato">
+      </label>
+
+      <label>Contato Emergência
+        <input id="contatoEmerg">
+      </label>
+
+      <label>Tipo de Chave Pix
+        <select id="tipoPix">
+          <option value="">—</option>
+          <option>CPF</option>
+          <option>Email</option>
+          <option>Telefone</option>
+        </select>
+      </label>
+
+      <label>Chave Pix
+        <input id="chavePix">
+      </label>
+
+      <label>Tem folga semanal?
+        <select id="folga">
+          <option value="">Não</option>
+          <option>Segunda</option>
+          <option>Terça</option>
+          <option>Quarta</option>
+          <option>Quinta</option>
+          <option>Sexta</option>
+          <option>Sábado</option>
+          <option>Domingo</option>
+        </select>
+      </label>
+
+      <label>Dia da Folga
+        <input id="diaFolga">
+      </label>
+
+      <label>Horário de Entrada
+        <input type="time" step="900" id="entrada">
+      </label>
+
+      <label>Horário de Saída
+        <input type="time" step="900" id="saida">
+      </label>
+
+      <label>Data de Início
+        <input type="date" id="inicio">
+      </label>
+
+      <label>Tipo Sanguíneo
+        <input id="sangue">
       </label>
 
       <label>Status
         <select id="status">
-          <option value="Ativo">Ativo</option>
-          <option value="Inativo">Inativo</option>
+          <option>Ativo</option>
+          <option>Inativo</option>
         </select>
       </label>
 
-      <label>Folga semanal
-        <select id="folga">
-          <option value="">Não</option>
-          <option value="Segunda">Segunda</option>
-          <option value="Terça">Terça</option>
-          <option value="Quarta">Quarta</option>
-          <option value="Quinta">Quinta</option>
-          <option value="Sexta">Sexta</option>
-          <option value="Sábado">Sábado</option>
-          <option value="Domingo">Domingo</option>
-        </select>
-      </label>
+    </div>
 
-      <label>Data de início
-        <input type="date" id="inicio">
-      </label>
-
-      <label>Entrada
-        <input type="time" id="entrada" step="900">
-      </label>
-
-      <label>Saída
-        <input type="time" id="saida" step="900">
-      </label>
+    <h4 style="margin-top:20px;">Certificações</h4>
+    <div class="cert-grid">
+      <label><input type="checkbox" id="cNuru"> Massagem Nuru</label>
+      <label><input type="checkbox" id="cViv"> Massagem Vivência</label>
+      <label><input type="checkbox" id="cPodo"> Podolatria</label>
+      <label><input type="checkbox" id="cCasais"> Massagem Casais</label>
+      <label><input type="checkbox" id="cFem"> Massagem Feminina</label>
     </div>
 
     <br>
     <button onclick="salvar()">Salvar</button>
     <button onclick="fecharModal()" style="background:#9ca3af">Cancelar</button>
+
   </div>
 </div>
 
 <script>
-/* =======================
-   DADOS
-======================= */
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
 let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
 let editIndex = null;
 
-/* =======================
-   MAPA DIAS DA SEMANA
-======================= */
 const mapSemana = {
-  "domingo": 0,
-  "segunda": 1,
-  "segunda-feira": 1,
-  "terça": 2,
-  "terca": 2,
-  "terça-feira": 2,
-  "quarta": 3,
-  "quarta-feira": 3,
-  "quinta": 4,
-  "quinta-feira": 4,
-  "sexta": 5,
-  "sexta-feira": 5,
-  "sábado": 6,
-  "sabado": 6
+  "domingo":0,"segunda":1,"terça":2,"terca":2,"quarta":3,
+  "quinta":4,"sexta":5,"sábado":6,"sabado":6
 };
 
-/* =======================
-   FUNÇÕES
-======================= */
-function abrirModal(i = null) {
-  editIndex = i;
-  document.getElementById("modal").style.display = "flex";
-
-  if (i !== null) {
-    const t = terapeutas[i];
-    nome.value = t.nome;
-    status.value = t.status || "Ativo";
-    folga.value = t.folga || "";
-    inicio.value = t.inicio || "";
-    entrada.value = t.entrada || "";
-    saida.value = t.saida || "";
-  } else {
-    nome.value = "";
-    status.value = "Ativo";
-    folga.value = "";
-    inicio.value = "";
-    entrada.value = "";
-    saida.value = "";
-  }
+function abrirModal(i=null){
+  editIndex=i;
+  modal.style.display="flex";
 }
 
-function fecharModal() {
-  document.getElementById("modal").style.display = "none";
+function fecharModal(){
+  modal.style.display="none";
 }
 
-function calcularDiasFolga(t) {
-  let total = 0;
-
-  // Folga semanal
-  if (t.folga) {
-    const diaFolga = mapSemana[t.folga.toLowerCase()];
-    if (diaFolga !== undefined) {
-      const hoje = new Date();
-      const inicio = t.inicio
-        ? new Date(t.inicio)
-        : new Date(hoje.getFullYear(), 0, 1);
-
-      for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate() + 1)) {
-        if (d.getDay() === diaFolga) total++;
+function calcularDiasFolga(t){
+  let total=0;
+  if(t.folga){
+    const dia=mapSemana[t.folga.toLowerCase()];
+    if(dia!==undefined){
+      const ini=t.inicio?new Date(t.inicio):new Date(new Date().getFullYear(),0,1);
+      for(let d=new Date(ini);d<=new Date();d.setDate(d.getDate()+1)){
+        if(d.getDay()===dia) total++;
       }
     }
   }
-
-  // Solicitações aprovadas
-  solicitacoes
-    .filter(s =>
-      s.status === "Aprovado" &&
-      s.terapeuta &&
-      s.terapeuta.toLowerCase() === t.nome.toLowerCase()
-    )
-    .forEach(s => {
-      const ini = new Date(s.inicio);
-      const fim = new Date(s.fim);
-      const dias = Math.floor((fim - ini) / 86400000) + 1;
-      if (!isNaN(dias)) total += dias;
+  solicitacoes.filter(s=>s.status==="Aprovado" && s.terapeuta===t.nomeProf)
+    .forEach(s=>{
+      total+=(new Date(s.fim)-new Date(s.inicio))/86400000+1;
     });
-
   return total;
 }
 
-function salvar() {
-  const terapeuta = {
-    nome: nome.value.trim(),
-    status: status.value,
-    folga: folga.value,
-    inicio: inicio.value,
-    entrada: entrada.value,
-    saida: saida.value
+function salvar(){
+  const t={
+    nomeCompleto:nomeCompleto.value,
+    nomeProf:nomeProf.value,
+    folga:folga.value,
+    inicio:inicio.value,
+    entrada:entrada.value,
+    saida:saida.value,
+    status:status.value
   };
-
-  if (!terapeuta.nome) {
-    alert("Nome é obrigatório");
-    return;
-  }
-
-  if (editIndex !== null) {
-    terapeutas[editIndex] = terapeuta;
-  } else {
-    terapeutas.push(terapeuta);
-  }
-
-  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  fecharModal();
-  render();
+  if(editIndex!=null) terapeutas[editIndex]=t;
+  else terapeutas.push(t);
+  localStorage.setItem("terapeutas",JSON.stringify(terapeutas));
+  fecharModal(); render();
 }
 
-function excluir(i) {
-  if (!confirm("Excluir terapeuta?")) return;
-  terapeutas.splice(i, 1);
-  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  render();
-}
-
-function render() {
-  const tbody = document.getElementById("listaEquipe");
-  tbody.innerHTML = "";
-
-  terapeutas.forEach((t, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${t.nome}</td>
-      <td>${t.folga || "—"}</td>
+function render(){
+  listaEquipe.innerHTML="";
+  terapeutas.forEach((t,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${t.nomeProf}</td>
+      <td>${t.folga||"—"}</td>
       <td>${calcularDiasFolga(t)}</td>
-      <td>${t.inicio || "—"}</td>
-      <td>${t.entrada || "—"}–${t.saida || "—"}</td>
+      <td>${t.inicio||"—"}</td>
+      <td>${t.entrada||"—"}–${t.saida||"—"}</td>
       <td class="actions">
         <button onclick="abrirModal(${i})">✏️</button>
-        <button onclick="excluir(${i})">🗑️</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
+        <button onclick="terapeutas.splice(${i},1);localStorage.setItem('terapeutas',JSON.stringify(terapeutas));render()">🗑️</button>
+      </td>`;
+    listaEquipe.appendChild(tr);
   });
 }
-
 render();
 </script>
 

@@ -13,6 +13,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <nav class="sidebar">
   <h2>Hara Spa</h2>
+
   <a href="index.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
   <a href="equipe.html"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
   <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Indisponibilidades</a>
@@ -24,15 +25,20 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <div class="content">
   <h1>Gestão da Equipe</h1>
+  <p>Gerir informações das terapeutas, horários e folgas</p>
 
-  <a href="nova-terapeuta.html">+ Nova Terapeuta</a><br><br>
+  <a href="nova-terapeuta.html"
+     style="display:inline-block;margin-bottom:15px;">
+    + Nova Terapeuta
+  </a>
 
   <table>
     <thead>
       <tr>
-        <th>Nome</th>
-        <th>Folga</th>
-        <th>Dias/Ano</th>
+        <th>Nome Profissional</th>
+        <th>Nome Completo</th>
+        <th>Unidade</th>
+        <th>Folga Semanal</th>
         <th>Status</th>
         <th>Ações</th>
       </tr>
@@ -49,20 +55,34 @@ function carregar() {
   const terapeutas =
     JSON.parse(localStorage.getItem("terapeutas")) || [];
 
+  if (terapeutas.length === 0) {
+    lista.innerHTML =
+      `<tr><td colspan="6">Nenhuma terapeuta cadastrada</td></tr>`;
+    return;
+  }
+
   terapeutas.forEach(t => {
     const row = document.createElement("tr");
+
     row.innerHTML = `
-      <td>${t.nome}</td>
-      <td>${t.folga}</td>
-      <td>${t.dias}</td>
+      <td>${t.nomeProfissional || "-"}</td>
+      <td>${t.nomeCompleto || "-"}</td>
+      <td>${t.unidade || "-"}</td>
+      <td>${t.temFolga === "Sim" ? t.diaFolga || "-" : "Não"}</td>
       <td>${t.status}</td>
       <td>
-        <button onclick="editar(${t.id})">✏️</button>
-        <button onclick="excluir(${t.id})">🗑️</button>
+        <button onclick="editar(${t.id})" title="Editar">✏️</button>
+        <button onclick="excluir(${t.id})" title="Excluir">🗑️</button>
       </td>
     `;
+
     lista.appendChild(row);
   });
+}
+
+function editar(id) {
+  localStorage.setItem("editarTerapeutaId", id);
+  window.location.href = "nova-terapeuta.html";
 }
 
 function excluir(id) {
@@ -75,11 +95,6 @@ function excluir(id) {
 
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   carregar();
-}
-
-function editar(id) {
-  localStorage.setItem("editarTerapeutaId", id);
-  window.location.href = "nova-terapeuta.html";
 }
 
 carregar();

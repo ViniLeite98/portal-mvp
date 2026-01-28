@@ -14,6 +14,7 @@ html, body {
   background: #f5f7fb;
 }
 
+/* ===== SIDEBAR ===== */
 .sidebar {
   width: 230px;
   background: #1f2937;
@@ -22,9 +23,7 @@ html, body {
   position: fixed;
   padding: 20px;
 }
-
 .sidebar h2 { margin-bottom: 30px; }
-
 .sidebar a {
   display: flex;
   align-items: center;
@@ -35,13 +34,13 @@ html, body {
   border-radius: 10px;
   margin-bottom: 6px;
 }
-
 .sidebar a.active,
 .sidebar a:hover {
   background: #374151;
   color: #fff;
 }
 
+/* ===== CONTENT ===== */
 .content {
   margin-left: 260px;
   padding: 30px;
@@ -51,9 +50,9 @@ html, body {
 .card {
   background: #fff;
   border-radius: 26px;
-  padding: 24px;
+  padding: 26px;
   box-shadow: 0 0 8px rgba(0,0,0,.05);
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 
 .header-row {
@@ -63,7 +62,7 @@ html, body {
 }
 
 button {
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-radius: 10px;
   border: none;
   background: #1f2937;
@@ -74,81 +73,81 @@ button {
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 14px;
 }
-
 th, td {
-  padding: 12px;
+  padding: 14px;
   border-bottom: 1px solid #e5e7eb;
   font-size: 14px;
 }
-
 th {
   font-size: 13px;
   color: #374151;
+  text-align: left;
 }
 
 .actions button {
   background: none;
-  color: #1f2937;
   font-size: 16px;
 }
 
+/* ===== MODAL ===== */
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.4);
+  background: rgba(0,0,0,.45);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 10;
 }
-
 .modal-content {
   background: #fff;
-  border-radius: 26px;
-  padding: 30px;
-  width: 900px;
+  border-radius: 28px;
+  padding: 34px;
+  width: 960px;
   max-height: 90vh;
   overflow-y: auto;
 }
 
+/* ===== FORM ===== */
 .form-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  gap: 22px;
+  margin-top: 20px;
 }
 
 .form-grid label {
   font-size: 12px;
   color: #374151;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .form-grid input,
 .form-grid select {
-  width: 100%;
-  padding: 8px;
+  padding: 9px;
   border-radius: 8px;
   border: 1px solid #d1d5db;
 }
 
-.full {
-  grid-column: span 4;
-}
-.half {
-  grid-column: span 2;
-}
+.full { grid-column: span 4; }
+.half { grid-column: span 2; }
 
 .cert-grid {
   display: grid;
   grid-template-columns: repeat(5,1fr);
-  gap: 10px;
-  margin-top: 10px;
+  gap: 14px;
+  margin-top: 14px;
 }
 </style>
 </head>
 
 <body>
 
+<!-- ===== MENU ===== -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
   <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
@@ -187,7 +186,7 @@ th {
 
 </div>
 
-<!-- MODAL -->
+<!-- ===== MODAL ===== -->
 <div class="modal" id="modal">
   <div class="modal-content">
 
@@ -245,9 +244,10 @@ th {
         <input id="chavePix">
       </label>
 
-      <label>Tem folga semanal?
+      <!-- 🔴 AJUSTE PRINCIPAL -->
+      <label>Folga semanal
         <select id="folga">
-          <option value="">Não</option>
+          <option value="">Não possui</option>
           <option>Segunda</option>
           <option>Terça</option>
           <option>Quarta</option>
@@ -258,8 +258,8 @@ th {
         </select>
       </label>
 
-      <label>Dia da Folga
-        <input id="diaFolga">
+      <label>Dia da folga
+        <input disabled placeholder="Automático">
       </label>
 
       <label>Horário de Entrada
@@ -287,7 +287,7 @@ th {
 
     </div>
 
-    <h4 style="margin-top:20px;">Certificações</h4>
+    <h4 style="margin-top:26px;">Certificações</h4>
     <div class="cert-grid">
       <label><input type="checkbox" id="cNuru"> Massagem Nuru</label>
       <label><input type="checkbox" id="cViv"> Massagem Vivência</label>
@@ -306,34 +306,26 @@ th {
 <script>
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
 let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
-let editIndex = null;
 
 const mapSemana = {
-  "domingo":0,"segunda":1,"terça":2,"terca":2,"quarta":3,
-  "quinta":4,"sexta":5,"sábado":6,"sabado":6
+  domingo:0,segunda:1,terça:2,terca:2,quarta:3,
+  quinta:4,sexta:5,sábado:6,sabado:6
 };
 
-function abrirModal(i=null){
-  editIndex=i;
-  modal.style.display="flex";
-}
-
-function fecharModal(){
-  modal.style.display="none";
-}
+function abrirModal(){ modal.style.display="flex"; }
+function fecharModal(){ modal.style.display="none"; }
 
 function calcularDiasFolga(t){
   let total=0;
   if(t.folga){
     const dia=mapSemana[t.folga.toLowerCase()];
-    if(dia!==undefined){
-      const ini=t.inicio?new Date(t.inicio):new Date(new Date().getFullYear(),0,1);
-      for(let d=new Date(ini);d<=new Date();d.setDate(d.getDate()+1)){
-        if(d.getDay()===dia) total++;
-      }
+    const ini=new Date(t.inicio||new Date().getFullYear()+"-01-01");
+    for(let d=new Date(ini);d<=new Date();d.setDate(d.getDate()+1)){
+      if(d.getDay()===dia) total++;
     }
   }
-  solicitacoes.filter(s=>s.status==="Aprovado" && s.terapeuta===t.nomeProf)
+  solicitacoes
+    .filter(s=>s.status==="Aprovado" && s.terapeuta===t.nomeProf)
     .forEach(s=>{
       total+=(new Date(s.fim)-new Date(s.inicio))/86400000+1;
     });
@@ -341,24 +333,21 @@ function calcularDiasFolga(t){
 }
 
 function salvar(){
-  const t={
-    nomeCompleto:nomeCompleto.value,
+  terapeutas.push({
     nomeProf:nomeProf.value,
     folga:folga.value,
     inicio:inicio.value,
     entrada:entrada.value,
     saida:saida.value,
     status:status.value
-  };
-  if(editIndex!=null) terapeutas[editIndex]=t;
-  else terapeutas.push(t);
+  });
   localStorage.setItem("terapeutas",JSON.stringify(terapeutas));
   fecharModal(); render();
 }
 
 function render(){
   listaEquipe.innerHTML="";
-  terapeutas.forEach((t,i)=>{
+  terapeutas.forEach(t=>{
     const tr=document.createElement("tr");
     tr.innerHTML=`
       <td>${t.nomeProf}</td>
@@ -366,10 +355,7 @@ function render(){
       <td>${calcularDiasFolga(t)}</td>
       <td>${t.inicio||"—"}</td>
       <td>${t.entrada||"—"}–${t.saida||"—"}</td>
-      <td class="actions">
-        <button onclick="abrirModal(${i})">✏️</button>
-        <button onclick="terapeutas.splice(${i},1);localStorage.setItem('terapeutas',JSON.stringify(terapeutas));render()">🗑️</button>
-      </td>`;
+      <td class="actions">✏️ 🗑️</td>`;
     listaEquipe.appendChild(tr);
   });
 }

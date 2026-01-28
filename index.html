@@ -7,36 +7,222 @@
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+.cards {
+  display: grid;
+  grid-template-columns: 1.1fr 1.6fr 1.2fr;
+  gap: 16px;
+}
+
+.card {
+  background: #fff;
+  padding: 16px;
+  border-radius: 18px;
+  box-shadow: 0 0 8px rgba(0,0,0,.05);
+}
+
+.card h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.kpi {
+  font-size: 34px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.small {
+  font-size: 12px;
+  color: #666;
+}
+
+.section-row {
+  display: grid;
+  grid-template-columns: 3.2fr 1.3fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.rank div {
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+</style>
 </head>
 
 <body>
 
+<!-- MENU -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
-
-  <a href="index.html" class="active">
-    <i class="fa-solid fa-house"></i> Início
-  </a>
-
-  <a href="equipe.html">
-    <i class="fa-solid fa-users"></i> Gestão da Equipe
-  </a>
-
-  <a href="solicitacoes.html">
-    <i class="fa-solid fa-calendar-xmark"></i> Solicitações
-  </a>
-
-  <a href="escalas.html">
-    <i class="fa-solid fa-calendar-days"></i> Escalas
-  </a>
+  <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
+  <a href="equipe.html"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
+  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
+  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
 </nav>
 
+<!-- CONTEÚDO -->
 <div class="content">
   <h1>Início</h1>
-  <div class="card">
-    Menu funcionando corretamente ✅
+
+  <!-- KPIs -->
+  <div class="cards">
+
+    <div class="card">
+      <h3>Equipe 👥</h3>
+      <div class="kpi" id="kpiEquipe">0</div>
+      <div class="small">Funcionárias ativas no sistema</div>
+    </div>
+
+    <div class="card">
+      <h3>Próximas Datas 📅</h3>
+      <div id="proxDatas" class="small" style="margin-top:8px;"></div>
+      <div class="small" style="margin-top:10px;">Gestão de datas</div>
+    </div>
+
+    <div class="card">
+      <h3>Dias Folgados 🏆</h3>
+      <div id="diasFolga" class="small" style="margin-top:8px;"></div>
+      <div class="small" style="margin-top:10px;">Relatório completo</div>
+    </div>
+
   </div>
+
+  <br>
+
+  <!-- FORÇA DE TRABALHO + CARGA HORÁRIA -->
+  <div class="section-row">
+
+    <!-- GRÁFICO -->
+    <div class="card">
+      <h3>Força de Trabalho</h3>
+      <canvas id="grafico"></canvas>
+      <div class="small">
+        Distribuição por hora (derivada do horário em Equipe).
+      </div>
+    </div>
+
+    <!-- RANKING -->
+    <div class="card">
+      <h3>Carga Horária</h3>
+      <div id="rankHoras" class="rank"></div>
+      <div class="small" style="margin-top:10px;">Relatório completo</div>
+    </div>
+
+  </div>
+
 </div>
+
+<script>
+// =========================
+// LOAD STORAGE
+// =========================
+const terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
+const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
+const proximas = JSON.parse(localStorage.getItem("proximas_datas")) || [];
+
+// =========================
+// KPI EQUIPE
+// =========================
+const ativas = terapeutas.filter(t =>
+  !t.status || t.status === "Ativo"
+);
+document.getElementById("kpiEquipe").innerText = ativas.length;
+
+// =========================
+// PRÓXIMAS DATAS
+// =========================
+const proxDiv = document.getElementById("proxDatas");
+if (proximas.length === 0) {
+  proxDiv.innerHTML = "Sem datas cadastradas.";
+} else {
+  proximas
+    .sort((a,b) => new Date(a.data) - new Date(b.data))
+    .slice(0,4)
+    .forEach(p => {
+      proxDiv.innerHTML += `
+        <div style="margin-bottom:6px;">
+          <b>${p.data}</b><br>${p.titulo || ""}
+        </div>`;
+    });
+}
+
+// =========================
+// DIAS FOLGADOS
+// =========================
+const aprovadas = solicitacoes.filter(s => s.status === "Aprovado");
+const diasPorPessoa = {};
+
+aprovadas.forEach(s => {
+  const ini = new Date(s.inicio);
+  const fim = new Date(s.fim);
+  const dias = Math.floor((fim - ini)/(1000*60*60*24)) + 1;
+  diasPorPessoa[s.terapeutaNome] =
+    (diasPorPessoa[s.terapeutaNome] || 0) + dias;
+});
+
+const folgaDiv = document.getElementById("diasFolga");
+Object.entries(diasPorPessoa)
+  .sort((a,b) => b[1]-a[1])
+  .slice(0,5)
+  .forEach(([nome,dias]) => {
+    folgaDiv.innerHTML += `<div><b>${nome}</b>: ${dias} dias</div>`;
+  });
+
+// =========================
+// FORÇA DE TRABALHO (GRÁFICO)
+// =========================
+const horas = Array.from({length:14}, (_,i)=>i+9);
+const contagem = horas.map(h => {
+  return ativas.filter(t => {
+    if (!t.horaEntrada || !t.horaSaida) return false;
+    const he = Number(t.horaEntrada.split(":")[0]);
+    const hs = Number(t.horaSaida.split(":")[0]);
+    return h >= he && h < hs;
+  }).length;
+});
+
+new Chart(document.getElementById("grafico"), {
+  type: "bar",
+  data: {
+    labels: horas.map(h => `${h}:00`),
+    datasets: [{
+      label: "Terapeutas ativas",
+      data: contagem,
+      backgroundColor: "#3b82f6"
+    }]
+  },
+  options: {
+    plugins: { legend: { display: true } },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    }
+  }
+});
+
+// =========================
+// CARGA HORÁRIA (RANKING)
+// =========================
+const horasRank = ativas.map(t => {
+  if (!t.horaEntrada || !t.horaSaida) return null;
+  const h =
+    Number(t.horaSaida.split(":")[0]) -
+    Number(t.horaEntrada.split(":")[0]);
+  return { nome: t.nomeProfissional || t.nomeCompleto, horas: h };
+}).filter(Boolean);
+
+horasRank
+  .sort((a,b)=>b.horas-a.horas)
+  .slice(0,5)
+  .forEach(r => {
+    document.getElementById("rankHoras")
+      .innerHTML += `<div>${r.nome}: ${r.horas}h</div>`;
+  });
+</script>
 
 </body>
 </html>

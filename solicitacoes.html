@@ -9,84 +9,77 @@
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-/* CONTAINER PRINCIPAL (igual PPT) */
 .page-box {
-  background: #ffffff;
-  border-radius: 22px;
-  border: 1px solid #e5e7eb;
-  padding: 22px;
+  background:#fff;
+  border-radius:22px;
+  border:1px solid #e5e7eb;
+  padding:22px;
 }
 
-/* TABS */
 .tabs {
-  display: flex;
-  gap: 10px;
-  margin: 16px 0;
+  display:flex;
+  gap:10px;
+  margin:16px 0;
 }
 
 .tabs button {
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
+  background:#f3f4f6;
+  border:1px solid #d1d5db;
+  padding:8px 14px;
+  border-radius:8px;
+  cursor:pointer;
 }
 
 .tabs button.active {
-  background: #1f2937;
-  color: #ffffff;
+  background:#1f2937;
+  color:#fff;
 }
 
-/* FORM */
 .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
 }
 
-/* LISTAS */
 .list-box {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 14px;
-  margin-top: 10px;
+  background:#f9fafb;
+  border:1px solid #e5e7eb;
+  border-radius:16px;
+  padding:14px;
+  margin-top:10px;
 }
 
-/* TABELA */
 table {
-  width: 100%;
-  border-collapse: collapse;
-  background: #ffffff;
-  border-radius: 12px;
-  overflow: hidden;
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:12px;
+  overflow:hidden;
 }
 
 th {
-  background: #f3f4f6;
-  font-weight: 600;
-  font-size: 13px;
-  padding: 10px;
-  text-align: left;
+  background:#f3f4f6;
+  font-size:13px;
+  padding:10px;
+  text-align:left;
 }
 
 td {
-  padding: 10px;
-  font-size: 14px;
-  border-bottom: 1px solid #e5e7eb;
+  padding:10px;
+  font-size:14px;
+  border-bottom:1px solid #e5e7eb;
 }
 
 tbody tr:nth-child(even) {
-  background: #fafafa;
+  background:#fafafa;
 }
 
 tbody tr:hover {
-  background: #f1f5f9;
+  background:#f1f5f9;
 }
 
 .actions button {
-  margin-right: 6px;
+  margin-right:6px;
 }
 </style>
 </head>
@@ -102,7 +95,6 @@ tbody tr:hover {
   <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
 </nav>
 
-<!-- CONTEÚDO -->
 <div class="content">
   <div class="page-box">
 
@@ -116,14 +108,13 @@ tbody tr:hover {
       <button onclick="showTab('gerenciar')">Gerenciar solicitações</button>
     </div>
 
-    <!-- NOVA SOLICITAÇÃO -->
+    <!-- NOVA -->
     <div id="tab-nova">
       <div class="form-row">
         <div>
           <label>Terapeuta *</label>
           <select id="terapeutaSelect"></select>
         </div>
-
         <div>
           <label>Tipo *</label>
           <select id="tipo">
@@ -134,12 +125,10 @@ tbody tr:hover {
             <option>Outro</option>
           </select>
         </div>
-
         <div>
           <label>Data Início *</label>
           <input type="date" id="dtInicio">
         </div>
-
         <div>
           <label>Data Fim *</label>
           <input type="date" id="dtFim">
@@ -175,7 +164,7 @@ tbody tr:hover {
 
     <!-- GERENCIAR -->
     <div id="tab-gerenciar" style="display:none;">
-      <h3>Histórico Completo</h3>
+      <h3>Gerenciar Solicitações</h3>
       <div class="list-box">
         <table>
           <thead>
@@ -185,9 +174,10 @@ tbody tr:hover {
               <th>Tipo</th>
               <th>Status</th>
               <th>Aprovador</th>
+              <th>Alterar</th>
             </tr>
           </thead>
-          <tbody id="listaTodas"></tbody>
+          <tbody id="listaGerenciar"></tbody>
         </table>
       </div>
     </div>
@@ -236,37 +226,35 @@ terapeutasAtivas.forEach(t => {
 // DATA PADRÃO = HOJE
 // ==========================
 const hoje = new Date().toISOString().split("T")[0];
-document.getElementById("dtInicio").value = hoje;
-document.getElementById("dtFim").value = hoje;
+dtInicio.value = hoje;
+dtFim.value = hoje;
 
 // ==========================
 // NOVA SOLICITAÇÃO
 // ==========================
 function salvarSolicitacao() {
-  const idTerapeuta = select.value;
-  const tipo = tipoSelect = document.getElementById("tipo").value;
-  const dtInicio = document.getElementById("dtInicio").value;
-  const dtFim = document.getElementById("dtFim").value;
-  const justificativa = document.getElementById("justificativa").value;
+  const terapeuta = terapeutasAtivas.find(t => t.id == select.value);
+  const tipo = document.getElementById("tipo").value;
+  const inicio = dtInicio.value;
+  const fim = dtFim.value;
+  const justificativa = justificativaInput = document.getElementById("justificativa").value;
 
-  if (!idTerapeuta || !dtInicio || !dtFim || !justificativa) {
+  if (!terapeuta || !inicio || !fim || !justificativa) {
     alert("Preencha todos os campos obrigatórios.");
     return;
   }
 
-  if (dtFim < dtInicio) {
+  if (fim < inicio) {
     alert("Data fim não pode ser menor que data início.");
     return;
   }
 
-  const terapeuta = terapeutasAtivas.find(t => t.id == idTerapeuta);
-
   const nova = {
     id: Date.now(),
-    terapeutaId: idTerapeuta,
+    terapeutaId: terapeuta.id,
     terapeutaNome: terapeuta.nomeProfissional || terapeuta.nomeCompleto,
-    dtInicio,
-    dtFim,
+    dtInicio: inicio,
+    dtFim: fim,
     tipo,
     justificativa,
     status: "Pendente",
@@ -276,21 +264,21 @@ function salvarSolicitacao() {
   const lista = getSolicitacoes();
   lista.push(nova);
   saveSolicitacoes(lista);
-
-  alert("Solicitação registrada (status: Pendente).");
+  alert("Solicitação registrada.");
   location.reload();
 }
 
 // ==========================
-// RENDER LISTAS
+// RENDER
 // ==========================
 function render() {
   const pend = document.getElementById("listaPendentes");
-  const all = document.getElementById("listaTodas");
+  const ger = document.getElementById("listaGerenciar");
   pend.innerHTML = "";
-  all.innerHTML = "";
+  ger.innerHTML = "";
 
   getSolicitacoes().forEach(s => {
+    // Pendentes
     if (s.status === "Pendente") {
       pend.innerHTML += `
         <tr>
@@ -299,43 +287,63 @@ function render() {
           <td>${s.tipo}</td>
           <td>${s.justificativa}</td>
           <td class="actions">
-            <button onclick="aprovar(${s.id})">✅</button>
-            <button onclick="rejeitar(${s.id})">❌</button>
+            <button onclick="setStatus(${s.id}, 'Aprovado')">✅</button>
+            <button onclick="setStatus(${s.id}, 'Rejeitado')">❌</button>
           </td>
         </tr>`;
     }
 
-    all.innerHTML += `
+    // Gerenciar (todos)
+    ger.innerHTML += `
       <tr>
         <td>${s.terapeutaNome}</td>
         <td>${s.dtInicio} → ${s.dtFim}</td>
         <td>${s.tipo}</td>
         <td>${s.status}</td>
         <td>${s.aprovador || "-"}</td>
+        <td>
+          <select onchange="alterarStatus(${s.id}, this.value)">
+            <option value="">Alterar...</option>
+            <option value="Pendente">Pendente</option>
+            <option value="Aprovado">Aprovado</option>
+            <option value="Rejeitado">Rejeitado</option>
+          </select>
+        </td>
       </tr>`;
   });
 }
 
-function aprovar(id) {
+// ==========================
+// ALTERAÇÕES DE STATUS
+// ==========================
+function setStatus(id, novo) {
   const nome = prompt("Nome do aprovador:");
   if (!nome) return;
 
   const lista = getSolicitacoes();
   const s = lista.find(x => x.id === id);
-  s.status = "Aprovado";
+  s.status = novo;
   s.aprovador = nome;
   saveSolicitacoes(lista);
   render();
 }
 
-function rejeitar(id) {
-  const nome = prompt("Nome do aprovador:");
-  if (!nome) return;
+function alterarStatus(id, novoStatus) {
+  if (!novoStatus) return;
 
   const lista = getSolicitacoes();
   const s = lista.find(x => x.id === id);
-  s.status = "Rejeitado";
-  s.aprovador = nome;
+
+  if (novoStatus === "Pendente") {
+    s.status = "Pendente";
+    s.aprovador = "";
+  } else {
+    const nome = prompt("Nome do aprovador:");
+    if (!nome) return;
+    s.status = novoStatus;
+    s.aprovador = nome;
+  }
+
   saveSolicitacoes(lista);
   render();
 }

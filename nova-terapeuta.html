@@ -10,27 +10,25 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <style>
 .form-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
 }
-.form-grid label { font-weight:600; }
-.form-grid input, .form-grid select {
-  width: 100%;
-}
-.full { grid-column: span 4; }
-.half { grid-column: span 2; }
-.third { grid-column: span 1; }
+.full { grid-column:span 4; }
+.half { grid-column:span 2; }
+.third { grid-column:span 1; }
+
 .card-form {
   background:#fff;
   padding:22px;
   border-radius:14px;
   box-shadow:0 0 8px rgba(0,0,0,.05);
 }
+
 .certificacoes {
   display:flex;
   gap:18px;
-  flex-wrap: wrap;
+  flex-wrap:wrap;
 }
 </style>
 </head>
@@ -44,7 +42,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <div class="content">
   <h1 id="titulo">Nova Terapeuta</h1>
-  <p>Preencha os dados da terapeuta</p>
+  <p>Ficha cadastral completa</p>
 
   <div class="card-form">
     <div class="form-grid">
@@ -146,11 +144,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
       <div class="full">
         <label>Certificações</label>
         <div class="certificacoes">
-          <label><input type="checkbox" value="Nuru"> Massagem Nuru</label>
-          <label><input type="checkbox" value="Vivência"> Massagem Vivência</label>
+          <label><input type="checkbox" value="Nuru"> Nuru</label>
+          <label><input type="checkbox" value="Vivência"> Vivência</label>
           <label><input type="checkbox" value="Podolatria"> Podolatria</label>
-          <label><input type="checkbox" value="Casais"> Massagem Casais</label>
-          <label><input type="checkbox" value="Feminina"> Massagem Feminina</label>
+          <label><input type="checkbox" value="Casais"> Casais</label>
+          <label><input type="checkbox" value="Feminina"> Feminina</label>
         </div>
       </div>
 
@@ -162,103 +160,67 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 </div>
 
 <script>
-// =======================
-// HELPERS (NÃO RESETAM)
-// =======================
-function getTerapeutas() {
-  const data = localStorage.getItem("terapeutas");
-  return data ? JSON.parse(data) : [];
+function getTerapeutas(){
+  return JSON.parse(localStorage.getItem("terapeutas")||"[]");
+}
+function saveTerapeutas(lista){
+  localStorage.setItem("terapeutas",JSON.stringify(lista));
 }
 
-function saveTerapeutas(lista) {
-  localStorage.setItem("terapeutas", JSON.stringify(lista));
-}
-
-// =======================
-// EDIÇÃO (se existir)
-// =======================
 const editId = localStorage.getItem("editarTerapeutaId");
 
-if (editId) {
-  document.getElementById("titulo").innerText = "Editar Terapeuta";
-
-  const terapeutas = getTerapeutas();
-  const t = terapeutas.find(x => x.id === Number(editId));
-
-  if (t) {
-    nomeCompleto.value = t.nomeCompleto || "";
-    nomeProfissional.value = t.nomeProfissional || "";
-    nascimento.value = t.nascimento || "";
-    cpf.value = t.cpf || "";
-    email.value = t.email || "";
-    unidade.value = t.unidade || "";
-    endereco.value = t.endereco || "";
-    contato.value = t.contato || "";
-    contatoEmergencia.value = t.contatoEmergencia || "";
-    tipoChave.value = t.tipoChave || "";
-    chavePix.value = t.chavePix || "";
-    temFolga.value = t.temFolga || "Sim";
-    diaFolga.value = t.diaFolga || "";
-    horaEntrada.value = t.horaEntrada || "";
-    horaSaida.value = t.horaSaida || "";
-    dataInicio.value = t.dataInicio || "";
-    tipoSanguineo.value = t.tipoSanguineo || "";
-
+if(editId){
+  const t = getTerapeutas().find(x=>x.id==editId);
+  if(t){
+    titulo.innerText="Editar Terapeuta";
+    Object.keys(t).forEach(k=>{
+      if(window[k]) window[k].value=t[k];
+    });
     document
-      .querySelector(`input[name="status"][value="${t.status || "Ativo"}"]`)
-      .checked = true;
+      .querySelector(`input[name="status"][value="${t.status||"Ativo"}"]`)
+      .checked=true;
 
     document
       .querySelectorAll(".certificacoes input")
-      .forEach(c => {
-        c.checked = (t.certificacoes || []).includes(c.value);
-      });
+      .forEach(c=>c.checked=(t.certificacoes||[]).includes(c.value));
   }
 }
 
-// =======================
-// SALVAR (SEM SOBRESCREVER)
-// =======================
-function salvar() {
-  let terapeutas = getTerapeutas();
+function salvar(){
+  let terapeutas=getTerapeutas();
+  const certificacoes=[...document.querySelectorAll(".certificacoes input:checked")]
+    .map(c=>c.value);
 
-  const certificacoes = [...document.querySelectorAll(".certificacoes input:checked")]
-    .map(c => c.value);
-
-  const dados = {
-    id: editId ? Number(editId) : Date.now(),
-    nomeCompleto: nomeCompleto.value,
-    nomeProfissional: nomeProfissional.value,
-    nascimento: nascimento.value,
-    cpf: cpf.value,
-    email: email.value,
-    unidade: unidade.value,
-    endereco: endereco.value,
-    contato: contato.value,
-    contatoEmergencia: contatoEmergencia.value,
-    tipoChave: tipoChave.value,
-    chavePix: chavePix.value,
-    temFolga: temFolga.value,
-    diaFolga: diaFolga.value,
-    horaEntrada: horaEntrada.value,
-    horaSaida: horaSaida.value,
-    dataInicio: dataInicio.value,
-    tipoSanguineo: tipoSanguineo.value,
-    status: document.querySelector('input[name="status"]:checked').value,
+  const dados={
+    id: editId?Number(editId):Date.now(),
+    nomeCompleto:nomeCompleto.value,
+    nomeProfissional:nomeProfissional.value,
+    nascimento:nascimento.value,
+    cpf:cpf.value,
+    email:email.value,
+    unidade:unidade.value,
+    endereco:endereco.value,
+    contato:contato.value,
+    contatoEmergencia:contatoEmergencia.value,
+    tipoChave:tipoChave.value,
+    chavePix:chavePix.value,
+    temFolga:temFolga.value,
+    diaFolga:diaFolga.value,
+    horaEntrada:horaEntrada.value,
+    horaSaida:horaSaida.value,
+    dataInicio:dataInicio.value,
+    tipoSanguineo:tipoSanguineo.value,
+    status:document.querySelector('input[name="status"]:checked').value,
     certificacoes
   };
 
-  if (editId) {
-    terapeutas = terapeutas.map(t =>
-      t.id === Number(editId) ? dados : t
-    );
-    localStorage.removeItem("editarTerapeutaId");
-  } else {
-    terapeutas.push(dados);
-  }
+  terapeutas = editId
+    ? terapeutas.map(t=>t.id==editId?dados:t)
+    : [...terapeutas,dados];
 
+  localStorage.removeItem("editarTerapeutaId");
   saveTerapeutas(terapeutas);
-  location.href = "equipe.html";
+  location.href="equipe.html";
 }
 </script>
 

@@ -69,10 +69,6 @@ button {
   cursor:pointer;
 }
 
-button.secondary {
-  background:#9ca3af;
-}
-
 table {
   width:100%;
   border-collapse:collapse;
@@ -85,19 +81,11 @@ th, td {
   text-align:left;
 }
 
-th {
-  font-size:13px;
-  color:#374151;
-}
-
 .actions i {
   cursor:pointer;
   margin-right:10px;
 }
-
-.actions .fa-trash {
-  color:#ef4444;
-}
+.actions .fa-trash { color:#ef4444; }
 
 .modal {
   display:none;
@@ -107,15 +95,16 @@ th {
   background:rgba(0,0,0,.4);
   justify-content:center;
   align-items:center;
-  z-index:10;
 }
 
 .modal-content {
   background:#fff;
   width:90%;
-  max-width:900px;
+  max-width:1100px;
   border-radius:28px;
   padding:24px;
+  max-height:90vh;
+  overflow-y:auto;
 }
 
 .form-grid {
@@ -129,13 +118,10 @@ th {
   flex-direction:column;
 }
 
+.form-group.full { grid-column:span 4; }
 .form-group.half { grid-column:span 2; }
 
-label {
-  font-size:13px;
-  margin-bottom:4px;
-}
-
+label { font-size:13px; margin-bottom:4px; }
 input, select {
   padding:8px;
   border-radius:6px;
@@ -157,9 +143,7 @@ input, select {
 </nav>
 
 <div class="content">
-
   <h1>Gestão da Equipe</h1>
-  <p>Gerir informações das terapeutas, horários e folgas</p>
 
   <div class="card">
     <div class="card-header">
@@ -174,22 +158,22 @@ input, select {
       <thead>
         <tr>
           <th>Nome</th>
-          <th>Status</th>
-          <th>Entrada</th>
-          <th>Saída</th>
+          <th>Folga Semanal</th>
+          <th>Dias de Folga/Ano</th>
+          <th>Data de Início</th>
+          <th>Horário</th>
           <th>Ações</th>
         </tr>
       </thead>
       <tbody id="lista"></tbody>
     </table>
   </div>
-
 </div>
 
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <h2 id="tituloModal">Nova Terapeuta</h2>
+    <h2 id="tituloModal">Terapeuta</h2>
 
     <div class="form-grid">
       <div class="form-group half">
@@ -203,6 +187,19 @@ input, select {
       </div>
 
       <div class="form-group">
+        <label>Tem folga semanal?</label>
+        <select id="temFolga">
+          <option>Sim</option>
+          <option>Não</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Dia da Folga</label>
+        <input id="diaFolga">
+      </div>
+
+      <div class="form-group">
         <label>Horário de Entrada</label>
         <input type="time" id="entrada">
       </div>
@@ -210,6 +207,11 @@ input, select {
       <div class="form-group">
         <label>Horário de Saída</label>
         <input type="time" id="saida">
+      </div>
+
+      <div class="form-group">
+        <label>Data de Início</label>
+        <input type="date" id="dataInicio">
       </div>
 
       <div class="form-group">
@@ -222,7 +224,7 @@ input, select {
     </div>
 
     <div style="margin-top:20px;text-align:right">
-      <button class="secondary" onclick="fecharModal()">Cancelar</button>
+      <button onclick="fecharModal()">Cancelar</button>
       <button onclick="salvar()">Salvar</button>
     </div>
   </div>
@@ -232,9 +234,6 @@ input, select {
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
 let editId = null;
 
-// =======================
-// RENDER
-// =======================
 function render() {
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
@@ -242,10 +241,11 @@ function render() {
   terapeutas.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${t.nomeProfissional || "—"}</td>
-      <td>${t.status || "Ativo"}</td>
-      <td>${t.horaEntrada || "—"}</td>
-      <td>${t.horaSaida || "—"}</td>
+      <td>${t.nomeProfissional}</td>
+      <td>${t.temFolga}</td>
+      <td>${t.diasFolgaAno || "-"}</td>
+      <td>${t.dataInicio || "-"}</td>
+      <td>${t.horaEntrada && t.horaSaida ? t.horaEntrada + "–" + t.horaSaida : "—"}</td>
       <td class="actions">
         <i class="fa-solid fa-pen" onclick="editar(${t.id})"></i>
         <i class="fa-solid fa-trash" onclick="excluir(${t.id})"></i>
@@ -258,9 +258,6 @@ function render() {
     terapeutas.length + " terapeutas cadastradas";
 }
 
-// =======================
-// MODAL
-// =======================
 function abrirModal() {
   editId = null;
   document.getElementById("tituloModal").innerText = "Nova Terapeuta";
@@ -272,26 +269,25 @@ function fecharModal() {
   document.getElementById("modal").style.display = "none";
 }
 
-// =======================
-// SALVAR (COM ID)
-// =======================
 function salvar() {
-
   if (entrada.value && saida.value && saida.value <= entrada.value) {
     alert("Horário de saída deve ser maior que o de entrada.");
     return;
   }
 
   const dados = {
-    id: editId ?? Date.now(),
+    id: editId || Date.now(),
     nomeCompleto: nomeCompleto.value,
     nomeProfissional: nomeProfissional.value,
+    temFolga: temFolga.value,
+    diaFolga: diaFolga.value,
     horaEntrada: entrada.value,
     horaSaida: saida.value,
+    dataInicio: dataInicio.value,
     status: status.value
   };
 
-  if (editId !== null) {
+  if (editId) {
     terapeutas = terapeutas.map(t =>
       t.id === editId ? dados : t
     );
@@ -305,9 +301,6 @@ function salvar() {
   render();
 }
 
-// =======================
-// EDITAR / EXCLUIR
-// =======================
 function editar(id) {
   const t = terapeutas.find(x => x.id === id);
   if (!t) return;
@@ -317,8 +310,11 @@ function editar(id) {
 
   nomeCompleto.value = t.nomeCompleto || "";
   nomeProfissional.value = t.nomeProfissional || "";
+  temFolga.value = t.temFolga || "Sim";
+  diaFolga.value = t.diaFolga || "";
   entrada.value = t.horaEntrada || "";
   saida.value = t.horaSaida || "";
+  dataInicio.value = t.dataInicio || "";
   status.value = t.status || "Ativo";
 
   document.getElementById("modal").style.display = "flex";
@@ -326,7 +322,6 @@ function editar(id) {
 
 function excluir(id) {
   if (!confirm("Excluir terapeuta?")) return;
-
   terapeutas = terapeutas.filter(t => t.id !== id);
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   render();

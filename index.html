@@ -166,7 +166,9 @@ var solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
 // ===============================
 // KPI EQUIPE
 // ===============================
-var ativas = terapeutas.filter(t => !t.status || t.status === "Ativo");
+var ativas = terapeutas.filter(function(t){
+  return !t.status || t.status === "Ativo";
+});
 document.getElementById("kpiEquipe").innerText = ativas.length;
 
 // ===============================
@@ -174,7 +176,7 @@ document.getElementById("kpiEquipe").innerText = ativas.length;
 // ===============================
 var dias = {};
 
-solicitacoes.forEach(s => {
+solicitacoes.forEach(function(s){
   if (s.status !== "Aprovado") return;
   if (!s.dataInicio || !s.dataFim) return;
 
@@ -189,11 +191,11 @@ solicitacoes.forEach(s => {
   dias[nome] = (dias[nome] || 0) + d;
 });
 
-var htmlFolga = "";
+var folgaHTML = "";
 for (var n in dias) {
-  htmlFolga += `<div><b>${n}</b>: ${dias[n]} dias</div>`;
+  folgaHTML += "<div><b>" + n + "</b>: " + dias[n] + " dias</div>";
 }
-document.getElementById("diasFolga").innerHTML = htmlFolga || "—";
+document.getElementById("diasFolga").innerHTML = folgaHTML || "—";
 
 // ===============================
 // FORÇA DE TRABALHO (GRÁFICO)
@@ -201,20 +203,56 @@ document.getElementById("diasFolga").innerHTML = htmlFolga || "—";
 var horas = [];
 for (var h = 9; h <= 22; h++) horas.push(h);
 
-var contagem = horas.map(hora =>
-  ativas.filter(t => {
+var contagem = horas.map(function(hora){
+  return ativas.filter(function(t){
     if (!t.horaEntrada || !t.horaSaida) return false;
     var he = parseInt(t.horaEntrada.split(":")[0],10);
     var hs = parseInt(t.horaSaida.split(":")[0],10);
     return !isNaN(he) && !isNaN(hs) && hora >= he && hora < hs;
-  }).length
-);
+  }).length;
+});
 
 var ctx = document.getElementById("grafico");
-if (ctx) {
+if (ctx && window.Chart) {
   new Chart(ctx, {
     type: "bar",
     data: {
-      labels: horas.map(h => h + ":00"),
+      labels: horas.map(function(h){ return h + ":00"; }),
       datasets: [{
-        label: "Terapeutas ativas
+        label: "Terapeutas ativas",
+        data: contagem,
+        backgroundColor: "#3b82f6"
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+}
+
+// ===============================
+// CARGA HORÁRIA
+// ===============================
+var carga = {};
+ativas.forEach(function(t){
+  if (!t.horaEntrada || !t.horaSaida) return;
+
+  var he = parseInt(t.horaEntrada.split(":")[0],10);
+  var hs = parseInt(t.horaSaida.split(":")[0],10);
+  if (isNaN(he) || isNaN(hs) || hs <= he) return;
+
+  var nome = t.nomeProfissional || t.nomeCompleto || "—";
+  carga[nome] = (carga[nome] || 0) + (hs - he);
+});
+
+var rankHTML = "";
+for (var nome in carga) {
+  rankHTML += "<div>" + nome + ": " + carga[nome] + "h</div>";
+}
+document.getElementById("rankHoras").innerHTML = rankHTML || "—";
+</script>
+
+</body>
+</html>

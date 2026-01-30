@@ -14,6 +14,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   grid-template-columns:repeat(4,1fr);
   gap:14px;
 }
+
 .full { grid-column:span 4; }
 .half { grid-column:span 2; }
 .third { grid-column:span 1; }
@@ -23,12 +24,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   padding:22px;
   border-radius:14px;
   box-shadow:0 0 8px rgba(0,0,0,.05);
-}
-
-.certificacoes {
-  display:flex;
-  gap:18px;
-  flex-wrap:wrap;
 }
 </style>
 </head>
@@ -47,6 +42,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   <div class="card-form">
     <div class="form-grid">
 
+      <!-- Nome -->
       <div class="half">
         <label>Nome Completo</label>
         <input id="nomeCompleto">
@@ -57,6 +53,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         <input id="nomeProfissional">
       </div>
 
+      <!-- Dados pessoais -->
       <div class="third">
         <label>Data de Nascimento</label>
         <input type="date" id="nascimento">
@@ -67,21 +64,28 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         <input id="cpf">
       </div>
 
-      <div class="half">
+      <div class="third">
         <label>Email</label>
         <input id="email">
       </div>
 
       <div class="third">
         <label>Unidade</label>
-        <input id="unidade">
+        <select id="unidade">
+          <option value="">—</option>
+          <option>Hara Spa – Centro</option>
+          <option>Hara Spa – Sul</option>
+          <option>Hara Spa – Norte</option>
+        </select>
       </div>
 
+      <!-- Endereço -->
       <div class="full">
         <label>Endereço</label>
         <input id="endereco">
       </div>
 
+      <!-- Contatos -->
       <div class="third">
         <label>Contato</label>
         <input id="contato">
@@ -92,9 +96,16 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         <input id="contatoEmergencia">
       </div>
 
+      <!-- Pix -->
       <div class="third">
         <label>Tipo de Chave</label>
-        <input id="tipoChave">
+        <select id="tipoChave">
+          <option value="">—</option>
+          <option>CPF</option>
+          <option>Email</option>
+          <option>Telefone</option>
+          <option>Chave Aleatória</option>
+        </select>
       </div>
 
       <div class="half">
@@ -102,6 +113,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         <input id="chavePix">
       </div>
 
+      <!-- Folga -->
       <div class="third">
         <label>Tem folga semanal?</label>
         <select id="temFolga">
@@ -112,9 +124,19 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
       <div class="third">
         <label>Dia da Folga</label>
-        <input id="diaFolga">
+        <select id="diaFolga">
+          <option value="">—</option>
+          <option>Segunda</option>
+          <option>Terça</option>
+          <option>Quarta</option>
+          <option>Quinta</option>
+          <option>Sexta</option>
+          <option>Sábado</option>
+          <option>Domingo</option>
+        </select>
       </div>
 
+      <!-- Jornada -->
       <div class="third">
         <label>Horário de Entrada</label>
         <input type="time" id="horaEntrada">
@@ -130,26 +152,22 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         <input type="date" id="dataInicio">
       </div>
 
+      <!-- Saúde / status -->
       <div class="third">
         <label>Tipo Sanguíneo</label>
-        <input id="tipoSanguineo">
+        <select id="tipoSanguineo">
+          <option value="">—</option>
+          <option>A+</option><option>A-</option>
+          <option>B+</option><option>B-</option>
+          <option>AB+</option><option>AB-</option>
+          <option>O+</option><option>O-</option>
+        </select>
       </div>
 
       <div class="third">
         <label>Status</label><br>
         <input type="radio" name="status" value="Ativo" checked> Ativo
         <input type="radio" name="status" value="Inativo"> Inativo
-      </div>
-
-      <div class="full">
-        <label>Certificações</label>
-        <div class="certificacoes">
-          <label><input type="checkbox" value="Nuru"> Nuru</label>
-          <label><input type="checkbox" value="Vivência"> Vivência</label>
-          <label><input type="checkbox" value="Podolatria"> Podolatria</label>
-          <label><input type="checkbox" value="Casais"> Casais</label>
-          <label><input type="checkbox" value="Feminina"> Feminina</label>
-        </div>
       </div>
 
     </div>
@@ -161,67 +179,59 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <script>
 function getTerapeutas(){
-  return JSON.parse(localStorage.getItem("terapeutas")||"[]");
+  return JSON.parse(localStorage.getItem("terapeutas") || "[]");
 }
 function saveTerapeutas(lista){
-  localStorage.setItem("terapeutas",JSON.stringify(lista));
+  localStorage.setItem("terapeutas", JSON.stringify(lista));
 }
 
 const editId = localStorage.getItem("editarTerapeutaId");
 
-if(editId){
-  const t = getTerapeutas().find(x=>x.id==editId);
-  if(t){
-    titulo.innerText="Editar Terapeuta";
-    Object.keys(t).forEach(k=>{
-      if(window[k]) window[k].value=t[k];
+if (editId) {
+  const t = getTerapeutas().find(x => x.id == editId);
+  if (t) {
+    titulo.innerText = "Editar Terapeuta";
+    Object.keys(t).forEach(k => {
+      if (window[k]) window[k].value = t[k];
     });
-
     document
-      .querySelector(`input[name="status"][value="${t.status||"Ativo"}"]`)
-      .checked=true;
-
-    document
-      .querySelectorAll(".certificacoes input")
-      .forEach(c=>c.checked=(t.certificacoes||[]).includes(c.value));
+      .querySelector(`input[name="status"][value="${t.status || "Ativo"}"]`)
+      .checked = true;
   }
 }
 
-function salvar(){
-  let terapeutas=getTerapeutas();
-  const certificacoes=[...document.querySelectorAll(".certificacoes input:checked")]
-    .map(c=>c.value);
+function salvar() {
+  let terapeutas = getTerapeutas();
 
-  const dados={
-    id: editId?Number(editId):Date.now(),
-    nomeCompleto:nomeCompleto.value,
-    nomeProfissional:nomeProfissional.value,
-    nascimento:nascimento.value,
-    cpf:cpf.value,
-    email:email.value,
-    unidade:unidade.value,
-    endereco:endereco.value,
-    contato:contato.value,
-    contatoEmergencia:contatoEmergencia.value,
-    tipoChave:tipoChave.value,
-    chavePix:chavePix.value,
-    temFolga:temFolga.value,
-    diaFolga:diaFolga.value,
-    horaEntrada:horaEntrada.value,
-    horaSaida:horaSaida.value,
-    dataInicio:dataInicio.value,
-    tipoSanguineo:tipoSanguineo.value,
-    status:document.querySelector('input[name="status"]:checked').value,
-    certificacoes
+  const dados = {
+    id: editId ? Number(editId) : Date.now(),
+    nomeCompleto: nomeCompleto.value,
+    nomeProfissional: nomeProfissional.value,
+    nascimento: nascimento.value,
+    cpf: cpf.value,
+    email: email.value,
+    unidade: unidade.value,
+    endereco: endereco.value,
+    contato: contato.value,
+    contatoEmergencia: contatoEmergencia.value,
+    tipoChave: tipoChave.value,
+    chavePix: chavePix.value,
+    temFolga: temFolga.value,
+    diaFolga: diaFolga.value,
+    horaEntrada: horaEntrada.value,
+    horaSaida: horaSaida.value,
+    dataInicio: dataInicio.value,
+    tipoSanguineo: tipoSanguineo.value,
+    status: document.querySelector('input[name="status"]:checked').value
   };
 
   terapeutas = editId
-    ? terapeutas.map(t=>t.id==editId?dados:t)
-    : [...terapeutas,dados];
+    ? terapeutas.map(t => t.id == editId ? dados : t)
+    : [...terapeutas, dados];
 
   localStorage.removeItem("editarTerapeutaId");
   saveTerapeutas(terapeutas);
-  location.href="equipe.html";
+  location.href = "equipe.html";
 }
 </script>
 

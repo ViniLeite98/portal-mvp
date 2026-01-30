@@ -2,158 +2,33 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Gestão da Equipe</title>
+<title>Nova Terapeuta</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-body {
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:#f5f7fb;
-}
-
-.sidebar {
-  width:230px;
-  background:#1f2937;
-  color:#fff;
-  height:100vh;
-  position:fixed;
-  padding:20px;
-}
-
-.sidebar h2 { margin-bottom:30px; }
-
-.sidebar a {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  color:#cbd5e1;
-  text-decoration:none;
-  padding:10px;
-  border-radius:10px;
-  margin-bottom:6px;
-}
-
-.sidebar a:hover,
-.sidebar a.active {
-  background:#374151;
-  color:#fff;
-}
-
-.content {
-  margin-left:260px;
-  padding:30px;
-}
-
-.card {
-  background:#fff;
-  border-radius:28px;
-  padding:24px;
-  margin-bottom:24px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
-}
-
-.card-header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-button {
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  padding:8px 14px;
-  cursor:pointer;
-}
-
-button.secondary {
-  background:#9ca3af;
-}
-
-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-top:16px;
-}
-
-th, td {
-  padding:12px 8px;
-  border-bottom:1px solid #e5e7eb;
-  text-align:left;
-}
-
-th {
-  font-size:13px;
-  color:#374151;
-}
-
-.actions i {
-  cursor:pointer;
-  margin-right:10px;
-}
-
-.actions .fa-trash {
-  color:#ef4444;
-}
-
-.modal {
-  display:none;
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background:rgba(0,0,0,.4);
-  justify-content:center;
-  align-items:center;
-  z-index:10;
-}
-
-.modal-content {
-  background:#fff;
-  width:90%;
-  max-width:1100px;
-  border-radius:28px;
-  padding:24px;
-  max-height:90vh;
-  overflow-y:auto;
-}
-
 .form-grid {
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:16px;
-  margin-top:16px;
+  gap:14px;
+}
+.full { grid-column:span 4; }
+.half { grid-column:span 2; }
+.third { grid-column:span 1; }
+
+.card-form {
+  background:#fff;
+  padding:22px;
+  border-radius:14px;
+  box-shadow:0 0 8px rgba(0,0,0,.05);
 }
 
-.form-group {
+.certificacoes {
   display:flex;
-  flex-direction:column;
-}
-
-.form-group.full { grid-column:span 4; }
-.form-group.half { grid-column:span 2; }
-.form-group.third { grid-column:span 1; }
-
-label {
-  font-size:13px;
-  margin-bottom:4px;
-}
-
-input, select {
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-}
-
-.cert-grid {
-  display:grid;
-  grid-template-columns:repeat(5,1fr);
-  gap:16px;
-  margin-top:12px;
+  gap:18px;
+  flex-wrap:wrap;
 }
 </style>
 </head>
@@ -162,227 +37,191 @@ input, select {
 
 <nav class="sidebar">
   <h2>Hara Spa</h2>
-  <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
-  <a class="active"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
-  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
-  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
-  <a href="materiais.html"><i class="fa-solid fa-box-open"></i> Materiais</a>
-  <a href="financeiro.html"><i class="fa-solid fa-coins"></i> Financeiro</a>
+  <a href="equipe.html"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
 </nav>
 
 <div class="content">
+  <h1 id="titulo">Nova Terapeuta</h1>
+  <p>Ficha cadastral completa</p>
 
-  <h1>Gestão da Equipe</h1>
-  <p>Gerir informações das terapeutas, horários e folgas</p>
-
-  <div class="card">
-    <div class="card-header">
-      <div>
-        <h3>Lista de Terapeutas</h3>
-        <small id="contador"></small>
-      </div>
-      <button onclick="abrirModal()">+ Nova Terapeuta</button>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Folga Semanal</th>
-          <th>Dias de Folga/Ano</th>
-          <th>Data de Início</th>
-          <th>Horário</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
-  </div>
-
-</div>
-
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h2>Terapeuta</h2>
-    <p>Preencha os dados da terapeuta</p>
-
+  <div class="card-form">
     <div class="form-grid">
 
-      <div class="form-group half">
+      <div class="half">
         <label>Nome Completo</label>
         <input id="nomeCompleto">
       </div>
 
-      <div class="form-group half">
+      <div class="half">
         <label>Nome Profissional</label>
         <input id="nomeProfissional">
       </div>
 
-      <div class="form-group">
+      <div class="third">
+        <label>Data de Nascimento</label>
+        <input type="date" id="nascimento">
+      </div>
+
+      <div class="third">
+        <label>CPF</label>
+        <input id="cpf">
+      </div>
+
+      <div class="half">
+        <label>Email</label>
+        <input id="email">
+      </div>
+
+      <div class="third">
+        <label>Unidade</label>
+        <input id="unidade">
+      </div>
+
+      <div class="full">
+        <label>Endereço</label>
+        <input id="endereco">
+      </div>
+
+      <div class="third">
+        <label>Contato</label>
+        <input id="contato">
+      </div>
+
+      <div class="third">
+        <label>Contato Emergência</label>
+        <input id="contatoEmergencia">
+      </div>
+
+      <div class="third">
+        <label>Tipo de Chave</label>
+        <input id="tipoChave">
+      </div>
+
+      <div class="half">
+        <label>Chave Pix</label>
+        <input id="chavePix">
+      </div>
+
+      <div class="third">
         <label>Tem folga semanal?</label>
         <select id="temFolga">
-          <option value="Não">Não</option>
           <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
         </select>
       </div>
 
-      <div class="form-group">
+      <div class="third">
         <label>Dia da Folga</label>
-        <select id="diaFolga">
-          <option value="">—</option>
-          <option>Segunda</option>
-          <option>Terça</option>
-          <option>Quarta</option>
-          <option>Quinta</option>
-          <option>Sexta</option>
-          <option>Sábado</option>
-          <option>Domingo</option>
-        </select>
+        <input id="diaFolga">
       </div>
 
-      <div class="form-group">
+      <div class="third">
         <label>Horário de Entrada</label>
         <input type="time" id="horaEntrada">
       </div>
 
-      <div class="form-group">
+      <div class="third">
         <label>Horário de Saída</label>
         <input type="time" id="horaSaida">
       </div>
 
-      <div class="form-group">
+      <div class="third">
         <label>Data de Início</label>
         <input type="date" id="dataInicio">
       </div>
 
-      <div class="form-group">
-        <label>Status</label>
-        <select id="status">
-          <option>Ativo</option>
-          <option>Inativo</option>
-        </select>
+      <div class="third">
+        <label>Tipo Sanguíneo</label>
+        <input id="tipoSanguineo">
+      </div>
+
+      <div class="third">
+        <label>Status</label><br>
+        <input type="radio" name="status" value="Ativo" checked> Ativo
+        <input type="radio" name="status" value="Inativo"> Inativo
+      </div>
+
+      <div class="full">
+        <label>Certificações</label>
+        <div class="certificacoes">
+          <label><input type="checkbox" value="Nuru"> Nuru</label>
+          <label><input type="checkbox" value="Vivência"> Vivência</label>
+          <label><input type="checkbox" value="Podolatria"> Podolatria</label>
+          <label><input type="checkbox" value="Casais"> Casais</label>
+          <label><input type="checkbox" value="Feminina"> Feminina</label>
+        </div>
       </div>
 
     </div>
 
-    <div style="margin-top:20px;text-align:right">
-      <button class="secondary" onclick="fecharModal()">Cancelar</button>
-      <button onclick="salvar()">Salvar</button>
-    </div>
+    <br>
+    <button onclick="salvar()">Salvar</button>
   </div>
 </div>
 
 <script>
-let terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
-let editId = null;
+function getTerapeutas(){
+  return JSON.parse(localStorage.getItem("terapeutas")||"[]");
+}
+function saveTerapeutas(lista){
+  localStorage.setItem("terapeutas",JSON.stringify(lista));
+}
 
-function calcularFolgas(t) {
-  if (t.temFolga !== "Sim" || !t.diaFolga || !t.dataInicio) return 0;
+const editId = localStorage.getItem("editarTerapeutaId");
 
-  let total = 0;
-  const inicio = new Date(t.dataInicio);
-  const hoje = new Date();
+if(editId){
+  const t = getTerapeutas().find(x=>x.id==editId);
+  if(t){
+    titulo.innerText="Editar Terapeuta";
+    Object.keys(t).forEach(k=>{
+      if(window[k]) window[k].value=t[k];
+    });
+    document
+      .querySelector(`input[name="status"][value="${t.status||"Ativo"}"]`)
+      .checked=true;
 
-  for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate()+1)) {
-    if (
-      d.toLocaleDateString("pt-BR",{weekday:"long"})
-        .toLowerCase()
-        .includes(t.diaFolga.toLowerCase())
-    ) {
-      total++;
-    }
+    document
+      .querySelectorAll(".certificacoes input")
+      .forEach(c=>c.checked=(t.certificacoes||[]).includes(c.value));
   }
-  return total;
 }
 
-function render() {
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+function salvar(){
+  let terapeutas=getTerapeutas();
+  const certificacoes=[...document.querySelectorAll(".certificacoes input:checked")]
+    .map(c=>c.value);
 
-  terapeutas.forEach(t => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${t.nomeProfissional}</td>
-      <td>${t.temFolga}</td>
-      <td>${calcularFolgas(t)}</td>
-      <td>${t.dataInicio || "—"}</td>
-      <td>${t.horaEntrada || ""} – ${t.horaSaida || ""}</td>
-      <td class="actions">
-        <i class="fa-solid fa-pen" onclick="editar(${t.id})"></i>
-        <i class="fa-solid fa-trash" onclick="excluir(${t.id})"></i>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById("contador").innerText =
-    terapeutas.length + " terapeutas cadastradas";
-}
-
-function abrirModal() {
-  editId = null;
-  document.querySelectorAll("#modal input, #modal select")
-    .forEach(e => e.value = "");
-  document.getElementById("modal").style.display = "flex";
-}
-
-function fecharModal() {
-  document.getElementById("modal").style.display = "none";
-}
-
-function salvar() {
-  const dados = {
-    id: editId ?? Date.now(),
-    nomeCompleto: nomeCompleto.value,
-    nomeProfissional: nomeProfissional.value,
-    temFolga: temFolga.value,
-    diaFolga: diaFolga.value,
-    horaEntrada: horaEntrada.value,
-    horaSaida: horaSaida.value,
-    dataInicio: dataInicio.value,
-    status: status.value
+  const dados={
+    id: editId?Number(editId):Date.now(),
+    nomeCompleto:nomeCompleto.value,
+    nomeProfissional:nomeProfissional.value,
+    nascimento:nascimento.value,
+    cpf:cpf.value,
+    email:email.value,
+    unidade:unidade.value,
+    endereco:endereco.value,
+    contato:contato.value,
+    contatoEmergencia:contatoEmergencia.value,
+    tipoChave:tipoChave.value,
+    chavePix:chavePix.value,
+    temFolga:temFolga.value,
+    diaFolga:diaFolga.value,
+    horaEntrada:horaEntrada.value,
+    horaSaida:horaSaida.value,
+    dataInicio:dataInicio.value,
+    tipoSanguineo:tipoSanguineo.value,
+    status:document.querySelector('input[name="status"]:checked').value,
+    certificacoes
   };
 
-  if (editId) {
-    terapeutas = terapeutas.map(t =>
-      t.id === editId ? dados : t
-    );
-  } else {
-    terapeutas.push(dados);
-  }
+  terapeutas = editId
+    ? terapeutas.map(t=>t.id==editId?dados:t)
+    : [...terapeutas,dados];
 
-  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  fecharModal();
-  render();
+  localStorage.removeItem("editarTerapeutaId");
+  saveTerapeutas(terapeutas);
+  location.href="equipe.html";
 }
-
-function editar(id) {
-  const t = terapeutas.find(x => x.id === id);
-  if (!t) return;
-
-  editId = id;
-
-  nomeCompleto.value = t.nomeCompleto || "";
-  nomeProfissional.value = t.nomeProfissional || "";
-  temFolga.value = t.temFolga || "Não";
-  diaFolga.value = t.diaFolga || "";
-  horaEntrada.value = t.horaEntrada || "";
-  horaSaida.value = t.horaSaida || "";
-  dataInicio.value = t.dataInicio || "";
-  status.value = t.status || "Ativo";
-
-  document.getElementById("modal").style.display = "flex";
-}
-
-function excluir(id) {
-  if (!confirm("Excluir terapeuta?")) return;
-  terapeutas = terapeutas.filter(t => t.id !== id);
-  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  render();
-}
-
-render();
 </script>
 
 </body>

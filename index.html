@@ -131,4 +131,55 @@ for (var n in dias) {
 document.getElementById("diasFolga").innerHTML = folgaHTML || "—";
 
 // FORÇA DE TRABALHO
-var h
+var horas = [];
+for (var h = 9; h <= 22; h++) horas.push(h);
+
+var contagem = horas.map(function(hora){
+  return ativas.filter(function(t){
+    if (!t.horaEntrada || !t.horaSaida) return false;
+    var he = parseInt(t.horaEntrada.split(":")[0],10);
+    var hs = parseInt(t.horaSaida.split(":")[0],10);
+    return !isNaN(he) && !isNaN(hs) && hora >= he && hora < hs;
+  }).length;
+});
+
+var ctx = document.getElementById("grafico");
+if (ctx) {
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: horas.map(function(h){ return h + ":00"; }),
+      datasets: [{
+        label: "Terapeutas ativas",
+        data: contagem,
+        backgroundColor: "#3b82f6"
+      }]
+    },
+    options: {
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+}
+
+// CARGA HORÁRIA
+var carga = {};
+ativas.forEach(function(t){
+  if (!t.horaEntrada || !t.horaSaida) return;
+
+  var he = parseInt(t.horaEntrada.split(":")[0],10);
+  var hs = parseInt(t.horaSaida.split(":")[0],10);
+  if (isNaN(he) || isNaN(hs) || hs <= he) return;
+
+  var nome = t.nomeProfissional || t.nomeCompleto || "—";
+  carga[nome] = (carga[nome] || 0) + (hs - he);
+});
+
+var rankHTML = "";
+for (var nome in carga) {
+  rankHTML += "<div>" + nome + ": " + carga[nome] + "h</div>";
+}
+document.getElementById("rankHoras").innerHTML = rankHTML || "—";
+</script>
+
+</body>
+</html>

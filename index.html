@@ -1,101 +1,111 @@
 <script>
-// ===============================
-// LOAD STORAGE
-// ===============================
-var terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
-var solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
+document.addEventListener("DOMContentLoaded", function () {
 
-// ===============================
-// KPI EQUIPE
-// ===============================
-var ativas = terapeutas.filter(function(t){
-  return t.status !== "Inativo";
-});
-document.getElementById("kpiEquipe").innerText = ativas.length;
+  // ===============================
+  // LOAD STORAGE
+  // ===============================
+  var terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
+  var solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
 
-// ===============================
-// DIAS FOLGADOS (CORRIGIDO)
-// ===============================
-var dias = {};
+  // ===============================
+  // KPI EQUIPE
+  // ===============================
+  var elEquipe = document.getElementById("kpiEquipe");
+  var ativas = terapeutas.filter(t => t.status !== "Inativo");
 
-solicitacoes.forEach(function(s){
-  if (s.status !== "Aprovado") return;
-  if (!s.dataInicio || !s.dataFim) return;
+  if (elEquipe) {
+    elEquipe.innerText = ativas.length;
+  }
 
-  var ini = new Date(s.dataInicio);
-  var fim = new Date(s.dataFim);
-  if (isNaN(ini) || isNaN(fim)) return;
+  // ===============================
+  // DIAS FOLGADOS
+  // ===============================
+  var elDias = document.getElementById("diasFolga");
+  var dias = {};
 
-  var d = Math.floor((fim - ini) / 86400000) + 1;
-  if (d <= 0) return;
+  solicitacoes.forEach(s => {
+    if (s.status !== "Aprovado") return;
+    if (!s.dataInicio || !s.dataFim) return;
 
-  var nome = s.terapeutaNome || "—";
-  dias[nome] = (dias[nome] || 0) + d;
-});
+    var ini = new Date(s.dataInicio);
+    var fim = new Date(s.dataFim);
+    if (isNaN(ini) || isNaN(fim)) return;
 
-var folgaHTML = "";
-for (var n in dias) {
-  folgaHTML += "<div><b>" + n + "</b>: " + dias[n] + " dias</div>";
-}
-document.getElementById("diasFolga").innerHTML = folgaHTML || "—";
+    var d = Math.floor((fim - ini) / 86400000) + 1;
+    if (d <= 0) return;
 
-// ===============================
-// FORÇA DE TRABALHO
-// ===============================
-var horas = [];
-for (var h = 9; h <= 22; h++) horas.push(h);
-
-var contagem = horas.map(function(hora){
-  return ativas.filter(function(t){
-    if (!t.horaEntrada || !t.horaSaida) return false;
-
-    var he = parseInt(t.horaEntrada.split(":")[0],10);
-    var hs = parseInt(t.horaSaida.split(":")[0],10);
-    if (isNaN(he) || isNaN(hs)) return false;
-
-    return hora >= he && hora < hs;
-  }).length;
-});
-
-var ctx = document.getElementById("grafico");
-if (ctx) {
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: horas.map(h => h + ":00"),
-      datasets: [{
-        label: "Terapeutas ativas",
-        data: contagem,
-        backgroundColor: "#3b82f6"
-      }]
-    },
-    options: {
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1 } }
-      }
-    }
+    var nome = s.terapeutaNome || "—";
+    dias[nome] = (dias[nome] || 0) + d;
   });
-}
 
-// ===============================
-// CARGA HORÁRIA
-// ===============================
-var carga = {};
+  if (elDias) {
+    var html = "";
+    for (var n in dias) {
+      html += `<div><b>${n}</b>: ${dias[n]} dias</div>`;
+    }
+    elDias.innerHTML = html || "—";
+  }
 
-ativas.forEach(function(t){
-  if (!t.horaEntrada || !t.horaSaida) return;
+  // ===============================
+  // FORÇA DE TRABALHO (GRÁFICO)
+  // ===============================
+  var canvas = document.getElementById("grafico");
 
-  var he = parseInt(t.horaEntrada.split(":")[0],10);
-  var hs = parseInt(t.horaSaida.split(":")[0],10);
-  if (isNaN(he) || isNaN(hs) || hs <= he) return;
+  if (canvas && window.Chart) {
+    var horas = [];
+    for (var h = 9; h <= 22; h++) horas.push(h);
 
-  var nome = t.nomeProfissional || t.nomeCompleto || "—";
-  carga[nome] = (carga[nome] || 0) + (hs - he);
+    var contagem = horas.map(hora =>
+      ativas.filter(t => {
+        if (!t.horaEntrada || !t.horaSaida) return false;
+        var he = parseInt(t.horaEntrada.split(":")[0], 10);
+        var hs = parseInt(t.horaSaida.split(":")[0], 10);
+        return !isNaN(he) && !isNaN(hs) && hora >= he && hora < hs;
+      }).length
+    );
+
+    new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: horas.map(h => h + ":00"),
+        datasets: [{
+          label: "Terapeutas ativas",
+          data: contagem,
+          backgroundColor: "#3b82f6"
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+  }
+
+  // ===============================
+  // CARGA HORÁRIA
+  // ===============================
+  var elRank = document.getElementById("rankHoras");
+  var carga = {};
+
+  ativas.forEach(t => {
+    if (!t.horaEntrada || !t.horaSaida) return;
+
+    var he = parseInt(t.horaEntrada.split(":")[0], 10);
+    var hs = parseInt(t.horaSaida.split(":")[0], 10);
+    if (isNaN(he) || isNaN(hs) || hs <= he) return;
+
+    var nome = t.nomeProfissional || t.nomeCompleto || "—";
+    carga[nome] = (carga[nome] || 0) + (hs - he);
+  });
+
+  if (elRank) {
+    var rankHTML = "";
+    for (var nome in carga) {
+      rankHTML += `<div>${nome}: ${carga[nome]}h</div>`;
+    }
+    elRank.innerHTML = rankHTML || "—";
+  }
+
 });
-
-var rankHTML = "";
-for (var nome in carga) {
-  rankHTML += "<div>" + nome + ": " + carga[nome] + "h</div>";
-}
-document.getElementById("rankHoras").innerHTML = rankHTML || "—";
 </script>

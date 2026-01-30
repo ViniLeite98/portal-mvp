@@ -4,348 +4,159 @@
 <meta charset="UTF-8">
 <title>Solicitações</title>
 
-<link rel="stylesheet" href="assets/css/style.css">
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-.page-box {
+body { margin:0; font-family:Arial; background:#f5f7fb; }
+
+.sidebar {
+  width:230px; background:#1f2937; color:#fff;
+  height:100vh; position:fixed; padding:20px;
+}
+.sidebar h2 { margin-bottom:30px; }
+.sidebar a {
+  display:flex; align-items:center; gap:10px;
+  color:#cbd5e1; text-decoration:none;
+  padding:10px; border-radius:10px; margin-bottom:6px;
+}
+.sidebar a:hover, .sidebar a.active {
+  background:#374151; color:#fff;
+}
+
+.content { margin-left:260px; padding:30px; }
+
+.card {
   background:#fff;
-  border-radius:22px;
-  border:1px solid #e5e7eb;
-  padding:22px;
-}
-
-.tabs {
-  display:flex;
-  gap:10px;
-  margin:16px 0;
-}
-
-.tabs button {
-  background:#f3f4f6;
-  border:1px solid #d1d5db;
-  padding:8px 14px;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-.tabs button.active {
-  background:#1f2937;
-  color:#fff;
-}
-
-.form-row {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-.list-box {
-  background:#f9fafb;
-  border:1px solid #e5e7eb;
-  border-radius:16px;
-  padding:14px;
-  margin-top:10px;
+  border-radius:24px;
+  padding:24px;
+  margin-bottom:24px;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
 }
 
 table {
   width:100%;
   border-collapse:collapse;
-  background:#fff;
-  border-radius:12px;
-  overflow:hidden;
+  margin-top:16px;
 }
-
-th {
-  background:#f3f4f6;
-  font-size:13px;
+th, td {
   padding:10px;
+  border-bottom:1px solid #e5e7eb;
   text-align:left;
 }
+th { font-size:13px; color:#374151; }
 
-td {
-  padding:10px;
-  font-size:14px;
-  border-bottom:1px solid #e5e7eb;
+button {
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:8px 14px;
+  cursor:pointer;
 }
-
-tbody tr:nth-child(even) {
-  background:#fafafa;
-}
-
-tbody tr:hover {
-  background:#f1f5f9;
-}
-
-.actions button {
-  margin-right:6px;
-}
+.secondary { background:#9ca3af; }
 </style>
 </head>
 
 <body>
 
-<!-- MENU -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
   <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
   <a href="equipe.html"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
   <a href="solicitacoes.html" class="active"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
   <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
+  <a href="materiais.html"><i class="fa-solid fa-box-open"></i> Materiais</a>
+  <a href="financeiro.html"><i class="fa-solid fa-coins"></i> Financeiro</a>
 </nav>
 
 <div class="content">
-  <div class="page-box">
+  <h1>Solicitações</h1>
+  <p>Registro de faltas, férias e indisponibilidades</p>
 
-    <h1>Solicitações</h1>
-    <p class="small">Demanda de indisponibilidade</p>
+  <div class="card">
+    <h3>Nova Solicitação</h3>
 
-    <!-- TABS -->
-    <div class="tabs">
-      <button class="active" onclick="showTab('nova')">Nova Solicitação</button>
-      <button onclick="showTab('aprovacoes')">Lista de aprovações</button>
-      <button onclick="showTab('gerenciar')">Gerenciar solicitações</button>
-    </div>
+    <label>Terapeuta</label><br>
+    <select id="terapeuta"></select><br><br>
 
-    <!-- NOVA -->
-    <div id="tab-nova">
-      <div class="form-row">
-        <div>
-          <label>Terapeuta *</label>
-          <select id="terapeutaSelect"></select>
-        </div>
-        <div>
-          <label>Tipo *</label>
-          <select id="tipo">
-            <option>Falta</option>
-            <option>Férias</option>
-            <option>Viagem</option>
-            <option>Atestado</option>
-            <option>Outro</option>
-          </select>
-        </div>
-        <div>
-          <label>Data Início *</label>
-          <input type="date" id="dtInicio">
-        </div>
-        <div>
-          <label>Data Fim *</label>
-          <input type="date" id="dtFim">
-        </div>
-      </div>
+    <label>Tipo</label><br>
+    <select id="tipo">
+      <option>Falta</option>
+      <option>Férias</option>
+      <option>Viagem</option>
+      <option>Atestado</option>
+      <option>Outro</option>
+    </select><br><br>
 
-      <br>
-      <label>Justificativa *</label>
-      <input id="justificativa">
+    <label>Data Início</label><br>
+    <input type="date" id="dataInicio"><br><br>
 
-      <br><br>
-      <button onclick="salvarSolicitacao()">Salvar Solicitação</button>
-    </div>
+    <label>Data Fim</label><br>
+    <input type="date" id="dataFim"><br><br>
 
-    <!-- APROVAÇÕES -->
-    <div id="tab-aprovacoes" style="display:none;">
-      <h3>Solicitações Pendentes</h3>
-      <div class="list-box">
-        <table>
-          <thead>
-            <tr>
-              <th>Profissional</th>
-              <th>Período</th>
-              <th>Tipo</th>
-              <th>Justificativa</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="listaPendentes"></tbody>
-        </table>
-      </div>
-    </div>
+    <label>Justificativa</label><br>
+    <input id="justificativa" style="width:100%"><br><br>
 
-    <!-- GERENCIAR -->
-    <div id="tab-gerenciar" style="display:none;">
-      <h3>Gerenciar Solicitações</h3>
-      <div class="list-box">
-        <table>
-          <thead>
-            <tr>
-              <th>Profissional</th>
-              <th>Período</th>
-              <th>Tipo</th>
-              <th>Status</th>
-              <th>Aprovador</th>
-              <th>Alterar</th>
-            </tr>
-          </thead>
-          <tbody id="listaGerenciar"></tbody>
-        </table>
-      </div>
-    </div>
+    <button onclick="salvar()">Salvar Solicitação</button>
+  </div>
 
+  <div class="card">
+    <h3>Solicitações Registradas</h3>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Profissional</th>
+          <th>Tipo</th>
+          <th>Período</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
   </div>
 </div>
 
 <script>
-// ==========================
-// HELPERS
-// ==========================
-function getTerapeutas() {
-  return JSON.parse(localStorage.getItem("terapeutas")) || [];
-}
-function getSolicitacoes() {
-  return JSON.parse(localStorage.getItem("solicitacoes")) || [];
-}
-function saveSolicitacoes(lista) {
-  localStorage.setItem("solicitacoes", JSON.stringify(lista));
-}
+const terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
+const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
 
-// ==========================
-// TABS
-// ==========================
-function showTab(tab) {
-  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll("[id^=tab-]").forEach(t => t.style.display = "none");
-  document.querySelector(`.tabs button[onclick="showTab('${tab}')"]`).classList.add("active");
-  document.getElementById("tab-" + tab).style.display = "block";
-}
-
-// ==========================
-// TERAPEUTAS ATIVAS
-// ==========================
-const terapeutasAtivas = getTerapeutas().filter(t => !t.status || t.status === "Ativo");
-const select = document.getElementById("terapeutaSelect");
-
-terapeutasAtivas.forEach(t => {
-  const opt = document.createElement("option");
-  opt.value = t.id;
-  opt.textContent = t.nomeProfissional || t.nomeCompleto;
-  select.appendChild(opt);
+const select = document.getElementById("terapeuta");
+terapeutas.forEach(t=>{
+  const o=document.createElement("option");
+  o.value=t.nomeProfissional;
+  o.textContent=t.nomeProfissional;
+  select.appendChild(o);
 });
 
-// ==========================
-// DATA PADRÃO = HOJE
-// ==========================
-const hoje = new Date().toISOString().split("T")[0];
-dtInicio.value = hoje;
-dtFim.value = hoje;
-
-// ==========================
-// NOVA SOLICITAÇÃO
-// ==========================
-function salvarSolicitacao() {
-  const terapeuta = terapeutasAtivas.find(t => t.id == select.value);
-  const tipo = document.getElementById("tipo").value;
-  const inicio = dtInicio.value;
-  const fim = dtFim.value;
-  const justificativa = justificativaInput = document.getElementById("justificativa").value;
-
-  if (!terapeuta || !inicio || !fim || !justificativa) {
-    alert("Preencha todos os campos obrigatórios.");
-    return;
-  }
-
-  if (fim < inicio) {
-    alert("Data fim não pode ser menor que data início.");
-    return;
-  }
-
-  const nova = {
-    id: Date.now(),
-    terapeutaId: terapeuta.id,
-    terapeutaNome: terapeuta.nomeProfissional || terapeuta.nomeCompleto,
-    dtInicio: inicio,
-    dtFim: fim,
-    tipo,
-    justificativa,
+function salvar() {
+  const s = {
+    id: crypto.randomUUID(),
+    terapeutaNome: terapeuta.value,
+    dataInicio: dataInicio.value,
+    dataFim: dataFim.value,
+    tipo: tipo.value,
+    justificativa: justificativa.value,
     status: "Pendente",
-    aprovador: ""
+    criadoEm: new Date().toISOString()
   };
-
-  const lista = getSolicitacoes();
-  lista.push(nova);
-  saveSolicitacoes(lista);
-  alert("Solicitação registrada.");
-  location.reload();
+  solicitacoes.push(s);
+  localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
+  render();
 }
 
-// ==========================
-// RENDER
-// ==========================
 function render() {
-  const pend = document.getElementById("listaPendentes");
-  const ger = document.getElementById("listaGerenciar");
-  pend.innerHTML = "";
-  ger.innerHTML = "";
-
-  getSolicitacoes().forEach(s => {
-    // Pendentes
-    if (s.status === "Pendente") {
-      pend.innerHTML += `
-        <tr>
-          <td>${s.terapeutaNome}</td>
-          <td>${s.dtInicio} → ${s.dtFim}</td>
-          <td>${s.tipo}</td>
-          <td>${s.justificativa}</td>
-          <td class="actions">
-            <button onclick="setStatus(${s.id}, 'Aprovado')">✅</button>
-            <button onclick="setStatus(${s.id}, 'Rejeitado')">❌</button>
-          </td>
-        </tr>`;
-    }
-
-    // Gerenciar (todos)
-    ger.innerHTML += `
-      <tr>
-        <td>${s.terapeutaNome}</td>
-        <td>${s.dtInicio} → ${s.dtFim}</td>
-        <td>${s.tipo}</td>
-        <td>${s.status}</td>
-        <td>${s.aprovador || "-"}</td>
-        <td>
-          <select onchange="alterarStatus(${s.id}, this.value)">
-            <option value="">Alterar...</option>
-            <option value="Pendente">Pendente</option>
-            <option value="Aprovado">Aprovado</option>
-            <option value="Rejeitado">Rejeitado</option>
-          </select>
-        </td>
-      </tr>`;
+  const tbody=document.getElementById("lista");
+  tbody.innerHTML="";
+  solicitacoes.forEach(s=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${s.terapeutaNome}</td>
+      <td>${s.tipo}</td>
+      <td>${s.dataInicio} → ${s.dataFim}</td>
+      <td>${s.status}</td>`;
+    tbody.appendChild(tr);
   });
-}
-
-// ==========================
-// ALTERAÇÕES DE STATUS
-// ==========================
-function setStatus(id, novo) {
-  const nome = prompt("Nome do aprovador:");
-  if (!nome) return;
-
-  const lista = getSolicitacoes();
-  const s = lista.find(x => x.id === id);
-  s.status = novo;
-  s.aprovador = nome;
-  saveSolicitacoes(lista);
-  render();
-}
-
-function alterarStatus(id, novoStatus) {
-  if (!novoStatus) return;
-
-  const lista = getSolicitacoes();
-  const s = lista.find(x => x.id === id);
-
-  if (novoStatus === "Pendente") {
-    s.status = "Pendente";
-    s.aprovador = "";
-  } else {
-    const nome = prompt("Nome do aprovador:");
-    if (!nome) return;
-    s.status = novoStatus;
-    s.aprovador = nome;
-  }
-
-  saveSolicitacoes(lista);
-  render();
 }
 
 render();

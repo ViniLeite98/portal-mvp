@@ -113,11 +113,9 @@ th {
 .modal-content {
   background:#fff;
   width:90%;
-  max-width:1100px;
+  max-width:900px;
   border-radius:28px;
   padding:24px;
-  max-height:90vh;
-  overflow-y:auto;
 }
 
 .form-grid {
@@ -131,7 +129,6 @@ th {
   flex-direction:column;
 }
 
-.form-group.full { grid-column:span 4; }
 .form-group.half { grid-column:span 2; }
 
 label {
@@ -192,8 +189,7 @@ input, select {
 <!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <h2>Terapeuta</h2>
-    <p>Preencha os dados da terapeuta</p>
+    <h2 id="tituloModal">Nova Terapeuta</h2>
 
     <div class="form-grid">
       <div class="form-group half">
@@ -234,13 +230,16 @@ input, select {
 
 <script>
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
-let editIndex = null;
+let editId = null;
 
+// =======================
+// RENDER
+// =======================
 function render() {
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
-  terapeutas.forEach((t,i) => {
+  terapeutas.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${t.nomeProfissional || "—"}</td>
@@ -248,8 +247,8 @@ function render() {
       <td>${t.horaEntrada || "—"}</td>
       <td>${t.horaSaida || "—"}</td>
       <td class="actions">
-        <i class="fa-solid fa-pen" onclick="editar(${i})"></i>
-        <i class="fa-solid fa-trash" onclick="excluir(${i})"></i>
+        <i class="fa-solid fa-pen" onclick="editar(${t.id})"></i>
+        <i class="fa-solid fa-trash" onclick="excluir(${t.id})"></i>
       </td>
     `;
     tbody.appendChild(tr);
@@ -259,8 +258,12 @@ function render() {
     terapeutas.length + " terapeutas cadastradas";
 }
 
+// =======================
+// MODAL
+// =======================
 function abrirModal() {
-  editIndex = null;
+  editId = null;
+  document.getElementById("tituloModal").innerText = "Nova Terapeuta";
   document.querySelectorAll("#modal input, #modal select").forEach(e => e.value = "");
   document.getElementById("modal").style.display = "flex";
 }
@@ -269,16 +272,18 @@ function fecharModal() {
   document.getElementById("modal").style.display = "none";
 }
 
+// =======================
+// SALVAR (COM ID)
+// =======================
 function salvar() {
-  // validação de horário
-  if (entrada.value && saida.value) {
-    if (saida.value <= entrada.value) {
-      alert("Horário de saída deve ser maior que o de entrada.");
-      return;
-    }
+
+  if (entrada.value && saida.value && saida.value <= entrada.value) {
+    alert("Horário de saída deve ser maior que o de entrada.");
+    return;
   }
 
-  const t = {
+  const dados = {
+    id: editId ?? Date.now(),
     nomeCompleto: nomeCompleto.value,
     nomeProfissional: nomeProfissional.value,
     horaEntrada: entrada.value,
@@ -286,20 +291,29 @@ function salvar() {
     status: status.value
   };
 
-  if (editIndex !== null) {
-    terapeutas[editIndex] = t;
+  if (editId !== null) {
+    terapeutas = terapeutas.map(t =>
+      t.id === editId ? dados : t
+    );
   } else {
-    terapeutas.push(t);
+    terapeutas.push(dados);
   }
 
+  editId = null;
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   fecharModal();
   render();
 }
 
-function editar(i) {
-  editIndex = i;
-  const t = terapeutas[i];
+// =======================
+// EDITAR / EXCLUIR
+// =======================
+function editar(id) {
+  const t = terapeutas.find(x => x.id === id);
+  if (!t) return;
+
+  editId = id;
+  document.getElementById("tituloModal").innerText = "Editar Terapeuta";
 
   nomeCompleto.value = t.nomeCompleto || "";
   nomeProfissional.value = t.nomeProfissional || "";
@@ -310,12 +324,12 @@ function editar(i) {
   document.getElementById("modal").style.display = "flex";
 }
 
-function excluir(i) {
-  if (confirm("Excluir terapeuta?")) {
-    terapeutas.splice(i,1);
-    localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-    render();
-  }
+function excluir(id) {
+  if (!confirm("Excluir terapeuta?")) return;
+
+  terapeutas = terapeutas.filter(t => t.id !== id);
+  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+  render();
 }
 
 render();

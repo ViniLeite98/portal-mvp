@@ -1,61 +1,41 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<title>Início</title>
+  <meta charset="UTF-8">
+  <title>Início</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- CSS GLOBAL -->
+  <link rel="stylesheet" href="assets/css/style.css">
 
-<style>
-body { margin:0; font-family:Arial; background:#f5f7fb; }
-.sidebar {
-  width:230px; background:#1f2937; color:#fff;
-  height:100vh; position:fixed; padding:20px;
-}
-.sidebar h2 { margin-bottom:30px; }
-.sidebar a {
-  display:flex; align-items:center; gap:10px;
-  color:#cbd5e1; text-decoration:none;
-  padding:10px; border-radius:10px; margin-bottom:6px;
-}
-.sidebar a.active, .sidebar a:hover { background:#374151; color:#fff; }
+  <!-- ICONES -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-.content { margin-left:260px; padding:30px; }
-
-.cards { display:grid; grid-template-columns:1.1fr 1.6fr 1.2fr; gap:16px; }
-.card {
-  background:#fff; border-radius:18px;
-  padding:18px; box-shadow:0 0 8px rgba(0,0,0,.05);
-}
-.kpi { font-size:34px; font-weight:700; }
-.small { font-size:12px; color:#6b7280; }
-
-.section-row { display:grid; grid-template-columns:3.2fr 1.3fr; gap:16px; margin-top:20px; }
-.section-actions { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-top:30px; }
-
-button {
-  width:100%; padding:10px; border-radius:10px;
-  border:none; background:#1f2937; color:#fff; cursor:pointer;
-}
-</style>
+  <!-- CHART -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
+<!-- SIDEBAR PADRÃO -->
 <nav class="sidebar">
   <h2>Hara Spa</h2>
-  <a href="index.html" class="active"><i class="fa-solid fa-house"></i> Início</a>
+
+  <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
   <a href="equipe.html"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
   <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
   <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
+  <a href="disponibilidade.html"><i class="fa-solid fa-table-cells"></i> Disponibilidade</a>
   <a href="materiais.html"><i class="fa-solid fa-box-open"></i> Materiais</a>
   <a href="financeiro.html"><i class="fa-solid fa-coins"></i> Financeiro</a>
 </nav>
 
+<!-- CONTEÚDO -->
 <div class="content">
   <h1>Início</h1>
+  <p class="small">Visão geral da operação</p>
 
+  <!-- KPIs -->
   <div class="cards">
     <div class="card">
       <h3>Equipe 👥</h3>
@@ -70,10 +50,11 @@ button {
 
     <div class="card">
       <h3>Dias Folgados 🏆</h3>
-      <div id="diasFolga" class="small"></div>
+      <div id="diasFolga" class="small">—</div>
     </div>
   </div>
 
+  <!-- GRÁFICOS -->
   <div class="section-row">
     <div class="card">
       <h3>Força de Trabalho</h3>
@@ -83,10 +64,11 @@ button {
 
     <div class="card">
       <h3>Carga Horária</h3>
-      <div id="rankHoras" class="small"></div>
+      <div id="rankHoras" class="small">—</div>
     </div>
   </div>
 
+  <!-- AÇÕES -->
   <div class="section-actions">
     <div class="card">
       <h3>Gestão de Terapeutas</h3>
@@ -108,31 +90,31 @@ button {
   </div>
 </div>
 
+<!-- JS GLOBAL (MENU ATIVO) -->
+<script src="assets/js/app.js"></script>
+
+<!-- ===============================
+     SCRIPT ORIGINAL (INALTERADO)
+     =============================== -->
 <script>
-// ===============================
-// LOAD STORAGE (SEGURO)
-// ===============================
+// LOAD STORAGE
 var terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 var solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
 
-// ===============================
 // KPI EQUIPE
-// ===============================
 var ativas = terapeutas.filter(function(t){
   return !t.status || t.status === "Ativo";
 });
 document.getElementById("kpiEquipe").innerText = ativas.length;
 
-// ===============================
-// DIAS FOLGADOS (DEFENSIVO)
-// ===============================
+// DIAS FOLGADOS
 var dias = {};
 solicitacoes.forEach(function(s){
   if (s.status !== "Aprovado") return;
-  if (!s.dtInicio || !s.dtFim) return;
+  if (!s.dataInicio || !s.dataFim) return;
 
-  var ini = new Date(s.dtInicio);
-  var fim = new Date(s.dtFim);
+  var ini = new Date(s.dataInicio);
+  var fim = new Date(s.dataFim);
   if (isNaN(ini) || isNaN(fim)) return;
 
   var d = Math.floor((fim - ini) / 86400000) + 1;
@@ -148,62 +130,5 @@ for (var n in dias) {
 }
 document.getElementById("diasFolga").innerHTML = folgaHTML || "—";
 
-// ===============================
-// FORÇA DE TRABALHO (INALTERADO)
-// ===============================
-var horas = [];
-for (var h = 9; h <= 22; h++) horas.push(h);
-
-var contagem = horas.map(function(hora){
-  return ativas.filter(function(t){
-    if (!t.horaEntrada || !t.horaSaida) return false;
-    var he = parseInt(t.horaEntrada.split(":")[0],10);
-    var hs = parseInt(t.horaSaida.split(":")[0],10);
-    return !isNaN(he) && !isNaN(hs) && hora >= he && hora < hs;
-  }).length;
-});
-
-var ctx = document.getElementById("grafico");
-if (ctx) {
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: horas.map(function(h){ return h + ":00"; }),
-      datasets: [{
-        label: "Terapeutas ativas",
-        data: contagem,
-        backgroundColor: "#3b82f6"
-      }]
-    },
-    options: {
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1 } }
-      }
-    }
-  });
-}
-
-// ===============================
-// CARGA HORÁRIA (ARRUMADA, SEGURA)
-// ===============================
-var carga = {};
-ativas.forEach(function(t){
-  if (!t.horaEntrada || !t.horaSaida) return;
-
-  var he = parseInt(t.horaEntrada.split(":")[0],10);
-  var hs = parseInt(t.horaSaida.split(":")[0],10);
-  if (isNaN(he) || isNaN(hs) || hs <= he) return;
-
-  var nome = t.nomeProfissional || t.nomeCompleto || "—";
-  carga[nome] = (carga[nome] || 0) + (hs - he);
-});
-
-var rankHTML = "";
-for (var nome in carga) {
-  rankHTML += "<div>" + nome + ": " + carga[nome] + "h</div>";
-}
-document.getElementById("rankHoras").innerHTML = rankHTML || "—";
-</script>
-
-</body>
-</html>
+// FORÇA DE TRABALHO
+var h

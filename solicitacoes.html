@@ -27,12 +27,28 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
 
 .card {
   background:#fff;
-  border-radius:24px;
+  border-radius:20px;
   padding:24px;
   margin-bottom:24px;
   box-shadow:0 4px 12px rgba(0,0,0,.05);
 }
 
+/* abas topo */
+.top-tabs {
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
+}
+.top-tab {
+  padding:8px 18px;
+  border-radius:8px;
+  background:#475569;
+  color:#fff;
+  font-size:14px;
+  cursor:pointer;
+}
+
+/* abas internas */
 .tabs {
   display:flex;
   gap:10px;
@@ -53,26 +69,31 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
 table {
   width:100%;
   border-collapse:collapse;
-  margin-top:16px;
 }
 th, td {
   padding:10px;
   border-bottom:1px solid #e5e7eb;
   text-align:left;
+  font-size:14px;
 }
-th { font-size:13px; color:#374151; }
+th { font-size:12px; color:#374151; }
 
 button {
   background:#1f2937;
   color:#fff;
   border:none;
-  border-radius:8px;
+  border-radius:6px;
   padding:6px 12px;
   cursor:pointer;
 }
-.aprovar { background:#16a34a; }
-.reprovar { background:#dc2626; margin-left:6px; }
-.secondary { background:#9ca3af; }
+.ok { background:#16a34a; }
+.no { background:#dc2626; }
+
+select, input {
+  padding:6px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+}
 </style>
 </head>
 
@@ -83,16 +104,20 @@ button {
   <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
   <a href="equipe.html"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
   <a href="solicitacoes.html" class="active"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
-  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
-  <a href="materiais.html"><i class="fa-solid fa-box-open"></i> Materiais</a>
-  <a href="financeiro.html"><i class="fa-solid fa-coins"></i> Financeiro</a>
 </nav>
 
 <div class="content">
-  <h1>Solicitações</h1>
-  <p>Registro de faltas, férias e indisponibilidades</p>
+  <h1>Solicitação</h1>
+  <p>Demanda de Indisponibilidade</p>
 
-  <!-- NOVA SOLICITAÇÃO -->
+  <!-- TOPO -->
+  <div class="top-tabs">
+    <div class="top-tab">Dia</div>
+    <div class="top-tab">Mês</div>
+    <div class="top-tab">Terapeutas</div>
+  </div>
+
+  <!-- NOVA -->
   <div class="card">
     <h3>Nova Solicitação</h3>
 
@@ -120,21 +145,22 @@ button {
     <button onclick="salvar()">Salvar Solicitação</button>
   </div>
 
-  <!-- ABAS -->
+  <!-- PAINEL -->
   <div class="card">
     <div class="tabs">
-      <div class="tab active" onclick="trocarAba('aprovar')">Aprovar</div>
-      <div class="tab" onclick="trocarAba('gerenciar')">Gerenciar</div>
+      <div class="tab active" onclick="trocar('aprovar')">Aprovar</div>
+      <div class="tab" onclick="trocar('gerenciar')">Gerenciar</div>
     </div>
 
     <!-- APROVAR -->
-    <div id="aba-aprovar">
+    <div id="aprovar">
       <table>
         <thead>
           <tr>
             <th>Profissional</th>
-            <th>Tipo</th>
-            <th>Período</th>
+            <th>Data Início</th>
+            <th>Data Fim</th>
+            <th>Justificativa</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -143,13 +169,13 @@ button {
     </div>
 
     <!-- GERENCIAR -->
-    <div id="aba-gerenciar" style="display:none">
+    <div id="gerenciar" style="display:none">
       <table>
         <thead>
           <tr>
             <th>Profissional</th>
-            <th>Tipo</th>
             <th>Período</th>
+            <th>Tipo</th>
             <th>Status</th>
           </tr>
         </thead>
@@ -163,16 +189,18 @@ button {
 const terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
 let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
 
-// popula select
-const select = document.getElementById("terapeuta");
+// select terapeutas
 terapeutas.forEach(t=>{
   const o=document.createElement("option");
   o.value=t.nomeProfissional;
   o.textContent=t.nomeProfissional;
-  select.appendChild(o);
+  terapeuta.appendChild(o);
 });
 
-function salvar() {
+// data inicio = hoje
+dataInicio.value = new Date().toISOString().slice(0,10);
+
+function salvar(){
   solicitacoes.push({
     id: crypto.randomUUID(),
     terapeutaNome: terapeuta.value,
@@ -180,54 +208,58 @@ function salvar() {
     dataFim: dataFim.value,
     tipo: tipo.value,
     justificativa: justificativa.value,
-    status: "Pendente",
-    criadoEm: new Date().toISOString()
+    status: "Pendente"
   });
   localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
   render();
 }
 
-function aprovar(id, status) {
+function setStatus(id, status){
   solicitacoes = solicitacoes.map(s =>
-    s.id === id ? { ...s, status } : s
+    s.id===id ? {...s, status} : s
   );
   localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
   render();
 }
 
-function render() {
-  const aprovar = document.getElementById("listaAprovar");
-  const gerenciar = document.getElementById("listaGerenciar");
-  aprovar.innerHTML = "";
-  gerenciar.innerHTML = "";
+function render(){
+  listaAprovar.innerHTML="";
+  listaGerenciar.innerHTML="";
 
-  solicitacoes.forEach(s => {
-    if (s.status === "Pendente") {
-      aprovar.innerHTML += `
+  solicitacoes.forEach(s=>{
+    if(s.status==="Pendente"){
+      listaAprovar.innerHTML+=`
         <tr>
           <td>${s.terapeutaNome}</td>
-          <td>${s.tipo}</td>
-          <td>${s.dataInicio} → ${s.dataFim}</td>
+          <td>${s.dataInicio}</td>
+          <td>${s.dataFim}</td>
+          <td>${s.justificativa}</td>
           <td>
-            <button class="aprovar" onclick="aprovar('${s.id}','Aprovado')">Aprovar</button>
-            <button class="reprovar" onclick="aprovar('${s.id}','Reprovado')">Reprovar</button>
+            <button class="ok" onclick="setStatus('${s.id}','Aprovado')">✔</button>
+            <button class="no" onclick="setStatus('${s.id}','Reprovado')">✖</button>
           </td>
         </tr>`;
     }
 
-    gerenciar.innerHTML += `
+    listaGerenciar.innerHTML+=`
       <tr>
         <td>${s.terapeutaNome}</td>
-        <td>${s.tipo}</td>
         <td>${s.dataInicio} → ${s.dataFim}</td>
-        <td>${s.status}</td>
+        <td>${s.tipo}</td>
+        <td>
+          <select onchange="setStatus('${s.id}',this.value)">
+            <option ${s.status==="Pendente"?"selected":""}>Pendente</option>
+            <option ${s.status==="Aprovado"?"selected":""}>Aprovado</option>
+            <option ${s.status==="Reprovado"?"selected":""}>Reprovado</option>
+          </select>
+        </td>
       </tr>`;
   });
 }
 
-function trocarAba(aba){
-  document.getElementById("aba-aprovar").style.display = aba==="aprovar"?"block":"none";
-  document.getElementById("aba-gerenciar").style.display = aba==="gerenciar"?"block":"none";
+function trocar(aba){
+  aprovar.style.display = aba==="aprovar"?"block":"none";
+  gerenciar.style.display = aba==="gerenciar"?"block":"none";
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   event.target.classList.add("active");
 }

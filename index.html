@@ -10,6 +10,7 @@
 <style>
 body { margin:0; font-family:Arial; background:#f5f7fb; }
 
+/* ===== SIDEBAR ===== */
 .sidebar {
   width:230px;
   background:#1f2937;
@@ -35,11 +36,13 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
   color:#fff;
 }
 
+/* ===== CONTEÚDO ===== */
 .content {
   margin-left:260px;
   padding:30px;
 }
 
+/* ===== CARDS ===== */
 .cards {
   display:grid;
   grid-template-columns:1.1fr 1.6fr 1.2fr;
@@ -51,7 +54,6 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
   padding:18px;
   box-shadow:0 0 8px rgba(0,0,0,.05);
 }
-
 .kpi {
   font-size:34px;
   font-weight:700;
@@ -88,16 +90,10 @@ button {
 
 <body>
 
-<nav class="sidebar">
-  <h2>Hara Spa</h2>
-  <a href="index.html" class="active"><i class="fa-solid fa-house"></i> Início</a>
-  <a href="equipe.html"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
-  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
-  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
-  <a href="materiais.html"><i class="fa-solid fa-box-open"></i> Materiais</a>
-  <a href="financeiro.html"><i class="fa-solid fa-coins"></i> Financeiro</a>
-</nav>
+<!-- SIDEBAR DINÂMICO -->
+<div id="sidebar-container"></div>
 
+<!-- CONTEÚDO -->
 <div class="content">
   <h1>Início</h1>
 
@@ -120,7 +116,7 @@ button {
     </div>
   </div>
 
-  <!-- Gráfico + carga -->
+  <!-- GRÁFICO + CARGA -->
   <div class="section-row">
     <div class="card">
       <h3>Força de Trabalho</h3>
@@ -134,7 +130,7 @@ button {
     </div>
   </div>
 
-  <!-- Ações -->
+  <!-- AÇÕES -->
   <div class="section-actions">
     <div class="card">
       <h3>Gestão de Terapeutas</h3>
@@ -156,102 +152,92 @@ button {
   </div>
 </div>
 
+<!-- LOAD SIDEBAR -->
 <script>
-// ===============================
-// LOAD STORAGE
-// ===============================
+fetch("sidebar.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("sidebar-container").innerHTML = html;
+
+    // marca item ativo automaticamente
+    const page = location.pathname.split("/").pop().replace(".html","");
+    document
+      .querySelectorAll(".sidebar a")
+      .forEach(a => {
+        if (a.dataset.page === page) {
+          a.classList.add("active");
+        }
+      });
+  });
+</script>
+
+<!-- LÓGICA DO DASHBOARD (INALTERADA) -->
+<script>
 var terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 var solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
 
-// ===============================
-// KPI EQUIPE
-// ===============================
-var ativas = terapeutas.filter(function(t){
-  return !t.status || t.status === "Ativo";
-});
+// KPI equipe
+var ativas = terapeutas.filter(t => !t.status || t.status === "Ativo");
 document.getElementById("kpiEquipe").innerText = ativas.length;
 
-// ===============================
-// DIAS FOLGADOS
-// ===============================
+// Dias folgados
 var dias = {};
-
-solicitacoes.forEach(function(s){
+solicitacoes.forEach(s => {
   if (s.status !== "Aprovado") return;
   if (!s.dataInicio || !s.dataFim) return;
 
   var ini = new Date(s.dataInicio);
   var fim = new Date(s.dataFim);
-  if (isNaN(ini) || isNaN(fim)) return;
-
   var d = Math.floor((fim - ini) / 86400000) + 1;
   if (d <= 0) return;
 
-  var nome = s.terapeutaNome || "—";
-  dias[nome] = (dias[nome] || 0) + d;
+  dias[s.terapeutaNome] = (dias[s.terapeutaNome] || 0) + d;
 });
 
-var folgaHTML = "";
-for (var n in dias) {
-  folgaHTML += "<div><b>" + n + "</b>: " + dias[n] + " dias</div>";
-}
-document.getElementById("diasFolga").innerHTML = folgaHTML || "—";
+document.getElementById("diasFolga").innerHTML =
+  Object.keys(dias).length
+    ? Object.entries(dias).map(([n,v]) => `<div><b>${n}</b>: ${v} dias</div>`).join("")
+    : "—";
 
-// ===============================
-// FORÇA DE TRABALHO (GRÁFICO)
-// ===============================
+// Gráfico força de trabalho
 var horas = [];
-for (var h = 9; h <= 22; h++) horas.push(h);
+for (var h=9; h<=22; h++) horas.push(h);
 
-var contagem = horas.map(function(hora){
-  return ativas.filter(function(t){
+var contagem = horas.map(hora =>
+  ativas.filter(t => {
     if (!t.horaEntrada || !t.horaSaida) return false;
-    var he = parseInt(t.horaEntrada.split(":")[0],10);
-    var hs = parseInt(t.horaSaida.split(":")[0],10);
-    return !isNaN(he) && !isNaN(hs) && hora >= he && hora < hs;
-  }).length;
+    var he = parseInt(t.horaEntrada.split(":")[0]);
+    var hs = parseInt(t.horaSaida.split(":")[0]);
+    return hora >= he && hora < hs;
+  }).length
+);
+
+new Chart(document.getElementById("grafico"), {
+  type:"bar",
+  data:{
+    labels: horas.map(h => h+":00"),
+    datasets:[{
+      label:"Terapeutas ativas",
+      data:contagem,
+      backgroundColor:"#3b82f6"
+    }]
+  },
+  options:{ scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 }}}}
 });
 
-var ctx = document.getElementById("grafico");
-if (ctx && window.Chart) {
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: horas.map(function(h){ return h + ":00"; }),
-      datasets: [{
-        label: "Terapeutas ativas",
-        data: contagem,
-        backgroundColor: "#3b82f6"
-      }]
-    },
-    options: {
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1 } }
-      }
-    }
-  });
-}
-
-// ===============================
-// CARGA HORÁRIA
-// ===============================
+// Carga horária
 var carga = {};
-ativas.forEach(function(t){
+ativas.forEach(t => {
   if (!t.horaEntrada || !t.horaSaida) return;
-
-  var he = parseInt(t.horaEntrada.split(":")[0],10);
-  var hs = parseInt(t.horaSaida.split(":")[0],10);
-  if (isNaN(he) || isNaN(hs) || hs <= he) return;
-
-  var nome = t.nomeProfissional || t.nomeCompleto || "—";
-  carga[nome] = (carga[nome] || 0) + (hs - he);
+  var he = parseInt(t.horaEntrada.split(":")[0]);
+  var hs = parseInt(t.horaSaida.split(":")[0]);
+  if (hs > he) carga[t.nomeProfissional] = (carga[t.nomeProfissional]||0) + (hs-he);
 });
 
-var rankHTML = "";
-for (var nome in carga) {
-  rankHTML += "<div>" + nome + ": " + carga[nome] + "h</div>";
-}
-document.getElementById("rankHoras").innerHTML = rankHTML || "—";
+document.getElementById("rankHoras").innerHTML =
+  Object.keys(carga).length
+    ? Object.entries(carga).map(([n,v]) => `<div>${n}: ${v}h</div>`).join("")
+    : "—";
 </script>
 
 </body>

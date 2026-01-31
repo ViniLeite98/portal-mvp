@@ -33,6 +33,23 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
   box-shadow:0 4px 12px rgba(0,0,0,.05);
 }
 
+.tabs {
+  display:flex;
+  gap:10px;
+  margin-bottom:16px;
+}
+.tab {
+  padding:8px 16px;
+  border-radius:20px;
+  background:#e5e7eb;
+  cursor:pointer;
+  font-size:14px;
+}
+.tab.active {
+  background:#1f2937;
+  color:#fff;
+}
+
 table {
   width:100%;
   border-collapse:collapse;
@@ -50,9 +67,11 @@ button {
   color:#fff;
   border:none;
   border-radius:8px;
-  padding:8px 14px;
+  padding:6px 12px;
   cursor:pointer;
 }
+.aprovar { background:#16a34a; }
+.reprovar { background:#dc2626; margin-left:6px; }
 .secondary { background:#9ca3af; }
 </style>
 </head>
@@ -73,6 +92,7 @@ button {
   <h1>Solicitações</h1>
   <p>Registro de faltas, férias e indisponibilidades</p>
 
+  <!-- NOVA SOLICITAÇÃO -->
   <div class="card">
     <h3>Nova Solicitação</h3>
 
@@ -100,27 +120,50 @@ button {
     <button onclick="salvar()">Salvar Solicitação</button>
   </div>
 
+  <!-- ABAS -->
   <div class="card">
-    <h3>Solicitações Registradas</h3>
+    <div class="tabs">
+      <div class="tab active" onclick="trocarAba('aprovar')">Aprovar</div>
+      <div class="tab" onclick="trocarAba('gerenciar')">Gerenciar</div>
+    </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Profissional</th>
-          <th>Tipo</th>
-          <th>Período</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
+    <!-- APROVAR -->
+    <div id="aba-aprovar">
+      <table>
+        <thead>
+          <tr>
+            <th>Profissional</th>
+            <th>Tipo</th>
+            <th>Período</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="listaAprovar"></tbody>
+      </table>
+    </div>
+
+    <!-- GERENCIAR -->
+    <div id="aba-gerenciar" style="display:none">
+      <table>
+        <thead>
+          <tr>
+            <th>Profissional</th>
+            <th>Tipo</th>
+            <th>Período</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="listaGerenciar"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <script>
 const terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
-const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
+let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
 
+// popula select
 const select = document.getElementById("terapeuta");
 terapeutas.forEach(t=>{
   const o=document.createElement("option");
@@ -130,7 +173,7 @@ terapeutas.forEach(t=>{
 });
 
 function salvar() {
-  const s = {
+  solicitacoes.push({
     id: crypto.randomUUID(),
     terapeutaNome: terapeuta.value,
     dataInicio: dataInicio.value,
@@ -139,24 +182,54 @@ function salvar() {
     justificativa: justificativa.value,
     status: "Pendente",
     criadoEm: new Date().toISOString()
-  };
-  solicitacoes.push(s);
+  });
+  localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
+  render();
+}
+
+function aprovar(id, status) {
+  solicitacoes = solicitacoes.map(s =>
+    s.id === id ? { ...s, status } : s
+  );
   localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
   render();
 }
 
 function render() {
-  const tbody=document.getElementById("lista");
-  tbody.innerHTML="";
-  solicitacoes.forEach(s=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td>${s.terapeutaNome}</td>
-      <td>${s.tipo}</td>
-      <td>${s.dataInicio} → ${s.dataFim}</td>
-      <td>${s.status}</td>`;
-    tbody.appendChild(tr);
+  const aprovar = document.getElementById("listaAprovar");
+  const gerenciar = document.getElementById("listaGerenciar");
+  aprovar.innerHTML = "";
+  gerenciar.innerHTML = "";
+
+  solicitacoes.forEach(s => {
+    if (s.status === "Pendente") {
+      aprovar.innerHTML += `
+        <tr>
+          <td>${s.terapeutaNome}</td>
+          <td>${s.tipo}</td>
+          <td>${s.dataInicio} → ${s.dataFim}</td>
+          <td>
+            <button class="aprovar" onclick="aprovar('${s.id}','Aprovado')">Aprovar</button>
+            <button class="reprovar" onclick="aprovar('${s.id}','Reprovado')">Reprovar</button>
+          </td>
+        </tr>`;
+    }
+
+    gerenciar.innerHTML += `
+      <tr>
+        <td>${s.terapeutaNome}</td>
+        <td>${s.tipo}</td>
+        <td>${s.dataInicio} → ${s.dataFim}</td>
+        <td>${s.status}</td>
+      </tr>`;
   });
+}
+
+function trocarAba(aba){
+  document.getElementById("aba-aprovar").style.display = aba==="aprovar"?"block":"none";
+  document.getElementById("aba-gerenciar").style.display = aba==="gerenciar"?"block":"none";
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  event.target.classList.add("active");
 }
 
 render();

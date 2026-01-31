@@ -33,22 +33,7 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
   box-shadow:0 4px 12px rgba(0,0,0,.05);
 }
 
-/* abas topo */
-.top-tabs {
-  display:flex;
-  gap:10px;
-  margin-bottom:20px;
-}
-.top-tab {
-  padding:8px 18px;
-  border-radius:8px;
-  background:#475569;
-  color:#fff;
-  font-size:14px;
-  cursor:pointer;
-}
-
-/* abas internas */
+/* abas */
 .tabs {
   display:flex;
   gap:10px;
@@ -88,6 +73,7 @@ button {
 }
 .ok { background:#16a34a; }
 .no { background:#dc2626; }
+.del { background:#b91c1c; }
 
 select, input {
   padding:6px;
@@ -107,22 +93,15 @@ select, input {
 </nav>
 
 <div class="content">
-  <h1>Solicitação</h1>
-  <p>Demanda de Indisponibilidade</p>
+  <h1>Solicitações</h1>
+  <p>Demanda de indisponibilidade</p>
 
-  <!-- TOPO -->
-  <div class="top-tabs">
-    <div class="top-tab">Dia</div>
-    <div class="top-tab">Mês</div>
-    <div class="top-tab">Terapeutas</div>
-  </div>
-
-  <!-- NOVA -->
+  <!-- NOVA SOLICITAÇÃO -->
   <div class="card">
     <h3>Nova Solicitação</h3>
 
-    <label>Terapeuta</label><br>
-    <select id="terapeuta"></select><br><br>
+    <label>Terapeuta (ativas)</label><br>
+    <select id="terapeuta" style="width:100%; height:40px"></select><br><br>
 
     <label>Tipo</label><br>
     <select id="tipo">
@@ -177,6 +156,7 @@ select, input {
             <th>Período</th>
             <th>Tipo</th>
             <th>Status</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody id="listaGerenciar"></tbody>
@@ -189,13 +169,15 @@ select, input {
 const terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
 let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
 
-// select terapeutas
-terapeutas.forEach(t=>{
-  const o=document.createElement("option");
-  o.value=t.nomeProfissional;
-  o.textContent=t.nomeProfissional;
-  terapeuta.appendChild(o);
-});
+// SOMENTE TERAPEUTAS ATIVAS
+terapeutas
+  .filter(t => !t.status || t.status === "Ativo")
+  .forEach(t => {
+    const o = document.createElement("option");
+    o.value = t.nomeProfissional;
+    o.textContent = t.nomeProfissional;
+    terapeuta.appendChild(o);
+  });
 
 // data inicio = hoje
 dataInicio.value = new Date().toISOString().slice(0,10);
@@ -216,8 +198,15 @@ function salvar(){
 
 function setStatus(id, status){
   solicitacoes = solicitacoes.map(s =>
-    s.id===id ? {...s, status} : s
+    s.id === id ? { ...s, status } : s
   );
+  localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
+  render();
+}
+
+function excluir(id){
+  if(!confirm("Deseja excluir esta solicitação?")) return;
+  solicitacoes = solicitacoes.filter(s => s.id !== id);
   localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
   render();
 }
@@ -226,9 +215,9 @@ function render(){
   listaAprovar.innerHTML="";
   listaGerenciar.innerHTML="";
 
-  solicitacoes.forEach(s=>{
-    if(s.status==="Pendente"){
-      listaAprovar.innerHTML+=`
+  solicitacoes.forEach(s => {
+    if(s.status === "Pendente"){
+      listaAprovar.innerHTML += `
         <tr>
           <td>${s.terapeutaNome}</td>
           <td>${s.dataInicio}</td>
@@ -241,17 +230,20 @@ function render(){
         </tr>`;
     }
 
-    listaGerenciar.innerHTML+=`
+    listaGerenciar.innerHTML += `
       <tr>
         <td>${s.terapeutaNome}</td>
         <td>${s.dataInicio} → ${s.dataFim}</td>
         <td>${s.tipo}</td>
         <td>
-          <select onchange="setStatus('${s.id}',this.value)">
+          <select onchange="setStatus('${s.id}', this.value)">
             <option ${s.status==="Pendente"?"selected":""}>Pendente</option>
             <option ${s.status==="Aprovado"?"selected":""}>Aprovado</option>
             <option ${s.status==="Reprovado"?"selected":""}>Reprovado</option>
           </select>
+        </td>
+        <td>
+          <button class="del" onclick="excluir('${s.id}')">Excluir</button>
         </td>
       </tr>`;
   });

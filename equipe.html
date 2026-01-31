@@ -13,7 +13,6 @@ body {
   background:#f5f7fb;
 }
 
-/* ===== SIDEBAR ===== */
 .sidebar {
   width:230px;
   background:#1f2937;
@@ -22,7 +21,9 @@ body {
   position:fixed;
   padding:20px;
 }
+
 .sidebar h2 { margin-bottom:30px; }
+
 .sidebar a {
   display:flex;
   align-items:center;
@@ -33,19 +34,18 @@ body {
   border-radius:10px;
   margin-bottom:6px;
 }
+
 .sidebar a:hover,
 .sidebar a.active {
   background:#374151;
   color:#fff;
 }
 
-/* ===== CONTEÚDO ===== */
 .content {
   margin-left:260px;
   padding:30px;
 }
 
-/* ===== CARDS / TABELA ===== */
 .card {
   background:#fff;
   border-radius:28px;
@@ -68,20 +68,19 @@ button {
   padding:8px 14px;
   cursor:pointer;
 }
-button.secondary {
-  background:#9ca3af;
-}
 
 table {
   width:100%;
   border-collapse:collapse;
   margin-top:16px;
 }
+
 th, td {
   padding:12px 8px;
   border-bottom:1px solid #e5e7eb;
   text-align:left;
 }
+
 th {
   font-size:13px;
   color:#374151;
@@ -91,66 +90,29 @@ th {
   cursor:pointer;
   margin-right:10px;
 }
+
 .actions .fa-trash {
   color:#ef4444;
-}
-
-/* ===== MODAL ===== */
-.modal {
-  display:none;
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,.4);
-  justify-content:center;
-  align-items:center;
-  z-index:10;
-}
-
-.modal-content {
-  background:#fff;
-  width:90%;
-  max-width:1100px;
-  border-radius:28px;
-  padding:24px;
-  max-height:90vh;
-  overflow-y:auto;
-}
-
-.form-grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:16px;
-  margin-top:16px;
-}
-
-.form-group {
-  display:flex;
-  flex-direction:column;
-}
-.form-group.full { grid-column:span 4; }
-.form-group.half { grid-column:span 2; }
-.form-group.third { grid-column:span 1; }
-
-label { font-size:13px; margin-bottom:4px; }
-input, select {
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
 }
 </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR DINÂMICO -->
-<div id="sidebar-container"></div>
+<nav class="sidebar">
+  <h2>Hara Spa</h2>
+  <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
+  <a class="active"><i class="fa-solid fa-users"></i> Gestão da Equipe</a>
+  <a href="solicitacoes.html"><i class="fa-solid fa-calendar-xmark"></i> Solicitações</a>
+  <a href="escalas.html"><i class="fa-solid fa-calendar-days"></i> Escalas</a>
+  <a href="materiais.html"><i class="fa-solid fa-box-open"></i> Materiais</a>
+  <a href="financeiro.html"><i class="fa-solid fa-coins"></i> Financeiro</a>
+</nav>
 
-<!-- CONTEÚDO -->
 <div class="content">
 
   <h1>Gestão da Equipe</h1>
-  <p>Gerir informações das terapeutas, horários e folgas</p>
+  <p>Visão operacional das terapeutas</p>
 
   <div class="card">
     <div class="card-header">
@@ -158,7 +120,7 @@ input, select {
         <h3>Lista de Terapeutas</h3>
         <small id="contador"></small>
       </div>
-      <button onclick="abrirModal()">+ Nova Terapeuta</button>
+      <button onclick="nova()">+ Nova Terapeuta</button>
     </div>
 
     <table>
@@ -166,9 +128,10 @@ input, select {
         <tr>
           <th>Nome</th>
           <th>Folga Semanal</th>
-          <th>Dias de Folga/Ano</th>
+          <th>Dia da Folga</th>
           <th>Data de Início</th>
           <th>Horário</th>
+          <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
@@ -178,190 +141,50 @@ input, select {
 
 </div>
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h2>Nova Terapeuta</h2>
-    <p>Preencha os dados da terapeuta</p>
-
-    <div class="form-grid">
-      <div class="form-group half">
-        <label>Nome Completo</label>
-        <input id="nomeCompleto">
-      </div>
-      <div class="form-group half">
-        <label>Nome profissional</label>
-        <input id="nomeProfissional">
-      </div>
-
-      <div class="form-group">
-        <label>Data de Nascimento</label>
-        <input type="date" id="dataNascimento">
-      </div>
-      <div class="form-group">
-        <label>CPF</label>
-        <input id="cpf">
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input id="email">
-      </div>
-      <div class="form-group">
-        <label>Unidade</label>
-        <input id="unidade">
-      </div>
-
-      <div class="form-group full">
-        <label>Endereço</label>
-        <input id="endereco">
-      </div>
-
-      <div class="form-group half">
-        <label>Contato</label>
-        <input id="contato">
-      </div>
-      <div class="form-group half">
-        <label>Contato Emergência</label>
-        <input id="contatoEmergencia">
-      </div>
-
-      <div class="form-group">
-        <label>Tem Folga semanal?</label>
-        <select id="temFolga">
-          <option value="Não">Não</option>
-          <option value="Sim">Sim</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Dia da Folga</label>
-        <select id="diaFolga">
-          <option value="">—</option>
-          <option>Segunda</option>
-          <option>Terça</option>
-          <option>Quarta</option>
-          <option>Quinta</option>
-          <option>Sexta</option>
-          <option>Sábado</option>
-          <option>Domingo</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Horário de Entrada</label>
-        <input type="time" id="entrada">
-      </div>
-      <div class="form-group">
-        <label>Horário de Saída</label>
-        <input type="time" id="saida">
-      </div>
-
-      <div class="form-group">
-        <label>Data de Início</label>
-        <input type="date" id="dataInicio">
-      </div>
-
-      <div class="form-group">
-        <label>Status</label>
-        <select id="status">
-          <option>Ativo</option>
-          <option>Inativo</option>
-        </select>
-      </div>
-    </div>
-
-    <div style="margin-top:20px;text-align:right">
-      <button class="secondary" onclick="fecharModal()">Cancelar</button>
-      <button onclick="salvar()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<!-- LOAD SIDEBAR -->
 <script>
-fetch("sidebar.html")
-  .then(r => r.text())
-  .then(html => {
-    document.getElementById("sidebar-container").innerHTML = html;
+let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 
-    const page = location.pathname.split("/").pop().replace(".html","");
-    document.querySelectorAll(".sidebar a").forEach(a => {
-      if (a.dataset.page === page) a.classList.add("active");
-    });
-  });
-</script>
-
-<!-- LÓGICA ORIGINAL (INALTERADA) -->
-<script>
-let terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
-let editIndex = null;
-
-function calcularFolgas(t) {
-  let total = 0;
-  if (t.temFolga === "Sim" && t.diaFolga) {
-    const inicio = new Date(Math.max(new Date(t.dataInicio), new Date(new Date().getFullYear(),0,1)));
-    const hoje = new Date();
-    for (let d=new Date(inicio); d<=hoje; d.setDate(d.getDate()+1)) {
-      if (d.toLocaleDateString("pt-BR",{weekday:"long"}).toLowerCase().includes(t.diaFolga.toLowerCase())) {
-        total++;
-      }
-    }
-  }
-  return total;
-}
-
-function render() {
+function render(){
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
-  terapeutas.forEach((t,i)=>{
+
+  terapeutas.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${t.nomeProfissional}</td>
-      <td>${t.temFolga}</td>
-      <td>${calcularFolgas(t)}</td>
-      <td>${t.dataInicio}</td>
-      <td>${t.entrada}–${t.saida}</td>
+      <td>${t.nomeProfissional || "—"}</td>
+      <td>${t.temFolga || "—"}</td>
+      <td>${t.diaFolga || "—"}</td>
+      <td>${t.dataInicio || "—"}</td>
+      <td>${t.horaEntrada || ""} – ${t.horaSaida || ""}</td>
+      <td>${t.status || "—"}</td>
       <td class="actions">
-        <i class="fa-solid fa-pen" onclick="editar(${i})"></i>
-        <i class="fa-solid fa-trash" onclick="excluir(${i})"></i>
-      </td>`;
+        <i class="fa-solid fa-pen" onclick="editar(${t.id})"></i>
+        <i class="fa-solid fa-trash" onclick="excluir(${t.id})"></i>
+      </td>
+    `;
     tbody.appendChild(tr);
   });
-  document.getElementById("contador").innerText = terapeutas.length+" terapeutas cadastradas";
+
+  document.getElementById("contador").innerText =
+    terapeutas.length + " terapeutas cadastradas";
 }
 
-function abrirModal() {
-  editIndex = null;
-  document.querySelectorAll("#modal input, #modal select").forEach(e=>e.value="");
-  document.getElementById("modal").style.display="flex";
-}
-function fecharModal(){ document.getElementById("modal").style.display="none"; }
-
-function salvar() {
-  const t = {
-    nomeCompleto:nomeCompleto.value,
-    nomeProfissional:nomeProfissional.value,
-    dataNascimento:dataNascimento.value,
-    cpf:cpf.value,
-    email:email.value,
-    unidade:unidade.value,
-    endereco:endereco.value,
-    contato:contato.value,
-    contatoEmergencia:contatoEmergencia.value,
-    temFolga:temFolga.value,
-    diaFolga:diaFolga.value,
-    entrada:entrada.value,
-    saida:saida.value,
-    dataInicio:dataInicio.value,
-    status:status.value
-  };
-  if (editIndex!==null) terapeutas[editIndex]=t;
-  else terapeutas.push(t);
-  localStorage.setItem("terapeutas",JSON.stringify(terapeutas));
-  fecharModal(); render();
+function nova(){
+  localStorage.removeItem("editarTerapeutaId");
+  location.href = "nova-terapeuta.html";
 }
 
-function editar(i){ editIndex=i; abrirModal(); Object.entries(terapeutas[i]).forEach(([k,v])=>{ if(window[k]) window[k].value=v; }); }
-function excluir(i){ if(confirm("Excluir terapeuta?")){ terapeutas.splice(i,1); localStorage.setItem("terapeutas",JSON.stringify(terapeutas)); render(); } }
+function editar(id){
+  localStorage.setItem("editarTerapeutaId", id);
+  location.href = "nova-terapeuta.html";
+}
+
+function excluir(id){
+  if(!confirm("Excluir terapeuta?")) return;
+  terapeutas = terapeutas.filter(t => t.id !== id);
+  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+  render();
+}
 
 render();
 </script>

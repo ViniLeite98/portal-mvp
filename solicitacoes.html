@@ -101,7 +101,7 @@ select, input {
     <h3>Nova Solicitação</h3>
 
     <label>Terapeuta (ativas)</label><br>
-    <select id="terapeuta" style="width:100%; height:40px"></select><br><br>
+    <select id="terapeuta" style="width:100%; height:44px"></select><br><br>
 
     <label>Tipo</label><br>
     <select id="tipo">
@@ -169,7 +169,7 @@ select, input {
 const terapeutas = JSON.parse(localStorage.getItem("terapeutas")) || [];
 let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes")) || [];
 
-// SOMENTE TERAPEUTAS ATIVAS
+// apenas terapeutas ativas
 terapeutas
   .filter(t => !t.status || t.status === "Ativo")
   .forEach(t => {
@@ -183,6 +183,16 @@ terapeutas
 dataInicio.value = new Date().toISOString().slice(0,10);
 
 function salvar(){
+  if (!dataInicio.value || !dataFim.value) {
+    alert("Informe data de início e data fim.");
+    return;
+  }
+
+  if (dataFim.value < dataInicio.value) {
+    alert("A data fim não pode ser menor que a data de início.");
+    return;
+  }
+
   solicitacoes.push({
     id: crypto.randomUUID(),
     terapeutaNome: terapeuta.value,
@@ -192,6 +202,7 @@ function salvar(){
     justificativa: justificativa.value,
     status: "Pendente"
   });
+
   localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
   render();
 }
@@ -205,24 +216,24 @@ function setStatus(id, status){
 }
 
 function excluir(id){
-  if(!confirm("Deseja excluir esta solicitação?")) return;
+  if (!confirm("Deseja excluir esta solicitação?")) return;
   solicitacoes = solicitacoes.filter(s => s.id !== id);
   localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
   render();
 }
 
 function render(){
-  listaAprovar.innerHTML="";
-  listaGerenciar.innerHTML="";
+  listaAprovar.innerHTML = "";
+  listaGerenciar.innerHTML = "";
 
   solicitacoes.forEach(s => {
-    if(s.status === "Pendente"){
+    if (s.status === "Pendente") {
       listaAprovar.innerHTML += `
         <tr>
-          <td>${s.terapeutaNome}</td>
-          <td>${s.dataInicio}</td>
-          <td>${s.dataFim}</td>
-          <td>${s.justificativa}</td>
+          <td>${s.terapeutaNome || "—"}</td>
+          <td>${s.dataInicio || "—"}</td>
+          <td>${s.dataFim || "—"}</td>
+          <td>${s.justificativa || "—"}</td>
           <td>
             <button class="ok" onclick="setStatus('${s.id}','Aprovado')">✔</button>
             <button class="no" onclick="setStatus('${s.id}','Reprovado')">✖</button>
@@ -232,9 +243,9 @@ function render(){
 
     listaGerenciar.innerHTML += `
       <tr>
-        <td>${s.terapeutaNome}</td>
-        <td>${s.dataInicio} → ${s.dataFim}</td>
-        <td>${s.tipo}</td>
+        <td>${s.terapeutaNome || "—"}</td>
+        <td>${s.dataInicio || "—"} → ${s.dataFim || "—"}</td>
+        <td>${s.tipo || "—"}</td>
         <td>
           <select onchange="setStatus('${s.id}', this.value)">
             <option ${s.status==="Pendente"?"selected":""}>Pendente</option>
@@ -250,9 +261,9 @@ function render(){
 }
 
 function trocar(aba){
-  aprovar.style.display = aba==="aprovar"?"block":"none";
-  gerenciar.style.display = aba==="gerenciar"?"block":"none";
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  aprovar.style.display = aba === "aprovar" ? "block" : "none";
+  gerenciar.style.display = aba === "gerenciar" ? "block" : "none";
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   event.target.classList.add("active");
 }
 

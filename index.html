@@ -158,48 +158,76 @@ fetch("sidebar.html")
   .then(r => r.text())
   .then(html => {
     document.getElementById("sidebar-container").innerHTML = html;
-
-    // marca item ativo automaticamente
     const page = location.pathname.split("/").pop().replace(".html","");
-    document
-      .querySelectorAll(".sidebar a")
-      .forEach(a => {
-        if (a.dataset.page === page) {
-          a.classList.add("active");
-        }
-      });
+    document.querySelectorAll(".sidebar a").forEach(a => {
+      if (a.dataset.page === page) a.classList.add("active");
+    });
   });
 </script>
 
-<!-- LÓGICA DO DASHBOARD (INALTERADA) -->
+<!-- LÓGICA DO DASHBOARD -->
 <script>
 var terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 var solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
 
-// KPI equipe
+// ===============================
+// KPI EQUIPE
+// ===============================
 var ativas = terapeutas.filter(t => !t.status || t.status === "Ativo");
 document.getElementById("kpiEquipe").innerText = ativas.length;
 
-// Dias folgados
-var dias = {};
-solicitacoes.forEach(s => {
-  if (s.status !== "Aprovado") return;
-  if (!s.dataInicio || !s.dataFim) return;
+// ===============================
+// FUNÇÃO: DIAS DE FOLGA NO ANO
+// ===============================
+function calcularDiasFolgaAno(t) {
+  let total = 0;
+  const ano = new Date().getFullYear();
+  const inicioAno = new Date(ano,0,1);
+  const hoje = new Date();
 
-  var ini = new Date(s.dataInicio);
-  var fim = new Date(s.dataFim);
-  var d = Math.floor((fim - ini) / 86400000) + 1;
-  if (d <= 0) return;
+  // folga semanal
+  if (t.temFolga === "Sim" && t.diaFolga) {
+    const inicio = new Date(Math.max(new Date(t.dataInicio || inicioAno), inicioAno));
+    for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate()+1)) {
+      const dia = d.toLocaleDateString("pt-BR",{weekday:"long"}).toLowerCase();
+      if (dia.includes(t.diaFolga.toLowerCase())) total++;
+    }
+  }
 
-  dias[s.terapeutaNome] = (dias[s.terapeutaNome] || 0) + d;
-});
+  // solicitações aprovadas
+  solicitacoes.forEach(s => {
+    if (s.status !== "Aprovado") return;
+    if (s.terapeutaNome !== t.nomeProfissional) return;
+
+    const ini = new Date(s.dataInicio);
+    const fim = new Date(s.dataFim);
+    if (isNaN(ini) || isNaN(fim)) return;
+
+    const realIni = ini < inicioAno ? inicioAno : ini;
+    const realFim = fim > hoje ? hoje : fim;
+    if (realFim < realIni) return;
+
+    total += Math.floor((realFim - realIni)/86400000) + 1;
+  });
+
+  return total;
+}
+
+// ===============================
+// DIAS FOLGADOS (RANKING)
+// ===============================
+const rankingDias = ativas
+  .map(t => [t.nomeProfissional, calcularDiasFolgaAno(t)])
+  .sort((a,b) => b[1] - a[1]);
 
 document.getElementById("diasFolga").innerHTML =
-  Object.keys(dias).length
-    ? Object.entries(dias).map(([n,v]) => `<div><b>${n}</b>: ${v} dias</div>`).join("")
+  rankingDias.length
+    ? rankingDias.map((r,i) => `<div>${i+1}º <b>${r[0]}</b>: ${r[1]} dias</div>`).join("")
     : "—";
 
-// Gráfico força de trabalho
+// ===============================
+// GRÁFICO FORÇA DE TRABALHO
+// ===============================
 var horas = [];
 for (var h=9; h<=22; h++) horas.push(h);
 
@@ -225,7 +253,9 @@ new Chart(document.getElementById("grafico"), {
   options:{ scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 }}}}
 });
 
-// Carga horária
+// ===============================
+// CARGA HORÁRIA (RANKING)
+// ===============================
 var carga = {};
 ativas.forEach(t => {
   if (!t.horaEntrada || !t.horaSaida) return;
@@ -234,9 +264,11 @@ ativas.forEach(t => {
   if (hs > he) carga[t.nomeProfissional] = (carga[t.nomeProfissional]||0) + (hs-he);
 });
 
+const rankingHoras = Object.entries(carga).sort((a,b)=>b[1]-a[1]);
+
 document.getElementById("rankHoras").innerHTML =
-  Object.keys(carga).length
-    ? Object.entries(carga).map(([n,v]) => `<div>${n}: ${v}h</div>`).join("")
+  rankingHoras.length
+    ? rankingHoras.map((r,i)=>`<div>${i+1}º <b>${r[0]}</b>: ${r[1]}h</div>`).join("")
     : "—";
 </script>
 

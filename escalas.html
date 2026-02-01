@@ -9,84 +9,206 @@
 <style>
 body { margin:0; font-family:Arial; background:#f5f7fb; }
 
-.sidebar {
-  width:230px;
-  background:#1f2937;
-  color:#fff;
-  height:100vh;
-  position:fixed;
-  padding:20px;
-}
-.sidebar h2 { margin-bottom:30px; }
-.sidebar a {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  color:#cbd5e1;
-  text-decoration:none;
-  padding:10px;
-  border-radius:10px;
-  margin-bottom:6px;
-}
-.sidebar a:hover,
-.sidebar a.active {
-  background:#374151;
-  color:#fff;
-}
-
 .content {
   margin-left:260px;
   padding:30px;
+}
+
+.calendar {
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:10px;
+  margin-top:20px;
+}
+
+.day {
+  background:#fff;
+  border-radius:12px;
+  padding:10px;
+  min-height:90px;
+  cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.05);
+}
+.day:hover { background:#f1f5f9; }
+
+.day .num {
+  font-weight:700;
+}
+.day .count {
+  margin-top:6px;
+  font-size:12px;
+  color:#374151;
+}
+
+.header {
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  margin-top:20px;
+  font-weight:600;
+  color:#6b7280;
+}
+
+/* MODAL */
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.modal-content {
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+  width:420px;
+  max-height:80vh;
+  overflow:auto;
+}
+.modal-content h3 {
+  margin-top:0;
+}
+.modal-content button {
+  margin-top:10px;
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:#1f2937;
+  color:#fff;
+  cursor:pointer;
+}
+.item {
+  padding:8px 0;
+  border-bottom:1px solid #e5e7eb;
+  font-size:14px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- SIDEBAR (IGUAL AO INDEX / EQUIPE / SOLICITAÇÕES) -->
-<nav class="sidebar">
-  <h2>Hara Spa</h2>
-
-  <a href="index.html">
-    <i class="fa-solid fa-house"></i> Início
-  </a>
-
-  <a href="equipe.html">
-    <i class="fa-solid fa-users"></i> Gestão da Equipe
-  </a>
-
-  <a href="solicitacoes.html">
-    <i class="fa-solid fa-calendar-xmark"></i> Solicitações
-  </a>
-
-  <a href="escalas.html" class="active">
-    <i class="fa-solid fa-calendar-days"></i> Escalas
-  </a>
-
-  <a href="materiais.html">
-    <i class="fa-solid fa-box-open"></i> Materiais
-  </a>
-
-  <a href="financeiro.html">
-    <i class="fa-solid fa-coins"></i> Financeiro
-  </a>
-</nav>
-<!-- FIM SIDEBAR -->
+<div id="sidebar-container"></div>
 
 <div class="content">
   <h1>Escalas</h1>
-  <p>Distribuição por data</p>
+  <p>Disponibilidade de terapeutas por dia</p>
 
-  <!-- ============================= -->
-  <!-- APLICAÇÃO DE ESCALAS (SEU CÓDIGO) -->
-  <!-- COLE AQUI SEM ALTERAR NADA -->
-  <!-- ============================= -->
+  <div class="header">
+    <div>Dom</div><div>Seg</div><div>Ter</div>
+    <div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+  </div>
 
+  <div class="calendar" id="calendar"></div>
 </div>
 
-<!-- SEU SCRIPT ORIGINAL DE ESCALAS CONTINUA AQUI -->
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle"></h3>
+    <div id="modalList"></div>
+    <button onclick="fecharModal()">Fechar</button>
+  </div>
+</div>
+
 <script>
-/* NÃO ALTERADO */
+// ===== SIDEBAR =====
+fetch("sidebar.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("sidebar-container").innerHTML = html;
+    document.querySelector('[data-page="escalas"]')?.classList.add("active");
+  });
+
+// ===== DADOS =====
+const terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
+const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
+
+const hoje = new Date();
+const ano = hoje.getFullYear();
+const mes = hoje.getMonth();
+
+// ===== HELPERS =====
+function diaSemana(d) {
+  return d.toLocaleDateString("pt-BR",{weekday:"long"}).toLowerCase();
+}
+
+function temSolicitacao(t, data) {
+  return solicitacoes.some(s => {
+    if (s.status !== "Aprovado") return false;
+    if (s.terapeutaNome !== t.nomeProfissional) return false;
+    const ini = new Date(s.dataInicio);
+    const fim = new Date(s.dataFim);
+    return data >= ini && data <= fim;
+  });
+}
+
+function cargaDia(t) {
+  const [hE,mE] = t.horaEntrada.split(":").map(Number);
+  const [hS,mS] = t.horaSaida.split(":").map(Number);
+  const min = (hS*60+mS)-(hE*60+mE);
+  return `${Math.floor(min/60)}h ${String(min%60).padStart(2,"0")}m`;
+}
+
+// ===== MONTA CALENDÁRIO =====
+const firstDay = new Date(ano,mes,1).getDay();
+const totalDays = new Date(ano,mes+1,0).getDate();
+
+const cal = document.getElementById("calendar");
+
+// espaços vazios
+for (let i=0;i<firstDay;i++) {
+  cal.appendChild(document.createElement("div"));
+}
+
+for (let d=1; d<=totalDays; d++) {
+  const data = new Date(ano,mes,d);
+
+  const disponiveis = terapeutas.filter(t => {
+    if (t.status !== "Ativo") return false;
+    if (t.temFolga === "Sim" && diaSemana(data).includes(t.diaFolga?.toLowerCase())) return false;
+    if (temSolicitacao(t,data)) return false;
+    return true;
+  });
+
+  const box = document.createElement("div");
+  box.className = "day";
+  box.innerHTML = `
+    <div class="num">${d}</div>
+    <div class="count">${disponiveis.length} terapeutas</div>
+  `;
+  box.onclick = () => abrirModal(data, disponiveis);
+  cal.appendChild(box);
+}
+
+// ===== MODAL =====
+function abrirModal(data, lista) {
+  document.getElementById("modalTitle").innerText =
+    data.toLocaleDateString("pt-BR");
+
+  const div = document.getElementById("modalList");
+  div.innerHTML = "";
+
+  if (!lista.length) {
+    div.innerHTML = "<p>Nenhuma terapeuta disponível.</p>";
+  } else {
+    lista.forEach(t => {
+      const el = document.createElement("div");
+      el.className = "item";
+      el.innerHTML = `
+        <b>${t.nomeProfissional}</b><br>
+        ${t.horaEntrada} – ${t.horaSaida} (${cargaDia(t)})
+      `;
+      div.appendChild(el);
+    });
+  }
+
+  document.getElementById("modal").style.display = "flex";
+}
+
+function fecharModal() {
+  document.getElementById("modal").style.display = "none";
+}
 </script>
 
 </body>

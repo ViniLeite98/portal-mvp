@@ -222,7 +222,9 @@ const rankingDias = ativas
 
 document.getElementById("diasFolga").innerHTML =
   rankingDias.length
-    ? rankingDias.map((r,i) => `<div>${i+1}º <b>${r[0]}</b>: ${r[1]} dias</div>`).join("")
+    ? rankingDias.map((r,i) =>
+        `<div>${i+1}º <b>${r[0]}</b>: ${r[1]} dias</div>`
+      ).join("")
     : "—";
 
 // ===============================
@@ -254,21 +256,40 @@ new Chart(document.getElementById("grafico"), {
 });
 
 // ===============================
-// CARGA HORÁRIA (RANKING)
+// CARGA HORÁRIA (RANKING COM MINUTOS)
 // ===============================
-var carga = {};
+var cargaMinutos = {};
+
 ativas.forEach(t => {
   if (!t.horaEntrada || !t.horaSaida) return;
-  var he = parseInt(t.horaEntrada.split(":")[0]);
-  var hs = parseInt(t.horaSaida.split(":")[0]);
-  if (hs > he) carga[t.nomeProfissional] = (carga[t.nomeProfissional]||0) + (hs-he);
+
+  const [hE, mE] = t.horaEntrada.split(":").map(Number);
+  const [hS, mS] = t.horaSaida.split(":").map(Number);
+  if (isNaN(hE)||isNaN(mE)||isNaN(hS)||isNaN(mS)) return;
+
+  const inicio = hE*60 + mE;
+  const fim = hS*60 + mS;
+  if (fim <= inicio) return;
+
+  const minutos = fim - inicio;
+  cargaMinutos[t.nomeProfissional] =
+    (cargaMinutos[t.nomeProfissional] || 0) + minutos;
 });
 
-const rankingHoras = Object.entries(carga).sort((a,b)=>b[1]-a[1]);
+const rankingHoras = Object.entries(cargaMinutos)
+  .sort((a,b) => b[1] - a[1]);
+
+function formatar(min) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${h}h ${m.toString().padStart(2,"0")}m`;
+}
 
 document.getElementById("rankHoras").innerHTML =
   rankingHoras.length
-    ? rankingHoras.map((r,i)=>`<div>${i+1}º <b>${r[0]}</b>: ${r[1]}h</div>`).join("")
+    ? rankingHoras.map((r,i)=>
+        `<div>${i+1}º <b>${r[0]}</b>: ${formatar(r[1])}</div>`
+      ).join("")
     : "—";
 </script>
 

@@ -9,21 +9,31 @@
 <style>
 body { margin:0; font-family:Arial; background:#f5f7fb; }
 
+/* ===== CONTEÚDO ===== */
 .content {
   margin-left:260px;
   padding:30px;
+}
+
+/* ===== CALENDÁRIO ===== */
+.header {
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  margin-top:20px;
+  font-weight:600;
+  color:#6b7280;
 }
 
 .calendar {
   display:grid;
   grid-template-columns:repeat(7,1fr);
   gap:10px;
-  margin-top:20px;
+  margin-top:10px;
 }
 
 .day {
   background:#fff;
-  border-radius:12px;
+  border-radius:14px;
   padding:10px;
   min-height:90px;
   cursor:pointer;
@@ -40,15 +50,7 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
   color:#374151;
 }
 
-.header {
-  display:grid;
-  grid-template-columns:repeat(7,1fr);
-  margin-top:20px;
-  font-weight:600;
-  color:#6b7280;
-}
-
-/* MODAL */
+/* ===== MODAL ===== */
 .modal {
   position:fixed;
   inset:0;
@@ -88,8 +90,10 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
 
 <body>
 
+<!-- SIDEBAR (PADRÃO) -->
 <div id="sidebar-container"></div>
 
+<!-- CONTEÚDO -->
 <div class="content">
   <h1>Escalas</h1>
   <p>Disponibilidade de terapeutas por dia</p>
@@ -112,15 +116,22 @@ body { margin:0; font-family:Arial; background:#f5f7fb; }
 </div>
 
 <script>
-// ===== SIDEBAR =====
+// ===============================
+// LOAD SIDEBAR (PADRÃO DO SISTEMA)
+// ===============================
 fetch("sidebar.html")
   .then(r => r.text())
   .then(html => {
     document.getElementById("sidebar-container").innerHTML = html;
-    document.querySelector('[data-page="escalas"]')?.classList.add("active");
+    const page = "escalas";
+    document.querySelectorAll(".sidebar a").forEach(a => {
+      if (a.dataset.page === page) a.classList.add("active");
+    });
   });
 
-// ===== DADOS =====
+// ===============================
+// DADOS
+// ===============================
 const terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
 
@@ -128,7 +139,9 @@ const hoje = new Date();
 const ano = hoje.getFullYear();
 const mes = hoje.getMonth();
 
-// ===== HELPERS =====
+// ===============================
+// HELPERS
+// ===============================
 function diaSemana(d) {
   return d.toLocaleDateString("pt-BR",{weekday:"long"}).toLowerCase();
 }
@@ -150,13 +163,13 @@ function cargaDia(t) {
   return `${Math.floor(min/60)}h ${String(min%60).padStart(2,"0")}m`;
 }
 
-// ===== MONTA CALENDÁRIO =====
+// ===============================
+// MONTA CALENDÁRIO
+// ===============================
 const firstDay = new Date(ano,mes,1).getDay();
 const totalDays = new Date(ano,mes+1,0).getDate();
-
 const cal = document.getElementById("calendar");
 
-// espaços vazios
 for (let i=0;i<firstDay;i++) {
   cal.appendChild(document.createElement("div"));
 }
@@ -181,7 +194,9 @@ for (let d=1; d<=totalDays; d++) {
   cal.appendChild(box);
 }
 
-// ===== MODAL =====
+// ===============================
+// MODAL
+// ===============================
 function abrirModal(data, lista) {
   document.getElementById("modalTitle").innerText =
     data.toLocaleDateString("pt-BR");

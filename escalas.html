@@ -5,6 +5,7 @@
 <title>Escalas</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 body {
@@ -122,10 +123,6 @@ body {
   background:#fee2e2;
   color:#991b1b;
 }
-.badge-gray {
-  background:#e5e7eb;
-  color:#374151;
-}
 </style>
 </head>
 
@@ -157,6 +154,9 @@ body {
     <div class="card">
       <h3 id="tituloDia">Selecione um dia</h3>
       <div id="detalhesDia">—</div>
+
+      <div class="section-title">Força de Trabalho</div>
+      <canvas id="graficoDia" height="140"></canvas>
     </div>
   </div>
 </div>
@@ -185,6 +185,7 @@ const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
 const calendar = document.getElementById("calendar");
 const detalhes = document.getElementById("detalhesDia");
 const tituloDia = document.getElementById("tituloDia");
+let chartDia = null;
 
 let hoje = new Date();
 let ano = hoje.getFullYear();
@@ -214,13 +215,12 @@ function folgaSemanal(t, data) {
 }
 
 function folgaAprovada(t, data) {
-  const s = solicitacoes.find(s =>
+  return solicitacoes.some(s =>
     s.status === "Aprovado" &&
     s.terapeutaNome === t.nomeProfissional &&
     data >= new Date(s.dataInicio) &&
     data <= new Date(s.dataFim)
   );
-  return s || null;
 }
 
 // ===============================
@@ -257,35 +257,26 @@ function renderCalendar() {
 }
 
 // ===============================
-// DETALHE DO DIA (COM MOTIVOS)
+// DETALHE + FORÇA DE TRABALHO
 // ===============================
 function mostrarDia(dia) {
   const data = new Date(ano, mes, dia);
   tituloDia.innerText = `Dia ${dia}/${mes + 1}/${ano}`;
   detalhes.innerHTML = "";
 
-  let html = "";
-
-  // DISPONÍVEIS
   const disponiveis = terapeutas.filter(t =>
     t.horaEntrada && t.horaSaida &&
     !folgaSemanal(t, data) &&
     !folgaAprovada(t, data)
   );
 
-  html += `<div class="section-title">Disponíveis (${disponiveis.length})</div>`;
-
+  // DISPONÍVEIS
+  detalhes.innerHTML += `<div class="section-title">Disponíveis (${disponiveis.length})</div>`;
   disponiveis.forEach(t => {
-    const [hE,mE] = t.horaEntrada.split(":").map(Number);
-    const [hS,mS] = t.horaSaida.split(":").map(Number);
-    const min = (hS*60+mS)-(hE*60+mE);
-    if (min <= 0) return;
-
-    html += `
+    detalhes.innerHTML += `
       <div class="detail-item">
         <b>${t.nomeProfissional}</b><br>
         ${t.horaEntrada} – ${t.horaSaida}
-        (${Math.floor(min/60)}h ${min%60}m)
       </div>
     `;
   });
@@ -295,21 +286,13 @@ function mostrarDia(dia) {
     folgaSemanal(t, data) || folgaAprovada(t, data)
   );
 
-  html += `<div class="section-title">Indisponíveis (${indisponiveis.length})</div>`;
-
+  detalhes.innerHTML += `<div class="section-title">Indisponíveis (${indisponiveis.length})</div>`;
   indisponiveis.forEach(t => {
-    let motivo = "";
+    let motivo = folgaSemanal(t, data)
+      ? `Folga semanal (${t.diaFolga})`
+      : "Folga aprovada";
 
-    if (folgaSemanal(t, data)) {
-      motivo = `Folga semanal (${t.diaFolga})`;
-    }
-
-    const f = folgaAprovada(t, data);
-    if (f) {
-      motivo = `Folga aprovada (${f.dataInicio} → ${f.dataFim})`;
-    }
-
-    html += `
+    detalhes.innerHTML += `
       <div class="detail-item">
         <b>${t.nomeProfissional}</b>
         <span class="badge badge-red">${motivo}</span>
@@ -317,7 +300,40 @@ function mostrarDia(dia) {
     `;
   });
 
-  detalhes.innerHTML = html || "—";
+  renderForcaTrabalho(disponiveis);
+}
+
+// ===============================
+// GRÁFICO POR DIA
+// ===============================
+function renderForcaTrabalho(lista) {
+  const horas = [];
+  for (let h=9; h<=22; h++) horas.push(h);
+
+  const contagem = horas.map(hora =>
+    lista.filter(t => {
+      const he = parseInt(t.horaEntrada.split(":")[0]);
+      const hs = parseInt(t.horaSaida.split(":")[0]);
+      return hora >= he && hora < hs;
+    }).length
+  );
+
+  if (chartDia) chartDia.destroy();
+
+  chartDia = new Chart(document.getElementById("graficoDia"), {
+    type:"bar",
+    data:{
+      labels: horas.map(h => h+":00"),
+      datasets:[{
+        label:"Terapeutas disponíveis",
+        data:contagem,
+        backgroundColor:"#3b82f6"
+      }]
+    },
+    options:{
+      scales:{ y:{ beginAtZero:true, ticks:{ stepSize:1 }}}
+    }
+  });
 }
 
 renderCalendar();

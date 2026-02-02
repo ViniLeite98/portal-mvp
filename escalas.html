@@ -13,7 +13,7 @@ body {
   background:#f5f7fb;
 }
 
-/* ===== SIDEBAR (PADRÃO) ===== */
+/* ===== SIDEBAR ===== */
 .sidebar {
   width:230px;
   background:#1f2937;
@@ -92,25 +92,12 @@ body {
   cursor:pointer;
   min-height:90px;
 }
+.day:hover { background:#f1f5f9; }
 
-.day:hover {
-  background:#f1f5f9;
-}
+.day-number { font-weight:700; }
+.day small { color:#6b7280; font-size:12px; }
 
-.day-number {
-  font-weight:700;
-}
-
-.day small {
-  color:#6b7280;
-  font-size:12px;
-}
-
-/* ===== DETALHE DO DIA ===== */
-.detail h3 {
-  margin-top:0;
-}
-
+/* ===== DETALHE ===== */
 .detail-item {
   padding:8px 0;
   border-bottom:1px solid #e5e7eb;
@@ -135,22 +122,16 @@ body {
     <div class="card">
       <h3>Calendário</h3>
 
-      <!-- DIAS DA SEMANA -->
       <div class="calendar weekdays">
-        <div>Dom</div>
-        <div>Seg</div>
-        <div>Ter</div>
-        <div>Qua</div>
-        <div>Qui</div>
-        <div>Sex</div>
-        <div>Sáb</div>
+        <div>Dom</div><div>Seg</div><div>Ter</div>
+        <div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
       </div>
 
       <div class="calendar" id="calendar"></div>
     </div>
 
     <!-- DETALHES -->
-    <div class="card detail">
+    <div class="card">
       <h3 id="tituloDia">Selecione um dia</h3>
       <div id="detalhesDia">—</div>
     </div>
@@ -169,10 +150,14 @@ fetch("sidebar.html")
   });
 </script>
 
-<!-- LÓGICA DA ESCALA -->
 <script>
+// ===============================
+// DADOS
+// ===============================
 const terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]")
   .filter(t => !t.status || t.status === "Ativo");
+
+const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
 
 const calendar = document.getElementById("calendar");
 const detalhes = document.getElementById("detalhesDia");
@@ -192,6 +177,32 @@ inputData.addEventListener("change", e => {
   renderCalendar();
 });
 
+// ===============================
+// HELPERS
+// ===============================
+function diaSemana(date) {
+  return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][date.getDay()];
+}
+
+function folgaSemanal(t, data) {
+  return t.temFolga === "Sim" &&
+         t.diaFolga &&
+         diaSemana(data).includes(t.diaFolga.toLowerCase());
+}
+
+function folgaAprovada(t, data) {
+  return solicitacoes.some(s => {
+    if (s.status !== "Aprovado") return false;
+    if (s.terapeutaNome !== t.nomeProfissional) return false;
+    const ini = new Date(s.dataInicio);
+    const fim = new Date(s.dataFim);
+    return data >= ini && data <= fim;
+  });
+}
+
+// ===============================
+// CALENDÁRIO
+// ===============================
 function renderCalendar() {
   calendar.innerHTML = "";
 
@@ -203,44 +214,55 @@ function renderCalendar() {
   }
 
   for (let d = 1; d <= totalDias; d++) {
+    const dataDia = new Date(ano, mes, d);
+
+    const qtd = terapeutas.filter(t =>
+      t.horaEntrada && t.horaSaida &&
+      !folgaSemanal(t, dataDia) &&
+      !folgaAprovada(t, dataDia)
+    ).length;
+
     const div = document.createElement("div");
     div.className = "day";
-
     div.innerHTML = `
       <div class="day-number">${d}</div>
-      <small>${terapeutas.length} terapeutas</small>
+      <small>${qtd} terapeutas</small>
     `;
-
     div.onclick = () => mostrarDia(d);
     calendar.appendChild(div);
   }
 }
 
+// ===============================
+// DETALHE DO DIA
+// ===============================
 function mostrarDia(dia) {
+  const data = new Date(ano, mes, dia);
   tituloDia.innerText = `Dia ${dia}/${mes + 1}/${ano}`;
   detalhes.innerHTML = "";
 
-  terapeutas.forEach(t => {
-    if (!t.horaEntrada || !t.horaSaida) return;
+  const disponiveis = terapeutas.filter(t =>
+    t.horaEntrada && t.horaSaida &&
+    !folgaSemanal(t, data) &&
+    !folgaAprovada(t, data)
+  );
 
+  disponiveis.forEach(t => {
     const [hE, mE] = t.horaEntrada.split(":").map(Number);
     const [hS, mS] = t.horaSaida.split(":").map(Number);
-    const minutos = (hS * 60 + mS) - (hE * 60 + mE);
-
-    if (minutos <= 0) return;
-
-    const h = Math.floor(minutos / 60);
-    const m = minutos % 60;
+    const min = (hS * 60 + mS) - (hE * 60 + mE);
+    if (min <= 0) return;
 
     detalhes.innerHTML += `
       <div class="detail-item">
         <b>${t.nomeProfissional}</b><br>
-        ${t.horaEntrada} – ${t.horaSaida} (${h}h ${m}m)
+        ${t.horaEntrada} – ${t.horaSaida}
+        (${Math.floor(min/60)}h ${min%60}m)
       </div>
     `;
   });
 
-  if (!detalhes.innerHTML) detalhes.innerHTML = "—";
+  if (!detalhes.innerHTML) detalhes.innerHTML = "Nenhuma terapeuta disponível";
 }
 
 renderCalendar();

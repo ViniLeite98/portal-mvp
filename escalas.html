@@ -60,12 +60,29 @@ body {
   box-shadow:0 4px 12px rgba(0,0,0,.05);
 }
 
+/* ===== LAYOUT ===== */
+.layout {
+  display:grid;
+  grid-template-columns: 2.2fr 1.3fr;
+  gap:20px;
+  margin-top:20px;
+}
+
 /* ===== CALENDÁRIO ===== */
 .calendar {
   display:grid;
   grid-template-columns: repeat(7, 1fr);
   gap:10px;
-  margin-top:20px;
+}
+
+.weekdays {
+  margin-top:16px;
+}
+.weekdays div {
+  text-align:center;
+  font-weight:600;
+  color:#374151;
+  font-size:13px;
 }
 
 .day {
@@ -87,14 +104,6 @@ body {
 .day small {
   color:#6b7280;
   font-size:12px;
-}
-
-/* ===== LAYOUT PRINCIPAL ===== */
-.layout {
-  display:grid;
-  grid-template-columns: 2.2fr 1.3fr;
-  gap:20px;
-  margin-top:20px;
 }
 
 /* ===== DETALHE DO DIA ===== */
@@ -125,6 +134,18 @@ body {
     <!-- CALENDÁRIO -->
     <div class="card">
       <h3>Calendário</h3>
+
+      <!-- DIAS DA SEMANA -->
+      <div class="calendar weekdays">
+        <div>Dom</div>
+        <div>Seg</div>
+        <div>Ter</div>
+        <div>Qua</div>
+        <div>Qui</div>
+        <div>Sex</div>
+        <div>Sáb</div>
+      </div>
+
       <div class="calendar" id="calendar"></div>
     </div>
 
@@ -142,14 +163,13 @@ fetch("sidebar.html")
   .then(r => r.text())
   .then(html => {
     document.getElementById("sidebar-container").innerHTML = html;
-    const page = "escalas";
     document.querySelectorAll(".sidebar a").forEach(a => {
-      if (a.dataset.page === page) a.classList.add("active");
+      if (a.dataset.page === "escalas") a.classList.add("active");
     });
   });
 </script>
 
-<!-- LÓGICA ESCALAS -->
+<!-- LÓGICA DA ESCALA -->
 <script>
 const terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]")
   .filter(t => !t.status || t.status === "Ativo");
@@ -162,8 +182,10 @@ let hoje = new Date();
 let ano = hoje.getFullYear();
 let mes = hoje.getMonth();
 
-document.getElementById("dataSelecionada").valueAsDate = hoje;
-document.getElementById("dataSelecionada").addEventListener("change", e => {
+const inputData = document.getElementById("dataSelecionada");
+inputData.valueAsDate = hoje;
+
+inputData.addEventListener("change", e => {
   const d = new Date(e.target.value);
   ano = d.getFullYear();
   mes = d.getMonth();
@@ -172,22 +194,21 @@ document.getElementById("dataSelecionada").addEventListener("change", e => {
 
 function renderCalendar() {
   calendar.innerHTML = "";
-  const primeiroDia = new Date(ano, mes, 1).getDay();
-  const totalDias = new Date(ano, mes+1, 0).getDate();
 
-  for (let i=0; i<primeiroDia; i++) {
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const totalDias = new Date(ano, mes + 1, 0).getDate();
+
+  for (let i = 0; i < primeiroDia; i++) {
     calendar.appendChild(document.createElement("div"));
   }
 
-  for (let d=1; d<=totalDias; d++) {
+  for (let d = 1; d <= totalDias; d++) {
     const div = document.createElement("div");
     div.className = "day";
 
-    const qtd = terapeutas.length;
-
     div.innerHTML = `
       <div class="day-number">${d}</div>
-      <small>${qtd} terapeutas</small>
+      <small>${terapeutas.length} terapeutas</small>
     `;
 
     div.onclick = () => mostrarDia(d);
@@ -196,17 +217,20 @@ function renderCalendar() {
 }
 
 function mostrarDia(dia) {
-  tituloDia.innerText = `Dia ${dia}/${mes+1}/${ano}`;
+  tituloDia.innerText = `Dia ${dia}/${mes + 1}/${ano}`;
   detalhes.innerHTML = "";
 
   terapeutas.forEach(t => {
     if (!t.horaEntrada || !t.horaSaida) return;
 
-    const [hE,mE] = t.horaEntrada.split(":").map(Number);
-    const [hS,mS] = t.horaSaida.split(":").map(Number);
-    const minutos = (hS*60+mS) - (hE*60+mE);
-    const h = Math.floor(minutos/60);
-    const m = minutos%60;
+    const [hE, mE] = t.horaEntrada.split(":").map(Number);
+    const [hS, mS] = t.horaSaida.split(":").map(Number);
+    const minutos = (hS * 60 + mS) - (hE * 60 + mE);
+
+    if (minutos <= 0) return;
+
+    const h = Math.floor(minutos / 60);
+    const m = minutos % 60;
 
     detalhes.innerHTML += `
       <div class="detail-item">

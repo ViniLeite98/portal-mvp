@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Critérios</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+body { margin:0; font-family:Arial; background:#f5f7fb; }
+
+.sidebar {
+  width:230px;
+  background:#1f2937;
+  color:#fff;
+  height:100vh;
+  position:fixed;
+  padding:20px;
+}
+.sidebar h2 { margin-bottom:30px; }
+.sidebar a {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  color:#cbd5e1;
+  text-decoration:none;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:6px;
+}
+.sidebar a:hover,
+.sidebar a.active {
+  background:#374151;
+  color:#fff;
+}
+
+.content { margin-left:260px; padding:30px; }
+
+.card {
+  background:#fff;
+  border-radius:20px;
+  padding:24px;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
+}
+th, td {
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+}
+
+button {
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:6px 12px;
+  cursor:pointer;
+}
+.del { background:#b91c1c; }
+</style>
+</head>
+
+<body>
+
+<nav class="sidebar">
+  <h2>Hara Spa</h2>
+  <a href="index.html"><i class="fa-solid fa-house"></i> Início</a>
+  <a href="criterios.html" class="active"><i class="fa-solid fa-sliders"></i> Critérios</a>
+</nav>
+
+<div class="content">
+  <h1>Critérios</h1>
+  <p>Gerenciamento de feriados</p>
+
+  <div class="card">
+    <input type="date" id="novo">
+    <button onclick="add()">Adicionar</button>
+
+    <table>
+      <thead>
+        <tr><th>Data</th><th>Ações</th></tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+let feriados = JSON.parse(localStorage.getItem("feriados") || "[]");
+
+function render(){
+  lista.innerHTML = "";
+  feriados.forEach(f => {
+    lista.innerHTML += `
+      <tr>
+        <td>${new Date(f).toLocaleDateString("pt-BR")}</td>
+        <td><button class="del" onclick="remover('${f}')">Excluir</button></td>
+      </tr>`;
+  });
+}
+
+function add(){
+  if(!novo.value) return;
+  if(!feriados.includes(novo.value)){
+    feriados.push(novo.value);
+    localStorage.setItem("feriados", JSON.stringify(feriados));
+    render();
+  }
+}
+
+function remover(d){
+  feriados = feriados.filter(f => f!==d);
+  localStorage.setItem("feriados", JSON.stringify(feriados));
+  render();
+}
+
+render();
+</script>
+
+</body>
+</html>

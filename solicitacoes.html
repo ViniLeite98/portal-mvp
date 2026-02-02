@@ -182,6 +182,9 @@ const terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]")
 
 let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || []);
 
+const aprovarDiv = document.getElementById("aprovar");
+const gerenciarDiv = document.getElementById("gerenciar");
+
 terapeutas.forEach(t => {
   const o = document.createElement("option");
   o.value = t.nomeProfissional;
@@ -190,32 +193,6 @@ terapeutas.forEach(t => {
 });
 
 dataInicio.value = new Date().toISOString().slice(0,10);
-
-/* HELPERS */
-function diaSemana(d){
-  return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][d.getDay()];
-}
-function folgaSemanal(t, data){
-  return t.temFolga==="Sim" && t.diaFolga &&
-         diaSemana(data).includes(t.diaFolga.toLowerCase());
-}
-function folgaAprovada(t, data){
-  return solicitacoes.some(s =>
-    s.status==="Aprovado" &&
-    s.terapeutaNome===t.nomeProfissional &&
-    data>=new Date(s.dataInicio) &&
-    data<=new Date(s.dataFim)
-  );
-}
-function disponiveisNoDia(data, excluirNome){
-  return terapeutas.filter(t => {
-    if (t.nomeProfissional===excluirNome) return false;
-    if (!t.horaEntrada || !t.horaSaida) return false;
-    if (folgaSemanal(t,data)) return false;
-    if (folgaAprovada(t,data)) return false;
-    return true;
-  });
-}
 
 /* SALVAR */
 function salvar(){
@@ -232,27 +209,6 @@ function salvar(){
     status: "Pendente"
   });
 
-  localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
-  render();
-}
-
-/* APROVAR COM INTELIGÊNCIA */
-function aprovar(id){
-  const s = solicitacoes.find(x => x.id===id);
-  let alertas = [];
-
-  for (let d=new Date(s.dataInicio); d<=new Date(s.dataFim); d.setDate(d.getDate()+1)){
-    const lista = disponiveisNoDia(new Date(d), s.terapeutaNome);
-    if (lista.length<=2){
-      alertas.push(`${d.toLocaleDateString("pt-BR")}: ${lista.length} disponíveis`);
-    }
-  }
-
-  if (alertas.length){
-    alert("⚠️ Impacto na escala:\n\n"+alertas.join("\n"));
-  }
-
-  s.status="Aprovado";
   localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
   render();
 }
@@ -282,7 +238,7 @@ function render(){
         <td>${s.dataInicio} → ${s.dataFim}</td>
         <td>${s.justificativa||"—"}</td>
         <td>
-          <button class="ok" onclick="aprovar('${s.id}')">✔</button>
+          <button class="ok" onclick="setStatus('${s.id}','Aprovado')">✔</button>
           <button class="no" onclick="setStatus('${s.id}','Reprovado')">✖</button>
         </td>
       </tr>`;
@@ -306,8 +262,8 @@ function render(){
 }
 
 function trocar(aba, el){
-  aprovar.style.display = aba==="aprovar"?"block":"none";
-  gerenciar.style.display = aba==="gerenciar"?"block":"none";
+  aprovarDiv.style.display = aba==="aprovar"?"block":"none";
+  gerenciarDiv.style.display = aba==="gerenciar"?"block":"none";
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   el.classList.add("active");
 }

@@ -12,7 +12,7 @@
    CONTEÚDO
    ========================= */
 .content {
-  margin-left:260px;
+  margin-left:260px; /* espaço para sidebar */
   padding:30px;
 }
 
@@ -114,33 +114,40 @@ th {
 
 </div>
 
+<!-- =========================
+     SCRIPT SIDEBAR DINÂMICO
+========================= -->
 <script>
-/* =========================
-   CARREGA SIDEBAR DINÂMICO
-   ========================= */
 fetch("sidebar.html")
   .then(r => r.text())
   .then(html => {
     document.getElementById("sidebar-container").innerHTML = html;
 
-    // marca link ativo
+    // marca item ativo
     const page = location.pathname.split("/").pop().replace(".html","");
     document.querySelectorAll(".sidebar a").forEach(a=>{
-      if(a.dataset.page === page) a.classList.add("active");
+      if(a.dataset.page===page) a.classList.add("active");
+    });
+
+    // Expande submenus por padrão (igual index)
+    document.querySelectorAll(".menu-title").forEach(title=>{
+      const submenu = title.nextElementSibling;
+      if(submenu) submenu.style.display = "block";
     });
   });
+</script>
 
-/* =========================
-   TERAPEUTAS
-   ========================= */
+<!-- =========================
+     TERAPEUTAS
+========================= -->
+<script>
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 
-/* ===== FUNÇÃO CALCULO DIAS DE FOLGA ===== */
 function calcularDiasFolgaAno(t){
   let total = 0;
   const hoje = new Date();
   const anoAtual = hoje.getFullYear();
-  const inicioAno = new Date(anoAtual, 0, 1);
+  const inicioAno = new Date(anoAtual,0,1);
 
   // Folga semanal
   if (t.temFolga === "Sim" && t.diaFolga) {
@@ -208,7 +215,7 @@ function editar(id){
 
 function excluir(id){
   if(!confirm("Excluir terapeuta?")) return;
-  terapeutas = terapeutas.filter(t=>t.id!==id);
+  terapeutas = terapeutas.filter(t => t.id !== id);
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   render();
 }

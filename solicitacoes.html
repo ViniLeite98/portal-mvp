@@ -9,20 +9,7 @@
 <style>
 body { margin:0; font-family:Arial; background:#f5f7fb; }
 
-/* =========================
-   SIDEBAR
-   ========================= */
-#sidebar-container {
-  position: fixed;
-  top:0;
-  left:0;
-  width:240px;
-  height:100vh;
-}
-
-/* =========================
-   CONTEÚDO
-   ========================= */
+/* CONTEÚDO */
 .content { margin-left:260px; padding:24px; min-height:100vh; }
 
 .card {
@@ -78,6 +65,17 @@ select, input {
   padding:6px;
   border-radius:6px;
   border:1px solid #d1d5db;
+}
+
+/* =========================
+   SIDEBAR CONTAINER
+   ========================= */
+#sidebar-container {
+  position: fixed;
+  top:0;
+  left:0;
+  width:240px;
+  height:100vh;
 }
 </style>
 </head>
@@ -164,6 +162,21 @@ select, input {
    ========================= -->
 <script>
 // -------------------------
+// LOAD SIDEBAR
+// -------------------------
+fetch("sidebar.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("sidebar-container").innerHTML = html;
+
+    // ativa link correto
+    const page = location.pathname.split("/").pop().replace(".html","");
+    document.querySelectorAll(".sidebar a").forEach(a=>{
+      if(a.dataset.page===page) a.classList.add("active");
+    });
+  });
+
+// -------------------------
 // TERAPEUTAS ATIVAS
 // -------------------------
 const terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]")
@@ -171,7 +184,6 @@ const terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]")
 
 let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || []);
 
-// popula select de terapeutas
 terapeutas.forEach(t => {
   const o = document.createElement("option");
   o.value = t.nomeProfissional;
@@ -179,12 +191,14 @@ terapeutas.forEach(t => {
   document.getElementById("terapeuta").appendChild(o);
 });
 
-// inicializa data início com hoje
 document.getElementById("dataInicio").value = new Date().toISOString().slice(0,10);
 
 // -------------------------
-// SALVAR
+// FUNÇÕES
 // -------------------------
+const aprovarDiv = document.getElementById("aprovar");
+const gerenciarDiv = document.getElementById("gerenciar");
+
 function salvar(){
   const dataInicio = document.getElementById("dataInicio").value;
   const dataFim = document.getElementById("dataFim").value;
@@ -205,41 +219,28 @@ function salvar(){
   render();
 }
 
-// -------------------------
-// ATUALIZA STATUS
-// -------------------------
-function setStatus(id, status){
-  solicitacoes = solicitacoes.map(s => s.id===id ? {...s, status} : s);
+function setStatus(id,status){
+  solicitacoes = solicitacoes.map(s=>s.id===id?{...s,status}:s);
   localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
   render();
 }
 
-// -------------------------
-// EXCLUIR
-// -------------------------
 function excluir(id){
   if(!confirm("Excluir solicitação?")) return;
-  solicitacoes = solicitacoes.filter(s => s.id!==id);
+  solicitacoes = solicitacoes.filter(s=>s.id!==id);
   localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
   render();
 }
-
-// -------------------------
-// RENDER
-// -------------------------
-const aprovarDiv = document.getElementById("aprovar");
-const gerenciarDiv = document.getElementById("gerenciar");
 
 function render(){
   const listaAprovar = document.getElementById("listaAprovar");
   const listaGerenciar = document.getElementById("listaGerenciar");
-
-  listaAprovar.innerHTML = "";
-  listaGerenciar.innerHTML = "";
+  listaAprovar.innerHTML="";
+  listaGerenciar.innerHTML="";
 
   solicitacoes.forEach(s=>{
     if(s.status==="Pendente"){
-      listaAprovar.innerHTML += `
+      listaAprovar.innerHTML+=`
         <tr>
           <td>${s.terapeutaNome}</td>
           <td>${s.dataInicio} → ${s.dataFim}</td>
@@ -251,7 +252,7 @@ function render(){
         </tr>`;
     }
 
-    listaGerenciar.innerHTML += `
+    listaGerenciar.innerHTML+=`
       <tr>
         <td>${s.terapeutaNome}</td>
         <td>${s.dataInicio} → ${s.dataFim}</td>
@@ -263,16 +264,11 @@ function render(){
             <option ${s.status==="Reprovado"?"selected":""}>Reprovado</option>
           </select>
         </td>
-        <td>
-          <button class="del" onclick="excluir('${s.id}')">Excluir</button>
-        </td>
+        <td><button class="del" onclick="excluir('${s.id}')">Excluir</button></td>
       </tr>`;
   });
 }
 
-// -------------------------
-// TROCAR ABAS
-// -------------------------
 function trocar(aba, el){
   aprovarDiv.style.display = aba==="aprovar"?"block":"none";
   gerenciarDiv.style.display = aba==="gerenciar"?"block":"none";

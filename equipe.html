@@ -5,14 +5,9 @@
 <title>Gestão da Equipe</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
 
 <style>
-body {
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:#f5f7fb;
-}
-
 /* =========================
    CONTEÚDO
    ========================= */
@@ -131,7 +126,7 @@ fetch("sidebar.html")
     // marca link ativo
     const page = location.pathname.split("/").pop().replace(".html","");
     document.querySelectorAll(".sidebar a").forEach(a=>{
-      if(a.dataset.page===page) a.classList.add("active");
+      if(a.dataset.page === page) a.classList.add("active");
     });
   });
 
@@ -140,13 +135,14 @@ fetch("sidebar.html")
    ========================= */
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 
+/* ===== FUNÇÃO CALCULO DIAS DE FOLGA ===== */
 function calcularDiasFolgaAno(t){
   let total = 0;
   const hoje = new Date();
   const anoAtual = hoje.getFullYear();
-  const inicioAno = new Date(anoAtual,0,1);
+  const inicioAno = new Date(anoAtual, 0, 1);
 
-  // folga semanal
+  // Folga semanal
   if (t.temFolga === "Sim" && t.diaFolga) {
     const inicio = new Date(Math.max(new Date(t.dataInicio || inicioAno), inicioAno));
     for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate()+1)) {
@@ -155,7 +151,7 @@ function calcularDiasFolgaAno(t){
     }
   }
 
-  // solicitações aprovadas
+  // Solicitações aprovadas
   const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
   solicitacoes.forEach(s=>{
     if(s.status!=="Aprovado") return;
@@ -212,7 +208,7 @@ function editar(id){
 
 function excluir(id){
   if(!confirm("Excluir terapeuta?")) return;
-  terapeutas = terapeutas.filter(t => t.id !== id);
+  terapeutas = terapeutas.filter(t=>t.id!==id);
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   render();
 }

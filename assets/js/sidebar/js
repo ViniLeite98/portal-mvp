@@ -1,0 +1,27 @@
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("assets/sidebar/sidebar.html")
+    .then(r => {
+      if (!r.ok) throw new Error("sidebar.html não encontrado");
+      return r.text();
+    })
+    .then(html => {
+      document.getElementById("sidebar").innerHTML = html;
+      initSidebar();
+    })
+    .catch(err => console.error(err));
+});
+
+function initSidebar() {
+  // Accordion
+  document.querySelectorAll(".menu-title").forEach(title => {
+    title.addEventListener("click", () => {
+      title.parentElement.classList.toggle("active");
+    });
+  });
+
+  // Link ativo
+  const page = location.pathname.split("/").pop().replace(".html","");
+  document.querySelectorAll(".sidebar a[data-page]").forEach(a => {
+    if (a.dataset.page === page) a.classList.add("active");
+  });
+}

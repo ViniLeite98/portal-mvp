@@ -1,24 +1,29 @@
-// Carrega sidebar
-fetch("sidebar.html")
-  .then(res => res.text())
-  .then(html => {
-    document.getElementById("sidebar").innerHTML = html;
-    initSidebar();
-  });
+document.addEventListener("DOMContentLoaded", () => {
+  fetch("sidebar.html")
+    .then(r => {
+      if (!r.ok) throw new Error("Sidebar não encontrada");
+      return r.text();
+    })
+    .then(html => {
+      const sidebar = document.getElementById("sidebar");
+      if (!sidebar) throw new Error("Container #sidebar não existe");
+      sidebar.innerHTML = html;
+      initSidebar();
+    })
+    .catch(err => console.error(err));
+});
 
 function initSidebar() {
-  // Accordion
+  // accordion
   document.querySelectorAll(".menu-title").forEach(title => {
     title.addEventListener("click", () => {
       title.parentElement.classList.toggle("active");
     });
   });
 
-  // Link ativo
-  const atual = location.pathname.split("/").pop();
-  document.querySelectorAll(".sidebar a[data-page]").forEach(link => {
-    if (link.getAttribute("href") === atual) {
-      link.classList.add("active");
-    }
+  // link ativo
+  const page = location.pathname.split("/").pop().replace(".html","");
+  document.querySelectorAll(".sidebar a[data-page]").forEach(a => {
+    if (a.dataset.page === page) a.classList.add("active");
   });
 }

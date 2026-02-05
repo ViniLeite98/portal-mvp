@@ -69,6 +69,17 @@ th {
 .actions .fa-trash {
   color:#ef4444;
 }
+
+/* =========================
+   SIDEBAR CONTAINER
+   ========================= */
+#sidebar-container {
+  position: fixed;
+  top:0;
+  left:0;
+  width:240px;
+  height:100vh;
+}
 </style>
 </head>
 
@@ -78,7 +89,6 @@ th {
 <div id="sidebar-container"></div>
 
 <div class="content">
-
   <h1>Gestão da Equipe</h1>
   <p>Visão operacional das terapeutas</p>
 
@@ -118,10 +128,10 @@ fetch("sidebar.html")
   .then(html => {
     document.getElementById("sidebar-container").innerHTML = html;
 
-    // marca item ativo
+    // marca link ativo
     const page = location.pathname.split("/").pop().replace(".html","");
     document.querySelectorAll(".sidebar a").forEach(a=>{
-      if(a.dataset.page === page) a.classList.add("active");
+      if(a.dataset.page===page) a.classList.add("active");
     });
   });
 
@@ -130,35 +140,30 @@ fetch("sidebar.html")
    ========================= */
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 
-/* ===== NOVA FUNÇÃO ===== */
 function calcularDiasFolgaAno(t){
   let total = 0;
   const hoje = new Date();
   const anoAtual = hoje.getFullYear();
-  const inicioAno = new Date(anoAtual, 0, 1);
+  const inicioAno = new Date(anoAtual,0,1);
 
-  // Folga semanal
+  // folga semanal
   if (t.temFolga === "Sim" && t.diaFolga) {
-    const inicio = new Date(Math.max(
-      new Date(t.dataInicio || inicioAno),
-      inicioAno
-    ));
-
+    const inicio = new Date(Math.max(new Date(t.dataInicio || inicioAno), inicioAno));
     for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate()+1)) {
       const diaSemana = d.toLocaleDateString("pt-BR",{weekday:"long"}).toLowerCase();
-      if (diaSemana.includes(t.diaFolga.toLowerCase())) total++;
+      if(diaSemana.includes(t.diaFolga.toLowerCase())) total++;
     }
   }
 
-  // Solicitações aprovadas
+  // solicitações aprovadas
   const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
   solicitacoes.forEach(s=>{
-    if (s.status !== "Aprovado") return;
-    if (s.terapeutaNome !== t.nomeProfissional) return;
+    if(s.status!=="Aprovado") return;
+    if(s.terapeutaNome !== t.nomeProfissional) return;
 
     const ini = new Date(s.dataInicio);
     const fim = new Date(s.dataFim);
-    if (isNaN(ini)||isNaN(fim)) return;
+    if(isNaN(ini)||isNaN(fim)) return;
 
     const inicioReal = ini < inicioAno ? inicioAno : ini;
     const fimReal = fim > hoje ? hoje : fim;
@@ -174,7 +179,7 @@ function render(){
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
-  terapeutas.forEach(t => {
+  terapeutas.forEach(t=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${t.nomeProfissional || "—"}</td>
@@ -191,7 +196,8 @@ function render(){
     tbody.appendChild(tr);
   });
 
-  document.getElementById("contador").innerText = terapeutas.length + " terapeutas cadastradas";
+  document.getElementById("contador").innerText =
+    terapeutas.length + " terapeutas cadastradas";
 }
 
 function nova(){
@@ -206,7 +212,7 @@ function editar(id){
 
 function excluir(id){
   if(!confirm("Excluir terapeuta?")) return;
-  terapeutas = terapeutas.filter(t => t.id !== id);
+  terapeutas = terapeutas.filter(t=>t.id!==id);
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
   render();
 }

@@ -9,14 +9,9 @@
 
 <!-- CSS GLOBAL -->
 <link rel="stylesheet" href="assets/css/style.css">
-
-<!-- CSS SIDEBAR -->
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-/* =========================
-   CONTEÚDO DA PÁGINA
-========================= */
 .content {
   padding: 30px;
   font-size: 14px;
@@ -24,9 +19,8 @@
 
 .card {
   background: #fff;
-  border-radius: 28px;
+  border-radius: 20px;
   padding: 24px;
-  margin-bottom: 24px;
   box-shadow: 0 4px 12px rgba(0,0,0,.05);
 }
 
@@ -34,6 +28,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
 }
 
 button {
@@ -48,7 +43,6 @@ button {
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 16px;
 }
 
 th, td {
@@ -64,7 +58,7 @@ th {
 
 .actions i {
   cursor: pointer;
-  margin-right: 10px;
+  margin-right: 12px;
 }
 
 .actions .fa-trash {
@@ -113,62 +107,70 @@ th {
 
 </div>
 
-<!-- JS SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- =========================
-     TERAPEUTAS
-========================= -->
 <script>
-let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
+/* =========================
+   HELPERS
+========================= */
+function getTerapeutas(){
+  return JSON.parse(localStorage.getItem("terapeutas") || "[]");
+}
 
+function saveTerapeutas(lista){
+  localStorage.setItem("terapeutas", JSON.stringify(lista));
+}
+
+/* =========================
+   DIAS DE FOLGA
+========================= */
 function calcularDiasFolgaAno(t){
   let total = 0;
   const hoje = new Date();
-  const anoAtual = hoje.getFullYear();
-  const inicioAno = new Date(anoAtual,0,1);
+  const inicioAno = new Date(hoje.getFullYear(),0,1);
 
   if (t.temFolga === "Sim" && t.diaFolga) {
     const inicio = new Date(Math.max(new Date(t.dataInicio || inicioAno), inicioAno));
     for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate()+1)) {
-      const diaSemana = d.toLocaleDateString("pt-BR",{weekday:"long"}).toLowerCase();
-      if(diaSemana.includes(t.diaFolga.toLowerCase())) total++;
+      const dia = d.toLocaleDateString("pt-BR",{weekday:"long"}).toLowerCase();
+      if (dia.includes(t.diaFolga.toLowerCase())) total++;
     }
   }
 
-  const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
+  const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || []);
   solicitacoes.forEach(s=>{
-    if(s.status!=="Aprovado") return;
-    if(s.terapeutaNome !== t.nomeProfissional) return;
+    if (s.status !== "Aprovado") return;
+    if (s.terapeutaNome !== t.nomeProfissional) return;
 
     const ini = new Date(s.dataInicio);
     const fim = new Date(s.dataFim);
-    if(isNaN(ini)||isNaN(fim)) return;
+    if (isNaN(ini) || isNaN(fim)) return;
 
-    const inicioReal = ini < inicioAno ? inicioAno : ini;
-    const fimReal = fim > hoje ? hoje : fim;
-    if(fimReal < inicioReal) return;
+    const realIni = ini < inicioAno ? inicioAno : ini;
+    const realFim = fim > hoje ? hoje : fim;
+    if (realFim < realIni) return;
 
-    total += Math.floor((fimReal - inicioReal)/86400000)+1;
+    total += Math.floor((realFim - realIni) / 86400000) + 1;
   });
 
   return total;
 }
 
+/* =========================
+   RENDER
+========================= */
 function render(){
+  let terapeutas = getTerapeutas();
+
+  // ORDENAÇÃO ALFABÉTICA
+  terapeutas.sort((a,b) =>
+    (a.nomeProfissional || "").localeCompare(b.nomeProfissional || "", "pt-BR")
+  );
+
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
-  // 🔹 ORDENA ALFABETICAMENTE PELO NOME
-  const terapeutasOrdenadas = [...terapeutas].sort((a, b) =>
-    (a.nomeProfissional || "").localeCompare(
-      b.nomeProfissional || "",
-      "pt-BR",
-      { sensitivity: "base" }
-    )
-  );
-
-  terapeutasOrdenadas.forEach(t=>{
+  terapeutas.forEach(t=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${t.nomeProfissional || "—"}</td>
@@ -178,8 +180,8 @@ function render(){
       <td>${t.horaEntrada || ""} – ${t.horaSaida || ""}</td>
       <td>${t.status || "—"}</td>
       <td class="actions">
-        <i class="fa-solid fa-pen" onclick="editar(${t.id})"></i>
-        <i class="fa-solid fa-trash" onclick="excluir(${t.id})"></i>
+        <i class="fa-solid fa-pen" title="Editar" onclick="editar('${t.cpf}')"></i>
+        <i class="fa-solid fa-trash" title="Excluir" onclick="excluir('${t.cpf}')"></i>
       </td>
     `;
     tbody.appendChild(tr);
@@ -189,23 +191,27 @@ function render(){
     terapeutas.length + " terapeutas cadastradas";
 }
 
+/* =========================
+   AÇÕES
+========================= */
 function nova(){
-  localStorage.removeItem("editarTerapeutaId");
+  localStorage.removeItem("editarTerapeutaCPF");
   location.href = "nova-terapeuta.html";
 }
 
-function editar(id){
-  localStorage.setItem("editarTerapeutaId", id);
+function editar(cpf){
+  localStorage.setItem("editarTerapeutaCPF", cpf);
   location.href = "nova-terapeuta.html";
 }
 
-function excluir(id){
-  if(!confirm("Excluir terapeuta?")) return;
-  terapeutas = terapeutas.filter(t => t.id !== id);
-  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+function excluir(cpf){
+  if (!confirm("Excluir terapeuta?")) return;
+  let terapeutas = getTerapeutas().filter(t => t.cpf !== cpf);
+  saveTerapeutas(terapeutas);
   render();
 }
 
+/* INIT */
 render();
 </script>
 

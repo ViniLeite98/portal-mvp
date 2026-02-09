@@ -26,7 +26,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
   box-shadow:0 0 8px rgba(0,0,0,.05);
 }
 
-label{ font-weight:600; }
+label{
+  font-weight:600;
+}
 </style>
 </head>
 
@@ -179,49 +181,37 @@ label{ font-weight:600; }
 </div>
 
 <script>
-function apenasNumeros(v){ return v.replace(/\D/g,""); }
+function getTerapeutas(){
+  return JSON.parse(localStorage.getItem("terapeutas") || "[]");
+}
+function saveTerapeutas(lista){
+  localStorage.setItem("terapeutas", JSON.stringify(lista));
+}
 
-let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
-const cpfEdicao = localStorage.getItem("editarTerapeutaCPF");
+const editId = localStorage.getItem("editarTerapeutaId");
 
-/* ===== EDIÇÃO ===== */
-if (cpfEdicao) {
-  const t = terapeutas.find(x => x.cpf === cpfEdicao);
+if (editId) {
+  const t = getTerapeutas().find(x => x.id == editId);
   if (t) {
     titulo.innerText = "Editar Terapeuta";
-    cpf.value = t.cpf;
-    cpf.disabled = true;
-
-    nomeCompleto.value = t.nomeCompleto || "";
-    nomeProfissional.value = t.nomeProfissional || "";
-    nascimento.value = t.nascimento || "";
-    email.value = t.email || "";
-    unidade.value = t.unidade || "";
-    endereco.value = t.endereco || "";
-    contato.value = t.contato || "";
-    contatoEmergencia.value = t.contatoEmergencia || "";
-    tipoChave.value = t.tipoChave || "";
-    chavePix.value = t.chavePix || "";
-    temFolga.value = t.temFolga || "Sim";
-    diaFolga.value = t.diaFolga || "";
-    horaEntrada.value = t.horaEntrada || "";
-    horaSaida.value = t.horaSaida || "";
-    dataInicio.value = t.dataInicio || "";
-    tipoSanguineo.value = t.tipoSanguineo || "";
-    document.querySelector(`input[name="status"][value="${t.status || "Ativo"}"]`).checked = true;
+    Object.keys(t).forEach(k => {
+      if (window[k]) window[k].value = t[k];
+    });
+    document
+      .querySelector(`input[name="status"][value="${t.status || "Ativo"}"]`)
+      .checked = true;
   }
 }
 
-/* ===== SALVAR ===== */
 function salvar(){
-  const cpfLimpo = apenasNumeros(cpf.value);
-  if (!cpfLimpo) return alert("CPF obrigatório");
+  let terapeutas = getTerapeutas();
 
   const dados = {
-    cpf: cpfLimpo,
+    id: editId ? Number(editId) : Date.now(),
     nomeCompleto: nomeCompleto.value,
     nomeProfissional: nomeProfissional.value,
     nascimento: nascimento.value,
+    cpf: cpf.value,
     email: email.value,
     unidade: unidade.value,
     endereco: endereco.value,
@@ -238,12 +228,12 @@ function salvar(){
     status: document.querySelector('input[name="status"]:checked').value
   };
 
-  const idx = terapeutas.findIndex(t => t.cpf === cpfLimpo);
-  if (idx >= 0) terapeutas[idx] = dados;
-  else terapeutas.push(dados);
+  terapeutas = editId
+    ? terapeutas.map(t => t.id == editId ? dados : t)
+    : [...terapeutas, dados];
 
-  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  localStorage.removeItem("editarTerapeutaCPF");
+  localStorage.removeItem("editarTerapeutaId");
+  saveTerapeutas(terapeutas);
   location.href = "equipe.html";
 }
 </script>

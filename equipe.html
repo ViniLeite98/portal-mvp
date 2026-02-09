@@ -8,48 +8,26 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-.content {
-  padding: 30px;
-}
-
-.card {
-  background: #fff;
-  border-radius: 18px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.05);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+.content { padding:30px; }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 15px;
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
 }
 
 th, td {
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
 }
 
 button {
-  background: #1f2937;
-  color: #fff;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.actions button {
-  background: transparent;
-  color: #111;
-  font-size: 16px;
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -57,49 +35,33 @@ button {
 <body>
 
 <div class="app">
-  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
-  <!-- CONTEÚDO -->
   <main class="content">
     <h1>Gestão da Equipe</h1>
-    <p>Terapeutas cadastradas</p>
 
-    <div class="card">
-      <div class="card-header">
-        <h3>Lista de Terapeutas</h3>
-        <button onclick="nova()">+ Nova Terapeuta</button>
-      </div>
+    <button onclick="nova()">+ Nova Terapeuta</button>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>CPF</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="lista">
-          <tr>
-            <td colspan="4">Carregando...</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista">
+        <tr><td colspan="4">Carregando...</td></tr>
+      </tbody>
+    </table>
   </main>
 </div>
 
-<!-- SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
-
-<!-- SUPABASE SDK (UM ÚNICO SCRIPT) -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <script>
-/* ======================================================
-   SUPABASE — CRIADO UMA ÚNICA VEZ
-====================================================== */
 const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
 const SUPABASE_ANON_KEY =
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
@@ -109,51 +71,38 @@ const supabaseClient = supabase.createClient(
   SUPABASE_ANON_KEY
 );
 
-/* ======================================================
-   CARREGAR TERAPEUTAS
-====================================================== */
-async function carregarTerapeutas() {
+async function carregar() {
   const tbody = document.getElementById("lista");
-  tbody.innerHTML = "<tr><td colspan='4'>Carregando...</td></tr>";
 
   const { data, error } = await supabaseClient
     .from("terapeutas")
-    .select("cpf, nome_profissional, status")
-    .order("nome_profissional", { ascending: true });
+    .select("*")
+    .order("nome_profissional");
 
   if (error) {
-    console.error("Erro Supabase:", error);
-    tbody.innerHTML = "<tr><td colspan='4'>Erro ao carregar dados</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='4'>Erro ao carregar</td></tr>";
+    console.error(error);
     return;
   }
 
-  if (!data || data.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='4'>Nenhuma terapeuta cadastrada</td></tr>";
+  if (!data.length) {
+    tbody.innerHTML = "<tr><td colspan='4'>Nenhuma terapeuta</td></tr>";
     return;
   }
 
   tbody.innerHTML = "";
-
   data.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${t.nome_profissional}</td>
       <td>${t.cpf}</td>
       <td>${t.status || "Ativo"}</td>
-      <td class="actions">
-        <button onclick="editar('${t.cpf}')">✏️</button>
+      <td>
+        <button onclick="editar('${t.cpf}')">Editar</button>
       </td>
     `;
     tbody.appendChild(tr);
   });
-}
-
-/* ======================================================
-   AÇÕES
-====================================================== */
-function nova() {
-  localStorage.removeItem("editarTerapeutaCPF");
-  location.href = "nova-terapeuta.html";
 }
 
 function editar(cpf) {
@@ -161,7 +110,12 @@ function editar(cpf) {
   location.href = "nova-terapeuta.html";
 }
 
-carregarTerapeutas();
+function nova() {
+  localStorage.removeItem("editarTerapeutaCPF");
+  location.href = "nova-terapeuta.html";
+}
+
+carregar();
 </script>
 
 </body>

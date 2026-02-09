@@ -4,12 +4,15 @@
 <meta charset="UTF-8">
 <title>Gestão da Equipe</title>
 
+<!-- CSS -->
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<!-- Ícones -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-.content {
+.main-content {
   padding: 30px;
 }
 
@@ -26,6 +29,15 @@
   align-items: center;
 }
 
+button {
+  background: #1f2937;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -35,6 +47,12 @@ table {
 th, td {
   padding: 12px;
   border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+th {
+  font-size: 13px;
+  color: #374151;
 }
 
 .actions i {
@@ -51,9 +69,11 @@ th, td {
 <body>
 
 <div class="app">
+  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
-  <main class="content">
+  <!-- CONTEÚDO -->
+  <main class="main-content">
     <h1>Gestão da Equipe</h1>
     <p>Visão operacional das terapeutas</p>
 
@@ -75,14 +95,18 @@ th, td {
           </tr>
         </thead>
         <tbody id="lista">
-          <tr><td colspan="6">Carregando...</td></tr>
+          <tr>
+            <td colspan="6" style="text-align:center;padding:20px">
+              ⏳ Carregando terapeutas...
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
   </main>
 </div>
 
-<!-- SIDEBAR -->
+<!-- SIDEBAR JS -->
 <script src="assets/sidebar/sidebar.js"></script>
 
 <!-- SUPABASE -->
@@ -98,41 +122,66 @@ const supabase = window.supabase.createClient(
 const lista = document.getElementById("lista");
 
 /* ===============================
-   LOAD TERAPEUTAS
+   LOAD TERAPEUTAS (OTIMIZADO)
 =============================== */
 async function carregarTerapeutas() {
-  lista.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
+  lista.innerHTML = `
+    <tr>
+      <td colspan="6" style="text-align:center;padding:20px">
+        ⏳ Carregando terapeutas...
+      </td>
+    </tr>
+  `;
 
   const { data, error } = await supabase
     .from("terapeutas")
-    .select("*")
+    .select(`
+      cpf,
+      nome_profissional,
+      tem_folga,
+      data_inicio,
+      hora_entrada,
+      hora_saida,
+      status
+    `)
     .order("nome_profissional", { ascending: true });
 
   if (error) {
-    lista.innerHTML = "<tr><td colspan='6'>Erro ao carregar</td></tr>";
     console.error(error);
+    lista.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center;color:red">
+          Erro ao carregar dados
+        </td>
+      </tr>
+    `;
     return;
   }
 
-  lista.innerHTML = "";
+  if (!data || !data.length) {
+    lista.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center">
+          Nenhuma terapeuta cadastrada
+        </td>
+      </tr>
+    `;
+    return;
+  }
 
-  data.forEach(t => {
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>${t.nome_profissional || "—"}</td>
+  lista.innerHTML = data.map(t => `
+    <tr>
+      <td>${t.nome_profissional}</td>
       <td>${t.tem_folga ? "Sim" : "Não"}</td>
       <td>${t.data_inicio || "—"}</td>
       <td>${t.hora_entrada || ""} – ${t.hora_saida || ""}</td>
-      <td>${t.status || "—"}</td>
+      <td>${t.status}</td>
       <td class="actions">
-        <i class="fa-solid fa-pen" onclick="editar('${t.cpf}')"></i>
-        <i class="fa-solid fa-trash" onclick="excluir('${t.cpf}')"></i>
+        <i class="fa-solid fa-pen" title="Editar" onclick="editar('${t.cpf}')"></i>
+        <i class="fa-solid fa-trash" title="Excluir" onclick="excluir('${t.cpf}')"></i>
       </td>
-    `;
-
-    lista.appendChild(tr);
-  });
+    </tr>
+  `).join("");
 }
 
 /* ===============================
@@ -157,7 +206,7 @@ async function excluir(cpf) {
     .eq("cpf", cpf);
 
   if (error) {
-    alert("Erro ao excluir");
+    alert("Erro ao excluir terapeuta");
     console.error(error);
     return;
   }

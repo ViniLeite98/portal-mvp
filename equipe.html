@@ -19,7 +19,7 @@
 ========================= */
 .content {
   padding: 30px;
-  font-size: 14px; /* fonte menor só aqui */
+  font-size: 14px;
 }
 
 .card {
@@ -113,11 +113,11 @@ th {
 
 </div>
 
-<!-- JS DO SIDEBAR -->
+<!-- JS SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
 <!-- =========================
-     TERAPEUTAS (INALTERADO)
+     TERAPEUTAS
 ========================= -->
 <script>
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
@@ -159,7 +159,16 @@ function render(){
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
-  terapeutas.forEach(t=>{
+  // 🔹 ORDENA ALFABETICAMENTE PELO NOME
+  const terapeutasOrdenadas = [...terapeutas].sort((a, b) =>
+    (a.nomeProfissional || "").localeCompare(
+      b.nomeProfissional || "",
+      "pt-BR",
+      { sensitivity: "base" }
+    )
+  );
+
+  terapeutasOrdenadas.forEach(t=>{
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${t.nomeProfissional || "—"}</td>

@@ -4,58 +4,74 @@
 <meta charset="UTF-8">
 <title>Gestão da Equipe</title>
 
-<link rel="stylesheet" href="assets/css/style.css">
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<!-- ÍCONES -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<!-- SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- CSS GLOBAL -->
+<link rel="stylesheet" href="assets/css/style.css">
+
+<!-- CSS SIDEBAR -->
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-.content { padding:30px; font-size:14px; }
+.content {
+  padding: 30px;
+  font-size: 14px;
+}
 
 .card {
-  background:#fff;
-  border-radius:20px;
-  padding:24px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
+  background: #fff;
+  border-radius: 28px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.05);
 }
 
 .card-header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+button {
+  background: #1f2937;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
 }
 
 table {
-  width:100%;
-  border-collapse:collapse;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
 }
 
 th, td {
-  padding:12px 8px;
-  border-bottom:1px solid #e5e7eb;
-  text-align:left;
+  padding: 12px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
 }
 
-th { font-size:13px; color:#374151; }
-
-.actions i {
-  cursor:pointer;
-  margin-right:10px;
+th {
+  font-size: 13px;
+  color: #374151;
 }
 
-.fa-trash { color:#ef4444; }
-.fa-pen { color:#111827; }
+.actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-right: 8px;
+}
 
-button {
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  padding:8px 14px;
-  cursor:pointer;
+.actions .edit {
+  color: #2563eb;
+}
+
+.actions .delete {
+  color: #ef4444;
 }
 </style>
 </head>
@@ -63,15 +79,21 @@ button {
 <body>
 
 <div class="app">
+
+  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
+  <!-- CONTEÚDO -->
   <main class="content">
     <h1>Gestão da Equipe</h1>
     <p>Visão operacional das terapeutas</p>
 
     <div class="card">
       <div class="card-header">
-        <h3>Lista de Terapeutas</h3>
+        <div>
+          <h3>Lista de Terapeutas</h3>
+          <small id="contador">Carregando...</small>
+        </div>
         <button onclick="nova()">+ Nova Terapeuta</button>
       </div>
 
@@ -87,44 +109,42 @@ button {
           </tr>
         </thead>
         <tbody id="lista">
-          <tr><td colspan="6">Carregando…</td></tr>
+          <tr>
+            <td colspan="6">Carregando...</td>
+          </tr>
         </tbody>
       </table>
     </div>
   </main>
+
 </div>
 
-<script src="assets/sidebar/sidebar.js"></script>
+<!-- SIDEBAR + SUPABASE -->
+<script src="assets/sidebar/sidebar.js" type="module"></script>
 
-<script>
-/* =========================
-   SUPABASE CONFIG
-========================= */
-const supabase = window.supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
+<!-- LÓGICA DA PÁGINA -->
+<script type="module">
+const tbody = document.getElementById("lista");
+const contador = document.getElementById("contador");
 
-/* =========================
-   LOAD TERAPEUTAS
-========================= */
-async function carregar() {
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  const { data, error } = await supabase
+async function carregarTerapeutas() {
+  const { data, error } = await window.supabase
     .from("terapeutas")
     .select("*")
     .order("nome_profissional", { ascending: true });
 
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar</td></tr>`;
     console.error(error);
+    tbody.innerHTML = "<tr><td colspan='6'>Erro ao carregar dados</td></tr>";
+    contador.innerText = "Erro";
     return;
   }
 
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="6">Nenhuma terapeuta cadastrada</td></tr>`;
+  contador.innerText = `${data.length} terapeutas cadastradas`;
+  tbody.innerHTML = "";
+
+  if (data.length === 0) {
+    tbody.innerHTML = "<tr><td colspan='6'>Nenhuma terapeuta cadastrada</td></tr>";
     return;
   }
 
@@ -135,6 +155,29 @@ async function carregar() {
       <td>${t.tem_folga || "—"}</td>
       <td>${t.data_inicio || "—"}</td>
       <td>${t.hora_entrada || ""} – ${t.hora_saida || ""}</td>
-      <td>${t.status || "—"}</td>
+      <td>${t.status || "Ativo"}</td>
       <td class="actions">
-        <i class="fa-solid fa
+        <button class="edit" onclick="editar('${t.cpf}')">
+          <i class="fa-solid fa-pen"></i>
+        </button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+window.editar = function(cpf) {
+  localStorage.setItem("editarTerapeutaCPF", cpf);
+  location.href = "nova-terapeuta.html";
+};
+
+window.nova = function() {
+  localStorage.removeItem("editarTerapeutaCPF");
+  location.href = "nova-terapeuta.html";
+};
+
+carregarTerapeutas();
+</script>
+
+</body>
+</html>

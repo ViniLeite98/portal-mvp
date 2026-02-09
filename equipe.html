@@ -11,6 +11,9 @@
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<!-- SUPABASE CLIENT -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
 .content {
   padding: 30px;
@@ -28,21 +31,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-}
-
-button {
-  background: #1f2937;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  cursor: pointer;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  margin-top: 16px;
 }
 
 th, td {
@@ -58,11 +52,20 @@ th {
 
 .actions i {
   cursor: pointer;
-  margin-right: 12px;
+  margin-right: 10px;
 }
 
 .actions .fa-trash {
   color: #ef4444;
+}
+
+button {
+  background: #1f2937;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -83,7 +86,7 @@ th {
       <div class="card-header">
         <div>
           <h3>Lista de Terapeutas</h3>
-          <small id="contador"></small>
+          <small id="contador">Carregando...</small>
         </div>
         <button onclick="nova()">+ Nova Terapeuta</button>
       </div>
@@ -93,7 +96,6 @@ th {
           <tr>
             <th>Nome</th>
             <th>Folga Semanal</th>
-            <th>Dias de Folga/Ano</th>
             <th>Data de Início</th>
             <th>Horário</th>
             <th>Status</th>
@@ -104,115 +106,94 @@ th {
       </table>
     </div>
   </main>
-
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 /* =========================
-   HELPERS
+   SUPABASE CONFIG
 ========================= */
-function getTerapeutas(){
-  return JSON.parse(localStorage.getItem("terapeutas") || "[]");
-}
+const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
 
-function saveTerapeutas(lista){
-  localStorage.setItem("terapeutas", JSON.stringify(lista));
-}
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
 /* =========================
-   DIAS DE FOLGA
+   LISTAR TERAPEUTAS
 ========================= */
-function calcularDiasFolgaAno(t){
-  let total = 0;
-  const hoje = new Date();
-  const inicioAno = new Date(hoje.getFullYear(),0,1);
+async function carregarTerapeutas() {
+  const { data, error } = await supabase
+    .from("terapeutas")
+    .select("*")
+    .order("nome_profissional", { ascending: true });
 
-  if (t.temFolga === "Sim" && t.diaFolga) {
-    const inicio = new Date(Math.max(new Date(t.dataInicio || inicioAno), inicioAno));
-    for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate()+1)) {
-      const dia = d.toLocaleDateString("pt-BR",{weekday:"long"}).toLowerCase();
-      if (dia.includes(t.diaFolga.toLowerCase())) total++;
-    }
+  if (error) {
+    alert("Erro ao carregar terapeutas");
+    console.error(error);
+    return;
   }
-
-  const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || []);
-  solicitacoes.forEach(s=>{
-    if (s.status !== "Aprovado") return;
-    if (s.terapeutaNome !== t.nomeProfissional) return;
-
-    const ini = new Date(s.dataInicio);
-    const fim = new Date(s.dataFim);
-    if (isNaN(ini) || isNaN(fim)) return;
-
-    const realIni = ini < inicioAno ? inicioAno : ini;
-    const realFim = fim > hoje ? hoje : fim;
-    if (realFim < realIni) return;
-
-    total += Math.floor((realFim - realIni) / 86400000) + 1;
-  });
-
-  return total;
-}
-
-/* =========================
-   RENDER
-========================= */
-function render(){
-  let terapeutas = getTerapeutas();
-
-  // ORDENAÇÃO ALFABÉTICA
-  terapeutas.sort((a,b) =>
-    (a.nomeProfissional || "").localeCompare(b.nomeProfissional || "", "pt-BR")
-  );
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
-  terapeutas.forEach(t=>{
+  data.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${t.nomeProfissional || "—"}</td>
-      <td>${t.temFolga || "—"}</td>
-      <td>${calcularDiasFolgaAno(t)}</td>
-      <td>${t.dataInicio || "—"}</td>
-      <td>${t.horaEntrada || ""} – ${t.horaSaida || ""}</td>
+      <td>${t.nome_profissional || "—"}</td>
+      <td>${t.tem_folga || "—"}</td>
+      <td>${t.data_inicio || "—"}</td>
+      <td>${t.hora_entrada || ""} – ${t.hora_saida || ""}</td>
       <td>${t.status || "—"}</td>
       <td class="actions">
-        <i class="fa-solid fa-pen" title="Editar" onclick="editar('${t.cpf}')"></i>
-        <i class="fa-solid fa-trash" title="Excluir" onclick="excluir('${t.cpf}')"></i>
+        <i class="fa-solid fa-pen" onclick="editar('${t.cpf}')"></i>
+        <i class="fa-solid fa-trash" onclick="excluir('${t.cpf}')"></i>
       </td>
     `;
     tbody.appendChild(tr);
   });
 
   document.getElementById("contador").innerText =
-    terapeutas.length + " terapeutas cadastradas";
+    data.length + " terapeutas cadastradas";
 }
 
 /* =========================
    AÇÕES
 ========================= */
-function nova(){
+function nova() {
   localStorage.removeItem("editarTerapeutaCPF");
   location.href = "nova-terapeuta.html";
 }
 
-function editar(cpf){
+function editar(cpf) {
   localStorage.setItem("editarTerapeutaCPF", cpf);
   location.href = "nova-terapeuta.html";
 }
 
-function excluir(cpf){
+async function excluir(cpf) {
   if (!confirm("Excluir terapeuta?")) return;
-  let terapeutas = getTerapeutas().filter(t => t.cpf !== cpf);
-  saveTerapeutas(terapeutas);
-  render();
+
+  const { error } = await supabase
+    .from("terapeutas")
+    .delete()
+    .eq("cpf", cpf);
+
+  if (error) {
+    alert("Erro ao excluir");
+    console.error(error);
+    return;
+  }
+
+  carregarTerapeutas();
 }
 
-/* INIT */
-render();
+/* =========================
+   INIT
+========================= */
+carregarTerapeutas();
 </script>
 
 </body>

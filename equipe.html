@@ -4,64 +4,43 @@
 <meta charset="UTF-8">
 <title>Gestão da Equipe</title>
 
-<!-- CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<!-- Ícones -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <style>
-.main-content {
-  padding: 30px;
-}
+.content { padding:30px; font-size:14px; }
 
 .card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.05);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-button {
-  background: #1f2937;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 16px;
-  cursor: pointer;
+  background:#fff;
+  border-radius:20px;
+  padding:24px;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
 }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
 }
 
 th, td {
-  padding: 12px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
 }
 
-th {
-  font-size: 13px;
-  color: #374151;
-}
+th { font-size:12px; color:#374151; }
 
 .actions i {
-  cursor: pointer;
-  margin-right: 10px;
+  cursor:pointer;
+  margin-right:10px;
 }
+.actions .fa-trash { color:#dc2626; }
 
-.actions .fa-trash {
-  color: #ef4444;
+.loading {
+  padding:20px;
+  color:#6b7280;
 }
 </style>
 </head>
@@ -69,136 +48,112 @@ th {
 <body>
 
 <div class="app">
-  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
-  <!-- CONTEÚDO -->
-  <main class="main-content">
+  <main class="content">
     <h1>Gestão da Equipe</h1>
-    <p>Visão operacional das terapeutas</p>
+    <p>Terapeutas cadastradas</p>
 
     <div class="card">
-      <div class="card-header">
-        <h3>Lista de Terapeutas</h3>
-        <button onclick="novaTerapeuta()">+ Nova Terapeuta</button>
-      </div>
+      <button onclick="nova()" style="margin-bottom:10px">+ Nova Terapeuta</button>
 
-      <table>
+      <div id="status" class="loading">Carregando terapeutas...</div>
+
+      <table id="tabela" style="display:none">
         <thead>
           <tr>
             <th>Nome</th>
-            <th>Folga Semanal</th>
-            <th>Data de Início</th>
-            <th>Horário</th>
+            <th>Email</th>
+            <th>Telefone</th>
             <th>Status</th>
             <th>Ações</th>
           </tr>
         </thead>
-        <tbody id="lista">
-          <tr>
-            <td colspan="6" style="text-align:center;padding:20px">
-              ⏳ Carregando terapeutas...
-            </td>
-          </tr>
-        </tbody>
+        <tbody id="lista"></tbody>
       </table>
     </div>
   </main>
 </div>
 
-<!-- SIDEBAR JS -->
+<!-- SIDEBAR (NÃO TOCAR) -->
 <script src="assets/sidebar/sidebar.js"></script>
 
 <!-- SUPABASE -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+/* =========================
+   SUPABASE CONFIG
+========================= */
+const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
+
 const supabase = window.supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
 );
-</script>
 
-<script>
-const lista = document.getElementById("lista");
+/* =========================
+   LOAD TERAPEUTAS
+========================= */
+async function carregarEquipe() {
+  const status = document.getElementById("status");
+  const tabela = document.getElementById("tabela");
+  const lista = document.getElementById("lista");
 
-/* ===============================
-   LOAD TERAPEUTAS (OTIMIZADO)
-=============================== */
-async function carregarTerapeutas() {
-  lista.innerHTML = `
-    <tr>
-      <td colspan="6" style="text-align:center;padding:20px">
-        ⏳ Carregando terapeutas...
-      </td>
-    </tr>
-  `;
+  status.innerText = "Carregando terapeutas...";
+  lista.innerHTML = "";
 
   const { data, error } = await supabase
     .from("terapeutas")
-    .select(`
-      cpf,
-      nome_profissional,
-      tem_folga,
-      data_inicio,
-      hora_entrada,
-      hora_saida,
-      status
-    `)
+    .select("*")
     .order("nome_profissional", { ascending: true });
 
   if (error) {
+    status.innerText = "Erro ao carregar dados";
     console.error(error);
-    lista.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center;color:red">
-          Erro ao carregar dados
-        </td>
-      </tr>
-    `;
     return;
   }
 
-  if (!data || !data.length) {
-    lista.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align:center">
-          Nenhuma terapeuta cadastrada
-        </td>
-      </tr>
-    `;
+  if (!data.length) {
+    status.innerText = "Nenhuma terapeuta cadastrada";
     return;
   }
 
-  lista.innerHTML = data.map(t => `
-    <tr>
-      <td>${t.nome_profissional}</td>
-      <td>${t.tem_folga ? "Sim" : "Não"}</td>
-      <td>${t.data_inicio || "—"}</td>
-      <td>${t.hora_entrada || ""} – ${t.hora_saida || ""}</td>
-      <td>${t.status}</td>
+  status.style.display = "none";
+  tabela.style.display = "table";
+
+  data.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.nome_profissional || "—"}</td>
+      <td>${t.email || "—"}</td>
+      <td>${t.telefone || "—"}</td>
+      <td>${t.status || "—"}</td>
       <td class="actions">
-        <i class="fa-solid fa-pen" title="Editar" onclick="editar('${t.cpf}')"></i>
-        <i class="fa-solid fa-trash" title="Excluir" onclick="excluir('${t.cpf}')"></i>
+        <i class="fa-solid fa-pen" onclick="editar('${t.cpf}')"></i>
+        <i class="fa-solid fa-trash" onclick="excluir('${t.cpf}')"></i>
       </td>
-    </tr>
-  `).join("");
+    `;
+    lista.appendChild(tr);
+  });
 }
 
-/* ===============================
+/* =========================
    AÇÕES
-=============================== */
-function novaTerapeuta() {
-  localStorage.removeItem("editarCPF");
-  window.location.href = "nova-terapeuta.html";
+========================= */
+function nova(){
+  localStorage.removeItem("editarTerapeutaCPF");
+  location.href = "nova-terapeuta.html";
 }
 
-function editar(cpf) {
-  localStorage.setItem("editarCPF", cpf);
-  window.location.href = "nova-terapeuta.html";
+function editar(cpf){
+  localStorage.setItem("editarTerapeutaCPF", cpf);
+  location.href = "nova-terapeuta.html";
 }
 
-async function excluir(cpf) {
-  if (!confirm("Excluir terapeuta?")) return;
+async function excluir(cpf){
+  if(!confirm("Excluir terapeuta?")) return;
 
   const { error } = await supabase
     .from("terapeutas")
@@ -206,16 +161,17 @@ async function excluir(cpf) {
     .eq("cpf", cpf);
 
   if (error) {
-    alert("Erro ao excluir terapeuta");
-    console.error(error);
+    alert("Erro ao excluir");
     return;
   }
 
-  carregarTerapeutas();
+  carregarEquipe();
 }
 
-/* INIT */
-carregarTerapeutas();
+/* =========================
+   INIT
+========================= */
+carregarEquipe();
 </script>
 
 </body>

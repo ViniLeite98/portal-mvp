@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <title>Cadastro de Terapeuta</title>
 
-<!-- ÍCONES -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<!-- CSS GLOBAL -->
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
@@ -81,8 +78,8 @@ button {
     <div class="section">
       <h3>Contatos</h3>
       <div class="grid grid-2">
-        <div><label>Telefone *</label><input id="telefone" oninput="formatarTelefone(this)"></div>
-        <div><label>Contato Emergência</label><input id="telefoneEmergencia" oninput="formatarTelefone(this)"></div>
+        <div><label>Telefone *</label><input id="telefone"></div>
+        <div><label>Contato Emergência</label><input id="telefoneEmergencia"></div>
       </div>
     </div>
 
@@ -119,20 +116,23 @@ button {
     <div class="section">
       <h3>Dados Funcionais</h3>
       <div class="grid">
-        <div><label>Tem folga semanal?</label>
+        <div>
+          <label>Tem folga semanal?</label>
           <select id="temFolga"><option>Sim</option><option>Não</option></select>
         </div>
-        <div><label>Dia da Folga</label>
+        <div>
+          <label>Dia da Folga</label>
           <select id="diaFolga">
             <option></option><option>Segunda</option><option>Terça</option>
-            <option>Quarta</option><option>Quinta</option><option>Sexta</option>
-            <option>Sábado</option><option>Domingo</option>
+            <option>Quarta</option><option>Quinta</option>
+            <option>Sexta</option><option>Sábado</option><option>Domingo</option>
           </select>
         </div>
         <div><label>Horário Entrada</label><input type="time" id="horaEntrada"></div>
         <div><label>Horário Saída</label><input type="time" id="horaSaida"></div>
         <div><label>Data de Início *</label><input type="date" id="dataInicio"></div>
-        <div><label>Status *</label>
+        <div>
+          <label>Status *</label>
           <select id="status"><option>Ativo</option><option>Inativo</option></select>
         </div>
       </div>
@@ -147,96 +147,89 @@ button {
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-/* =========================
-   VALIDAÇÕES
-========================= */
-function cpfValido(cpf){
-  cpf=cpf.replace(/\D/g,"");
-  if(cpf.length!==11||/^(\d)\1+$/.test(cpf))return false;
-  let s=0;for(let i=0;i<9;i++)s+=cpf[i]*(10-i);
-  let r=(s*10)%11;if(r==10)r=0;if(r!=cpf[9])return false;
-  s=0;for(let i=0;i<10;i++)s+=cpf[i]*(11-i);
-  r=(s*10)%11;if(r==10)r=0;return r==cpf[10];
-}
-function emailValido(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
-function formatarTelefone(i){
-  let v=i.value.replace(/\D/g,"").slice(0,11);
-  i.value=v.length>6?`(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`:
-          v.length>2?`(${v.slice(0,2)}) ${v.slice(2)}`:v;
-}
+function soNumeros(v){ return v.replace(/\D/g,""); }
 
-/* =========================
-   LOAD EDIÇÃO
-========================= */
-let terapeutas=JSON.parse(localStorage.getItem("terapeutas")||"[]");
-const cpfEdit=localStorage.getItem("editarTerapeutaCPF");
-if(cpfEdit){
-  const t=terapeutas.find(x=>x.cpf===cpfEdit);
-  if(t){
-    titulo.innerText="Editar Terapeuta";
-    cpf.value=t.cpf; cpf.disabled=true;
-    nomeCompleto.value=t.nomeCompleto||"";
-    nomeProfissional.value=t.nomeProfissional||"";
-    rg.value=t.rg||"";
-    nascimento.value=t.nascimento||"";
-    email.value=t.email||"";
-    tipoSanguineo.value=t.tipoSanguineo||"";
-    telefone.value=t.telefone||"";
-    telefoneEmergencia.value=t.telefoneEmergencia||"";
-    cep.value=t.endereco?.cep||"";
-    rua.value=t.endereco?.rua||"";
-    numero.value=t.endereco?.numero||"";
-    complemento.value=t.endereco?.complemento||"";
-    bairro.value=t.endereco?.bairro||"";
-    cidade.value=t.endereco?.cidade||"";
-    uf.value=t.endereco?.uf||"";
-    tipoPix.value=t.pix?.tipo||"";
-    chavePix.value=t.pix?.chave||"";
-    temFolga.value=t.temFolga||"Sim";
-    diaFolga.value=t.diaFolga||"";
-    horaEntrada.value=t.horaEntrada||"";
-    horaSaida.value=t.horaSaida||"";
-    dataInicio.value=t.dataInicio||"";
-    status.value=t.status||"Ativo";
+document.addEventListener("DOMContentLoaded", () => {
+
+  let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
+  const cpfEdit = localStorage.getItem("editarTerapeutaCPF");
+
+  /* ===== LOAD EDIÇÃO ===== */
+  if (cpfEdit) {
+    const t = terapeutas.find(x => x.cpf === cpfEdit);
+    if (t) {
+      titulo.innerText = "Editar Terapeuta";
+      cpf.value = t.cpf;
+      cpf.disabled = true;
+
+      nomeCompleto.value = t.nomeCompleto || "";
+      nomeProfissional.value = t.nomeProfissional || "";
+      rg.value = t.rg || "";
+      nascimento.value = t.nascimento || "";
+      email.value = t.email || "";
+      tipoSanguineo.value = t.tipoSanguineo || "";
+      telefone.value = t.telefone || "";
+      telefoneEmergencia.value = t.telefoneEmergencia || "";
+
+      cep.value = t.endereco?.cep || "";
+      rua.value = t.endereco?.rua || "";
+      numero.value = t.endereco?.numero || "";
+      complemento.value = t.endereco?.complemento || "";
+      bairro.value = t.endereco?.bairro || "";
+      cidade.value = t.endereco?.cidade || "";
+      uf.value = t.endereco?.uf || "";
+
+      tipoPix.value = t.pix?.tipo || "";
+      chavePix.value = t.pix?.chave || "";
+
+      temFolga.value = t.temFolga || "Sim";
+      diaFolga.value = t.diaFolga || "";
+      horaEntrada.value = t.horaEntrada || "";
+      horaSaida.value = t.horaSaida || "";
+      dataInicio.value = t.dataInicio || "";
+      status.value = t.status || "Ativo";
+    }
   }
-}
 
-/* =========================
-   SALVAR
-========================= */
-function salvar(){
-  const cpfV=cpf.value.replace(/\D/g,"");
-  if(!cpfValido(cpfV)) return alert("CPF inválido");
-  if(!emailValido(email.value)) return alert("Email inválido");
+  /* ===== SALVAR ===== */
+  window.salvar = function(){
+    const cpfLimpo = soNumeros(cpf.value);
+    if (cpfLimpo.length !== 11) return alert("CPF inválido");
 
-  const obj={
-    cpf:cpfV,
-    nomeCompleto:nomeCompleto.value,
-    nomeProfissional:nomeProfissional.value,
-    rg:rg.value,
-    nascimento:nascimento.value,
-    email:email.value,
-    tipoSanguineo:tipoSanguineo.value,
-    telefone:telefone.value,
-    telefoneEmergencia:telefoneEmergencia.value,
-    endereco:{cep:cep.value,rua:rua.value,numero:numero.value,complemento:complemento.value,bairro:bairro.value,cidade:cidade.value,uf:uf.value},
-    pix:{tipo:tipoPix.value,chave:chavePix.value},
-    temFolga:temFolga.value,
-    diaFolga:diaFolga.value,
-    horaEntrada:horaEntrada.value,
-    horaSaida:horaSaida.value,
-    dataInicio:dataInicio.value,
-    status:status.value
+    const obj = {
+      cpf: cpfLimpo,
+      nomeCompleto: nomeCompleto.value,
+      nomeProfissional: nomeProfissional.value,
+      rg: rg.value,
+      nascimento: nascimento.value,
+      email: email.value,
+      tipoSanguineo: tipoSanguineo.value,
+      telefone: telefone.value,
+      telefoneEmergencia: telefoneEmergencia.value,
+      endereco: {
+        cep: cep.value, rua: rua.value, numero: numero.value,
+        complemento: complemento.value, bairro: bairro.value,
+        cidade: cidade.value, uf: uf.value
+      },
+      pix: { tipo: tipoPix.value, chave: chavePix.value },
+      temFolga: temFolga.value,
+      diaFolga: diaFolga.value,
+      horaEntrada: horaEntrada.value,
+      horaSaida: horaSaida.value,
+      dataInicio: dataInicio.value,
+      status: status.value
+    };
+
+    const i = terapeutas.findIndex(t => t.cpf === cpfLimpo);
+    if (i >= 0) terapeutas[i] = obj;
+    else terapeutas.push(obj);
+
+    localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+    localStorage.removeItem("editarTerapeutaCPF");
+    location.href = "equipe.html";
   };
 
-  const i=terapeutas.findIndex(t=>t.cpf===cpfV);
-  if(i>=0) terapeutas[i]=obj;
-  else terapeutas.push(obj);
-
-  localStorage.setItem("terapeutas",JSON.stringify(terapeutas));
-  localStorage.removeItem("editarTerapeutaCPF");
-  location.href="equipe.html";
-}
+});
 </script>
 
 </body>

@@ -8,8 +8,44 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
+<style>
+.content {
+  padding: 30px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.05);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+th, td {
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.actions i {
+  cursor: pointer;
+  margin-right: 10px;
+}
+
+.actions .fa-trash {
+  color: #ef4444;
+}
+</style>
 </head>
 
 <body>
@@ -24,15 +60,15 @@
     <div class="card">
       <div class="card-header">
         <h3>Lista de Terapeutas</h3>
-        <button onclick="nova()">+ Nova Terapeuta</button>
+        <button onclick="novaTerapeuta()">+ Nova Terapeuta</button>
       </div>
 
       <table>
         <thead>
           <tr>
             <th>Nome</th>
-            <th>Folga</th>
-            <th>Data Início</th>
+            <th>Folga Semanal</th>
+            <th>Data de Início</th>
             <th>Horário</th>
             <th>Status</th>
             <th>Ações</th>
@@ -46,56 +82,91 @@
   </main>
 </div>
 
+<!-- SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
+<!-- SUPABASE -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script>
-async function carregar() {
+const supabase = window.supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
+</script>
+
+<script>
+const lista = document.getElementById("lista");
+
+/* ===============================
+   LOAD TERAPEUTAS
+=============================== */
+async function carregarTerapeutas() {
+  lista.innerHTML = "<tr><td colspan='6'>Carregando...</td></tr>";
+
   const { data, error } = await supabase
     .from("terapeutas")
     .select("*")
-    .order("nome_profissional");
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+    .order("nome_profissional", { ascending: true });
 
   if (error) {
-    tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar</td></tr>`;
+    lista.innerHTML = "<tr><td colspan='6'>Erro ao carregar</td></tr>";
     console.error(error);
     return;
   }
 
-  if (!data.length) {
-    tbody.innerHTML = `<tr><td colspan="6">Nenhuma terapeuta</td></tr>`;
-    return;
-  }
+  lista.innerHTML = "";
 
   data.forEach(t => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${t.nome_profissional}</td>
-        <td>${t.tem_folga ? "Sim" : "Não"}</td>
-        <td>${t.data_inicio || "-"}</td>
-        <td>${t.hora_entrada || ""} - ${t.hora_saida || ""}</td>
-        <td>${t.status}</td>
-        <td>
-          <i class="fa fa-pen" onclick="editar('${t.cpf}')"></i>
-        </td>
-      </tr>
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${t.nome_profissional || "—"}</td>
+      <td>${t.tem_folga ? "Sim" : "Não"}</td>
+      <td>${t.data_inicio || "—"}</td>
+      <td>${t.hora_entrada || ""} – ${t.hora_saida || ""}</td>
+      <td>${t.status || "—"}</td>
+      <td class="actions">
+        <i class="fa-solid fa-pen" onclick="editar('${t.cpf}')"></i>
+        <i class="fa-solid fa-trash" onclick="excluir('${t.cpf}')"></i>
+      </td>
     `;
+
+    lista.appendChild(tr);
   });
 }
 
-window.nova = () => {
+/* ===============================
+   AÇÕES
+=============================== */
+function novaTerapeuta() {
   localStorage.removeItem("editarCPF");
-  location.href = "nova-terapeuta.html";
-};
+  window.location.href = "nova-terapeuta.html";
+}
 
-window.editar = (cpf) => {
+function editar(cpf) {
   localStorage.setItem("editarCPF", cpf);
-  location.href = "nova-terapeuta.html";
-};
+  window.location.href = "nova-terapeuta.html";
+}
 
-carregar();
+async function excluir(cpf) {
+  if (!confirm("Excluir terapeuta?")) return;
+
+  const { error } = await supabase
+    .from("terapeutas")
+    .delete()
+    .eq("cpf", cpf);
+
+  if (error) {
+    alert("Erro ao excluir");
+    console.error(error);
+    return;
+  }
+
+  carregarTerapeutas();
+}
+
+/* INIT */
+carregarTerapeutas();
 </script>
 
 </body>

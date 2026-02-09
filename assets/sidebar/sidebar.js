@@ -1,25 +1,33 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const sidebarContainer = document.getElementById("sidebar");
-  if (!sidebarContainer) return;
+  const sidebar = document.getElementById("sidebar");
+  if (!sidebar) return;
 
-  fetch("assets/sidebar/sidebar.html")
-    .then(res => res.text())
-    .then(html => {
-      sidebarContainer.innerHTML = html;
+  sidebar.innerHTML = `
+    <h2>Hara Spa</h2>
 
-      document.querySelectorAll(".submenu-toggle").forEach(toggle => {
-        toggle.addEventListener("click", e => {
-          e.preventDefault();
-          toggle.parentElement.classList.toggle("open");
-        });
-      });
+    <a href="index.html" data-page="index">
+      <i class="fa-solid fa-house"></i> Início
+    </a>
 
-      // Marca link ativo
-      const current = location.pathname.split("/").pop();
-      document.querySelectorAll(".sidebar a").forEach(link => {
-        if (link.getAttribute("href") === current) {
-          link.classList.add("active");
-        }
-      });
-    });
+    <a href="equipe.html" data-page="equipe">
+      <i class="fa-solid fa-users"></i> Gestão da Equipe
+    </a>
+
+    <a href="nova-terapeuta.html" data-page="nova-terapeuta">
+      <i class="fa-solid fa-user-plus"></i> Nova Terapeuta
+    </a>
+
+    <a href="solicitacoes.html" data-page="solicitacoes">
+      <i class="fa-solid fa-calendar-xmark"></i> Solicitações
+    </a>
+
+    <a href="escalas.html" data-page="escalas">
+      <i class="fa-solid fa-calendar-days"></i> Escalas
+    </a>
+  `;
+
+  const page = location.pathname.split("/").pop().replace(".html", "");
+  sidebar.querySelectorAll("a").forEach(a => {
+    if (a.dataset.page === page) a.classList.add("active");
+  });
 });

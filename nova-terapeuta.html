@@ -1,223 +1,115 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Gestão da Equipe</title>
-
-<!-- ÍCONES -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<!-- CSS GLOBAL -->
-<link rel="stylesheet" href="assets/css/style.css">
-
-<!-- CSS SIDEBAR -->
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
-<style>
-.content {
-  padding: 30px;
-  font-size: 14px;
-}
-
-.card {
-  background: #fff;
-  border-radius: 28px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.05);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-button {
-  background: #1f2937;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  cursor: pointer;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
-}
-
-th, td {
-  padding: 12px 8px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-}
-
-th {
-  font-size: 13px;
-  color: #374151;
-}
-
-.actions i {
-  cursor: pointer;
-  margin-right: 12px;
-}
-
-.actions .fa-trash {
-  color: #ef4444;
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-
-  <!-- SIDEBAR -->
-  <aside id="sidebar"></aside>
-
-  <!-- CONTEÚDO -->
-  <main class="content">
-    <h1>Gestão da Equipe</h1>
-    <p>Visão operacional das terapeutas</p>
-
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <h3>Lista de Terapeutas</h3>
-          <small id="contador"></small>
-        </div>
-        <button onclick="nova()">+ Nova Terapeuta</button>
-      </div>
-
-      <table>
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Folga Semanal</th>
-            <th>Dias de Folga/Ano</th>
-            <th>Data de Início</th>
-            <th>Horário</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="lista"></tbody>
-      </table>
-    </div>
-  </main>
-
-</div>
-
-<!-- JS SIDEBAR -->
-<script src="assets/sidebar/sidebar.js"></script>
-
 <script>
 /* =========================
-   DADOS
+   UTILIDADES
+========================= */
+function apenasNumeros(v){
+  return v.replace(/\D/g,"");
+}
+
+/* =========================
+   CARREGAR TERAPEUTAS
 ========================= */
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
+const cpfEdicao = localStorage.getItem("editarTerapeutaCPF");
 
 /* =========================
-   DIAS DE FOLGA
+   SE FOR EDIÇÃO → PREENCHE
 ========================= */
-function calcularDiasFolgaAno(t){
-  let total = 0;
-  const hoje = new Date();
-  const anoAtual = hoje.getFullYear();
-  const inicioAno = new Date(anoAtual,0,1);
+if (cpfEdicao) {
+  const t = terapeutas.find(t => t.cpf === cpfEdicao);
 
-  if (t.temFolga === "Sim" && t.diaFolga) {
-    const inicio = new Date(Math.max(new Date(t.dataInicio || inicioAno), inicioAno));
-    for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate()+1)) {
-      const diaSemana = d
-        .toLocaleDateString("pt-BR",{weekday:"long"})
-        .toLowerCase();
-      if (diaSemana.includes(t.diaFolga.toLowerCase())) total++;
-    }
+  if (!t) {
+    alert("Terapeuta não encontrada.");
+    localStorage.removeItem("editarTerapeutaCPF");
+  } else {
+    // 🔹 Dados pessoais
+    nomeCompleto.value       = t.nomeCompleto || "";
+    nomeProfissional.value   = t.nomeProfissional || "";
+    cpf.value                = t.cpf || "";
+    cpf.disabled             = true; // 🔒 CPF NÃO EDITA
+    email.value              = t.email || "";
+    dataNascimento.value     = t.dataNascimento || "";
+    tipoSanguineo.value      = t.tipoSanguineo || "";
+
+    // 🔹 Contato
+    contato.value            = t.contato || "";
+    contatoEmergencia.value  = t.contatoEmergencia || "";
+
+    // 🔹 Endereço
+    cep.value                = t.cep || "";
+    rua.value                = t.rua || "";
+    numero.value             = t.numero || "";
+    complemento.value        = t.complemento || "";
+
+    // 🔹 Pagamento
+    tipoChave.value          = t.tipoChave || "";
+    chavePix.value           = t.chavePix || "";
+
+    // 🔹 Funcional
+    temFolga.value           = t.temFolga || "Não";
+    diaFolga.value           = t.diaFolga || "";
+    horaEntrada.value        = t.horaEntrada || "";
+    horaSaida.value          = t.horaSaida || "";
+    dataInicio.value         = t.dataInicio || "";
+    status.value             = t.status || "Ativo";
+  }
+}
+
+/* =========================
+   SALVAR
+========================= */
+function salvar(){
+  const cpfLimpo = apenasNumeros(cpf.value);
+
+  if (cpfLimpo.length !== 11) {
+    alert("CPF inválido");
+    return;
   }
 
-  const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
-  solicitacoes.forEach(s=>{
-    if(s.status!=="Aprovado") return;
-    if(s.terapeutaNome !== t.nomeProfissional) return;
+  if (!email.value.includes("@") || !email.value.includes(".")) {
+    alert("Email inválido");
+    return;
+  }
 
-    const ini = new Date(s.dataInicio);
-    const fim = new Date(s.dataFim);
-    if(isNaN(ini)||isNaN(fim)) return;
+  const terapeuta = {
+    cpf: cpfLimpo,
+    nomeCompleto: nomeCompleto.value,
+    nomeProfissional: nomeProfissional.value,
+    email: email.value,
+    dataNascimento: dataNascimento.value,
+    tipoSanguineo: tipoSanguineo.value,
+    contato: contato.value,
+    contatoEmergencia: contatoEmergencia.value,
+    cep: cep.value,
+    rua: rua.value,
+    numero: numero.value,
+    complemento: complemento.value,
+    tipoChave: tipoChave.value,
+    chavePix: chavePix.value,
+    temFolga: temFolga.value,
+    diaFolga: diaFolga.value,
+    horaEntrada: horaEntrada.value,
+    horaSaida: horaSaida.value,
+    dataInicio: dataInicio.value,
+    status: status.value
+  };
 
-    const inicioReal = ini < inicioAno ? inicioAno : ini;
-    const fimReal = fim > hoje ? hoje : fim;
-    if(fimReal < inicioReal) return;
+  if (cpfEdicao) {
+    // 🔁 ATUALIZA
+    terapeutas = terapeutas.map(t =>
+      t.cpf === cpfEdicao ? terapeuta : t
+    );
+  } else {
+    // ➕ NOVO (evita duplicado)
+    if (terapeutas.some(t => t.cpf === cpfLimpo)) {
+      alert("CPF já cadastrado");
+      return;
+    }
+    terapeutas.push(terapeuta);
+  }
 
-    total += Math.floor((fimReal - inicioReal)/86400000)+1;
-  });
-
-  return total;
-}
-
-/* =========================
-   RENDER
-========================= */
-function render(){
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  // 🔹 ORDEM ALFABÉTICA
-  const ordenadas = [...terapeutas].sort((a,b) =>
-    (a.nomeProfissional || "").localeCompare(
-      b.nomeProfissional || "",
-      "pt-BR",
-      { sensitivity:"base" }
-    )
-  );
-
-  ordenadas.forEach(t=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${t.nomeProfissional || "—"}</td>
-      <td>${t.temFolga || "—"}</td>
-      <td>${calcularDiasFolgaAno(t)}</td>
-      <td>${t.dataInicio || "—"}</td>
-      <td>${t.horaEntrada || ""} – ${t.horaSaida || ""}</td>
-      <td>${t.status || "—"}</td>
-      <td class="actions">
-        <i class="fa-solid fa-pen" title="Editar"
-           onclick="editar('${t.cpf}')"></i>
-        <i class="fa-solid fa-trash" title="Excluir"
-           onclick="excluir('${t.cpf}')"></i>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById("contador").innerText =
-    terapeutas.length + " terapeutas cadastradas";
-}
-
-/* =========================
-   AÇÕES
-========================= */
-function nova(){
-  localStorage.removeItem("editarTerapeutaCPF");
-  location.href = "nova-terapeuta.html";
-}
-
-function editar(cpf){
-  localStorage.setItem("editarTerapeutaCPF", cpf);
-  location.href = "nova-terapeuta.html";
-}
-
-function excluir(cpf){
-  if(!confirm("Excluir terapeuta?")) return;
-  terapeutas = terapeutas.filter(t => t.cpf !== cpf);
   localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-  render();
+  localStorage.removeItem("editarTerapeutaCPF");
+  location.href = "equipe.html";
 }
-
-render();
 </script>
-
-</body>
-</html>

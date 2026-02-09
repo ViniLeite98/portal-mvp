@@ -1,11 +1,16 @@
-// NÃO usar import aqui
-// NÃO usar export aqui
+document.addEventListener("DOMContentLoaded", () => {
+  const sidebarContainer = document.getElementById("sidebar");
+  if (!sidebarContainer) return;
 
-const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
+  fetch("assets/sidebar/sidebar.html")
+    .then(res => res.text())
+    .then(html => {
+      sidebarContainer.innerHTML = html;
 
-// cria o client UMA ÚNICA VEZ
-window.supabase = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
+      document.querySelectorAll(".submenu-toggle").forEach(btn => {
+        btn.addEventListener("click", () => {
+          btn.parentElement.classList.toggle("open");
+        });
+      });
+    });
+});

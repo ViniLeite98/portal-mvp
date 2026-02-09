@@ -1,75 +1,263 @@
-<script>
-/* =========================
-   UTILIDADES
-========================= */
-function apenasNumeros(v){
-  return v.replace(/\D/g,"");
-}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Terapeuta</title>
 
-/* =========================
-   CARREGAR TERAPEUTAS
-========================= */
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+.content { padding:30px; font-size:14px; }
+.card {
+  background:#fff;
+  border-radius:20px;
+  padding:24px;
+  margin-bottom:24px;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+.section-title {
+  font-weight:700;
+  margin-bottom:12px;
+  color:#374151;
+}
+.grid {
+  display:grid;
+  grid-template-columns: repeat(3,1fr);
+  gap:16px;
+}
+.grid-2 { grid-template-columns: repeat(2,1fr); }
+label { font-size:12px; color:#374151; }
+input, select {
+  width:100%;
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+}
+.actions {
+  display:flex;
+  gap:12px;
+}
+button {
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:10px 18px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar"></aside>
+
+  <!-- CONTEÚDO -->
+  <main class="content">
+
+    <h1 id="titulo">Nova Terapeuta</h1>
+    <p>Preencha os dados da terapeuta</p>
+
+    <!-- DADOS PESSOAIS -->
+    <div class="card">
+      <div class="section-title">Dados Pessoais</div>
+      <div class="grid">
+        <div>
+          <label>Nome Completo *</label>
+          <input id="nomeCompleto">
+        </div>
+        <div>
+          <label>Nome Profissional *</label>
+          <input id="nomeProfissional">
+        </div>
+        <div>
+          <label>CPF *</label>
+          <input id="cpf">
+        </div>
+        <div>
+          <label>Email *</label>
+          <input id="email">
+        </div>
+        <div>
+          <label>Data de Nascimento</label>
+          <input id="dataNascimento" type="date">
+        </div>
+        <div>
+          <label>Tipo Sanguíneo</label>
+          <select id="tipoSanguineo">
+            <option value="">—</option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option>
+            <option>O+</option><option>O-</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTATO -->
+    <div class="card">
+      <div class="section-title">Contato</div>
+      <div class="grid-2 grid">
+        <div>
+          <label>Telefone</label>
+          <input id="contato">
+        </div>
+        <div>
+          <label>Contato Emergência</label>
+          <input id="contatoEmergencia">
+        </div>
+      </div>
+    </div>
+
+    <!-- ENDEREÇO -->
+    <div class="card">
+      <div class="section-title">Endereço</div>
+      <div class="grid">
+        <div>
+          <label>CEP</label>
+          <input id="cep">
+        </div>
+        <div>
+          <label>Rua</label>
+          <input id="rua">
+        </div>
+        <div>
+          <label>Número</label>
+          <input id="numero">
+        </div>
+        <div>
+          <label>Complemento</label>
+          <input id="complemento">
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGAMENTO -->
+    <div class="card">
+      <div class="section-title">Pagamento</div>
+      <div class="grid-2 grid">
+        <div>
+          <label>Tipo de Chave Pix</label>
+          <select id="tipoChave">
+            <option value="">—</option>
+            <option>CPF</option>
+            <option>Email</option>
+            <option>Telefone</option>
+            <option>Aleatória</option>
+          </select>
+        </div>
+        <div>
+          <label>Chave Pix</label>
+          <input id="chavePix">
+        </div>
+      </div>
+    </div>
+
+    <!-- FUNCIONAL -->
+    <div class="card">
+      <div class="section-title">Dados Funcionais</div>
+      <div class="grid">
+        <div>
+          <label>Tem folga semanal?</label>
+          <select id="temFolga">
+            <option>Não</option>
+            <option>Sim</option>
+          </select>
+        </div>
+        <div>
+          <label>Dia da Folga</label>
+          <select id="diaFolga">
+            <option value="">—</option>
+            <option>Segunda</option>
+            <option>Terça</option>
+            <option>Quarta</option>
+            <option>Quinta</option>
+            <option>Sexta</option>
+            <option>Sábado</option>
+            <option>Domingo</option>
+          </select>
+        </div>
+        <div>
+          <label>Horário Entrada</label>
+          <input id="horaEntrada" type="time">
+        </div>
+        <div>
+          <label>Horário Saída</label>
+          <input id="horaSaida" type="time">
+        </div>
+        <div>
+          <label>Data de Início</label>
+          <input id="dataInicio" type="date">
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="status">
+            <option>Ativo</option>
+            <option>Inativo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button onclick="salvar()">Salvar</button>
+      <button onclick="location.href='equipe.html'">Cancelar</button>
+    </div>
+
+  </main>
+</div>
+
+<!-- SIDEBAR -->
+<script src="assets/sidebar/sidebar.js"></script>
+
+<!-- =========================
+     SCRIPT PRINCIPAL
+========================= -->
+<script>
+function $(id){ return document.getElementById(id); }
+function apenasNumeros(v){ return v.replace(/\D/g,""); }
+
 let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 const cpfEdicao = localStorage.getItem("editarTerapeutaCPF");
 
-/* =========================
-   SE FOR EDIÇÃO → PREENCHE
-========================= */
 if (cpfEdicao) {
   const t = terapeutas.find(t => t.cpf === cpfEdicao);
-
-  if (!t) {
-    alert("Terapeuta não encontrada.");
-    localStorage.removeItem("editarTerapeutaCPF");
-  } else {
-    // 🔹 Dados pessoais
-    nomeCompleto.value       = t.nomeCompleto || "";
-    nomeProfissional.value   = t.nomeProfissional || "";
-    cpf.value                = t.cpf || "";
-    cpf.disabled             = true; // 🔒 CPF NÃO EDITA
-    email.value              = t.email || "";
-    dataNascimento.value     = t.dataNascimento || "";
-    tipoSanguineo.value      = t.tipoSanguineo || "";
-
-    // 🔹 Contato
-    contato.value            = t.contato || "";
-    contatoEmergencia.value  = t.contatoEmergencia || "";
-
-    // 🔹 Endereço
-    cep.value                = t.cep || "";
-    rua.value                = t.rua || "";
-    numero.value             = t.numero || "";
-    complemento.value        = t.complemento || "";
-
-    // 🔹 Pagamento
-    tipoChave.value          = t.tipoChave || "";
-    chavePix.value           = t.chavePix || "";
-
-    // 🔹 Funcional
-    temFolga.value           = t.temFolga || "Não";
-    diaFolga.value           = t.diaFolga || "";
-    horaEntrada.value        = t.horaEntrada || "";
-    horaSaida.value          = t.horaSaida || "";
-    dataInicio.value         = t.dataInicio || "";
-    status.value             = t.status || "Ativo";
+  if (t) {
+    titulo.innerText = "Editar Terapeuta";
+    nomeCompleto.value = t.nomeCompleto || "";
+    nomeProfissional.value = t.nomeProfissional || "";
+    cpf.value = t.cpf; cpf.disabled = true;
+    email.value = t.email || "";
+    dataNascimento.value = t.dataNascimento || "";
+    tipoSanguineo.value = t.tipoSanguineo || "";
+    contato.value = t.contato || "";
+    contatoEmergencia.value = t.contatoEmergencia || "";
+    cep.value = t.cep || "";
+    rua.value = t.rua || "";
+    numero.value = t.numero || "";
+    complemento.value = t.complemento || "";
+    tipoChave.value = t.tipoChave || "";
+    chavePix.value = t.chavePix || "";
+    temFolga.value = t.temFolga || "Não";
+    diaFolga.value = t.diaFolga || "";
+    horaEntrada.value = t.horaEntrada || "";
+    horaSaida.value = t.horaSaida || "";
+    dataInicio.value = t.dataInicio || "";
+    status.value = t.status || "Ativo";
   }
 }
 
-/* =========================
-   SALVAR
-========================= */
 function salvar(){
   const cpfLimpo = apenasNumeros(cpf.value);
 
-  if (cpfLimpo.length !== 11) {
-    alert("CPF inválido");
-    return;
-  }
-
-  if (!email.value.includes("@") || !email.value.includes(".")) {
-    alert("Email inválido");
-    return;
-  }
+  if (cpfLimpo.length !== 11) return alert("CPF inválido");
+  if (!email.value.includes("@") || !email.value.includes(".")) return alert("Email inválido");
 
   const terapeuta = {
     cpf: cpfLimpo,
@@ -95,16 +283,9 @@ function salvar(){
   };
 
   if (cpfEdicao) {
-    // 🔁 ATUALIZA
-    terapeutas = terapeutas.map(t =>
-      t.cpf === cpfEdicao ? terapeuta : t
-    );
+    terapeutas = terapeutas.map(t => t.cpf === cpfEdicao ? terapeuta : t);
   } else {
-    // ➕ NOVO (evita duplicado)
-    if (terapeutas.some(t => t.cpf === cpfLimpo)) {
-      alert("CPF já cadastrado");
-      return;
-    }
+    if (terapeutas.some(t => t.cpf === cpfLimpo)) return alert("CPF já cadastrado");
     terapeutas.push(terapeuta);
   }
 
@@ -113,3 +294,6 @@ function salvar(){
   location.href = "equipe.html";
 }
 </script>
+
+</body>
+</html>

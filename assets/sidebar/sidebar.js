@@ -7,10 +7,19 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(html => {
       sidebarContainer.innerHTML = html;
 
-      document.querySelectorAll(".submenu-toggle").forEach(btn => {
-        btn.addEventListener("click", () => {
-          btn.parentElement.classList.toggle("open");
+      document.querySelectorAll(".submenu-toggle").forEach(toggle => {
+        toggle.addEventListener("click", e => {
+          e.preventDefault();
+          toggle.parentElement.classList.toggle("open");
         });
+      });
+
+      // Marca link ativo
+      const current = location.pathname.split("/").pop();
+      document.querySelectorAll(".sidebar a").forEach(link => {
+        if (link.getAttribute("href") === current) {
+          link.classList.add("active");
+        }
       });
     });
 });

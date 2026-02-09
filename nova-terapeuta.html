@@ -4,9 +4,12 @@
 <meta charset="UTF-8">
 <title>Cadastro de Terapeuta</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
 .content { padding:30px; font-size:14px; }
@@ -21,8 +24,8 @@
 
 .section h3 {
   margin-bottom:16px;
-  padding-bottom:8px;
   border-bottom:1px solid #e5e7eb;
+  padding-bottom:6px;
 }
 
 .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
@@ -30,16 +33,20 @@
 
 label { font-weight:600; font-size:13px; }
 input, select {
-  width:100%; padding:6px;
+  width:100%;
+  padding:6px;
   border-radius:6px;
   border:1px solid #d1d5db;
 }
 
 .actions { margin-top:20px; }
 button {
-  background:#1f2937; color:#fff;
-  border:none; border-radius:8px;
-  padding:10px 18px; cursor:pointer;
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:10px 18px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -56,21 +63,12 @@ button {
     <div class="section">
       <h3>Dados Pessoais</h3>
       <div class="grid">
-        <div><label>Nome Completo *</label><input id="nomeCompleto"></div>
-        <div><label>Nome Profissional *</label><input id="nomeProfissional"></div>
+        <div><label>Nome Completo *</label><input id="nome_completo"></div>
+        <div><label>Nome Profissional *</label><input id="nome_profissional"></div>
         <div><label>CPF *</label><input id="cpf"></div>
         <div><label>RG</label><input id="rg"></div>
         <div><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
         <div><label>Email *</label><input id="email"></div>
-        <div>
-          <label>Tipo Sanguíneo</label>
-          <select id="tipoSanguineo">
-            <option></option><option>A+</option><option>A-</option>
-            <option>B+</option><option>B-</option>
-            <option>AB+</option><option>AB-</option>
-            <option>O+</option><option>O-</option>
-          </select>
-        </div>
       </div>
     </div>
 
@@ -79,36 +77,7 @@ button {
       <h3>Contatos</h3>
       <div class="grid grid-2">
         <div><label>Telefone *</label><input id="telefone"></div>
-        <div><label>Contato Emergência</label><input id="telefoneEmergencia"></div>
-      </div>
-    </div>
-
-    <!-- ENDEREÇO -->
-    <div class="section">
-      <h3>Endereço</h3>
-      <div class="grid">
-        <div><label>CEP</label><input id="cep"></div>
-        <div><label>Rua</label><input id="rua"></div>
-        <div><label>Número</label><input id="numero"></div>
-        <div><label>Complemento</label><input id="complemento"></div>
-        <div><label>Bairro</label><input id="bairro"></div>
-        <div><label>Cidade</label><input id="cidade"></div>
-        <div><label>UF</label><input id="uf"></div>
-      </div>
-    </div>
-
-    <!-- PAGAMENTO -->
-    <div class="section">
-      <h3>Dados de Pagamento</h3>
-      <div class="grid grid-2">
-        <div>
-          <label>Tipo de Chave PIX</label>
-          <select id="tipoPix">
-            <option></option><option>CPF</option><option>Email</option>
-            <option>Telefone</option><option>Aleatória</option>
-          </select>
-        </div>
-        <div><label>Chave PIX</label><input id="chavePix"></div>
+        <div><label>Contato Emergência</label><input id="telefone_emergencia"></div>
       </div>
     </div>
 
@@ -118,22 +87,29 @@ button {
       <div class="grid">
         <div>
           <label>Tem folga semanal?</label>
-          <select id="temFolga"><option>Sim</option><option>Não</option></select>
+          <select id="tem_folga">
+            <option>Sim</option>
+            <option>Não</option>
+          </select>
         </div>
         <div>
           <label>Dia da Folga</label>
-          <select id="diaFolga">
-            <option></option><option>Segunda</option><option>Terça</option>
+          <select id="dia_folga">
+            <option></option>
+            <option>Segunda</option><option>Terça</option>
             <option>Quarta</option><option>Quinta</option>
             <option>Sexta</option><option>Sábado</option><option>Domingo</option>
           </select>
         </div>
-        <div><label>Horário Entrada</label><input type="time" id="horaEntrada"></div>
-        <div><label>Horário Saída</label><input type="time" id="horaSaida"></div>
-        <div><label>Data de Início *</label><input type="date" id="dataInicio"></div>
+        <div><label>Horário Entrada</label><input type="time" id="hora_entrada"></div>
+        <div><label>Horário Saída</label><input type="time" id="hora_saida"></div>
+        <div><label>Data de Início *</label><input type="date" id="data_inicio"></div>
         <div>
           <label>Status *</label>
-          <select id="status"><option>Ativo</option><option>Inativo</option></select>
+          <select id="status">
+            <option>Ativo</option>
+            <option>Inativo</option>
+          </select>
         </div>
       </div>
     </div>
@@ -147,89 +123,100 @@ button {
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-function soNumeros(v){ return v.replace(/\D/g,""); }
+/* =========================
+   SUPABASE CONFIG
+========================= */
+const supabase = window.supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
 
-document.addEventListener("DOMContentLoaded", () => {
+const cpfEdit = localStorage.getItem("editarTerapeutaCPF");
 
-  let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
-  const cpfEdit = localStorage.getItem("editarTerapeutaCPF");
+/* =========================
+   LOAD EDIÇÃO
+========================= */
+async function carregarEdicao() {
+  if (!cpfEdit) return;
 
-  /* ===== LOAD EDIÇÃO ===== */
-  if (cpfEdit) {
-    const t = terapeutas.find(x => x.cpf === cpfEdit);
-    if (t) {
-      titulo.innerText = "Editar Terapeuta";
-      cpf.value = t.cpf;
-      cpf.disabled = true;
+  document.getElementById("titulo").innerText = "Editar Terapeuta";
 
-      nomeCompleto.value = t.nomeCompleto || "";
-      nomeProfissional.value = t.nomeProfissional || "";
-      rg.value = t.rg || "";
-      nascimento.value = t.nascimento || "";
-      email.value = t.email || "";
-      tipoSanguineo.value = t.tipoSanguineo || "";
-      telefone.value = t.telefone || "";
-      telefoneEmergencia.value = t.telefoneEmergencia || "";
+  const { data, error } = await supabase
+    .from("terapeutas")
+    .select("*")
+    .eq("cpf", cpfEdit)
+    .single();
 
-      cep.value = t.endereco?.cep || "";
-      rua.value = t.endereco?.rua || "";
-      numero.value = t.endereco?.numero || "";
-      complemento.value = t.endereco?.complemento || "";
-      bairro.value = t.endereco?.bairro || "";
-      cidade.value = t.endereco?.cidade || "";
-      uf.value = t.endereco?.uf || "";
+  if (error || !data) return;
 
-      tipoPix.value = t.pix?.tipo || "";
-      chavePix.value = t.pix?.chave || "";
+  cpf.value = data.cpf;
+  cpf.disabled = true;
 
-      temFolga.value = t.temFolga || "Sim";
-      diaFolga.value = t.diaFolga || "";
-      horaEntrada.value = t.horaEntrada || "";
-      horaSaida.value = t.horaSaida || "";
-      dataInicio.value = t.dataInicio || "";
-      status.value = t.status || "Ativo";
-    }
+  nome_completo.value = data.nome_completo || "";
+  nome_profissional.value = data.nome_profissional || "";
+  rg.value = data.rg || "";
+  nascimento.value = data.nascimento || "";
+  email.value = data.email || "";
+  telefone.value = data.telefone || "";
+  telefone_emergencia.value = data.telefone_emergencia || "";
+  tem_folga.value = data.tem_folga || "Sim";
+  dia_folga.value = data.dia_folga || "";
+  hora_entrada.value = data.hora_entrada || "";
+  hora_saida.value = data.hora_saida || "";
+  data_inicio.value = data.data_inicio || "";
+  status.value = data.status || "Ativo";
+}
+
+carregarEdicao();
+
+/* =========================
+   SALVAR (INSERT / UPDATE)
+========================= */
+async function salvar() {
+  if (!cpf.value || !email.value) {
+    alert("CPF e Email são obrigatórios");
+    return;
   }
 
-  /* ===== SALVAR ===== */
-  window.salvar = function(){
-    const cpfLimpo = soNumeros(cpf.value);
-    if (cpfLimpo.length !== 11) return alert("CPF inválido");
-
-    const obj = {
-      cpf: cpfLimpo,
-      nomeCompleto: nomeCompleto.value,
-      nomeProfissional: nomeProfissional.value,
-      rg: rg.value,
-      nascimento: nascimento.value,
-      email: email.value,
-      tipoSanguineo: tipoSanguineo.value,
-      telefone: telefone.value,
-      telefoneEmergencia: telefoneEmergencia.value,
-      endereco: {
-        cep: cep.value, rua: rua.value, numero: numero.value,
-        complemento: complemento.value, bairro: bairro.value,
-        cidade: cidade.value, uf: uf.value
-      },
-      pix: { tipo: tipoPix.value, chave: chavePix.value },
-      temFolga: temFolga.value,
-      diaFolga: diaFolga.value,
-      horaEntrada: horaEntrada.value,
-      horaSaida: horaSaida.value,
-      dataInicio: dataInicio.value,
-      status: status.value
-    };
-
-    const i = terapeutas.findIndex(t => t.cpf === cpfLimpo);
-    if (i >= 0) terapeutas[i] = obj;
-    else terapeutas.push(obj);
-
-    localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
-    localStorage.removeItem("editarTerapeutaCPF");
-    location.href = "equipe.html";
+  const payload = {
+    cpf: cpf.value.replace(/\D/g, ""),
+    nome_completo: nome_completo.value,
+    nome_profissional: nome_profissional.value,
+    rg: rg.value,
+    nascimento: nascimento.value,
+    email: email.value,
+    telefone: telefone.value,
+    telefone_emergencia: telefone_emergencia.value,
+    tem_folga: tem_folga.value,
+    dia_folga: dia_folga.value,
+    hora_entrada: hora_entrada.value,
+    hora_saida: hora_saida.value,
+    data_inicio: data_inicio.value,
+    status: status.value
   };
 
-});
+  let result;
+
+  if (cpfEdit) {
+    result = await supabase
+      .from("terapeutas")
+      .update(payload)
+      .eq("cpf", cpfEdit);
+  } else {
+    result = await supabase
+      .from("terapeutas")
+      .insert(payload);
+  }
+
+  if (result.error) {
+    alert("Erro ao salvar");
+    console.error(result.error);
+    return;
+  }
+
+  localStorage.removeItem("editarTerapeutaCPF");
+  location.href = "equipe.html";
+}
 </script>
 
 </body>

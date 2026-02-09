@@ -2,47 +2,70 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Cadastro de Terapeuta</title>
+<title>Gestão da Equipe</title>
 
 <!-- ÍCONES -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <!-- CSS GLOBAL -->
 <link rel="stylesheet" href="assets/css/style.css">
+
+<!-- CSS SIDEBAR -->
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-.content { padding:30px; font-size:14px; }
-
-.section {
-  background:#fff;
-  border-radius:20px;
-  padding:24px;
-  margin-bottom:24px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
+.content {
+  padding: 30px;
+  font-size: 14px;
 }
 
-.section h3 {
-  margin-bottom:16px;
-  padding-bottom:8px;
-  border-bottom:1px solid #e5e7eb;
+.card {
+  background: #fff;
+  border-radius: 28px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.05);
 }
 
-.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-.grid-2 { grid-template-columns:repeat(2,1fr); }
-
-label { font-weight:600; font-size:13px; }
-input, select {
-  width:100%; padding:6px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-.actions { margin-top:20px; }
 button {
-  background:#1f2937; color:#fff;
-  border:none; border-radius:8px;
-  padding:10px 18px; cursor:pointer;
+  background: #1f2937;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+th, td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+th {
+  font-size: 13px;
+  color: #374151;
+}
+
+.actions i {
+  cursor: pointer;
+  margin-right: 12px;
+}
+
+.actions .fa-trash {
+  color: #ef4444;
 }
 </style>
 </head>
@@ -50,193 +73,150 @@ button {
 <body>
 
 <div class="app">
+
+  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
+  <!-- CONTEÚDO -->
   <main class="content">
-    <h1 id="titulo">Nova Terapeuta</h1>
+    <h1>Gestão da Equipe</h1>
+    <p>Visão operacional das terapeutas</p>
 
-    <!-- DADOS PESSOAIS -->
-    <div class="section">
-      <h3>Dados Pessoais</h3>
-      <div class="grid">
-        <div><label>Nome Completo *</label><input id="nomeCompleto"></div>
-        <div><label>Nome Profissional *</label><input id="nomeProfissional"></div>
-        <div><label>CPF *</label><input id="cpf"></div>
-        <div><label>RG</label><input id="rg"></div>
-        <div><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
-        <div><label>Email *</label><input id="email"></div>
+    <div class="card">
+      <div class="card-header">
         <div>
-          <label>Tipo Sanguíneo</label>
-          <select id="tipoSanguineo">
-            <option></option><option>A+</option><option>A-</option>
-            <option>B+</option><option>B-</option>
-            <option>AB+</option><option>AB-</option>
-            <option>O+</option><option>O-</option>
-          </select>
+          <h3>Lista de Terapeutas</h3>
+          <small id="contador"></small>
         </div>
+        <button onclick="nova()">+ Nova Terapeuta</button>
       </div>
-    </div>
 
-    <!-- CONTATOS -->
-    <div class="section">
-      <h3>Contatos</h3>
-      <div class="grid grid-2">
-        <div><label>Telefone *</label><input id="telefone" oninput="formatarTelefone(this)"></div>
-        <div><label>Contato Emergência</label><input id="telefoneEmergencia" oninput="formatarTelefone(this)"></div>
-      </div>
-    </div>
-
-    <!-- ENDEREÇO -->
-    <div class="section">
-      <h3>Endereço</h3>
-      <div class="grid">
-        <div><label>CEP</label><input id="cep"></div>
-        <div><label>Rua</label><input id="rua"></div>
-        <div><label>Número</label><input id="numero"></div>
-        <div><label>Complemento</label><input id="complemento"></div>
-        <div><label>Bairro</label><input id="bairro"></div>
-        <div><label>Cidade</label><input id="cidade"></div>
-        <div><label>UF</label><input id="uf"></div>
-      </div>
-    </div>
-
-    <!-- PAGAMENTO -->
-    <div class="section">
-      <h3>Dados de Pagamento</h3>
-      <div class="grid grid-2">
-        <div>
-          <label>Tipo de Chave PIX</label>
-          <select id="tipoPix">
-            <option></option><option>CPF</option><option>Email</option>
-            <option>Telefone</option><option>Aleatória</option>
-          </select>
-        </div>
-        <div><label>Chave PIX</label><input id="chavePix"></div>
-      </div>
-    </div>
-
-    <!-- FUNCIONAL -->
-    <div class="section">
-      <h3>Dados Funcionais</h3>
-      <div class="grid">
-        <div><label>Tem folga semanal?</label>
-          <select id="temFolga"><option>Sim</option><option>Não</option></select>
-        </div>
-        <div><label>Dia da Folga</label>
-          <select id="diaFolga">
-            <option></option><option>Segunda</option><option>Terça</option>
-            <option>Quarta</option><option>Quinta</option><option>Sexta</option>
-            <option>Sábado</option><option>Domingo</option>
-          </select>
-        </div>
-        <div><label>Horário Entrada</label><input type="time" id="horaEntrada"></div>
-        <div><label>Horário Saída</label><input type="time" id="horaSaida"></div>
-        <div><label>Data de Início *</label><input type="date" id="dataInicio"></div>
-        <div><label>Status *</label>
-          <select id="status"><option>Ativo</option><option>Inativo</option></select>
-        </div>
-      </div>
-    </div>
-
-    <div class="actions">
-      <button onclick="salvar()">Salvar</button>
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Folga Semanal</th>
+            <th>Dias de Folga/Ano</th>
+            <th>Data de Início</th>
+            <th>Horário</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
     </div>
   </main>
+
 </div>
 
+<!-- JS SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 /* =========================
-   VALIDAÇÕES
+   DADOS
 ========================= */
-function cpfValido(cpf){
-  cpf=cpf.replace(/\D/g,"");
-  if(cpf.length!==11||/^(\d)\1+$/.test(cpf))return false;
-  let s=0;for(let i=0;i<9;i++)s+=cpf[i]*(10-i);
-  let r=(s*10)%11;if(r==10)r=0;if(r!=cpf[9])return false;
-  s=0;for(let i=0;i<10;i++)s+=cpf[i]*(11-i);
-  r=(s*10)%11;if(r==10)r=0;return r==cpf[10];
-}
-function emailValido(e){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);}
-function formatarTelefone(i){
-  let v=i.value.replace(/\D/g,"").slice(0,11);
-  i.value=v.length>6?`(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`:
-          v.length>2?`(${v.slice(0,2)}) ${v.slice(2)}`:v;
-}
+let terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]");
 
 /* =========================
-   LOAD EDIÇÃO
+   DIAS DE FOLGA
 ========================= */
-let terapeutas=JSON.parse(localStorage.getItem("terapeutas")||"[]");
-const cpfEdit=localStorage.getItem("editarTerapeutaCPF");
-if(cpfEdit){
-  const t=terapeutas.find(x=>x.cpf===cpfEdit);
-  if(t){
-    titulo.innerText="Editar Terapeuta";
-    cpf.value=t.cpf; cpf.disabled=true;
-    nomeCompleto.value=t.nomeCompleto||"";
-    nomeProfissional.value=t.nomeProfissional||"";
-    rg.value=t.rg||"";
-    nascimento.value=t.nascimento||"";
-    email.value=t.email||"";
-    tipoSanguineo.value=t.tipoSanguineo||"";
-    telefone.value=t.telefone||"";
-    telefoneEmergencia.value=t.telefoneEmergencia||"";
-    cep.value=t.endereco?.cep||"";
-    rua.value=t.endereco?.rua||"";
-    numero.value=t.endereco?.numero||"";
-    complemento.value=t.endereco?.complemento||"";
-    bairro.value=t.endereco?.bairro||"";
-    cidade.value=t.endereco?.cidade||"";
-    uf.value=t.endereco?.uf||"";
-    tipoPix.value=t.pix?.tipo||"";
-    chavePix.value=t.pix?.chave||"";
-    temFolga.value=t.temFolga||"Sim";
-    diaFolga.value=t.diaFolga||"";
-    horaEntrada.value=t.horaEntrada||"";
-    horaSaida.value=t.horaSaida||"";
-    dataInicio.value=t.dataInicio||"";
-    status.value=t.status||"Ativo";
+function calcularDiasFolgaAno(t){
+  let total = 0;
+  const hoje = new Date();
+  const anoAtual = hoje.getFullYear();
+  const inicioAno = new Date(anoAtual,0,1);
+
+  if (t.temFolga === "Sim" && t.diaFolga) {
+    const inicio = new Date(Math.max(new Date(t.dataInicio || inicioAno), inicioAno));
+    for (let d = new Date(inicio); d <= hoje; d.setDate(d.getDate()+1)) {
+      const diaSemana = d
+        .toLocaleDateString("pt-BR",{weekday:"long"})
+        .toLowerCase();
+      if (diaSemana.includes(t.diaFolga.toLowerCase())) total++;
+    }
   }
+
+  const solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || "[]");
+  solicitacoes.forEach(s=>{
+    if(s.status!=="Aprovado") return;
+    if(s.terapeutaNome !== t.nomeProfissional) return;
+
+    const ini = new Date(s.dataInicio);
+    const fim = new Date(s.dataFim);
+    if(isNaN(ini)||isNaN(fim)) return;
+
+    const inicioReal = ini < inicioAno ? inicioAno : ini;
+    const fimReal = fim > hoje ? hoje : fim;
+    if(fimReal < inicioReal) return;
+
+    total += Math.floor((fimReal - inicioReal)/86400000)+1;
+  });
+
+  return total;
 }
 
 /* =========================
-   SALVAR
+   RENDER
 ========================= */
-function salvar(){
-  const cpfV=cpf.value.replace(/\D/g,"");
-  if(!cpfValido(cpfV)) return alert("CPF inválido");
-  if(!emailValido(email.value)) return alert("Email inválido");
+function render(){
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
 
-  const obj={
-    cpf:cpfV,
-    nomeCompleto:nomeCompleto.value,
-    nomeProfissional:nomeProfissional.value,
-    rg:rg.value,
-    nascimento:nascimento.value,
-    email:email.value,
-    tipoSanguineo:tipoSanguineo.value,
-    telefone:telefone.value,
-    telefoneEmergencia:telefoneEmergencia.value,
-    endereco:{cep:cep.value,rua:rua.value,numero:numero.value,complemento:complemento.value,bairro:bairro.value,cidade:cidade.value,uf:uf.value},
-    pix:{tipo:tipoPix.value,chave:chavePix.value},
-    temFolga:temFolga.value,
-    diaFolga:diaFolga.value,
-    horaEntrada:horaEntrada.value,
-    horaSaida:horaSaida.value,
-    dataInicio:dataInicio.value,
-    status:status.value
-  };
+  // 🔹 ORDEM ALFABÉTICA
+  const ordenadas = [...terapeutas].sort((a,b) =>
+    (a.nomeProfissional || "").localeCompare(
+      b.nomeProfissional || "",
+      "pt-BR",
+      { sensitivity:"base" }
+    )
+  );
 
-  const i=terapeutas.findIndex(t=>t.cpf===cpfV);
-  if(i>=0) terapeutas[i]=obj;
-  else terapeutas.push(obj);
+  ordenadas.forEach(t=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.nomeProfissional || "—"}</td>
+      <td>${t.temFolga || "—"}</td>
+      <td>${calcularDiasFolgaAno(t)}</td>
+      <td>${t.dataInicio || "—"}</td>
+      <td>${t.horaEntrada || ""} – ${t.horaSaida || ""}</td>
+      <td>${t.status || "—"}</td>
+      <td class="actions">
+        <i class="fa-solid fa-pen" title="Editar"
+           onclick="editar('${t.cpf}')"></i>
+        <i class="fa-solid fa-trash" title="Excluir"
+           onclick="excluir('${t.cpf}')"></i>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 
-  localStorage.setItem("terapeutas",JSON.stringify(terapeutas));
-  localStorage.removeItem("editarTerapeutaCPF");
-  location.href="equipe.html";
+  document.getElementById("contador").innerText =
+    terapeutas.length + " terapeutas cadastradas";
 }
+
+/* =========================
+   AÇÕES
+========================= */
+function nova(){
+  localStorage.removeItem("editarTerapeutaCPF");
+  location.href = "nova-terapeuta.html";
+}
+
+function editar(cpf){
+  localStorage.setItem("editarTerapeutaCPF", cpf);
+  location.href = "nova-terapeuta.html";
+}
+
+function excluir(cpf){
+  if(!confirm("Excluir terapeuta?")) return;
+  terapeutas = terapeutas.filter(t => t.cpf !== cpf);
+  localStorage.setItem("terapeutas", JSON.stringify(terapeutas));
+  render();
+}
+
+render();
 </script>
 
 </body>

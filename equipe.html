@@ -4,68 +4,58 @@
 <meta charset="UTF-8">
 <title>Gestão da Equipe</title>
 
-<!-- ÍCONES -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<!-- CSS GLOBAL -->
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<!-- SUPABASE CLIENT -->
+<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-.content {
-  padding: 30px;
-  font-size: 14px;
-}
+.content { padding:30px; font-size:14px; }
 
 .card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.05);
+  background:#fff;
+  border-radius:20px;
+  padding:24px;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
 }
 
 .card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
 }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
+  width:100%;
+  border-collapse:collapse;
 }
 
 th, td {
-  padding: 12px 8px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
+  padding:12px 8px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
 }
 
-th {
-  font-size: 13px;
-  color: #374151;
-}
+th { font-size:13px; color:#374151; }
 
 .actions i {
-  cursor: pointer;
-  margin-right: 10px;
+  cursor:pointer;
+  margin-right:10px;
 }
 
-.actions .fa-trash {
-  color: #ef4444;
-}
+.fa-trash { color:#ef4444; }
+.fa-pen { color:#111827; }
 
 button {
-  background: #1f2937;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  cursor: pointer;
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:8px 14px;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -73,21 +63,15 @@ button {
 <body>
 
 <div class="app">
-
-  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
-  <!-- CONTEÚDO -->
   <main class="content">
     <h1>Gestão da Equipe</h1>
     <p>Visão operacional das terapeutas</p>
 
     <div class="card">
       <div class="card-header">
-        <div>
-          <h3>Lista de Terapeutas</h3>
-          <small id="contador">Carregando...</small>
-        </div>
+        <h3>Lista de Terapeutas</h3>
         <button onclick="nova()">+ Nova Terapeuta</button>
       </div>
 
@@ -102,7 +86,9 @@ button {
             <th>Ações</th>
           </tr>
         </thead>
-        <tbody id="lista"></tbody>
+        <tbody id="lista">
+          <tr><td colspan="6">Carregando…</td></tr>
+        </tbody>
       </table>
     </div>
   </main>
@@ -114,31 +100,33 @@ button {
 /* =========================
    SUPABASE CONFIG
 ========================= */
-const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
-
 const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 /* =========================
-   LISTAR TERAPEUTAS
+   LOAD TERAPEUTAS
 ========================= */
-async function carregarTerapeutas() {
+async function carregar() {
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
   const { data, error } = await supabase
     .from("terapeutas")
     .select("*")
     .order("nome_profissional", { ascending: true });
 
   if (error) {
-    alert("Erro ao carregar terapeutas");
+    tbody.innerHTML = `<tr><td colspan="6">Erro ao carregar</td></tr>`;
     console.error(error);
     return;
   }
 
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+  if (!data.length) {
+    tbody.innerHTML = `<tr><td colspan="6">Nenhuma terapeuta cadastrada</td></tr>`;
+    return;
+  }
 
   data.forEach(t => {
     const tr = document.createElement("tr");
@@ -149,52 +137,4 @@ async function carregarTerapeutas() {
       <td>${t.hora_entrada || ""} – ${t.hora_saida || ""}</td>
       <td>${t.status || "—"}</td>
       <td class="actions">
-        <i class="fa-solid fa-pen" onclick="editar('${t.cpf}')"></i>
-        <i class="fa-solid fa-trash" onclick="excluir('${t.cpf}')"></i>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-
-  document.getElementById("contador").innerText =
-    data.length + " terapeutas cadastradas";
-}
-
-/* =========================
-   AÇÕES
-========================= */
-function nova() {
-  localStorage.removeItem("editarTerapeutaCPF");
-  location.href = "nova-terapeuta.html";
-}
-
-function editar(cpf) {
-  localStorage.setItem("editarTerapeutaCPF", cpf);
-  location.href = "nova-terapeuta.html";
-}
-
-async function excluir(cpf) {
-  if (!confirm("Excluir terapeuta?")) return;
-
-  const { error } = await supabase
-    .from("terapeutas")
-    .delete()
-    .eq("cpf", cpf);
-
-  if (error) {
-    alert("Erro ao excluir");
-    console.error(error);
-    return;
-  }
-
-  carregarTerapeutas();
-}
-
-/* =========================
-   INIT
-========================= */
-carregarTerapeutas();
-</script>
-
-</body>
-</html>
+        <i class="fa-solid fa

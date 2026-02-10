@@ -8,6 +8,36 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+.content { padding:30px; }
+.section {
+  background:#fff;
+  padding:24px;
+  border-radius:16px;
+  margin-bottom:24px;
+}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+.grid-2 { grid-template-columns:repeat(2,1fr); }
+label { font-weight:600; font-size:13px; }
+input, select {
+  width:100%; padding:8px;
+  border:1px solid #d1d5db;
+  border-radius:6px;
+}
+button {
+  background:#1f2937;
+  color:#fff;
+  padding:10px 18px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+</style>
 </head>
 
 <body>
@@ -16,55 +46,87 @@
   <aside id="sidebar"></aside>
 
   <main class="content">
-    <h1>Nova Terapeuta</h1>
+    <h1 id="titulo">Nova Terapeuta</h1>
 
     <!-- DADOS PESSOAIS -->
-    <div class="card">
+    <div class="section">
       <h3>Dados Pessoais</h3>
-      <input id="nomeCompleto" placeholder="Nome Completo">
-      <input id="nomeProfissional" placeholder="Nome Profissional">
-      <input id="cpf" placeholder="CPF">
-      <input id="rg" placeholder="RG">
-      <input type="date" id="nascimento">
-      <input id="email" placeholder="Email">
+      <div class="grid">
+        <div><label>Nome Completo *</label><input id="nome_completo"></div>
+        <div><label>Nome Profissional *</label><input id="nome_profissional"></div>
+        <div><label>CPF *</label><input id="cpf"></div>
+
+        <div><label>RG</label><input id="rg"></div>
+        <div><label>Data Nascimento</label><input type="date" id="nascimento"></div>
+        <div><label>Email *</label><input id="email"></div>
+
+        <div>
+          <label>Tipo Sanguíneo</label>
+          <select id="tipo_sanguineo">
+            <option></option>
+            <option>A+</option><option>A-</option>
+            <option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option>
+            <option>O+</option><option>O-</option>
+          </select>
+        </div>
+      </div>
     </div>
 
-    <!-- CONTATO -->
-    <div class="card">
-      <h3>Contato</h3>
-      <input id="telefone" placeholder="Telefone">
-      <input id="telefoneEmergencia" placeholder="Contato Emergência">
+    <!-- CONTATOS -->
+    <div class="section">
+      <h3>Contatos</h3>
+      <div class="grid-2 grid">
+        <div><label>Telefone *</label><input id="telefone"></div>
+        <div><label>Contato Emergência</label><input id="telefone_emergencia"></div>
+      </div>
     </div>
 
     <!-- ENDEREÇO -->
-    <div class="card">
+    <div class="section">
       <h3>Endereço</h3>
-      <input id="cep" placeholder="CEP">
-      <input id="rua" placeholder="Rua">
-      <input id="numero" placeholder="Número">
-      <input id="bairro" placeholder="Bairro">
-      <input id="cidade" placeholder="Cidade">
-      <input id="uf" placeholder="UF">
+      <div class="grid">
+        <div><label>CEP</label><input id="cep"></div>
+        <div><label>Rua</label><input id="rua"></div>
+        <div><label>Número</label><input id="numero"></div>
+        <div><label>Complemento</label><input id="complemento"></div>
+        <div><label>Bairro</label><input id="bairro"></div>
+        <div><label>Cidade</label><input id="cidade"></div>
+        <div><label>UF</label><input id="uf"></div>
+      </div>
+    </div>
+
+    <!-- PAGAMENTO -->
+    <div class="section">
+      <h3>Pagamento</h3>
+      <div class="grid-2 grid">
+        <div>
+          <label>Tipo PIX</label>
+          <select id="pix_tipo">
+            <option></option>
+            <option>CPF</option>
+            <option>Email</option>
+            <option>Telefone</option>
+            <option>Aleatória</option>
+          </select>
+        </div>
+        <div><label>Chave PIX</label><input id="pix_chave"></div>
+      </div>
     </div>
 
     <!-- FUNCIONAL -->
-    <div class="card">
+    <div class="section">
       <h3>Dados Funcionais</h3>
-      <select id="temFolga">
-        <option>Sim</option>
-        <option>Não</option>
-      </select>
-      <input id="diaFolga" placeholder="Dia da Folga">
-      <input type="time" id="horaEntrada">
-      <input type="time" id="horaSaida">
-      <input type="date" id="dataInicio">
-      <select id="status">
-        <option>Ativo</option>
-        <option>Inativo</option>
-      </select>
+      <div class="grid">
+        <div><label>Tem folga?</label><select id="tem_folga"><option>Sim</option><option>Não</option></select></div>
+        <div><label>Dia Folga</label><input id="dia_folga"></div>
+        <div><label>Hora Entrada</label><input type="time" id="hora_entrada"></div>
+        <div><label>Hora Saída</label><input type="time" id="hora_saida"></div>
+        <div><label>Data Início</label><input type="date" id="data_inicio"></div>
+        <div><label>Status</label><select id="status"><option>Ativo</option><option>Inativo</option></select></div>
+      </div>
     </div>
 
-    <br>
     <button onclick="salvar()">Salvar</button>
   </main>
 </div>
@@ -72,106 +134,44 @@
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
-const SUPABASE_ANON_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
-
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
+const supabase = supabaseJs.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-document.addEventListener("DOMContentLoaded", carregarEdicao);
+const params = new URLSearchParams(window.location.search);
+const cpfEdit = params.get("cpf");
 
-async function carregarEdicao() {
-  const cpfEdit = localStorage.getItem("editarTerapeutaCPF");
-  if (!cpfEdit) return;
+if (cpfEdit) carregarEdicao(cpfEdit);
 
-  const { data, error } = await supabaseClient
-    .from("terapeutas")
-    .select("*")
-    .eq("cpf", cpfEdit)
-    .single();
+async function carregarEdicao(cpf) {
+  document.getElementById("titulo").innerText = "Editar Terapeuta";
+  const { data } = await supabase.from("terapeutas").select("*").eq("cpf", cpf).single();
 
-  if (error || !data) {
-    console.error(error);
-    return;
+  for (const k in data) {
+    if (document.getElementById(k)) {
+      document.getElementById(k).value = data[k] ?? "";
+    }
   }
 
-  nomeCompleto.value = data.nome_completo || "";
-  nomeProfissional.value = data.nome_profissional || "";
-  cpf.value = data.cpf || "";
-  rg.value = data.rg || "";
-  nascimento.value = data.data_nascimento || "";
-  email.value = data.email || "";
-  telefone.value = data.telefone || "";
-  telefoneEmergencia.value = data.telefone_emergencia || "";
-
-  cep.value = data.cep || "";
-  rua.value = data.rua || "";
-  numero.value = data.numero || "";
-  bairro.value = data.bairro || "";
-  cidade.value = data.cidade || "";
-  uf.value = data.uf || "";
-
-  temFolga.value = data.tem_folga || "Sim";
-  diaFolga.value = data.dia_folga || "";
-  horaEntrada.value = data.hora_entrada || "";
-  horaSaida.value = data.hora_saida || "";
-  dataInicio.value = data.data_inicio || "";
-  status.value = data.status || "Ativo";
-
-  cpf.disabled = true;
+  document.getElementById("cpf").disabled = true;
 }
 
 async function salvar() {
-  const cpfEdit = localStorage.getItem("editarTerapeutaCPF");
+  const payload = {};
+  document.querySelectorAll("input, select").forEach(i => payload[i.id] = i.value);
 
-  const payload = {
-    nome_completo: nomeCompleto.value,
-    nome_profissional: nomeProfissional.value,
-    cpf: cpf.value,
-    rg: rg.value,
-    data_nascimento: nascimento.value,
-    email: email.value,
-    telefone: telefone.value,
-    telefone_emergencia: telefoneEmergencia.value,
-    cep: cep.value,
-    rua: rua.value,
-    numero: numero.value,
-    bairro: bairro.value,
-    cidade: cidade.value,
-    uf: uf.value,
-    tem_folga: temFolga.value,
-    dia_folga: diaFolga.value,
-    hora_entrada: horaEntrada.value,
-    hora_saida: horaSaida.value,
-    data_inicio: dataInicio.value,
-    status: status.value
-  };
+  const { error } = await supabase
+    .from("terapeutas")
+    .upsert(payload, { onConflict: "cpf" });
 
-  let result;
-
-  if (cpfEdit) {
-    result = await supabaseClient
-      .from("terapeutas")
-      .update(payload)
-      .eq("cpf", cpfEdit);
-  } else {
-    result = await supabaseClient
-      .from("terapeutas")
-      .insert([payload]);
-  }
-
-  if (result.error) {
+  if (error) {
     alert("Erro ao salvar");
-    console.error(result.error);
-    return;
+    console.error(error);
+  } else {
+    alert("Salvo com sucesso");
+    window.location.href = "equipe.html";
   }
-
-  localStorage.removeItem("editarTerapeutaCPF");
-  alert("Salvo com sucesso");
-  location.href = "equipe.html";
 }
 </script>
 

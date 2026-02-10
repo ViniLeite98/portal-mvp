@@ -6,8 +6,24 @@
 
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+input, select {
+  width:100%;
+  padding:8px;
+  margin-bottom:10px;
+}
+button {
+  background:#1f2937;
+  color:#fff;
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+}
+</style>
 </head>
 
 <body>
@@ -19,10 +35,7 @@
     <h1 id="titulo">Nova Terapeuta</h1>
 
     <label>Nome Completo</label>
-    <input id="nomeCompleto">
-
-    <label>Nome Profissional</label>
-    <input id="nomeProfissional">
+    <input id="nome_completo">
 
     <label>CPF</label>
     <input id="cpf">
@@ -31,10 +44,10 @@
     <input id="email">
 
     <label>Dia da Folga</label>
-    <input id="diaFolga">
+    <input id="dia_folga">
 
     <label>Data de Início</label>
-    <input type="date" id="dataInicio">
+    <input type="date" id="data_inicio">
 
     <label>Status</label>
     <select id="status">
@@ -42,7 +55,6 @@
       <option>Inativo</option>
     </select>
 
-    <br><br>
     <button onclick="salvar()">Salvar</button>
   </main>
 </div>
@@ -51,7 +63,8 @@
 
 <script>
 const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
+const SUPABASE_ANON_KEY =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
 
 const supabase = window.supabase.createClient(
   SUPABASE_URL,
@@ -61,12 +74,11 @@ const supabase = window.supabase.createClient(
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-if (id) {
-  document.getElementById("titulo").innerText = "Editar Terapeuta";
-  carregar();
-}
+if (id) carregarEdicao();
 
-async function carregar() {
+async function carregarEdicao() {
+  document.getElementById("titulo").innerText = "Editar Terapeuta";
+
   const { data, error } = await supabase
     .from("terapeutas")
     .select("*")
@@ -74,27 +86,25 @@ async function carregar() {
     .single();
 
   if (error) {
-    alert("Erro ao carregar");
+    console.error(error);
     return;
   }
 
-  nomeCompleto.value = data.nome_completo || "";
-  nomeProfissional.value = data.nome_profissional || "";
-  cpf.value = data.cpf || "";
-  email.value = data.email || "";
-  diaFolga.value = data.dia_folga || "";
-  dataInicio.value = data.data_inicio || "";
-  status.value = data.status || "Ativo";
+  nome_completo.value = data.nome_completo;
+  cpf.value = data.cpf;
+  email.value = data.email;
+  dia_folga.value = data.dia_folga;
+  data_inicio.value = data.data_inicio;
+  status.value = data.status;
 }
 
 async function salvar() {
   const payload = {
-    nome_completo: nomeCompleto.value,
-    nome_profissional: nomeProfissional.value,
+    nome_completo: nome_completo.value,
     cpf: cpf.value,
     email: email.value,
-    dia_folga: diaFolga.value,
-    data_inicio: dataInicio.value,
+    dia_folga: dia_folga.value,
+    data_inicio: data_inicio.value,
     status: status.value
   };
 
@@ -107,7 +117,7 @@ async function salvar() {
   } else {
     result = await supabase
       .from("terapeutas")
-      .insert([payload]);
+      .insert(payload);
   }
 
   if (result.error) {
@@ -116,7 +126,7 @@ async function salvar() {
     return;
   }
 
-  window.location.href = "equipe.html";
+  location.href = "equipe.html";
 }
 </script>
 

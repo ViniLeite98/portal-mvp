@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Gestão da Equipe</title>
 
 <link rel="stylesheet" href="assets/css/style.css">
@@ -10,60 +10,32 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-.content {
-  padding: 30px;
+.content { padding:30px; }
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
 }
 
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
+th, td {
+  padding:10px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
 }
 
-.table th, .table td {
-  padding: 12px 10px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-  font-size: 14px;
+button {
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+  margin-right:5px;
 }
 
-.table th {
-  color: #374151;
-  font-weight: 600;
-}
-
-.actions button {
-  margin-right: 6px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.btn-edit {
-  background: #2563eb;
-  color: #fff;
-}
-
-.btn-delete {
-  background: #dc2626;
-  color: #fff;
-}
-
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.top-bar button {
-  background: #1f2937;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  cursor: pointer;
+button.danger {
+  background:#b91c1c;
 }
 </style>
 </head>
@@ -71,46 +43,33 @@
 <body>
 
 <div class="app">
-  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
-  <!-- CONTEÚDO -->
   <main class="content">
-    <div class="top-bar">
-      <div>
-        <h1>Gestão da Equipe</h1>
-        <p>Terapeutas cadastradas</p>
-      </div>
-      <button onclick="novaTerapeuta()">+ Nova Terapeuta</button>
-    </div>
+    <h1>Gestão da Equipe</h1>
+    <p>Terapeutas cadastradas</p>
 
-    <table class="table">
+    <button onclick="nova()">+ Nova Terapeuta</button>
+
+    <table>
       <thead>
         <tr>
-          <th>Nome Profissional</th>
+          <th>Nome</th>
           <th>CPF</th>
-          <th>Folga</th>
-          <th>Data de Início</th>
           <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
       <tbody id="lista">
-        <tr>
-          <td colspan="6">Carregando...</td>
-        </tr>
+        <tr><td colspan="4">Carregando...</td></tr>
       </tbody>
     </table>
   </main>
 </div>
 
-<!-- SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-/* =========================
-   SUPABASE (UMA ÚNICA VEZ)
-========================= */
 const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
 const SUPABASE_ANON_KEY =
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
@@ -120,25 +79,22 @@ const supabaseClient = supabase.createClient(
   SUPABASE_ANON_KEY
 );
 
-/* =========================
-   CARREGAR EQUIPE
-========================= */
-async function carregarEquipe() {
+async function carregar() {
   const tbody = document.getElementById("lista");
 
   const { data, error } = await supabaseClient
     .from("terapeutas")
     .select("*")
-    .order("nome_profissional", { ascending: true });
+    .order("nome_profissional");
 
   if (error) {
     console.error(error);
-    tbody.innerHTML = "<tr><td colspan='6'>Erro ao carregar dados</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='4'>Erro ao carregar</td></tr>";
     return;
   }
 
   if (!data || data.length === 0) {
-    tbody.innerHTML = "<tr><td colspan='6'>Nenhuma terapeuta cadastrada</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='4'>Nenhuma terapeuta cadastrada</td></tr>";
     return;
   }
 
@@ -148,30 +104,25 @@ async function carregarEquipe() {
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${t.nome_profissional || ""}</td>
-      <td>${t.cpf || ""}</td>
-      <td>${t.dia_folga || "-"}</td>
-      <td>${t.data_inicio || "-"}</td>
+      <td>${t.cpf}</td>
       <td>${t.status || "Ativo"}</td>
-      <td class="actions">
-        <button class="btn-edit" onclick="editar('${t.cpf}')">Editar</button>
-        <button class="btn-delete" onclick="excluir('${t.cpf}')">Excluir</button>
+      <td>
+        <button onclick="editar('${t.cpf}')">Editar</button>
+        <button class="danger" onclick="excluir('${t.cpf}')">Excluir</button>
       </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-/* =========================
-   AÇÕES
-========================= */
-function novaTerapeuta() {
-  localStorage.removeItem("editarTerapeutaCPF");
-  window.location.href = "nova-terapeuta.html";
-}
-
 function editar(cpf) {
   localStorage.setItem("editarTerapeutaCPF", cpf);
-  window.location.href = "nova-terapeuta.html";
+  location.href = "nova-terapeuta.html";
+}
+
+function nova() {
+  localStorage.removeItem("editarTerapeutaCPF");
+  location.href = "nova-terapeuta.html";
 }
 
 async function excluir(cpf) {
@@ -188,11 +139,10 @@ async function excluir(cpf) {
     return;
   }
 
-  carregarEquipe();
+  carregar();
 }
 
-/* INIT */
-carregarEquipe();
+carregar();
 </script>
 
 </body>

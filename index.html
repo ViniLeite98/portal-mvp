@@ -23,15 +23,14 @@
 
 .card {
   background:#fff;
-  border-radius:20px;
-  padding:22px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
+  border-radius:22px;
+  padding:24px;
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
 }
 
-.big { font-size:46px; font-weight:700; margin:10px 0 }
+.big { font-size:48px; font-weight:700; margin:10px 0 }
 
-.rank p { margin:6px 0; font-size:14px }
-
+/* ===== DASHBOARD ROW ===== */
 .dashboard-row {
   display:grid;
   grid-template-columns:3fr 1fr;
@@ -39,13 +38,13 @@
   margin-top:30px;
 }
 
-/* FORÇA DE TRABALHO */
+/* ===== FORÇA DE TRABALHO ===== */
 .workforce {
   display:flex;
   align-items:flex-end;
-  gap:14px;
-  height:170px;
-  margin-top:20px;
+  gap:18px;
+  height:190px;
+  margin-top:24px;
 }
 
 .bar-wrap {
@@ -55,16 +54,18 @@
   gap:6px;
 }
 
-.bar {
-  width:34px;
-  background:#9db7e5;
-  border-radius:8px 8px 0 0;
-  height:6px;
-}
-
 .qtd {
   font-size:12px;
   font-weight:600;
+  color:#1f2937;
+}
+
+.bar {
+  width:34px;
+  border-radius:10px 10px 0 0;
+  background:linear-gradient(180deg,#9db7e5,#4f6fad);
+  height:8px;
+  transition:height .4s ease;
 }
 
 .hour {
@@ -72,10 +73,16 @@
   color:#6b7280;
 }
 
-/* CARGA HORÁRIA */
+/* ===== CARGA HORÁRIA ===== */
 .carga p {
-  margin:8px 0;
+  margin:10px 0;
   font-size:14px;
+  display:flex;
+  justify-content:space-between;
+}
+
+.carga span {
+  font-weight:600;
 }
 </style>
 </head>
@@ -109,7 +116,7 @@
 
       <div class="card">
         <h3>Dias Folgados</h3>
-        <div id="folgas-hoje" class="rank">
+        <div id="folgas-hoje">
           <p>Carregando...</p>
         </div>
         <small>Relatório completo</small>
@@ -123,7 +130,6 @@
       <!-- FORÇA DE TRABALHO -->
       <div class="card">
         <h3>Força de Trabalho</h3>
-
         <div class="workforce" id="workforce-bars"></div>
       </div>
 
@@ -133,7 +139,7 @@
         <div id="carga-horaria">
           <p>Carregando...</p>
         </div>
-        <small>Relatório completo</small>
+        <small>Baseado no horário de entrada e saída</small>
       </div>
 
     </div>
@@ -148,7 +154,10 @@ const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
 const SUPABASE_ANON_KEY =
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
 /* =====================
    EQUIPE
@@ -220,7 +229,7 @@ async function carregarForcaTrabalho() {
 }
 
 /* =====================
-   CARGA HORÁRIA
+   CARGA HORÁRIA REAL
 ===================== */
 async function carregarCargaHoraria() {
 
@@ -232,11 +241,18 @@ async function carregarCargaHoraria() {
   const lista = data
     ?.map(t => {
       if (!t.hora_entrada || !t.hora_saida) return null;
-      const inicio = parseInt(t.hora_entrada.split(":")[0]);
-      const fim = parseInt(t.hora_saida.split(":")[0]);
+
+      const [hi, mi] = t.hora_entrada.split(":").map(Number);
+      const [hf, mf] = t.hora_saida.split(":").map(Number);
+
+      const inicio = hi + mi / 60;
+      const fim = hf + mf / 60;
+
+      if (fim <= inicio) return null;
+
       return {
         nome: t.nome_profissi,
-        horas: Math.max(fim - inicio, 0)
+        horas: (fim - inicio).toFixed(1)
       };
     })
     .filter(Boolean)
@@ -246,13 +262,18 @@ async function carregarCargaHoraria() {
   const box = document.getElementById("carga-horaria");
   box.innerHTML = "";
 
-  if (!lista?.length) {
-    box.innerHTML = "<p>Sem dados</p>";
+  if (!lista.length) {
+    box.innerHTML = "<p>Sem dados válidos</p>";
     return;
   }
 
   lista.forEach(t => {
-    box.innerHTML += `<p>${t.nome}: ${t.horas} horas</p>`;
+    box.innerHTML += `
+      <p>
+        ${t.nome}
+        <span>${t.horas}h</span>
+      </p>
+    `;
   });
 }
 

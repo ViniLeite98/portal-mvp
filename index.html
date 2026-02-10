@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<!-- SUPABASE -->
+<!-- SUPABASE (estável) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
 <style>
@@ -23,12 +23,15 @@
 
 .card {
   background:#fff;
-  border-radius:22px;
-  padding:24px;
-  box-shadow:0 6px 18px rgba(0,0,0,.06);
+  border-radius:20px;
+  padding:20px;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
 }
 
-.big { font-size:48px; font-weight:700; margin:10px 0 }
+.big {
+  font-size:42px;
+  font-weight:700;
+}
 
 .dashboard-row {
   display:grid;
@@ -37,50 +40,39 @@
   margin-top:30px;
 }
 
-/* FORÇA DE TRABALHO */
+/* Força de trabalho */
 .workforce {
   display:flex;
   align-items:flex-end;
-  gap:16px;
-  height:190px;
-  margin-top:24px;
+  gap:14px;
+  height:160px;
+  margin-top:20px;
 }
 
 .bar-wrap {
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:6px;
-}
-
-.qtd {
-  font-size:12px;
-  font-weight:600;
+  gap:4px;
 }
 
 .bar {
-  width:34px;
-  background:linear-gradient(180deg,#9db7e5,#4f6fad);
-  border-radius:10px 10px 0 0;
-  height:6px;
+  width:30px;
+  background:#4f6fad;
+  border-radius:6px 6px 0 0;
 }
 
-.hour {
-  font-size:12px;
-  color:#6b7280;
-}
+.qtd { font-size:12px; font-weight:600 }
+.hour { font-size:12px; color:#6b7280 }
 
-/* CARGA HORÁRIA */
+/* Carga horária */
 .carga p {
-  margin:10px 0;
-  font-size:14px;
   display:flex;
   justify-content:space-between;
+  margin:6px 0;
+  font-size:14px;
 }
-
-.carga span {
-  font-weight:600;
-}
+.carga span { font-weight:600 }
 </style>
 </head>
 
@@ -96,36 +88,38 @@
 
     <!-- CARDS -->
     <div class="cards">
+
       <div class="card">
         <h3>Equipe</h3>
-        <div id="total-ativas" class="big">--</div>
-        <small>Terapeutas ativas</small>
+        <div id="total-equipe" class="big">--</div>
+        <small>Total de terapeutas</small>
       </div>
 
       <div class="card">
         <h3>Próximas Datas</h3>
-        <p>Agenda institucional</p>
+        <p>Em desenvolvimento</p>
       </div>
 
       <div class="card">
         <h3>Dias Folgados</h3>
-        <p>Gerenciado por solicitações</p>
+        <p>Em desenvolvimento</p>
       </div>
+
     </div>
 
-    <!-- FORÇA + CARGA -->
+    <!-- FORÇA DE TRABALHO + CARGA -->
     <div class="dashboard-row">
+
       <div class="card">
         <h3>Força de Trabalho</h3>
-        <div id="workforce-bars" class="workforce"></div>
+        <div id="forca" class="workforce"></div>
       </div>
 
       <div class="card carga">
         <h3>Carga Horária</h3>
-        <div id="carga-horaria">
-          <p>Carregando...</p>
-        </div>
+        <div id="carga">Carregando…</div>
       </div>
+
     </div>
 
   </main>
@@ -136,112 +130,110 @@
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
 
+  if (!window.supabase) {
+    alert("Supabase não carregou");
+    return;
+  }
+
   const supabaseClient = window.supabase.createClient(
     "https://rymehgsoarjeecuwyhny.supabase.co",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmVzc2UiLCJyZWYiOiJyeW1laGdzb2FyamVlY3V3eWhueSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzcwNjU3NDg1LCJleHAiOjIwODYyMzM0ODV9.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
   );
 
-  /* EQUIPE */
-  async function carregarEquipe() {
-    const { data } = await supabaseClient
-      .from("terapeutas")
-      .select("cpf,status");
+  /* =========================
+     BUSCA BASE (SEM FILTRO)
+  ========================= */
+  const { data, error } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissi,hora_entrada,hora_saida,status");
 
-    const ativas = data.filter(
-      t => !t.status || t.status.toLowerCase() === "ativo"
-    );
-
-    document.getElementById("total-ativas").innerText = ativas.length;
+  if (error) {
+    console.error("Erro Supabase:", error);
+    alert("Erro ao buscar terapeutas");
+    return;
   }
 
-  /* FORÇA DE TRABALHO */
-  async function carregarForcaTrabalho() {
-    const { data } = await supabaseClient
-      .from("terapeutas")
-      .select("hora_entrada,hora_saida,status");
+  console.log("TERAPEUTAS:", data);
 
-    const horas = {};
-    for (let h = 9; h <= 21; h++) horas[h] = 0;
+  /* =========================
+     EQUIPE
+  ========================= */
+  document.getElementById("total-equipe").innerText = data.length;
 
-    data.forEach(t => {
-      if (t.status && t.status.toLowerCase() !== "ativo") return;
-      if (!t.hora_entrada || !t.hora_saida) return;
+  /* =========================
+     FORÇA DE TRABALHO
+  ========================= */
+  const horas = {};
+  for (let h = 9; h <= 21; h++) horas[h] = 0;
 
-      const [hi, mi] = t.hora_entrada.split(":").map(Number);
-      const [hf, mf] = t.hora_saida.split(":").map(Number);
+  data.forEach(t => {
+    if (!t.hora_entrada || !t.hora_saida) return;
 
-      const inicio = hi * 60 + mi;
-      const fim = hf * 60 + mf;
+    const [hi, mi] = t.hora_entrada.split(":").map(Number);
+    const [hf, mf] = t.hora_saida.split(":").map(Number);
+    if ([hi,mi,hf,mf].some(isNaN)) return;
 
-      for (let h = 9; h <= 21; h++) {
-        const ref = h * 60;
-        if (inicio <= ref && ref < fim) horas[h]++;
-      }
-    });
+    const inicio = hi * 60 + mi;
+    const fim = hf * 60 + mf;
 
-    const box = document.getElementById("workforce-bars");
-    box.innerHTML = "";
-
-    Object.entries(horas).forEach(([h,q])=>{
-      box.innerHTML += `
-        <div class="bar-wrap">
-          <div class="qtd">${q}</div>
-          <div class="bar" style="height:${q*18}px"></div>
-          <div class="hour">${h}:00</div>
-        </div>
-      `;
-    });
-  }
-
-  /* CARGA HORÁRIA */
-  async function carregarCargaHoraria() {
-    const box = document.getElementById("carga-horaria");
-    box.innerHTML = "<p>Carregando...</p>";
-
-    const { data } = await supabaseClient
-      .from("terapeutas")
-      .select("nome_profissi,hora_entrada,hora_saida,status");
-
-    const lista = [];
-
-    data.forEach(t => {
-      if (t.status && t.status.toLowerCase() !== "ativo") return;
-      if (!t.hora_entrada || !t.hora_saida) return;
-
-      const [hi, mi] = t.hora_entrada.split(":").map(Number);
-      const [hf, mf] = t.hora_saida.split(":").map(Number);
-
-      const totalMin = (hf*60+mf) - (hi*60+mi);
-      if (totalMin <= 0) return;
-
-      const h = Math.floor(totalMin / 60);
-      const m = totalMin % 60;
-
-      lista.push({
-        nome: t.nome_profissi,
-        minutos: totalMin,
-        texto: `${h}:${m.toString().padStart(2,"0")}`
-      });
-    });
-
-    if (!lista.length) {
-      box.innerHTML = "<p>Sem dados válidos</p>";
-      return;
+    for (let h = 9; h <= 21; h++) {
+      const ref = h * 60;
+      if (inicio <= ref && ref < fim) horas[h]++;
     }
+  });
 
-    lista.sort((a,b)=>b.minutos-a.minutos);
+  const forca = document.getElementById("forca");
+  forca.innerHTML = "";
 
-    box.innerHTML = "";
-    lista.slice(0,3).forEach(t=>{
-      box.innerHTML += `
-        <p>${t.nome}<span>${t.texto}h</span></p>
-      `;
+  Object.entries(horas).forEach(([h,q])=>{
+    forca.innerHTML += `
+      <div class="bar-wrap">
+        <div class="qtd">${q}</div>
+        <div class="bar" style="height:${q*16}px"></div>
+        <div class="hour">${h}:00</div>
+      </div>
+    `;
+  });
+
+  /* =========================
+     CARGA HORÁRIA
+  ========================= */
+  const carga = document.getElementById("carga");
+  const lista = [];
+
+  data.forEach(t => {
+    if (!t.hora_entrada || !t.hora_saida) return;
+
+    const [hi, mi] = t.hora_entrada.split(":").map(Number);
+    const [hf, mf] = t.hora_saida.split(":").map(Number);
+    if ([hi,mi,hf,mf].some(isNaN)) return;
+
+    const totalMin = (hf*60+mf) - (hi*60+mi);
+    if (totalMin <= 0) return;
+
+    const h = Math.floor(totalMin/60);
+    const m = totalMin%60;
+
+    lista.push({
+      nome: t.nome_profissi,
+      minutos: totalMin,
+      texto: `${h}:${m.toString().padStart(2,"0")}`
     });
+  });
+
+  if (lista.length === 0) {
+    carga.innerHTML = "Sem dados válidos";
+    return;
   }
 
-  await carregarEquipe();
-  await carregarForcaTrabalho();
-  await carregarCargaHoraria();
+  lista.sort((a,b)=>b.minutos-a.minutos);
+
+  carga.innerHTML = "";
+  lista.slice(0,3).forEach(t=>{
+    carga.innerHTML += `
+      <p>${t.nome}<span>${t.texto}h</span></p>
+    `;
+  });
 
 });
 </script>

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Gestão da Equipe</title>
+<title>Nova Terapeuta</title>
 
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
@@ -10,33 +10,44 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-.content { padding:30px; }
+.content { padding:30px; max-width:1100px; }
 
-table {
+.card {
+  background:#fff;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:20px;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:15px;
+}
+
+label { font-size:14px; font-weight:600; }
+input, select {
   width:100%;
-  border-collapse:collapse;
-  margin-top:16px;
+  padding:8px;
+  border:1px solid #d1d5db;
+  border-radius:6px;
 }
 
-th, td {
-  padding:12px;
-  border-bottom:1px solid #e5e7eb;
-  text-align:left;
-}
-
-.actions button {
-  margin-right:6px;
+.actions {
+  display:flex;
+  gap:10px;
 }
 
 button {
   background:#1f2937;
   color:#fff;
   border:none;
-  padding:6px 10px;
+  padding:8px 14px;
   border-radius:6px;
   cursor:pointer;
 }
-button.danger {
+
+button.delete {
   background:#dc2626;
 }
 </style>
@@ -48,105 +59,185 @@ button.danger {
   <aside id="sidebar"></aside>
 
   <main class="content">
-    <h1>Gestão da Equipe</h1>
-    <p>Terapeutas cadastradas</p>
+    <h1 id="titulo">Nova Terapeuta</h1>
 
-    <button onclick="novaTerapeuta()">+ Nova Terapeuta</button>
+    <!-- DADOS PESSOAIS -->
+    <div class="card">
+      <h3>Dados Pessoais</h3>
+      <div class="grid">
+        <div>
+          <label>Nome Completo *</label>
+          <input id="nome_completo">
+        </div>
+        <div>
+          <label>Nome Profissional *</label>
+          <input id="nome_profissional">
+        </div>
+        <div>
+          <label>CPF *</label>
+          <input id="cpf">
+        </div>
+        <div>
+          <label>RG</label>
+          <input id="rg">
+        </div>
+        <div>
+          <label>Data de Nascimento</label>
+          <input type="date" id="data_nascimento">
+        </div>
+        <div>
+          <label>Email *</label>
+          <input id="email">
+        </div>
+      </div>
+    </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Nome Profissional</th>
-          <th>CPF</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista">
-        <tr><td colspan="4">Carregando...</td></tr>
-      </tbody>
-    </table>
+    <!-- CONTATOS -->
+    <div class="card">
+      <h3>Contatos</h3>
+      <div class="grid">
+        <div>
+          <label>Telefone *</label>
+          <input id="telefone">
+        </div>
+        <div>
+          <label>Contato Emergência</label>
+          <input id="contato_emergencia">
+        </div>
+      </div>
+    </div>
+
+    <!-- ENDEREÇO -->
+    <div class="card">
+      <h3>Endereço</h3>
+      <div class="grid">
+        <div><label>CEP</label><input id="cep"></div>
+        <div><label>Rua</label><input id="rua"></div>
+        <div><label>Número</label><input id="numero"></div>
+        <div><label>Bairro</label><input id="bairro"></div>
+        <div><label>Cidade</label><input id="cidade"></div>
+        <div><label>UF</label><input id="uf"></div>
+      </div>
+    </div>
+
+    <!-- DADOS FUNCIONAIS -->
+    <div class="card">
+      <h3>Dados Funcionais</h3>
+      <div class="grid">
+        <div>
+          <label>Dia da Folga</label>
+          <input id="dia_folga">
+        </div>
+        <div>
+          <label>Horário Entrada</label>
+          <input type="time" id="horario_entrada">
+        </div>
+        <div>
+          <label>Horário Saída</label>
+          <input type="time" id="horario_saida">
+        </div>
+        <div>
+          <label>Data de Início *</label>
+          <input type="date" id="data_inicio">
+        </div>
+        <div>
+          <label>Status *</label>
+          <select id="status">
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button onclick="salvar()">Salvar</button>
+      <button class="delete" id="btnExcluir" onclick="excluir()" style="display:none">
+        Excluir
+      </button>
+    </div>
+
   </main>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-/* =============================
-   SUPABASE
-============================= */
-const supabase = supabaseJs.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+/* ================= SUPABASE ================= */
+const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
+const SUPABASE_ANON_KEY =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
 );
 
-/* =============================
-   LOAD EQUIPE
-============================= */
-async function carregarEquipe() {
-  const tbody = document.getElementById("lista");
+/* ================= MODO EDIÇÃO ================= */
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
 
-  const { data, error } = await supabase
+if (id) {
+  document.getElementById("titulo").innerText = "Editar Terapeuta";
+  document.getElementById("btnExcluir").style.display = "inline-block";
+  carregar();
+}
+
+/* ================= FUNÇÕES ================= */
+async function carregar() {
+  const { data } = await supabaseClient
     .from("terapeutas")
-    .select("cpf, nome_profissional, status")
-    .order("nome_profissional");
+    .select("*")
+    .eq("id", id)
+    .single();
 
-  if (error) {
-    console.error(error);
-    tbody.innerHTML = "<tr><td colspan='4'>Erro ao carregar</td></tr>";
-    return;
-  }
+  if (!data) return;
 
-  if (!data.length) {
-    tbody.innerHTML = "<tr><td colspan='4'>Nenhuma terapeuta cadastrada</td></tr>";
-    return;
-  }
-
-  tbody.innerHTML = "";
-
-  data.forEach(t => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${t.nome_profissional || "-"}</td>
-      <td>${t.cpf}</td>
-      <td>${t.status || "Ativo"}</td>
-      <td class="actions">
-        <button onclick="editar('${t.cpf}')">Editar</button>
-        <button class="danger" onclick="excluir('${t.cpf}')">Excluir</button>
-      </td>
-    `;
-    tbody.appendChild(tr);
+  Object.keys(data).forEach(k => {
+    if (document.getElementById(k)) {
+      document.getElementById(k).value = data[k] || "";
+    }
   });
 }
 
-/* =============================
-   AÇÕES
-============================= */
-function novaTerapeuta() {
-  location.href = "nova-terapeuta.html";
-}
+async function salvar() {
+  const payload = {
+    nome_completo: nome_completo.value,
+    nome_profissional: nome_profissional.value,
+    cpf: cpf.value,
+    rg: rg.value,
+    data_nascimento: data_nascimento.value,
+    email: email.value,
+    telefone: telefone.value,
+    contato_emergencia: contato_emergencia.value,
+    cep: cep.value,
+    rua: rua.value,
+    numero: numero.value,
+    bairro: bairro.value,
+    cidade: cidade.value,
+    uf: uf.value,
+    dia_folga: dia_folga.value,
+    horario_entrada: horario_entrada.value,
+    horario_saida: horario_saida.value,
+    data_inicio: data_inicio.value,
+    status: status.value
+  };
 
-function editar(cpf) {
-  location.href = `nova-terapeuta.html?cpf=${cpf}`;
-}
-
-async function excluir(cpf) {
-  if (!confirm("Deseja realmente excluir esta terapeuta?")) return;
-
-  const { error } = await supabase
-    .from("terapeutas")
-    .delete()
-    .eq("cpf", cpf);
-
-  if (error) {
-    alert("Erro ao excluir");
-    console.error(error);
+  if (id) {
+    await supabaseClient.from("terapeutas").update(payload).eq("id", id);
   } else {
-    carregarEquipe();
+    await supabaseClient.from("terapeutas").insert(payload);
   }
+
+  alert("Salvo com sucesso");
+  location.href = "equipe.html";
 }
 
-carregarEquipe();
+async function excluir() {
+  if (!confirm("Deseja excluir esta terapeuta?")) return;
+  await supabaseClient.from("terapeutas").delete().eq("id", id);
+  location.href = "equipe.html";
+}
 </script>
 
 </body>

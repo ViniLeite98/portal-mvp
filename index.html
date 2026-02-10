@@ -2,61 +2,76 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Teste Supabase</title>
+<title>Início</title>
 
+<!-- Supabase JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <style>
 body {
   font-family: Arial, sans-serif;
-  padding: 20px;
+  background: #f5f7fb;
+  padding: 40px;
 }
-pre {
-  background: #f3f4f6;
-  padding: 12px;
-  border-radius: 6px;
+
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 320px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+.numero {
+  font-size: 48px;
+  font-weight: bold;
+  margin-top: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Teste Supabase — Terapeutas</h1>
-
-<div id="status">Conectando...</div>
-
-<pre id="resultado"></pre>
+<div class="card">
+  <h2>Equipe</h2>
+  <div id="total" class="numero">...</div>
+  <p>Terapeutas cadastradas</p>
+</div>
 
 <script>
+/* ======================
+   CONFIGURAÇÃO SUPABASE
+====================== */
+
 const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
-const SUPABASE_KEY =
+const SUPABASE_ANON_KEY =
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmVzc2UiLCJyZWYiOiJyeW1laGdzb2FyamVlY3V3eWhueSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzcwNjU3NDg1LCJleHAiOjIwODYyMzM0ODV9.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
 
 const supabaseClient = supabase.createClient(
   SUPABASE_URL,
-  SUPABASE_KEY
+  SUPABASE_ANON_KEY
 );
 
-async function testar() {
-  const status = document.getElementById("status");
-  const resultado = document.getElementById("resultado");
+/* ======================
+   CONTAR TERAPEUTAS
+====================== */
+async function contarTerapeutas() {
+  const totalEl = document.getElementById("total");
 
   const { data, error } = await supabaseClient
     .from("terapeutas")
-    .select("*")
-    .limit(5);
+    .select("cpf");
 
   if (error) {
-    status.innerText = "❌ Erro ao buscar dados";
-    resultado.innerText = JSON.stringify(error, null, 2);
+    console.error("Erro Supabase:", error);
+    totalEl.innerText = "Erro";
     return;
   }
 
-  status.innerText = "✅ Conectado ao Supabase";
-  resultado.innerText = JSON.stringify(data, null, 2);
+  totalEl.innerText = data.length;
 }
 
-testar();
+contarTerapeutas();
 </script>
 
 </body>

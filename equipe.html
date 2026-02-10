@@ -60,12 +60,8 @@ button.excluir { background:#dc2626; }
   border-radius:16px;
   padding:24px;
 }
-.section {
-  margin-bottom:24px;
-}
-.section h3 {
-  margin-bottom:12px;
-}
+.section { margin-bottom:24px; }
+.section h3 { margin-bottom:12px; }
 .grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -221,12 +217,19 @@ const campos = [
 
 function getPayload() {
   const obj = {};
-  campos.forEach(c => obj[c] = document.getElementById(c).value || null);
+  campos.forEach(c => {
+    const el = document.getElementById(c);
+    if (!el) return;
+    if (el.value !== "") obj[c] = el.value;
+  });
   return obj;
 }
 
 function setForm(data) {
-  campos.forEach(c => document.getElementById(c).value = data[c] || "");
+  campos.forEach(c => {
+    if (document.getElementById(c))
+      document.getElementById(c).value = data[c] || "";
+  });
 }
 
 async function carregar() {
@@ -261,11 +264,17 @@ function abrirNovo() {
 
 async function editar(cpf) {
   cpfAtual = cpf;
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("terapeutas")
     .select("*")
     .eq("cpf", cpf)
     .single();
+
+  if (error) {
+    alert("Erro ao carregar");
+    console.error(error);
+    return;
+  }
 
   setForm(data);
   document.getElementById("cpf").disabled = true;
@@ -274,6 +283,12 @@ async function editar(cpf) {
 
 async function salvar() {
   const payload = getPayload();
+
+  if (!payload.nome_completo || !payload.nome_profissional || !payload.email) {
+    alert("Preencha os campos obrigatórios");
+    return;
+  }
+
   let error;
 
   if (cpfAtual) {
@@ -283,14 +298,18 @@ async function salvar() {
       .update(payload)
       .eq("cpf", cpfAtual));
   } else {
+    if (!payload.cpf) {
+      alert("CPF é obrigatório");
+      return;
+    }
     ({ error } = await supabaseClient
       .from("terapeutas")
       .insert(payload));
   }
 
   if (error) {
+    console.error("SUPABASE ERROR:", error);
     alert("Erro ao salvar");
-    console.error(error);
     return;
   }
 

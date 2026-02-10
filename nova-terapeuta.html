@@ -7,40 +7,7 @@
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<style>
-.content { padding:30px; }
-
-.section {
-  background:#fff;
-  border-radius:18px;
-  padding:20px;
-  margin-bottom:20px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
-}
-
-.grid {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:15px;
-}
-
-label { font-weight:600; font-size:13px; }
-input, select {
-  width:100%;
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-}
-
-button {
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  padding:10px 18px;
-  border-radius:8px;
-  cursor:pointer;
-}
-</style>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -51,124 +18,106 @@ button {
   <main class="content">
     <h1 id="titulo">Nova Terapeuta</h1>
 
-    <!-- DADOS -->
-    <div class="section">
-      <h3>Dados Básicos</h3>
-      <div class="grid">
-        <div>
-          <label>Nome Profissional *</label>
-          <input id="nome_profissional">
-        </div>
+    <label>Nome Completo</label>
+    <input id="nomeCompleto">
 
-        <div>
-          <label>CPF *</label>
-          <input id="cpf">
-        </div>
+    <label>Nome Profissional</label>
+    <input id="nomeProfissional">
 
-        <div>
-          <label>Status</label>
-          <select id="status">
-            <option>Ativo</option>
-            <option>Inativo</option>
-          </select>
-        </div>
-      </div>
-    </div>
+    <label>CPF</label>
+    <input id="cpf">
 
+    <label>Email</label>
+    <input id="email">
+
+    <label>Dia da Folga</label>
+    <input id="diaFolga">
+
+    <label>Data de Início</label>
+    <input type="date" id="dataInicio">
+
+    <label>Status</label>
+    <select id="status">
+      <option>Ativo</option>
+      <option>Inativo</option>
+    </select>
+
+    <br><br>
     <button onclick="salvar()">Salvar</button>
   </main>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- SUPABASE SDK -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
 <script>
-/* ======================================================
-   SUPABASE — UMA ÚNICA VEZ
-====================================================== */
 const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
-const SUPABASE_ANON_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
 
-const supabaseClient = supabase.createClient(
+const supabase = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
 
-/* ======================================================
-   MODO EDIÇÃO
-====================================================== */
-const cpfEdit = localStorage.getItem("editarTerapeutaCPF");
+const params = new URLSearchParams(window.location.search);
+const id = params.get("id");
 
-async function carregarEdicao() {
-  if (!cpfEdit) return;
-
+if (id) {
   document.getElementById("titulo").innerText = "Editar Terapeuta";
-  document.getElementById("cpf").disabled = true;
+  carregar();
+}
 
-  const { data, error } = await supabaseClient
+async function carregar() {
+  const { data, error } = await supabase
     .from("terapeutas")
     .select("*")
-    .eq("cpf", cpfEdit)
+    .eq("id", id)
     .single();
 
   if (error) {
-    alert("Erro ao carregar terapeuta");
-    console.error(error);
+    alert("Erro ao carregar");
     return;
   }
 
-  document.getElementById("nome_profissional").value = data.nome_profissional;
-  document.getElementById("cpf").value = data.cpf;
-  document.getElementById("status").value = data.status || "Ativo";
+  nomeCompleto.value = data.nome_completo || "";
+  nomeProfissional.value = data.nome_profissional || "";
+  cpf.value = data.cpf || "";
+  email.value = data.email || "";
+  diaFolga.value = data.dia_folga || "";
+  dataInicio.value = data.data_inicio || "";
+  status.value = data.status || "Ativo";
 }
 
-/* ======================================================
-   SALVAR (INSERT / UPDATE)
-====================================================== */
 async function salvar() {
-  const nome = document.getElementById("nome_profissional").value.trim();
-  const cpf = document.getElementById("cpf").value.trim();
-  const status = document.getElementById("status").value;
+  const payload = {
+    nome_completo: nomeCompleto.value,
+    nome_profissional: nomeProfissional.value,
+    cpf: cpf.value,
+    email: email.value,
+    dia_folga: diaFolga.value,
+    data_inicio: dataInicio.value,
+    status: status.value
+  };
 
-  if (!nome || !cpf) {
-    alert("Preencha nome e CPF");
-    return;
-  }
-
-  let response;
-
-  if (cpfEdit) {
-    response = await supabaseClient
+  let result;
+  if (id) {
+    result = await supabase
       .from("terapeutas")
-      .update({
-        nome_profissional: nome,
-        status
-      })
-      .eq("cpf", cpfEdit);
+      .update(payload)
+      .eq("id", id);
   } else {
-    response = await supabaseClient
+    result = await supabase
       .from("terapeutas")
-      .insert({
-        nome_profissional: nome,
-        cpf,
-        status
-      });
+      .insert([payload]);
   }
 
-  if (response.error) {
+  if (result.error) {
     alert("Erro ao salvar");
-    console.error(response.error);
+    console.error(result.error);
     return;
   }
 
-  localStorage.removeItem("editarTerapeutaCPF");
-  location.href = "equipe.html";
+  window.location.href = "equipe.html";
 }
-
-carregarEdicao();
 </script>
 
 </body>

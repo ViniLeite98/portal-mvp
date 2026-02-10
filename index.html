@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<!-- SUPABASE (CDN ESTÁVEL) -->
+<!-- SUPABASE -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
 <style>
@@ -91,6 +91,7 @@
   <aside id="sidebar"></aside>
 
   <main class="main-content">
+
     <h1>Início</h1>
     <p>Visão geral do Hara Spa</p>
 
@@ -105,18 +106,12 @@
 
       <div class="card">
         <h3>Próximas Datas</h3>
-        <p>14 Fevereiro – Segunda</p>
-        <p>15 Fevereiro – Terça</p>
-        <p>16 Março – Quarta</p>
-        <small>Gestão de feriados</small>
+        <p>Agenda institucional</p>
       </div>
 
       <div class="card">
         <h3>Dias Folgados</h3>
-        <div id="folgas-hoje">
-          <p>Carregando...</p>
-        </div>
-        <small>Relatório completo</small>
+        <p>Gerenciado por solicitações</p>
       </div>
 
     </div>
@@ -124,17 +119,18 @@
     <!-- FORÇA DE TRABALHO + CARGA HORÁRIA -->
     <div class="dashboard-row">
 
+      <!-- FORÇA DE TRABALHO -->
       <div class="card">
         <h3>Força de Trabalho</h3>
         <div id="workforce-bars" class="workforce"></div>
       </div>
 
+      <!-- CARGA HORÁRIA -->
       <div class="card carga">
         <h3>Carga Horária</h3>
         <div id="carga-horaria">
           <p>Carregando...</p>
         </div>
-        <small>Baseado no horário de entrada e saída</small>
       </div>
 
     </div>
@@ -145,7 +141,7 @@
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
   if (!window.supabase) {
     alert("Erro: Supabase não carregou");
@@ -154,100 +150,126 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const supabaseClient = window.supabase.createClient(
     "https://rymehgsoarjeecuwyhny.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+    "SUA_ANON_KEY_AQUI"
   );
 
-  /* EQUIPE */
+  /* =====================
+     EQUIPE ATIVA
+  ===================== */
   async function carregarEquipe() {
     const { data } = await supabaseClient
       .from("terapeutas")
       .select("cpf")
-      .eq("status","Ativo");
+      .eq("status", "Ativo");
 
     document.getElementById("total-ativas").innerText = data?.length || 0;
   }
 
-  /* FORÇA DE TRABALHO */
+  /* =====================
+     FORÇA DE TRABALHO (INTERVALOS)
+  ===================== */
   async function carregarForcaTrabalho() {
+
     const { data } = await supabaseClient
       .from("terapeutas")
-      .select("hora_entrada,hora_saida")
-      .eq("status","Ativo");
+      .select("hora_entrada, hora_saida")
+      .eq("status", "Ativo");
 
     const horas = {};
-    for (let h=9; h<=21; h++) horas[h]=0;
+    for (let h = 9; h <= 21; h++) horas[h] = 0;
 
-    data.forEach(t=>{
-      if(!t.hora_entrada || !t.hora_saida) return;
+    data.forEach(t => {
+      if (!t.hora_entrada || !t.hora_saida) return;
 
-      const [hi,mi]=t.hora_entrada.split(":").map(Number);
-      const [hf,mf]=t.hora_saida.split(":").map(Number);
+      const [hi, mi] = t.hora_entrada.split(":").map(Number);
+      const [hf, mf] = t.hora_saida.split(":").map(Number);
 
-      const inicio = hi*60+mi;
-      const fim = hf*60+mf;
+      if (isNaN(hi)||isNaN(mi)||isNaN(hf)||isNaN(mf)) return;
 
-      for(let h=9;h<=21;h++){
-        const ref=h*60;
-        if(inicio<=ref && ref<fim) horas[h]++;
+      const inicio = hi * 60 + mi;
+      const fim = hf * 60 + mf;
+
+      for (let h = 9; h <= 21; h++) {
+        const ref = h * 60;
+        if (inicio <= ref && ref < fim) {
+          horas[h]++;
+        }
       }
     });
 
-    const box=document.getElementById("workforce-bars");
-    box.innerHTML="";
+    const box = document.getElementById("workforce-bars");
+    box.innerHTML = "";
 
-    Object.entries(horas).forEach(([h,q])=>{
-      box.innerHTML+=`
+    Object.entries(horas).forEach(([h, qtd]) => {
+      box.innerHTML += `
         <div class="bar-wrap">
-          <div class="qtd">${q}</div>
-          <div class="bar" style="height:${q*18}px"></div>
+          <div class="qtd">${qtd}</div>
+          <div class="bar" style="height:${qtd * 18}px"></div>
           <div class="hour">${h}:00</div>
         </div>
       `;
     });
   }
 
-  /* CARGA HORÁRIA */
-  async function carregarCargaHoraria(){
+  /* =====================
+     CARGA HORÁRIA (FUNCIONAL)
+  ===================== */
+  async function carregarCargaHoraria() {
+    const box = document.getElementById("carga-horaria");
+    box.innerHTML = "<p>Carregando...</p>";
+
     const { data } = await supabaseClient
       .from("terapeutas")
-      .select("nome_profissi,hora_entrada,hora_saida")
-      .eq("status","Ativo");
+      .select("nome_profissi, hora_entrada, hora_saida")
+      .eq("status", "Ativo");
 
-    const lista=[];
+    const lista = [];
 
-    data.forEach(t=>{
-      if(!t.hora_entrada||!t.hora_saida)return;
-      const [hi,mi]=t.hora_entrada.split(":").map(Number);
-      const [hf,mf]=t.hora_saida.split(":").map(Number);
+    data.forEach(t => {
+      if (
+        !t.hora_entrada ||
+        !t.hora_saida ||
+        !t.hora_entrada.includes(":") ||
+        !t.hora_saida.includes(":")
+      ) return;
 
-      const total=(hf*60+mf)-(hi*60+mi);
-      if(total<=0)return;
+      const [hi, mi] = t.hora_entrada.split(":").map(Number);
+      const [hf, mf] = t.hora_saida.split(":").map(Number);
 
-      const h=Math.floor(total/60);
-      const m=total%60;
+      if (isNaN(hi)||isNaN(mi)||isNaN(hf)||isNaN(mf)) return;
+
+      const totalMin = (hf * 60 + mf) - (hi * 60 + mi);
+      if (totalMin <= 0) return;
+
+      const h = Math.floor(totalMin / 60);
+      const m = totalMin % 60;
 
       lista.push({
-        nome:t.nome_profissi,
-        minutos:total,
-        texto:`${h}:${m.toString().padStart(2,"0")}`
+        nome: t.nome_profissi,
+        minutos: totalMin,
+        texto: `${h}:${m.toString().padStart(2,"0")}`
       });
     });
 
+    if (lista.length === 0) {
+      box.innerHTML = "<p>Sem dados válidos</p>";
+      return;
+    }
+
     lista.sort((a,b)=>b.minutos-a.minutos);
 
-    const box=document.getElementById("carga-horaria");
-    box.innerHTML="";
-
-    lista.slice(0,3).forEach(t=>{
-      box.innerHTML+=`
+    box.innerHTML = "";
+    lista.slice(0,3).forEach(t => {
+      box.innerHTML += `
         <p>${t.nome}<span>${t.texto}h</span></p>
       `;
     });
   }
 
-  carregarEquipe();
-  carregarForcaTrabalho();
-  carregarCargaHoraria();
+  /* INIT */
+  await carregarEquipe();
+  await carregarForcaTrabalho();
+  await carregarCargaHoraria();
 
 });
 </script>

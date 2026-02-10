@@ -1,120 +1,91 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <title>Início | Hara Spa</title>
+<meta charset="UTF-8">
+<title>Início | Hara Spa</title>
 
-  <!-- Ícones -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-  <!-- CSS global -->
-  <link rel="stylesheet" href="assets/css/style.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
-  <!-- CSS sidebar -->
-  <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<style>
+.app { display:flex; min-height:100vh; background:#f5f7fb }
+.main-content { flex:1; padding:30px }
 
-  <!-- Supabase -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+.cards {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:20px;
+  margin-top:24px;
+}
 
-  <style>
-    .app {
-      display: flex;
-      min-height: 100vh;
-      background: #f5f7fb;
-    }
+.card {
+  background:#fff;
+  border-radius:20px;
+  padding:22px;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
 
-    .main-content {
-      flex: 1;
-      padding: 30px;
-    }
+.card h3 {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:16px;
+}
 
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-      margin-top: 24px;
-    }
+.big {
+  font-size:46px;
+  font-weight:700;
+  margin:10px 0;
+}
 
-    .card {
-      background: #fff;
-      border-radius: 20px;
-      padding: 24px;
-      box-shadow: 0 4px 12px rgba(0,0,0,.05);
-    }
+.rank p {
+  margin:6px 0;
+  font-size:14px;
+}
 
-    .card h3 {
-      margin-bottom: 6px;
-      font-size: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+.workforce {
+  display:flex;
+  align-items:flex-end;
+  gap:16px;
+  height:160px;
+  margin-top:20px;
+}
 
-    .big-number {
-      font-size: 48px;
-      font-weight: bold;
-      margin-top: 12px;
-    }
-
-    /* ===== FORÇA DE TRABALHO ===== */
-    .workforce {
-      display: flex;
-      align-items: flex-end;
-      gap: 18px;
-      height: 160px;
-      margin-top: 20px;
-    }
-
-    .bar-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .bar {
-      width: 36px;
-      background: #c7d7f2;
-      border-radius: 8px 8px 0 0;
-      height: 10px;
-      transition: height .3s;
-    }
-
-    .hour {
-      font-size: 12px;
-      color: #6b7280;
-    }
-  </style>
+.bar-wrap { display:flex; flex-direction:column; align-items:center }
+.bar {
+  width:34px;
+  background:#c7d7f2;
+  border-radius:8px 8px 0 0;
+  height:8px;
+}
+.hour { font-size:12px; color:#6b7280 }
+</style>
 </head>
 
 <body>
 
 <div class="app">
-
-  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
-  <!-- CONTEÚDO -->
   <main class="main-content">
 
     <h1>Início</h1>
     <p>Visão geral do Hara Spa</p>
 
-    <!-- TOPO -->
+    <!-- CARDS SUPERIORES -->
     <div class="cards">
 
-      <!-- CARD EQUIPE (ATIVAS) -->
+      <!-- EQUIPE -->
       <div class="card">
-        <h3>
-          Equipe
-          <i class="fa-solid fa-users"></i>
-        </h3>
-
-        <div id="total-ativas" class="big-number">--</div>
+        <h3>Equipe <i class="fa-solid fa-users"></i></h3>
+        <div id="total-ativas" class="big">--</div>
         <small>Terapeutas ativas no sistema</small>
       </div>
 
-      <!-- CARD ESTÁTICO -->
+      <!-- PRÓXIMAS DATAS (mantido estático) -->
       <div class="card">
         <h3>Próximas Datas <i class="fa-regular fa-calendar"></i></h3>
         <p>14 Fevereiro – Segunda</p>
@@ -123,13 +94,13 @@
         <small>Gestão de feriados</small>
       </div>
 
-      <!-- CARD ESTÁTICO -->
+      <!-- DIAS FOLGADOS (BANCO REAL) -->
       <div class="card">
         <h3>Dias Folgados</h3>
-        <p>Maria: 15 dias</p>
-        <p>Joana: 12 dias</p>
-        <p>Fabiana: 9 dias</p>
-        <small>Relatório completo</small>
+        <div id="folgas-hoje" class="rank">
+          <p>Carregando...</p>
+        </div>
+        <small>Terapeutas com folga cadastrada</small>
       </div>
 
     </div>
@@ -139,29 +110,27 @@
       <h3>Força de Trabalho</h3>
 
       <div class="workforce">
-        <div class="bar-container"><div class="bar" data-hora="10"></div><span class="hour">10:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="11"></div><span class="hour">11:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="12"></div><span class="hour">12:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="13"></div><span class="hour">13:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="14"></div><span class="hour">14:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="15"></div><span class="hour">15:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="16"></div><span class="hour">16:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="17"></div><span class="hour">17:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="18"></div><span class="hour">18:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="19"></div><span class="hour">19:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="20"></div><span class="hour">20:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="21"></div><span class="hour">21:00</span></div>
-        <div class="bar-container"><div class="bar" data-hora="22"></div><span class="hour">22:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="10"></div><span class="hour">10:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="11"></div><span class="hour">11:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="12"></div><span class="hour">12:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="13"></div><span class="hour">13:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="14"></div><span class="hour">14:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="15"></div><span class="hour">15:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="16"></div><span class="hour">16:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="17"></div><span class="hour">17:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="18"></div><span class="hour">18:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="19"></div><span class="hour">19:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="20"></div><span class="hour">20:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="21"></div><span class="hour">21:00</span></div>
+        <div class="bar-wrap"><div class="bar" data-hora="22"></div><span class="hour">22:00</span></div>
       </div>
     </div>
 
   </main>
 </div>
 
-<!-- SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- SUPABASE -->
 <script>
 const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
 const SUPABASE_ANON_KEY =
@@ -172,31 +141,55 @@ const supabaseClient = supabase.createClient(
   SUPABASE_ANON_KEY
 );
 
-/* TOTAL DE ATIVAS */
+/* =====================
+   EQUIPE ATIVA
+===================== */
 async function carregarEquipeAtiva() {
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from("terapeutas")
-    .select("id")
+    .select("cpf")
     .eq("status", "Ativo");
 
-  if (!error) {
-    document.getElementById("total-ativas").innerText = data.length;
-  }
+  document.getElementById("total-ativas").innerText = data?.length || 0;
 }
 
-/* FORÇA DE TRABALHO */
-async function carregarForcaTrabalho() {
-  const { data, error } = await supabaseClient
+/* =====================
+   DIAS FOLGADOS
+===================== */
+async function carregarFolgas() {
+  const box = document.getElementById("folgas-hoje");
+
+  const { data } = await supabaseClient
     .from("terapeutas")
-    .select("hora_inicio")
+    .select("nome_profissi, dia_folga")
+    .eq("tem_folga", "Sim")
+    .limit(3);
+
+  if (!data || data.length === 0) {
+    box.innerHTML = "<p>Nenhuma folga registrada</p>";
+    return;
+  }
+
+  box.innerHTML = "";
+  data.forEach(t => {
+    box.innerHTML += `<p>${t.nome_profissi} – ${t.dia_folga || "folga"}</p>`;
+  });
+}
+
+/* =====================
+   FORÇA DE TRABALHO
+===================== */
+async function carregarForcaTrabalho() {
+  const { data } = await supabaseClient
+    .from("terapeutas")
+    .select("hora_entrada")
     .eq("status", "Ativo");
 
-  if (error) return;
-
   const mapa = {};
-  data.forEach(t => {
-    if (!t.hora_inicio) return;
-    const h = t.hora_inicio.split(":")[0];
+
+  data?.forEach(t => {
+    if (!t.hora_entrada) return;
+    const h = t.hora_entrada.split(":")[0];
     mapa[h] = (mapa[h] || 0) + 1;
   });
 
@@ -208,7 +201,9 @@ async function carregarForcaTrabalho() {
   });
 }
 
+/* INIT */
 carregarEquipeAtiva();
+carregarFolgas();
 carregarForcaTrabalho();
 </script>
 

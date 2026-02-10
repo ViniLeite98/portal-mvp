@@ -6,22 +6,49 @@
 
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
+.content { padding:30px; max-width:1100px; }
+
+.card {
+  background:#fff;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:20px;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:15px;
+}
+
+label { font-size:14px; font-weight:600; }
 input, select {
   width:100%;
   padding:8px;
-  margin-bottom:10px;
+  border:1px solid #d1d5db;
+  border-radius:6px;
 }
+
+.actions {
+  display:flex;
+  gap:10px;
+}
+
 button {
   background:#1f2937;
   color:#fff;
-  padding:10px 16px;
   border:none;
-  border-radius:8px;
+  padding:8px 14px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+button.delete {
+  background:#dc2626;
 }
 </style>
 </head>
@@ -34,98 +61,181 @@ button {
   <main class="content">
     <h1 id="titulo">Nova Terapeuta</h1>
 
-    <label>Nome Completo</label>
-    <input id="nome_completo">
+    <!-- DADOS PESSOAIS -->
+    <div class="card">
+      <h3>Dados Pessoais</h3>
+      <div class="grid">
+        <div>
+          <label>Nome Completo *</label>
+          <input id="nome_completo">
+        </div>
+        <div>
+          <label>Nome Profissional *</label>
+          <input id="nome_profissional">
+        </div>
+        <div>
+          <label>CPF *</label>
+          <input id="cpf">
+        </div>
+        <div>
+          <label>RG</label>
+          <input id="rg">
+        </div>
+        <div>
+          <label>Data de Nascimento</label>
+          <input type="date" id="data_nascimento">
+        </div>
+        <div>
+          <label>Email *</label>
+          <input id="email">
+        </div>
+      </div>
+    </div>
 
-    <label>CPF</label>
-    <input id="cpf">
+    <!-- CONTATOS -->
+    <div class="card">
+      <h3>Contatos</h3>
+      <div class="grid">
+        <div>
+          <label>Telefone *</label>
+          <input id="telefone">
+        </div>
+        <div>
+          <label>Contato Emergência</label>
+          <input id="contato_emergencia">
+        </div>
+      </div>
+    </div>
 
-    <label>Email</label>
-    <input id="email">
+    <!-- ENDEREÇO -->
+    <div class="card">
+      <h3>Endereço</h3>
+      <div class="grid">
+        <div><label>CEP</label><input id="cep"></div>
+        <div><label>Rua</label><input id="rua"></div>
+        <div><label>Número</label><input id="numero"></div>
+        <div><label>Bairro</label><input id="bairro"></div>
+        <div><label>Cidade</label><input id="cidade"></div>
+        <div><label>UF</label><input id="uf"></div>
+      </div>
+    </div>
 
-    <label>Dia da Folga</label>
-    <input id="dia_folga">
+    <!-- DADOS FUNCIONAIS -->
+    <div class="card">
+      <h3>Dados Funcionais</h3>
+      <div class="grid">
+        <div>
+          <label>Dia da Folga</label>
+          <input id="dia_folga">
+        </div>
+        <div>
+          <label>Horário Entrada</label>
+          <input type="time" id="horario_entrada">
+        </div>
+        <div>
+          <label>Horário Saída</label>
+          <input type="time" id="horario_saida">
+        </div>
+        <div>
+          <label>Data de Início *</label>
+          <input type="date" id="data_inicio">
+        </div>
+        <div>
+          <label>Status *</label>
+          <select id="status">
+            <option value="Ativo">Ativo</option>
+            <option value="Inativo">Inativo</option>
+          </select>
+        </div>
+      </div>
+    </div>
 
-    <label>Data de Início</label>
-    <input type="date" id="data_inicio">
+    <div class="actions">
+      <button onclick="salvar()">Salvar</button>
+      <button class="delete" id="btnExcluir" onclick="excluir()" style="display:none">
+        Excluir
+      </button>
+    </div>
 
-    <label>Status</label>
-    <select id="status">
-      <option>Ativo</option>
-      <option>Inativo</option>
-    </select>
-
-    <button onclick="salvar()">Salvar</button>
   </main>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
+/* ================= SUPABASE ================= */
 const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
 const SUPABASE_ANON_KEY =
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
 
-const supabase = window.supabase.createClient(
+const supabaseClient = supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
 
+/* ================= MODO EDIÇÃO ================= */
 const params = new URLSearchParams(window.location.search);
 const id = params.get("id");
 
-if (id) carregarEdicao();
-
-async function carregarEdicao() {
+if (id) {
   document.getElementById("titulo").innerText = "Editar Terapeuta";
+  document.getElementById("btnExcluir").style.display = "inline-block";
+  carregar();
+}
 
-  const { data, error } = await supabase
+/* ================= FUNÇÕES ================= */
+async function carregar() {
+  const { data } = await supabaseClient
     .from("terapeutas")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+  if (!data) return;
 
-  nome_completo.value = data.nome_completo;
-  cpf.value = data.cpf;
-  email.value = data.email;
-  dia_folga.value = data.dia_folga;
-  data_inicio.value = data.data_inicio;
-  status.value = data.status;
+  Object.keys(data).forEach(k => {
+    if (document.getElementById(k)) {
+      document.getElementById(k).value = data[k] || "";
+    }
+  });
 }
 
 async function salvar() {
   const payload = {
     nome_completo: nome_completo.value,
+    nome_profissional: nome_profissional.value,
     cpf: cpf.value,
+    rg: rg.value,
+    data_nascimento: data_nascimento.value,
     email: email.value,
+    telefone: telefone.value,
+    contato_emergencia: contato_emergencia.value,
+    cep: cep.value,
+    rua: rua.value,
+    numero: numero.value,
+    bairro: bairro.value,
+    cidade: cidade.value,
+    uf: uf.value,
     dia_folga: dia_folga.value,
+    horario_entrada: horario_entrada.value,
+    horario_saida: horario_saida.value,
     data_inicio: data_inicio.value,
     status: status.value
   };
 
-  let result;
   if (id) {
-    result = await supabase
-      .from("terapeutas")
-      .update(payload)
-      .eq("id", id);
+    await supabaseClient.from("terapeutas").update(payload).eq("id", id);
   } else {
-    result = await supabase
-      .from("terapeutas")
-      .insert(payload);
+    await supabaseClient.from("terapeutas").insert(payload);
   }
 
-  if (result.error) {
-    alert("Erro ao salvar");
-    console.error(result.error);
-    return;
-  }
+  alert("Salvo com sucesso");
+  location.href = "equipe.html";
+}
 
+async function excluir() {
+  if (!confirm("Deseja excluir esta terapeuta?")) return;
+  await supabaseClient.from("terapeutas").delete().eq("id", id);
   location.href = "equipe.html";
 }
 </script>

@@ -1,19 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const container = document.getElementById("sidebar");
+  const sidebarContainer = document.getElementById("sidebar");
 
-  // carrega o HTML do sidebar
   fetch("assets/sidebar/sidebar.html")
-    .then(r => r.text())
+    .then(res => res.text())
     .then(html => {
-      container.innerHTML = html;
-
-      // marca página ativa
-      const page = location.pathname.split("/").pop().replace(".html", "");
-      container.querySelectorAll("a").forEach(link => {
-        if (link.dataset.page === page) {
-          link.classList.add("active");
-        }
-      });
-    })
-    .catch(err => console.error("Erro sidebar:", err));
+      sidebarContainer.innerHTML = html;
+      marcarAtivo();
+    });
 });
+
+function marcarAtivo() {
+  const links = document.querySelectorAll(".menu a");
+  const path = window.location.pathname.split("/").pop();
+
+  links.forEach(link => {
+    if (link.getAttribute("href") === path) {
+      link.classList.add("active");
+    }
+  });
+}

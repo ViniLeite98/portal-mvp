@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Nova Terapeuta</title>
+<title>Gestão da Equipe</title>
 
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
@@ -11,31 +11,33 @@
 
 <style>
 .content { padding:30px; }
-.section {
-  background:#fff;
-  padding:24px;
-  border-radius:16px;
-  margin-bottom:24px;
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:16px;
 }
-.grid {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
+
+th, td {
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:left;
 }
-.grid-2 { grid-template-columns:repeat(2,1fr); }
-label { font-weight:600; font-size:13px; }
-input, select {
-  width:100%; padding:8px;
-  border:1px solid #d1d5db;
-  border-radius:6px;
+
+.actions button {
+  margin-right:6px;
 }
+
 button {
   background:#1f2937;
   color:#fff;
-  padding:10px 18px;
   border:none;
-  border-radius:8px;
+  padding:6px 10px;
+  border-radius:6px;
   cursor:pointer;
+}
+button.danger {
+  background:#dc2626;
 }
 </style>
 </head>
@@ -46,133 +48,105 @@ button {
   <aside id="sidebar"></aside>
 
   <main class="content">
-    <h1 id="titulo">Nova Terapeuta</h1>
+    <h1>Gestão da Equipe</h1>
+    <p>Terapeutas cadastradas</p>
 
-    <!-- DADOS PESSOAIS -->
-    <div class="section">
-      <h3>Dados Pessoais</h3>
-      <div class="grid">
-        <div><label>Nome Completo *</label><input id="nome_completo"></div>
-        <div><label>Nome Profissional *</label><input id="nome_profissional"></div>
-        <div><label>CPF *</label><input id="cpf"></div>
+    <button onclick="novaTerapeuta()">+ Nova Terapeuta</button>
 
-        <div><label>RG</label><input id="rg"></div>
-        <div><label>Data Nascimento</label><input type="date" id="nascimento"></div>
-        <div><label>Email *</label><input id="email"></div>
-
-        <div>
-          <label>Tipo Sanguíneo</label>
-          <select id="tipo_sanguineo">
-            <option></option>
-            <option>A+</option><option>A-</option>
-            <option>B+</option><option>B-</option>
-            <option>AB+</option><option>AB-</option>
-            <option>O+</option><option>O-</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <!-- CONTATOS -->
-    <div class="section">
-      <h3>Contatos</h3>
-      <div class="grid-2 grid">
-        <div><label>Telefone *</label><input id="telefone"></div>
-        <div><label>Contato Emergência</label><input id="telefone_emergencia"></div>
-      </div>
-    </div>
-
-    <!-- ENDEREÇO -->
-    <div class="section">
-      <h3>Endereço</h3>
-      <div class="grid">
-        <div><label>CEP</label><input id="cep"></div>
-        <div><label>Rua</label><input id="rua"></div>
-        <div><label>Número</label><input id="numero"></div>
-        <div><label>Complemento</label><input id="complemento"></div>
-        <div><label>Bairro</label><input id="bairro"></div>
-        <div><label>Cidade</label><input id="cidade"></div>
-        <div><label>UF</label><input id="uf"></div>
-      </div>
-    </div>
-
-    <!-- PAGAMENTO -->
-    <div class="section">
-      <h3>Pagamento</h3>
-      <div class="grid-2 grid">
-        <div>
-          <label>Tipo PIX</label>
-          <select id="pix_tipo">
-            <option></option>
-            <option>CPF</option>
-            <option>Email</option>
-            <option>Telefone</option>
-            <option>Aleatória</option>
-          </select>
-        </div>
-        <div><label>Chave PIX</label><input id="pix_chave"></div>
-      </div>
-    </div>
-
-    <!-- FUNCIONAL -->
-    <div class="section">
-      <h3>Dados Funcionais</h3>
-      <div class="grid">
-        <div><label>Tem folga?</label><select id="tem_folga"><option>Sim</option><option>Não</option></select></div>
-        <div><label>Dia Folga</label><input id="dia_folga"></div>
-        <div><label>Hora Entrada</label><input type="time" id="hora_entrada"></div>
-        <div><label>Hora Saída</label><input type="time" id="hora_saida"></div>
-        <div><label>Data Início</label><input type="date" id="data_inicio"></div>
-        <div><label>Status</label><select id="status"><option>Ativo</option><option>Inativo</option></select></div>
-      </div>
-    </div>
-
-    <button onclick="salvar()">Salvar</button>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome Profissional</th>
+          <th>CPF</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista">
+        <tr><td colspan="4">Carregando...</td></tr>
+      </tbody>
+    </table>
   </main>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
+/* =============================
+   SUPABASE
+============================= */
 const supabase = supabaseJs.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-const params = new URLSearchParams(window.location.search);
-const cpfEdit = params.get("cpf");
+/* =============================
+   LOAD EQUIPE
+============================= */
+async function carregarEquipe() {
+  const tbody = document.getElementById("lista");
 
-if (cpfEdit) carregarEdicao(cpfEdit);
+  const { data, error } = await supabase
+    .from("terapeutas")
+    .select("cpf, nome_profissional, status")
+    .order("nome_profissional");
 
-async function carregarEdicao(cpf) {
-  document.getElementById("titulo").innerText = "Editar Terapeuta";
-  const { data } = await supabase.from("terapeutas").select("*").eq("cpf", cpf).single();
-
-  for (const k in data) {
-    if (document.getElementById(k)) {
-      document.getElementById(k).value = data[k] ?? "";
-    }
+  if (error) {
+    console.error(error);
+    tbody.innerHTML = "<tr><td colspan='4'>Erro ao carregar</td></tr>";
+    return;
   }
 
-  document.getElementById("cpf").disabled = true;
+  if (!data.length) {
+    tbody.innerHTML = "<tr><td colspan='4'>Nenhuma terapeuta cadastrada</td></tr>";
+    return;
+  }
+
+  tbody.innerHTML = "";
+
+  data.forEach(t => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${t.nome_profissional || "-"}</td>
+      <td>${t.cpf}</td>
+      <td>${t.status || "Ativo"}</td>
+      <td class="actions">
+        <button onclick="editar('${t.cpf}')">Editar</button>
+        <button class="danger" onclick="excluir('${t.cpf}')">Excluir</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 }
 
-async function salvar() {
-  const payload = {};
-  document.querySelectorAll("input, select").forEach(i => payload[i.id] = i.value);
+/* =============================
+   AÇÕES
+============================= */
+function novaTerapeuta() {
+  location.href = "nova-terapeuta.html";
+}
+
+function editar(cpf) {
+  location.href = `nova-terapeuta.html?cpf=${cpf}`;
+}
+
+async function excluir(cpf) {
+  if (!confirm("Deseja realmente excluir esta terapeuta?")) return;
 
   const { error } = await supabase
     .from("terapeutas")
-    .upsert(payload, { onConflict: "cpf" });
+    .delete()
+    .eq("cpf", cpf);
 
   if (error) {
-    alert("Erro ao salvar");
+    alert("Erro ao excluir");
     console.error(error);
   } else {
-    alert("Salvo com sucesso");
-    window.location.href = "equipe.html";
+    carregarEquipe();
   }
 }
+
+carregarEquipe();
 </script>
 
 </body>

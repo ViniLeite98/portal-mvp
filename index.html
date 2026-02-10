@@ -13,8 +13,10 @@
   <!-- CSS sidebar -->
   <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+  <!-- Supabase -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
   <style>
-    /* ===== LAYOUT BASE ===== */
     .app {
       display: flex;
       min-height: 100vh;
@@ -27,7 +29,6 @@
       overflow-x: hidden;
     }
 
-    /* ===== CARDS ===== */
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -51,7 +52,6 @@
       color: #6b7280;
     }
 
-    /* ===== GRID DASHBOARD ===== */
     .dashboard-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -65,15 +65,26 @@
       }
     }
 
-    .placeholder {
-      height: 220px;
-      border-radius: 14px;
-      background: #eef2f7;
+    .stats {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #9ca3af;
+      gap: 24px;
+      margin-top: 16px;
+    }
+
+    .stats strong {
+      font-size: 22px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 8px;
+    }
+
+    ul li {
       font-size: 14px;
+      padding: 4px 0;
+      color: #374151;
     }
 
     .actions {
@@ -93,85 +104,148 @@
 
 <body>
 
-  <div class="app">
+<div class="app">
 
-    <!-- SIDEBAR (dinâmica) -->
-    <aside id="sidebar"></aside>
+  <!-- SIDEBAR -->
+  <aside id="sidebar"></aside>
 
-    <!-- CONTEÚDO -->
-    <main class="main-content">
+  <!-- CONTEÚDO -->
+  <main class="main-content">
 
-      <h1>Início</h1>
-      <p>Visão geral do Hara Spa</p>
+    <h1>Início</h1>
+    <p>Visão geral do Hara Spa</p>
 
-      <!-- CARDS TOPO -->
-      <div class="cards">
-        <div class="card">
-          <h3>Próximas Datas 📅</h3>
-          <small>Agenda resumida</small>
+    <!-- CARDS TOPO -->
+    <div class="cards">
+      <div class="card">
+        <h3>Próximas Datas 📅</h3>
+        <small>Agenda resumida</small>
+      </div>
+
+      <div class="card">
+        <h3>Dias Folgados 🏆</h3>
+        <small>Ranking do mês</small>
+      </div>
+
+      <div class="card">
+        <h3>Carga Horária ⏱️</h3>
+        <small>Resumo operacional</small>
+      </div>
+    </div>
+
+    <!-- GRID PRINCIPAL -->
+    <div class="dashboard-grid">
+
+      <!-- CARD EQUIPE (SUPABASE) -->
+      <div class="card">
+        <h3>Equipe</h3>
+
+        <div class="stats">
+          <div>
+            <strong id="total-terapeutas">--</strong><br>
+            <small>Total</small>
+          </div>
+          <div>
+            <strong id="ativas">--</strong><br>
+            <small>Ativas</small>
+          </div>
+          <div>
+            <strong id="inativas">--</strong><br>
+            <small>Inativas</small>
+          </div>
         </div>
 
-        <div class="card">
-          <h3>Dias Folgados 🏆</h3>
-          <small>Ranking do mês</small>
-        </div>
-
-        <div class="card">
-          <h3>Carga Horária ⏱️</h3>
-          <small>Resumo operacional</small>
+        <div style="margin-top:16px">
+          <small>Últimas cadastradas</small>
+          <ul id="ultimas-terapeutas"></ul>
         </div>
       </div>
 
-      <!-- GRID PRINCIPAL -->
-      <div class="dashboard-grid">
-
-        <div class="card">
-          <h3>Terapeutas Ativas</h3>
-          <div class="placeholder">
-            Gráfico será conectado ao Supabase
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Solicitações</h3>
-          <p>Faltas, férias e viagens</p>
-          <div class="actions">
-            <button onclick="location.href='solicitacoes.html'">
-              Ver solicitações
-            </button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- GRID INFERIOR -->
-      <div class="cards">
-        <div class="card">
-          <h3>Escalas</h3>
-          <p>Distribuição por data</p>
-          <div class="actions">
-            <button onclick="location.href='escalas.html'">
-              Criar escalas
-            </button>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Equipe</h3>
-          <p>Gestão operacional</p>
-          <div class="actions">
-            <button onclick="location.href='equipe.html'">
-              Ver equipe
-            </button>
-          </div>
+      <!-- SOLICITAÇÕES -->
+      <div class="card">
+        <h3>Solicitações</h3>
+        <p>Faltas, férias e viagens</p>
+        <div class="actions">
+          <button onclick="location.href='solicitacoes.html'">
+            Ver solicitações
+          </button>
         </div>
       </div>
 
-    </main>
-  </div>
+    </div>
 
-  <!-- JS SIDEBAR -->
-  <script src="assets/sidebar/sidebar.js"></script>
+    <!-- GRID INFERIOR -->
+    <div class="cards">
+      <div class="card">
+        <h3>Escalas</h3>
+        <p>Distribuição por data</p>
+        <div class="actions">
+          <button onclick="location.href='escalas.html'">
+            Criar escalas
+          </button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Equipe</h3>
+        <p>Gestão operacional</p>
+        <div class="actions">
+          <button onclick="location.href='equipe.html'">
+            Ver equipe
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- SIDEBAR JS -->
+<script src="assets/sidebar/sidebar.js"></script>
+
+<!-- SUPABASE SCRIPT -->
+<script>
+const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
+const SUPABASE_ANON_KEY =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+async function carregarResumoEquipe() {
+
+  const { data, error } = await supabaseClient
+    .from("terapeutas")
+    .select("nome_profissional, status, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erro Supabase:", error);
+    return;
+  }
+
+  const total = data.length;
+  const ativas = data.filter(t => (t.status || "Ativo") === "Ativo").length;
+  const inativas = total - ativas;
+
+  document.getElementById("total-terapeutas").innerText = total;
+  document.getElementById("ativas").innerText = ativas;
+  document.getElementById("inativas").innerText = inativas;
+
+  const ul = document.getElementById("ultimas-terapeutas");
+  ul.innerHTML = "";
+
+  data.slice(0, 5).forEach(t => {
+    const li = document.createElement("li");
+    li.textContent = t.nome_profissional || "-";
+    ul.appendChild(li);
+  });
+}
+
+carregarResumoEquipe();
+</script>
 
 </body>
 </html>

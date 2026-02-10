@@ -4,85 +4,56 @@
 <meta charset="UTF-8">
 <title>Solicitações</title>
 
-<!-- ÍCONES -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<!-- CSS GLOBAL -->
 <link rel="stylesheet" href="assets/css/style.css">
-
-<!-- CSS SIDEBAR -->
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<!-- SUPABASE -->
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
 <style>
-/* =========================
-   CONTEÚDO DA PÁGINA
-========================= */
-.content {
-  padding: 24px;
-  font-size: 14px;
-}
+.content { padding:24px; font-size:14px }
 
 .card {
-  background: #fff;
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 12px rgba(0,0,0,.05);
+  background:#fff;
+  border-radius:20px;
+  padding:24px;
+  margin-bottom:24px;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
 }
 
-.tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
-}
+.tabs { display:flex; gap:10px; margin-bottom:16px }
 
 .tab {
-  padding: 8px 16px;
-  border-radius: 20px;
-  background: #e5e7eb;
-  cursor: pointer;
-  font-size: 14px;
+  padding:8px 16px;
+  border-radius:20px;
+  background:#e5e7eb;
+  cursor:pointer;
 }
 
-.tab.active {
-  background: #1f2937;
-  color: #fff;
-}
+.tab.active { background:#1f2937; color:#fff }
 
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #e5e7eb;
-  text-align: left;
-  font-size: 14px;
-}
-
-th {
-  font-size: 12px;
-  color: #374151;
-}
+table { width:100%; border-collapse:collapse }
+th,td { padding:10px; border-bottom:1px solid #e5e7eb }
+th { font-size:12px; color:#374151 }
 
 button {
-  background: #1f2937;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:6px 12px;
+  cursor:pointer;
 }
 
-.ok { background: #16a34a; }
-.no { background: #dc2626; }
-.del { background: #b91c1c; }
+.ok { background:#16a34a }
+.no { background:#dc2626 }
+.del { background:#b91c1c }
 
-select, input {
-  padding: 6px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
+select,input {
+  padding:6px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
 }
 </style>
 </head>
@@ -90,11 +61,8 @@ select, input {
 <body>
 
 <div class="app">
-
-  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
-  <!-- CONTEÚDO -->
   <main class="content">
     <h1>Solicitações</h1>
     <p>Demanda de indisponibilidade</p>
@@ -104,7 +72,7 @@ select, input {
       <h3>Nova Solicitação</h3>
 
       <label>Terapeuta (ativas)</label><br>
-      <select id="terapeuta" style="width:100%; height:44px"></select><br><br>
+      <select id="terapeuta" style="width:100%;height:44px"></select><br><br>
 
       <label>Tipo</label><br>
       <select id="tipo">
@@ -130,11 +98,10 @@ select, input {
     <!-- PAINEL -->
     <div class="card">
       <div class="tabs">
-        <div class="tab active" onclick="trocar('aprovar', this)">Aprovar</div>
-        <div class="tab" onclick="trocar('gerenciar', this)">Gerenciar</div>
+        <div class="tab active" onclick="trocar('aprovar',this)">Aprovar</div>
+        <div class="tab" onclick="trocar('gerenciar',this)">Gerenciar</div>
       </div>
 
-      <!-- ABA APROVAR -->
       <div id="aprovar">
         <table>
           <thead>
@@ -149,7 +116,6 @@ select, input {
         </table>
       </div>
 
-      <!-- ABA GERENCIAR -->
       <div id="gerenciar" style="display:none">
         <table>
           <thead>
@@ -166,117 +132,132 @@ select, input {
       </div>
     </div>
   </main>
-
 </div>
 
-<!-- JS SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- =========================
-   LÓGICA DAS SOLICITAÇÕES
-========================= -->
 <script>
-/* TERAPEUTAS ATIVAS */
-const terapeutas = JSON.parse(localStorage.getItem("terapeutas") || "[]")
-  .filter(t => !t.status || t.status === "Ativo");
+document.addEventListener("DOMContentLoaded", () => {
 
-let solicitacoes = JSON.parse(localStorage.getItem("solicitacoes") || []);
+  const supabaseClient = window.supabase.createClient(
+    "https://rymehgsoarjeecuwyhny.supabase.co",
+    "SUA_ANON_KEY_AQUI"
+  );
 
-terapeutas.forEach(t => {
-  const o = document.createElement("option");
-  o.value = t.nomeProfissional;
-  o.textContent = t.nomeProfissional;
-  document.getElementById("terapeuta").appendChild(o);
-});
-
-document.getElementById("dataInicio").value =
-  new Date().toISOString().slice(0,10);
-
-/* FUNÇÕES */
-const aprovarDiv = document.getElementById("aprovar");
-const gerenciarDiv = document.getElementById("gerenciar");
-
-function salvar(){
-  const dataInicio = document.getElementById("dataInicio").value;
-  const dataFim = document.getElementById("dataFim").value;
-  if(!dataInicio || !dataFim) return alert("Datas obrigatórias");
-  if(dataFim < dataInicio) return alert("Data fim inválida");
-
-  solicitacoes.push({
-    id: crypto.randomUUID(),
-    terapeutaNome: document.getElementById("terapeuta").value,
-    dataInicio,
-    dataFim,
-    tipo: document.getElementById("tipo").value,
-    justificativa: document.getElementById("justificativa").value,
-    status: "Pendente"
-  });
-
-  localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
-  render();
-}
-
-function setStatus(id,status){
-  solicitacoes = solicitacoes.map(s=>s.id===id?{...s,status}:s);
-  localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
-  render();
-}
-
-function excluir(id){
-  if(!confirm("Excluir solicitação?")) return;
-  solicitacoes = solicitacoes.filter(s=>s.id!==id);
-  localStorage.setItem("solicitacoes", JSON.stringify(solicitacoes));
-  render();
-}
-
-function render(){
   const listaAprovar = document.getElementById("listaAprovar");
   const listaGerenciar = document.getElementById("listaGerenciar");
-  listaAprovar.innerHTML="";
-  listaGerenciar.innerHTML="";
 
-  solicitacoes.forEach(s=>{
-    if(s.status==="Pendente"){
-      listaAprovar.innerHTML+=`
-        <tr>
-          <td>${s.terapeutaNome}</td>
-          <td>${s.dataInicio} → ${s.dataFim}</td>
-          <td>${s.justificativa||"—"}</td>
-          <td>
-            <button class="ok" onclick="setStatus('${s.id}','Aprovado')">✔</button>
-            <button class="no" onclick="setStatus('${s.id}','Reprovado')">✖</button>
-          </td>
-        </tr>`;
+  /* TERAPEUTAS ATIVAS */
+  async function carregarTerapeutas() {
+    const { data } = await supabaseClient
+      .from("terapeutas")
+      .select("cpf,nome_profissi")
+      .eq("status","Ativo");
+
+    const sel = document.getElementById("terapeuta");
+    sel.innerHTML="";
+
+    data.forEach(t=>{
+      const o=document.createElement("option");
+      o.value=t.cpf;
+      o.textContent=t.nome_profissi;
+      sel.appendChild(o);
+    });
+  }
+
+  /* SALVAR */
+  window.salvar = async function() {
+    const cpf = document.getElementById("terapeuta").value;
+    const nome = document.getElementById("terapeuta").selectedOptions[0].text;
+    const dataInicio = document.getElementById("dataInicio").value;
+    const dataFim = document.getElementById("dataFim").value;
+
+    if(!dataInicio||!dataFim||dataFim<dataInicio){
+      alert("Datas inválidas"); return;
     }
 
-    listaGerenciar.innerHTML+=`
-      <tr>
-        <td>${s.terapeutaNome}</td>
-        <td>${s.dataInicio} → ${s.dataFim}</td>
-        <td>${s.tipo}</td>
-        <td>
-          <select onchange="setStatus('${s.id}',this.value)">
-            <option ${s.status==="Pendente"?"selected":""}>Pendente</option>
-            <option ${s.status==="Aprovado"?"selected":""}>Aprovado</option>
-            <option ${s.status==="Reprovado"?"selected":""}>Reprovado</option>
-          </select>
-        </td>
-        <td>
-          <button class="del" onclick="excluir('${s.id}')">Excluir</button>
-        </td>
-      </tr>`;
-  });
-}
+    await supabaseClient.from("solicitacoes").insert({
+      cpf_terapeuta: cpf,
+      nome_terapeuta: nome,
+      tipo: document.getElementById("tipo").value,
+      data_inicio: dataInicio,
+      data_fim: dataFim,
+      justificativa: document.getElementById("justificativa").value,
+      status: "Pendente"
+    });
 
-function trocar(aba, el){
-  aprovarDiv.style.display = aba==="aprovar"?"block":"none";
-  gerenciarDiv.style.display = aba==="gerenciar"?"block":"none";
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  el.classList.add("active");
-}
+    render();
+  }
 
-/* inicializa */
-render();
+  /* STATUS */
+  window.setStatus = async function(id,status){
+    await supabaseClient
+      .from("solicitacoes")
+      .update({status})
+      .eq("id",id);
+    render();
+  }
+
+  /* EXCLUIR */
+  window.excluir = async function(id){
+    if(!confirm("Excluir solicitação?"))return;
+    await supabaseClient.from("solicitacoes").delete().eq("id",id);
+    render();
+  }
+
+  /* RENDER */
+  async function render(){
+    listaAprovar.innerHTML="";
+    listaGerenciar.innerHTML="";
+
+    const { data } = await supabaseClient
+      .from("solicitacoes")
+      .select("*")
+      .order("created_at",{ascending:false});
+
+    data.forEach(s=>{
+      if(s.status==="Pendente"){
+        listaAprovar.innerHTML+=`
+          <tr>
+            <td>${s.nome_terapeuta}</td>
+            <td>${s.data_inicio} → ${s.data_fim}</td>
+            <td>${s.justificativa||"—"}</td>
+            <td>
+              <button class="ok" onclick="setStatus('${s.id}','Aprovado')">✔</button>
+              <button class="no" onclick="setStatus('${s.id}','Reprovado')">✖</button>
+            </td>
+          </tr>`;
+      }
+
+      listaGerenciar.innerHTML+=`
+        <tr>
+          <td>${s.nome_terapeuta}</td>
+          <td>${s.data_inicio} → ${s.data_fim}</td>
+          <td>${s.tipo}</td>
+          <td>
+            <select onchange="setStatus('${s.id}',this.value)">
+              <option ${s.status==="Pendente"?"selected":""}>Pendente</option>
+              <option ${s.status==="Aprovado"?"selected":""}>Aprovado</option>
+              <option ${s.status==="Reprovado"?"selected":""}>Reprovado</option>
+            </select>
+          </td>
+          <td>
+            <button class="del" onclick="excluir('${s.id}')">Excluir</button>
+          </td>
+        </tr>`;
+    });
+  }
+
+  window.trocar = function(aba,el){
+    document.getElementById("aprovar").style.display=aba==="aprovar"?"block":"none";
+    document.getElementById("gerenciar").style.display=aba==="gerenciar"?"block":"none";
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    el.classList.add("active");
+  }
+
+  carregarTerapeutas();
+  render();
+});
 </script>
 
 </body>

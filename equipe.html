@@ -13,11 +13,13 @@
   display: flex;
   min-height: 100vh;
 }
+
 .content {
   flex: 1;
   padding: 30px;
   margin-left: 260px;
 }
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -25,13 +27,17 @@ table {
   background: #fff;
   border-radius: 12px;
 }
+
 th, td {
   padding: 12px;
   border-bottom: 1px solid #e5e7eb;
 }
+
 th {
   background: #f9fafb;
+  font-weight: 600;
 }
+
 button {
   background: #1f2937;
   color: #fff;
@@ -40,10 +46,12 @@ button {
   border-radius: 6px;
   cursor: pointer;
 }
+
 button.excluir {
   background: #dc2626;
   margin-left: 6px;
 }
+
 .top-actions {
   display: flex;
   justify-content: flex-end;
@@ -59,17 +67,21 @@ button.excluir {
   align-items: center;
   justify-content: center;
 }
+
 .modal-content {
   background: #fff;
   padding: 24px;
   border-radius: 16px;
   width: 420px;
 }
-.modal-content input, select {
+
+.modal-content input,
+.modal-content select {
   width: 100%;
   padding: 8px;
   margin-bottom: 10px;
 }
+
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -118,8 +130,8 @@ button.excluir {
     <input type="time" id="hora_saida">
 
     <select id="status">
-      <option>Ativo</option>
-      <option>Inativo</option>
+      <option value="Ativo">Ativo</option>
+      <option value="Inativo">Inativo</option>
     </select>
 
     <div class="modal-actions">
@@ -156,11 +168,16 @@ async function carregar() {
 
   if (error) {
     console.error(error);
-    tbody.innerHTML = "<tr><td colspan='4'>Erro</td></tr>";
+    tbody.innerHTML = "<tr><td colspan='4'>Erro ao carregar</td></tr>";
     return;
   }
 
   tbody.innerHTML = "";
+
+  if (!data || data.length === 0) {
+    tbody.innerHTML = "<tr><td colspan='4'>Nenhuma terapeuta cadastrada</td></tr>";
+    return;
+  }
 
   data.forEach(t => {
     tbody.innerHTML += `
@@ -198,7 +215,8 @@ async function editar(cpf) {
     .single();
 
   if (error) {
-    alert("Erro ao carregar");
+    alert("Erro ao carregar terapeuta");
+    console.error(error);
     return;
   }
 
@@ -225,32 +243,37 @@ function limpar() {
 }
 
 /* =====================
-   SALVAR
+   SALVAR (CORRIGIDO)
 ===================== */
 async function salvar() {
   const payload = {
     nome_profissional: document.getElementById("nome_profissional").value,
-    cpf: document.getElementById("cpf").value,
     hora_entrada: document.getElementById("hora_entrada").value,
     hora_saida: document.getElementById("hora_saida").value,
     status: document.getElementById("status").value
   };
 
   let error;
+
   if (cpfAtual) {
+    // UPDATE — NÃO envia CPF
     ({ error } = await supabaseClient
       .from("terapeutas")
       .update(payload)
       .eq("cpf", cpfAtual));
   } else {
+    // INSERT — envia CPF
     ({ error } = await supabaseClient
       .from("terapeutas")
-      .insert(payload));
+      .insert({
+        ...payload,
+        cpf: document.getElementById("cpf").value
+      }));
   }
 
   if (error) {
     alert("Erro ao salvar");
-    console.error(error);
+    console.error("SUPABASE ERROR:", error);
     return;
   }
 
@@ -278,6 +301,7 @@ async function excluir(cpf) {
   carregar();
 }
 
+/* INIT */
 carregar();
 </script>
 

@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<!-- SUPABASE -->
+<!-- SUPABASE (CDN ESTÁVEL) -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
 <style>
@@ -150,30 +150,39 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const supabaseClient = window.supabase.createClient(
     "https://rymehgsoarjeecuwyhny.supabase.co",
-    "SUA_ANON_KEY_AQUI"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
   );
 
   /* =====================
      EQUIPE ATIVA
   ===================== */
   async function carregarEquipe() {
-    const { data } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from("terapeutas")
       .select("cpf")
       .eq("status", "Ativo");
 
-    document.getElementById("total-ativas").innerText = data?.length || 0;
+    if (error) {
+      console.error("Equipe:", error);
+      return;
+    }
+
+    document.getElementById("total-ativas").innerText = data.length;
   }
 
   /* =====================
      FORÇA DE TRABALHO (INTERVALOS)
   ===================== */
   async function carregarForcaTrabalho() {
-
-    const { data } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from("terapeutas")
       .select("hora_entrada, hora_saida")
       .eq("status", "Ativo");
+
+    if (error) {
+      console.error("Força de trabalho:", error);
+      return;
+    }
 
     const horas = {};
     for (let h = 9; h <= 21; h++) horas[h] = 0;
@@ -183,8 +192,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const [hi, mi] = t.hora_entrada.split(":").map(Number);
       const [hf, mf] = t.hora_saida.split(":").map(Number);
-
-      if (isNaN(hi)||isNaN(mi)||isNaN(hf)||isNaN(mf)) return;
+      if ([hi,mi,hf,mf].some(isNaN)) return;
 
       const inicio = hi * 60 + mi;
       const fim = hf * 60 + mf;
@@ -218,10 +226,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     const box = document.getElementById("carga-horaria");
     box.innerHTML = "<p>Carregando...</p>";
 
-    const { data } = await supabaseClient
+    const { data, error } = await supabaseClient
       .from("terapeutas")
       .select("nome_profissi, hora_entrada, hora_saida")
       .eq("status", "Ativo");
+
+    if (error) {
+      console.error("Carga horária:", error);
+      box.innerHTML = "<p>Erro ao carregar</p>";
+      return;
+    }
 
     const lista = [];
 
@@ -235,8 +249,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const [hi, mi] = t.hora_entrada.split(":").map(Number);
       const [hf, mf] = t.hora_saida.split(":").map(Number);
-
-      if (isNaN(hi)||isNaN(mi)||isNaN(hf)||isNaN(mf)) return;
+      if ([hi,mi,hf,mf].some(isNaN)) return;
 
       const totalMin = (hf * 60 + mf) - (hi * 60 + mi);
       if (totalMin <= 0) return;

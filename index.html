@@ -63,7 +63,6 @@
   background:linear-gradient(180deg,#9db7e5,#4f6fad);
   border-radius:10px 10px 0 0;
   height:6px;
-  transition:height .3s;
 }
 
 .hour {
@@ -95,13 +94,12 @@
     <h1>Início</h1>
     <p>Visão geral do Hara Spa</p>
 
-    <!-- CARDS SUPERIORES -->
+    <!-- CARDS -->
     <div class="cards">
-
       <div class="card">
         <h3>Equipe</h3>
         <div id="total-ativas" class="big">--</div>
-        <small>Terapeutas ativas no sistema</small>
+        <small>Terapeutas ativas</small>
       </div>
 
       <div class="card">
@@ -113,12 +111,10 @@
         <h3>Dias Folgados</h3>
         <p>Gerenciado por solicitações</p>
       </div>
-
     </div>
 
-    <!-- FORÇA DE TRABALHO + CARGA HORÁRIA -->
+    <!-- FORÇA + CARGA -->
     <div class="dashboard-row">
-
       <div class="card">
         <h3>Força de Trabalho</h3>
         <div id="workforce-bars" class="workforce"></div>
@@ -130,7 +126,6 @@
           <p>Carregando...</p>
         </div>
       </div>
-
     </div>
 
   </main>
@@ -141,28 +136,16 @@
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
 
-  if (!window.supabase) {
-    alert("Erro: Supabase não carregou");
-    return;
-  }
-
   const supabaseClient = window.supabase.createClient(
     "https://rymehgsoarjeecuwyhny.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmVzc2UiLCJyZWYiOiJyeW1laGdzb2FyamVlY3V3eWhueSIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzcwNjU3NDg1LCJleHAiOjIwODYyMzM0ODV9.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
   );
 
-  /* =====================
-     EQUIPE ATIVA
-  ===================== */
+  /* EQUIPE */
   async function carregarEquipe() {
-    const { data, error } = await supabaseClient
+    const { data } = await supabaseClient
       .from("terapeutas")
-      .select("cpf, status");
-
-    if (error) {
-      console.error("Equipe:", error);
-      return;
-    }
+      .select("cpf,status");
 
     const ativas = data.filter(
       t => !t.status || t.status.toLowerCase() === "ativo"
@@ -171,18 +154,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("total-ativas").innerText = ativas.length;
   }
 
-  /* =====================
-     FORÇA DE TRABALHO (INTERVALOS)
-  ===================== */
+  /* FORÇA DE TRABALHO */
   async function carregarForcaTrabalho() {
-    const { data, error } = await supabaseClient
+    const { data } = await supabaseClient
       .from("terapeutas")
-      .select("hora_entrada, hora_saida, status");
-
-    if (error) {
-      console.error("Força de trabalho:", error);
-      return;
-    }
+      .select("hora_entrada,hora_saida,status");
 
     const horas = {};
     for (let h = 9; h <= 21; h++) horas[h] = 0;
@@ -193,49 +169,38 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const [hi, mi] = t.hora_entrada.split(":").map(Number);
       const [hf, mf] = t.hora_saida.split(":").map(Number);
-      if ([hi,mi,hf,mf].some(isNaN)) return;
 
       const inicio = hi * 60 + mi;
       const fim = hf * 60 + mf;
 
       for (let h = 9; h <= 21; h++) {
         const ref = h * 60;
-        if (inicio <= ref && ref < fim) {
-          horas[h]++;
-        }
+        if (inicio <= ref && ref < fim) horas[h]++;
       }
     });
 
     const box = document.getElementById("workforce-bars");
     box.innerHTML = "";
 
-    Object.entries(horas).forEach(([h, qtd]) => {
+    Object.entries(horas).forEach(([h,q])=>{
       box.innerHTML += `
         <div class="bar-wrap">
-          <div class="qtd">${qtd}</div>
-          <div class="bar" style="height:${qtd * 18}px"></div>
+          <div class="qtd">${q}</div>
+          <div class="bar" style="height:${q*18}px"></div>
           <div class="hour">${h}:00</div>
         </div>
       `;
     });
   }
 
-  /* =====================
-     CARGA HORÁRIA (CORRIGIDA)
-  ===================== */
+  /* CARGA HORÁRIA */
   async function carregarCargaHoraria() {
     const box = document.getElementById("carga-horaria");
     box.innerHTML = "<p>Carregando...</p>";
 
-    const { data, error } = await supabaseClient
+    const { data } = await supabaseClient
       .from("terapeutas")
-      .select("nome_profissi, hora_entrada, hora_saida, status");
-
-    if (error) {
-      console.error("Carga horária:", error);
-      box.innerHTML = "<p>Erro ao carregar</p>";
-      return;
-    }
+      .select("nome_profissi,hora_entrada,hora_saida,status");
 
     const lista = [];
 
@@ -243,16 +208,10 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (t.status && t.status.toLowerCase() !== "ativo") return;
       if (!t.hora_entrada || !t.hora_saida) return;
 
-      if (
-        !t.hora_entrada.includes(":") ||
-        !t.hora_saida.includes(":")
-      ) return;
-
       const [hi, mi] = t.hora_entrada.split(":").map(Number);
       const [hf, mf] = t.hora_saida.split(":").map(Number);
-      if ([hi,mi,hf,mf].some(isNaN)) return;
 
-      const totalMin = (hf * 60 + mf) - (hi * 60 + mi);
+      const totalMin = (hf*60+mf) - (hi*60+mi);
       if (totalMin <= 0) return;
 
       const h = Math.floor(totalMin / 60);
@@ -265,7 +224,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
     });
 
-    if (lista.length === 0) {
+    if (!lista.length) {
       box.innerHTML = "<p>Sem dados válidos</p>";
       return;
     }
@@ -273,14 +232,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     lista.sort((a,b)=>b.minutos-a.minutos);
 
     box.innerHTML = "";
-    lista.slice(0,3).forEach(t => {
+    lista.slice(0,3).forEach(t=>{
       box.innerHTML += `
         <p>${t.nome}<span>${t.texto}h</span></p>
       `;
     });
   }
 
-  /* INIT */
   await carregarEquipe();
   await carregarForcaTrabalho();
   await carregarCargaHoraria();

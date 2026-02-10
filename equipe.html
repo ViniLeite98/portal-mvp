@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8">
 <title>Gestão da Equipe</title>
 
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -17,12 +18,15 @@
 .table th, .table td {
   padding: 10px;
   border-bottom: 1px solid #e5e7eb;
+  text-align: left;
 }
 button {
   padding: 6px 10px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
+  background:#1f2937;
+  color:#fff;
 }
 </style>
 </head>
@@ -45,7 +49,7 @@ button {
         <tr>
           <th>Nome</th>
           <th>Folga</th>
-          <th>Início</th>
+          <th>Data de Início</th>
           <th>Status</th>
           <th>Ações</th>
         </tr>
@@ -61,7 +65,8 @@ button {
 
 <script>
 const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
+const SUPABASE_ANON_KEY =
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
 
 const supabase = window.supabase.createClient(
   SUPABASE_URL,
@@ -69,32 +74,33 @@ const supabase = window.supabase.createClient(
 );
 
 async function carregarEquipe() {
+  const tbody = document.getElementById("lista");
+
   const { data, error } = await supabase
     .from("terapeutas")
-    .select("*")
+    .select("id, nome_completo, dia_folga, data_inicio, status")
     .order("nome_completo");
 
-  const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
   if (error) {
-    tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar</td></tr>";
     console.error(error);
+    tbody.innerHTML = "<tr><td colspan='5'>Erro ao carregar</td></tr>";
     return;
   }
 
-  if (!data.length) {
-    tbody.innerHTML = "<tr><td colspan='5'>Nenhuma terapeuta</td></tr>";
+  if (!data || data.length === 0) {
+    tbody.innerHTML = "<tr><td colspan='5'>Nenhuma terapeuta cadastrada</td></tr>";
     return;
   }
 
   data.forEach(t => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${t.nome_completo || ""}</td>
+      <td>${t.nome_completo}</td>
       <td>${t.dia_folga || "-"}</td>
       <td>${t.data_inicio || "-"}</td>
-      <td>${t.status || ""}</td>
+      <td>${t.status || "-"}</td>
       <td>
         <button onclick="editar(${t.id})">Editar</button>
       </td>
@@ -104,11 +110,11 @@ async function carregarEquipe() {
 }
 
 function editar(id) {
-  window.location.href = `nova-terapeuta.html?id=${id}`;
+  location.href = `nova-terapeuta.html?id=${id}`;
 }
 
 function novaTerapeuta() {
-  window.location.href = "nova-terapeuta.html";
+  location.href = "nova-terapeuta.html";
 }
 
 carregarEquipe();

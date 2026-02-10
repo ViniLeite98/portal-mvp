@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<!-- SUPABASE (CDN ESTÁVEL) -->
+<!-- SUPABASE -->
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 
 <style>
@@ -119,13 +119,11 @@
     <!-- FORÇA DE TRABALHO + CARGA HORÁRIA -->
     <div class="dashboard-row">
 
-      <!-- FORÇA DE TRABALHO -->
       <div class="card">
         <h3>Força de Trabalho</h3>
         <div id="workforce-bars" class="workforce"></div>
       </div>
 
-      <!-- CARGA HORÁRIA -->
       <div class="card carga">
         <h3>Carga Horária</h3>
         <div id="carga-horaria">
@@ -159,15 +157,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function carregarEquipe() {
     const { data, error } = await supabaseClient
       .from("terapeutas")
-      .select("cpf")
-      .eq("status", "Ativo");
+      .select("cpf, status");
 
     if (error) {
       console.error("Equipe:", error);
       return;
     }
 
-    document.getElementById("total-ativas").innerText = data.length;
+    const ativas = data.filter(
+      t => !t.status || t.status.toLowerCase() === "ativo"
+    );
+
+    document.getElementById("total-ativas").innerText = ativas.length;
   }
 
   /* =====================
@@ -176,8 +177,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function carregarForcaTrabalho() {
     const { data, error } = await supabaseClient
       .from("terapeutas")
-      .select("hora_entrada, hora_saida")
-      .eq("status", "Ativo");
+      .select("hora_entrada, hora_saida, status");
 
     if (error) {
       console.error("Força de trabalho:", error);
@@ -188,6 +188,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     for (let h = 9; h <= 21; h++) horas[h] = 0;
 
     data.forEach(t => {
+      if (t.status && t.status.toLowerCase() !== "ativo") return;
       if (!t.hora_entrada || !t.hora_saida) return;
 
       const [hi, mi] = t.hora_entrada.split(":").map(Number);
@@ -220,7 +221,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   /* =====================
-     CARGA HORÁRIA (FUNCIONAL)
+     CARGA HORÁRIA (CORRIGIDA)
   ===================== */
   async function carregarCargaHoraria() {
     const box = document.getElementById("carga-horaria");
@@ -228,8 +229,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const { data, error } = await supabaseClient
       .from("terapeutas")
-      .select("nome_profissi, hora_entrada, hora_saida")
-      .eq("status", "Ativo");
+      .select("nome_profissi, hora_entrada, hora_saida, status");
 
     if (error) {
       console.error("Carga horária:", error);
@@ -240,9 +240,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     const lista = [];
 
     data.forEach(t => {
+      if (t.status && t.status.toLowerCase() !== "ativo") return;
+      if (!t.hora_entrada || !t.hora_saida) return;
+
       if (
-        !t.hora_entrada ||
-        !t.hora_saida ||
         !t.hora_entrada.includes(":") ||
         !t.hora_saida.includes(":")
       ) return;

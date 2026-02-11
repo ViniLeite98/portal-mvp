@@ -1,3 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard | Hara Spa</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
+.app { display:flex; min-height:100vh; }
+.content { flex:1; padding:40px; margin-left:260px; }
+
+.card {
+  background:#fff;
+  border-radius:25px;
+  padding:30px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+.top-cards {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:30px;
+  margin-bottom:40px;
+}
+
+.big-number { font-size:60px; font-weight:bold; }
+
+.workforce {
+  background:#fff;
+  border-radius:25px;
+  padding:30px;
+  display:flex;
+  gap:40px;
+}
+
+.chart { flex:3; }
+
+.bars {
+  display:flex;
+  align-items:flex-end;
+  gap:12px;
+  height:220px;
+  margin-top:30px;
+}
+
+.bar {
+  width:28px;
+  background:#5b7dbd;
+  border-radius:6px 6px 0 0;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  color:#fff;
+  font-size:11px;
+}
+
+.hours {
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  margin-top:10px;
+}
+
+.work-info {
+  flex:1;
+  border-left:1px solid #ddd;
+  padding-left:30px;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside id="sidebar"></aside>
+
+  <main class="content">
+
+    <div class="top-cards">
+      <div class="card">
+        <h3>Equipe</h3>
+        <div class="big-number" id="totalEquipe">0</div>
+        <p>Terapeutas ativas</p>
+      </div>
+
+      <div class="card">
+        <h3>Resumo</h3>
+        <p>Dados atualizados em tempo real</p>
+      </div>
+
+      <div class="card">
+        <h3>Status</h3>
+        <p>Sistema operacional</p>
+      </div>
+    </div>
+
+    <div class="workforce">
+
+      <div class="chart">
+        <h3>Força de Trabalho</h3>
+        <div class="bars" id="bars"></div>
+        <div class="hours" id="hours"></div>
+      </div>
+
+      <div class="work-info">
+        <h3>Carga horária</h3>
+        <div id="cargaHoraria"></div>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script src="assets/sidebar/sidebar.js"></script>
+
+<script>
+const supabaseClient = supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
+
 async function carregarDashboard() {
 
   const { data, error } = await supabaseClient
@@ -13,11 +137,9 @@ async function carregarDashboard() {
   // ========= CONTADOR =========
   document.getElementById("totalEquipe").innerText = data.length;
 
-  // ========= CARGA HORÁRIA (ORDENADA MAIOR → MENOR) =========
+  // ========= CARGA HORÁRIA =========
   const cargaDiv = document.getElementById("cargaHoraria");
   cargaDiv.innerHTML = "";
-
-  const cargas = [];
 
   data.forEach(t => {
     if (!t.hora_entrada || !t.hora_saida) return;
@@ -27,28 +149,16 @@ async function carregarDashboard() {
 
     const diffMs = fim - inicio;
 
-    const totalMin = diffMs / 60000;
-    const horas = Math.floor(totalMin / 60);
-    const minutos = totalMin % 60;
+    const horas = Math.floor(diffMs / 3600000);
+    const minutos = Math.floor((diffMs % 3600000) / 60000);
 
-    cargas.push({
-      nome: t.nome_profissional,
-      totalMin,
-      texto: `${horas}:${minutos.toString().padStart(2,'0')}`
-    });
-  });
-
-  // Ordena da maior carga para menor
-  cargas.sort((a, b) => b.totalMin - a.totalMin);
-
-  cargas.forEach(c => {
     cargaDiv.innerHTML += 
-      `<p>${c.nome}: ${c.texto} horas</p>`;
+      `<p>${t.nome_profissional}: ${horas}:${minutos.toString().padStart(2,'0')} horas</p>`;
   });
 
   // ========= FORÇA DE TRABALHO =========
-  const inicioDia = 9;
-  const fimDia = 21;
+  const inicioDia = 10;
+  const fimDia = 22;
 
   const contagem = {};
 
@@ -59,18 +169,11 @@ async function carregarDashboard() {
   data.forEach(t => {
     if (!t.hora_entrada || !t.hora_saida) return;
 
-    const [horaIni, minIni] = t.hora_entrada.split(":").map(Number);
-    const [horaFim, minFim] = t.hora_saida.split(":").map(Number);
+    const horaIni = parseInt(t.hora_entrada.split(":")[0]);
+    const horaFim = parseInt(t.hora_saida.split(":")[0]);
 
-    for (let h = inicioDia; h <= fimDia; h++) {
-
-      const inicioSlot = h * 60;
-      const fimSlot = (h + 1) * 60;
-
-      const inicioTrab = horaIni * 60 + minIni;
-      const fimTrab = horaFim * 60 + minFim;
-
-      if (inicioTrab < fimSlot && fimTrab > inicioSlot) {
+    for (let h = horaIni; h < horaFim; h++) {
+      if (contagem[h] !== undefined) {
         contagem[h]++;
       }
     }
@@ -97,3 +200,9 @@ async function carregarDashboard() {
   });
 
 }
+
+carregarDashboard();
+</script>
+
+</body>
+</html>

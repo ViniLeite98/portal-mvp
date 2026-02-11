@@ -127,38 +127,40 @@ async function carregarDashboard() {
   const { data, error } = await supabaseClient
     .from("terapeutas")
     .select("nome_profissional,hora_entrada,hora_saida,status")
-    .eq("status","Ativo");
+    .eq("status","Ativo")
+    .order("nome_profissional", { ascending: true });
 
   if (error) {
     console.error("Erro Supabase:", error);
     return;
   }
 
-  // ========= CONTADOR =========
+  // ===== TOTAL ATIVAS =====
   document.getElementById("totalEquipe").innerText = data.length;
 
-  // ========= CARGA HORÁRIA =========
+  // ===== CARGA HORÁRIA =====
   const cargaDiv = document.getElementById("cargaHoraria");
   cargaDiv.innerHTML = "";
 
   data.forEach(t => {
+
     if (!t.hora_entrada || !t.hora_saida) return;
 
-    const inicio = new Date(`1970-01-01T${t.hora_entrada}`);
-    const fim = new Date(`1970-01-01T${t.hora_saida}`);
+    const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
+    const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
 
-    const diffMs = fim - inicio;
+    const totalMin = (h2*60+m2) - (h1*60+m1);
 
-    const horas = Math.floor(diffMs / 3600000);
-    const minutos = Math.floor((diffMs % 3600000) / 60000);
+    const horas = Math.floor(totalMin / 60);
+    const minutos = totalMin % 60;
 
     cargaDiv.innerHTML += 
       `<p>${t.nome_profissional}: ${horas}:${minutos.toString().padStart(2,'0')} horas</p>`;
   });
 
-  // ========= FORÇA DE TRABALHO =========
-  const inicioDia = 10;
-  const fimDia = 22;
+  // ===== FORÇA DE TRABALHO (9h às 21h) =====
+  const inicioDia = 9;
+  const fimDia = 21;
 
   const contagem = {};
 
@@ -167,13 +169,21 @@ async function carregarDashboard() {
   }
 
   data.forEach(t => {
+
     if (!t.hora_entrada || !t.hora_saida) return;
 
-    const horaIni = parseInt(t.hora_entrada.split(":")[0]);
-    const horaFim = parseInt(t.hora_saida.split(":")[0]);
+    const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
+    const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
 
-    for (let h = horaIni; h < horaFim; h++) {
-      if (contagem[h] !== undefined) {
+    const inicio = h1*60 + m1;
+    const fim = h2*60 + m2;
+
+    for (let h = inicioDia; h <= fimDia; h++) {
+
+      const slotInicio = h * 60;
+      const slotFim = (h + 1) * 60;
+
+      if (inicio < slotFim && fim > slotInicio) {
         contagem[h]++;
       }
     }
@@ -185,10 +195,10 @@ async function carregarDashboard() {
   barsDiv.innerHTML = "";
   hoursDiv.innerHTML = "";
 
-  Object.keys(contagem).forEach(h => {
+  for (let h = inicioDia; h <= fimDia; h++) {
 
     const quantidade = contagem[h];
-    const altura = quantidade * 30;
+    const altura = quantidade * 25;
 
     barsDiv.innerHTML += `
       <div class="bar" style="height:${altura}px">
@@ -197,7 +207,7 @@ async function carregarDashboard() {
     `;
 
     hoursDiv.innerHTML += `<span>${h}:00</span>`;
-  });
+  }
 
 }
 

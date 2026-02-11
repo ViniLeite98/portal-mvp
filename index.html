@@ -47,21 +47,21 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
 }
 
 .bar {
-  width:30px;
-  background:#6b8ac9;
+  width:28px;
+  background:#5b7dbd;
+  border-radius:6px 6px 0 0;
   display:flex;
   align-items:flex-end;
   justify-content:center;
   color:#fff;
-  font-size:12px;
-  border-radius:6px 6px 0 0;
+  font-size:11px;
 }
 
 .hours {
   display:flex;
-  gap:12px;
-  margin-top:10px;
+  justify-content:space-between;
   font-size:12px;
+  margin-top:10px;
 }
 
 .work-info {
@@ -87,7 +87,7 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
 
       <div class="card">
         <h3>Resumo</h3>
-        <p>Dados em tempo real</p>
+        <p>Dados atualizados em tempo real</p>
       </div>
 
       <div class="card">
@@ -126,7 +126,7 @@ async function carregarDashboard() {
 
   const { data, error } = await supabaseClient
     .from("terapeutas")
-    .select("nome_profissi,hora_entrada,hora_saida,status")
+    .select("nome_profissional,hora_entrada,hora_saida,status")
     .eq("status","Ativo");
 
   if (error) {
@@ -134,104 +134,70 @@ async function carregarDashboard() {
     return;
   }
 
-  // =====================
-  // TOTAL ATIVAS
-  // =====================
+  // ========= CONTADOR =========
   document.getElementById("totalEquipe").innerText = data.length;
 
-  // =====================
-  // CARGA HORÁRIA (ORDENADA)
-  // =====================
+  // ========= CARGA HORÁRIA =========
   const cargaDiv = document.getElementById("cargaHoraria");
   cargaDiv.innerHTML = "";
 
-  const listaCarga = [];
-
   data.forEach(t => {
-
     if (!t.hora_entrada || !t.hora_saida) return;
 
-    const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
-    const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
+    const inicio = new Date(`1970-01-01T${t.hora_entrada}`);
+    const fim = new Date(`1970-01-01T${t.hora_saida}`);
 
-    const inicio = h1*60 + m1;
-    const fim = h2*60 + m2;
+    const diffMs = fim - inicio;
 
-    const totalMin = fim - inicio;
+    const horas = Math.floor(diffMs / 3600000);
+    const minutos = Math.floor((diffMs % 3600000) / 60000);
 
-    if (totalMin > 0) {
-      listaCarga.push({
-        nome: t.nome_profissi,
-        minutos: totalMin
-      });
-    }
+    cargaDiv.innerHTML += 
+      `<p>${t.nome_profissional}: ${horas}:${minutos.toString().padStart(2,'0')} horas</p>`;
   });
 
-  // Ordena maior → menor
-  listaCarga.sort((a,b)=> b.minutos - a.minutos);
-
-  listaCarga.forEach(t => {
-    const horas = Math.floor(t.minutos/60);
-    const minutos = t.minutos % 60;
-
-    cargaDiv.innerHTML += `
-      <p>${t.nome}: ${horas}:${minutos.toString().padStart(2,"0")} horas</p>
-    `;
-  });
-
-  // =====================
-  // FORÇA DE TRABALHO (9h–21h)
-  // =====================
-  const inicioDia = 9;
-  const fimDia = 21;
+  // ========= FORÇA DE TRABALHO =========
+  const inicioDia = 10;
+  const fimDia = 22;
 
   const contagem = {};
 
-  for(let h=inicioDia; h<=fimDia; h++){
-    contagem[h]=0;
+  for (let h = inicioDia; h <= fimDia; h++) {
+    contagem[h] = 0;
   }
 
-  data.forEach(t=>{
+  data.forEach(t => {
+    if (!t.hora_entrada || !t.hora_saida) return;
 
-    if(!t.hora_entrada || !t.hora_saida) return;
+    const horaIni = parseInt(t.hora_entrada.split(":")[0]);
+    const horaFim = parseInt(t.hora_saida.split(":")[0]);
 
-    const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
-    const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
-
-    const inicio = h1*60 + m1;
-    const fim = h2*60 + m2;
-
-    for(let h=inicioDia; h<=fimDia; h++){
-
-      const slotInicio = h*60;
-      const slotFim = (h+1)*60;
-
-      if(inicio < slotFim && fim > slotInicio){
+    for (let h = horaIni; h < horaFim; h++) {
+      if (contagem[h] !== undefined) {
         contagem[h]++;
       }
     }
-
   });
 
   const barsDiv = document.getElementById("bars");
   const hoursDiv = document.getElementById("hours");
 
-  barsDiv.innerHTML="";
-  hoursDiv.innerHTML="";
+  barsDiv.innerHTML = "";
+  hoursDiv.innerHTML = "";
 
-  for(let h=inicioDia; h<=fimDia; h++){
+  Object.keys(contagem).forEach(h => {
 
-    const qtd = contagem[h];
-    const altura = qtd * 25;
+    const quantidade = contagem[h];
+    const altura = quantidade * 30;
 
     barsDiv.innerHTML += `
       <div class="bar" style="height:${altura}px">
-        ${qtd}
+        ${quantidade}
       </div>
     `;
 
-    hoursDiv.innerHTML += `<span style="width:30px;text-align:center">${h}:00</span>`;
-  }
+    hoursDiv.innerHTML += `<span>${h}:00</span>`;
+  });
 
 }
 

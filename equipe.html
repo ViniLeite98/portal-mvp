@@ -4,19 +4,15 @@
 <meta charset="UTF-8">
 <title>Gestão da Equipe | Hara Spa</title>
 
+<link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-body {
-  background:#f5f7fb;
-  font-family: Arial, sans-serif;
-}
-
 .app { display:flex; min-height:100vh; }
-.content { flex:1; padding:40px; margin-left:260px; }
+.content { flex:1; padding:40px; margin-left:260px; background:#f5f7fb; }
 
-/* CARD PRINCIPAL */
+/* CARD */
 .card-lista {
   background:#fff;
   border-radius:32px;
@@ -24,63 +20,47 @@ body {
   border:2px solid #d1d5db;
 }
 
-/* HEADER */
 .header-lista {
   display:flex;
   justify-content:space-between;
   align-items:center;
-  margin-bottom:32px;
+  margin-bottom:30px;
 }
 
-.header-lista h2 {
-  font-size:26px;
-  margin:0;
-}
-
-.header-lista p {
-  margin-top:6px;
-  color:#6b7280;
-}
+.header-lista h2 { margin:0; }
+.header-lista p { margin-top:6px; color:#6b7280; }
 
 .btn-nova {
   background:#3b4f6b;
   color:#fff;
-  padding:12px 22px;
+  padding:10px 20px;
   border-radius:14px;
   border:none;
-  font-size:16px;
   cursor:pointer;
+  font-size:16px;
 }
 
 /* TABELA */
-table {
-  width:100%;
-  border-collapse:collapse;
-}
-
-th {
+.tabela { width:100%; border-collapse:collapse; }
+.tabela th {
   text-align:left;
   font-size:18px;
-  padding-bottom:16px;
+  padding-bottom:15px;
 }
-
-td {
-  padding:20px 8px;
-  font-size:18px;
+.tabela td {
+  padding:18px 8px;
   border-top:1px solid #e5e7eb;
+  font-size:16px;
 }
 
 .actions button {
   background:none;
   border:none;
-  font-size:20px;
+  font-size:18px;
   cursor:pointer;
-  margin-right:10px;
+  margin-right:8px;
 }
-
-.actions button.excluir {
-  color:red;
-}
+.actions button.excluir { color:red; }
 
 /* MODAL */
 .modal {
@@ -94,7 +74,7 @@ td {
 }
 .modal-content {
   background:#fff;
-  width:900px;
+  width:1000px;
   max-height:90vh;
   overflow:auto;
   border-radius:16px;
@@ -102,17 +82,20 @@ td {
 }
 .section { margin-bottom:24px; }
 .section h3 { margin-bottom:12px; }
+
 .grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:12px;
 }
+
 input, select {
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
   width:100%;
 }
+
 .modal-actions {
   display:flex;
   justify-content:flex-end;
@@ -129,15 +112,19 @@ input, select {
   <main class="content">
 
     <div class="card-lista">
+
       <div class="header-lista">
         <div>
           <h2>Lista de Terapeutas</h2>
-          <p id="contador"></p>
+          <p id="contador">0 terapeutas ativas</p>
         </div>
-        <button class="btn-nova" onclick="abrirNovo()">+ Nova Terapeuta</button>
+
+        <button class="btn-nova" onclick="abrirNovo()">
+          + Nova Terapeuta
+        </button>
       </div>
 
-      <table>
+      <table class="tabela">
         <thead>
           <tr>
             <th>Nome</th>
@@ -147,8 +134,10 @@ input, select {
             <th>Ações</th>
           </tr>
         </thead>
+
         <tbody id="lista"></tbody>
       </table>
+
     </div>
 
   </main>
@@ -171,16 +160,52 @@ input, select {
     </div>
 
     <div class="section">
+      <h3>Contatos</h3>
+      <div class="grid">
+        <input id="telefone" placeholder="Telefone *">
+        <input id="telefone_emer" placeholder="Contato Emergência">
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Endereço</h3>
+      <div class="grid">
+        <input id="cep" placeholder="CEP">
+        <input id="rua" placeholder="Rua">
+        <input id="numero" placeholder="Número">
+        <input id="complemento" placeholder="Complemento">
+        <input id="bairro" placeholder="Bairro">
+        <input id="cidade" placeholder="Cidade">
+        <input id="uf" placeholder="UF">
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Pagamento</h3>
+      <div class="grid">
+        <select id="pix_tipo">
+          <option value="">Tipo Chave PIX</option>
+          <option>CPF</option>
+          <option>Email</option>
+          <option>Telefone</option>
+          <option>Aleatória</option>
+        </select>
+        <input id="pix_chave" placeholder="Chave PIX">
+      </div>
+    </div>
+
+    <div class="section">
       <h3>Dados Funcionais</h3>
       <div class="grid">
         <select id="tem_folga">
-          <option value="">Folga semanal?</option>
+          <option value="">Tem folga semanal?</option>
           <option value="Sim">Sim</option>
           <option value="Não">Não</option>
         </select>
-        <input type="date" id="data_inicio">
+        <input id="dia_folga" placeholder="Dia da Folga">
         <input type="time" id="hora_entrada">
         <input type="time" id="hora_saida">
+        <input type="date" id="data_inicio">
         <select id="status">
           <option value="Ativo">Ativo</option>
           <option value="Inativo">Inativo</option>
@@ -206,6 +231,39 @@ const supabaseClient = supabase.createClient(
 
 let cpfAtual = null;
 
+const campos = [
+ "nome_completo","nome_profissional","cpf","rg","nascimento","email",
+ "telefone","telefone_emer","cep","rua","numero","complemento","bairro",
+ "cidade","uf","pix_tipo","pix_chave","tem_folga","dia_folga",
+ "hora_entrada","hora_saida","data_inicio","status"
+];
+
+function getPayload() {
+  const obj = {};
+  campos.forEach(c => {
+    const el = document.getElementById(c);
+    if (!el) return;
+    if (el.value !== "") obj[c] = el.value;
+  });
+  return obj;
+}
+
+function setForm(data) {
+  campos.forEach(c => {
+    if (document.getElementById(c))
+      document.getElementById(c).value = data[c] || "";
+  });
+}
+
+function formatarData(data) {
+  if (!data) return "-";
+  return new Date(data).toLocaleDateString("pt-BR", {
+    day:"2-digit",
+    month:"long",
+    year:"numeric"
+  });
+}
+
 async function carregar() {
   const { data } = await supabaseClient
     .from("terapeutas")
@@ -223,7 +281,7 @@ async function carregar() {
     tbody.innerHTML += `
       <tr>
         <td>${t.nome_profissional}</td>
-        <td>${t.tem_folga === "Sim" ? "Sim" : "Não"}</td>
+        <td>${t.tem_folga || "Não"}</td>
         <td>${formatarData(t.data_inicio)}</td>
         <td>${t.hora_entrada || "-"} – ${t.hora_saida || "-"}</td>
         <td class="actions">
@@ -235,19 +293,9 @@ async function carregar() {
   });
 }
 
-function formatarData(data) {
-  if (!data) return "-";
-  return new Date(data).toLocaleDateString("pt-BR", {
-    day:"2-digit",
-    month:"long",
-    year:"numeric"
-  });
-}
-
 function abrirNovo() {
   cpfAtual = null;
-  document.querySelectorAll("#modal input, #modal select")
-    .forEach(el => el.value = "");
+  campos.forEach(c => document.getElementById(c).value = "");
   document.getElementById("cpf").disabled = false;
   document.getElementById("modal").style.display = "flex";
 }
@@ -260,36 +308,32 @@ async function editar(cpf) {
     .eq("cpf",cpf)
     .single();
 
-  Object.keys(data).forEach(key=>{
-    if(document.getElementById(key))
-      document.getElementById(key).value = data[key] || "";
-  });
-
+  setForm(data);
   document.getElementById("cpf").disabled = true;
   document.getElementById("modal").style.display = "flex";
 }
 
 async function salvar() {
-  const payload = {
-    nome_completo: nome_completo.value,
-    nome_profissional: nome_profissional.value,
-    email: email.value,
-    tem_folga: tem_folga.value,
-    data_inicio: data_inicio.value,
-    hora_entrada: hora_entrada.value,
-    hora_saida: hora_saida.value,
-    status: status.value
-  };
+  const payload = getPayload();
+
+  if (!payload.nome_completo || !payload.nome_profissional || !payload.email) {
+    alert("Preencha os campos obrigatórios");
+    return;
+  }
 
   let error;
 
   if (cpfAtual) {
+    delete payload.cpf;
     ({ error } = await supabaseClient
       .from("terapeutas")
       .update(payload)
       .eq("cpf", cpfAtual));
   } else {
-    payload.cpf = cpf.value;
+    if (!payload.cpf) {
+      alert("CPF é obrigatório");
+      return;
+    }
     ({ error } = await supabaseClient
       .from("terapeutas")
       .insert(payload));

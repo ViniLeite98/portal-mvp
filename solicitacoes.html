@@ -15,7 +15,7 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
 .card {
   background:#fff;
   border-radius:20px;
-  padding:25px;
+  padding:30px;
   box-shadow:0 4px 12px rgba(0,0,0,.08);
   margin-bottom:30px;
 }
@@ -36,6 +36,10 @@ button {
   cursor:pointer;
 }
 
+button:hover {
+  opacity:.9;
+}
+
 table {
   width:100%;
   border-collapse:collapse;
@@ -46,7 +50,12 @@ th, td {
   padding:10px;
   border-bottom:1px solid #eee;
   text-align:left;
+  font-size:14px;
 }
+
+.status-pendente { color:#d97706; font-weight:bold; }
+.status-aprovado { color:#16a34a; font-weight:bold; }
+.status-reprovado { color:#dc2626; font-weight:bold; }
 </style>
 </head>
 <body>
@@ -92,6 +101,7 @@ th, td {
             <th>Tipo</th>
             <th>Período</th>
             <th>Status</th>
+            <th>Criado em</th>
           </tr>
         </thead>
         <tbody id="lista"></tbody>
@@ -110,34 +120,54 @@ const supabaseClient = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-// ====================
-// CARREGAR TERAPEUTAS ATIVAS
-// ====================
-async function carregarTerapeutas() {
+/* =========================
+   DEFINIR DATA HOJE
+========================= */
+function definirDataHoje() {
+  const hoje = new Date().toISOString().split("T")[0];
+  document.getElementById("data_inicio").value = hoje;
+  document.getElementById("data_fim").min = hoje;
+}
 
-  const select = document.getElementById("terapeuta");
-  select.innerHTML = "<option>Carregando...</option>";
+/* =========================
+   VALIDAR DATA FIM
+========================= */
+document.addEventListener("DOMContentLoaded", () => {
+
+  definirDataHoje();
+
+  const dataInicio = document.getElementById("data_inicio");
+  const dataFim = document.getElementById("data_fim");
+
+  dataInicio.addEventListener("change", () => {
+    dataFim.min = dataInicio.value;
+
+    if (dataFim.value < dataInicio.value) {
+      dataFim.value = dataInicio.value;
+    }
+  });
+
+});
+
+/* =========================
+   CARREGAR TERAPEUTAS ATIVAS
+========================= */
+async function carregarTerapeutas() {
 
   const { data, error } = await supabaseClient
     .from("terapeutas")
-    .select("cpf,nome_profissional,status")
+    .select("cpf,nome_profissional")
     .eq("status","Ativo")
     .order("nome_profissional");
 
-  console.log("Terapeutas:", data);
+  const select = document.getElementById("terapeuta");
+  select.innerHTML = "";
 
   if (error) {
-    console.error("Erro terapeutas:", error);
+    console.error(error);
     select.innerHTML = "<option>Erro ao carregar</option>";
     return;
   }
-
-  if (!data || data.length === 0) {
-    select.innerHTML = "<option>Nenhuma ativa</option>";
-    return;
-  }
-
-  select.innerHTML = "";
 
   data.forEach(t => {
     select.innerHTML += `
@@ -148,16 +178,29 @@ async function carregarTerapeutas() {
   });
 }
 
-// ====================
-// SALVAR SOLICITAÇÃO
-// ====================
+/* =========================
+   SALVAR SOLICITAÇÃO
+========================= */
 async function salvar() {
+
+  const dataInicio = document.getElementById("data_inicio").value;
+  const dataFim = document.getElementById("data_fim").value;
+
+  if (!dataInicio || !dataFim) {
+    alert("Preencha as datas.");
+    return;
+  }
+
+  if (dataFim < dataInicio) {
+    alert("Data fim não pode ser menor que data início.");
+    return;
+  }
 
   const payload = {
     terapeuta_cpf: document.getElementById("terapeuta").value,
     tipo: document.getElementById("tipo").value,
-    data_inicio: document.getElementById("data_inicio").value,
-    data_fim: document.getElementById("data_fim").value,
+    data_inicio: dataInicio,
+    data_fim: dataFim,
     justificativa: document.getElementById("justificativa").value,
     status: "Pendente"
   };
@@ -167,7 +210,7 @@ async function salvar() {
     .insert(payload);
 
   if (error) {
-    console.error("Erro salvar:", error);
+    console.error(error);
     alert("Erro ao salvar");
     return;
   }
@@ -176,26 +219,18 @@ async function salvar() {
   carregarSolicitacoes();
 }
 
-// ====================
-// CARREGAR SOLICITAÇÕES
-// ====================
+/* =========================
+   CARREGAR SOLICITAÇÕES
+========================= */
 async function carregarSolicitacoes() {
 
   const { data, error } = await supabaseClient
     .from("solicitacoes")
-    .select(`
-      *,
-      terapeutas (
-        nome_profissional,
-        cpf
-      )
-    `)
+    .select("*")
     .order("created_at", { ascending:false });
 
-  console.log("Solicitações:", data);
-
   if (error) {
-    console.error("Erro solicitacoes:", error);
+    console.error(error);
     return;
   }
 
@@ -204,23 +239,33 @@ async function carregarSolicitacoes() {
 
   data.forEach(s => {
 
-    const nome = s.terapeutas?.nome_profissional || "";
-    const cpf = s.terapeutas?.cpf || "";
+    // Converter UTC para horário Brasil
+    const dataCriacao = new Date(s.created_at);
+    const dataFormatada = dataCriacao.toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo"
+    });
+
+    let statusClass = "";
+    if (s.status === "Pendente") statusClass = "status-pendente";
+    if (s.status === "Aprovado") statusClass = "status-aprovado";
+    if (s.status === "Reprovado") statusClass = "status-reprovado";
 
     tbody.innerHTML += `
       <tr>
-        <td>${nome} - ${cpf}</td>
+        <td>${s.terapeuta_cpf}</td>
         <td>${s.tipo}</td>
-        <td>${s.data_inicio} até ${s.data_fim}</td>
-        <td>${s.status}</td>
+        <td>${s.data_inicio} → ${s.data_fim}</td>
+        <td class="${statusClass}">${s.status}</td>
+        <td>${dataFormatada}</td>
       </tr>
     `;
   });
+
 }
 
-// ====================
-// INICIALIZA
-// ====================
+/* =========================
+   INICIALIZA
+========================= */
 carregarTerapeutas();
 carregarSolicitacoes();
 </script>

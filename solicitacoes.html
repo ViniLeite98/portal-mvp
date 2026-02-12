@@ -107,34 +107,54 @@ th, td {
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "SUA_ANON_KEY_AQUI"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
+// ====================
+// CARREGAR TERAPEUTAS ATIVAS
+// ====================
 async function carregarTerapeutas() {
 
-  const { data } = await supabaseClient
+  const select = document.getElementById("terapeuta");
+  select.innerHTML = "<option>Carregando...</option>";
+
+  const { data, error } = await supabaseClient
     .from("terapeutas")
-    .select("cpf,nome_profissional")
+    .select("cpf,nome_profissional,status")
     .eq("status","Ativo")
     .order("nome_profissional");
 
-  const select = document.getElementById("terapeuta");
+  console.log("Terapeutas:", data);
+
+  if (error) {
+    console.error("Erro terapeutas:", error);
+    select.innerHTML = "<option>Erro ao carregar</option>";
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    select.innerHTML = "<option>Nenhuma ativa</option>";
+    return;
+  }
+
   select.innerHTML = "";
 
   data.forEach(t => {
-    select.innerHTML += 
-      `<option value="${t.cpf}">
+    select.innerHTML += `
+      <option value="${t.cpf}">
         ${t.nome_profissional} - ${t.cpf}
-      </option>`;
+      </option>
+    `;
   });
 }
 
+// ====================
+// SALVAR SOLICITAÇÃO
+// ====================
 async function salvar() {
 
-  const terapeuta_cpf = document.getElementById("terapeuta").value;
-
   const payload = {
-    terapeuta_cpf,
+    terapeuta_cpf: document.getElementById("terapeuta").value,
     tipo: document.getElementById("tipo").value,
     data_inicio: document.getElementById("data_inicio").value,
     data_fim: document.getElementById("data_fim").value,
@@ -147,18 +167,21 @@ async function salvar() {
     .insert(payload);
 
   if (error) {
-    console.error(error);
+    console.error("Erro salvar:", error);
     alert("Erro ao salvar");
     return;
   }
 
-  alert("Salvo com sucesso!");
+  alert("Solicitação registrada!");
   carregarSolicitacoes();
 }
 
+// ====================
+// CARREGAR SOLICITAÇÕES
+// ====================
 async function carregarSolicitacoes() {
 
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("solicitacoes")
     .select(`
       *,
@@ -168,6 +191,13 @@ async function carregarSolicitacoes() {
       )
     `)
     .order("created_at", { ascending:false });
+
+  console.log("Solicitações:", data);
+
+  if (error) {
+    console.error("Erro solicitacoes:", error);
+    return;
+  }
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
@@ -188,6 +218,9 @@ async function carregarSolicitacoes() {
   });
 }
 
+// ====================
+// INICIALIZA
+// ====================
 carregarTerapeutas();
 carregarSolicitacoes();
 </script>

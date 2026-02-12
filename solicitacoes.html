@@ -2,262 +2,194 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Solicitações</title>
+<title>Solicitações | Hara Spa</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="assets/css/style.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<!-- SUPABASE -->
-<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-
 <style>
-.content { padding:24px; font-size:14px }
+body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
+.app { display:flex; min-height:100vh; }
+.content { flex:1; padding:40px; margin-left:260px; }
 
 .card {
   background:#fff;
   border-radius:20px;
-  padding:24px;
-  margin-bottom:24px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
+  padding:25px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  margin-bottom:30px;
 }
 
-.tabs { display:flex; gap:10px; margin-bottom:16px }
-
-.tab {
-  padding:8px 16px;
-  border-radius:20px;
-  background:#e5e7eb;
-  cursor:pointer;
+input, select {
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  width:100%;
 }
-
-.tab.active { background:#1f2937; color:#fff }
-
-table { width:100%; border-collapse:collapse }
-th,td { padding:10px; border-bottom:1px solid #e5e7eb }
-th { font-size:12px; color:#374151 }
 
 button {
   background:#1f2937;
   color:#fff;
   border:none;
   border-radius:6px;
-  padding:6px 12px;
+  padding:8px 14px;
   cursor:pointer;
 }
 
-.ok { background:#16a34a }
-.no { background:#dc2626 }
-.del { background:#b91c1c }
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
 
-select,input {
-  padding:6px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
+th, td {
+  padding:10px;
+  border-bottom:1px solid #eee;
+  text-align:left;
 }
 </style>
 </head>
-
 <body>
 
 <div class="app">
   <aside id="sidebar"></aside>
 
   <main class="content">
-    <h1>Solicitações</h1>
-    <p>Demanda de indisponibilidade</p>
 
-    <!-- NOVA SOLICITAÇÃO -->
     <div class="card">
-      <h3>Nova Solicitação</h3>
+      <h2>Nova Solicitação</h2>
 
-      <label>Terapeuta (ativas)</label><br>
-      <select id="terapeuta" style="width:100%;height:44px"></select><br><br>
+      <label>Terapeuta</label>
+      <select id="terapeuta"></select><br><br>
 
-      <label>Tipo</label><br>
+      <label>Tipo</label>
       <select id="tipo">
         <option>Falta</option>
         <option>Férias</option>
-        <option>Viagem</option>
         <option>Atestado</option>
-        <option>Outro</option>
+        <option>Viagem</option>
       </select><br><br>
 
-      <label>Data Início</label><br>
-      <input type="date" id="dataInicio"><br><br>
+      <label>Data Início</label>
+      <input type="date" id="data_inicio"><br><br>
 
-      <label>Data Fim</label><br>
-      <input type="date" id="dataFim"><br><br>
+      <label>Data Fim</label>
+      <input type="date" id="data_fim"><br><br>
 
-      <label>Justificativa</label><br>
-      <input id="justificativa" style="width:100%"><br><br>
+      <label>Justificativa</label>
+      <input id="justificativa"><br><br>
 
-      <button onclick="salvar()">Salvar Solicitação</button>
+      <button onclick="salvar()">Salvar</button>
     </div>
 
-    <!-- PAINEL -->
     <div class="card">
-      <div class="tabs">
-        <div class="tab active" onclick="trocar('aprovar',this)">Aprovar</div>
-        <div class="tab" onclick="trocar('gerenciar',this)">Gerenciar</div>
-      </div>
+      <h2>Solicitações Registradas</h2>
 
-      <div id="aprovar">
-        <table>
-          <thead>
-            <tr>
-              <th>Profissional</th>
-              <th>Período</th>
-              <th>Justificativa</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="listaAprovar"></tbody>
-        </table>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Terapeuta</th>
+            <th>Tipo</th>
+            <th>Período</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
 
-      <div id="gerenciar" style="display:none">
-        <table>
-          <thead>
-            <tr>
-              <th>Profissional</th>
-              <th>Período</th>
-              <th>Tipo</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="listaGerenciar"></tbody>
-        </table>
-      </div>
     </div>
+
   </main>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+const supabaseClient = supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "SUA_ANON_KEY_AQUI"
+);
 
-  const supabaseClient = window.supabase.createClient(
-    "https://rymehgsoarjeecuwyhny.supabase.co",
-    "SUA_ANON_KEY_AQUI"
-  );
+async function carregarTerapeutas() {
 
-  const listaAprovar = document.getElementById("listaAprovar");
-  const listaGerenciar = document.getElementById("listaGerenciar");
+  const { data } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissional")
+    .eq("status","Ativo")
+    .order("nome_profissional");
 
-  /* TERAPEUTAS ATIVAS */
-  async function carregarTerapeutas() {
-    const { data } = await supabaseClient
-      .from("terapeutas")
-      .select("cpf,nome_profissi")
-      .eq("status","Ativo");
+  const select = document.getElementById("terapeuta");
+  select.innerHTML = "";
 
-    const sel = document.getElementById("terapeuta");
-    sel.innerHTML="";
+  data.forEach(t => {
+    select.innerHTML += 
+      `<option value="${t.cpf}">
+        ${t.nome_profissional} - ${t.cpf}
+      </option>`;
+  });
+}
 
-    data.forEach(t=>{
-      const o=document.createElement("option");
-      o.value=t.cpf;
-      o.textContent=t.nome_profissi;
-      sel.appendChild(o);
-    });
+async function salvar() {
+
+  const terapeuta_cpf = document.getElementById("terapeuta").value;
+
+  const payload = {
+    terapeuta_cpf,
+    tipo: document.getElementById("tipo").value,
+    data_inicio: document.getElementById("data_inicio").value,
+    data_fim: document.getElementById("data_fim").value,
+    justificativa: document.getElementById("justificativa").value,
+    status: "Pendente"
+  };
+
+  const { error } = await supabaseClient
+    .from("solicitacoes")
+    .insert(payload);
+
+  if (error) {
+    console.error(error);
+    alert("Erro ao salvar");
+    return;
   }
 
-  /* SALVAR */
-  window.salvar = async function() {
-    const cpf = document.getElementById("terapeuta").value;
-    const nome = document.getElementById("terapeuta").selectedOptions[0].text;
-    const dataInicio = document.getElementById("dataInicio").value;
-    const dataFim = document.getElementById("dataFim").value;
+  alert("Salvo com sucesso!");
+  carregarSolicitacoes();
+}
 
-    if(!dataInicio||!dataFim||dataFim<dataInicio){
-      alert("Datas inválidas"); return;
-    }
+async function carregarSolicitacoes() {
 
-    await supabaseClient.from("solicitacoes").insert({
-      cpf_terapeuta: cpf,
-      nome_terapeuta: nome,
-      tipo: document.getElementById("tipo").value,
-      data_inicio: dataInicio,
-      data_fim: dataFim,
-      justificativa: document.getElementById("justificativa").value,
-      status: "Pendente"
-    });
+  const { data } = await supabaseClient
+    .from("solicitacoes")
+    .select(`
+      *,
+      terapeutas (
+        nome_profissional,
+        cpf
+      )
+    `)
+    .order("created_at", { ascending:false });
 
-    render();
-  }
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
 
-  /* STATUS */
-  window.setStatus = async function(id,status){
-    await supabaseClient
-      .from("solicitacoes")
-      .update({status})
-      .eq("id",id);
-    render();
-  }
+  data.forEach(s => {
 
-  /* EXCLUIR */
-  window.excluir = async function(id){
-    if(!confirm("Excluir solicitação?"))return;
-    await supabaseClient.from("solicitacoes").delete().eq("id",id);
-    render();
-  }
+    const nome = s.terapeutas?.nome_profissional || "";
+    const cpf = s.terapeutas?.cpf || "";
 
-  /* RENDER */
-  async function render(){
-    listaAprovar.innerHTML="";
-    listaGerenciar.innerHTML="";
+    tbody.innerHTML += `
+      <tr>
+        <td>${nome} - ${cpf}</td>
+        <td>${s.tipo}</td>
+        <td>${s.data_inicio} até ${s.data_fim}</td>
+        <td>${s.status}</td>
+      </tr>
+    `;
+  });
+}
 
-    const { data } = await supabaseClient
-      .from("solicitacoes")
-      .select("*")
-      .order("created_at",{ascending:false});
-
-    data.forEach(s=>{
-      if(s.status==="Pendente"){
-        listaAprovar.innerHTML+=`
-          <tr>
-            <td>${s.nome_terapeuta}</td>
-            <td>${s.data_inicio} → ${s.data_fim}</td>
-            <td>${s.justificativa||"—"}</td>
-            <td>
-              <button class="ok" onclick="setStatus('${s.id}','Aprovado')">✔</button>
-              <button class="no" onclick="setStatus('${s.id}','Reprovado')">✖</button>
-            </td>
-          </tr>`;
-      }
-
-      listaGerenciar.innerHTML+=`
-        <tr>
-          <td>${s.nome_terapeuta}</td>
-          <td>${s.data_inicio} → ${s.data_fim}</td>
-          <td>${s.tipo}</td>
-          <td>
-            <select onchange="setStatus('${s.id}',this.value)">
-              <option ${s.status==="Pendente"?"selected":""}>Pendente</option>
-              <option ${s.status==="Aprovado"?"selected":""}>Aprovado</option>
-              <option ${s.status==="Reprovado"?"selected":""}>Reprovado</option>
-            </select>
-          </td>
-          <td>
-            <button class="del" onclick="excluir('${s.id}')">Excluir</button>
-          </td>
-        </tr>`;
-    });
-  }
-
-  window.trocar = function(aba,el){
-    document.getElementById("aprovar").style.display=aba==="aprovar"?"block":"none";
-    document.getElementById("gerenciar").style.display=aba==="gerenciar"?"block":"none";
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    el.classList.add("active");
-  }
-
-  carregarTerapeutas();
-  render();
-});
+carregarTerapeutas();
+carregarSolicitacoes();
 </script>
 
 </body>

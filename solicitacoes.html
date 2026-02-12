@@ -2,76 +2,103 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Gerenciar Solicitações</title>
+<title>Solicitações | Hara Spa</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
 body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
-
-.login {
-  width:300px;
-  margin:150px auto;
-  background:#fff;
-  padding:30px;
-  border-radius:20px;
-  text-align:center;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
-
-.app { display:none; min-height:100vh; }
+.app { display:flex; min-height:100vh; }
 .content { flex:1; padding:40px; margin-left:260px; }
 
-button {
-  padding:6px 10px;
-  border:none;
-  border-radius:6px;
-  cursor:pointer;
+.card {
+  background:#fff;
+  border-radius:20px;
+  padding:25px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  margin-bottom:30px;
 }
 
-.aprovar { background:#16a34a; color:#fff; }
-.reprovar { background:#dc2626; color:#fff; }
+input, select {
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  width:100%;
+}
 
-.status { font-weight:bold; }
+button {
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:8px 14px;
+  cursor:pointer;
+}
 
 table {
   width:100%;
   border-collapse:collapse;
-  background:#fff;
-  border-radius:20px;
-  padding:20px;
+  margin-top:20px;
 }
-th,td {
+
+th, td {
   padding:10px;
   border-bottom:1px solid #eee;
+  text-align:left;
 }
 </style>
 </head>
 <body>
 
-<div class="login" id="loginBox">
-  <h3>Acesso Restrito</h3>
-  <input type="password" id="senha" placeholder="Senha"><br><br>
-  <button onclick="login()">Entrar</button>
-</div>
-
-<div class="app" id="painel">
+<div class="app">
   <aside id="sidebar"></aside>
+
   <main class="content">
-    <h2>Gerenciar Solicitações</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Terapeuta</th>
-          <th>Tipo</th>
-          <th>Período</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
+
+    <div class="card">
+      <h2>Nova Solicitação</h2>
+
+      <label>Terapeuta</label>
+      <select id="terapeuta"></select><br><br>
+
+      <label>Tipo</label>
+      <select id="tipo">
+        <option>Falta</option>
+        <option>Férias</option>
+        <option>Atestado</option>
+        <option>Viagem</option>
+      </select><br><br>
+
+      <label>Data Início</label>
+      <input type="date" id="data_inicio"><br><br>
+
+      <label>Data Fim</label>
+      <input type="date" id="data_fim"><br><br>
+
+      <label>Justificativa</label>
+      <input id="justificativa"><br><br>
+
+      <button onclick="salvar()">Salvar</button>
+    </div>
+
+    <div class="card">
+      <h2>Solicitações Registradas</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Terapeuta</th>
+            <th>Tipo</th>
+            <th>Período</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
+
+    </div>
+
   </main>
 </div>
 
@@ -80,58 +107,123 @@ th,td {
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "SUA_ANON_KEY_AQUI"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-function login(){
-  if(senha.value==="2026"){
-    loginBox.style.display="none";
-    painel.style.display="flex";
-    carregar();
-  } else {
-    alert("Senha incorreta");
+// ====================
+// CARREGAR TERAPEUTAS ATIVAS
+// ====================
+async function carregarTerapeutas() {
+
+  const select = document.getElementById("terapeuta");
+  select.innerHTML = "<option>Carregando...</option>";
+
+  const { data, error } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissional,status")
+    .eq("status","Ativo")
+    .order("nome_profissional");
+
+  console.log("Terapeutas:", data);
+
+  if (error) {
+    console.error("Erro terapeutas:", error);
+    select.innerHTML = "<option>Erro ao carregar</option>";
+    return;
   }
+
+  if (!data || data.length === 0) {
+    select.innerHTML = "<option>Nenhuma ativa</option>";
+    return;
+  }
+
+  select.innerHTML = "";
+
+  data.forEach(t => {
+    select.innerHTML += `
+      <option value="${t.cpf}">
+        ${t.nome_profissional} - ${t.cpf}
+      </option>
+    `;
+  });
 }
 
-async function carregar(){
-  const { data } = await supabaseClient
+// ====================
+// SALVAR SOLICITAÇÃO
+// ====================
+async function salvar() {
+
+  const payload = {
+    terapeuta_cpf: document.getElementById("terapeuta").value,
+    tipo: document.getElementById("tipo").value,
+    data_inicio: document.getElementById("data_inicio").value,
+    data_fim: document.getElementById("data_fim").value,
+    justificativa: document.getElementById("justificativa").value,
+    status: "Pendente"
+  };
+
+  const { error } = await supabaseClient
     .from("solicitacoes")
-    .select("*")
-    .order("created_at",{ascending:false});
+    .insert(payload);
 
-  const tbody=document.getElementById("lista");
-  tbody.innerHTML="";
+  if (error) {
+    console.error("Erro salvar:", error);
+    alert("Erro ao salvar");
+    return;
+  }
 
-  data.forEach(s=>{
-    let botoes="";
+  alert("Solicitação registrada!");
+  carregarSolicitacoes();
+}
 
-    if(s.status==="Pendente"){
-      botoes=`
-        <button class="aprovar" onclick="alterar(${s.id},'Aprovado')">Aprovar</button>
-        <button class="reprovar" onclick="alterar(${s.id},'Reprovado')">Reprovar</button>
-      `;
-    }
+// ====================
+// CARREGAR SOLICITAÇÕES
+// ====================
+async function carregarSolicitacoes() {
 
-    tbody.innerHTML+=`
+  const { data, error } = await supabaseClient
+    .from("solicitacoes")
+    .select(`
+      *,
+      terapeutas (
+        nome_profissional,
+        cpf
+      )
+    `)
+    .order("created_at", { ascending:false });
+
+  console.log("Solicitações:", data);
+
+  if (error) {
+    console.error("Erro solicitacoes:", error);
+    return;
+  }
+
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  data.forEach(s => {
+
+    const nome = s.terapeutas?.nome_profissional || "";
+    const cpf = s.terapeutas?.cpf || "";
+
+    tbody.innerHTML += `
       <tr>
-        <td>${s.terapeuta_cpf}</td>
+        <td>${nome} - ${cpf}</td>
         <td>${s.tipo}</td>
-        <td>${s.data_inicio} → ${s.data_fim}</td>
-        <td class="status">${s.status}</td>
-        <td>${botoes}</td>
+        <td>${s.data_inicio} até ${s.data_fim}</td>
+        <td>${s.status}</td>
       </tr>
     `;
   });
 }
 
-async function alterar(id,status){
-  await supabaseClient
-    .from("solicitacoes")
-    .update({status})
-    .eq("id",id);
-
-  carregar();
-}
+// ====================
+// INICIALIZA
+// ====================
+carregarTerapeutas();
+carregarSolicitacoes();
 </script>
+
 </body>
 </html>

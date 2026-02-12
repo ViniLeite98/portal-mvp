@@ -38,36 +38,54 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
 
 .chart { flex:3; }
 
-.bars {
+.chart-wrapper {
   display:flex;
   align-items:flex-end;
-  gap:12px;
-  height:220px;
+  gap:16px;
+  height:260px;
   margin-top:30px;
 }
 
-.bar {
-  width:28px;
-  background:#5b7dbd;
-  border-radius:6px 6px 0 0;
+.bar-container {
   display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  color:#fff;
-  font-size:11px;
+  flex-direction:column;
+  align-items:center;
+  width:40px;
 }
 
-.hours {
-  display:flex;
-  justify-content:space-between;
+.bar-value {
   font-size:12px;
-  margin-top:10px;
+  font-weight:600;
+  margin-bottom:6px;
+  color:#333;
+}
+
+.bar {
+  width:100%;
+  background:linear-gradient(180deg,#6a8fd6,#4f6fb3);
+  border-radius:8px 8px 0 0;
+  transition:.3s;
+}
+
+.bar:hover {
+  opacity:.85;
+}
+
+.bar-hour {
+  margin-top:8px;
+  font-size:12px;
+  color:#555;
 }
 
 .work-info {
   flex:1;
-  border-left:1px solid #ddd;
+  border-left:1px solid #eee;
   padding-left:30px;
+}
+
+.work-info p {
+  margin:8px 0;
+  font-size:14px;
 }
 </style>
 </head>
@@ -100,8 +118,7 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
 
       <div class="chart">
         <h3>Força de Trabalho</h3>
-        <div class="bars" id="bars"></div>
-        <div class="hours" id="hours"></div>
+        <div class="chart-wrapper" id="bars"></div>
       </div>
 
       <div class="work-info">
@@ -128,22 +145,21 @@ async function carregarDashboard() {
     .from("terapeutas")
     .select("nome_profissional,hora_entrada,hora_saida,status")
     .eq("status","Ativo")
-    .order("nome_profissional", { ascending: true });
+    .order("nome_profissional");
 
   if (error) {
-    console.error("Erro Supabase:", error);
+    console.error(error);
     return;
   }
 
-  // ===== TOTAL ATIVAS =====
+  // TOTAL ATIVAS
   document.getElementById("totalEquipe").innerText = data.length;
 
-  // ===== CARGA HORÁRIA =====
+  // CARGA HORÁRIA
   const cargaDiv = document.getElementById("cargaHoraria");
   cargaDiv.innerHTML = "";
 
   data.forEach(t => {
-
     if (!t.hora_entrada || !t.hora_saida) return;
 
     const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
@@ -158,15 +174,12 @@ async function carregarDashboard() {
       `<p>${t.nome_profissional}: ${horas}:${minutos.toString().padStart(2,'0')} horas</p>`;
   });
 
-  // ===== FORÇA DE TRABALHO (9h às 21h) =====
+  // FORÇA DE TRABALHO 9h–21h
   const inicioDia = 9;
   const fimDia = 21;
 
   const contagem = {};
-
-  for (let h = inicioDia; h <= fimDia; h++) {
-    contagem[h] = 0;
-  }
+  for (let h = inicioDia; h <= fimDia; h++) contagem[h] = 0;
 
   data.forEach(t => {
 
@@ -179,35 +192,31 @@ async function carregarDashboard() {
     const fim = h2*60 + m2;
 
     for (let h = inicioDia; h <= fimDia; h++) {
-
       const slotInicio = h * 60;
       const slotFim = (h + 1) * 60;
 
-      // 🔹 CORREÇÃO FINAL AQUI
       if (inicio < slotFim && fim >= slotInicio) {
         contagem[h]++;
       }
     }
   });
 
+  const maxValor = Math.max(...Object.values(contagem));
   const barsDiv = document.getElementById("bars");
-  const hoursDiv = document.getElementById("hours");
-
   barsDiv.innerHTML = "";
-  hoursDiv.innerHTML = "";
 
   for (let h = inicioDia; h <= fimDia; h++) {
 
-    const quantidade = contagem[h];
-    const altura = quantidade * 25;
+    const valor = contagem[h];
+    const altura = maxValor === 0 ? 0 : (valor / maxValor) * 200;
 
     barsDiv.innerHTML += `
-      <div class="bar" style="height:${altura}px">
-        ${quantidade}
+      <div class="bar-container">
+        <div class="bar-value">${valor}</div>
+        <div class="bar" style="height:${altura}px"></div>
+        <div class="bar-hour">${h}:00</div>
       </div>
     `;
-
-    hoursDiv.innerHTML += `<span>${h}:00</span>`;
   }
 
 }

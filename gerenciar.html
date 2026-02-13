@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Gerenciar Solicitações | Hara Spa</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
+.app { display:flex; min-height:100vh; }
+.content { flex:1; padding:40px; margin-left:260px; }
+
+.card {
+  background:#fff;
+  border-radius:20px;
+  padding:30px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th, td {
+  padding:10px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+  font-size:14px;
+}
+
+.status-pendente { color:#d97706; font-weight:bold; }
+.status-aprovado { color:#16a34a; font-weight:bold; }
+.status-reprovado { color:#dc2626; font-weight:bold; }
+
+.menu-voltar {
+  margin-top:25px;
+}
+
+.menu-voltar button {
+  background:#475569;
+  padding:10px 20px;
+  border:none;
+  border-radius:6px;
+  color:white;
+  cursor:pointer;
+}
+
+.menu-voltar button:hover {
+  background:#334155;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+<aside id="sidebar"></aside>
+
+<main class="content">
+
+<div class="card">
+<h2>Gerenciar Solicitações</h2>
+
+<table>
+<thead>
+<tr>
+<th>Terapeuta</th>
+<th>Tipo</th>
+<th>Período</th>
+<th>Status</th>
+<th>Criado em</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+<div class="menu-voltar">
+<button onclick="window.location.href='solicitacoes.html'">
+Voltar para Solicitações
+</button>
+</div>
+
+</div>
+
+</main>
+</div>
+
+<script>
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"SUA_ANON_KEY_AQUI"
+);
+
+async function carregarTudo(){
+
+const { data } = await supabaseClient
+.from("solicitacoes")
+.select("*")
+.order("created_at",{ascending:false});
+
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
+
+data.forEach(s=>{
+
+let statusClass="";
+if(s.status==="Pendente")statusClass="status-pendente";
+if(s.status==="Aprovado")statusClass="status-aprovado";
+if(s.status==="Reprovado")statusClass="status-reprovado";
+
+tbody.innerHTML+=`
+<tr>
+<td>${s.terapeuta_cpf}</td>
+<td>${s.tipo}</td>
+<td>${s.data_inicio} → ${s.data_fim}</td>
+<td class="${statusClass}">${s.status}</td>
+<td>${new Date(s.created_at).toLocaleString("pt-BR")}</td>
+</tr>`;
+});
+}
+
+carregarTudo();
+</script>
+
+</body>
+</html>

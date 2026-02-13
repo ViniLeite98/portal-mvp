@@ -20,6 +20,13 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
   margin-bottom:30px;
 }
 
+input, select {
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  width:100%;
+}
+
 button {
   background:#1f2937;
   color:#fff;
@@ -27,7 +34,7 @@ button {
   border-radius:6px;
   padding:8px 14px;
   cursor:pointer;
-  margin-right:10px;
+  margin-right:6px;
 }
 
 button:hover { opacity:.9; }
@@ -45,6 +52,10 @@ button:hover { opacity:.9; }
 .btn-aprovar { color:#16a34a; }
 .btn-reprovar { color:#dc2626; }
 
+.status-pendente { color:#d97706; font-weight:bold; }
+.status-aprovado { color:#16a34a; font-weight:bold; }
+.status-reprovado { color:#dc2626; font-weight:bold; }
+
 table {
   width:100%;
   border-collapse:collapse;
@@ -55,11 +66,8 @@ th, td {
   padding:10px;
   border-bottom:1px solid #eee;
   text-align:left;
+  font-size:14px;
 }
-
-.status-pendente { color:#d97706; font-weight:bold; }
-.status-aprovado { color:#16a34a; font-weight:bold; }
-.status-reprovado { color:#dc2626; font-weight:bold; }
 </style>
 </head>
 <body>
@@ -96,29 +104,13 @@ th, td {
 <button onclick="salvar()">Salvar</button>
 </div>
 
-<!-- BOTÕES -->
-<button onclick="abrirLista()">Lista de Aprovações</button>
-<button onclick="abrirGerenciar()">Gerenciar Solicitações</button>
+<!-- BOTÃO -->
+<button onclick="toggleLista()">Lista de aprovações</button>
 
-<!-- LISTA APROVAÇÃO -->
+<!-- LISTA ESCONDIDA -->
 <div class="card" id="cardLista" style="display:none;">
 <h2>Painel de Aprovação</h2>
-<table>
-<thead>
-<tr>
-<th>Terapeuta</th>
-<th>Período</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="listaAprovacao"></tbody>
-</table>
-</div>
 
-<!-- GERENCIAR -->
-<div class="card" id="cardGerenciar" style="display:none;">
-<h2>Gerenciar Solicitações</h2>
 <table>
 <thead>
 <tr>
@@ -129,147 +121,130 @@ th, td {
 <th>Ações</th>
 </tr>
 </thead>
-<tbody id="listaGerenciar"></tbody>
+<tbody id="lista"></tbody>
 </table>
 </div>
 
 </main>
 </div>
 
+<script src="assets/sidebar/sidebar.js"></script>
+
 <script>
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQi1730657485","exp":2086233485}"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-function verificarSenha(){
-  const senha = prompt("Digite a senha:");
-  return senha === "2026";
-}
+/* MOSTRAR / ESCONDER LISTA */
+function toggleLista(){
+  const card = document.getElementById("cardLista");
 
-/* ABRIR LISTA */
-function abrirLista(){
-  if(!verificarSenha()) return alert("Senha incorreta");
-
-  document.getElementById("cardGerenciar").style.display = "none";
-  document.getElementById("cardLista").style.display = "block";
-  carregarListaAprovacao();
-}
-
-/* ABRIR GERENCIAR */
-function abrirGerenciar(){
-  if(!verificarSenha()) return alert("Senha incorreta");
-
-  document.getElementById("cardLista").style.display = "none";
-  document.getElementById("cardGerenciar").style.display = "block";
-  carregarListaGerenciar();
+  if(card.style.display === "none"){
+    card.style.display = "block";
+    carregarSolicitacoes();
+  } else {
+    card.style.display = "none";
+  }
 }
 
 /* CARREGAR TERAPEUTAS */
-async function carregarTerapeutas(){
+async function carregarTerapeutas() {
+
   const { data } = await supabaseClient
-  .from("terapeutas")
-  .select("cpf,nome_profissional")
-  .eq("status","Ativo");
+    .from("terapeutas")
+    .select("cpf,nome_profissional")
+    .eq("status","Ativo")
+    .order("nome_profissional");
 
   const select = document.getElementById("terapeuta");
-  select.innerHTML="";
-  data.forEach(t=>{
-    select.innerHTML+=`<option value="${t.cpf}">
-      ${t.nome_profissional} - ${t.cpf}
-    </option>`;
+  select.innerHTML = "";
+
+  data.forEach(t => {
+    select.innerHTML += `
+      <option value="${t.cpf}">
+        ${t.nome_profissional} - ${t.cpf}
+      </option>
+    `;
   });
 }
 
 /* SALVAR */
-async function salvar(){
-  const dataInicio=document.getElementById("data_inicio").value;
-  const dataFim=document.getElementById("data_fim").value;
+async function salvar() {
 
-  if(dataFim < dataInicio){
-    alert("Data fim não pode ser menor que início");
+  const dataInicio = document.getElementById("data_inicio").value;
+  const dataFim = document.getElementById("data_fim").value;
+
+  if (dataFim < dataInicio) {
+    alert("Data fim não pode ser menor que data início.");
     return;
   }
 
-  await supabaseClient.from("solicitacoes").insert({
+  const payload = {
     terapeuta_cpf: document.getElementById("terapeuta").value,
     tipo: document.getElementById("tipo").value,
-    data_inicio:dataInicio,
-    data_fim:dataFim,
-    justificativa:document.getElementById("justificativa").value,
-    status:"Pendente"
-  });
+    data_inicio: dataInicio,
+    data_fim: dataFim,
+    justificativa: document.getElementById("justificativa").value,
+    status: "Pendente"
+  };
+
+  const { error } = await supabaseClient
+    .from("solicitacoes")
+    .insert(payload);
+
+  if (error) return alert("Erro ao salvar");
 
   alert("Solicitação registrada!");
 }
 
 /* ALTERAR STATUS */
-async function alterarStatus(id,status){
-  await supabaseClient.from("solicitacoes")
-  .update({status})
-  .eq("id",id);
+async function alterarStatus(id, novoStatus){
+  await supabaseClient
+    .from("solicitacoes")
+    .update({ status: novoStatus })
+    .eq("id", id);
 
-  carregarListaAprovacao();
+  carregarSolicitacoes();
 }
 
-/* EXCLUIR */
-async function excluir(id){
-  await supabaseClient.from("solicitacoes")
-  .delete()
-  .eq("id",id);
+/* CARREGAR LISTA */
+async function carregarSolicitacoes() {
 
-  carregarListaGerenciar();
-}
+  const { data } = await supabaseClient
+    .from("solicitacoes")
+    .select("*")
+    .order("created_at", { ascending:false });
 
-/* CARREGAR LISTA APROVAÇÃO */
-async function carregarListaAprovacao(){
-  const {data}=await supabaseClient
-  .from("solicitacoes")
-  .select("*");
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
 
-  const tbody=document.getElementById("listaAprovacao");
-  tbody.innerHTML="";
+  data.forEach(s => {
 
-  data.forEach(s=>{
-    tbody.innerHTML+=`
-    <tr>
-      <td>${s.terapeuta_cpf}</td>
-      <td>${s.data_inicio} → ${s.data_fim}</td>
-      <td>${s.status}</td>
-      <td>
-        <button class="btn-icon btn-aprovar"
-        onclick="alterarStatus('${s.id}','Aprovado')">✔</button>
-        <button class="btn-icon btn-reprovar"
-        onclick="alterarStatus('${s.id}','Reprovado')">✖</button>
-      </td>
-    </tr>`;
+    let statusClass = "";
+    if (s.status === "Pendente") statusClass = "status-pendente";
+    if (s.status === "Aprovado") statusClass = "status-aprovado";
+    if (s.status === "Reprovado") statusClass = "status-reprovado";
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${s.terapeuta_cpf}</td>
+        <td>${s.tipo}</td>
+        <td>${s.data_inicio} → ${s.data_fim}</td>
+        <td class="${statusClass}">${s.status}</td>
+        <td>
+          <button class="btn-icon btn-aprovar"
+            onclick="alterarStatus('${s.id}','Aprovado')">✔</button>
+
+          <button class="btn-icon btn-reprovar"
+            onclick="alterarStatus('${s.id}','Reprovado')">✖</button>
+        </td>
+      </tr>
+    `;
   });
 }
 
-/* CARREGAR GERENCIAR */
-async function carregarListaGerenciar(){
-  const {data}=await supabaseClient
-  .from("solicitacoes")
-  .select("*");
-
-  const tbody=document.getElementById("listaGerenciar");
-  tbody.innerHTML="";
-
-  data.forEach(s=>{
-    tbody.innerHTML+=`
-    <tr>
-      <td>${s.terapeuta_cpf}</td>
-      <td>${s.tipo}</td>
-      <td>${s.data_inicio} → ${s.data_fim}</td>
-      <td>${s.status}</td>
-      <td>
-        <button onclick="excluir('${s.id}')"
-        class="btn-danger">Excluir</button>
-      </td>
-    </tr>`;
-  });
-}
-
+/* INIT */
 carregarTerapeutas();
 </script>
 

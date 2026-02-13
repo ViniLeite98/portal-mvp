@@ -8,68 +8,35 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-  font-family:'Segoe UI', sans-serif;
-  background:#f1f5f9;
-  color:#1e293b;
-}
-
+body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
 .app { display:flex; min-height:100vh; }
-.content { flex:1; margin-left:260px; display:flex; flex-direction:column; }
-
-.topbar {
-  height:70px;
-  background:white;
-  display:flex;
-  align-items:center;
-  padding:0 40px;
-  border-bottom:1px solid #e2e8f0;
-}
-
-.container {
-  max-width:1100px;
-  width:100%;
-  margin:40px auto;
-  padding:0 20px;
-}
+.content { flex:1; padding:40px; margin-left:260px; }
 
 .card {
-  background:white;
-  border-radius:16px;
+  background:#fff;
+  border-radius:20px;
   padding:30px;
-  box-shadow:0 4px 16px rgba(0,0,0,0.05);
-}
-
-.form-group { margin-bottom:18px; }
-
-label {
-  display:block;
-  margin-bottom:6px;
-  font-size:14px;
-  font-weight:500;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  margin-bottom:30px;
 }
 
 input, select {
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ddd;
   width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
 }
 
-.btn {
-  padding:8px 14px;
-  border-radius:8px;
+button {
+  background:#1f2937;
+  color:#fff;
   border:none;
+  border-radius:6px;
+  padding:8px 14px;
   cursor:pointer;
-  font-size:14px;
 }
 
-.btn-primary { background:#1e293b; color:white; }
-.btn-success { background:#16a34a; color:white; }
-.btn-danger { background:#dc2626; color:white; }
-.btn-secondary { background:#64748b; color:white; }
+button:hover { opacity:.9; }
 
 table {
   width:100%;
@@ -79,15 +46,14 @@ table {
 
 th, td {
   padding:10px;
-  border-bottom:1px solid #e2e8f0;
+  border-bottom:1px solid #eee;
+  text-align:left;
   font-size:14px;
 }
 
 .status-pendente { color:#d97706; font-weight:bold; }
 .status-aprovado { color:#16a34a; font-weight:bold; }
 .status-reprovado { color:#dc2626; font-weight:bold; }
-
-.hidden { display:none; }
 </style>
 </head>
 <body>
@@ -95,99 +61,54 @@ th, td {
 <div class="app">
   <aside id="sidebar"></aside>
 
-  <div class="content">
-    <div class="topbar">
-      <h2>Solicitações</h2>
+  <main class="content">
+
+    <div class="card">
+      <h2>Nova Solicitação</h2>
+
+      <label>Terapeuta</label>
+      <select id="terapeuta"></select><br><br>
+
+      <label>Tipo</label>
+      <select id="tipo">
+        <option>Falta</option>
+        <option>Férias</option>
+        <option>Atestado</option>
+        <option>Viagem</option>
+      </select><br><br>
+
+      <label>Data Início</label>
+      <input type="date" id="data_inicio"><br><br>
+
+      <label>Data Fim</label>
+      <input type="date" id="data_fim"><br><br>
+
+      <label>Justificativa</label>
+      <input id="justificativa"><br><br>
+
+      <button onclick="salvar()">Salvar</button>
     </div>
 
-    <div class="container">
+    <div class="card">
+      <h2>Solicitações Registradas</h2>
 
-      <!-- ========================= -->
-      <!-- NOVA SOLICITAÇÃO -->
-      <!-- ========================= -->
-      <div id="tela-nova" class="card">
-
-        <h3>Nova Solicitação</h3><br>
-
-        <div class="form-group">
-          <label>Terapeuta</label>
-          <select id="terapeuta"></select>
-        </div>
-
-        <div class="form-group">
-          <label>Tipo</label>
-          <select id="tipo">
-            <option>Falta</option>
-            <option>Férias</option>
-            <option>Atestado</option>
-            <option>Viagem</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Data Início</label>
-          <input type="date" id="data_inicio">
-        </div>
-
-        <div class="form-group">
-          <label>Data Fim</label>
-          <input type="date" id="data_fim">
-        </div>
-
-        <div class="form-group">
-          <label>Justificativa</label>
-          <input id="justificativa">
-        </div>
-
-        <button class="btn btn-primary" onclick="salvar()">
-          Salvar
-        </button>
-      </div>
-
-
-      <!-- ========================= -->
-      <!-- APROVAÇÕES -->
-      <!-- ========================= -->
-      <div id="tela-aprovacoes" class="card hidden">
-        <h3>Lista de Aprovações</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Terapeuta</th>
-              <th>Tipo</th>
-              <th>Período</th>
-              <th>Status</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody id="lista-aprovacoes"></tbody>
-        </table>
-      </div>
-
-
-      <!-- ========================= -->
-      <!-- GERENCIAR -->
-      <!-- ========================= -->
-      <div id="tela-gerenciar" class="card hidden">
-        <h3>Gerenciar Solicitações</h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Terapeuta</th>
-              <th>Tipo</th>
-              <th>Período</th>
-              <th>Status</th>
-              <th>Criado</th>
-            </tr>
-          </thead>
-          <tbody id="lista-gerenciar"></tbody>
-        </table>
-      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Terapeuta</th>
+            <th>Tipo</th>
+            <th>Período</th>
+            <th>Status</th>
+            <th>Criado em</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
 
     </div>
-  </div>
+
+  </main>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
@@ -195,26 +116,62 @@ th, td {
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "SUA_ANON_KEY_AQUI"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-/* =========================
-   CONTROLE DE TELAS
-========================= */
-function mostrarTela(nome) {
-  document.getElementById("tela-nova").classList.add("hidden");
-  document.getElementById("tela-aprovacoes").classList.add("hidden");
-  document.getElementById("tela-gerenciar").classList.add("hidden");
+let editandoId = null;
 
-  document.getElementById("tela-" + nome).classList.remove("hidden");
-
-  if(nome === "aprovacoes") carregarAprovacoes();
-  if(nome === "gerenciar") carregarGerenciar();
+/* DEFINIR DATA HOJE */
+function definirDataHoje() {
+  const hoje = new Date().toISOString().split("T")[0];
+  document.getElementById("data_inicio").value = hoje;
+  document.getElementById("data_fim").min = hoje;
 }
 
-/* =========================
-   SALVAR
-========================= */
+/* VALIDAR DATA FIM */
+document.addEventListener("DOMContentLoaded", () => {
+
+  definirDataHoje();
+
+  const dataInicio = document.getElementById("data_inicio");
+  const dataFim = document.getElementById("data_fim");
+
+  dataInicio.addEventListener("change", () => {
+    dataFim.min = dataInicio.value;
+    if (dataFim.value < dataInicio.value) {
+      dataFim.value = dataInicio.value;
+    }
+  });
+
+});
+
+/* CARREGAR TERAPEUTAS */
+async function carregarTerapeutas() {
+
+  const { data, error } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissional")
+    .eq("status","Ativo")
+    .order("nome_profissional");
+
+  const select = document.getElementById("terapeuta");
+  select.innerHTML = "";
+
+  if (error) {
+    select.innerHTML = "<option>Erro ao carregar</option>";
+    return;
+  }
+
+  data.forEach(t => {
+    select.innerHTML += `
+      <option value="${t.cpf}">
+        ${t.nome_profissional} - ${t.cpf}
+      </option>
+    `;
+  });
+}
+
+/* SALVAR OU EDITAR */
 async function salvar() {
 
   const payload = {
@@ -222,94 +179,122 @@ async function salvar() {
     tipo: document.getElementById("tipo").value,
     data_inicio: document.getElementById("data_inicio").value,
     data_fim: document.getElementById("data_fim").value,
-    justificativa: document.getElementById("justificativa").value,
-    status: "Pendente"
+    justificativa: document.getElementById("justificativa").value
   };
 
-  const { error } = await supabaseClient
-    .from("solicitacoes")
-    .insert(payload);
+  if (editandoId) {
 
-  if(error) {
-    alert("Erro ao salvar");
-    return;
+    const { error } = await supabaseClient
+      .from("solicitacoes")
+      .update(payload)
+      .eq("id", editandoId);
+
+    if (error) return alert("Erro ao atualizar");
+
+    alert("Atualizado com sucesso!");
+    editandoId = null;
+
+  } else {
+
+    payload.status = "Pendente";
+
+    const { error } = await supabaseClient
+      .from("solicitacoes")
+      .insert(payload);
+
+    if (error) return alert("Erro ao salvar");
+
+    alert("Solicitação registrada!");
   }
 
-  alert("Solicitação registrada!");
+  document.getElementById("justificativa").value = "";
+  carregarSolicitacoes();
 }
 
-/* =========================
-   CARREGAR APROVAÇÕES
-========================= */
-async function carregarAprovacoes() {
+/* CARREGAR SOLICITAÇÕES */
+async function carregarSolicitacoes() {
 
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("solicitacoes")
     .select("*")
-    .eq("status","Pendente");
+    .order("created_at", { ascending:false });
 
-  const tbody = document.getElementById("lista-aprovacoes");
+  if (error) return;
+
+  const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
   data.forEach(s => {
+
+    const dataCriacao = new Date(s.created_at);
+    const dataFormatada = dataCriacao.toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo"
+    });
+
+    let statusClass = "";
+    if (s.status === "Pendente") statusClass = "status-pendente";
+    if (s.status === "Aprovado") statusClass = "status-aprovado";
+    if (s.status === "Reprovado") statusClass = "status-reprovado";
+
     tbody.innerHTML += `
       <tr>
         <td>${s.terapeuta_cpf}</td>
         <td>${s.tipo}</td>
         <td>${s.data_inicio} → ${s.data_fim}</td>
-        <td class="status-pendente">${s.status}</td>
+        <td class="${statusClass}">${s.status}</td>
+        <td>${dataFormatada}</td>
         <td>
-          <button class="btn btn-success"
-            onclick="atualizarStatus(${s.id}, 'Aprovado')">✔</button>
-          <button class="btn btn-danger"
-            onclick="atualizarStatus(${s.id}, 'Reprovado')">✖</button>
+          <button onclick="editarSolicitacao(${s.id})">
+            Editar
+          </button>
+          <button style="background:#dc2626"
+            onclick="excluirSolicitacao(${s.id})">
+            Excluir
+          </button>
         </td>
       </tr>
     `;
   });
 }
 
-/* =========================
-   ATUALIZAR STATUS
-========================= */
-async function atualizarStatus(id, status) {
-
-  await supabaseClient
-    .from("solicitacoes")
-    .update({ status })
-    .eq("id", id);
-
-  carregarAprovacoes();
-  carregarGerenciar();
-}
-
-/* =========================
-   GERENCIAR
-========================= */
-async function carregarGerenciar() {
+/* EDITAR */
+async function editarSolicitacao(id) {
 
   const { data } = await supabaseClient
     .from("solicitacoes")
     .select("*")
-    .order("created_at", { ascending:false });
+    .eq("id", id)
+    .single();
 
-  const tbody = document.getElementById("lista-gerenciar");
-  tbody.innerHTML = "";
+  document.getElementById("terapeuta").value = data.terapeuta_cpf;
+  document.getElementById("tipo").value = data.tipo;
+  document.getElementById("data_inicio").value = data.data_inicio;
+  document.getElementById("data_fim").value = data.data_fim;
+  document.getElementById("justificativa").value = data.justificativa;
 
-  data.forEach(s => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${s.terapeuta_cpf}</td>
-        <td>${s.tipo}</td>
-        <td>${s.data_inicio} → ${s.data_fim}</td>
-        <td>${s.status}</td>
-        <td>${new Date(s.created_at).toLocaleString("pt-BR")}</td>
-      </tr>
-    `;
-  });
+  editandoId = id;
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-mostrarTela("nova");
+/* EXCLUIR */
+async function excluirSolicitacao(id) {
+
+  if (!confirm("Tem certeza que deseja excluir?")) return;
+
+  const { error } = await supabaseClient
+    .from("solicitacoes")
+    .delete()
+    .eq("id", id);
+
+  if (error) return alert("Erro ao excluir");
+
+  alert("Excluído com sucesso!");
+  carregarSolicitacoes();
+}
+
+/* INICIALIZA */
+carregarTerapeutas();
+carregarSolicitacoes();
 </script>
 
 </body>

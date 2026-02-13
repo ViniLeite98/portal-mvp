@@ -38,6 +38,10 @@ button {
 
 button:hover { opacity:.9; }
 
+.btn-danger {
+  background:#dc2626;
+}
+
 table {
   width:100%;
   border-collapse:collapse;
@@ -105,7 +109,6 @@ th, td {
         </thead>
         <tbody id="lista"></tbody>
       </table>
-
     </div>
 
   </main>
@@ -128,9 +131,7 @@ function definirDataHoje() {
   document.getElementById("data_fim").min = hoje;
 }
 
-/* VALIDAR DATA FIM */
 document.addEventListener("DOMContentLoaded", () => {
-
   definirDataHoje();
 
   const dataInicio = document.getElementById("data_inicio");
@@ -142,13 +143,12 @@ document.addEventListener("DOMContentLoaded", () => {
       dataFim.value = dataInicio.value;
     }
   });
-
 });
 
 /* CARREGAR TERAPEUTAS */
 async function carregarTerapeutas() {
 
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from("terapeutas")
     .select("cpf,nome_profissional")
     .eq("status","Ativo")
@@ -156,11 +156,6 @@ async function carregarTerapeutas() {
 
   const select = document.getElementById("terapeuta");
   select.innerHTML = "";
-
-  if (error) {
-    select.innerHTML = "<option>Erro ao carregar</option>";
-    return;
-  }
 
   data.forEach(t => {
     select.innerHTML += `
@@ -214,12 +209,10 @@ async function salvar() {
 /* CARREGAR SOLICITAÇÕES */
 async function carregarSolicitacoes() {
 
-  const { data, error } = await supabaseClient
+  const { data } = await supabaseClient
     .from("solicitacoes")
     .select("*")
     .order("created_at", { ascending:false });
-
-  if (error) return;
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
@@ -244,11 +237,11 @@ async function carregarSolicitacoes() {
         <td class="${statusClass}">${s.status}</td>
         <td>${dataFormatada}</td>
         <td>
-          <button onclick="editarSolicitacao(${s.id})">
+          <button onclick="editarSolicitacao('${s.id}')">
             Editar
           </button>
-          <button style="background:#dc2626"
-            onclick="excluirSolicitacao(${s.id})">
+          <button class="btn-danger"
+            onclick="excluirSolicitacao('${s.id}')">
             Excluir
           </button>
         </td>

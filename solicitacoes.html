@@ -1,3 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Solicitações | Hara Spa</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
+.app { display:flex; min-height:100vh; }
+.content { flex:1; padding:40px; margin-left:260px; }
+
+.card {
+  background:#fff;
+  border-radius:20px;
+  padding:30px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  margin-bottom:30px;
+}
+
+input, select {
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  width:100%;
+}
+
+button {
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:8px 14px;
+  cursor:pointer;
+}
+
+button:hover { opacity:.9; }
+
+.btn-danger { background:#dc2626; }
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th, td {
+  padding:10px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+  font-size:14px;
+}
+
+.status-pendente { color:#d97706; font-weight:bold; }
+.status-aprovado { color:#16a34a; font-weight:bold; }
+.status-reprovado { color:#dc2626; font-weight:bold; }
+</style>
+</head>
+<body>
+
+<div class="app">
+<aside id="sidebar"></aside>
+
+<main class="content">
+
+<div class="card">
+<h2>Nova Solicitação</h2>
+
+<label>Terapeuta</label>
+<select id="terapeuta"></select><br><br>
+
+<label>Tipo</label>
+<select id="tipo">
+<option>Falta</option>
+<option>Férias</option>
+<option>Atestado</option>
+<option>Viagem</option>
+</select><br><br>
+
+<label>Data Início</label>
+<input type="date" id="data_inicio"><br><br>
+
+<label>Data Fim</label>
+<input type="date" id="data_fim"><br><br>
+
+<label>Justificativa</label>
+<input id="justificativa"><br><br>
+
+<label>Status</label>
+<select id="status">
+<option value="Pendente">Pendente</option>
+<option value="Aprovado">Aprovado</option>
+<option value="Reprovado">Reprovado</option>
+</select><br><br>
+
+<button onclick="salvar()">Salvar</button>
+</div>
+
+<div class="card">
+<h2>Solicitações Registradas</h2>
+
+<table>
+<thead>
+<tr>
+<th>Terapeuta</th>
+<th>Tipo</th>
+<th>Período</th>
+<th>Status</th>
+<th>Criado em</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+</div>
+
+</main>
+</div>
+
+<script src="assets/sidebar/sidebar.js"></script>
+
 <script>
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
@@ -7,9 +130,9 @@ const supabaseClient = supabase.createClient(
 let editandoId = null;
 
 /* =========================
-   DEFINIR DATA HOJE + TRAVAS
+   CONFIGURAÇÃO DE DATAS
 ========================= */
-function configurarDatas() {
+document.addEventListener("DOMContentLoaded", () => {
 
   const dataInicio = document.getElementById("data_inicio");
   const dataFim = document.getElementById("data_fim");
@@ -20,25 +143,20 @@ function configurarDatas() {
   dataInicio.min = hoje;
   dataFim.min = hoje;
 
-  // Quando alterar data início
   dataInicio.addEventListener("change", () => {
     dataFim.min = dataInicio.value;
 
-    if (dataFim.value && dataFim.value < dataInicio.value) {
-      dataFim.value = dataInicio.value;
+    if (dataFim.value) {
+      const di = new Date(dataInicio.value + "T00:00:00");
+      const df = new Date(dataFim.value + "T00:00:00");
+
+      if (df.getTime() < di.getTime()) {
+        dataFim.value = dataInicio.value;
+      }
     }
   });
 
-  // Segurança extra ao alterar data fim
-  dataFim.addEventListener("change", () => {
-    if (dataFim.value < dataInicio.value) {
-      alert("Data fim não pode ser menor que data início.");
-      dataFim.value = dataInicio.value;
-    }
-  });
-}
-
-document.addEventListener("DOMContentLoaded", configurarDatas);
+});
 
 /* =========================
    CARREGAR TERAPEUTAS
@@ -68,25 +186,28 @@ async function carregarTerapeutas() {
 ========================= */
 async function salvar() {
 
-  const dataInicio = document.getElementById("data_inicio").value;
-  const dataFim = document.getElementById("data_fim").value;
+  const dataInicioStr = document.getElementById("data_inicio").value;
+  const dataFimStr = document.getElementById("data_fim").value;
 
-  // 🔒 VALIDAÇÃO REAL (backend safety)
-  if (!dataInicio || !dataFim) {
+  if (!dataInicioStr || !dataFimStr) {
     alert("Preencha as datas.");
     return;
   }
 
-  if (dataFim < dataInicio) {
+  const dataInicio = new Date(dataInicioStr + "T00:00:00");
+  const dataFim = new Date(dataFimStr + "T00:00:00");
+
+  if (dataFim.getTime() < dataInicio.getTime()) {
     alert("Data fim não pode ser menor que data início.");
+    document.getElementById("data_fim").value = dataInicioStr;
     return;
   }
 
   const payload = {
     terapeuta_cpf: document.getElementById("terapeuta").value,
     tipo: document.getElementById("tipo").value,
-    data_inicio: dataInicio,
-    data_fim: dataFim,
+    data_inicio: dataInicioStr,
+    data_fim: dataFimStr,
     justificativa: document.getElementById("justificativa").value,
     status: document.getElementById("status").value
   };
@@ -211,3 +332,6 @@ async function excluirSolicitacao(id) {
 carregarTerapeutas();
 carregarSolicitacoes();
 </script>
+
+</body>
+</html>

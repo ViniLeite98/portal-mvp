@@ -68,7 +68,7 @@
 <script>
 const supabaseClient = window.supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "SUA_ANON_KEY_AQUI"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let terapeutas = [];
@@ -182,59 +182,6 @@ function mostrarDia(dia){
         <b>${t.nome_profissional}</b><br>
         ${t.hora_entrada} – ${t.hora_saida}
       </div>`;
-  });
-
-  const indisponiveis = terapeutas.filter(t =>
-    folgaSemanal(t,data) || folgaAprovada(t,data)
-  );
-
-  detalhes.innerHTML += `<div class="section-title">
-  Indisponíveis (${indisponiveis.length})
-  </div>`;
-
-  indisponiveis.forEach(t=>{
-    let motivo = folgaSemanal(t,data)
-      ? `Folga semanal (${t.dia_folga})`
-      : "Folga aprovada";
-
-    detalhes.innerHTML += `
-      <div class="detail-item">
-        <b>${t.nome_profissional}</b>
-        <span class="badge-red">${motivo}</span>
-      </div>`;
-  });
-
-  renderForcaTrabalho(disponiveis);
-}
-
-function renderForcaTrabalho(lista){
-
-  const horas=[];
-  for(let h=9;h<=22;h++) horas.push(h);
-
-  const contagem = horas.map(hora =>
-    lista.filter(t=>{
-      const he=parseInt((t.hora_entrada||"0").split(":")[0]);
-      const hs=parseInt((t.hora_saida||"0").split(":")[0]);
-      return hora>=he && hora<hs;
-    }).length
-  );
-
-  if(chartDia) chartDia.destroy();
-
-  chartDia = new Chart(document.getElementById("graficoDia"),{
-    type:"bar",
-    data:{
-      labels:horas.map(h=>h+":00"),
-      datasets:[{
-        label:"Terapeutas disponíveis",
-        data:contagem,
-        backgroundColor:"#3b82f6"
-      }]
-    },
-    options:{
-      scales:{ y:{ beginAtZero:true, ticks:{stepSize:1} } }
-    }
   });
 }
 

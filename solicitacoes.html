@@ -34,12 +34,26 @@ button {
   border-radius:6px;
   padding:8px 14px;
   cursor:pointer;
-  margin-right:5px;
+  margin-right:6px;
 }
 
 button:hover { opacity:.9; }
 
 .btn-danger { background:#dc2626; }
+
+/* Ícones */
+.btn-icon {
+  border:none;
+  background:none;
+  cursor:pointer;
+  font-size:18px;
+  margin-right:8px;
+}
+
+.btn-aprovar { color:#16a34a; }
+.btn-reprovar { color:#dc2626; }
+
+.btn-icon:hover { transform:scale(1.15); }
 
 table {
   width:100%;
@@ -57,25 +71,6 @@ th, td {
 .status-pendente { color:#d97706; font-weight:bold; }
 .status-aprovado { color:#16a34a; font-weight:bold; }
 .status-reprovado { color:#dc2626; font-weight:bold; }
-
-/* Modal */
-.modal {
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-}
-
-.modal-box{
-  background:#fff;
-  padding:30px;
-  border-radius:16px;
-  width:400px;
-  box-shadow:0 10px 30px rgba(0,0,0,.2);
-}
 </style>
 </head>
 <body>
@@ -108,13 +103,6 @@ th, td {
 <label>Justificativa</label>
 <input id="justificativa"><br><br>
 
-<label>Status</label>
-<select id="status">
-<option value="Pendente">Pendente</option>
-<option value="Aprovado">Aprovado</option>
-<option value="Reprovado">Reprovado</option>
-</select><br><br>
-
 <button onclick="salvar()">Salvar</button>
 </div>
 
@@ -134,19 +122,10 @@ th, td {
 </thead>
 <tbody id="lista"></tbody>
 </table>
+
 </div>
 
 </main>
-</div>
-
-<!-- Modal -->
-<div id="modalVisualizar" class="modal">
-  <div class="modal-box">
-    <h3>Detalhes da Solicitação</h3>
-    <div id="conteudoModal" style="margin-top:15px;"></div>
-    <br>
-    <button onclick="fecharModal()">Fechar</button>
-  </div>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
@@ -204,7 +183,7 @@ async function carregarTerapeutas() {
   });
 }
 
-/* SALVAR / EDITAR */
+/* SALVAR */
 async function salvar() {
 
   const dataInicioStr = document.getElementById("data_inicio").value;
@@ -225,40 +204,34 @@ async function salvar() {
     data_inicio: dataInicioStr,
     data_fim: dataFimStr,
     justificativa: document.getElementById("justificativa").value,
-    status: document.getElementById("status").value
+    status: "Pendente"
   };
 
-  if (editandoId) {
+  const { error } = await supabaseClient
+    .from("solicitacoes")
+    .insert(payload);
 
-    const { error } = await supabaseClient
-      .from("solicitacoes")
-      .update(payload)
-      .eq("id", editandoId);
+  if (error) return alert("Erro ao salvar");
 
-    if (error) return alert("Erro ao atualizar");
-
-    editandoId = null;
-    alert("Atualizado com sucesso!");
-
-  } else {
-
-    const { error } = await supabaseClient
-      .from("solicitacoes")
-      .insert(payload);
-
-    if (error) return alert("Erro ao salvar");
-
-    alert("Solicitação registrada!");
-  }
-
-  limparFormulario();
+  alert("Solicitação registrada!");
+  document.getElementById("justificativa").value = "";
   carregarSolicitacoes();
 }
 
-/* LIMPAR */
-function limparFormulario(){
-  document.getElementById("justificativa").value = "";
-  document.getElementById("status").value = "Pendente";
+/* ALTERAR STATUS */
+async function alterarStatus(id, novoStatus){
+
+  const { error } = await supabaseClient
+    .from("solicitacoes")
+    .update({ status: novoStatus })
+    .eq("id", id);
+
+  if(error){
+    alert("Erro ao atualizar status");
+    return;
+  }
+
+  carregarSolicitacoes();
 }
 
 /* CARREGAR LISTA */
@@ -292,37 +265,24 @@ async function carregarSolicitacoes() {
         <td class="${statusClass}">${s.status}</td>
         <td>${dataFormatada}</td>
         <td>
-          <button onclick="visualizarSolicitacao('${s.id}')">Visualizar</button>
-          <button onclick="editarSolicitacao('${s.id}')">Editar</button>
-          <button class="btn-danger" onclick="excluirSolicitacao('${s.id}')">Excluir</button>
+          <button class="btn-icon btn-aprovar"
+            onclick="alterarStatus('${s.id}','Aprovado')">✔</button>
+
+          <button class="btn-icon btn-reprovar"
+            onclick="alterarStatus('${s.id}','Reprovado')">✖</button>
+
+          <button onclick="editarSolicitacao('${s.id}')">
+            Editar
+          </button>
+
+          <button class="btn-danger"
+            onclick="excluirSolicitacao('${s.id}')">
+            Excluir
+          </button>
         </td>
       </tr>
     `;
   });
-}
-
-/* VISUALIZAR */
-async function visualizarSolicitacao(id){
-
-  const { data } = await supabaseClient
-    .from("solicitacoes")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  document.getElementById("conteudoModal").innerHTML = `
-    <p><b>Terapeuta:</b> ${data.terapeuta_cpf}</p>
-    <p><b>Tipo:</b> ${data.tipo}</p>
-    <p><b>Período:</b> ${data.data_inicio} → ${data.data_fim}</p>
-    <p><b>Status:</b> ${data.status}</p>
-    <p><b>Justificativa:</b><br>${data.justificativa || "-"}</p>
-  `;
-
-  document.getElementById("modalVisualizar").style.display = "flex";
-}
-
-function fecharModal(){
-  document.getElementById("modalVisualizar").style.display = "none";
 }
 
 /* EDITAR */
@@ -339,7 +299,6 @@ async function editarSolicitacao(id) {
   document.getElementById("data_inicio").value = data.data_inicio;
   document.getElementById("data_fim").value = data.data_fim;
   document.getElementById("justificativa").value = data.justificativa;
-  document.getElementById("status").value = data.status;
 
   editandoId = id;
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -357,7 +316,6 @@ async function excluirSolicitacao(id) {
 
   if (error) return alert("Erro ao excluir");
 
-  alert("Excluído com sucesso!");
   carregarSolicitacoes();
 }
 

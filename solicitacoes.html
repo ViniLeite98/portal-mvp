@@ -34,6 +34,7 @@ button {
   border-radius:6px;
   padding:8px 14px;
   cursor:pointer;
+  margin-right:5px;
 }
 
 button:hover { opacity:.9; }
@@ -56,6 +57,25 @@ th, td {
 .status-pendente { color:#d97706; font-weight:bold; }
 .status-aprovado { color:#16a34a; font-weight:bold; }
 .status-reprovado { color:#dc2626; font-weight:bold; }
+
+/* Modal */
+.modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+.modal-box{
+  background:#fff;
+  padding:30px;
+  border-radius:16px;
+  width:400px;
+  box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
 </style>
 </head>
 <body>
@@ -119,6 +139,16 @@ th, td {
 </main>
 </div>
 
+<!-- Modal -->
+<div id="modalVisualizar" class="modal">
+  <div class="modal-box">
+    <h3>Detalhes da Solicitação</h3>
+    <div id="conteudoModal" style="margin-top:15px;"></div>
+    <br>
+    <button onclick="fecharModal()">Fechar</button>
+  </div>
+</div>
+
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
@@ -129,9 +159,7 @@ const supabaseClient = supabase.createClient(
 
 let editandoId = null;
 
-/* =========================
-   CONFIGURAÇÃO DE DATAS
-========================= */
+/* CONFIGURAÇÃO DE DATAS */
 document.addEventListener("DOMContentLoaded", () => {
 
   const dataInicio = document.getElementById("data_inicio");
@@ -149,18 +177,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (dataFim.value) {
       const di = new Date(dataInicio.value + "T00:00:00");
       const df = new Date(dataFim.value + "T00:00:00");
-
-      if (df.getTime() < di.getTime()) {
-        dataFim.value = dataInicio.value;
-      }
+      if (df < di) dataFim.value = dataInicio.value;
     }
   });
 
 });
 
-/* =========================
-   CARREGAR TERAPEUTAS
-========================= */
+/* CARREGAR TERAPEUTAS */
 async function carregarTerapeutas() {
 
   const { data } = await supabaseClient
@@ -181,23 +204,16 @@ async function carregarTerapeutas() {
   });
 }
 
-/* =========================
-   SALVAR / EDITAR
-========================= */
+/* SALVAR / EDITAR */
 async function salvar() {
 
   const dataInicioStr = document.getElementById("data_inicio").value;
   const dataFimStr = document.getElementById("data_fim").value;
 
-  if (!dataInicioStr || !dataFimStr) {
-    alert("Preencha as datas.");
-    return;
-  }
-
   const dataInicio = new Date(dataInicioStr + "T00:00:00");
   const dataFim = new Date(dataFimStr + "T00:00:00");
 
-  if (dataFim.getTime() < dataInicio.getTime()) {
+  if (dataFim < dataInicio) {
     alert("Data fim não pode ser menor que data início.");
     document.getElementById("data_fim").value = dataInicioStr;
     return;
@@ -221,8 +237,8 @@ async function salvar() {
 
     if (error) return alert("Erro ao atualizar");
 
-    alert("Atualizado com sucesso!");
     editandoId = null;
+    alert("Atualizado com sucesso!");
 
   } else {
 
@@ -239,17 +255,13 @@ async function salvar() {
   carregarSolicitacoes();
 }
 
-/* =========================
-   LIMPAR
-========================= */
+/* LIMPAR */
 function limparFormulario(){
   document.getElementById("justificativa").value = "";
   document.getElementById("status").value = "Pendente";
 }
 
-/* =========================
-   CARREGAR LISTA
-========================= */
+/* CARREGAR LISTA */
 async function carregarSolicitacoes() {
 
   const { data } = await supabaseClient
@@ -280,6 +292,7 @@ async function carregarSolicitacoes() {
         <td class="${statusClass}">${s.status}</td>
         <td>${dataFormatada}</td>
         <td>
+          <button onclick="visualizarSolicitacao('${s.id}')">Visualizar</button>
           <button onclick="editarSolicitacao('${s.id}')">Editar</button>
           <button class="btn-danger" onclick="excluirSolicitacao('${s.id}')">Excluir</button>
         </td>
@@ -288,9 +301,31 @@ async function carregarSolicitacoes() {
   });
 }
 
-/* =========================
-   EDITAR
-========================= */
+/* VISUALIZAR */
+async function visualizarSolicitacao(id){
+
+  const { data } = await supabaseClient
+    .from("solicitacoes")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  document.getElementById("conteudoModal").innerHTML = `
+    <p><b>Terapeuta:</b> ${data.terapeuta_cpf}</p>
+    <p><b>Tipo:</b> ${data.tipo}</p>
+    <p><b>Período:</b> ${data.data_inicio} → ${data.data_fim}</p>
+    <p><b>Status:</b> ${data.status}</p>
+    <p><b>Justificativa:</b><br>${data.justificativa || "-"}</p>
+  `;
+
+  document.getElementById("modalVisualizar").style.display = "flex";
+}
+
+function fecharModal(){
+  document.getElementById("modalVisualizar").style.display = "none";
+}
+
+/* EDITAR */
 async function editarSolicitacao(id) {
 
   const { data } = await supabaseClient
@@ -310,9 +345,7 @@ async function editarSolicitacao(id) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/* =========================
-   EXCLUIR
-========================= */
+/* EXCLUIR */
 async function excluirSolicitacao(id) {
 
   if (!confirm("Tem certeza que deseja excluir?")) return;

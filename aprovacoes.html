@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Aprovações | Hara Spa</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
+.app { display:flex; min-height:100vh; }
+.content { flex:1; padding:40px; margin-left:260px; }
+
+.card {
+  background:#fff;
+  border-radius:20px;
+  padding:30px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th, td {
+  padding:10px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+  font-size:14px;
+}
+
+button {
+  border:none;
+  border-radius:6px;
+  padding:6px 12px;
+  cursor:pointer;
+  color:white;
+}
+
+.btn-aprovar { background:#16a34a; }
+.btn-reprovar { background:#dc2626; }
+
+.menu-voltar {
+  margin-top:25px;
+}
+
+.menu-voltar button {
+  background:#475569;
+  padding:10px 20px;
+}
+
+.menu-voltar button:hover {
+  background:#334155;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+<aside id="sidebar"></aside>
+
+<main class="content">
+
+<div class="card">
+<h2>Lista de Aprovações</h2>
+
+<table>
+<thead>
+<tr>
+<th>Terapeuta</th>
+<th>Tipo</th>
+<th>Período</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+<div class="menu-voltar">
+<button onclick="window.location.href='solicitacoes.html'">
+Voltar para Solicitações
+</button>
+</div>
+
+</div>
+
+</main>
+</div>
+
+<script>
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"SUA_ANON_KEY_AQUI"
+);
+
+async function carregarPendentes(){
+
+const { data } = await supabaseClient
+.from("solicitacoes")
+.select("*")
+.eq("status","Pendente")
+.order("created_at",{ascending:false});
+
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
+
+data.forEach(s=>{
+tbody.innerHTML+=`
+<tr>
+<td>${s.terapeuta_cpf}</td>
+<td>${s.tipo}</td>
+<td>${s.data_inicio} → ${s.data_fim}</td>
+<td>
+<button class="btn-aprovar"
+onclick="atualizarStatus('${s.id}','Aprovado')">✔</button>
+<button class="btn-reprovar"
+onclick="atualizarStatus('${s.id}','Reprovado')">✖</button>
+</td>
+</tr>`;
+});
+}
+
+async function atualizarStatus(id,status){
+
+await supabaseClient
+.from("solicitacoes")
+.update({status:status})
+.eq("id",id);
+
+carregarPendentes();
+}
+
+carregarPendentes();
+</script>
+
+</body>
+</html>

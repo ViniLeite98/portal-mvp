@@ -8,9 +8,22 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
-.app { display:flex; min-height:100vh; }
-.content { flex:1; padding:40px; margin-left:260px; }
+body {
+  margin:0;
+  font-family:'Segoe UI';
+  background:#f5f7fb;
+}
+
+.app {
+  display:flex;
+  min-height:100vh;
+}
+
+.content {
+  flex:1;
+  padding:40px;
+  margin-left:260px;
+}
 
 .card {
   background:#fff;
@@ -20,42 +33,53 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
   margin-bottom:30px;
 }
 
+h2 {
+  margin-top:0;
+}
+
 input, select {
-  padding:8px;
-  border-radius:6px;
+  padding:10px;
+  border-radius:8px;
   border:1px solid #ddd;
   width:100%;
+  font-size:14px;
 }
 
 button {
   background:#1f2937;
   color:#fff;
   border:none;
-  border-radius:6px;
-  padding:8px 14px;
+  border-radius:8px;
+  padding:10px 16px;
   cursor:pointer;
+  font-size:14px;
+  transition:.2s;
 }
 
 button:hover {
   opacity:.9;
 }
 
-table {
-  width:100%;
-  border-collapse:collapse;
+/* MENU INFERIOR */
+
+.menu-inferior {
+  display:flex;
+  justify-content:space-between;
+  gap:20px;
   margin-top:20px;
 }
 
-th, td {
-  padding:10px;
-  border-bottom:1px solid #eee;
-  text-align:left;
-  font-size:14px;
+.menu-inferior button {
+  flex:1;
+  background:#475569;
+  padding:14px;
+  font-weight:500;
 }
 
-.status-pendente { color:#d97706; font-weight:bold; }
-.status-aprovado { color:#16a34a; font-weight:bold; }
-.status-reprovado { color:#dc2626; font-weight:bold; }
+.menu-inferior button:hover {
+  background:#334155;
+  transform:translateY(-2px);
+}
 </style>
 </head>
 <body>
@@ -91,22 +115,19 @@ th, td {
       <button onclick="salvar()">Salvar</button>
     </div>
 
-    <div class="card">
-      <h2>Solicitações Registradas</h2>
+    <!-- MENU INFERIOR -->
+    <div class="menu-inferior">
+      <button onclick="location.href='solicitacoes.html'">
+        Nova Solicitação
+      </button>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Terapeuta</th>
-            <th>Tipo</th>
-            <th>Período</th>
-            <th>Status</th>
-            <th>Criado em</th>
-          </tr>
-        </thead>
-        <tbody id="lista"></tbody>
-      </table>
+      <button onclick="location.href='aprovacoes.html'">
+        Lista de Aprovações
+      </button>
 
+      <button onclick="location.href='gerenciar.html'">
+        Gerenciar Solicitações
+      </button>
     </div>
 
   </main>
@@ -129,11 +150,7 @@ function definirDataHoje() {
   document.getElementById("data_fim").min = hoje;
 }
 
-/* =========================
-   VALIDAR DATA FIM
-========================= */
 document.addEventListener("DOMContentLoaded", () => {
-
   definirDataHoje();
 
   const dataInicio = document.getElementById("data_inicio");
@@ -141,16 +158,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   dataInicio.addEventListener("change", () => {
     dataFim.min = dataInicio.value;
-
     if (dataFim.value < dataInicio.value) {
       dataFim.value = dataInicio.value;
     }
   });
-
 });
 
 /* =========================
-   CARREGAR TERAPEUTAS ATIVAS
+   CARREGAR TERAPEUTAS
 ========================= */
 async function carregarTerapeutas() {
 
@@ -179,7 +194,7 @@ async function carregarTerapeutas() {
 }
 
 /* =========================
-   SALVAR SOLICITAÇÃO
+   SALVAR
 ========================= */
 async function salvar() {
 
@@ -197,78 +212,4 @@ async function salvar() {
   }
 
   const payload = {
-    terapeuta_cpf: document.getElementById("terapeuta").value,
-    tipo: document.getElementById("tipo").value,
-    data_inicio: dataInicio,
-    data_fim: dataFim,
-    justificativa: document.getElementById("justificativa").value,
-    status: "Pendente"
-  };
-
-  const { error } = await supabaseClient
-    .from("solicitacoes")
-    .insert(payload);
-
-  if (error) {
-    console.error(error);
-    alert("Erro ao salvar");
-    return;
-  }
-
-  alert("Solicitação registrada!");
-  carregarSolicitacoes();
-}
-
-/* =========================
-   CARREGAR SOLICITAÇÕES
-========================= */
-async function carregarSolicitacoes() {
-
-  const { data, error } = await supabaseClient
-    .from("solicitacoes")
-    .select("*")
-    .order("created_at", { ascending:false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  data.forEach(s => {
-
-    // Converter UTC para horário Brasil
-    const dataCriacao = new Date(s.created_at);
-    const dataFormatada = dataCriacao.toLocaleString("pt-BR", {
-      timeZone: "America/Sao_Paulo"
-    });
-
-    let statusClass = "";
-    if (s.status === "Pendente") statusClass = "status-pendente";
-    if (s.status === "Aprovado") statusClass = "status-aprovado";
-    if (s.status === "Reprovado") statusClass = "status-reprovado";
-
-    tbody.innerHTML += `
-      <tr>
-        <td>${s.terapeuta_cpf}</td>
-        <td>${s.tipo}</td>
-        <td>${s.data_inicio} → ${s.data_fim}</td>
-        <td class="${statusClass}">${s.status}</td>
-        <td>${dataFormatada}</td>
-      </tr>
-    `;
-  });
-
-}
-
-/* =========================
-   INICIALIZA
-========================= */
-carregarTerapeutas();
-carregarSolicitacoes();
-</script>
-
-</body>
-</html>
+    terapeuta_cpf: document.getElementByI_

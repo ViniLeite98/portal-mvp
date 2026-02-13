@@ -99,8 +99,8 @@ function diaSemana(date){
 }
 
 function folgaSemanal(t,data){
+  if(!t.tem_folga || !t.dia_folga) return false;
   return t.tem_folga==="Sim" &&
-         t.dia_folga &&
          diaSemana(data)===t.dia_folga.toLowerCase();
 }
 
@@ -115,23 +115,39 @@ function folgaAprovada(t,data){
 
 async function carregarDados(){
 
-  const { data: dadosTerapeutas } = await supabase
-    .from("terapeutas")
-    .select("*")
-    .eq("status","Ativo");
+  try {
 
-  const { data: dadosSolicitacoes } = await supabase
-    .from("solicitacoes")
-    .select("*")
-    .eq("status","Aprovado");
+    const { data: dadosTerapeutas, error: erroT } = await supabase
+      .from("terapeutas")
+      .select("*")
+      .eq("status","Ativo");
 
-  terapeutas = dadosTerapeutas || [];
-  solicitacoes = dadosSolicitacoes || [];
+    if(erroT) throw erroT;
 
-  renderCalendar();
+    const { data: dadosSolicitacoes, error: erroS } = await supabase
+      .from("solicitacoes")
+      .select("*")
+      .eq("status","Aprovado");
+
+    if(erroS) throw erroS;
+
+    console.log("Terapeutas carregados:", dadosTerapeutas);
+    console.log("Solicitações aprovadas:", dadosSolicitacoes);
+
+    terapeutas = dadosTerapeutas || [];
+    solicitacoes = dadosSolicitacoes || [];
+
+    renderCalendar();
+
+  } catch(err){
+    console.error("Erro ao carregar dados:", err);
+    document.getElementById("calendar").innerHTML =
+      "<p>Erro ao carregar dados do banco.</p>";
+  }
 }
 
 function renderCalendar(){
+
   const calendar = document.getElementById("calendar");
   calendar.innerHTML="";
 
@@ -163,6 +179,7 @@ function renderCalendar(){
 }
 
 function mostrarDia(dia){
+
   const data = new Date(ano,mes,dia);
   document.getElementById("tituloDia").innerText=
     `Dia ${dia}/${mes+1}/${ano}`;
@@ -218,8 +235,8 @@ function renderForcaTrabalho(lista){
 
   const contagem = horas.map(hora =>
     lista.filter(t=>{
-      const he=parseInt(t.hora_entrada.split(":")[0]);
-      const hs=parseInt(t.hora_saida.split(":")[0]);
+      const he=parseInt((t.hora_entrada||"0").split(":")[0]);
+      const hs=parseInt((t.hora_saida||"0").split(":")[0]);
       return hora>=he && hora<hs;
     }).length
   );

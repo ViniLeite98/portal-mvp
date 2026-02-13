@@ -38,9 +38,7 @@ button {
 
 button:hover { opacity:.9; }
 
-.btn-danger {
-  background:#dc2626;
-}
+.btn-danger { background:#dc2626; }
 
 table {
   width:100%;
@@ -63,229 +61,238 @@ th, td {
 <body>
 
 <div class="app">
-  <aside id="sidebar"></aside>
+<aside id="sidebar"></aside>
 
-  <main class="content">
+<main class="content">
 
-    <div class="card">
-      <h2>Nova Solicitação</h2>
+<div class="card">
+<h2>Nova Solicitação</h2>
 
-      <label>Terapeuta</label>
-      <select id="terapeuta"></select><br><br>
+<label>Terapeuta</label>
+<select id="terapeuta"></select><br><br>
 
-      <label>Tipo</label>
-      <select id="tipo">
-        <option>Falta</option>
-        <option>Férias</option>
-        <option>Atestado</option>
-        <option>Viagem</option>
-      </select><br><br>
+<label>Tipo</label>
+<select id="tipo">
+<option>Falta</option>
+<option>Férias</option>
+<option>Atestado</option>
+<option>Viagem</option>
+</select><br><br>
 
-      <label>Data Início</label>
-      <input type="date" id="data_inicio"><br><br>
+<label>Data Início</label>
+<input type="date" id="data_inicio"><br><br>
 
-      <label>Data Fim</label>
-      <input type="date" id="data_fim"><br><br>
+<label>Data Fim</label>
+<input type="date" id="data_fim"><br><br>
 
-      <label>Justificativa</label>
-      <input id="justificativa"><br><br>
+<label>Justificativa</label>
+<input id="justificativa"><br><br>
 
-      <button onclick="salvar()">Salvar</button>
-    </div>
+<label>Status</label>
+<select id="status">
+<option value="Pendente">Pendente</option>
+<option value="Aprovado">Aprovado</option>
+<option value="Reprovado">Reprovado</option>
+</select><br><br>
 
-    <div class="card">
-      <h2>Solicitações Registradas</h2>
+<button onclick="salvar()">Salvar</button>
+</div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Terapeuta</th>
-            <th>Tipo</th>
-            <th>Período</th>
-            <th>Status</th>
-            <th>Criado em</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="lista"></tbody>
-      </table>
-    </div>
+<div class="card">
+<h2>Solicitações Registradas</h2>
 
-  </main>
+<table>
+<thead>
+<tr>
+<th>Terapeuta</th>
+<th>Tipo</th>
+<th>Período</th>
+<th>Status</th>
+<th>Criado em</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+</div>
+
+</main>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let editandoId = null;
 
-/* DEFINIR DATA HOJE */
+/* DATA HOJE */
 function definirDataHoje() {
-  const hoje = new Date().toISOString().split("T")[0];
-  document.getElementById("data_inicio").value = hoje;
-  document.getElementById("data_fim").min = hoje;
+const hoje = new Date().toISOString().split("T")[0];
+document.getElementById("data_inicio").value = hoje;
+document.getElementById("data_fim").min = hoje;
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  definirDataHoje();
+definirDataHoje();
 
-  const dataInicio = document.getElementById("data_inicio");
-  const dataFim = document.getElementById("data_fim");
+const dataInicio = document.getElementById("data_inicio");
+const dataFim = document.getElementById("data_fim");
 
-  dataInicio.addEventListener("change", () => {
-    dataFim.min = dataInicio.value;
-    if (dataFim.value < dataInicio.value) {
-      dataFim.value = dataInicio.value;
-    }
-  });
+dataInicio.addEventListener("change", () => {
+dataFim.min = dataInicio.value;
+if (dataFim.value < dataInicio.value) {
+dataFim.value = dataInicio.value;
+}
+});
 });
 
 /* CARREGAR TERAPEUTAS */
 async function carregarTerapeutas() {
 
-  const { data } = await supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional")
-    .eq("status","Ativo")
-    .order("nome_profissional");
+const { data } = await supabaseClient
+.from("terapeutas")
+.select("cpf,nome_profissional")
+.eq("status","Ativo")
+.order("nome_profissional");
 
-  const select = document.getElementById("terapeuta");
-  select.innerHTML = "";
+const select = document.getElementById("terapeuta");
+select.innerHTML = "";
 
-  data.forEach(t => {
-    select.innerHTML += `
-      <option value="${t.cpf}">
-        ${t.nome_profissional} - ${t.cpf}
-      </option>
-    `;
-  });
+data.forEach(t => {
+select.innerHTML += `
+<option value="${t.cpf}">
+${t.nome_profissional} - ${t.cpf}
+</option>
+`;
+});
 }
 
 /* SALVAR OU EDITAR */
 async function salvar() {
 
-  const payload = {
-    terapeuta_cpf: document.getElementById("terapeuta").value,
-    tipo: document.getElementById("tipo").value,
-    data_inicio: document.getElementById("data_inicio").value,
-    data_fim: document.getElementById("data_fim").value,
-    justificativa: document.getElementById("justificativa").value
-  };
+const payload = {
+terapeuta_cpf: document.getElementById("terapeuta").value,
+tipo: document.getElementById("tipo").value,
+data_inicio: document.getElementById("data_inicio").value,
+data_fim: document.getElementById("data_fim").value,
+justificativa: document.getElementById("justificativa").value,
+status: document.getElementById("status").value
+};
 
-  if (editandoId) {
+if (editandoId) {
 
-    const { error } = await supabaseClient
-      .from("solicitacoes")
-      .update(payload)
-      .eq("id", editandoId);
+const { error } = await supabaseClient
+.from("solicitacoes")
+.update(payload)
+.eq("id", editandoId);
 
-    if (error) return alert("Erro ao atualizar");
+if (error) return alert("Erro ao atualizar");
 
-    alert("Atualizado com sucesso!");
-    editandoId = null;
+alert("Atualizado com sucesso!");
+editandoId = null;
 
-  } else {
+} else {
 
-    payload.status = "Pendente";
+const { error } = await supabaseClient
+.from("solicitacoes")
+.insert(payload);
 
-    const { error } = await supabaseClient
-      .from("solicitacoes")
-      .insert(payload);
+if (error) return alert("Erro ao salvar");
 
-    if (error) return alert("Erro ao salvar");
-
-    alert("Solicitação registrada!");
-  }
-
-  document.getElementById("justificativa").value = "";
-  carregarSolicitacoes();
+alert("Solicitação registrada!");
 }
 
-/* CARREGAR SOLICITAÇÕES */
+limparFormulario();
+carregarSolicitacoes();
+}
+
+/* LIMPAR */
+function limparFormulario(){
+document.getElementById("justificativa").value = "";
+document.getElementById("status").value = "Pendente";
+}
+
+/* CARREGAR LISTA */
 async function carregarSolicitacoes() {
 
-  const { data } = await supabaseClient
-    .from("solicitacoes")
-    .select("*")
-    .order("created_at", { ascending:false });
+const { data } = await supabaseClient
+.from("solicitacoes")
+.select("*")
+.order("created_at", { ascending:false });
 
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+const tbody = document.getElementById("lista");
+tbody.innerHTML = "";
 
-  data.forEach(s => {
+data.forEach(s => {
 
-    const dataCriacao = new Date(s.created_at);
-    const dataFormatada = dataCriacao.toLocaleString("pt-BR", {
-      timeZone: "America/Sao_Paulo"
-    });
+const dataCriacao = new Date(s.created_at);
+const dataFormatada = dataCriacao.toLocaleString("pt-BR", {
+timeZone: "America/Sao_Paulo"
+});
 
-    let statusClass = "";
-    if (s.status === "Pendente") statusClass = "status-pendente";
-    if (s.status === "Aprovado") statusClass = "status-aprovado";
-    if (s.status === "Reprovado") statusClass = "status-reprovado";
+let statusClass = "";
+if (s.status === "Pendente") statusClass = "status-pendente";
+if (s.status === "Aprovado") statusClass = "status-aprovado";
+if (s.status === "Reprovado") statusClass = "status-reprovado";
 
-    tbody.innerHTML += `
-      <tr>
-        <td>${s.terapeuta_cpf}</td>
-        <td>${s.tipo}</td>
-        <td>${s.data_inicio} → ${s.data_fim}</td>
-        <td class="${statusClass}">${s.status}</td>
-        <td>${dataFormatada}</td>
-        <td>
-          <button onclick="editarSolicitacao('${s.id}')">
-            Editar
-          </button>
-          <button class="btn-danger"
-            onclick="excluirSolicitacao('${s.id}')">
-            Excluir
-          </button>
-        </td>
-      </tr>
-    `;
-  });
+tbody.innerHTML += `
+<tr>
+<td>${s.terapeuta_cpf}</td>
+<td>${s.tipo}</td>
+<td>${s.data_inicio} → ${s.data_fim}</td>
+<td class="${statusClass}">${s.status}</td>
+<td>${dataFormatada}</td>
+<td>
+<button onclick="editarSolicitacao('${s.id}')">Editar</button>
+<button class="btn-danger" onclick="excluirSolicitacao('${s.id}')">Excluir</button>
+</td>
+</tr>
+`;
+});
 }
 
 /* EDITAR */
 async function editarSolicitacao(id) {
 
-  const { data } = await supabaseClient
-    .from("solicitacoes")
-    .select("*")
-    .eq("id", id)
-    .single();
+const { data } = await supabaseClient
+.from("solicitacoes")
+.select("*")
+.eq("id", id)
+.single();
 
-  document.getElementById("terapeuta").value = data.terapeuta_cpf;
-  document.getElementById("tipo").value = data.tipo;
-  document.getElementById("data_inicio").value = data.data_inicio;
-  document.getElementById("data_fim").value = data.data_fim;
-  document.getElementById("justificativa").value = data.justificativa;
+document.getElementById("terapeuta").value = data.terapeuta_cpf;
+document.getElementById("tipo").value = data.tipo;
+document.getElementById("data_inicio").value = data.data_inicio;
+document.getElementById("data_fim").value = data.data_fim;
+document.getElementById("justificativa").value = data.justificativa;
+document.getElementById("status").value = data.status;
 
-  editandoId = id;
-  window.scrollTo({ top: 0, behavior: "smooth" });
+editandoId = id;
+window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 /* EXCLUIR */
 async function excluirSolicitacao(id) {
 
-  if (!confirm("Tem certeza que deseja excluir?")) return;
+if (!confirm("Tem certeza que deseja excluir?")) return;
 
-  const { error } = await supabaseClient
-    .from("solicitacoes")
-    .delete()
-    .eq("id", id);
+const { error } = await supabaseClient
+.from("solicitacoes")
+.delete()
+.eq("id", id);
 
-  if (error) return alert("Erro ao excluir");
+if (error) return alert("Erro ao excluir");
 
-  alert("Excluído com sucesso!");
-  carregarSolicitacoes();
+alert("Excluído com sucesso!");
+carregarSolicitacoes();
 }
 
-/* INICIALIZA */
+/* INIT */
 carregarTerapeutas();
 carregarSolicitacoes();
 </script>

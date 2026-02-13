@@ -119,7 +119,7 @@ th, td {
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "SUA_ANON_KEY_AQUI"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let editandoId = null;
@@ -191,8 +191,7 @@ async function salvar() {
 
   } else {
 
-    // 🔵 AGORA SALVA DIRETO COMO APROVADO
-    payload.status = "Aprovado";
+    payload.status = "Pendente";
 
     const { error } = await supabaseClient
       .from("solicitacoes")
@@ -221,7 +220,9 @@ async function carregarSolicitacoes() {
   data.forEach(s => {
 
     const dataCriacao = new Date(s.created_at);
-    const dataFormatada = dataCriacao.toLocaleString("pt-BR");
+    const dataFormatada = dataCriacao.toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo"
+    });
 
     let statusClass = "";
     if (s.status === "Pendente") statusClass = "status-pendente";

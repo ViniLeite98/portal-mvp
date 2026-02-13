@@ -1,127 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Solicitações | Hara Spa</title>
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
-<style>
-body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
-.app { display:flex; min-height:100vh; }
-.content { flex:1; padding:40px; margin-left:260px; }
-
-.card {
-  background:#fff;
-  border-radius:20px;
-  padding:30px;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-  margin-bottom:30px;
-}
-
-input, select {
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #ddd;
-  width:100%;
-}
-
-button {
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:8px 14px;
-  cursor:pointer;
-}
-
-button:hover { opacity:.9; }
-
-.btn-danger { background:#dc2626; }
-
-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-}
-
-th, td {
-  padding:10px;
-  border-bottom:1px solid #eee;
-  text-align:left;
-  font-size:14px;
-}
-
-.status-pendente { color:#d97706; font-weight:bold; }
-.status-aprovado { color:#16a34a; font-weight:bold; }
-.status-reprovado { color:#dc2626; font-weight:bold; }
-</style>
-</head>
-<body>
-
-<div class="app">
-<aside id="sidebar"></aside>
-
-<main class="content">
-
-<div class="card">
-<h2>Nova Solicitação</h2>
-
-<label>Terapeuta</label>
-<select id="terapeuta"></select><br><br>
-
-<label>Tipo</label>
-<select id="tipo">
-<option>Falta</option>
-<option>Férias</option>
-<option>Atestado</option>
-<option>Viagem</option>
-</select><br><br>
-
-<label>Data Início</label>
-<input type="date" id="data_inicio"><br><br>
-
-<label>Data Fim</label>
-<input type="date" id="data_fim"><br><br>
-
-<label>Justificativa</label>
-<input id="justificativa"><br><br>
-
-<label>Status</label>
-<select id="status">
-<option value="Pendente">Pendente</option>
-<option value="Aprovado">Aprovado</option>
-<option value="Reprovado">Reprovado</option>
-</select><br><br>
-
-<button onclick="salvar()">Salvar</button>
-</div>
-
-<div class="card">
-<h2>Solicitações Registradas</h2>
-
-<table>
-<thead>
-<tr>
-<th>Terapeuta</th>
-<th>Tipo</th>
-<th>Período</th>
-<th>Status</th>
-<th>Criado em</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
-
-</div>
-
-</main>
-</div>
-
-<script src="assets/sidebar/sidebar.js"></script>
-
 <script>
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
@@ -130,172 +6,208 @@ const supabaseClient = supabase.createClient(
 
 let editandoId = null;
 
-/* DATA HOJE */
-function definirDataHoje() {
-const hoje = new Date().toISOString().split("T")[0];
-document.getElementById("data_inicio").value = hoje;
-document.getElementById("data_fim").min = hoje;
+/* =========================
+   DEFINIR DATA HOJE + TRAVAS
+========================= */
+function configurarDatas() {
+
+  const dataInicio = document.getElementById("data_inicio");
+  const dataFim = document.getElementById("data_fim");
+
+  const hoje = new Date().toISOString().split("T")[0];
+
+  dataInicio.value = hoje;
+  dataInicio.min = hoje;
+  dataFim.min = hoje;
+
+  // Quando alterar data início
+  dataInicio.addEventListener("change", () => {
+    dataFim.min = dataInicio.value;
+
+    if (dataFim.value && dataFim.value < dataInicio.value) {
+      dataFim.value = dataInicio.value;
+    }
+  });
+
+  // Segurança extra ao alterar data fim
+  dataFim.addEventListener("change", () => {
+    if (dataFim.value < dataInicio.value) {
+      alert("Data fim não pode ser menor que data início.");
+      dataFim.value = dataInicio.value;
+    }
+  });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-definirDataHoje();
+document.addEventListener("DOMContentLoaded", configurarDatas);
 
-const dataInicio = document.getElementById("data_inicio");
-const dataFim = document.getElementById("data_fim");
-
-dataInicio.addEventListener("change", () => {
-dataFim.min = dataInicio.value;
-if (dataFim.value < dataInicio.value) {
-dataFim.value = dataInicio.value;
-}
-});
-});
-
-/* CARREGAR TERAPEUTAS */
+/* =========================
+   CARREGAR TERAPEUTAS
+========================= */
 async function carregarTerapeutas() {
 
-const { data } = await supabaseClient
-.from("terapeutas")
-.select("cpf,nome_profissional")
-.eq("status","Ativo")
-.order("nome_profissional");
+  const { data } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissional")
+    .eq("status","Ativo")
+    .order("nome_profissional");
 
-const select = document.getElementById("terapeuta");
-select.innerHTML = "";
+  const select = document.getElementById("terapeuta");
+  select.innerHTML = "";
 
-data.forEach(t => {
-select.innerHTML += `
-<option value="${t.cpf}">
-${t.nome_profissional} - ${t.cpf}
-</option>
-`;
-});
+  data.forEach(t => {
+    select.innerHTML += `
+      <option value="${t.cpf}">
+        ${t.nome_profissional} - ${t.cpf}
+      </option>
+    `;
+  });
 }
 
-/* SALVAR OU EDITAR */
+/* =========================
+   SALVAR / EDITAR
+========================= */
 async function salvar() {
 
-const payload = {
-terapeuta_cpf: document.getElementById("terapeuta").value,
-tipo: document.getElementById("tipo").value,
-data_inicio: document.getElementById("data_inicio").value,
-data_fim: document.getElementById("data_fim").value,
-justificativa: document.getElementById("justificativa").value,
-status: document.getElementById("status").value
-};
+  const dataInicio = document.getElementById("data_inicio").value;
+  const dataFim = document.getElementById("data_fim").value;
 
-if (editandoId) {
+  // 🔒 VALIDAÇÃO REAL (backend safety)
+  if (!dataInicio || !dataFim) {
+    alert("Preencha as datas.");
+    return;
+  }
 
-const { error } = await supabaseClient
-.from("solicitacoes")
-.update(payload)
-.eq("id", editandoId);
+  if (dataFim < dataInicio) {
+    alert("Data fim não pode ser menor que data início.");
+    return;
+  }
 
-if (error) return alert("Erro ao atualizar");
+  const payload = {
+    terapeuta_cpf: document.getElementById("terapeuta").value,
+    tipo: document.getElementById("tipo").value,
+    data_inicio: dataInicio,
+    data_fim: dataFim,
+    justificativa: document.getElementById("justificativa").value,
+    status: document.getElementById("status").value
+  };
 
-alert("Atualizado com sucesso!");
-editandoId = null;
+  if (editandoId) {
 
-} else {
+    const { error } = await supabaseClient
+      .from("solicitacoes")
+      .update(payload)
+      .eq("id", editandoId);
 
-const { error } = await supabaseClient
-.from("solicitacoes")
-.insert(payload);
+    if (error) return alert("Erro ao atualizar");
 
-if (error) return alert("Erro ao salvar");
+    alert("Atualizado com sucesso!");
+    editandoId = null;
 
-alert("Solicitação registrada!");
+  } else {
+
+    const { error } = await supabaseClient
+      .from("solicitacoes")
+      .insert(payload);
+
+    if (error) return alert("Erro ao salvar");
+
+    alert("Solicitação registrada!");
+  }
+
+  limparFormulario();
+  carregarSolicitacoes();
 }
 
-limparFormulario();
-carregarSolicitacoes();
-}
-
-/* LIMPAR */
+/* =========================
+   LIMPAR
+========================= */
 function limparFormulario(){
-document.getElementById("justificativa").value = "";
-document.getElementById("status").value = "Pendente";
+  document.getElementById("justificativa").value = "";
+  document.getElementById("status").value = "Pendente";
 }
 
-/* CARREGAR LISTA */
+/* =========================
+   CARREGAR LISTA
+========================= */
 async function carregarSolicitacoes() {
 
-const { data } = await supabaseClient
-.from("solicitacoes")
-.select("*")
-.order("created_at", { ascending:false });
+  const { data } = await supabaseClient
+    .from("solicitacoes")
+    .select("*")
+    .order("created_at", { ascending:false });
 
-const tbody = document.getElementById("lista");
-tbody.innerHTML = "";
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
 
-data.forEach(s => {
+  data.forEach(s => {
 
-const dataCriacao = new Date(s.created_at);
-const dataFormatada = dataCriacao.toLocaleString("pt-BR", {
-timeZone: "America/Sao_Paulo"
-});
+    const dataCriacao = new Date(s.created_at);
+    const dataFormatada = dataCriacao.toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo"
+    });
 
-let statusClass = "";
-if (s.status === "Pendente") statusClass = "status-pendente";
-if (s.status === "Aprovado") statusClass = "status-aprovado";
-if (s.status === "Reprovado") statusClass = "status-reprovado";
+    let statusClass = "";
+    if (s.status === "Pendente") statusClass = "status-pendente";
+    if (s.status === "Aprovado") statusClass = "status-aprovado";
+    if (s.status === "Reprovado") statusClass = "status-reprovado";
 
-tbody.innerHTML += `
-<tr>
-<td>${s.terapeuta_cpf}</td>
-<td>${s.tipo}</td>
-<td>${s.data_inicio} → ${s.data_fim}</td>
-<td class="${statusClass}">${s.status}</td>
-<td>${dataFormatada}</td>
-<td>
-<button onclick="editarSolicitacao('${s.id}')">Editar</button>
-<button class="btn-danger" onclick="excluirSolicitacao('${s.id}')">Excluir</button>
-</td>
-</tr>
-`;
-});
+    tbody.innerHTML += `
+      <tr>
+        <td>${s.terapeuta_cpf}</td>
+        <td>${s.tipo}</td>
+        <td>${s.data_inicio} → ${s.data_fim}</td>
+        <td class="${statusClass}">${s.status}</td>
+        <td>${dataFormatada}</td>
+        <td>
+          <button onclick="editarSolicitacao('${s.id}')">Editar</button>
+          <button class="btn-danger" onclick="excluirSolicitacao('${s.id}')">Excluir</button>
+        </td>
+      </tr>
+    `;
+  });
 }
 
-/* EDITAR */
+/* =========================
+   EDITAR
+========================= */
 async function editarSolicitacao(id) {
 
-const { data } = await supabaseClient
-.from("solicitacoes")
-.select("*")
-.eq("id", id)
-.single();
+  const { data } = await supabaseClient
+    .from("solicitacoes")
+    .select("*")
+    .eq("id", id)
+    .single();
 
-document.getElementById("terapeuta").value = data.terapeuta_cpf;
-document.getElementById("tipo").value = data.tipo;
-document.getElementById("data_inicio").value = data.data_inicio;
-document.getElementById("data_fim").value = data.data_fim;
-document.getElementById("justificativa").value = data.justificativa;
-document.getElementById("status").value = data.status;
+  document.getElementById("terapeuta").value = data.terapeuta_cpf;
+  document.getElementById("tipo").value = data.tipo;
+  document.getElementById("data_inicio").value = data.data_inicio;
+  document.getElementById("data_fim").value = data.data_fim;
+  document.getElementById("justificativa").value = data.justificativa;
+  document.getElementById("status").value = data.status;
 
-editandoId = id;
-window.scrollTo({ top: 0, behavior: "smooth" });
+  editandoId = id;
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/* EXCLUIR */
+/* =========================
+   EXCLUIR
+========================= */
 async function excluirSolicitacao(id) {
 
-if (!confirm("Tem certeza que deseja excluir?")) return;
+  if (!confirm("Tem certeza que deseja excluir?")) return;
 
-const { error } = await supabaseClient
-.from("solicitacoes")
-.delete()
-.eq("id", id);
+  const { error } = await supabaseClient
+    .from("solicitacoes")
+    .delete()
+    .eq("id", id);
 
-if (error) return alert("Erro ao excluir");
+  if (error) return alert("Erro ao excluir");
 
-alert("Excluído com sucesso!");
-carregarSolicitacoes();
+  alert("Excluído com sucesso!");
+  carregarSolicitacoes();
 }
 
 /* INIT */
 carregarTerapeutas();
 carregarSolicitacoes();
 </script>
-
-</body>
-</html>

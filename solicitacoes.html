@@ -32,16 +32,15 @@ button {
   color:#fff;
   border:none;
   border-radius:6px;
-  padding:6px 12px;
+  padding:8px 14px;
   cursor:pointer;
-  font-size:13px;
 }
 
 button:hover { opacity:.9; }
 
-.btn-danger { background:#dc2626; }
-.btn-aprovar { background:#16a34a; }
-.btn-reprovar { background:#dc2626; }
+.btn-danger {
+  background:#dc2626;
+}
 
 table {
   width:100%;
@@ -68,9 +67,6 @@ th, td {
 
   <main class="content">
 
-    <!-- ===================== -->
-    <!-- NOVA SOLICITAÇÃO -->
-    <!-- ===================== -->
     <div class="card">
       <h2>Nova Solicitação</h2>
 
@@ -97,9 +93,6 @@ th, td {
       <button onclick="salvar()">Salvar</button>
     </div>
 
-    <!-- ===================== -->
-    <!-- LISTA -->
-    <!-- ===================== -->
     <div class="card">
       <h2>Solicitações Registradas</h2>
 
@@ -126,14 +119,33 @@ th, td {
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "SUA_ANON_KEY_AQUI"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let editandoId = null;
 
-/* =========================
-   CARREGAR TERAPEUTAS
-========================= */
+/* DEFINIR DATA HOJE */
+function definirDataHoje() {
+  const hoje = new Date().toISOString().split("T")[0];
+  document.getElementById("data_inicio").value = hoje;
+  document.getElementById("data_fim").min = hoje;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  definirDataHoje();
+
+  const dataInicio = document.getElementById("data_inicio");
+  const dataFim = document.getElementById("data_fim");
+
+  dataInicio.addEventListener("change", () => {
+    dataFim.min = dataInicio.value;
+    if (dataFim.value < dataInicio.value) {
+      dataFim.value = dataInicio.value;
+    }
+  });
+});
+
+/* CARREGAR TERAPEUTAS */
 async function carregarTerapeutas() {
 
   const { data } = await supabaseClient
@@ -154,9 +166,7 @@ async function carregarTerapeutas() {
   });
 }
 
-/* =========================
-   SALVAR OU EDITAR
-========================= */
+/* SALVAR OU EDITAR */
 async function salvar() {
 
   const payload = {
@@ -196,9 +206,7 @@ async function salvar() {
   carregarSolicitacoes();
 }
 
-/* =========================
-   CARREGAR SOLICITAÇÕES
-========================= */
+/* CARREGAR SOLICITAÇÕES */
 async function carregarSolicitacoes() {
 
   const { data } = await supabaseClient
@@ -212,7 +220,9 @@ async function carregarSolicitacoes() {
   data.forEach(s => {
 
     const dataCriacao = new Date(s.created_at);
-    const dataFormatada = dataCriacao.toLocaleString("pt-BR");
+    const dataFormatada = dataCriacao.toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo"
+    });
 
     let statusClass = "";
     if (s.status === "Pendente") statusClass = "status-pendente";
@@ -227,21 +237,9 @@ async function carregarSolicitacoes() {
         <td class="${statusClass}">${s.status}</td>
         <td>${dataFormatada}</td>
         <td>
-          ${s.status === "Pendente" ? `
-            <button class="btn-aprovar"
-              onclick="atualizarStatus('${s.id}','Aprovado')">
-              Aprovar
-            </button>
-            <button class="btn-reprovar"
-              onclick="atualizarStatus('${s.id}','Reprovado')">
-              Reprovar
-            </button>
-          ` : ""}
-
           <button onclick="editarSolicitacao('${s.id}')">
             Editar
           </button>
-
           <button class="btn-danger"
             onclick="excluirSolicitacao('${s.id}')">
             Excluir
@@ -252,24 +250,7 @@ async function carregarSolicitacoes() {
   });
 }
 
-/* =========================
-   ATUALIZAR STATUS
-========================= */
-async function atualizarStatus(id, novoStatus) {
-
-  const { error } = await supabaseClient
-    .from("solicitacoes")
-    .update({ status: novoStatus })
-    .eq("id", id);
-
-  if (error) return alert("Erro ao atualizar status");
-
-  carregarSolicitacoes();
-}
-
-/* =========================
-   EDITAR
-========================= */
+/* EDITAR */
 async function editarSolicitacao(id) {
 
   const { data } = await supabaseClient
@@ -288,9 +269,7 @@ async function editarSolicitacao(id) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-/* =========================
-   EXCLUIR
-========================= */
+/* EXCLUIR */
 async function excluirSolicitacao(id) {
 
   if (!confirm("Tem certeza que deseja excluir?")) return;
@@ -302,12 +281,11 @@ async function excluirSolicitacao(id) {
 
   if (error) return alert("Erro ao excluir");
 
+  alert("Excluído com sucesso!");
   carregarSolicitacoes();
 }
 
-/* =========================
-   INICIALIZA
-========================= */
+/* INICIALIZA */
 carregarTerapeutas();
 carregarSolicitacoes();
 </script>

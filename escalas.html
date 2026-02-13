@@ -15,21 +15,15 @@
 .content { padding:30px; font-size:14px; }
 .header { display:flex; justify-content:space-between; align-items:center; }
 .card { background:#fff; border-radius:18px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,.05); }
-
 .layout { display:grid; grid-template-columns:2.2fr 1.4fr; gap:20px; margin-top:20px; }
-
 .calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; }
 .weekdays { margin-top:16px; }
 .weekdays div { text-align:center; font-weight:600; font-size:13px; }
-
 .day { border:1px solid #e5e7eb; border-radius:10px; padding:10px; cursor:pointer; min-height:90px; }
 .day:hover { background:#f1f5f9; }
-
 .day-number { font-weight:700; }
-
 .section-title { margin-top:20px; font-weight:700; }
 .detail-item { padding:8px 0; border-bottom:1px solid #e5e7eb; }
-
 .badge-red { background:#fee2e2; color:#991b1b; padding:2px 6px; border-radius:6px; font-size:11px; margin-left:6px; }
 </style>
 </head>
@@ -72,7 +66,7 @@
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-const supabase = window.supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "SUA_ANON_KEY_AQUI"
 );
@@ -115,35 +109,20 @@ function folgaAprovada(t,data){
 
 async function carregarDados(){
 
-  try {
+  const { data: dadosTerapeutas } = await supabaseClient
+    .from("terapeutas")
+    .select("*")
+    .eq("status","Ativo");
 
-    const { data: dadosTerapeutas, error: erroT } = await supabase
-      .from("terapeutas")
-      .select("*")
-      .eq("status","Ativo");
+  const { data: dadosSolicitacoes } = await supabaseClient
+    .from("solicitacoes")
+    .select("*")
+    .eq("status","Aprovado");
 
-    if(erroT) throw erroT;
+  terapeutas = dadosTerapeutas || [];
+  solicitacoes = dadosSolicitacoes || [];
 
-    const { data: dadosSolicitacoes, error: erroS } = await supabase
-      .from("solicitacoes")
-      .select("*")
-      .eq("status","Aprovado");
-
-    if(erroS) throw erroS;
-
-    console.log("Terapeutas carregados:", dadosTerapeutas);
-    console.log("Solicitações aprovadas:", dadosSolicitacoes);
-
-    terapeutas = dadosTerapeutas || [];
-    solicitacoes = dadosSolicitacoes || [];
-
-    renderCalendar();
-
-  } catch(err){
-    console.error("Erro ao carregar dados:", err);
-    document.getElementById("calendar").innerHTML =
-      "<p>Erro ao carregar dados do banco.</p>";
-  }
+  renderCalendar();
 }
 
 function renderCalendar(){

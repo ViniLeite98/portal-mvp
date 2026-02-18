@@ -8,23 +8,10 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-body {
-  margin:0;
-  font-family:'Segoe UI';
-  background:#f5f7fb;
-}
+body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
+.app { display:flex; min-height:100vh; }
+.content { flex:1; padding:40px; margin-left:260px; }
 
-.app {
-  display:flex;
-  min-height:100vh;
-}
-
-.content {
-  flex:1;
-  padding:40px;
-}
-
-/* Cards */
 .card {
   background:#fff;
   border-radius:20px;
@@ -52,9 +39,7 @@ button {
 
 button:hover { opacity:.9; }
 
-.btn-toggle {
-  margin-bottom:20px;
-}
+.btn-danger { background:#dc2626; }
 
 .btn-icon {
   border:none;
@@ -85,78 +70,76 @@ th, td {
 }
 </style>
 </head>
-
 <body>
 
 <div class="app">
-  <aside id="sidebar"></aside>
+<aside id="sidebar"></aside>
 
-  <main class="content">
+<main class="content">
 
-    <!-- NOVA SOLICITAÇÃO -->
-    <div class="card">
-      <h2>Nova Solicitação</h2>
+<!-- NOVA SOLICITAÇÃO -->
+<div class="card">
+<h2>Nova Solicitação</h2>
 
-      <label>Terapeuta</label>
-      <select id="terapeuta"></select><br><br>
+<label>Terapeuta</label>
+<select id="terapeuta"></select><br><br>
 
-      <label>Tipo</label>
-      <select id="tipo">
-        <option>Falta</option>
-        <option>Férias</option>
-        <option>Atestado</option>
-        <option>Viagem</option>
-      </select><br><br>
+<label>Tipo</label>
+<select id="tipo">
+<option>Falta</option>
+<option>Férias</option>
+<option>Atestado</option>
+<option>Viagem</option>
+</select><br><br>
 
-      <label>Data Início</label>
-      <input type="date" id="data_inicio"><br><br>
+<label>Data Início</label>
+<input type="date" id="data_inicio"><br><br>
 
-      <label>Data Fim</label>
-      <input type="date" id="data_fim"><br><br>
+<label>Data Fim</label>
+<input type="date" id="data_fim"><br><br>
 
-      <label>Justificativa</label>
-      <input id="justificativa"><br><br>
+<label>Justificativa</label>
+<input id="justificativa"><br><br>
 
-      <button onclick="salvar()">Salvar</button>
-    </div>
+<button onclick="salvar()">Salvar</button>
+</div>
 
-    <!-- BOTÃO TOGGLE -->
-    <button class="btn-toggle" onclick="toggleLista()">Lista de Aprovações</button>
+<!-- BOTÃO -->
+<button onclick="toggleLista()">Lista de aprovações</button>
 
-    <!-- PAINEL -->
-    <div class="card" id="cardLista" style="display:none;">
-      <h2>Painel de Aprovação</h2>
+<!-- LISTA ESCONDIDA -->
+<div class="card" id="cardLista" style="display:none;">
+<h2>Painel de Aprovação</h2>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Terapeuta</th>
-            <th>Tipo</th>
-            <th>Período</th>
-            <th>Status</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="lista"></tbody>
-      </table>
-    </div>
+<table>
+<thead>
+<tr>
+<th>Terapeuta</th>
+<th>Tipo</th>
+<th>Período</th>
+<th>Status</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+</div>
 
-  </main>
+</main>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-/* =========================
-   TOGGLE LISTA
-========================= */
+/* MOSTRAR / ESCONDER LISTA */
 function toggleLista(){
   const card = document.getElementById("cardLista");
+
   if(card.style.display === "none"){
     card.style.display = "block";
     carregarSolicitacoes();
@@ -165,9 +148,7 @@ function toggleLista(){
   }
 }
 
-/* =========================
-   CARREGAR TERAPEUTAS
-========================= */
+/* CARREGAR TERAPEUTAS */
 async function carregarTerapeutas() {
 
   const { data } = await supabaseClient
@@ -188,18 +169,11 @@ async function carregarTerapeutas() {
   });
 }
 
-/* =========================
-   SALVAR
-========================= */
+/* SALVAR */
 async function salvar() {
 
   const dataInicio = document.getElementById("data_inicio").value;
   const dataFim = document.getElementById("data_fim").value;
-
-  if (!dataInicio || !dataFim) {
-    alert("Preencha as datas.");
-    return;
-  }
 
   if (dataFim < dataInicio) {
     alert("Data fim não pode ser menor que data início.");
@@ -219,19 +193,12 @@ async function salvar() {
     .from("solicitacoes")
     .insert(payload);
 
-  if (error) {
-    alert("Erro ao salvar");
-    return;
-  }
+  if (error) return alert("Erro ao salvar");
 
   alert("Solicitação registrada!");
-
-  document.getElementById("justificativa").value = "";
 }
 
-/* =========================
-   ALTERAR STATUS
-========================= */
+/* ALTERAR STATUS */
 async function alterarStatus(id, novoStatus){
   await supabaseClient
     .from("solicitacoes")
@@ -241,9 +208,7 @@ async function alterarStatus(id, novoStatus){
   carregarSolicitacoes();
 }
 
-/* =========================
-   CARREGAR LISTA
-========================= */
+/* CARREGAR LISTA */
 async function carregarSolicitacoes() {
 
   const { data } = await supabaseClient

@@ -4,26 +4,33 @@
 <meta charset="UTF-8">
 <title>Solicitações | Hara Spa</title>
 
+<!-- FONT AWESOME -->
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
+body { margin:0; font-family:'Segoe UI'; background:#f6f7f9; }
+
 .app { display:flex; min-height:100vh; }
-.content { flex:1; padding:40px; margin-left:260px; }
+.content { flex:1; padding:30px; margin-left:260px; }
 
 .card {
   background:#fff;
   border-radius:20px;
   padding:30px;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  box-shadow:0 4px 12px rgba(0,0,0,.06);
   margin-bottom:30px;
 }
+
+h2 { margin-bottom:20px; }
 
 input, select {
   padding:8px;
   border-radius:6px;
-  border:1px solid #ddd;
+  border:1px solid #d1d5db;
   width:100%;
 }
 
@@ -35,6 +42,7 @@ button {
   padding:8px 14px;
   cursor:pointer;
   margin-right:6px;
+  font-size:14px;
 }
 
 button:hover { opacity:.9; }
@@ -63,13 +71,18 @@ table {
 }
 
 th, td {
-  padding:10px;
-  border-bottom:1px solid #eee;
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
   text-align:left;
   font-size:14px;
 }
+
+.top-actions {
+  margin-bottom:20px;
+}
 </style>
 </head>
+
 <body>
 
 <div class="app">
@@ -104,8 +117,12 @@ th, td {
 <button onclick="salvar()">Salvar</button>
 </div>
 
-<!-- BOTÃO -->
-<button onclick="toggleLista()">Lista de aprovações</button>
+<!-- BOTÃO LISTA -->
+<div class="top-actions">
+<button onclick="toggleLista()">
+<i class="fa-solid fa-list"></i> Lista de Aprovações
+</button>
+</div>
 
 <!-- LISTA ESCONDIDA -->
 <div class="card" id="cardLista" style="display:none;">
@@ -149,8 +166,7 @@ function toggleLista(){
 }
 
 /* CARREGAR TERAPEUTAS */
-async function carregarTerapeutas() {
-
+async function carregarTerapeutas(){
   const { data } = await supabaseClient
     .from("terapeutas")
     .select("cpf,nome_profissional")
@@ -160,22 +176,26 @@ async function carregarTerapeutas() {
   const select = document.getElementById("terapeuta");
   select.innerHTML = "";
 
-  data.forEach(t => {
+  data.forEach(t=>{
     select.innerHTML += `
       <option value="${t.cpf}">
         ${t.nome_profissional} - ${t.cpf}
-      </option>
-    `;
+      </option>`;
   });
 }
 
 /* SALVAR */
-async function salvar() {
+async function salvar(){
 
   const dataInicio = document.getElementById("data_inicio").value;
   const dataFim = document.getElementById("data_fim").value;
 
-  if (dataFim < dataInicio) {
+  if(!dataInicio || !dataFim){
+    alert("Preencha as datas.");
+    return;
+  }
+
+  if(dataFim < dataInicio){
     alert("Data fim não pode ser menor que data início.");
     return;
   }
@@ -193,7 +213,7 @@ async function salvar() {
     .from("solicitacoes")
     .insert(payload);
 
-  if (error) return alert("Erro ao salvar");
+  if(error) return alert("Erro ao salvar");
 
   alert("Solicitação registrada!");
 }
@@ -209,22 +229,22 @@ async function alterarStatus(id, novoStatus){
 }
 
 /* CARREGAR LISTA */
-async function carregarSolicitacoes() {
+async function carregarSolicitacoes(){
 
   const { data } = await supabaseClient
     .from("solicitacoes")
     .select("*")
-    .order("created_at", { ascending:false });
+    .order("created_at",{ ascending:false });
 
   const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+  tbody.innerHTML="";
 
-  data.forEach(s => {
+  data.forEach(s=>{
 
-    let statusClass = "";
-    if (s.status === "Pendente") statusClass = "status-pendente";
-    if (s.status === "Aprovado") statusClass = "status-aprovado";
-    if (s.status === "Reprovado") statusClass = "status-reprovado";
+    let statusClass="";
+    if(s.status==="Pendente") statusClass="status-pendente";
+    if(s.status==="Aprovado") statusClass="status-aprovado";
+    if(s.status==="Reprovado") statusClass="status-reprovado";
 
     tbody.innerHTML += `
       <tr>
@@ -234,13 +254,16 @@ async function carregarSolicitacoes() {
         <td class="${statusClass}">${s.status}</td>
         <td>
           <button class="btn-icon btn-aprovar"
-            onclick="alterarStatus('${s.id}','Aprovado')">✔</button>
+            onclick="alterarStatus('${s.id}','Aprovado')">
+            <i class="fa-solid fa-check"></i>
+          </button>
 
           <button class="btn-icon btn-reprovar"
-            onclick="alterarStatus('${s.id}','Reprovado')">✖</button>
+            onclick="alterarStatus('${s.id}','Reprovado')">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </td>
-      </tr>
-    `;
+      </tr>`;
   });
 }
 

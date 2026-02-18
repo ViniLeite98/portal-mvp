@@ -14,9 +14,6 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-/* =========================
-   CONTEÚDO
-========================= */
 .content {
   padding: 30px;
   font-size: 14px;
@@ -46,9 +43,6 @@ button.primary {
   cursor: pointer;
 }
 
-/* =========================
-   TABELA
-========================= */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -114,6 +108,7 @@ th {
       <thead>
         <tr>
           <th>Nome</th>
+          <th>CPF / CNPJ</th>
           <th>Telefones</th>
           <th>Endereço</th>
           <th>Data de Nasc</th>
@@ -130,12 +125,44 @@ th {
 <!-- JS SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- =========================
-     LÓGICA DE CLIENTES
-========================= -->
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-let clientes = JSON.parse(localStorage.getItem("clientes") || "[]");
+/* =========================
+   CONEXÃO SUPABASE
+========================= */
+
+const supabase = window.supabase.createClient(
+  "SUA_URL_SUPABASE",
+  "SUA_ANON_KEY"
+);
+
+let clientes = [];
 let filtro = "";
+
+/* =========================
+   CARREGAR CLIENTES
+========================= */
+
+async function carregarClientes() {
+  const { data, error } = await supabase
+    .from("clientes")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao buscar clientes:", error);
+    return;
+  }
+
+  clientes = data || [];
+  render();
+}
+
+/* =========================
+   RENDER
+========================= */
 
 function render() {
   const tbody = document.getElementById("lista");
@@ -143,7 +170,8 @@ function render() {
 
   clientes
     .filter(c => c.nome.toLowerCase().includes(filtro))
-    .forEach((c, i) => {
+    .forEach((c) => {
+
       tbody.innerHTML += `
         <tr>
           <td>
@@ -154,45 +182,80 @@ function render() {
               ${c.nome}
             </div>
           </td>
+
+          <td>${c.documento || "—"}</td>
+
           <td>
             ${c.tel1 || ""}<br>
             ${c.tel2 || ""}
           </td>
+
           <td>${c.endereco || "—"}</td>
           <td>${c.nascimento || "—"}</td>
+
           <td class="actions">
             <i class="fa-solid fa-eye" title="Visualizar"></i>
-            <i class="fa-solid fa-pen" title="Editar" onclick="editar(${i})"></i>
-            <i class="fa-solid fa-trash" title="Excluir" onclick="excluir(${i})"></i>
+            <i class="fa-solid fa-pen" title="Editar" onclick="editar('${c.id}')"></i>
+            <i class="fa-solid fa-trash" title="Excluir" onclick="excluir('${c.id}')"></i>
           </td>
         </tr>
       `;
     });
 }
 
+/* =========================
+   FILTRO
+========================= */
+
 function filtrar(txt) {
   filtro = txt.toLowerCase();
   render();
 }
+
+/* =========================
+   NOVO
+========================= */
 
 function novoCliente() {
   localStorage.removeItem("clienteEdit");
   location.href = "cliente-novo.html";
 }
 
-function editar(i) {
-  localStorage.setItem("clienteEdit", i);
+/* =========================
+   EDITAR
+========================= */
+
+function editar(id) {
+  localStorage.setItem("clienteEdit", id);
   location.href = "cliente-novo.html";
 }
 
-function excluir(i) {
+/* =========================
+   EXCLUIR
+========================= */
+
+async function excluir(id) {
   if (!confirm("Excluir cliente?")) return;
-  clientes.splice(i, 1);
-  localStorage.setItem("clientes", JSON.stringify(clientes));
-  render();
+
+  const { error } = await supabase
+    .from("clientes")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Erro ao excluir:", error);
+    return;
+  }
+
+  carregarClientes();
 }
 
-render();
+/* =========================
+   INIT
+========================= */
+
+carregarClientes();
+
 </script>
 
 </body>

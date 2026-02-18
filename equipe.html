@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <title>Gestão da Equipe | Hara Spa</title>
 
+<!-- FONT AWESOME (corrige ícones do sidebar) -->
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -112,7 +116,6 @@ input, select {
 <div class="modal" id="modal">
   <div class="modal-content">
 
-    <!-- DADOS PESSOAIS -->
     <div class="section">
       <h3>Dados Pessoais</h3>
       <div class="grid">
@@ -132,7 +135,6 @@ input, select {
       </div>
     </div>
 
-    <!-- CONTATOS -->
     <div class="section">
       <h3>Contatos</h3>
       <div class="grid">
@@ -141,7 +143,6 @@ input, select {
       </div>
     </div>
 
-    <!-- ENDEREÇO -->
     <div class="section">
       <h3>Endereço</h3>
       <div class="grid">
@@ -155,7 +156,6 @@ input, select {
       </div>
     </div>
 
-    <!-- PAGAMENTO -->
     <div class="section">
       <h3>Dados de Pagamento</h3>
       <div class="grid">
@@ -170,7 +170,6 @@ input, select {
       </div>
     </div>
 
-    <!-- FUNCIONAIS -->
     <div class="section">
       <h3>Dados Funcionais</h3>
       <div class="grid">
@@ -215,34 +214,34 @@ const campos = [
  "tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status"
 ];
 
-function getPayload() {
-  const obj = {};
-  campos.forEach(c => {
-    const el = document.getElementById(c);
-    if (!el) return;
-    if (el.value !== "") obj[c] = el.value;
+function getPayload(){
+  const obj={};
+  campos.forEach(c=>{
+    const el=document.getElementById(c);
+    if(!el) return;
+    if(el.value!=="") obj[c]=el.value;
   });
   return obj;
 }
 
-function setForm(data) {
-  campos.forEach(c => {
-    if (document.getElementById(c))
-      document.getElementById(c).value = data[c] || "";
+function setForm(data){
+  campos.forEach(c=>{
+    if(document.getElementById(c))
+      document.getElementById(c).value=data[c]||"";
   });
 }
 
-async function carregar() {
+async function carregar(){
   const { data } = await supabaseClient
     .from("terapeutas")
     .select("cpf,nome_profissional,status")
     .order("nome_profissional");
 
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+  const tbody=document.getElementById("lista");
+  tbody.innerHTML="";
 
-  data.forEach(t => {
-    tbody.innerHTML += `
+  data.forEach(t=>{
+    tbody.innerHTML+=`
       <tr>
         <td>${t.nome_profissional}</td>
         <td>${t.cpf}</td>
@@ -255,60 +254,61 @@ async function carregar() {
   });
 }
 
-function abrirNovo() {
-  cpfAtual = null;
-  campos.forEach(c => document.getElementById(c).value = "");
-  document.getElementById("cpf").disabled = false;
-  document.getElementById("modal").style.display = "flex";
+function abrirNovo(){
+  cpfAtual=null;
+  campos.forEach(c=>document.getElementById(c).value="");
+  document.getElementById("cpf").disabled=false;
+  document.getElementById("modal").style.display="flex";
 }
 
-async function editar(cpf) {
-  cpfAtual = cpf;
-  const { data, error } = await supabaseClient
+async function editar(cpf){
+  cpfAtual=cpf;
+
+  const { data,error }=await supabaseClient
     .from("terapeutas")
     .select("*")
-    .eq("cpf", cpf)
+    .eq("cpf",cpf)
     .single();
 
-  if (error) {
+  if(error){
     alert("Erro ao carregar");
     console.error(error);
     return;
   }
 
   setForm(data);
-  document.getElementById("cpf").disabled = true;
-  document.getElementById("modal").style.display = "flex";
+  document.getElementById("cpf").disabled=true;
+  document.getElementById("modal").style.display="flex";
 }
 
-async function salvar() {
-  const payload = getPayload();
+async function salvar(){
+  const payload=getPayload();
 
-  if (!payload.nome_completo || !payload.nome_profissional || !payload.email) {
+  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
     alert("Preencha os campos obrigatórios");
     return;
   }
 
   let error;
 
-  if (cpfAtual) {
+  if(cpfAtual){
     delete payload.cpf;
-    ({ error } = await supabaseClient
+    ({ error }=await supabaseClient
       .from("terapeutas")
       .update(payload)
-      .eq("cpf", cpfAtual));
-  } else {
-    if (!payload.cpf) {
+      .eq("cpf",cpfAtual));
+  }else{
+    if(!payload.cpf){
       alert("CPF é obrigatório");
       return;
     }
-    ({ error } = await supabaseClient
+    ({ error }=await supabaseClient
       .from("terapeutas")
       .insert(payload));
   }
 
-  if (error) {
-    console.error("SUPABASE ERROR:", error);
+  if(error){
+    console.error(error);
     alert("Erro ao salvar");
     return;
   }
@@ -317,14 +317,14 @@ async function salvar() {
   carregar();
 }
 
-async function excluir(cpf) {
-  if (!confirm("Excluir terapeuta?")) return;
-  await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
+async function excluir(cpf){
+  if(!confirm("Excluir terapeuta?")) return;
+  await supabaseClient.from("terapeutas").delete().eq("cpf",cpf);
   carregar();
 }
 
-function fecharModal() {
-  document.getElementById("modal").style.display = "none";
+function fecharModal(){
+  document.getElementById("modal").style.display="none";
 }
 
 carregar();

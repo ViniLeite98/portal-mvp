@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <title>Dashboard | Hara Spa</title>
 
+<!-- FONT AWESOME (CORRIGE ÍCONES DO SIDEBAR) -->
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
@@ -67,9 +71,7 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
   transition:.3s;
 }
 
-.bar:hover {
-  opacity:.85;
-}
+.bar:hover { opacity:.85; }
 
 .bar-hour {
   margin-top:8px;
@@ -136,10 +138,10 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+  "SUA_ANON_KEY_AQUI"
 );
 
-async function carregarDashboard() {
+async function carregarDashboard(){
 
   const { data, error } = await supabaseClient
     .from("terapeutas")
@@ -147,70 +149,63 @@ async function carregarDashboard() {
     .eq("status","Ativo")
     .order("nome_profissional");
 
-  if (error) {
+  if(error){
     console.error(error);
     return;
   }
 
-  // TOTAL ATIVAS
   document.getElementById("totalEquipe").innerText = data.length;
 
-  // CARGA HORÁRIA
   const cargaDiv = document.getElementById("cargaHoraria");
   cargaDiv.innerHTML = "";
 
-  data.forEach(t => {
-    if (!t.hora_entrada || !t.hora_saida) return;
+  data.forEach(t=>{
+    if(!t.hora_entrada || !t.hora_saida) return;
 
     const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
     const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
 
-    const totalMin = (h2*60+m2) - (h1*60+m1);
+    const totalMin = Math.max(0,(h2*60+m2)-(h1*60+m1));
+    const horas = Math.floor(totalMin/60);
+    const minutos = totalMin%60;
 
-    const horas = Math.floor(totalMin / 60);
-    const minutos = totalMin % 60;
-
-    cargaDiv.innerHTML += 
+    cargaDiv.innerHTML +=
       `<p>${t.nome_profissional}: ${horas}:${minutos.toString().padStart(2,'0')} horas</p>`;
   });
 
-  // FORÇA DE TRABALHO 9h–21h
-  const inicioDia = 9;
-  const fimDia = 21;
+  const inicioDia=9;
+  const fimDia=21;
+  const contagem={};
 
-  const contagem = {};
-  for (let h = inicioDia; h <= fimDia; h++) contagem[h] = 0;
+  for(let h=inicioDia;h<=fimDia;h++) contagem[h]=0;
 
-  data.forEach(t => {
+  data.forEach(t=>{
+    if(!t.hora_entrada||!t.hora_saida) return;
 
-    if (!t.hora_entrada || !t.hora_saida) return;
+    const [h1,m1]=t.hora_entrada.substring(0,5).split(":").map(Number);
+    const [h2,m2]=t.hora_saida.substring(0,5).split(":").map(Number);
 
-    const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
-    const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
+    const inicio=h1*60+m1;
+    const fim=h2*60+m2;
 
-    const inicio = h1*60 + m1;
-    const fim = h2*60 + m2;
-
-    for (let h = inicioDia; h <= fimDia; h++) {
-      const slotInicio = h * 60;
-      const slotFim = (h + 1) * 60;
-
-      if (inicio < slotFim && fim >= slotInicio) {
+    for(let h=inicioDia;h<=fimDia;h++){
+      const slotInicio=h*60;
+      const slotFim=(h+1)*60;
+      if(inicio<slotFim && fim>=slotInicio){
         contagem[h]++;
       }
     }
   });
 
-  const maxValor = Math.max(...Object.values(contagem));
-  const barsDiv = document.getElementById("bars");
-  barsDiv.innerHTML = "";
+  const maxValor=Math.max(...Object.values(contagem));
+  const barsDiv=document.getElementById("bars");
+  barsDiv.innerHTML="";
 
-  for (let h = inicioDia; h <= fimDia; h++) {
+  for(let h=inicioDia;h<=fimDia;h++){
+    const valor=contagem[h];
+    const altura=maxValor===0?0:(valor/maxValor)*200;
 
-    const valor = contagem[h];
-    const altura = maxValor === 0 ? 0 : (valor / maxValor) * 200;
-
-    barsDiv.innerHTML += `
+    barsDiv.innerHTML+=`
       <div class="bar-container">
         <div class="bar-value">${valor}</div>
         <div class="bar" style="height:${altura}px"></div>
@@ -218,7 +213,6 @@ async function carregarDashboard() {
       </div>
     `;
   }
-
 }
 
 carregarDashboard();

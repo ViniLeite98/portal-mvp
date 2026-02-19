@@ -9,20 +9,23 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-.content { padding: 30px; font-size: 14px; }
+.content { padding:30px; font-size:14px; }
+
 .header {
   display:flex;
   justify-content:space-between;
   align-items:center;
   margin-bottom:16px;
 }
+
 .search {
-  width: 280px;
-  padding: 8px 10px;
-  border: none;
-  border-bottom: 1px solid #d1d5db;
-  outline: none;
+  width:280px;
+  padding:8px 10px;
+  border:none;
+  border-bottom:1px solid #d1d5db;
+  outline:none;
 }
+
 button.primary {
   background:#7c3aed;
   color:#fff;
@@ -31,26 +34,58 @@ button.primary {
   padding:8px 14px;
   cursor:pointer;
 }
+
+button.secondary {
+  background:#e5e7eb;
+  border:none;
+  border-radius:8px;
+  padding:8px 14px;
+  cursor:pointer;
+  margin-left:8px;
+}
+
 table {
   width:100%;
   border-collapse:collapse;
   margin-top:16px;
 }
+
 th, td {
   padding:14px 10px;
   border-bottom:1px solid #e5e7eb;
 }
+
 th {
   font-size:12px;
   color:#6b7280;
   text-align:left;
 }
+
 .actions i {
   margin-right:14px;
   cursor:pointer;
 }
+
 .actions .fa-trash {
   color:#dc2626;
+}
+
+.form-box {
+  margin-top:30px;
+  max-width:500px;
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.06);
+}
+
+.form-box input,
+.form-box select {
+  width:100%;
+  padding:8px;
+  margin-bottom:12px;
+  border:1px solid #d1d5db;
+  border-radius:6px;
 }
 </style>
 </head>
@@ -58,13 +93,14 @@ th {
 <body>
 
 <div class="app">
+
   <aside id="sidebar"></aside>
 
   <main class="content">
 
     <div class="header">
       <input class="search" placeholder="Buscar serviço..." oninput="filtrar(this.value)">
-      <button class="primary" onclick="alert('Funciona!')">ADICIONAR SERVIÇO</button>
+      <button class="primary" onclick="abrirForm()">ADICIONAR SERVIÇO</button>
     </div>
 
     <table>
@@ -81,6 +117,26 @@ th {
       <tbody id="lista"></tbody>
     </table>
 
+    <!-- FORM -->
+    <div id="formServico" style="display:none;">
+      <div class="form-box">
+        <h3>Novo Serviço</h3>
+
+        <input id="id_interno" placeholder="ID Interno" readonly>
+        <input id="nome" placeholder="Nome do Serviço">
+        <input id="valor" type="number" step="0.01" placeholder="Valor (R$)">
+        <input id="comissao" type="number" step="0.01" placeholder="Comissão (%)">
+
+        <select id="status">
+          <option value="ativo">ativo</option>
+          <option value="inativo">inativo</option>
+        </select>
+
+        <button class="primary" onclick="salvar()">Salvar</button>
+        <button class="secondary" onclick="fecharForm()">Cancelar</button>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -89,6 +145,7 @@ th {
 
 <script>
 
+/* CONEXÃO ÚNICA */
 const supabase = window.supabase.createClient(
   "https://rymehgsorajeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
@@ -97,7 +154,9 @@ const supabase = window.supabase.createClient(
 let servicos = [];
 let filtro = "";
 
+/* CARREGAR */
 async function carregar() {
+
   const { data, error } = await supabase
     .from("servicos")
     .select("*")
@@ -105,6 +164,7 @@ async function carregar() {
 
   if (error) {
     console.error(error);
+    alert(error.message);
     return;
   }
 
@@ -112,13 +172,16 @@ async function carregar() {
   render();
 }
 
+/* RENDER */
 function render() {
+
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
   servicos
     .filter(s => s.nome.toLowerCase().includes(filtro))
     .forEach(s => {
+
       tbody.innerHTML += `
         <tr>
           <td>${s.id_interno || "-"}</td>
@@ -134,13 +197,76 @@ function render() {
     });
 }
 
+/* FILTRO */
 function filtrar(txt) {
   filtro = txt.toLowerCase();
   render();
 }
 
+/* ABRIR FORM */
+function abrirForm() {
+  document.getElementById("formServico").style.display = "block";
+  gerarId();
+}
+
+/* FECHAR FORM */
+function fecharForm() {
+  document.getElementById("formServico").style.display = "none";
+}
+
+/* GERAR ID INTERNO */
+async function gerarId() {
+
+  const { data } = await supabase
+    .from("servicos")
+    .select("id_interno")
+    .order("created_at", { ascending:false })
+    .limit(1);
+
+  let numero = 1;
+
+  if (data.length > 0 && data[0].id_interno) {
+    numero = parseInt(data[0].id_interno.replace("SRV","")) + 1;
+  }
+
+  document.getElementById("id_interno").value =
+    "SRV" + numero.toString().padStart(3,"0");
+}
+
+/* SALVAR */
+async function salvar() {
+
+  const payload = {
+    id_interno: document.getElementById("id_interno").value,
+    nome: document.getElementById("nome").value,
+    valor: parseFloat(document.getElementById("valor").value),
+    comissao: parseFloat(document.getElementById("comissao").value),
+    status: document.getElementById("status").value
+  };
+
+  const { error } = await supabase
+    .from("servicos")
+    .insert(payload);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  fecharForm();
+  carregar();
+}
+
+/* EXCLUIR */
 async function excluir(id) {
-  await supabase.from("servicos").delete().eq("id", id);
+
+  if (!confirm("Excluir serviço?")) return;
+
+  await supabase
+    .from("servicos")
+    .delete()
+    .eq("id", id);
+
   carregar();
 }
 

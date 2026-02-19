@@ -4,190 +4,181 @@
 <meta charset="UTF-8">
 <title>Serviços</title>
 
+<link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-body { font-family: Arial; margin:0; }
-.content { padding:30px; }
+.content { padding: 30px; font-size: 14px; }
 
-button {
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+
+.search {
+  width: 280px;
+  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid #d1d5db;
+  outline: none;
+}
+
+button.primary {
   background:#7c3aed;
   color:#fff;
   border:none;
+  border-radius:8px;
   padding:8px 14px;
-  border-radius:6px;
   cursor:pointer;
 }
 
 table {
   width:100%;
   border-collapse:collapse;
-  margin-top:20px;
+  margin-top:16px;
 }
 
 th, td {
-  padding:10px;
-  border-bottom:1px solid #ddd;
+  padding:14px 10px;
+  border-bottom:1px solid #e5e7eb;
 }
 
-.form {
-  margin-top:30px;
-  max-width:400px;
+th {
+  font-size:12px;
+  color:#6b7280;
+  text-align:left;
 }
 
-input, select {
-  width:100%;
-  padding:6px;
-  margin-bottom:10px;
+.actions i {
+  margin-right:14px;
+  cursor:pointer;
+}
+
+.actions .fa-trash {
+  color:#dc2626;
 }
 </style>
 </head>
 
 <body>
 
-<div class="content">
+<div class="app">
 
-<h2>Serviços</h2>
+  <aside id="sidebar"></aside>
 
-<button onclick="abrirForm()">NOVO SERVIÇO</button>
+  <main class="content">
 
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Serviço</th>
-      <th>Valor</th>
-      <th>Comissão</th>
-      <th>Status</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody id="lista"></tbody>
-</table>
+    <div class="header">
+      <input class="search" placeholder="Buscar serviço..." oninput="filtrar(this.value)">
+      <button class="primary" onclick="novo()">ADICIONAR SERVIÇO</button>
+    </div>
 
-<div id="form" class="form" style="display:none;">
-  <h3 id="tituloForm">Novo Serviço</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Serviço</th>
+          <th>Valor</th>
+          <th>Comissão</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
 
-  <input id="id_interno" placeholder="ID Interno" readonly>
-  <input id="nome" placeholder="Nome do Serviço">
-  <input id="valor" type="number" step="0.01" placeholder="Valor">
-  <input id="comissao" type="number" step="0.01" placeholder="Comissão">
-  <select id="status">
-    <option value="ativo">ativo</option>
-    <option value="inativo">inativo</option>
-  </select>
-
-  <button onclick="salvar()">Salvar</button>
-  <button onclick="fecharForm()" style="background:#ccc;color:#000;">Cancelar</button>
-</div>
+  </main>
 
 </div>
 
+<script src="assets/sidebar/sidebar.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-/* CONEXÃO ÚNICA */
+/* CONEXÃO (IGUAL AO EQUIPE) */
 const supabase = window.supabase.createClient(
   "https://rymehgsorajeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let editId = null;
+let servicos = [];
+let filtro = "";
 
+/* CARREGAR */
 async function carregar() {
-  const { data } = await supabase
+
+  const { data, error } = await supabase
     .from("servicos")
     .select("*")
     .order("created_at", { ascending:false });
 
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  servicos = data || [];
+  render();
+}
+
+/* RENDER */
+function render() {
+
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
-  data.forEach(s => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${s.id_interno}</td>
-        <td>${s.nome}</td>
-        <td>${s.valor}</td>
-        <td>${s.comissao}</td>
-        <td>${s.status}</td>
-        <td>
-          <button onclick="editar('${s.id}')">Editar</button>
-          <button onclick="excluir('${s.id}')">Excluir</button>
-        </td>
-      </tr>
-    `;
-  });
+  servicos
+    .filter(s => s.nome.toLowerCase().includes(filtro))
+    .forEach(s => {
+
+      tbody.innerHTML += `
+        <tr>
+          <td>${s.id_interno || "-"}</td>
+          <td>${s.nome}</td>
+          <td>R$ ${Number(s.valor).toFixed(2)}</td>
+          <td>${s.comissao || 0}%</td>
+          <td>${s.status}</td>
+          <td class="actions">
+            <i class="fa-solid fa-pen" onclick="editar('${s.id}')"></i>
+            <i class="fa-solid fa-trash" onclick="excluir('${s.id}')"></i>
+          </td>
+        </tr>
+      `;
+    });
 }
 
-function abrirForm() {
-  editId = null;
-  document.getElementById("form").style.display = "block";
-  gerarId();
+/* FILTRO */
+function filtrar(txt) {
+  filtro = txt.toLowerCase();
+  render();
 }
 
-function fecharForm() {
-  document.getElementById("form").style.display = "none";
+/* NOVO */
+function novo() {
+  localStorage.removeItem("servicoEdit");
+  location.href = "servicos-form.html";
 }
 
-async function gerarId() {
-  const { data } = await supabase
-    .from("servicos")
-    .select("id_interno")
-    .order("created_at", { ascending:false })
-    .limit(1);
-
-  let numero = 1;
-
-  if (data.length > 0 && data[0].id_interno) {
-    numero = parseInt(data[0].id_interno.replace("SRV","")) + 1;
-  }
-
-  document.getElementById("id_interno").value =
-    "SRV" + numero.toString().padStart(3,"0");
+/* EDITAR */
+function editar(id) {
+  localStorage.setItem("servicoEdit", id);
+  location.href = "servicos-form.html";
 }
 
-async function editar(id) {
-  editId = id;
-
-  const { data } = await supabase
-    .from("servicos")
-    .select("*")
-    .eq("id", id)
-    .single();
-
-  document.getElementById("form").style.display = "block";
-  document.getElementById("id_interno").value = data.id_interno;
-  document.getElementById("nome").value = data.nome;
-  document.getElementById("valor").value = data.valor;
-  document.getElementById("comissao").value = data.comissao;
-  document.getElementById("status").value = data.status;
-}
-
-async function salvar() {
-
-  const payload = {
-    id_interno: document.getElementById("id_interno").value,
-    nome: document.getElementById("nome").value,
-    valor: parseFloat(document.getElementById("valor").value),
-    comissao: parseFloat(document.getElementById("comissao").value),
-    status: document.getElementById("status").value
-  };
-
-  if (editId) {
-    await supabase.from("servicos").update(payload).eq("id", editId);
-  } else {
-    await supabase.from("servicos").insert(payload);
-  }
-
-  fecharForm();
-  carregar();
-}
-
+/* EXCLUIR */
 async function excluir(id) {
-  await supabase.from("servicos").delete().eq("id", id);
+
+  if (!confirm("Excluir serviço?")) return;
+
+  await supabase
+    .from("servicos")
+    .delete()
+    .eq("id", id);
+
   carregar();
 }
 

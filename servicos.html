@@ -83,8 +83,8 @@ button.secondary {
       <div class="form-group">
         <label>Status</label>
         <select id="status">
-          <option value="ativo">Ativo</option>
-          <option value="inativo">Inativo</option>
+          <option value="ativo">ativo</option>
+          <option value="inativo">inativo</option>
         </select>
       </div>
 
@@ -102,13 +102,17 @@ button.secondary {
 <script>
 
 /* =========================
-   CONEXÃO SUPABASE
+   CRIAR CONEXÃO (UMA VEZ SÓ)
 ========================= */
 
-const supabase = window.supabase.createClient(
-  "https://rymehgsorajeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
+if (!window.supabaseClient) {
+  window.supabaseClient = window.supabase.createClient(
+    "https://rymehgsorajeecuwyhny.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+  );
+}
+
+const supabase = window.supabaseClient;
 
 let editId = localStorage.getItem("servicoEdit");
 
@@ -118,15 +122,20 @@ let editId = localStorage.getItem("servicoEdit");
 
 async function gerarIdInterno() {
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("servicos")
     .select("id_interno")
     .order("created_at", { ascending:false })
     .limit(1);
 
+  if (error) {
+    console.error(error);
+    return;
+  }
+
   let numero = 1;
 
-  if (data && data.length > 0 && data[0].id_interno) {
+  if (data.length > 0 && data[0].id_interno) {
     const ultimo = data[0].id_interno.replace("SRV","");
     numero = parseInt(ultimo) + 1;
   }
@@ -136,7 +145,7 @@ async function gerarIdInterno() {
 }
 
 /* =========================
-   CARREGAR PARA EDIÇÃO
+   CARREGAR EDIÇÃO
 ========================= */
 
 async function carregarEdicao() {
@@ -148,13 +157,16 @@ async function carregarEdicao() {
 
   document.getElementById("titulo").innerText = "Editar Serviço";
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("servicos")
     .select("*")
     .eq("id", editId)
     .single();
 
-  if (!data) return;
+  if (error) {
+    console.error(error);
+    return;
+  }
 
   document.getElementById("id_interno").value = data.id_interno;
   document.getElementById("nome").value = data.nome;
@@ -169,29 +181,45 @@ async function carregarEdicao() {
 
 async function salvar() {
 
+  const idInterno = document.getElementById("id_interno").value;
+  const nome = document.getElementById("nome").value;
+  const valor = parseFloat(document.getElementById("valor").value);
+  const comissao = parseFloat(document.getElementById("comissao").value);
+  const status = document.getElementById("status").value;
+
+  if (!nome || !valor) {
+    alert("Preencha nome e valor.");
+    return;
+  }
+
   const payload = {
-    id_interno: document.getElementById("id_interno").value,
-    nome: document.getElementById("nome").value,
-    valor: parseFloat(document.getElementById("valor").value),
-    comissao: parseFloat(document.getElementById("comissao").value),
-    status: document.getElementById("status").value
+    id_interno: idInterno,
+    nome,
+    valor,
+    comissao,
+    status
   };
 
-  if (editId) {
+  let response;
 
-    await supabase
+  if (editId) {
+    response = await supabase
       .from("servicos")
       .update(payload)
       .eq("id", editId);
-
   } else {
-
-    await supabase
+    response = await supabase
       .from("servicos")
       .insert(payload);
-
   }
 
+  if (response.error) {
+    alert("Erro: " + response.error.message);
+    console.error(response.error);
+    return;
+  }
+
+  alert("Salvo com sucesso!");
   localStorage.removeItem("servicoEdit");
   window.location.href = "servicos.html";
 }

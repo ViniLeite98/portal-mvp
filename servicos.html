@@ -4,187 +4,103 @@
 <meta charset="UTF-8">
 <title>Serviços</title>
 
-<link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <style>
-.content { padding:30px; font-size:14px; }
+body { font-family: Arial; margin:0; }
+.content { padding:30px; }
 
-.header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-
-button.primary {
+button {
   background:#7c3aed;
   color:#fff;
   border:none;
   padding:8px 14px;
-  border-radius:8px;
-  cursor:pointer;
-}
-
-button.secondary {
-  background:#e5e7eb;
-  border:none;
-  padding:8px 14px;
-  border-radius:8px;
+  border-radius:6px;
   cursor:pointer;
 }
 
 table {
   width:100%;
   border-collapse:collapse;
-  margin-bottom:30px;
+  margin-top:20px;
 }
 
 th, td {
-  padding:12px;
-  border-bottom:1px solid #e5e7eb;
+  padding:10px;
+  border-bottom:1px solid #ddd;
 }
 
-th {
-  font-size:12px;
-  color:#6b7280;
-  text-align:left;
-}
-
-.actions i {
-  margin-right:12px;
-  cursor:pointer;
-}
-
-.actions .fa-trash {
-  color:#dc2626;
-}
-
-.form-box {
-  max-width:500px;
-  background:#fff;
-  padding:24px;
-  border-radius:12px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.06);
-}
-
-.form-group { margin-bottom:16px; }
-
-label {
-  display:block;
-  margin-bottom:6px;
-  font-size:12px;
-  color:#6b7280;
+.form {
+  margin-top:30px;
+  max-width:400px;
 }
 
 input, select {
   width:100%;
-  padding:8px;
-  border:1px solid #d1d5db;
-  border-radius:6px;
+  padding:6px;
+  margin-bottom:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="app">
-  <aside id="sidebar"></aside>
+<div class="content">
 
-  <main class="content">
+<h2>Serviços</h2>
 
-    <div class="header">
-      <h2>Serviços</h2>
-      <button class="primary" onclick="mostrarFormulario()">NOVO SERVIÇO</button>
-    </div>
+<button onclick="abrirForm()">NOVO SERVIÇO</button>
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Serviço</th>
-          <th>Valor</th>
-          <th>Comissão</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Serviço</th>
+      <th>Valor</th>
+      <th>Comissão</th>
+      <th>Status</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody id="lista"></tbody>
+</table>
 
-    <!-- FORM -->
-    <div id="formContainer" style="display:none;">
-      <h3 id="formTitulo">Novo Serviço</h3>
+<div id="form" class="form" style="display:none;">
+  <h3 id="tituloForm">Novo Serviço</h3>
 
-      <div class="form-box">
+  <input id="id_interno" placeholder="ID Interno" readonly>
+  <input id="nome" placeholder="Nome do Serviço">
+  <input id="valor" type="number" step="0.01" placeholder="Valor">
+  <input id="comissao" type="number" step="0.01" placeholder="Comissão">
+  <select id="status">
+    <option value="ativo">ativo</option>
+    <option value="inativo">inativo</option>
+  </select>
 
-        <div class="form-group">
-          <label>ID Interno</label>
-          <input type="text" id="id_interno" readonly>
-        </div>
-
-        <div class="form-group">
-          <label>Nome do Serviço</label>
-          <input type="text" id="nome">
-        </div>
-
-        <div class="form-group">
-          <label>Valor (R$)</label>
-          <input type="number" id="valor" step="0.01">
-        </div>
-
-        <div class="form-group">
-          <label>Comissão (%)</label>
-          <input type="number" id="comissao" step="0.01">
-        </div>
-
-        <div class="form-group">
-          <label>Status</label>
-          <select id="status">
-            <option value="ativo">ativo</option>
-            <option value="inativo">inativo</option>
-          </select>
-        </div>
-
-        <button class="primary" onclick="salvar()">Salvar</button>
-        <button class="secondary" onclick="cancelar()">Cancelar</button>
-
-      </div>
-    </div>
-
-  </main>
+  <button onclick="salvar()">Salvar</button>
+  <button onclick="fecharForm()" style="background:#ccc;color:#000;">Cancelar</button>
 </div>
 
-<script src="assets/sidebar/sidebar.js"></script>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-/* CONEXÃO */
-if (!window.supabaseClient) {
-  window.supabaseClient = window.supabase.createClient(
-    "https://rymehgsorajeecuwyhny.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-  );
-}
-
-const supabase = window.supabaseClient;
+/* CONEXÃO ÚNICA */
+const supabase = window.supabase.createClient(
+  "https://rymehgsorajeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
 
 let editId = null;
 
-/* CARREGAR */
 async function carregar() {
-
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("servicos")
     .select("*")
     .order("created_at", { ascending:false });
-
-  if (error) {
-    alert(error.message);
-    return;
-  }
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
@@ -192,34 +108,31 @@ async function carregar() {
   data.forEach(s => {
     tbody.innerHTML += `
       <tr>
-        <td>${s.id_interno || "-"}</td>
+        <td>${s.id_interno}</td>
         <td>${s.nome}</td>
-        <td>R$ ${Number(s.valor).toFixed(2)}</td>
-        <td>${s.comissao}%</td>
+        <td>${s.valor}</td>
+        <td>${s.comissao}</td>
         <td>${s.status}</td>
-        <td class="actions">
-          <i class="fa-solid fa-pen" onclick="editar('${s.id}')"></i>
-          <i class="fa-solid fa-trash" onclick="excluir('${s.id}')"></i>
+        <td>
+          <button onclick="editar('${s.id}')">Editar</button>
+          <button onclick="excluir('${s.id}')">Excluir</button>
         </td>
       </tr>
     `;
   });
-
 }
 
-function mostrarFormulario() {
+function abrirForm() {
   editId = null;
-  document.getElementById("formTitulo").innerText = "Novo Serviço";
-  document.getElementById("formContainer").style.display = "block";
-  gerarIdInterno();
+  document.getElementById("form").style.display = "block";
+  gerarId();
 }
 
-function cancelar() {
-  document.getElementById("formContainer").style.display = "none";
+function fecharForm() {
+  document.getElementById("form").style.display = "none";
 }
 
-async function gerarIdInterno() {
-
+async function gerarId() {
   const { data } = await supabase
     .from("servicos")
     .select("id_interno")
@@ -237,7 +150,6 @@ async function gerarIdInterno() {
 }
 
 async function editar(id) {
-
   editId = id;
 
   const { data } = await supabase
@@ -246,9 +158,7 @@ async function editar(id) {
     .eq("id", id)
     .single();
 
-  document.getElementById("formTitulo").innerText = "Editar Serviço";
-  document.getElementById("formContainer").style.display = "block";
-
+  document.getElementById("form").style.display = "block";
   document.getElementById("id_interno").value = data.id_interno;
   document.getElementById("nome").value = data.nome;
   document.getElementById("valor").value = data.valor;
@@ -266,37 +176,18 @@ async function salvar() {
     status: document.getElementById("status").value
   };
 
-  let response;
-
   if (editId) {
-    response = await supabase
-      .from("servicos")
-      .update(payload)
-      .eq("id", editId);
+    await supabase.from("servicos").update(payload).eq("id", editId);
   } else {
-    response = await supabase
-      .from("servicos")
-      .insert(payload);
+    await supabase.from("servicos").insert(payload);
   }
 
-  if (response.error) {
-    alert(response.error.message);
-    return;
-  }
-
-  cancelar();
+  fecharForm();
   carregar();
 }
 
 async function excluir(id) {
-
-  if (!confirm("Excluir serviço?")) return;
-
-  await supabase
-    .from("servicos")
-    .delete()
-    .eq("id", id);
-
+  await supabase.from("servicos").delete().eq("id", id);
   carregar();
 }
 

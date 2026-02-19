@@ -27,9 +27,18 @@ button.primary {
   cursor:pointer;
 }
 
+button.secondary {
+  background:#e5e7eb;
+  border:none;
+  padding:8px 14px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
 table {
   width:100%;
   border-collapse:collapse;
+  margin-bottom:30px;
 }
 
 th, td {
@@ -52,14 +61,28 @@ th {
   color:#dc2626;
 }
 
-.status-ativo {
-  color:#16a34a;
-  font-weight:600;
+.form-box {
+  max-width:500px;
+  background:#fff;
+  padding:24px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.06);
 }
 
-.status-inativo {
-  color:#dc2626;
-  font-weight:600;
+.form-group { margin-bottom:16px; }
+
+label {
+  display:block;
+  margin-bottom:6px;
+  font-size:12px;
+  color:#6b7280;
+}
+
+input, select {
+  width:100%;
+  padding:8px;
+  border:1px solid #d1d5db;
+  border-radius:6px;
 }
 </style>
 </head>
@@ -73,7 +96,7 @@ th {
 
     <div class="header">
       <h2>Serviços</h2>
-      <button class="primary" onclick="novoServico()">NOVO SERVIÇO</button>
+      <button class="primary" onclick="mostrarFormulario()">NOVO SERVIÇO</button>
     </div>
 
     <table>
@@ -82,13 +105,53 @@ th {
           <th>ID</th>
           <th>Serviço</th>
           <th>Valor</th>
-          <th>Comissão (%)</th>
+          <th>Comissão</th>
           <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
       <tbody id="lista"></tbody>
     </table>
+
+    <!-- FORM -->
+    <div id="formContainer" style="display:none;">
+      <h3 id="formTitulo">Novo Serviço</h3>
+
+      <div class="form-box">
+
+        <div class="form-group">
+          <label>ID Interno</label>
+          <input type="text" id="id_interno" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Nome do Serviço</label>
+          <input type="text" id="nome">
+        </div>
+
+        <div class="form-group">
+          <label>Valor (R$)</label>
+          <input type="number" id="valor" step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Comissão (%)</label>
+          <input type="number" id="comissao" step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label>Status</label>
+          <select id="status">
+            <option value="ativo">ativo</option>
+            <option value="inativo">inativo</option>
+          </select>
+        </div>
+
+        <button class="primary" onclick="salvar()">Salvar</button>
+        <button class="secondary" onclick="cancelar()">Cancelar</button>
+
+      </div>
+    </div>
 
   </main>
 </div>
@@ -98,26 +161,20 @@ th {
 
 <script>
 
-/* =========================
-   CONEXÃO ÚNICA SUPABASE
-========================= */
-
+/* CONEXÃO */
 if (!window.supabaseClient) {
   window.supabaseClient = window.supabase.createClient(
     "https://rymehgsorajeecuwyhny.supabase.co",
-    "SUA_KEY_AQUI"
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
   );
 }
 
 const supabase = window.supabaseClient;
 
-let servicos = [];
+let editId = null;
 
-/* =========================
-   CARREGAR SERVIÇOS
-========================= */
-
-async function carregarServicos() {
+/* CARREGAR */
+async function carregar() {
 
   const { data, error } = await supabase
     .from("servicos")
@@ -125,35 +182,21 @@ async function carregarServicos() {
     .order("created_at", { ascending:false });
 
   if (error) {
-    console.error(error);
-    alert("Erro ao carregar serviços.");
+    alert(error.message);
     return;
   }
-
-  servicos = data || [];
-  render();
-}
-
-/* =========================
-   RENDER
-========================= */
-
-function render() {
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
-  servicos.forEach(s => {
-
+  data.forEach(s => {
     tbody.innerHTML += `
       <tr>
         <td>${s.id_interno || "-"}</td>
         <td>${s.nome}</td>
         <td>R$ ${Number(s.valor).toFixed(2)}</td>
-        <td>${s.comissao || 0}%</td>
-        <td class="status-${s.status}">
-          ${s.status}
-        </td>
+        <td>${s.comissao}%</td>
+        <td>${s.status}</td>
         <td class="actions">
           <i class="fa-solid fa-pen" onclick="editar('${s.id}')"></i>
           <i class="fa-solid fa-trash" onclick="excluir('${s.id}')"></i>
@@ -164,47 +207,100 @@ function render() {
 
 }
 
-/* =========================
-   NOVO
-========================= */
-
-function novoServico() {
-  localStorage.removeItem("servicoEdit");
-  window.location.href = "servico-novo.html";
+function mostrarFormulario() {
+  editId = null;
+  document.getElementById("formTitulo").innerText = "Novo Serviço";
+  document.getElementById("formContainer").style.display = "block";
+  gerarIdInterno();
 }
 
-/* =========================
-   EDITAR
-========================= */
-
-function editar(id) {
-  localStorage.setItem("servicoEdit", id);
-  window.location.href = "servico-novo.html";
+function cancelar() {
+  document.getElementById("formContainer").style.display = "none";
 }
 
-/* =========================
-   EXCLUIR
-========================= */
+async function gerarIdInterno() {
+
+  const { data } = await supabase
+    .from("servicos")
+    .select("id_interno")
+    .order("created_at", { ascending:false })
+    .limit(1);
+
+  let numero = 1;
+
+  if (data.length > 0 && data[0].id_interno) {
+    numero = parseInt(data[0].id_interno.replace("SRV","")) + 1;
+  }
+
+  document.getElementById("id_interno").value =
+    "SRV" + numero.toString().padStart(3,"0");
+}
+
+async function editar(id) {
+
+  editId = id;
+
+  const { data } = await supabase
+    .from("servicos")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  document.getElementById("formTitulo").innerText = "Editar Serviço";
+  document.getElementById("formContainer").style.display = "block";
+
+  document.getElementById("id_interno").value = data.id_interno;
+  document.getElementById("nome").value = data.nome;
+  document.getElementById("valor").value = data.valor;
+  document.getElementById("comissao").value = data.comissao;
+  document.getElementById("status").value = data.status;
+}
+
+async function salvar() {
+
+  const payload = {
+    id_interno: document.getElementById("id_interno").value,
+    nome: document.getElementById("nome").value,
+    valor: parseFloat(document.getElementById("valor").value),
+    comissao: parseFloat(document.getElementById("comissao").value),
+    status: document.getElementById("status").value
+  };
+
+  let response;
+
+  if (editId) {
+    response = await supabase
+      .from("servicos")
+      .update(payload)
+      .eq("id", editId);
+  } else {
+    response = await supabase
+      .from("servicos")
+      .insert(payload);
+  }
+
+  if (response.error) {
+    alert(response.error.message);
+    return;
+  }
+
+  cancelar();
+  carregar();
+}
 
 async function excluir(id) {
 
   if (!confirm("Excluir serviço?")) return;
 
-  const { error } = await supabase
+  await supabase
     .from("servicos")
     .delete()
     .eq("id", id);
 
-  if (error) {
-    alert("Erro ao excluir.");
-    console.error(error);
-    return;
-  }
-
-  carregarServicos();
+  carregar();
 }
 
-carregarServicos();
+carregar();
 
 </script>
 

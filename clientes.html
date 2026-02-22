@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <title>Clientes | Hara Spa</title>
 
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -61,6 +58,7 @@ button.excluir { background:#dc2626; }
   display:none;
   align-items:center;
   justify-content:center;
+  z-index:10;
 }
 
 .modal-content {
@@ -95,6 +93,7 @@ input, select {
 <body>
 
 <div class="app">
+
   <aside id="sidebar"></aside>
 
   <main class="content">
@@ -117,8 +116,10 @@ input, select {
       <tbody id="lista"></tbody>
     </table>
   </main>
+
 </div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
 
@@ -144,30 +145,33 @@ input, select {
 
 <script>
 const supabaseClient = supabase.createClient(
-  "SUA_URL",
-  "SUA_KEY"
+  "SUA_URL_SUPABASE",
+  "SUA_PUBLIC_ANON_KEY"
 );
 
 let idAtual = null;
 
 async function carregar(){
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("clientes")
     .select("*")
     .order("nome");
 
+  if(error){
+    console.error(error);
+    return;
+  }
+
   const tbody=document.getElementById("lista");
   tbody.innerHTML="";
-
-  if(!data) return;
 
   data.forEach(c=>{
     tbody.innerHTML+=`
       <tr>
         <td>${c.nome}</td>
-        <td>${c.telefone||""}</td>
-        <td>${c.email||""}</td>
-        <td>${c.status||""}</td>
+        <td>${c.telefone || ""}</td>
+        <td>${c.email || ""}</td>
+        <td>${c.status || ""}</td>
         <td>
           <button onclick="editar('${c.id}')">Editar</button>
           <button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
@@ -188,16 +192,21 @@ function abrirNovo(){
 async function editar(id){
   idAtual=id;
 
-  const { data } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("clientes")
     .select("*")
     .eq("id",id)
     .single();
 
-  document.getElementById("nome").value=data.nome||"";
-  document.getElementById("telefone").value=data.telefone||"";
-  document.getElementById("email").value=data.email||"";
-  document.getElementById("status").value=data.status||"Ativo";
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  document.getElementById("nome").value=data.nome || "";
+  document.getElementById("telefone").value=data.telefone || "";
+  document.getElementById("email").value=data.email || "";
+  document.getElementById("status").value=data.status || "Ativo";
 
   document.getElementById("modal").style.display="flex";
 }

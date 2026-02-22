@@ -13,6 +13,7 @@
 
 <style>
 .app { display:flex; min-height:100vh; }
+
 .content { 
   flex:1; 
   padding:30px; 
@@ -34,11 +35,13 @@ table {
   border-radius:14px;
   overflow:hidden;
 }
+
 th,td {
   padding:12px;
   border-bottom:1px solid #e5e7eb;
   font-size:14px;
 }
+
 th { 
   background:#f9fafb; 
   font-weight:600; 
@@ -52,6 +55,7 @@ button {
   padding:6px 12px;
   cursor:pointer;
 }
+
 button.excluir { background:#dc2626; }
 
 .top-actions {
@@ -69,6 +73,7 @@ button.excluir { background:#dc2626; }
   justify-content:center;
   z-index:10;
 }
+
 .modal-content {
   background:#fff;
   width:900px;
@@ -77,6 +82,7 @@ button.excluir { background:#dc2626; }
   border-radius:16px;
   padding:24px;
 }
+
 .section { margin-bottom:24px; }
 
 .grid {
@@ -84,12 +90,14 @@ button.excluir { background:#dc2626; }
   grid-template-columns:repeat(3,1fr);
   gap:12px;
 }
+
 input, select {
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
   width:100%;
 }
+
 .modal-actions {
   display:flex;
   justify-content:flex-end;
@@ -149,41 +157,6 @@ input, select {
     </div>
 
     <div class="section">
-      <h3>Contatos</h3>
-      <div class="grid">
-        <input id="telefone" placeholder="Telefone *">
-        <input id="telefone_emer" placeholder="Contato Emergência">
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Endereço</h3>
-      <div class="grid">
-        <input id="cep" placeholder="CEP">
-        <input id="rua" placeholder="Rua">
-        <input id="numero" placeholder="Número">
-        <input id="complemento" placeholder="Complemento">
-        <input id="bairro" placeholder="Bairro">
-        <input id="cidade" placeholder="Cidade">
-        <input id="uf" placeholder="UF">
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Dados de Pagamento</h3>
-      <div class="grid">
-        <select id="pix_tipo">
-          <option value="">Tipo Chave PIX</option>
-          <option>CPF</option>
-          <option>Email</option>
-          <option>Telefone</option>
-          <option>Aleatória</option>
-        </select>
-        <input id="pix_chave" placeholder="Chave PIX">
-      </div>
-    </div>
-
-    <div class="section">
       <h3>Dados Funcionais</h3>
       <div class="grid">
 
@@ -203,11 +176,26 @@ input, select {
           <option value="Sábado">Sábado</option>
         </select>
 
-        <input type="text" id="hora_entrada" placeholder="Hora de Entrada (HH:MM)">
+        <!-- Hora Entrada -->
+        <input type="text"
+               id="hora_entrada"
+               placeholder="Hora de Entrada"
+               onfocus="this.type='time'"
+               onblur="if(!this.value)this.type='text'">
 
-        <input type="text" id="hora_saida" placeholder="Hora de Saída (HH:MM)">
+        <!-- Hora Saída -->
+        <input type="text"
+               id="hora_saida"
+               placeholder="Hora de Saída"
+               onfocus="this.type='time'"
+               onblur="if(!this.value)this.type='text'">
 
-        <input type="text" id="data_inicio" placeholder="Data de Início (dd/mm/aaaa)">
+        <!-- Data Início -->
+        <input type="text"
+               id="data_inicio"
+               placeholder="Data de Início"
+               onfocus="this.type='date'"
+               onblur="if(!this.value)this.type='text'">
 
         <select id="status">
           <option value="" disabled selected hidden>Status</option>
@@ -255,8 +243,8 @@ function getPayload(){
 
 function setForm(data){
   campos.forEach(c=>{
-    if(document.getElementById(c))
-      document.getElementById(c).value=data[c]||"";
+    const el=document.getElementById(c);
+    if(el) el.value=data[c]||"";
   });
 }
 
@@ -285,7 +273,10 @@ async function carregar(){
 
 function abrirNovo(){
   cpfAtual=null;
-  campos.forEach(c=>document.getElementById(c).value="");
+  campos.forEach(c=>{
+    const el=document.getElementById(c);
+    if(el) el.value="";
+  });
   document.getElementById("cpf").disabled=false;
   document.getElementById("modal").style.display="flex";
 }

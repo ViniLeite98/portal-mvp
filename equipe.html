@@ -125,6 +125,7 @@ input, select {
   </main>
 </div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
 
@@ -187,13 +188,13 @@ input, select {
       <div class="grid">
 
         <select id="tem_folga">
-          <option value="">Tem folga semanal?</option>
+          <option value="" disabled hidden>Tem folga semanal?</option>
           <option value="Sim">Sim</option>
           <option value="Não">Não</option>
         </select>
 
         <select id="dia_folga">
-          <option value="">Dia da Folga</option>
+          <option value="" disabled hidden>Dia da Folga</option>
           <option value="Segunda">Segunda</option>
           <option value="Terça">Terça</option>
           <option value="Quarta">Quarta</option>
@@ -203,10 +204,13 @@ input, select {
         </select>
 
         <input type="time" id="hora_entrada">
+
         <input type="time" id="hora_saida">
+
         <input type="date" id="data_inicio">
 
         <select id="status">
+          <option value="" disabled hidden>Status</option>
           <option value="Ativo">Ativo</option>
           <option value="Inativo">Inativo</option>
         </select>
@@ -223,10 +227,11 @@ input, select {
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
+
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "SUA_PUBLIC_ANON_KEY_AQUI"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let cpfAtual = null;
@@ -250,8 +255,8 @@ function getPayload(){
 
 function setForm(data){
   campos.forEach(c=>{
-    const el=document.getElementById(c);
-    if(el) el.value=data[c]||"";
+    if(document.getElementById(c))
+      document.getElementById(c).value=data[c]||"";
   });
 }
 
@@ -263,8 +268,6 @@ async function carregar(){
 
   const tbody=document.getElementById("lista");
   tbody.innerHTML="";
-
-  if(!data) return;
 
   data.forEach(t=>{
     tbody.innerHTML+=`
@@ -282,10 +285,7 @@ async function carregar(){
 
 function abrirNovo(){
   cpfAtual=null;
-  campos.forEach(c=>{
-    const el=document.getElementById(c);
-    if(el) el.value="";
-  });
+  campos.forEach(c=>document.getElementById(c).value="");
   document.getElementById("cpf").disabled=false;
   document.getElementById("modal").style.display="flex";
 }
@@ -301,6 +301,7 @@ async function editar(cpf){
 
   if(error){
     alert("Erro ao carregar");
+    console.error(error);
     return;
   }
 
@@ -336,6 +337,7 @@ async function salvar(){
   }
 
   if(error){
+    console.error(error);
     alert("Erro ao salvar");
     return;
   }

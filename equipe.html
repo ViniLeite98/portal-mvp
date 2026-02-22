@@ -125,7 +125,6 @@ input, select {
   </main>
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
 
@@ -203,26 +202,9 @@ input, select {
           <option value="Sábado">Sábado</option>
         </select>
 
-        <!-- Hora Entrada -->
-        <input type="text"
-               id="hora_entrada"
-               placeholder="Hora de Entrada"
-               onfocus="this.type='time'"
-               onblur="if(!this.value)this.type='text'">
-
-        <!-- Hora Saída -->
-        <input type="text"
-               id="hora_saida"
-               placeholder="Hora de Saída"
-               onfocus="this.type='time'"
-               onblur="if(!this.value)this.type='text'">
-
-        <!-- Data Início -->
-        <input type="text"
-               id="data_inicio"
-               placeholder="Data de Início"
-               onfocus="this.type='date'"
-               onblur="if(!this.value)this.type='text'">
+        <input type="time" id="hora_entrada">
+        <input type="time" id="hora_saida">
+        <input type="date" id="data_inicio">
 
         <select id="status">
           <option value="Ativo">Ativo</option>
@@ -241,23 +223,139 @@ input, select {
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
-
 <script>
-// 🔥 Ajuste importante para edição funcionar com date/time dinâmico
-function setForm(data){
+const supabaseClient = supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "SUA_PUBLIC_ANON_KEY_AQUI"
+);
+
+let cpfAtual = null;
+
+const campos = [
+ "nome_completo","nome_profissional","cpf","rg","nascimento","email",
+ "tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
+ "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
+ "tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status"
+];
+
+function getPayload(){
+  const obj={};
   campos.forEach(c=>{
     const el=document.getElementById(c);
     if(!el) return;
+    if(el.value!=="") obj[c]=el.value;
+  });
+  return obj;
+}
 
-    if((c==="hora_entrada" || c==="hora_saida") && data[c]){
-      el.type="time";
-    }
-
-    if(c==="data_inicio" && data[c]){
-      el.type="date";
-    }
-
-    el.value=data[c]||"";
+function setForm(data){
+  campos.forEach(c=>{
+    const el=document.getElementById(c);
+    if(el) el.value=data[c]||"";
   });
 }
+
+async function carregar(){
+  const { data } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissional,status")
+    .order("nome_profissional");
+
+  const tbody=document.getElementById("lista");
+  tbody.innerHTML="";
+
+  if(!data) return;
+
+  data.forEach(t=>{
+    tbody.innerHTML+=`
+      <tr>
+        <td>${t.nome_profissional}</td>
+        <td>${t.cpf}</td>
+        <td>${t.status}</td>
+        <td>
+          <button onclick="editar('${t.cpf}')">Editar</button>
+          <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+        </td>
+      </tr>`;
+  });
+}
+
+function abrirNovo(){
+  cpfAtual=null;
+  campos.forEach(c=>{
+    const el=document.getElementById(c);
+    if(el) el.value="";
+  });
+  document.getElementById("cpf").disabled=false;
+  document.getElementById("modal").style.display="flex";
+}
+
+async function editar(cpf){
+  cpfAtual=cpf;
+
+  const { data,error }=await supabaseClient
+    .from("terapeutas")
+    .select("*")
+    .eq("cpf",cpf)
+    .single();
+
+  if(error){
+    alert("Erro ao carregar");
+    return;
+  }
+
+  setForm(data);
+  document.getElementById("cpf").disabled=true;
+  document.getElementById("modal").style.display="flex";
+}
+
+async function salvar(){
+  const payload=getPayload();
+
+  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
+    alert("Preencha os campos obrigatórios");
+    return;
+  }
+
+  let error;
+
+  if(cpfAtual){
+    delete payload.cpf;
+    ({ error }=await supabaseClient
+      .from("terapeutas")
+      .update(payload)
+      .eq("cpf",cpfAtual));
+  }else{
+    if(!payload.cpf){
+      alert("CPF é obrigatório");
+      return;
+    }
+    ({ error }=await supabaseClient
+      .from("terapeutas")
+      .insert(payload));
+  }
+
+  if(error){
+    alert("Erro ao salvar");
+    return;
+  }
+
+  fecharModal();
+  carregar();
+}
+
+async function excluir(cpf){
+  if(!confirm("Excluir terapeuta?")) return;
+  await supabaseClient.from("terapeutas").delete().eq("cpf",cpf);
+  carregar();
+}
+
+function fecharModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+carregar();
 </script>
+
+</body>
+</html>

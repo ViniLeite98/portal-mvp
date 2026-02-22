@@ -1,358 +1,64 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Gestão da Equipe | Hara Spa</title>
+<div class="section">
+  <h3>Dados Funcionais</h3>
+  <div class="grid">
 
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<link rel="stylesheet" href="assets/css/style.css">
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-<style>
-.app { display:flex; min-height:100vh; }
-.content { 
-  flex:1; 
-  padding:30px; 
-  margin-left:260px; 
-  background:#f5f7fb; 
-}
-
-.content h1,
-.content p,
-.section h3,
-th {
-  text-align:left !important;
-}
-
-table {
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-}
-th,td {
-  padding:12px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-}
-th { 
-  background:#f9fafb; 
-  font-weight:600; 
-}
-
-button {
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
-}
-button.excluir { background:#dc2626; }
-
-.top-actions {
-  display:flex;
-  justify-content:flex-end;
-  margin-bottom:16px;
-}
-
-.modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
-}
-.modal-content {
-  background:#fff;
-  width:900px;
-  max-height:90vh;
-  overflow:auto;
-  border-radius:16px;
-  padding:24px;
-}
-.section { margin-bottom:24px; }
-
-.grid {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-}
-input, select {
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-  width:100%;
-}
-.modal-actions {
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-  <aside id="sidebar"></aside>
-
-  <main class="content">
-    <h1>Gestão da Equipe</h1>
-    <p>Terapeutas cadastradas</p>
-
-    <div class="top-actions">
-      <button onclick="abrirNovo()">+ Nova Terapeuta</button>
+    <div>
+      <label style="font-size:13px; display:block; margin-bottom:4px;">
+        Tem folga semanal?
+      </label>
+      <select id="tem_folga">
+        <option value=""></option>
+        <option value="Sim">Sim</option>
+        <option value="Não">Não</option>
+      </select>
     </div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Nome Profissional</th>
-          <th>CPF</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
-  </main>
-</div>
-
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-
-    <div class="section">
-      <h3>Dados Pessoais</h3>
-      <div class="grid">
-        <input id="nome_completo" placeholder="Nome Completo *">
-        <input id="nome_profissional" placeholder="Nome Profissional *">
-        <input id="cpf" placeholder="CPF *">
-        <input id="rg" placeholder="RG">
-        <input type="date" id="nascimento">
-        <input id="email" placeholder="Email *">
-        <select id="tipo_sanguineo">
-          <option value="">Tipo Sanguíneo</option>
-          <option>A+</option><option>A-</option>
-          <option>B+</option><option>B-</option>
-          <option>AB+</option><option>AB-</option>
-          <option>O+</option><option>O-</option>
-        </select>
-      </div>
+    <div>
+      <label style="font-size:13px; display:block; margin-bottom:4px;">
+        Dia da Folga
+      </label>
+      <select id="dia_folga">
+        <option value=""></option>
+        <option value="Segunda">Segunda</option>
+        <option value="Terça">Terça</option>
+        <option value="Quarta">Quarta</option>
+        <option value="Quinta">Quinta</option>
+        <option value="Sexta">Sexta</option>
+        <option value="Sábado">Sábado</option>
+      </select>
     </div>
 
-    <div class="section">
-      <h3>Contatos</h3>
-      <div class="grid">
-        <input id="telefone" placeholder="Telefone *">
-        <input id="telefone_emer" placeholder="Contato Emergência">
-      </div>
+    <div>
+      <label style="font-size:13px; display:block; margin-bottom:4px;">
+        Hora de Entrada
+      </label>
+      <input type="time" id="hora_entrada">
     </div>
 
-    <div class="section">
-      <h3>Endereço</h3>
-      <div class="grid">
-        <input id="cep" placeholder="CEP">
-        <input id="rua" placeholder="Rua">
-        <input id="numero" placeholder="Número">
-        <input id="complemento" placeholder="Complemento">
-        <input id="bairro" placeholder="Bairro">
-        <input id="cidade" placeholder="Cidade">
-        <input id="uf" placeholder="UF">
-      </div>
+    <div>
+      <label style="font-size:13px; display:block; margin-bottom:4px;">
+        Hora de Saída
+      </label>
+      <input type="time" id="hora_saida">
     </div>
 
-    <div class="section">
-      <h3>Dados de Pagamento</h3>
-      <div class="grid">
-        <select id="pix_tipo">
-          <option value="">Tipo Chave PIX</option>
-          <option>CPF</option>
-          <option>Email</option>
-          <option>Telefone</option>
-          <option>Aleatória</option>
-        </select>
-        <input id="pix_chave" placeholder="Chave PIX">
-      </div>
+    <div>
+      <label style="font-size:13px; display:block; margin-bottom:4px;">
+        Data de Início
+      </label>
+      <input type="date" id="data_inicio">
     </div>
 
-    <div class="section">
-      <h3>Dados Funcionais</h3>
-      <div class="grid">
-        <select id="tem_folga">
-          <option value="">Tem folga semanal?</option>
-          <option value="Sim">Sim</option>
-          <option value="Não">Não</option>
-        </select>
-
-        <!-- AJUSTE AQUI -->
-        <select id="dia_folga">
-          <option value="">Dia da Folga</option>
-          <option value="Segunda">Segunda</option>
-          <option value="Terça">Terça</option>
-          <option value="Quarta">Quarta</option>
-          <option value="Quinta">Quinta</option>
-          <option value="Sexta">Sexta</option>
-          <option value="Sábado">Sábado</option>
-        </select>
-
-        <input type="time" id="hora_entrada">
-        <input type="time" id="hora_saida">
-        <input type="date" id="data_inicio">
-        <select id="status">
-          <option value="Ativo">Ativo</option>
-          <option value="Inativo">Inativo</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="modal-actions">
-      <button onclick="fecharModal()">Cancelar</button>
-      <button onclick="salvar()">Salvar</button>
+    <div>
+      <label style="font-size:13px; display:block; margin-bottom:4px;">
+        Status
+      </label>
+      <select id="status">
+        <option value=""></option>
+        <option value="Ativo">Ativo</option>
+        <option value="Inativo">Inativo</option>
+      </select>
     </div>
 
   </div>
 </div>
-
-<script src="assets/sidebar/sidebar.js"></script>
-
-<script>
-const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
-
-let cpfAtual = null;
-
-const campos = [
- "nome_completo","nome_profissional","cpf","rg","nascimento","email",
- "tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
- "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
- "tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status"
-];
-
-function getPayload(){
-  const obj={};
-  campos.forEach(c=>{
-    const el=document.getElementById(c);
-    if(!el) return;
-    if(el.value!=="") obj[c]=el.value;
-  });
-  return obj;
-}
-
-function setForm(data){
-  campos.forEach(c=>{
-    if(document.getElementById(c))
-      document.getElementById(c).value=data[c]||"";
-  });
-}
-
-async function carregar(){
-  const { data } = await supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional,status")
-    .order("nome_profissional");
-
-  const tbody=document.getElementById("lista");
-  tbody.innerHTML="";
-
-  data.forEach(t=>{
-    tbody.innerHTML+=`
-      <tr>
-        <td>${t.nome_profissional}</td>
-        <td>${t.cpf}</td>
-        <td>${t.status}</td>
-        <td>
-          <button onclick="editar('${t.cpf}')">Editar</button>
-          <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
-        </td>
-      </tr>`;
-  });
-}
-
-function abrirNovo(){
-  cpfAtual=null;
-  campos.forEach(c=>document.getElementById(c).value="");
-  document.getElementById("cpf").disabled=false;
-  document.getElementById("modal").style.display="flex";
-}
-
-async function editar(cpf){
-  cpfAtual=cpf;
-
-  const { data,error }=await supabaseClient
-    .from("terapeutas")
-    .select("*")
-    .eq("cpf",cpf)
-    .single();
-
-  if(error){
-    alert("Erro ao carregar");
-    console.error(error);
-    return;
-  }
-
-  setForm(data);
-  document.getElementById("cpf").disabled=true;
-  document.getElementById("modal").style.display="flex";
-}
-
-async function salvar(){
-  const payload=getPayload();
-
-  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
-    alert("Preencha os campos obrigatórios");
-    return;
-  }
-
-  let error;
-
-  if(cpfAtual){
-    delete payload.cpf;
-    ({ error }=await supabaseClient
-      .from("terapeutas")
-      .update(payload)
-      .eq("cpf",cpfAtual));
-  }else{
-    if(!payload.cpf){
-      alert("CPF é obrigatório");
-      return;
-    }
-    ({ error }=await supabaseClient
-      .from("terapeutas")
-      .insert(payload));
-  }
-
-  if(error){
-    console.error(error);
-    alert("Erro ao salvar");
-    return;
-  }
-
-  fecharModal();
-  carregar();
-}
-
-async function excluir(cpf){
-  if(!confirm("Excluir terapeuta?")) return;
-  await supabaseClient.from("terapeutas").delete().eq("cpf",cpf);
-  carregar();
-}
-
-function fecharModal(){
-  document.getElementById("modal").style.display="none";
-}
-
-carregar();
-</script>
-
-</body>
-</html>

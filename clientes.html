@@ -2,83 +2,92 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Clientes</title>
+<title>Clientes | Hara Spa</title>
 
-<!-- ÍCONES -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<!-- CSS GLOBAL -->
 <link rel="stylesheet" href="assets/css/style.css">
-
-<!-- CSS SIDEBAR -->
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-.content {
-  padding: 30px;
-  font-size: 14px;
-}
+.app { display:flex; min-height:100vh; }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-}
-
-.search {
-  width: 280px;
-  padding: 8px 10px;
-  border: none;
-  border-bottom: 1px solid #d1d5db;
-  outline: none;
-}
-
-button.primary {
-  background: #7c3aed;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
-  cursor: pointer;
+.content { 
+  flex:1; 
+  padding:30px; 
+  margin-left:260px; 
+  background:#f5f7fb; 
 }
 
 table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden;
 }
 
-th, td {
-  padding: 14px 10px;
-  border-bottom: 1px solid #e5e7eb;
+th,td {
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
+  font-size:14px;
 }
 
-th {
-  font-size: 12px;
-  color: #6b7280;
-  text-align: left;
+th { background:#f9fafb; font-weight:600; }
+
+button {
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:6px 12px;
+  cursor:pointer;
 }
 
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #d1d5db;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: #374151;
+button.excluir { background:#dc2626; }
+
+.top-actions {
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:16px;
 }
 
-.actions i {
-  margin-right: 14px;
-  cursor: pointer;
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
 }
 
-.actions .fa-trash {
-  color: #dc2626;
+.modal-content {
+  background:#fff;
+  width:600px;
+  border-radius:16px;
+  padding:24px;
+}
+
+.grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+input, select {
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  width:100%;
+}
+
+.modal-actions {
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:20px;
 }
 </style>
 </head>
@@ -86,176 +95,147 @@ th {
 <body>
 
 <div class="app">
-
-  <!-- SIDEBAR -->
   <aside id="sidebar"></aside>
 
-  <!-- CONTEÚDO -->
   <main class="content">
+    <h1>Clientes</h1>
 
-    <div class="header">
-      <input
-        class="search"
-        placeholder="Buscar por nome..."
-        oninput="filtrar(this.value)"
-      >
-      <button class="primary" onclick="novoCliente()">
-        ADICIONAR CLIENTE
-      </button>
+    <div class="top-actions">
+      <button onclick="abrirNovo()">+ Novo Cliente</button>
     </div>
 
     <table>
       <thead>
         <tr>
           <th>Nome</th>
-          <th>CPF / CNPJ</th>
-          <th>Telefones</th>
-          <th>Endereço</th>
-          <th>Data de Nasc</th>
+          <th>Telefone</th>
+          <th>Email</th>
+          <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
       <tbody id="lista"></tbody>
     </table>
-
   </main>
-
 </div>
 
-<!-- JS SIDEBAR -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+
+    <div class="grid">
+      <input id="nome" placeholder="Nome *">
+      <input id="telefone" placeholder="Telefone">
+      <input id="email" placeholder="Email">
+      <select id="status">
+        <option value="Ativo">Ativo</option>
+        <option value="Inativo">Inativo</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button onclick="fecharModal()">Cancelar</button>
+      <button onclick="salvar()">Salvar</button>
+    </div>
+
+  </div>
+</div>
+
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- SUPABASE -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
-/* =========================
-   CONEXÃO SUPABASE
-========================= */
-
-const supabase = window.supabase.createClient(
-  "SUA_URL_SUPABASE",
-  "SUA_ANON_KEY"
+const supabaseClient = supabase.createClient(
+  "SUA_URL",
+  "SUA_KEY"
 );
 
-let clientes = [];
-let filtro = "";
+let idAtual = null;
 
-/* =========================
-   CARREGAR CLIENTES
-========================= */
-
-async function carregarClientes() {
-  const { data, error } = await supabase
+async function carregar(){
+  const { data } = await supabaseClient
     .from("clientes")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("nome");
 
-  if (error) {
-    console.error("Erro ao buscar clientes:", error);
-    return;
-  }
+  const tbody=document.getElementById("lista");
+  tbody.innerHTML="";
 
-  clientes = data || [];
-  render();
+  if(!data) return;
+
+  data.forEach(c=>{
+    tbody.innerHTML+=`
+      <tr>
+        <td>${c.nome}</td>
+        <td>${c.telefone||""}</td>
+        <td>${c.email||""}</td>
+        <td>${c.status||""}</td>
+        <td>
+          <button onclick="editar('${c.id}')">Editar</button>
+          <button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
+        </td>
+      </tr>`;
+  });
 }
 
-/* =========================
-   RENDER
-========================= */
-
-function render() {
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  clientes
-    .filter(c => c.nome.toLowerCase().includes(filtro))
-    .forEach((c) => {
-
-      tbody.innerHTML += `
-        <tr>
-          <td>
-            <div style="display:flex;align-items:center;gap:10px">
-              <div class="avatar">
-                ${c.nome.charAt(0).toUpperCase()}
-              </div>
-              ${c.nome}
-            </div>
-          </td>
-
-          <td>${c.documento || "—"}</td>
-
-          <td>
-            ${c.tel1 || ""}<br>
-            ${c.tel2 || ""}
-          </td>
-
-          <td>${c.endereco || "—"}</td>
-          <td>${c.nascimento || "—"}</td>
-
-          <td class="actions">
-            <i class="fa-solid fa-eye" title="Visualizar"></i>
-            <i class="fa-solid fa-pen" title="Editar" onclick="editar('${c.id}')"></i>
-            <i class="fa-solid fa-trash" title="Excluir" onclick="excluir('${c.id}')"></i>
-          </td>
-        </tr>
-      `;
-    });
+function abrirNovo(){
+  idAtual=null;
+  document.getElementById("nome").value="";
+  document.getElementById("telefone").value="";
+  document.getElementById("email").value="";
+  document.getElementById("status").value="Ativo";
+  document.getElementById("modal").style.display="flex";
 }
 
-/* =========================
-   FILTRO
-========================= */
+async function editar(id){
+  idAtual=id;
 
-function filtrar(txt) {
-  filtro = txt.toLowerCase();
-  render();
-}
-
-/* =========================
-   NOVO
-========================= */
-
-function novoCliente() {
-  localStorage.removeItem("clienteEdit");
-  location.href = "cliente-novo.html";
-}
-
-/* =========================
-   EDITAR
-========================= */
-
-function editar(id) {
-  localStorage.setItem("clienteEdit", id);
-  location.href = "cliente-novo.html";
-}
-
-/* =========================
-   EXCLUIR
-========================= */
-
-async function excluir(id) {
-  if (!confirm("Excluir cliente?")) return;
-
-  const { error } = await supabase
+  const { data } = await supabaseClient
     .from("clientes")
-    .delete()
-    .eq("id", id);
+    .select("*")
+    .eq("id",id)
+    .single();
 
-  if (error) {
-    console.error("Erro ao excluir:", error);
+  document.getElementById("nome").value=data.nome||"";
+  document.getElementById("telefone").value=data.telefone||"";
+  document.getElementById("email").value=data.email||"";
+  document.getElementById("status").value=data.status||"Ativo";
+
+  document.getElementById("modal").style.display="flex";
+}
+
+async function salvar(){
+  const payload={
+    nome:document.getElementById("nome").value,
+    telefone:document.getElementById("telefone").value,
+    email:document.getElementById("email").value,
+    status:document.getElementById("status").value
+  };
+
+  if(!payload.nome){
+    alert("Nome é obrigatório");
     return;
   }
 
-  carregarClientes();
+  if(idAtual){
+    await supabaseClient.from("clientes").update(payload).eq("id",idAtual);
+  }else{
+    await supabaseClient.from("clientes").insert(payload);
+  }
+
+  fecharModal();
+  carregar();
 }
 
-/* =========================
-   INIT
-========================= */
+async function excluir(id){
+  if(!confirm("Excluir cliente?")) return;
+  await supabaseClient.from("clientes").delete().eq("id",id);
+  carregar();
+}
 
-carregarClientes();
+function fecharModal(){
+  document.getElementById("modal").style.display="none";
+}
 
+carregar();
 </script>
 
 </body>

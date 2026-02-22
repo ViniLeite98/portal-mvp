@@ -13,7 +13,6 @@
 
 <style>
 .app { display:flex; min-height:100vh; }
-
 .content { 
   flex:1; 
   padding:30px; 
@@ -61,7 +60,6 @@ button.excluir { background:#dc2626; }
   margin-bottom:16px;
 }
 
-/* MODAL */
 .modal {
   position:fixed;
   inset:0;
@@ -79,34 +77,19 @@ button.excluir { background:#dc2626; }
   border-radius:16px;
   padding:24px;
 }
-
 .section { margin-bottom:24px; }
 
 .grid {
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:16px;
+  gap:12px;
 }
-
-.field {
-  display:flex;
-  flex-direction:column;
-}
-
-.field label {
-  font-size:13px;
-  margin-bottom:6px;
-  font-weight:500;
-  color:#374151;
-}
-
 input, select {
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
   width:100%;
 }
-
 .modal-actions {
   display:flex;
   justify-content:flex-end;
@@ -146,57 +129,87 @@ input, select {
 <div class="modal" id="modal">
   <div class="modal-content">
 
-    <!-- DADOS FUNCIONAIS -->
+    <div class="section">
+      <h3>Dados Pessoais</h3>
+      <div class="grid">
+        <input id="nome_completo" placeholder="Nome Completo *">
+        <input id="nome_profissional" placeholder="Nome Profissional *">
+        <input id="cpf" placeholder="CPF *">
+        <input id="rg" placeholder="RG">
+        <input type="date" id="nascimento">
+        <input id="email" placeholder="Email *">
+        <select id="tipo_sanguineo">
+          <option value="">Tipo Sanguíneo</option>
+          <option>A+</option><option>A-</option>
+          <option>B+</option><option>B-</option>
+          <option>AB+</option><option>AB-</option>
+          <option>O+</option><option>O-</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Contatos</h3>
+      <div class="grid">
+        <input id="telefone" placeholder="Telefone *">
+        <input id="telefone_emer" placeholder="Contato Emergência">
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Endereço</h3>
+      <div class="grid">
+        <input id="cep" placeholder="CEP">
+        <input id="rua" placeholder="Rua">
+        <input id="numero" placeholder="Número">
+        <input id="complemento" placeholder="Complemento">
+        <input id="bairro" placeholder="Bairro">
+        <input id="cidade" placeholder="Cidade">
+        <input id="uf" placeholder="UF">
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Dados de Pagamento</h3>
+      <div class="grid">
+        <select id="pix_tipo">
+          <option value="">Tipo Chave PIX</option>
+          <option>CPF</option>
+          <option>Email</option>
+          <option>Telefone</option>
+          <option>Aleatória</option>
+        </select>
+        <input id="pix_chave" placeholder="Chave PIX">
+      </div>
+    </div>
+
     <div class="section">
       <h3>Dados Funcionais</h3>
       <div class="grid">
+        <select id="tem_folga">
+          <option value="">Tem folga semanal?</option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
 
-        <div class="field">
-          <label>Tem folga semanal?</label>
-          <select id="tem_folga">
-            <option value=""></option>
-            <option value="Sim">Sim</option>
-            <option value="Não">Não</option>
-          </select>
-        </div>
+        <!-- AJUSTE AQUI -->
+        <select id="dia_folga">
+          <option value="">Dia da Folga</option>
+          <option value="Segunda">Segunda</option>
+          <option value="Terça">Terça</option>
+          <option value="Quarta">Quarta</option>
+          <option value="Quinta">Quinta</option>
+          <option value="Sexta">Sexta</option>
+          <option value="Sábado">Sábado</option>
+        </select>
 
-        <div class="field">
-          <label>Dia da Folga</label>
-          <select id="dia_folga">
-            <option value=""></option>
-            <option value="Segunda">Segunda</option>
-            <option value="Terça">Terça</option>
-            <option value="Quarta">Quarta</option>
-            <option value="Quinta">Quinta</option>
-            <option value="Sexta">Sexta</option>
-            <option value="Sábado">Sábado</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label>Hora de Entrada</label>
-          <input type="time" id="hora_entrada">
-        </div>
-
-        <div class="field">
-          <label>Hora de Saída</label>
-          <input type="time" id="hora_saida">
-        </div>
-
-        <div class="field">
-          <label>Data de Início</label>
-          <input type="date" id="data_inicio">
-        </div>
-
-        <div class="field">
-          <label>Status</label>
-          <select id="status">
-            <option value=""></option>
-            <option value="Ativo">Ativo</option>
-            <option value="Inativo">Inativo</option>
-          </select>
-        </div>
-
+        <input type="time" id="hora_entrada">
+        <input type="time" id="hora_saida">
+        <input type="date" id="data_inicio">
+        <select id="status">
+          <option value="Ativo">Ativo</option>
+          <option value="Inativo">Inativo</option>
+        </select>
       </div>
     </div>
 
@@ -219,6 +232,9 @@ const supabaseClient = supabase.createClient(
 let cpfAtual = null;
 
 const campos = [
+ "nome_completo","nome_profissional","cpf","rg","nascimento","email",
+ "tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
+ "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
  "tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status"
 ];
 
@@ -239,9 +255,103 @@ function setForm(data){
   });
 }
 
+async function carregar(){
+  const { data } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissional,status")
+    .order("nome_profissional");
+
+  const tbody=document.getElementById("lista");
+  tbody.innerHTML="";
+
+  data.forEach(t=>{
+    tbody.innerHTML+=`
+      <tr>
+        <td>${t.nome_profissional}</td>
+        <td>${t.cpf}</td>
+        <td>${t.status}</td>
+        <td>
+          <button onclick="editar('${t.cpf}')">Editar</button>
+          <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+        </td>
+      </tr>`;
+  });
+}
+
+function abrirNovo(){
+  cpfAtual=null;
+  campos.forEach(c=>document.getElementById(c).value="");
+  document.getElementById("cpf").disabled=false;
+  document.getElementById("modal").style.display="flex";
+}
+
+async function editar(cpf){
+  cpfAtual=cpf;
+
+  const { data,error }=await supabaseClient
+    .from("terapeutas")
+    .select("*")
+    .eq("cpf",cpf)
+    .single();
+
+  if(error){
+    alert("Erro ao carregar");
+    console.error(error);
+    return;
+  }
+
+  setForm(data);
+  document.getElementById("cpf").disabled=true;
+  document.getElementById("modal").style.display="flex";
+}
+
+async function salvar(){
+  const payload=getPayload();
+
+  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
+    alert("Preencha os campos obrigatórios");
+    return;
+  }
+
+  let error;
+
+  if(cpfAtual){
+    delete payload.cpf;
+    ({ error }=await supabaseClient
+      .from("terapeutas")
+      .update(payload)
+      .eq("cpf",cpfAtual));
+  }else{
+    if(!payload.cpf){
+      alert("CPF é obrigatório");
+      return;
+    }
+    ({ error }=await supabaseClient
+      .from("terapeutas")
+      .insert(payload));
+  }
+
+  if(error){
+    console.error(error);
+    alert("Erro ao salvar");
+    return;
+  }
+
+  fecharModal();
+  carregar();
+}
+
+async function excluir(cpf){
+  if(!confirm("Excluir terapeuta?")) return;
+  await supabaseClient.from("terapeutas").delete().eq("cpf",cpf);
+  carregar();
+}
+
 function fecharModal(){
   document.getElementById("modal").style.display="none";
 }
+
+carregar();
 </script>
 
 </body>

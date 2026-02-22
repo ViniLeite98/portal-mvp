@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Clientes | Hara Spa</title>
 
-<link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -30,63 +29,10 @@ th,td {
   padding:12px;
   border-bottom:1px solid #e5e7eb;
   font-size:14px;
+  text-align:left;
 }
 
 th { background:#f9fafb; font-weight:600; }
-
-button {
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
-}
-
-button.excluir { background:#dc2626; }
-
-.top-actions {
-  display:flex;
-  justify-content:flex-end;
-  margin-bottom:16px;
-}
-
-.modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
-}
-
-.modal-content {
-  background:#fff;
-  width:600px;
-  border-radius:16px;
-  padding:24px;
-}
-
-.grid {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
-}
-
-input, select {
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-  width:100%;
-}
-
-.modal-actions {
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:20px;
-}
 </style>
 </head>
 
@@ -99,10 +45,6 @@ input, select {
   <main class="content">
     <h1>Clientes</h1>
 
-    <div class="top-actions">
-      <button onclick="abrirNovo()">+ Novo Cliente</button>
-    </div>
-
     <table>
       <thead>
         <tr>
@@ -110,138 +52,46 @@ input, select {
           <th>Telefone</th>
           <th>Email</th>
           <th>Status</th>
-          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="lista"></tbody>
     </table>
+
   </main>
 
-</div>
-
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-
-    <div class="grid">
-      <input id="nome" placeholder="Nome *">
-      <input id="telefone" placeholder="Telefone">
-      <input id="email" placeholder="Email">
-      <select id="status">
-        <option value="Ativo">Ativo</option>
-        <option value="Inativo">Inativo</option>
-      </select>
-    </div>
-
-    <div class="modal-actions">
-      <button onclick="fecharModal()">Cancelar</button>
-      <button onclick="salvar()">Salvar</button>
-    </div>
-
-  </div>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 const supabaseClient = supabase.createClient(
-  "SUA_URL_SUPABASE",
-  "SUA_PUBLIC_ANON_KEY"
+  "COLE_AQUI_SUA_URL",
+  "COLE_AQUI_SUA_PUBLIC_ANON_KEY"
 );
-
-let idAtual = null;
 
 async function carregar(){
   const { data, error } = await supabaseClient
     .from("clientes")
-    .select("*")
-    .order("nome");
+    .select("*");
 
   if(error){
-    console.error(error);
+    console.error("Erro:", error);
     return;
   }
 
-  const tbody=document.getElementById("lista");
-  tbody.innerHTML="";
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
 
-  data.forEach(c=>{
-    tbody.innerHTML+=`
+  data.forEach(cliente => {
+    tbody.innerHTML += `
       <tr>
-        <td>${c.nome}</td>
-        <td>${c.telefone || ""}</td>
-        <td>${c.email || ""}</td>
-        <td>${c.status || ""}</td>
-        <td>
-          <button onclick="editar('${c.id}')">Editar</button>
-          <button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
-        </td>
-      </tr>`;
+        <td>${cliente.nome || ""}</td>
+        <td>${cliente.telefone || ""}</td>
+        <td>${cliente.email || ""}</td>
+        <td>${cliente.status || ""}</td>
+      </tr>
+    `;
   });
-}
-
-function abrirNovo(){
-  idAtual=null;
-  document.getElementById("nome").value="";
-  document.getElementById("telefone").value="";
-  document.getElementById("email").value="";
-  document.getElementById("status").value="Ativo";
-  document.getElementById("modal").style.display="flex";
-}
-
-async function editar(id){
-  idAtual=id;
-
-  const { data, error } = await supabaseClient
-    .from("clientes")
-    .select("*")
-    .eq("id",id)
-    .single();
-
-  if(error){
-    console.error(error);
-    return;
-  }
-
-  document.getElementById("nome").value=data.nome || "";
-  document.getElementById("telefone").value=data.telefone || "";
-  document.getElementById("email").value=data.email || "";
-  document.getElementById("status").value=data.status || "Ativo";
-
-  document.getElementById("modal").style.display="flex";
-}
-
-async function salvar(){
-  const payload={
-    nome:document.getElementById("nome").value,
-    telefone:document.getElementById("telefone").value,
-    email:document.getElementById("email").value,
-    status:document.getElementById("status").value
-  };
-
-  if(!payload.nome){
-    alert("Nome é obrigatório");
-    return;
-  }
-
-  if(idAtual){
-    await supabaseClient.from("clientes").update(payload).eq("id",idAtual);
-  }else{
-    await supabaseClient.from("clientes").insert(payload);
-  }
-
-  fecharModal();
-  carregar();
-}
-
-async function excluir(id){
-  if(!confirm("Excluir cliente?")) return;
-  await supabaseClient.from("clientes").delete().eq("id",id);
-  carregar();
-}
-
-function fecharModal(){
-  document.getElementById("modal").style.display="none";
 }
 
 carregar();

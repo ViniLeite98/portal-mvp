@@ -1,92 +1,10 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Certificações | Hara Spa</title>
-
-<link rel="stylesheet" href="/assets/sidebar/sidebar.css">
-
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="/assets/js/supabase.js"></script>
 
-<style>
-.app { display:flex; min-height:100vh; }
-.content { flex:1; padding:30px; }
-
-.form-box {
-  display:flex;
-  gap:10px;
-  margin-bottom:20px;
-}
-
-select, button {
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-
-button {
-  background:#111;
-  color:#fff;
-  cursor:pointer;
-}
-
-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-}
-
-th, td {
-  padding:10px;
-  border-bottom:1px solid #eee;
-}
-
-.remover {
-  background:#b00020;
-  color:white;
-}
-</style>
-</head>
-<body>
-
-<div class="app">
-
-<!-- SIDEBAR FIXO -->
-<div id="sidebar"></div>
-
-<div class="content">
-
-<h2>Vincular Certificação</h2>
-
-<div class="form-box">
-  <select id="selectEquipe">
-    <option value="">Selecione CPF da Atendente</option>
-  </select>
-
-  <select id="selectCertificacao">
-    <option value="">Selecione Certificação</option>
-  </select>
-
-  <button onclick="vincular()">Cadastrar</button>
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Nome</th>
-<th>CPF</th>
-<th>Certificação</th>
-<th>Ação</th>
-</tr>
-</thead>
-<tbody id="tabelaCertificacoes"></tbody>
-</table>
-
-</div>
-</div>
-
 <script>
+
+const supabase = window.supabaseClient;
+
 // ================= SIDEBAR =================
 fetch('/assets/sidebar/sidebar.html')
   .then(res => res.text())
@@ -99,7 +17,6 @@ async function carregarEquipe() {
   const { data, error } = await supabase
     .from('equipe')
     .select('id, nome, cpf')
-    .order('nome')
 
   if(error){
     console.error(error)
@@ -118,12 +35,11 @@ async function carregarEquipe() {
   })
 }
 
-// ================= CARREGAR CERTIFICAÇÕES =================
+// ================= CARREGAR CERTIFICACOES =================
 async function carregarCertificacoes() {
   const { data, error } = await supabase
     .from('certificacoes')
     .select('*')
-    .order('nome')
 
   if(error){
     console.error(error)
@@ -157,7 +73,7 @@ async function vincular() {
     .insert([{ equipe_id, certificacao_id }])
 
   if (error) {
-    alert("Essa certificação já está vinculada.")
+    alert("Já vinculada.")
     return
   }
 
@@ -189,9 +105,7 @@ async function carregarTabela() {
         <td>${item.equipe?.cpf}</td>
         <td>${item.certificacao?.nome}</td>
         <td>
-          <button class="remover" onclick="remover('${item.id}')">
-            Remover
-          </button>
+          <button onclick="remover('${item.id}')">Remover</button>
         </td>
       </tr>
     `
@@ -214,6 +128,3 @@ carregarCertificacoes()
 carregarTabela()
 
 </script>
-
-</body>
-</html>

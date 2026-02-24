@@ -21,16 +21,10 @@
   flex-wrap:wrap;
 }
 
-.form-box div {
-  display:flex;
-  flex-direction:column;
-}
-
 select, input {
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
-  min-width:180px;
 }
 
 button {
@@ -41,8 +35,8 @@ button {
   padding:6px 12px;
   cursor:pointer;
 }
-
 button.excluir { background:#dc2626; }
+button.editar { background:#2563eb; }
 
 table {
   width:100%;
@@ -58,9 +52,32 @@ th,td {
   font-size:14px;
   text-align:left;
 }
-th {
-  background:#f9fafb;
-  font-weight:600;
+th { background:#f9fafb; font-weight:600; }
+
+.paginacao {
+  margin-top:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.paginacao button:disabled {
+  opacity:0.5;
+  cursor:not-allowed;
+}
+
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+.modal-content {
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  width:400px;
 }
 </style>
 </head>
@@ -75,17 +92,17 @@ th {
 
     <div class="form-box">
       <div>
-        <label>Terapeuta</label>
+        <label>Terapeuta</label><br>
         <select id="cpf_terapeuta"></select>
       </div>
 
       <div>
-        <label>Certificação</label>
+        <label>Certificação</label><br>
         <select id="certificacao_id"></select>
       </div>
 
       <div>
-        <label>Data</label>
+        <label>Data</label><br>
         <input type="date" id="data_obtencao">
       </div>
 
@@ -104,7 +121,24 @@ th {
       <tbody id="lista"></tbody>
     </table>
 
+    <div class="paginacao">
+      <button id="btnAnterior" onclick="paginaAnterior()">Anterior</button>
+      <span id="infoPagina"></span>
+      <button id="btnProximo" onclick="proximaPagina()">Próxima</button>
+    </div>
+
   </main>
+</div>
+
+<!-- Modal Editar -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Editar Certificação</h3>
+    <input type="date" id="editar_data">
+    <br><br>
+    <button onclick="salvarEdicao()">Salvar</button>
+    <button onclick="fecharModal()">Cancelar</button>
+  </div>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
@@ -115,56 +149,26 @@ const supabaseClient = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-async function carregarSelects(){
+let paginaAtual = 1;
+const limite = 10;
+let totalRegistros = 0;
+let idEdicao = null;
 
-  const { data: terapeutas } = await supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional")
-    .order("nome_profissional");
+async function carregar(){
+  const inicio = (paginaAtual - 1) * limite;
+  const fim = inicio + limite - 1;
 
-  const selectTerapeuta = document.getElementById("cpf_terapeuta");
-  selectTerapeuta.innerHTML = "";
-
-  terapeutas.forEach(t=>{
-    selectTerapeuta.innerHTML += `
-      <option value="${t.cpf}">
-        ${t.nome_profissional} (${t.cpf})
-      </option>
-    `;
-  });
-
-  const { data: certificacoes } = await supabaseClient
-    .from("certificacoes")
-    .select("*")
-    .order("nome");
-
-  const selectCert = document.getElementById("certificacao_id");
-  selectCert.innerHTML = "";
-
-  certificacoes.forEach(c=>{
-    selectCert.innerHTML += `
-      <option value="${c.id}">
-        ${c.nome}
-      </option>
-    `;
-  });
-}
-
-async function carregarLista(){
-
-  const { data, error } = await supabaseClient
+  const { data, count } = await supabaseClient
     .from("terapeuta_certificacoes")
     .select(`
       id,
       data_obtencao,
       terapeutas(nome_profissional),
       certificacoes(nome)
-    `);
+    `, { count: "exact" })
+    .range(inicio, fim);
 
-  if(error){
-    alert(error.message);
-    return;
-  }
+  totalRegistros = count;
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
@@ -172,56 +176,69 @@ async function carregarLista(){
   data.forEach(item=>{
     tbody.innerHTML += `
       <tr>
-        <td>${item.terapeutas?.nome_profissional || ""}</td>
-        <td>${item.certificacoes?.nome || ""}</td>
+        <td>${item.terapeutas?.nome_profissional}</td>
+        <td>${item.certificacoes?.nome}</td>
         <td>${item.data_obtencao || ""}</td>
         <td>
-          <button class="excluir" onclick="excluir('${item.id}')">
-            Excluir
-          </button>
+          <button class="editar" onclick="abrirEditar('${item.id}','${item.data_obtencao || ""}')">Editar</button>
+          <button class="excluir" onclick="excluir('${item.id}')">Excluir</button>
         </td>
       </tr>
     `;
   });
+
+  atualizarPaginacao();
 }
 
-async function vincular(){
+function atualizarPaginacao(){
+  const totalPaginas = Math.ceil(totalRegistros / limite);
+  document.getElementById("infoPagina").innerText =
+    `Página ${paginaAtual} de ${totalPaginas}`;
 
-  const payload = {
-    cpf_terapeuta: document.getElementById("cpf_terapeuta").value,
-    certificacao_id: document.getElementById("certificacao_id").value,
-    data_obtencao: document.getElementById("data_obtencao").value || null
-  };
+  document.getElementById("btnAnterior").disabled = paginaAtual === 1;
+  document.getElementById("btnProximo").disabled = paginaAtual === totalPaginas;
+}
 
-  const { error } = await supabaseClient
-    .from("terapeuta_certificacoes")
-    .insert(payload);
+function proximaPagina(){
+  paginaAtual++;
+  carregar();
+}
 
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  carregarLista();
+function paginaAnterior(){
+  paginaAtual--;
+  carregar();
 }
 
 async function excluir(id){
-
-  const { error } = await supabaseClient
+  await supabaseClient
     .from("terapeuta_certificacoes")
     .delete()
     .eq("id", id);
 
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  carregarLista();
+  carregar();
 }
 
-carregarSelects();
-carregarLista();
+function abrirEditar(id,data){
+  idEdicao = id;
+  document.getElementById("editar_data").value = data || "";
+  document.getElementById("modal").style.display = "flex";
+}
+
+async function salvarEdicao(){
+  await supabaseClient
+    .from("terapeuta_certificacoes")
+    .update({ data_obtencao: document.getElementById("editar_data").value })
+    .eq("id", idEdicao);
+
+  fecharModal();
+  carregar();
+}
+
+function fecharModal(){
+  document.getElementById("modal").style.display = "none";
+}
+
+carregar();
 </script>
 
 </body>

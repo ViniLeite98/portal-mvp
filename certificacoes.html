@@ -11,20 +11,27 @@
 .app { display:flex; min-height:100vh; }
 .content { flex:1; padding:30px; margin-left:260px; background:#f5f7fb; }
 
-table {
-  width:100%;
-  border-collapse:collapse;
+.form-box {
   background:#fff;
-  border-radius:14px;
-  overflow:hidden;
+  padding:20px;
+  border-radius:12px;
+  display:flex;
+  gap:20px;
+  align-items:end;
+  flex-wrap:wrap;
 }
-th,td {
-  padding:12px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
+
+.form-box div {
+  display:flex;
+  flex-direction:column;
 }
-th { background:#f9fafb; font-weight:600; }
+
+select, input {
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  min-width:180px;
+}
 
 button {
   background:#1f2937;
@@ -34,47 +41,26 @@ button {
   padding:6px 12px;
   cursor:pointer;
 }
+
 button.excluir { background:#dc2626; }
 
-.top-actions {
-  display:flex;
-  justify-content:flex-end;
-  margin-bottom:16px;
-}
-
-.modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
-}
-.modal-content {
-  background:#fff;
-  width:700px;
-  max-height:90vh;
-  overflow:auto;
-  border-radius:16px;
-  padding:24px;
-}
-.grid {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
-}
-input, textarea {
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
+table {
   width:100%;
-}
-.modal-actions {
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden;
   margin-top:20px;
+}
+th,td {
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
+  font-size:14px;
+  text-align:left;
+}
+th {
+  background:#f9fafb;
+  font-weight:600;
 }
 </style>
 </head>
@@ -87,43 +73,38 @@ input, textarea {
   <main class="content">
     <h1>Certificações</h1>
 
-    <div class="top-actions">
-      <button onclick="abrirNovo()">+ Nova Certificação</button>
+    <div class="form-box">
+      <div>
+        <label>Terapeuta</label>
+        <select id="cpf_terapeuta"></select>
+      </div>
+
+      <div>
+        <label>Certificação</label>
+        <select id="certificacao_id"></select>
+      </div>
+
+      <div>
+        <label>Data</label>
+        <input type="date" id="data_obtencao">
+      </div>
+
+      <button onclick="vincular()">Vincular</button>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Nome</th>
-          <th>Instituição</th>
+          <th>Terapeuta</th>
+          <th>Certificação</th>
           <th>Data</th>
           <th>Ações</th>
         </tr>
       </thead>
       <tbody id="lista"></tbody>
     </table>
+
   </main>
-</div>
-
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h3>Cadastro Certificação</h3>
-
-    <div class="grid">
-      <input id="nome" placeholder="Nome da certificação">
-      <input id="instituicao" placeholder="Instituição">
-      <input type="date" id="data_conclusao">
-      <input type="number" id="carga_horaria" placeholder="Carga horária (h)">
-    </div>
-
-    <textarea id="descricao" placeholder="Descrição" style="margin-top:12px;"></textarea>
-
-    <div class="modal-actions">
-      <button onclick="fecharModal()">Cancelar</button>
-      <button onclick="salvar()">Salvar</button>
-    </div>
-  </div>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
@@ -131,124 +112,116 @@ input, textarea {
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let idAtual = null;
+async function carregarSelects(){
 
-const campos = [
-  "nome","instituicao","data_conclusao",
-  "carga_horaria","descricao"
-];
+  const { data: terapeutas } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissional")
+    .order("nome_profissional");
 
-function getPayload(){
-  const obj = {};
-  campos.forEach(c => {
-    const el = document.getElementById(c);
-    if(el.value !== "") obj[c] = el.value;
+  const selectTerapeuta = document.getElementById("cpf_terapeuta");
+  selectTerapeuta.innerHTML = "";
+
+  terapeutas.forEach(t=>{
+    selectTerapeuta.innerHTML += `
+      <option value="${t.cpf}">
+        ${t.nome_profissional} (${t.cpf})
+      </option>
+    `;
   });
-  return obj;
-}
 
-function setForm(data){
-  campos.forEach(c => {
-    document.getElementById(c).value = data[c] || "";
-  });
-}
-
-async function carregar(){
-  const { data, error } = await supabaseClient
+  const { data: certificacoes } = await supabaseClient
     .from("certificacoes")
     .select("*")
-    .order("id");
+    .order("nome");
 
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+  const selectCert = document.getElementById("certificacao_id");
+  selectCert.innerHTML = "";
+
+  certificacoes.forEach(c=>{
+    selectCert.innerHTML += `
+      <option value="${c.id}">
+        ${c.nome}
+      </option>
+    `;
+  });
+}
+
+async function carregarLista(){
+
+  const { data, error } = await supabaseClient
+    .from("terapeuta_certificacoes")
+    .select(`
+      id,
+      data_obtencao,
+      terapeutas(nome_profissional),
+      certificacoes(nome)
+    `);
 
   if(error){
     alert(error.message);
     return;
   }
 
-  data.forEach(c => {
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  data.forEach(item=>{
     tbody.innerHTML += `
       <tr>
-        <td>${c.nome || ""}</td>
-        <td>${c.instituicao || ""}</td>
-        <td>${c.data_conclusao || ""}</td>
+        <td>${item.terapeutas?.nome_profissional || ""}</td>
+        <td>${item.certificacoes?.nome || ""}</td>
+        <td>${item.data_obtencao || ""}</td>
         <td>
-          <button onclick="editar(${c.id})">Editar</button>
-          <button class="excluir" onclick="excluir(${c.id})">Excluir</button>
+          <button class="excluir" onclick="excluir('${item.id}')">
+            Excluir
+          </button>
         </td>
       </tr>
     `;
   });
 }
 
-function abrirNovo(){
-  idAtual = null;
-  campos.forEach(c => document.getElementById(c).value = "");
-  document.getElementById("modal").style.display = "flex";
-}
+async function vincular(){
 
-async function editar(id){
-  idAtual = id;
+  const payload = {
+    cpf_terapeuta: document.getElementById("cpf_terapeuta").value,
+    certificacao_id: document.getElementById("certificacao_id").value,
+    data_obtencao: document.getElementById("data_obtencao").value || null
+  };
 
-  const { data, error } = await supabaseClient
-    .from("certificacoes")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { error } = await supabaseClient
+    .from("terapeuta_certificacoes")
+    .insert(payload);
 
   if(error){
     alert(error.message);
     return;
   }
 
-  setForm(data);
-  document.getElementById("modal").style.display = "flex";
-}
-
-async function salvar(){
-  const payload = getPayload();
-  let error;
-
-  if(idAtual){
-    ({ error } = await supabaseClient
-      .from("certificacoes")
-      .update(payload)
-      .eq("id", idAtual));
-  } else {
-    ({ error } = await supabaseClient
-      .from("certificacoes")
-      .insert(payload));
-  }
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  fecharModal();
-  carregar();
+  carregarLista();
 }
 
 async function excluir(id){
-  if(!confirm("Excluir certificação?")) return;
 
-  await supabaseClient
-    .from("certificacoes")
+  const { error } = await supabaseClient
+    .from("terapeuta_certificacoes")
     .delete()
     .eq("id", id);
 
-  carregar();
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  carregarLista();
 }
 
-function fecharModal(){
-  document.getElementById("modal").style.display = "none";
-}
-
-carregar();
+carregarSelects();
+carregarLista();
 </script>
 
 </body>

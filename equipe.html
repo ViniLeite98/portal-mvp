@@ -11,8 +11,6 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-
-/* RESET */
 * { box-sizing:border-box; }
 
 body {
@@ -26,26 +24,14 @@ body {
   min-height:100vh;
 }
 
-/* SIDEBAR FIXA */
 #sidebar {
   width:260px;
   flex-shrink:0;
 }
 
-/* CONTEÚDO PADRÃO */
 .content {
   flex:1;
   padding:40px;
-}
-
-/* TÍTULOS */
-.content h1 {
-  margin-bottom:6px;
-}
-
-.content p {
-  margin-bottom:20px;
-  color:#555;
 }
 
 /* TABELA */
@@ -128,7 +114,6 @@ input, select {
   gap:10px;
   margin-top:20px;
 }
-
 </style>
 </head>
 
@@ -139,7 +124,6 @@ input, select {
   <aside id="sidebar"></aside>
 
   <main class="content">
-
     <h1>Gestão da Equipe</h1>
     <p>Terapeutas cadastradas</p>
 
@@ -158,12 +142,10 @@ input, select {
       </thead>
       <tbody id="lista"></tbody>
     </table>
-
   </main>
 
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
 
@@ -176,79 +158,6 @@ input, select {
         <input id="rg" placeholder="RG">
         <input type="date" id="nascimento">
         <input id="email" placeholder="Email *">
-        <select id="tipo_sanguineo">
-          <option value="">Tipo Sanguíneo</option>
-          <option>A+</option><option>A-</option>
-          <option>B+</option><option>B-</option>
-          <option>AB+</option><option>AB-</option>
-          <option>O+</option><option>O-</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Contatos</h3>
-      <div class="grid">
-        <input id="telefone" placeholder="Telefone *">
-        <input id="telefone_emer" placeholder="Contato Emergência">
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Endereço</h3>
-      <div class="grid">
-        <input id="cep" placeholder="CEP">
-        <input id="rua" placeholder="Rua">
-        <input id="numero" placeholder="Número">
-        <input id="complemento" placeholder="Complemento">
-        <input id="bairro" placeholder="Bairro">
-        <input id="cidade" placeholder="Cidade">
-        <input id="uf" placeholder="UF">
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Dados de Pagamento</h3>
-      <div class="grid">
-        <select id="pix_tipo">
-          <option value="">Tipo Chave PIX</option>
-          <option>CPF</option>
-          <option>Email</option>
-          <option>Telefone</option>
-          <option>Aleatória</option>
-        </select>
-        <input id="pix_chave" placeholder="Chave PIX">
-      </div>
-    </div>
-
-    <div class="section">
-      <h3>Dados Funcionais</h3>
-      <div class="grid">
-        <select id="tem_folga">
-          <option value="" disabled hidden>Tem folga semanal?</option>
-          <option value="Sim">Sim</option>
-          <option value="Não">Não</option>
-        </select>
-
-        <select id="dia_folga">
-          <option value="" disabled hidden>Dia da Folga</option>
-          <option>Segunda</option>
-          <option>Terça</option>
-          <option>Quarta</option>
-          <option>Quinta</option>
-          <option>Sexta</option>
-          <option>Sábado</option>
-        </select>
-
-        <input type="time" id="hora_entrada">
-        <input type="time" id="hora_saida">
-        <input type="date" id="data_inicio">
-
-        <select id="status">
-          <option value="" disabled hidden>Status</option>
-          <option>Ativo</option>
-          <option>Inativo</option>
-        </select>
       </div>
     </div>
 
@@ -262,9 +171,137 @@ input, select {
 
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- SEU SCRIPT ORIGINAL CONTINUA IGUAL AQUI -->
 <script>
-/* Mantive exatamente seu JS original */
+const supabaseClient = supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
+
+let cpfAtual = null;
+
+async function carregar(){
+  const { data, error } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissional,status")
+    .order("nome_profissional");
+
+  if(error){
+    console.error(error);
+    alert("Erro ao carregar terapeutas");
+    return;
+  }
+
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  if(!data) return;
+
+  data.forEach(t=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${t.nome_profissional || ""}</td>
+        <td>${t.cpf || ""}</td>
+        <td>${t.status || ""}</td>
+        <td>
+          <button onclick="editar('${t.cpf}')">Editar</button>
+          <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+        </td>
+      </tr>`;
+  });
+}
+
+function abrirNovo(){
+  cpfAtual = null;
+  document.getElementById("nome_completo").value="";
+  document.getElementById("nome_profissional").value="";
+  document.getElementById("cpf").value="";
+  document.getElementById("email").value="";
+  document.getElementById("cpf").disabled=false;
+  document.getElementById("modal").style.display="flex";
+}
+
+async function editar(cpf){
+  cpfAtual = cpf;
+
+  const { data, error } = await supabaseClient
+    .from("terapeutas")
+    .select("*")
+    .eq("cpf",cpf)
+    .single();
+
+  if(error){
+    alert("Erro ao carregar terapeuta");
+    console.error(error);
+    return;
+  }
+
+  document.getElementById("nome_completo").value=data.nome_completo || "";
+  document.getElementById("nome_profissional").value=data.nome_profissional || "";
+  document.getElementById("cpf").value=data.cpf || "";
+  document.getElementById("email").value=data.email || "";
+
+  document.getElementById("cpf").disabled=true;
+  document.getElementById("modal").style.display="flex";
+}
+
+async function salvar(){
+  const payload = {
+    nome_completo: document.getElementById("nome_completo").value,
+    nome_profissional: document.getElementById("nome_profissional").value,
+    cpf: document.getElementById("cpf").value,
+    email: document.getElementById("email").value
+  };
+
+  if(!payload.nome_completo || !payload.nome_profissional || !payload.email){
+    alert("Preencha os campos obrigatórios");
+    return;
+  }
+
+  let error;
+
+  if(cpfAtual){
+    delete payload.cpf;
+    ({ error } = await supabaseClient
+      .from("terapeutas")
+      .update(payload)
+      .eq("cpf",cpfAtual));
+  } else {
+    ({ error } = await supabaseClient
+      .from("terapeutas")
+      .insert(payload));
+  }
+
+  if(error){
+    console.error(error);
+    alert("Erro ao salvar");
+    return;
+  }
+
+  fecharModal();
+  carregar();
+}
+
+async function excluir(cpf){
+  if(!confirm("Excluir terapeuta?")) return;
+
+  const { error } = await supabaseClient
+    .from("terapeutas")
+    .delete()
+    .eq("cpf",cpf);
+
+  if(error){
+    alert("Erro ao excluir");
+    return;
+  }
+
+  carregar();
+}
+
+function fecharModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+carregar();
 </script>
 
 </body>

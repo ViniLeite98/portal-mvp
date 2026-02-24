@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Gerenciar Usuários | Hara Spa</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+  font-family:Arial;
+  background:#f4f4f4;
+  padding:40px;
+}
+
+h2{ margin-bottom:20px; }
+
+table{
+  width:100%;
+  background:white;
+  border-collapse:collapse;
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+th, td{
+  padding:12px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+}
+
+button{
+  padding:6px 10px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+.salvar{ background:#2b7cff; color:white; }
+.desativar{ background:#e74c3c; color:white; }
+</style>
+</head>
+<body>
+
+<h2>Gerenciar Usuários</h2>
+
+<table>
+<thead>
+<tr>
+<th>Email</th>
+<th>Perfil</th>
+<th>Ativo</th>
+<th>Ação</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+<script>
+const supabaseClient = supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
+
+async function verificarAdmin(){
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  if(!user){
+    window.location.href = "/login.html";
+    return;
+  }
+
+  if(user.email !== "viniciusleitesouza_1998@hotmail.com"){
+    alert("Acesso restrito.");
+    window.location.href = "/index.html";
+    return;
+  }
+}
+
+async function carregar(){
+  const { data, error } = await supabaseClient
+    .from("usuarios")
+    .select("id, perfil, ativo");
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  for(const u of data){
+
+    const { data: userAuth } = await supabaseClient
+      .from("auth.users")
+      .select("email")
+      .eq("id", u.id)
+      .single();
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${userAuth?.email || "-"}</td>
+        <td>
+          <select id="perfil-${u.id}">
+            <option value="admin" ${u.perfil==="admin"?"selected":""}>Admin</option>
+            <option value="gestor" ${u.perfil==="gestor"?"selected":""}>Gestor</option>
+            <option value="colaborador" ${u.perfil==="colaborador"?"selected":""}>Colaborador</option>
+          </select>
+        </td>
+        <td>${u.ativo ? "Sim" : "Não"}</td>
+        <td>
+          <button class="salvar" onclick="salvar('${u.id}')">Salvar</button>
+        </td>
+      </tr>
+    `;
+  }
+}
+
+async function salvar(id){
+  const perfil = document.getElementById(`perfil-${id}`).value;
+
+  const { error } = await supabaseClient
+    .from("usuarios")
+    .update({ perfil })
+    .eq("id", id);
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  alert("Atualizado!");
+  carregar();
+}
+
+(async () => {
+  await verificarAdmin();
+  carregar();
+})();
+</script>
+
+</body>
+</html>

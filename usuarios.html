@@ -7,17 +7,35 @@
 
 <style>
 body{
-  font-family:Arial;
+  font-family: Arial;
   background:#f4f4f4;
   padding:40px;
 }
 
-h2{ margin-bottom:20px; }
+h2{ margin-bottom:10px; }
+h3{ margin-top:30px; }
+
+input, select{
+  padding:8px;
+  margin-right:10px;
+  margin-bottom:10px;
+}
+
+button{
+  padding:8px 12px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+.criar{ background:#2b7cff; color:white; }
+.salvar{ background:#27ae60; color:white; }
 
 table{
   width:100%;
   background:white;
   border-collapse:collapse;
+  margin-top:20px;
   box-shadow:0 4px 12px rgba(0,0,0,0.08);
 }
 
@@ -26,20 +44,24 @@ th, td{
   border-bottom:1px solid #eee;
   text-align:left;
 }
-
-button{
-  padding:6px 10px;
-  border:none;
-  border-radius:4px;
-  cursor:pointer;
-}
-
-.salvar{ background:#2b7cff; color:white; }
 </style>
 </head>
 <body>
 
 <h2>Gerenciar Usuários</h2>
+
+<h3>Criar Novo Usuário</h3>
+
+<input type="email" id="novo-email" placeholder="Email">
+<input type="password" id="novo-senha" placeholder="Senha">
+<select id="novo-perfil">
+  <option value="colaborador">Colaborador</option>
+  <option value="gestor">Gestor</option>
+  <option value="admin">Admin</option>
+</select>
+<button class="criar" onclick="criarUsuario()">Criar</button>
+
+<hr style="margin:30px 0;">
 
 <table>
 <thead>
@@ -59,6 +81,8 @@ const supabaseClient = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
+const ADMIN_EMAIL = "viniciusleitesouza_1998@hotmail.com";
+
 async function verificarAdmin(){
   const { data: { user } } = await supabaseClient.auth.getUser();
 
@@ -67,7 +91,7 @@ async function verificarAdmin(){
     return;
   }
 
-  if(user.email !== "viniciusleitesouza_1998@hotmail.com"){
+  if(user.email !== ADMIN_EMAIL){
     alert("Acesso restrito.");
     window.location.href = "/index.html";
     return;
@@ -90,7 +114,7 @@ async function carregar(){
   data.forEach(u => {
     tbody.innerHTML += `
       <tr>
-        <td>${u.email || "-"}</td>
+        <td>${u.email}</td>
         <td>
           <select id="perfil-${u.id}">
             <option value="admin" ${u.perfil==="admin"?"selected":""}>Admin</option>
@@ -121,6 +145,47 @@ async function salvar(id){
   }
 
   alert("Atualizado!");
+  carregar();
+}
+
+async function criarUsuario(){
+  const email = document.getElementById("novo-email").value;
+  const senha = document.getElementById("novo-senha").value;
+  const perfil = document.getElementById("novo-perfil").value;
+
+  if(!email || !senha){
+    alert("Preencha email e senha");
+    return;
+  }
+
+  const { data, error } = await supabaseClient.auth.signUp({
+    email,
+    password: senha
+  });
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  const userId = data.user.id;
+
+  const { error: error2 } = await supabaseClient
+    .from("usuarios")
+    .insert({
+      id: userId,
+      nome: email,
+      email: email,
+      perfil: perfil,
+      ativo: true
+    });
+
+  if(error2){
+    alert(error2.message);
+    return;
+  }
+
+  alert("Usuário criado com sucesso!");
   carregar();
 }
 

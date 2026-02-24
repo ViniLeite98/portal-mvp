@@ -2,137 +2,79 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Clientes | Hara Spa</title>
-
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<title>Login | Hara Spa</title>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-.app { display:flex; min-height:100vh; }
-.content { flex:1; padding:30px; margin-left:260px; background:#f5f7fb; }
-
-table {
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-}
-th,td {
-  padding:12px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
-}
-th { background:#f9fafb; font-weight:600; }
-
-button {
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
-}
-button.excluir { background:#dc2626; }
-
-.modal {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
+body{
+  font-family: Arial;
+  background:#f4f4f4;
+  display:flex;
   justify-content:center;
-  z-index:10;
+  align-items:center;
+  height:100vh;
 }
-.modal-content {
-  background:#fff;
-  width:800px;
-  max-height:90vh;
-  overflow:auto;
-  border-radius:16px;
-  padding:24px;
+
+.card{
+  background:white;
+  padding:30px;
+  border-radius:8px;
+  width:320px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
 }
-.grid {
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:12px;
+
+h2{
+  margin-bottom:20px;
+  text-align:center;
 }
-input, textarea {
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
+
+input{
   width:100%;
+  padding:10px;
+  margin-bottom:12px;
+  border:1px solid #ddd;
+  border-radius:4px;
 }
-.modal-actions {
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:20px;
+
+button{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+  margin-bottom:10px;
 }
-.top-bar {
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:16px;
+
+.login{
+  background:#2b7cff;
+  color:white;
 }
-.logout-btn {
-  background:#ef4444;
+
+.cadastro{
+  background:#444;
+  color:white;
+}
+
+.msg{
+  text-align:center;
+  margin-top:10px;
+  font-size:14px;
 }
 </style>
 </head>
-
 <body>
 
-<div class="app">
-  <aside id="sidebar"></aside>
+<div class="card">
+  <h2>Hara Spa</h2>
 
-  <main class="content">
-    <h1>Clientes</h1>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Senha">
 
-    <div class="top-bar">
-      <button class="logout-btn" onclick="logout()">Sair</button>
-      <button onclick="abrirNovo()">+ Novo Cliente</button>
-    </div>
+  <button class="login" onclick="login()">Entrar</button>
+  <button class="cadastro" onclick="cadastrar()">Criar Conta</button>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Nome</th>
-          <th>Telefone</th>
-          <th>Email</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
-  </main>
+  <div class="msg" id="msg"></div>
 </div>
-
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h3>Cadastro Cliente</h3>
-
-    <div class="grid">
-      <input id="nome" placeholder="Nome">
-      <input id="cpf_cnpj" placeholder="CPF/CNPJ">
-      <input id="telefone_1" placeholder="Telefone 1">
-      <input id="telefone_2" placeholder="Telefone 2">
-      <input type="date" id="dt_nasc">
-      <input id="email" placeholder="Email">
-      <input id="nacionalidade" placeholder="Nacionalidade">
-      <input id="endereco" placeholder="Endereço">
-    </div>
-
-    <textarea id="observacao" placeholder="Observação" style="margin-top:12px;"></textarea>
-
-    <div class="modal-actions">
-      <button onclick="fecharModal()">Cancelar</button>
-      <button onclick="salvar()">Salvar</button>
-    </div>
-  </div>
-</div>
-
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 const supabaseClient = supabase.createClient(
@@ -140,135 +82,40 @@ const supabaseClient = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-// 🔐 Verificação de login
-async function verificarLogin(){
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  if(!user){
-    window.location.href = "/login.html";
-  }
-}
-verificarLogin();
+async function login(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
-let idAtual = null;
-
-const campos = [
-  "nome","cpf_cnpj","telefone_1","telefone_2",
-  "dt_nasc","email","nacionalidade","endereco","observacao"
-];
-
-function getPayload(){
-  const obj = {};
-  campos.forEach(c => {
-    const el = document.getElementById(c);
-    if(el.value !== "") obj[c] = el.value;
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email,
+    password
   });
-  return obj;
-}
-
-function setForm(data){
-  campos.forEach(c => {
-    document.getElementById(c).value = data[c] || "";
-  });
-}
-
-async function carregar(){
-  const { data, error } = await supabaseClient
-    .from("clientes")
-    .select("*")
-    .order("id");
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
 
   if(error){
-    alert(error.message);
+    document.getElementById("msg").innerText = error.message;
     return;
   }
 
-  data.forEach(c => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${c.nome || ""}</td>
-        <td>${c.telefone_1 || ""}</td>
-        <td>${c.email || ""}</td>
-        <td>
-          <button onclick="editar(${c.id})">Editar</button>
-          <button class="excluir" onclick="excluir(${c.id})">Excluir</button>
-        </td>
-      </tr>
-    `;
+  window.location.href = "/index.html";
+}
+
+async function cadastrar(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const { error } = await supabaseClient.auth.signUp({
+    email,
+    password
   });
-}
-
-function abrirNovo(){
-  idAtual = null;
-  campos.forEach(c => document.getElementById(c).value = "");
-  document.getElementById("modal").style.display = "flex";
-}
-
-async function editar(id){
-  idAtual = id;
-
-  const { data, error } = await supabaseClient
-    .from("clientes")
-    .select("*")
-    .eq("id", id)
-    .single();
 
   if(error){
-    alert(error.message);
+    document.getElementById("msg").innerText = error.message;
     return;
   }
 
-  setForm(data);
-  document.getElementById("modal").style.display = "flex";
+  document.getElementById("msg").innerText =
+    "Conta criada! Verifique seu email para confirmar.";
 }
-
-async function salvar(){
-  const payload = getPayload();
-  let error;
-
-  if(idAtual){
-    ({ error } = await supabaseClient
-      .from("clientes")
-      .update(payload)
-      .eq("id", idAtual));
-  } else {
-    ({ error } = await supabaseClient
-      .from("clientes")
-      .insert(payload));
-  }
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  fecharModal();
-  carregar();
-}
-
-async function excluir(id){
-  if(!confirm("Excluir cliente?")) return;
-
-  await supabaseClient
-    .from("clientes")
-    .delete()
-    .eq("id", id);
-
-  carregar();
-}
-
-function fecharModal(){
-  document.getElementById("modal").style.display = "none";
-}
-
-async function logout(){
-  await supabaseClient.auth.signOut();
-  window.location.href = "/login.html";
-}
-
-carregar();
 </script>
 
 </body>

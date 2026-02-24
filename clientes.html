@@ -4,21 +4,85 @@
 <meta charset="UTF-8">
 <title>Clientes | Hara Spa</title>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+body { font-family: Arial; background:#f4f4f4; padding:40px; }
+h2 { margin-bottom:20px; }
+
+button {
+  padding:8px 12px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+.novo { background:#2b7cff; color:white; }
+.excluir { background:#e74c3c; color:white; }
+
+table {
+  width:100%;
+  background:white;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th, td {
+  padding:12px;
+  border-bottom:1px solid #ddd;
+  text-align:left;
+}
+
+.modal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal-content {
+  background:white;
+  padding:20px;
+  width:400px;
+  border-radius:8px;
+}
+
+.modal-content input {
+  width:100%;
+  padding:8px;
+  margin-bottom:10px;
+}
+</style>
 </head>
 <body>
 
 <h2>Clientes</h2>
 
-<table border="1">
+<button class="novo" onclick="abrirNovo()">+ Novo Cliente</button>
+
+<table>
 <thead>
 <tr>
 <th>Nome</th>
 <th>Telefone</th>
 <th>Email</th>
+<th>Ações</th>
 </tr>
 </thead>
 <tbody id="lista"></tbody>
 </table>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <input type="text" id="nome" placeholder="Nome">
+    <input type="text" id="telefone_1" placeholder="Telefone">
+    <input type="email" id="email" placeholder="Email">
+
+    <button onclick="salvar()">Salvar</button>
+    <button onclick="fecharModal()">Cancelar</button>
+  </div>
+</div>
 
 <script>
 const supabaseClient = supabase.createClient(
@@ -26,33 +90,13 @@ const supabaseClient = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-async function verificarAdmin(){
-  const { data: { user } } = await supabaseClient.auth.getUser();
-
-  if(!user){
-    window.location.href = "/login.html?redirect=clientes.html";
-    return false;
-  }
-
-  const { data, error } = await supabaseClient
-    .from("usuarios")
-    .select("perfil")
-    .eq("id", user.id)
-    .single();
-
-  if(error || data?.perfil !== "admin"){
-    alert("Acesso restrito.");
-    window.location.href = "/index.html";
-    return false;
-  }
-
-  return true;
-}
+let idAtual = null;
 
 async function carregar(){
   const { data, error } = await supabaseClient
     .from("clientes")
-    .select("*");
+    .select("*")
+    .order("id");
 
   if(error){
     alert(error.message);
@@ -68,17 +112,89 @@ async function carregar(){
         <td>${c.nome || ""}</td>
         <td>${c.telefone_1 || ""}</td>
         <td>${c.email || ""}</td>
+        <td>
+          <button onclick="editar('${c.id}')">Editar</button>
+          <button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
+        </td>
       </tr>
     `;
   });
 }
 
-(async () => {
-  const autorizado = await verificarAdmin();
-  if(autorizado){
-    carregar();
+function abrirNovo(){
+  idAtual = null;
+  document.getElementById("nome").value = "";
+  document.getElementById("telefone_1").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("modal").style.display = "flex";
+}
+
+function fecharModal(){
+  document.getElementById("modal").style.display = "none";
+}
+
+async function editar(id){
+  idAtual = id;
+
+  const { data, error } = await supabaseClient
+    .from("clientes")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if(error){
+    alert(error.message);
+    return;
   }
-})();
+
+  document.getElementById("nome").value = data.nome;
+  document.getElementById("telefone_1").value = data.telefone_1;
+  document.getElementById("email").value = data.email;
+
+  document.getElementById("modal").style.display = "flex";
+}
+
+async function salvar(){
+  const payload = {
+    nome: document.getElementById("nome").value,
+    telefone_1: document.getElementById("telefone_1").value,
+    email: document.getElementById("email").value
+  };
+
+  let error;
+
+  if(idAtual){
+    ({ error } = await supabaseClient
+      .from("clientes")
+      .update(payload)
+      .eq("id", idAtual));
+  } else {
+    ({ error } = await supabaseClient
+      .from("clientes")
+      .insert(payload));
+  }
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  fecharModal();
+  carregar();
+}
+
+async function excluir(id){
+  if(!confirm("Excluir cliente?")) return;
+
+  await supabaseClient
+    .from("clientes")
+    .delete()
+    .eq("id", id);
+
+  carregar();
+}
+
+carregar();
 </script>
 
 </body>

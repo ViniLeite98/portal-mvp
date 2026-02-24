@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Certificações | Hara Spa</title>
+
+<link rel="stylesheet" href="../assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="../assets/js/supabase.js"></script>
+
+<style>
+.app { display:flex; min-height:100vh; }
+.content { flex:1; padding:30px; }
+select, button { padding:8px; margin-right:10px; }
+table { width:100%; margin-top:20px; border-collapse:collapse; }
+th, td { padding:10px; border-bottom:1px solid #ddd; }
+</style>
+</head>
+<body>
+
+<div class="app">
+<div class="content">
+
+<h2>Cadastro de Certificações</h2>
+
+<select id="selectEquipe">
+<option value="">Selecione CPF da Atendente</option>
+</select>
+
+<select id="selectCertificacao">
+<option value="">Selecione Certificação</option>
+</select>
+
+<button onclick="vincularCertificacao()">Cadastrar</button>
+
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>CPF</th>
+<th>Certificação</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+</div>
+</div>
+
+<script>
+
+// carregar equipe
+async function carregarEquipe(){
+  const { data } = await supabase.from('equipe').select('*')
+
+  const select = document.getElementById('selectEquipe')
+  select.innerHTML = '<option value="">Selecione CPF da Atendente</option>'
+
+  data.forEach(e => {
+    select.innerHTML += `
+      <option value="${e.id}">
+        ${e.cpf} - ${e.nome}
+      </option>
+    `
+  })
+}
+
+// carregar certificações
+async function carregarCertificacoes(){
+  const { data } = await supabase.from('certificacoes').select('*')
+
+  const select = document.getElementById('selectCertificacao')
+  select.innerHTML = '<option value="">Selecione Certificação</option>'
+
+  data.forEach(c => {
+    select.innerHTML += `
+      <option value="${c.id}">
+        ${c.nome}
+      </option>
+    `
+  })
+}
+
+// vincular
+async function vincularCertificacao(){
+  const equipe_id = document.getElementById('selectEquipe').value
+  const certificacao_id = document.getElementById('selectCertificacao').value
+
+  if(!equipe_id || !certificacao_id){
+    alert("Selecione os dois campos")
+    return
+  }
+
+  await supabase.from('equipe_certificacoes').insert([
+    { equipe_id, certificacao_id }
+  ])
+
+  carregarLista()
+}
+
+// listar
+async function carregarLista(){
+  const { data } = await supabase
+    .from('equipe_certificacoes')
+    .select(`
+      id,
+      equipe(equipe_id: id, nome, cpf),
+      certificacoes(certificacao_id: id, nome)
+    `)
+
+  const tbody = document.getElementById('lista')
+  tbody.innerHTML = ""
+
+  data.forEach(item => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${item.equipe.nome}</td>
+        <td>${item.equipe.cpf}</td>
+        <td>${item.certificacoes.nome}</td>
+        <td>
+          <button onclick="remover('${item.id}')">Remover</button>
+        </td>
+      </tr>
+    `
+  })
+}
+
+// remover
+async function remover(id){
+  await supabase
+    .from('equipe_certificacoes')
+    .delete()
+    .eq('id', id)
+
+  carregarLista()
+}
+
+carregarEquipe()
+carregarCertificacoes()
+carregarLista()
+
+</script>
+
+</body>
+</html>

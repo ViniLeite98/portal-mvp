@@ -4,14 +4,37 @@
 <meta charset="UTF-8">
 <title>Certificações | Hara Spa</title>
 
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-.app { display:flex; min-height:100vh; }
-.content { flex:1; padding:30px; margin-left:260px; background:#f5f7fb; }
+*{box-sizing:border-box}
 
-.form-box {
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f5f7fb;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+#sidebar{
+  width:260px;
+  flex-shrink:0;
+}
+
+.content{
+  flex:1;
+  padding:40px;
+}
+
+/* FORM */
+.form-box{
   background:#fff;
   padding:20px;
   border-radius:12px;
@@ -19,21 +42,22 @@
   gap:20px;
   align-items:end;
   flex-wrap:wrap;
+  margin-bottom:20px;
 }
 
-.form-box div {
+.form-box div{
   display:flex;
   flex-direction:column;
 }
 
-select, input {
+select,input{
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
-  min-width:180px;
+  min-width:200px;
 }
 
-button {
+button{
   background:#1f2937;
   color:#fff;
   border:none;
@@ -42,25 +66,33 @@ button {
   cursor:pointer;
 }
 
-button.excluir { background:#dc2626; }
+button.excluir{background:#dc2626}
 
-table {
+/* TABELA */
+table{
   width:100%;
   border-collapse:collapse;
   background:#fff;
   border-radius:14px;
   overflow:hidden;
-  margin-top:20px;
 }
-th,td {
-  padding:12px;
+
+th,td{
+  padding:14px;
   border-bottom:1px solid #e5e7eb;
   font-size:14px;
   text-align:left;
 }
-th {
+
+th{
   background:#f9fafb;
   font-weight:600;
+}
+
+.pagination{
+  margin-top:20px;
+  display:flex;
+  gap:8px;
 }
 </style>
 </head>
@@ -71,9 +103,12 @@ th {
   <aside id="sidebar"></aside>
 
   <main class="content">
+
     <h1>Certificações</h1>
+    <p>Vincular certificações às terapeutas</p>
 
     <div class="form-box">
+
       <div>
         <label>Terapeuta</label>
         <select id="cpf_terapeuta"></select>
@@ -90,6 +125,7 @@ th {
       </div>
 
       <button onclick="vincular()">Vincular</button>
+
     </div>
 
     <table>
@@ -104,16 +140,27 @@ th {
       <tbody id="lista"></tbody>
     </table>
 
+    <div class="pagination" id="paginacao"></div>
+
   </main>
 </div>
 
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
+
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
+
+let paginaAtual = 1;
+const porPagina = 10;
+let totalRegistros = 0;
 
 async function carregarSelects(){
 
@@ -152,19 +199,25 @@ async function carregarSelects(){
 
 async function carregarLista(){
 
-  const { data, error } = await supabaseClient
+  const inicio = (paginaAtual-1)*porPagina;
+  const fim = inicio + porPagina - 1;
+
+  const { data, error, count } = await supabaseClient
     .from("terapeuta_certificacoes")
     .select(`
       id,
       data_obtencao,
       terapeutas(nome_profissional),
       certificacoes(nome)
-    `);
+    `,{count:"exact"})
+    .range(inicio,fim);
 
   if(error){
-    alert(error.message);
+    console.error(error);
     return;
   }
+
+  totalRegistros = count;
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
@@ -183,6 +236,27 @@ async function carregarLista(){
       </tr>
     `;
   });
+
+  renderPaginacao();
+}
+
+function renderPaginacao(){
+  const totalPaginas = Math.ceil(totalRegistros/porPagina);
+  const div = document.getElementById("paginacao");
+  div.innerHTML="";
+
+  for(let i=1;i<=totalPaginas;i++){
+    div.innerHTML+=`
+      <button onclick="irPagina(${i})"
+      ${i===paginaAtual?"style='background:#4f6fb3'":""}>
+      ${i}
+      </button>`;
+  }
+}
+
+function irPagina(p){
+  paginaAtual=p;
+  carregarLista();
 }
 
 async function vincular(){
@@ -198,7 +272,8 @@ async function vincular(){
     .insert(payload);
 
   if(error){
-    alert(error.message);
+    console.error(error);
+    alert("Erro ao vincular");
     return;
   }
 
@@ -207,13 +282,15 @@ async function vincular(){
 
 async function excluir(id){
 
+  if(!confirm("Excluir vínculo?")) return;
+
   const { error } = await supabaseClient
     .from("terapeuta_certificacoes")
     .delete()
     .eq("id", id);
 
   if(error){
-    alert(error.message);
+    console.error(error);
     return;
   }
 
@@ -222,6 +299,7 @@ async function excluir(id){
 
 carregarSelects();
 carregarLista();
+
 </script>
 
 </body>

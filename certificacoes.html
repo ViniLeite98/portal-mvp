@@ -1,13 +1,119 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Certificações | Hara Spa</title>
+
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+.app { display:flex; min-height:100vh; }
+.content { flex:1; padding:30px; margin-left:260px; background:#f5f7fb; }
+
+.form-box {
+  background:#fff;
+  padding:20px;
+  border-radius:12px;
+  display:flex;
+  gap:20px;
+  align-items:end;
+  flex-wrap:wrap;
+}
+
+.form-box div {
+  display:flex;
+  flex-direction:column;
+}
+
+select, input {
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  min-width:180px;
+}
+
+button {
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:6px 12px;
+  cursor:pointer;
+}
+
+button.excluir { background:#dc2626; }
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden;
+  margin-top:20px;
+}
+th,td {
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
+  font-size:14px;
+  text-align:left;
+}
+th {
+  background:#f9fafb;
+  font-weight:600;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <aside id="sidebar"></aside>
+
+  <main class="content">
+    <h1>Certificações</h1>
+
+    <div class="form-box">
+      <div>
+        <label>Terapeuta</label>
+        <select id="cpf_terapeuta"></select>
+      </div>
+
+      <div>
+        <label>Certificação</label>
+        <select id="certificacao_id"></select>
+      </div>
+
+      <div>
+        <label>Data</label>
+        <input type="date" id="data_obtencao">
+      </div>
+
+      <button onclick="vincular()">Vincular</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Terapeuta</th>
+          <th>Certificação</th>
+          <th>Data</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
+
+  </main>
+</div>
+
+<script src="assets/sidebar/sidebar.js"></script>
+
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
-
-let paginaAtual = 1;
-const limite = 10;
-let totalRegistros = 0;
-let idEditando = null;
 
 async function carregarSelects(){
 
@@ -46,25 +152,19 @@ async function carregarSelects(){
 
 async function carregarLista(){
 
-  const inicio = (paginaAtual - 1) * limite;
-  const fim = inicio + limite - 1;
-
-  const { data, error, count } = await supabaseClient
+  const { data, error } = await supabaseClient
     .from("terapeuta_certificacoes")
     .select(`
       id,
       data_obtencao,
       terapeutas(nome_profissional),
       certificacoes(nome)
-    `, { count: "exact" })
-    .range(inicio, fim);
+    `);
 
   if(error){
     alert(error.message);
     return;
   }
-
-  totalRegistros = count;
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
@@ -76,83 +176,17 @@ async function carregarLista(){
         <td>${item.certificacoes?.nome || ""}</td>
         <td>${item.data_obtencao || ""}</td>
         <td>
-          <button onclick="editar('${item.id}','${item.data_obtencao || ""}')">Editar</button>
-          <button class="excluir" onclick="excluir('${item.id}')">Excluir</button>
+          <button class="excluir" onclick="excluir('${item.id}')">
+            Excluir
+          </button>
         </td>
       </tr>
     `;
   });
-
-  atualizarPaginacao();
-}
-
-function atualizarPaginacao(){
-  const totalPaginas = Math.ceil(totalRegistros / limite);
-
-  if(!document.getElementById("paginacao")){
-    const div = document.createElement("div");
-    div.id = "paginacao";
-    div.style.marginTop = "15px";
-    div.style.display = "flex";
-    div.style.justifyContent = "space-between";
-    div.innerHTML = `
-      <button onclick="paginaAnterior()" id="btnAnterior">Anterior</button>
-      <span id="infoPagina"></span>
-      <button onclick="proximaPagina()" id="btnProximo">Próxima</button>
-    `;
-    document.querySelector(".content").appendChild(div);
-  }
-
-  document.getElementById("infoPagina").innerText =
-    `Página ${paginaAtual} de ${totalPaginas}`;
-
-  document.getElementById("btnAnterior").disabled = paginaAtual === 1;
-  document.getElementById("btnProximo").disabled = paginaAtual === totalPaginas;
-}
-
-function proximaPagina(){
-  paginaAtual++;
-  carregarLista();
-}
-
-function paginaAnterior(){
-  paginaAtual--;
-  carregarLista();
-}
-
-function editar(id, data){
-  idEditando = id;
-
-  document.getElementById("data_obtencao").value = data || "";
-  document.getElementById("cpf_terapeuta").disabled = true;
-  document.getElementById("certificacao_id").disabled = true;
 }
 
 async function vincular(){
 
-  if(idEditando){
-    // modo edição
-    const { error } = await supabaseClient
-      .from("terapeuta_certificacoes")
-      .update({
-        data_obtencao: document.getElementById("data_obtencao").value || null
-      })
-      .eq("id", idEditando);
-
-    if(error){
-      alert(error.message);
-      return;
-    }
-
-    idEditando = null;
-    document.getElementById("cpf_terapeuta").disabled = false;
-    document.getElementById("certificacao_id").disabled = false;
-    document.getElementById("data_obtencao").value = "";
-    carregarLista();
-    return;
-  }
-
-  // modo inserção
   const payload = {
     cpf_terapeuta: document.getElementById("cpf_terapeuta").value,
     certificacao_id: document.getElementById("certificacao_id").value,
@@ -168,7 +202,6 @@ async function vincular(){
     return;
   }
 
-  document.getElementById("data_obtencao").value = "";
   carregarLista();
 }
 
@@ -190,3 +223,6 @@ async function excluir(id){
 carregarSelects();
 carregarLista();
 </script>
+
+</body>
+</html>

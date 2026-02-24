@@ -36,12 +36,6 @@ button {
 }
 button.excluir { background:#dc2626; }
 
-.top-actions {
-  display:flex;
-  justify-content:flex-end;
-  margin-bottom:16px;
-}
-
 .modal {
   position:fixed;
   inset:0;
@@ -76,6 +70,14 @@ input, textarea {
   gap:10px;
   margin-top:20px;
 }
+.top-bar {
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:16px;
+}
+.logout-btn {
+  background:#ef4444;
+}
 </style>
 </head>
 
@@ -87,7 +89,8 @@ input, textarea {
   <main class="content">
     <h1>Clientes</h1>
 
-    <div class="top-actions">
+    <div class="top-bar">
+      <button class="logout-btn" onclick="logout()">Sair</button>
       <button onclick="abrirNovo()">+ Novo Cliente</button>
     </div>
 
@@ -134,8 +137,17 @@ input, textarea {
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
+
+// 🔐 Verificação de login
+async function verificarLogin(){
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if(!user){
+    window.location.href = "/login.html";
+  }
+}
+verificarLogin();
 
 let idAtual = null;
 
@@ -249,6 +261,11 @@ async function excluir(id){
 
 function fecharModal(){
   document.getElementById("modal").style.display = "none";
+}
+
+async function logout(){
+  await supabaseClient.auth.signOut();
+  window.location.href = "/login.html";
 }
 
 carregar();

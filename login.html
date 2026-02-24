@@ -1,3 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Clientes | Hara Spa</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  margin:0;
+  padding:40px;
+  background:#f4f6f9;
+}
+
+h1{
+  margin-bottom:20px;
+}
+
+button{
+  padding:6px 12px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+.btn-novo{ background:#2b7cff; color:white; }
+.btn-editar{ background:#f39c12; color:white; }
+.btn-excluir{ background:#e74c3c; color:white; }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:white;
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+th, td{
+  padding:10px;
+  border-bottom:1px solid #ddd;
+  text-align:left;
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal-content{
+  background:white;
+  padding:20px;
+  width:400px;
+  border-radius:8px;
+}
+.modal-content input{
+  width:100%;
+  padding:8px;
+  margin-bottom:10px;
+}
+</style>
+</head>
+<body>
+
+<h1>Clientes</h1>
+
+<button class="btn-novo" onclick="abrirNovo()">+ Novo Cliente</button>
+
+<br><br>
+
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>Telefone</th>
+<th>Email</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Cliente</h3>
+    <input type="text" id="nome" placeholder="Nome">
+    <input type="text" id="telefone_1" placeholder="Telefone">
+    <input type="email" id="email" placeholder="Email">
+
+    <button class="btn-novo" onclick="salvar()">Salvar</button>
+    <button onclick="fecharModal()">Cancelar</button>
+  </div>
+</div>
+
 <script>
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
@@ -6,12 +103,7 @@ const supabaseClient = supabase.createClient(
 
 let idAtual = null;
 
-const campos = [
-  "nome","cpf_cnpj","telefone_1","telefone_2",
-  "dt_nasc","email","nacionalidade","endereco","observacao"
-];
-
-// 🔐 PROTEÇÃO DA PÁGINA
+// 🔐 PROTEÇÃO
 async function protegerPagina(){
   const { data: { user } } = await supabaseClient.auth.getUser();
 
@@ -23,22 +115,7 @@ async function protegerPagina(){
   return true;
 }
 
-function getPayload(){
-  const obj = {};
-  campos.forEach(c => {
-    const el = document.getElementById(c);
-    if(el && el.value !== "") obj[c] = el.value;
-  });
-  return obj;
-}
-
-function setForm(data){
-  campos.forEach(c => {
-    const el = document.getElementById(c);
-    if(el) el.value = data[c] || "";
-  });
-}
-
+// 🔄 CARREGAR CLIENTES
 async function carregar(){
   const { data, error } = await supabaseClient
     .from("clientes")
@@ -60,23 +137,28 @@ async function carregar(){
         <td>${c.telefone_1 || ""}</td>
         <td>${c.email || ""}</td>
         <td>
-          <button onclick="editar('${c.id}')">Editar</button>
-          <button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
+          <button class="btn-editar" onclick="editar('${c.id}')">Editar</button>
+          <button class="btn-excluir" onclick="excluir('${c.id}')">Excluir</button>
         </td>
       </tr>
     `;
   });
 }
 
+// ➕ NOVO
 function abrirNovo(){
   idAtual = null;
-  campos.forEach(c => {
-    const el = document.getElementById(c);
-    if(el) el.value = "";
-  });
+  document.getElementById("nome").value = "";
+  document.getElementById("telefone_1").value = "";
+  document.getElementById("email").value = "";
   document.getElementById("modal").style.display = "flex";
 }
 
+function fecharModal(){
+  document.getElementById("modal").style.display = "none";
+}
+
+// ✏ EDITAR
 async function editar(id){
   idAtual = id;
 
@@ -91,12 +173,21 @@ async function editar(id){
     return;
   }
 
-  setForm(data);
+  document.getElementById("nome").value = data.nome;
+  document.getElementById("telefone_1").value = data.telefone_1;
+  document.getElementById("email").value = data.email;
+
   document.getElementById("modal").style.display = "flex";
 }
 
+// 💾 SALVAR
 async function salvar(){
-  const payload = getPayload();
+  const payload = {
+    nome: document.getElementById("nome").value,
+    telefone_1: document.getElementById("telefone_1").value,
+    email: document.getElementById("email").value
+  };
+
   let error;
 
   if(idAtual){
@@ -119,6 +210,7 @@ async function salvar(){
   carregar();
 }
 
+// 🗑 EXCLUIR
 async function excluir(id){
   if(!confirm("Excluir cliente?")) return;
 
@@ -130,16 +222,7 @@ async function excluir(id){
   carregar();
 }
 
-function fecharModal(){
-  document.getElementById("modal").style.display = "none";
-}
-
-async function logout(){
-  await supabaseClient.auth.signOut();
-  window.location.href = "/login.html";
-}
-
-// 🚀 INICIALIZAÇÃO CORRETA
+// 🚀 INICIALIZAÇÃO
 (async () => {
   const ok = await protegerPagina();
   if(ok){
@@ -147,3 +230,6 @@ async function logout(){
   }
 })();
 </script>
+
+</body>
+</html>

@@ -2,120 +2,227 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Login | Hara Spa</title>
+<title>Clientes | Hara Spa</title>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 body{
   font-family: Arial;
   background:#f4f4f4;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+  padding:40px;
 }
 
-.card{
-  background:white;
-  padding:30px;
-  border-radius:8px;
-  width:320px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.1);
-}
-
-h2{
-  margin-bottom:20px;
-  text-align:center;
-}
-
-input{
-  width:100%;
-  padding:10px;
-  margin-bottom:12px;
-  border:1px solid #ddd;
-  border-radius:4px;
-}
+h2{ margin-bottom:20px; }
 
 button{
-  width:100%;
-  padding:10px;
+  padding:8px 12px;
   border:none;
   border-radius:4px;
   cursor:pointer;
-  margin-bottom:10px;
 }
 
-.login{
-  background:#2b7cff;
-  color:white;
+.novo{ background:#2b7cff; color:white; }
+.excluir{ background:#e74c3c; color:white; }
+
+table{
+  width:100%;
+  background:white;
+  border-collapse:collapse;
+  margin-top:20px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.08);
 }
 
-.cadastro{
-  background:#444;
-  color:white;
+th, td{
+  padding:12px;
+  border-bottom:1px solid #eee;
+  text-align:left;
 }
 
-.msg{
-  text-align:center;
-  margin-top:10px;
-  font-size:14px;
+.modal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+
+.modal-content{
+  background:white;
+  padding:20px;
+  width:400px;
+  border-radius:8px;
 }
 </style>
 </head>
 <body>
 
-<div class="card">
-  <h2>Hara Spa</h2>
+<h2>Clientes</h2>
 
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Senha">
+<button class="novo" onclick="abrirNovo()">+ Novo Cliente</button>
 
-  <button class="login" onclick="login()">Entrar</button>
-  <button class="cadastro" onclick="cadastrar()">Criar Conta</button>
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>Telefone</th>
+<th>Email</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
 
-  <div class="msg" id="msg"></div>
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <input type="text" id="nome" placeholder="Nome"><br><br>
+    <input type="text" id="telefone_1" placeholder="Telefone"><br><br>
+    <input type="email" id="email" placeholder="Email"><br><br>
+    <button onclick="salvar()">Salvar</button>
+    <button onclick="fecharModal()">Cancelar</button>
+  </div>
 </div>
 
 <script>
+
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-async function login(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+async function verificarAdmin(){
+  const { data: { user } } = await supabaseClient.auth.getUser();
 
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if(error){
-    document.getElementById("msg").innerText = error.message;
+  if(!user){
+    window.location.href = "/login.html";
     return;
   }
 
-  window.location.href = "/index.html";
+  const { data, error } = await supabaseClient
+    .from("usuarios")
+    .select("perfil")
+    .eq("id", user.id)
+    .single();
+
+  if(error || data?.perfil !== "admin"){
+    alert("Acesso restrito.");
+    window.location.href = "/index.html";
+    return;
+  }
 }
 
-async function cadastrar(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
+let idAtual = null;
 
-  const { error } = await supabaseClient.auth.signUp({
-    email,
-    password
-  });
+async function carregar(){
+  const { data, error } = await supabaseClient
+    .from("clientes")
+    .select("*")
+    .order("id");
 
   if(error){
-    document.getElementById("msg").innerText = error.message;
+    alert(error.message);
     return;
   }
 
-  document.getElementById("msg").innerText =
-    "Conta criada! Verifique seu email para confirmar.";
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  data.forEach(c => {
+    tbody.innerHTML += `
+      <tr>
+        <td>${c.nome || ""}</td>
+        <td>${c.telefone_1 || ""}</td>
+        <td>${c.email || ""}</td>
+        <td>
+          <button onclick="editar('${c.id}')">Editar</button>
+          <button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
+        </td>
+      </tr>
+    `;
+  });
 }
+
+function abrirNovo(){
+  idAtual = null;
+  document.getElementById("nome").value = "";
+  document.getElementById("telefone_1").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("modal").style.display = "flex";
+}
+
+function fecharModal(){
+  document.getElementById("modal").style.display = "none";
+}
+
+async function editar(id){
+  idAtual = id;
+
+  const { data, error } = await supabaseClient
+    .from("clientes")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  document.getElementById("nome").value = data.nome;
+  document.getElementById("telefone_1").value = data.telefone_1;
+  document.getElementById("email").value = data.email;
+
+  document.getElementById("modal").style.display = "flex";
+}
+
+async function salvar(){
+  const payload = {
+    nome: document.getElementById("nome").value,
+    telefone_1: document.getElementById("telefone_1").value,
+    email: document.getElementById("email").value
+  };
+
+  let error;
+
+  if(idAtual){
+    ({ error } = await supabaseClient
+      .from("clientes")
+      .update(payload)
+      .eq("id", idAtual));
+  } else {
+    ({ error } = await supabaseClient
+      .from("clientes")
+      .insert(payload));
+  }
+
+  if(error){
+    alert(error.message);
+    return;
+  }
+
+  fecharModal();
+  carregar();
+}
+
+async function excluir(id){
+  if(!confirm("Excluir cliente?")) return;
+
+  await supabaseClient
+    .from("clientes")
+    .delete()
+    .eq("id", id);
+
+  carregar();
+}
+
+(async () => {
+  await verificarAdmin();
+  carregar();
+})();
+
 </script>
 
 </body>

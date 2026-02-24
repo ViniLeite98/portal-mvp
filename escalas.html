@@ -2,27 +2,82 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Escalas</title>
+<title>Escalas | Hara Spa</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<link rel="stylesheet" href="assets/css/style.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-.content { padding:30px; font-size:14px; }
-.header { display:flex; justify-content:space-between; align-items:center; }
-.card { background:#fff; border-radius:18px; padding:20px; box-shadow:0 4px 12px rgba(0,0,0,.05); }
+*{box-sizing:border-box}
 
-.layout { display:grid; grid-template-columns:2.2fr 1.4fr; gap:20px; margin-top:20px; }
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f5f7fb;
+}
 
-.calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; }
-.weekdays { margin-top:16px; }
-.weekdays div { text-align:center; font-weight:600; font-size:13px; }
+.app{
+  display:flex;
+  min-height:100vh;
+}
 
-.day {
+#sidebar{
+  width:260px;
+  flex-shrink:0;
+}
+
+.content{
+  flex:1;
+  padding:40px;
+  font-size:14px;
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* CARD */
+.card{
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 4px 12px rgba(0,0,0,.05);
+}
+
+/* LAYOUT */
+.layout{
+  display:grid;
+  grid-template-columns:2.2fr 1.4fr;
+  gap:20px;
+  margin-top:20px;
+}
+
+/* CALENDÁRIO */
+.calendar{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:10px;
+}
+
+.weekdays{
+  margin-top:16px;
+}
+
+.weekdays div{
+  text-align:center;
+  font-weight:600;
+  font-size:13px;
+}
+
+.day{
   border:1px solid #e5e7eb;
   border-radius:10px;
   padding:10px;
@@ -30,39 +85,47 @@
   min-height:90px;
   transition:.2s;
 }
-.day:hover { transform:translateY(-2px); }
 
-.day-number { font-weight:700; }
+.day:hover{
+  transform:translateY(-2px);
+}
 
-.day-domingo {
+.day-number{
+  font-weight:700;
+}
+
+.day-domingo{
   background:#f3f4f6;
   color:#9ca3af;
   cursor:default;
 }
 
-.day-verde {
+.day-verde{
   background:#dcfce7;
   border-color:#22c55e;
 }
 
-.day-amarelo {
+.day-amarelo{
   background:#fef9c3;
   border-color:#eab308;
 }
 
-.day-vermelho {
+.day-vermelho{
   background:#fee2e2;
   border-color:#ef4444;
 }
 
-.section-title { margin-top:20px; font-weight:700; }
+.section-title{
+  margin-top:20px;
+  font-weight:700;
+}
 
-.detail-item {
+.detail-item{
   padding:8px 0;
   border-bottom:1px solid #e5e7eb;
 }
 
-.badge-red {
+.badge-red{
   background:#fee2e2;
   color:#991b1b;
   padding:2px 6px;
@@ -74,69 +137,70 @@
 </head>
 
 <body>
+
 <div class="app">
-<aside id="sidebar"></aside>
+  <aside id="sidebar"></aside>
 
-<main class="content">
+  <main class="content">
 
-<div class="header">
-<h1>Escalas</h1>
-<input type="date" id="dataSelecionada">
-</div>
+    <div class="header">
+      <h1>Escalas</h1>
+      <input type="date" id="dataSelecionada">
+    </div>
 
-<div class="layout">
+    <div class="layout">
 
-<!-- CALENDÁRIO -->
-<div class="card">
-<h3>Calendário</h3>
+      <!-- CALENDÁRIO -->
+      <div class="card">
+        <h3>Calendário</h3>
 
-<div class="calendar weekdays">
-<div>Dom</div><div>Seg</div><div>Ter</div>
-<div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
-</div>
+        <div class="calendar weekdays">
+          <div>Dom</div><div>Seg</div><div>Ter</div>
+          <div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+        </div>
 
-<div class="calendar" id="calendar"></div>
-</div>
+        <div class="calendar" id="calendar"></div>
+      </div>
 
-<!-- DETALHES -->
-<div class="card">
-<h3 id="tituloDia">Selecione um dia</h3>
-<div id="detalhesDia">—</div>
-</div>
+      <!-- DETALHES -->
+      <div class="card">
+        <h3 id="tituloDia">Selecione um dia</h3>
+        <div id="detalhesDia">—</div>
+      </div>
 
-</div>
+    </div>
 
-<!-- FORÇA DE TRABALHO -->
-<div class="card" style="margin-top:20px;">
-<h3>Força de Trabalho</h3>
-<canvas id="graficoDia" height="120"></canvas>
-</div>
+    <!-- FORÇA DE TRABALHO -->
+    <div class="card" style="margin-top:20px;">
+      <h3>Força de Trabalho</h3>
+      <canvas id="graficoDia" height="120"></canvas>
+    </div>
 
-</main>
+  </main>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-const supabaseClient = window.supabase.createClient(
+const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+  "SUA_ANON_KEY_AQUI"
 );
 
-let terapeutas = [];
-let solicitacoes = [];
-let chartDia = null;
+let terapeutas=[];
+let solicitacoes=[];
+let chartDia=null;
 
-let hoje = new Date();
-let ano = hoje.getFullYear();
-let mes = hoje.getMonth();
+let hoje=new Date();
+let ano=hoje.getFullYear();
+let mes=hoje.getMonth();
 
-document.getElementById("dataSelecionada").valueAsDate = hoje;
+document.getElementById("dataSelecionada").valueAsDate=hoje;
 
-document.getElementById("dataSelecionada").addEventListener("change", e=>{
-  const d = new Date(e.target.value);
-  ano = d.getFullYear();
-  mes = d.getMonth();
+document.getElementById("dataSelecionada").addEventListener("change",e=>{
+  const d=new Date(e.target.value);
+  ano=d.getFullYear();
+  mes=d.getMonth();
   renderCalendar();
 });
 
@@ -145,7 +209,7 @@ function diaSemana(date){
 }
 
 function folgaSemanal(t,data){
-  if(!t.tem_folga || !t.dia_folga) return false;
+  if(!t.tem_folga||!t.dia_folga) return false;
   return t.tem_folga==="Sim" &&
          diaSemana(data)===t.dia_folga.toLowerCase();
 }
@@ -154,8 +218,8 @@ function folgaAprovada(t,data){
   return solicitacoes.some(s =>
     s.status==="Aprovado" &&
     s.terapeuta_cpf===t.cpf &&
-    data >= new Date(s.data_inicio) &&
-    data <= new Date(s.data_fim)
+    data>=new Date(s.data_inicio) &&
+    data<=new Date(s.data_fim)
   );
 }
 
@@ -171,57 +235,51 @@ async function carregarDados(){
     .select("*")
     .eq("status","Aprovado");
 
-  terapeutas = dadosTerapeutas || [];
-  solicitacoes = dadosSolicitacoes || [];
+  terapeutas=dadosTerapeutas||[];
+  solicitacoes=dadosSolicitacoes||[];
 
   renderCalendar();
 }
 
 function renderCalendar(){
 
-  const calendar = document.getElementById("calendar");
+  const calendar=document.getElementById("calendar");
   calendar.innerHTML="";
 
-  const primeiroDia = new Date(ano,mes,1).getDay();
-  const totalDias = new Date(ano,mes+1,0).getDate();
+  const primeiroDia=new Date(ano,mes,1).getDay();
+  const totalDias=new Date(ano,mes+1,0).getDate();
 
   for(let i=0;i<primeiroDia;i++){
     calendar.appendChild(document.createElement("div"));
   }
 
-  for(let d=1; d<=totalDias; d++){
+  for(let d=1;d<=totalDias;d++){
 
-    const dataDia = new Date(ano,mes,d);
-    const diaSemanaNumero = dataDia.getDay();
+    const dataDia=new Date(ano,mes,d);
+    const diaSemanaNumero=dataDia.getDay();
 
-    const div = document.createElement("div");
+    const div=document.createElement("div");
     div.className="day";
 
-    if(diaSemanaNumero === 0){
+    if(diaSemanaNumero===0){
       div.classList.add("day-domingo");
       div.innerHTML=`<div class="day-number">${d}</div><small>Fechado</small>`;
       calendar.appendChild(div);
       continue;
     }
 
-    const disponiveis = terapeutas.filter(t =>
+    const disponiveis=terapeutas.filter(t =>
       t.hora_entrada && t.hora_saida &&
       !folgaSemanal(t,dataDia) &&
       !folgaAprovada(t,dataDia)
     );
 
-    const total = terapeutas.length;
-    const ausentes = total - disponiveis.length;
+    const total=terapeutas.length;
+    const ausentes=total-disponiveis.length;
 
-    if(ausentes >= 4){
-      div.classList.add("day-vermelho");
-    }
-    else if(ausentes >= 2){
-      div.classList.add("day-amarelo");
-    }
-    else if(ausentes === 0){
-      div.classList.add("day-verde");
-    }
+    if(ausentes>=4) div.classList.add("day-vermelho");
+    else if(ausentes>=2) div.classList.add("day-amarelo");
+    else if(ausentes===0) div.classList.add("day-verde");
 
     div.innerHTML=`<div class="day-number">${d}</div>
                    <small>${disponiveis.length} terapeutas</small>`;
@@ -233,20 +291,20 @@ function renderCalendar(){
 
 function mostrarDia(dia){
 
-  const data = new Date(ano,mes,dia);
+  const data=new Date(ano,mes,dia);
   document.getElementById("tituloDia").innerText=
     `Dia ${dia}/${mes+1}/${ano}`;
 
-  const detalhes = document.getElementById("detalhesDia");
+  const detalhes=document.getElementById("detalhesDia");
   detalhes.innerHTML="";
 
-  const disponiveis = terapeutas.filter(t =>
+  const disponiveis=terapeutas.filter(t =>
     t.hora_entrada && t.hora_saida &&
     !folgaSemanal(t,data) &&
     !folgaAprovada(t,data)
   );
 
-  const indisponiveis = terapeutas.filter(t =>
+  const indisponiveis=terapeutas.filter(t =>
     folgaSemanal(t,data) || folgaAprovada(t,data)
   );
 
@@ -290,7 +348,7 @@ function renderForcaTrabalho(lista){
   const horas=[];
   for(let h=9;h<=21;h++) horas.push(h);
 
-  const contagem = horas.map(hora =>
+  const contagem=horas.map(hora =>
     lista.filter(t=>{
       const he=parseInt((t.hora_entrada||"0").split(":")[0]);
       const hs=parseInt((t.hora_saida||"0").split(":")[0]);
@@ -300,7 +358,7 @@ function renderForcaTrabalho(lista){
 
   if(chartDia) chartDia.destroy();
 
-  chartDia = new Chart(document.getElementById("graficoDia"),{
+  chartDia=new Chart(document.getElementById("graficoDia"),{
     type:"bar",
     data:{
       labels:horas.map(h=>h+":00"),
@@ -313,13 +371,13 @@ function renderForcaTrabalho(lista){
       }]
     },
     options:{
-      plugins:{ legend:{ display:false } },
+      plugins:{legend:{display:false}},
       scales:{
-        x:{ grid:{ display:false }, ticks:{ color:"#6b7280" } },
+        x:{grid:{display:false},ticks:{color:"#6b7280"}},
         y:{
           beginAtZero:true,
-          ticks:{ stepSize:1, color:"#6b7280" },
-          grid:{ color:"#f1f5f9" }
+          ticks:{stepSize:1,color:"#6b7280"},
+          grid:{color:"#f1f5f9"}
         }
       }
     }

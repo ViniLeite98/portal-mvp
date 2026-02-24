@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Equipe | Hara Spa</title>
+<title>Clientes | Hara Spa</title>
 
 <link rel="stylesheet"
  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -11,23 +11,31 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-.app { display:flex; min-height:100vh; }
+*{box-sizing:border-box}
 
-.content {
-  flex:1;
-  padding:30px;
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
   background:#f5f7fb;
 }
 
-h1 { margin-bottom:10px; }
-
-.top-actions {
+.app{
   display:flex;
-  justify-content:flex-end;
-  margin-bottom:16px;
+  min-height:100vh;
 }
 
-table {
+#sidebar{
+  width:260px;
+  flex-shrink:0;
+}
+
+.content{
+  flex:1;
+  padding:40px;
+}
+
+/* TABELA */
+table{
   width:100%;
   border-collapse:collapse;
   background:#fff;
@@ -35,19 +43,20 @@ table {
   overflow:hidden;
 }
 
-th,td {
-  padding:12px;
+th,td{
+  padding:14px;
   border-bottom:1px solid #e5e7eb;
   font-size:14px;
   text-align:left;
 }
 
-th {
+th{
   background:#f9fafb;
   font-weight:600;
 }
 
-button {
+/* BOTÕES */
+button{
   background:#1f2937;
   color:#fff;
   border:none;
@@ -56,9 +65,16 @@ button {
   cursor:pointer;
 }
 
-button.excluir { background:#dc2626; }
+button.excluir{background:#dc2626}
 
-.modal {
+.top-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:16px;
+}
+
+/* MODAL */
+.modal{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.4);
@@ -68,7 +84,7 @@ button.excluir { background:#dc2626; }
   z-index:10;
 }
 
-.modal-content {
+.modal-content{
   background:#fff;
   width:900px;
   max-height:90vh;
@@ -77,20 +93,22 @@ button.excluir { background:#dc2626; }
   padding:24px;
 }
 
-.grid {
+.section{margin-bottom:20px}
+
+.grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:12px;
 }
 
-input, select {
+input,textarea{
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
   width:100%;
 }
 
-.modal-actions {
+.modal-actions{
   display:flex;
   justify-content:flex-end;
   gap:10px;
@@ -102,183 +120,182 @@ input, select {
 <body>
 
 <div class="app">
-  <aside id="sidebar"></aside>
+<aside id="sidebar"></aside>
 
-  <main class="content">
+<main class="content">
 
-    <h1>Equipe</h1>
+<h1>Clientes</h1>
+<p>Clientes cadastrados</p>
 
-    <div class="top-actions">
-      <button onclick="abrirNovo()">+ Nova Terapeuta</button>
-    </div>
+<div class="top-actions">
+<button onclick="abrirNovo()">+ Novo Cliente</button>
+</div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Nome Profissional</th>
-          <th>CPF</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>Telefone</th>
+<th>Email</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
 
-  </main>
+</main>
 </div>
 
 <!-- MODAL -->
 <div class="modal" id="modal">
-  <div class="modal-content">
+<div class="modal-content">
 
-    <h3>Cadastro Terapeuta</h3>
+<div class="section">
+<h3>Dados do Cliente</h3>
+<div class="grid">
+<input id="nome" placeholder="Nome *">
+<input id="cpf_cnpj" placeholder="CPF/CNPJ">
+<input id="telefone_1" placeholder="Telefone 1">
+<input id="telefone_2" placeholder="Telefone 2">
+<input type="date" id="dt_nasc">
+<input id="email" placeholder="Email">
+<input id="nacionalidade" placeholder="Nacionalidade">
+<input id="endereco" placeholder="Endereço">
+</div>
+</div>
 
-    <div class="grid">
-      <input id="nome_completo" placeholder="Nome Completo">
-      <input id="nome_profissional" placeholder="Nome Profissional">
-      <input id="cpf" placeholder="CPF">
-      <input type="time" id="hora_entrada">
-      <input type="time" id="hora_saida">
-      <select id="status">
-        <option value="">Status</option>
-        <option value="Ativo">Ativo</option>
-        <option value="Inativo">Inativo</option>
-      </select>
-    </div>
+<div class="section">
+<textarea id="observacao" placeholder="Observação"></textarea>
+</div>
 
-    <div class="modal-actions">
-      <button onclick="fecharModal()">Cancelar</button>
-      <button onclick="salvar()">Salvar</button>
-    </div>
+<div class="modal-actions">
+<button onclick="fecharModal()">Cancelar</button>
+<button onclick="salvar()">Salvar</button>
+</div>
 
-  </div>
+</div>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let cpfAtual = null;
+let idAtual=null;
+
+const campos=[
+"nome","cpf_cnpj","telefone_1","telefone_2",
+"dt_nasc","email","nacionalidade","endereco","observacao"
+];
+
+function getPayload(){
+const obj={};
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el && el.value!=="") obj[c]=el.value;
+});
+return obj;
+}
+
+function setForm(data){
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value=data[c]||"";
+});
+}
 
 async function carregar(){
-  const { data, error } = await supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional,status")
-    .order("nome_profissional");
+const {data,error}=await supabaseClient
+.from("clientes")
+.select("*")
+.order("nome");
 
-  if(error){
-    alert(error.message);
-    return;
-  }
+if(error){console.error(error);return;}
 
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
 
-  data.forEach(t=>{
-    tbody.innerHTML += `
-      <tr>
-        <td>${t.nome_profissional}</td>
-        <td>${t.cpf}</td>
-        <td>${t.status}</td>
-        <td>
-          <button onclick="editar('${t.cpf}')">Editar</button>
-          <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
-        </td>
-      </tr>
-    `;
-  });
+data.forEach(c=>{
+tbody.innerHTML+=`
+<tr>
+<td>${c.nome||""}</td>
+<td>${c.telefone_1||""}</td>
+<td>${c.email||""}</td>
+<td>
+<button onclick="editar(${c.id})">Editar</button>
+<button class="excluir" onclick="excluir(${c.id})">Excluir</button>
+</td>
+</tr>`;
+});
 }
 
 function abrirNovo(){
-  cpfAtual = null;
-  document.getElementById("nome_completo").value = "";
-  document.getElementById("nome_profissional").value = "";
-  document.getElementById("cpf").value = "";
-  document.getElementById("hora_entrada").value = "";
-  document.getElementById("hora_saida").value = "";
-  document.getElementById("status").value = "";
-  document.getElementById("modal").style.display = "flex";
+idAtual=null;
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
+document.getElementById("modal").style.display="flex";
 }
 
-async function editar(cpf){
-  cpfAtual = cpf;
+async function editar(id){
+idAtual=id;
 
-  const { data, error } = await supabaseClient
-    .from("terapeutas")
-    .select("*")
-    .eq("cpf", cpf)
-    .single();
+const {data,error}=await supabaseClient
+.from("clientes")
+.select("*")
+.eq("id",id)
+.single();
 
-  if(error){
-    alert(error.message);
-    return;
-  }
+if(error){console.error(error);return;}
 
-  document.getElementById("nome_completo").value = data.nome_completo || "";
-  document.getElementById("nome_profissional").value = data.nome_profissional || "";
-  document.getElementById("cpf").value = data.cpf || "";
-  document.getElementById("hora_entrada").value = data.hora_entrada || "";
-  document.getElementById("hora_saida").value = data.hora_saida || "";
-  document.getElementById("status").value = data.status || "";
-
-  document.getElementById("modal").style.display = "flex";
+setForm(data);
+document.getElementById("modal").style.display="flex";
 }
 
 async function salvar(){
+const payload=getPayload();
 
-  const payload = {
-    nome_completo: document.getElementById("nome_completo").value,
-    nome_profissional: document.getElementById("nome_profissional").value,
-    cpf: document.getElementById("cpf").value,
-    hora_entrada: document.getElementById("hora_entrada").value,
-    hora_saida: document.getElementById("hora_saida").value,
-    status: document.getElementById("status").value
-  };
-
-  let error;
-
-  if(cpfAtual){
-    ({ error } = await supabaseClient
-      .from("terapeutas")
-      .update(payload)
-      .eq("cpf", cpfAtual));
-  } else {
-    ({ error } = await supabaseClient
-      .from("terapeutas")
-      .insert(payload));
-  }
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  fecharModal();
-  carregar();
+if(!payload.nome){
+alert("Nome é obrigatório");
+return;
 }
 
-async function excluir(cpf){
-  if(!confirm("Excluir terapeuta?")) return;
+let error;
 
-  const { error } = await supabaseClient
-    .from("terapeutas")
-    .delete()
-    .eq("cpf", cpf);
+if(idAtual){
+({error}=await supabaseClient
+.from("clientes")
+.update(payload)
+.eq("id",idAtual));
+}else{
+({error}=await supabaseClient
+.from("clientes")
+.insert(payload));
+}
 
-  if(error){
-    alert(error.message);
-    return;
-  }
+if(error){
+console.error(error);
+alert("Erro ao salvar");
+return;
+}
 
-  carregar();
+fecharModal();
+carregar();
+}
+
+async function excluir(id){
+if(!confirm("Excluir cliente?"))return;
+
+await supabaseClient.from("clientes").delete().eq("id",id);
+carregar();
 }
 
 function fecharModal(){
-  document.getElementById("modal").style.display = "none";
+document.getElementById("modal").style.display="none";
 }
 
 carregar();

@@ -2,35 +2,61 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Serviços | Hara Spa</title>
+<title>Clientes | Hara Spa</title>
+
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-.app { display:flex; min-height:100vh; }
-.content { flex:1; padding:30px; margin-left:260px; background:#f5f7fb; }
+*{box-sizing:border-box}
 
-table {
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f5f7fb;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+#sidebar{
+  width:260px;
+  flex-shrink:0;
+}
+
+.content{
+  flex:1;
+  padding:40px;
+}
+
+/* TABELA */
+table{
   width:100%;
   border-collapse:collapse;
   background:#fff;
   border-radius:14px;
   overflow:hidden;
 }
-th,td {
-  padding:12px;
+
+th,td{
+  padding:14px;
   border-bottom:1px solid #e5e7eb;
   font-size:14px;
   text-align:left;
 }
-th {
+
+th{
   background:#f9fafb;
   font-weight:600;
-  cursor:pointer;
 }
 
-button {
+/* BOTÕES */
+button{
   background:#1f2937;
   color:#fff;
   border:none;
@@ -38,15 +64,17 @@ button {
   padding:6px 12px;
   cursor:pointer;
 }
-button.excluir { background:#dc2626; }
 
-.top-actions {
+button.excluir{background:#dc2626}
+
+.top-actions{
   display:flex;
   justify-content:flex-end;
   margin-bottom:16px;
 }
 
-.modal {
+/* MODAL */
+.modal{
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.4);
@@ -55,39 +83,36 @@ button.excluir { background:#dc2626; }
   justify-content:center;
   z-index:10;
 }
-.modal-content {
+
+.modal-content{
   background:#fff;
-  width:600px;
+  width:900px;
+  max-height:90vh;
+  overflow:auto;
   border-radius:16px;
   padding:24px;
 }
-.grid {
+
+.section{margin-bottom:20px}
+
+.grid{
   display:grid;
-  grid-template-columns:repeat(2,1fr);
+  grid-template-columns:repeat(3,1fr);
   gap:12px;
 }
-input, select {
+
+input,textarea{
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
   width:100%;
 }
-.modal-actions {
+
+.modal-actions{
   display:flex;
   justify-content:flex-end;
   gap:10px;
   margin-top:20px;
-}
-
-.paginacao {
-  margin-top:15px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-.paginacao button:disabled {
-  opacity:0.5;
-  cursor:not-allowed;
 }
 </style>
 </head>
@@ -95,223 +120,182 @@ input, select {
 <body>
 
 <div class="app">
-  <aside id="sidebar"></aside>
+<aside id="sidebar"></aside>
 
-  <main class="content">
-    <h1>Serviços</h1>
+<main class="content">
 
-    <div class="top-actions">
-      <button onclick="abrirNovo()">+ Novo Serviço</button>
-    </div>
+<h1>Clientes</h1>
+<p>Clientes cadastrados</p>
 
-    <table>
-      <thead>
-        <tr>
-          <th onclick="ordenar('nome')">Nome</th>
-          <th onclick="ordenar('valor')">Valor</th>
-          <th onclick="ordenar('comissao')">Comissão</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
-
-    <div class="paginacao">
-      <button id="btnAnterior" onclick="paginaAnterior()">Anterior</button>
-      <span id="infoPagina"></span>
-      <button id="btnProximo" onclick="proximaPagina()">Próxima</button>
-    </div>
-
-  </main>
+<div class="top-actions">
+<button onclick="abrirNovo()">+ Novo Cliente</button>
 </div>
 
+<table>
+<thead>
+<tr>
+<th>Nome</th>
+<th>Telefone</th>
+<th>Email</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+</main>
+</div>
+
+<!-- MODAL -->
 <div class="modal" id="modal">
-  <div class="modal-content">
-    <h3>Cadastro Serviço</h3>
+<div class="modal-content">
 
-    <div class="grid">
-      <input id="nome" placeholder="Nome do serviço">
-      <input id="valor" type="number" step="0.01" placeholder="Valor">
-      <input id="comissao" type="number" step="0.01" placeholder="Comissão">
-      <select id="status">
-        <option value="">Status</option>
-        <option value="ativo">ativo</option>
-        <option value="inativo">inativo</option>
-      </select>
-    </div>
+<div class="section">
+<h3>Dados do Cliente</h3>
+<div class="grid">
+<input id="nome" placeholder="Nome *">
+<input id="cpf_cnpj" placeholder="CPF/CNPJ">
+<input id="telefone_1" placeholder="Telefone 1">
+<input id="telefone_2" placeholder="Telefone 2">
+<input type="date" id="dt_nasc">
+<input id="email" placeholder="Email">
+<input id="nacionalidade" placeholder="Nacionalidade">
+<input id="endereco" placeholder="Endereço">
+</div>
+</div>
 
-    <div class="modal-actions">
-      <button onclick="fecharModal()">Cancelar</button>
-      <button onclick="salvar()">Salvar</button>
-    </div>
-  </div>
+<div class="section">
+<textarea id="observacao" placeholder="Observação"></textarea>
+</div>
+
+<div class="modal-actions">
+<button onclick="fecharModal()">Cancelar</button>
+<button onclick="salvar()">Salvar</button>
+</div>
+
+</div>
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let idAtual = null;
-let ordemAtual = { campo: "nome", asc: true };
+let idAtual=null;
 
-let paginaAtual = 1;
-const limite = 10;
-let totalRegistros = 0;
+const campos=[
+"nome","cpf_cnpj","telefone_1","telefone_2",
+"dt_nasc","email","nacionalidade","endereco","observacao"
+];
+
+function getPayload(){
+const obj={};
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el && el.value!=="") obj[c]=el.value;
+});
+return obj;
+}
+
+function setForm(data){
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value=data[c]||"";
+});
+}
 
 async function carregar(){
+const {data,error}=await supabaseClient
+.from("clientes")
+.select("*")
+.order("nome");
 
-  const inicio = (paginaAtual - 1) * limite;
-  const fim = inicio + limite - 1;
+if(error){console.error(error);return;}
 
-  const { data, error, count } = await supabaseClient
-    .from("servicos")
-    .select("*", { count: "exact" })
-    .order(ordemAtual.campo, { ascending: ordemAtual.asc })
-    .range(inicio, fim);
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
 
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  totalRegistros = count;
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  data.forEach(s => {
-    tbody.innerHTML += `
-      <tr>
-        <td>${s.nome}</td>
-        <td>R$ ${Number(s.valor).toFixed(2)}</td>
-        <td>R$ ${Number(s.comissao).toFixed(2)}</td>
-        <td>${s.status}</td>
-        <td>
-          <button onclick="editar('${s.id}')">Editar</button>
-          <button class="excluir" onclick="excluir('${s.id}')">Excluir</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  atualizarPaginacao();
-}
-
-function atualizarPaginacao(){
-  const totalPaginas = Math.ceil(totalRegistros / limite);
-
-  document.getElementById("infoPagina").innerText =
-    `Página ${paginaAtual} de ${totalPaginas}`;
-
-  document.getElementById("btnAnterior").disabled = paginaAtual === 1;
-  document.getElementById("btnProximo").disabled = paginaAtual === totalPaginas;
-}
-
-function proximaPagina(){
-  paginaAtual++;
-  carregar();
-}
-
-function paginaAnterior(){
-  paginaAtual--;
-  carregar();
-}
-
-function ordenar(campo){
-  if(ordemAtual.campo === campo){
-    ordemAtual.asc = !ordemAtual.asc;
-  } else {
-    ordemAtual.campo = campo;
-    ordemAtual.asc = true;
-  }
-  paginaAtual = 1;
-  carregar();
+data.forEach(c=>{
+tbody.innerHTML+=`
+<tr>
+<td>${c.nome||""}</td>
+<td>${c.telefone_1||""}</td>
+<td>${c.email||""}</td>
+<td>
+<button onclick="editar(${c.id})">Editar</button>
+<button class="excluir" onclick="excluir(${c.id})">Excluir</button>
+</td>
+</tr>`;
+});
 }
 
 function abrirNovo(){
-  idAtual = null;
-  document.getElementById("nome").value = "";
-  document.getElementById("valor").value = "";
-  document.getElementById("comissao").value = "";
-  document.getElementById("status").value = "";
-  document.getElementById("modal").style.display = "flex";
+idAtual=null;
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
+document.getElementById("modal").style.display="flex";
 }
 
 async function editar(id){
-  idAtual = id;
+idAtual=id;
 
-  const { data, error } = await supabaseClient
-    .from("servicos")
-    .select("*")
-    .eq("id", id)
-    .single();
+const {data,error}=await supabaseClient
+.from("clientes")
+.select("*")
+.eq("id",id)
+.single();
 
-  if(error){
-    alert(error.message);
-    return;
-  }
+if(error){console.error(error);return;}
 
-  document.getElementById("nome").value = data.nome;
-  document.getElementById("valor").value = data.valor;
-  document.getElementById("comissao").value = data.comissao;
-  document.getElementById("status").value = data.status;
-
-  document.getElementById("modal").style.display = "flex";
+setForm(data);
+document.getElementById("modal").style.display="flex";
 }
 
 async function salvar(){
-  const payload = {
-    nome: document.getElementById("nome").value,
-    valor: parseFloat(document.getElementById("valor").value),
-    comissao: parseFloat(document.getElementById("comissao").value),
-    status: document.getElementById("status").value
-  };
+const payload=getPayload();
 
-  let error;
+if(!payload.nome){
+alert("Nome é obrigatório");
+return;
+}
 
-  if(idAtual){
-    ({ error } = await supabaseClient
-      .from("servicos")
-      .update(payload)
-      .eq("id", idAtual));
-  } else {
-    ({ error } = await supabaseClient
-      .from("servicos")
-      .insert(payload));
-  }
+let error;
 
-  if(error){
-    alert(error.message);
-    return;
-  }
+if(idAtual){
+({error}=await supabaseClient
+.from("clientes")
+.update(payload)
+.eq("id",idAtual));
+}else{
+({error}=await supabaseClient
+.from("clientes")
+.insert(payload));
+}
 
-  fecharModal();
-  carregar();
+if(error){
+console.error(error);
+alert("Erro ao salvar");
+return;
+}
+
+fecharModal();
+carregar();
 }
 
 async function excluir(id){
-  if(!confirm("Excluir serviço?")) return;
+if(!confirm("Excluir cliente?"))return;
 
-  const { error } = await supabaseClient
-    .from("servicos")
-    .delete()
-    .eq("id", id);
-
-  if(error){
-    alert(error.message);
-    return;
-  }
-
-  carregar();
+await supabaseClient.from("clientes").delete().eq("id",id);
+carregar();
 }
 
 function fecharModal(){
-  document.getElementById("modal").style.display = "none";
+document.getElementById("modal").style.display="none";
 }
 
 carregar();

@@ -2,14 +2,30 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Clientes | Hara Spa</title>
+<title>Equipe | Hara Spa</title>
+
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 .app { display:flex; min-height:100vh; }
-.content { flex:1; padding:30px; margin-left:260px; background:#f5f7fb; }
+
+.content {
+  flex:1;
+  padding:30px;
+  background:#f5f7fb;
+}
+
+h1 { margin-bottom:10px; }
+
+.top-actions {
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:16px;
+}
 
 table {
   width:100%;
@@ -18,13 +34,18 @@ table {
   border-radius:14px;
   overflow:hidden;
 }
+
 th,td {
   padding:12px;
   border-bottom:1px solid #e5e7eb;
   font-size:14px;
   text-align:left;
 }
-th { background:#f9fafb; font-weight:600; }
+
+th {
+  background:#f9fafb;
+  font-weight:600;
+}
 
 button {
   background:#1f2937;
@@ -34,13 +55,8 @@ button {
   padding:6px 12px;
   cursor:pointer;
 }
-button.excluir { background:#dc2626; }
 
-.top-actions {
-  display:flex;
-  justify-content:flex-end;
-  margin-bottom:16px;
-}
+button.excluir { background:#dc2626; }
 
 .modal {
   position:fixed;
@@ -51,25 +67,29 @@ button.excluir { background:#dc2626; }
   justify-content:center;
   z-index:10;
 }
+
 .modal-content {
   background:#fff;
-  width:800px;
+  width:900px;
   max-height:90vh;
   overflow:auto;
   border-radius:16px;
   padding:24px;
 }
+
 .grid {
   display:grid;
-  grid-template-columns:repeat(2,1fr);
+  grid-template-columns:repeat(3,1fr);
   gap:12px;
 }
-input, textarea {
+
+input, select {
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
   width:100%;
 }
+
 .modal-actions {
   display:flex;
   justify-content:flex-end;
@@ -85,47 +105,52 @@ input, textarea {
   <aside id="sidebar"></aside>
 
   <main class="content">
-    <h1>Clientes</h1>
+
+    <h1>Equipe</h1>
 
     <div class="top-actions">
-      <button onclick="abrirNovo()">+ Novo Cliente</button>
+      <button onclick="abrirNovo()">+ Nova Terapeuta</button>
     </div>
 
     <table>
       <thead>
         <tr>
-          <th>Nome</th>
-          <th>Telefone</th>
-          <th>Email</th>
+          <th>Nome Profissional</th>
+          <th>CPF</th>
+          <th>Status</th>
           <th>Ações</th>
         </tr>
       </thead>
       <tbody id="lista"></tbody>
     </table>
+
   </main>
 </div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
   <div class="modal-content">
-    <h3>Cadastro Cliente</h3>
+
+    <h3>Cadastro Terapeuta</h3>
 
     <div class="grid">
-      <input id="nome" placeholder="Nome">
-      <input id="cpf_cnpj" placeholder="CPF/CNPJ">
-      <input id="telefone_1" placeholder="Telefone 1">
-      <input id="telefone_2" placeholder="Telefone 2">
-      <input type="date" id="dt_nasc">
-      <input id="email" placeholder="Email">
-      <input id="nacionalidade" placeholder="Nacionalidade">
-      <input id="endereco" placeholder="Endereço">
+      <input id="nome_completo" placeholder="Nome Completo">
+      <input id="nome_profissional" placeholder="Nome Profissional">
+      <input id="cpf" placeholder="CPF">
+      <input type="time" id="hora_entrada">
+      <input type="time" id="hora_saida">
+      <select id="status">
+        <option value="">Status</option>
+        <option value="Ativo">Ativo</option>
+        <option value="Inativo">Inativo</option>
+      </select>
     </div>
-
-    <textarea id="observacao" placeholder="Observação" style="margin-top:12px;"></textarea>
 
     <div class="modal-actions">
       <button onclick="fecharModal()">Cancelar</button>
       <button onclick="salvar()">Salvar</button>
     </div>
+
   </div>
 </div>
 
@@ -137,60 +162,31 @@ const supabaseClient = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-async function verificarLogin(){
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if(!session){
-    window.location.href = "login.html?redirect=clientes.html";
-  }
-}
-
-verificarLogin();
-
-let idAtual = null;
-
-const campos = [
-  "nome","cpf_cnpj","telefone_1","telefone_2",
-  "dt_nasc","email","nacionalidade","endereco","observacao"
-];
-
-function getPayload(){
-  const obj = {};
-  campos.forEach(c => {
-    const el = document.getElementById(c);
-    if(el.value !== "") obj[c] = el.value;
-  });
-  return obj;
-}
-
-function setForm(data){
-  campos.forEach(c => {
-    document.getElementById(c).value = data[c] || "";
-  });
-}
+let cpfAtual = null;
 
 async function carregar(){
   const { data, error } = await supabaseClient
-    .from("clientes")
-    .select("*")
-    .order("id");
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+    .from("terapeutas")
+    .select("cpf,nome_profissional,status")
+    .order("nome_profissional");
 
   if(error){
     alert(error.message);
     return;
   }
 
-  data.forEach(c => {
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  data.forEach(t=>{
     tbody.innerHTML += `
       <tr>
-        <td>${c.nome || ""}</td>
-        <td>${c.telefone_1 || ""}</td>
-        <td>${c.email || ""}</td>
+        <td>${t.nome_profissional}</td>
+        <td>${t.cpf}</td>
+        <td>${t.status}</td>
         <td>
-          <button onclick="editar(${c.id})">Editar</button>
-          <button class="excluir" onclick="excluir(${c.id})">Excluir</button>
+          <button onclick="editar('${t.cpf}')">Editar</button>
+          <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
         </td>
       </tr>
     `;
@@ -198,18 +194,23 @@ async function carregar(){
 }
 
 function abrirNovo(){
-  idAtual = null;
-  campos.forEach(c => document.getElementById(c).value = "");
+  cpfAtual = null;
+  document.getElementById("nome_completo").value = "";
+  document.getElementById("nome_profissional").value = "";
+  document.getElementById("cpf").value = "";
+  document.getElementById("hora_entrada").value = "";
+  document.getElementById("hora_saida").value = "";
+  document.getElementById("status").value = "";
   document.getElementById("modal").style.display = "flex";
 }
 
-async function editar(id){
-  idAtual = id;
+async function editar(cpf){
+  cpfAtual = cpf;
 
   const { data, error } = await supabaseClient
-    .from("clientes")
+    .from("terapeutas")
     .select("*")
-    .eq("id", id)
+    .eq("cpf", cpf)
     .single();
 
   if(error){
@@ -217,22 +218,37 @@ async function editar(id){
     return;
   }
 
-  setForm(data);
+  document.getElementById("nome_completo").value = data.nome_completo || "";
+  document.getElementById("nome_profissional").value = data.nome_profissional || "";
+  document.getElementById("cpf").value = data.cpf || "";
+  document.getElementById("hora_entrada").value = data.hora_entrada || "";
+  document.getElementById("hora_saida").value = data.hora_saida || "";
+  document.getElementById("status").value = data.status || "";
+
   document.getElementById("modal").style.display = "flex";
 }
 
 async function salvar(){
-  const payload = getPayload();
+
+  const payload = {
+    nome_completo: document.getElementById("nome_completo").value,
+    nome_profissional: document.getElementById("nome_profissional").value,
+    cpf: document.getElementById("cpf").value,
+    hora_entrada: document.getElementById("hora_entrada").value,
+    hora_saida: document.getElementById("hora_saida").value,
+    status: document.getElementById("status").value
+  };
+
   let error;
 
-  if(idAtual){
+  if(cpfAtual){
     ({ error } = await supabaseClient
-      .from("clientes")
+      .from("terapeutas")
       .update(payload)
-      .eq("id", idAtual));
+      .eq("cpf", cpfAtual));
   } else {
     ({ error } = await supabaseClient
-      .from("clientes")
+      .from("terapeutas")
       .insert(payload));
   }
 
@@ -245,13 +261,18 @@ async function salvar(){
   carregar();
 }
 
-async function excluir(id){
-  if(!confirm("Excluir cliente?")) return;
+async function excluir(cpf){
+  if(!confirm("Excluir terapeuta?")) return;
 
-  await supabaseClient
-    .from("clientes")
+  const { error } = await supabaseClient
+    .from("terapeutas")
     .delete()
-    .eq("id", id);
+    .eq("cpf", cpf);
+
+  if(error){
+    alert(error.message);
+    return;
+  }
 
   carregar();
 }

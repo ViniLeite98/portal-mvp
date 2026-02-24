@@ -1,75 +1,26 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Certificações | Hara Spa</title>
-
-<link rel="stylesheet" href="/assets/sidebar/sidebar.css">
+<title>Teste Certificações</title>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="/assets/js/supabase.js"></script>
 
 <style>
-.app { display:flex; min-height:100vh; }
-.content { flex:1; padding:30px; }
-
-.form-box {
-  display:flex;
-  gap:10px;
-  margin-bottom:20px;
-}
-
-select, button {
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-
-button {
-  background:#111;
-  color:#fff;
-  cursor:pointer;
-}
-
-table {
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-}
-
-th, td {
-  padding:10px;
-  border-bottom:1px solid #eee;
-  text-align:left;
-}
-
-.remover {
-  background:#b00020;
-  color:white;
-}
+body { font-family: Arial; padding: 40px; }
+select, button { padding: 8px; margin-right: 10px; }
+table { margin-top: 20px; border-collapse: collapse; width: 100%; }
+th, td { padding: 8px; border-bottom: 1px solid #ccc; }
 </style>
+
 </head>
 <body>
 
-<div class="app">
+<h2>Teste Certificações</h2>
 
-<div id="sidebar"></div>
-
-<div class="content">
-
-<h2>Vincular Certificação</h2>
-
-<div class="form-box">
-  <select id="selectEquipe">
-    <option value="">Selecione CPF da Atendente</option>
-  </select>
-
-  <select id="selectCertificacao">
-    <option value="">Selecione Certificação</option>
-  </select>
-
-  <button onclick="vincular()">Cadastrar</button>
-</div>
+<select id="equipe"></select>
+<select id="certificacao"></select>
+<button onclick="vincular()">Cadastrar</button>
 
 <table>
 <thead>
@@ -77,144 +28,109 @@ th, td {
 <th>Nome</th>
 <th>CPF</th>
 <th>Certificação</th>
-<th>Ação</th>
 </tr>
 </thead>
-<tbody id="tabelaCertificacoes"></tbody>
+<tbody id="lista"></tbody>
 </table>
-
-</div>
-</div>
 
 <script>
 
-const supabase = window.supabaseClient;
+// ===== SUPABASE DIRETO AQUI (SEM ARQUIVO EXTERNO) =====
 
-// ================= SIDEBAR =================
-fetch('/assets/sidebar/sidebar.html')
-  .then(res => res.text())
-  .then(data => {
-    document.getElementById('sidebar').innerHTML = data
-  })
+const supabase = window.supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
 
-// ================= CARREGAR EQUIPE =================
+// ===== CARREGAR EQUIPE =====
 async function carregarEquipe() {
   const { data, error } = await supabase
     .from('equipe')
-    .select('id, nome, cpf')
-    .order('nome')
+    .select('id, nome, cpf');
 
   if (error) {
-    console.error("Erro ao carregar equipe:", error)
-    return
+    console.error(error);
+    return;
   }
 
-  const select = document.getElementById("selectEquipe")
-  select.innerHTML = '<option value="">Selecione CPF da Atendente</option>'
+  const select = document.getElementById("equipe");
+  select.innerHTML = "";
 
   data.forEach(e => {
-    select.innerHTML += `
-      <option value="${e.id}">
-        ${e.cpf} - ${e.nome}
-      </option>
-    `
-  })
+    select.innerHTML += `<option value="${e.id}">${e.nome} - ${e.cpf}</option>`;
+  });
 }
 
-// ================= CARREGAR CERTIFICACOES =================
+// ===== CARREGAR CERTIFICACOES =====
 async function carregarCertificacoes() {
   const { data, error } = await supabase
     .from('certificacoes')
-    .select('*')
-    .order('nome')
+    .select('*');
 
   if (error) {
-    console.error("Erro ao carregar certificações:", error)
-    return
+    console.error(error);
+    return;
   }
 
-  const select = document.getElementById("selectCertificacao")
-  select.innerHTML = '<option value="">Selecione Certificação</option>'
+  const select = document.getElementById("certificacao");
+  select.innerHTML = "";
 
   data.forEach(c => {
-    select.innerHTML += `
-      <option value="${c.id}">
-        ${c.nome}
-      </option>
-    `
-  })
+    select.innerHTML += `<option value="${c.id}">${c.nome}</option>`;
+  });
 }
 
-// ================= VINCULAR =================
+// ===== VINCULAR =====
 async function vincular() {
-  const equipe_id = document.getElementById("selectEquipe").value
-  const certificacao_id = document.getElementById("selectCertificacao").value
-
-  if (!equipe_id || !certificacao_id) {
-    alert("Selecione os dois campos.")
-    return
-  }
+  const equipe_id = document.getElementById("equipe").value;
+  const certificacao_id = document.getElementById("certificacao").value;
 
   const { error } = await supabase
     .from('equipe_certificacoes')
-    .insert([{ equipe_id, certificacao_id }])
+    .insert([{ equipe_id, certificacao_id }]);
 
   if (error) {
-    alert("Essa certificação já está vinculada.")
-    return
+    alert("Erro ou já vinculado");
+    console.log(error);
+    return;
   }
 
-  carregarTabela()
+  carregarLista();
 }
 
-// ================= LISTAR =================
-async function carregarTabela() {
+// ===== LISTAR =====
+async function carregarLista() {
   const { data, error } = await supabase
     .from('equipe_certificacoes')
     .select(`
       id,
       equipe:equipe_id (nome, cpf),
       certificacao:certificacao_id (nome)
-    `)
+    `);
 
   if (error) {
-    console.error("Erro ao carregar tabela:", error)
-    return
+    console.error(error);
+    return;
   }
 
-  const tbody = document.getElementById("tabelaCertificacoes")
-  tbody.innerHTML = ""
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
 
   data.forEach(item => {
     tbody.innerHTML += `
       <tr>
-        <td>${item.equipe?.nome}</td>
-        <td>${item.equipe?.cpf}</td>
-        <td>${item.certificacao?.nome}</td>
-        <td>
-          <button class="remover" onclick="remover('${item.id}')">
-            Remover
-          </button>
-        </td>
+        <td>${item.equipe.nome}</td>
+        <td>${item.equipe.cpf}</td>
+        <td>${item.certificacao.nome}</td>
       </tr>
-    `
-  })
+    `;
+  });
 }
 
-// ================= REMOVER =================
-async function remover(id) {
-  await supabase
-    .from('equipe_certificacoes')
-    .delete()
-    .eq('id', id)
-
-  carregarTabela()
-}
-
-// ================= INIT =================
-carregarEquipe()
-carregarCertificacoes()
-carregarTabela()
+// ===== INIT =====
+carregarEquipe();
+carregarCertificacoes();
+carregarLista();
 
 </script>
 

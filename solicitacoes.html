@@ -1,14 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Solicitações | Hara Spa</title>
+
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f5f7fb;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+#sidebar{
+  width:260px;
+  flex-shrink:0;
+}
+
+.content{
+  flex:1;
+  padding:40px;
+}
+
+.card{
+  background:#fff;
+  border-radius:20px;
+  padding:30px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+  margin-bottom:30px;
+}
+
+input, select{
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ddd;
+  width:100%;
+}
+
+button{
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:8px 14px;
+  cursor:pointer;
+  margin-right:6px;
+}
+
+button:hover{ opacity:.9; }
+
+.btn-danger{ background:#dc2626; }
+.btn-aprovar{ background:#16a34a; }
+.btn-reprovar{ background:#dc2626; }
+
+.status-pendente{ color:#d97706; font-weight:bold; }
+.status-aprovado{ color:#16a34a; font-weight:bold; }
+.status-reprovado{ color:#dc2626; font-weight:bold; }
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th, td{
+  padding:10px;
+  border-bottom:1px solid #eee;
+  text-align:left;
+  font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside id="sidebar"></aside>
+
+<main class="content">
+
+<div class="card">
+<h2>Nova Solicitação</h2>
+
+<label>Terapeuta</label>
+<select id="terapeuta"></select><br><br>
+
+<label>Tipo</label>
+<select id="tipo">
+<option>Falta</option>
+<option>Férias</option>
+<option>Atestado</option>
+<option>Viagem</option>
+</select><br><br>
+
+<label>Data Início</label>
+<input type="date" id="data_inicio"><br><br>
+
+<label>Data Fim</label>
+<input type="date" id="data_fim"><br><br>
+
+<label>Justificativa</label>
+<input id="justificativa"><br><br>
+
+<button onclick="salvar()">Salvar</button>
+</div>
+
+<button onclick="toggleLista()">Lista de aprovações</button>
+
+<div class="card" id="cardLista" style="display:none;">
+<h2>Painel de Aprovação</h2>
+
+<table>
+<thead>
+<tr>
+<th>Terapeuta</th>
+<th>Tipo</th>
+<th>Período</th>
+<th>Status</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+</div>
+
+</main>
+</div>
+
+<!-- SUPABASE UMD (CORRETO PARA VERCEL) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- SIDEBAR -->
+<script src="assets/sidebar/sidebar.js"></script>
+
 <script>
 document.addEventListener("DOMContentLoaded", function(){
 
-const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+if(!window.supabase){
+  console.error("Supabase não carregou.");
+  return;
+}
+
+const supabaseClient = window.supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let idEdicao = null;
 
-/* ================= MOSTRAR LISTA ================= */
+/* MOSTRAR LISTA */
 window.toggleLista = function(){
   const card=document.getElementById("cardLista");
   if(card.style.display==="none"){
@@ -19,9 +171,8 @@ window.toggleLista = function(){
   }
 };
 
-/* ================= CARREGAR TERAPEUTAS ================= */
+/* CARREGAR TERAPEUTAS */
 async function carregarTerapeutas(){
-
   const {data,error}=await supabaseClient
     .from("terapeutas")
     .select("cpf,nome_profissional")
@@ -45,7 +196,7 @@ async function carregarTerapeutas(){
   });
 }
 
-/* ================= SALVAR / EDITAR ================= */
+/* SALVAR / EDITAR */
 window.salvar = async function(){
 
   const dataInicio=document.getElementById("data_inicio").value;
@@ -89,9 +240,8 @@ window.salvar = async function(){
   carregarSolicitacoes();
 };
 
-/* ================= EDITAR ================= */
+/* EDITAR */
 window.editar = async function(id){
-
   const {data,error}=await supabaseClient
     .from("solicitacoes")
     .select("*")
@@ -114,25 +264,14 @@ window.editar = async function(id){
   window.scrollTo({top:0,behavior:"smooth"});
 };
 
-/* ================= EXCLUIR ================= */
+/* EXCLUIR */
 window.excluir = async function(id){
-
   if(!confirm("Excluir solicitação?")) return;
-
-  const {error}=await supabaseClient
-    .from("solicitacoes")
-    .delete()
-    .eq("id",id);
-
-  if(error){
-    console.error(error);
-    return;
-  }
-
+  await supabaseClient.from("solicitacoes").delete().eq("id",id);
   carregarSolicitacoes();
 };
 
-/* ================= ALTERAR STATUS ================= */
+/* ALTERAR STATUS */
 window.alterarStatus = async function(id,novoStatus){
   await supabaseClient
     .from("solicitacoes")
@@ -142,7 +281,7 @@ window.alterarStatus = async function(id,novoStatus){
   carregarSolicitacoes();
 };
 
-/* ================= CARREGAR LISTA ================= */
+/* CARREGAR LISTA */
 async function carregarSolicitacoes(){
 
   const {data,error}=await supabaseClient
@@ -153,7 +292,6 @@ async function carregarSolicitacoes(){
       data_inicio,
       data_fim,
       status,
-      justificativa,
       terapeutas(nome_profissional)
     `)
     .order("created_at",{ascending:false});
@@ -190,8 +328,10 @@ async function carregarSolicitacoes(){
   });
 }
 
-/* INIT */
 carregarTerapeutas();
 
 });
 </script>
+
+</body>
+</html>

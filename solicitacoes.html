@@ -8,11 +8,32 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
-.app { display:flex; min-height:100vh; }
-.content { flex:1; padding:40px; margin-left:260px; }
+*{box-sizing:border-box}
 
-.card {
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f5f7fb;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+#sidebar{
+  width:260px;
+  flex-shrink:0;
+}
+
+.content{
+  flex:1;
+  padding:40px;
+}
+
+/* RESTANTE DO SEU CSS ORIGINAL */
+
+.card{
   background:#fff;
   border-radius:20px;
   padding:30px;
@@ -20,14 +41,14 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
   margin-bottom:30px;
 }
 
-input, select {
+input, select{
   padding:8px;
   border-radius:6px;
   border:1px solid #ddd;
   width:100%;
 }
 
-button {
+button{
   background:#1f2937;
   color:#fff;
   border:none;
@@ -37,11 +58,11 @@ button {
   margin-right:6px;
 }
 
-button:hover { opacity:.9; }
+button:hover{ opacity:.9; }
 
-.btn-danger { background:#dc2626; }
+.btn-danger{ background:#dc2626; }
 
-.btn-icon {
+.btn-icon{
   border:none;
   background:none;
   cursor:pointer;
@@ -49,20 +70,20 @@ button:hover { opacity:.9; }
   margin-right:8px;
 }
 
-.btn-aprovar { color:#16a34a; }
-.btn-reprovar { color:#dc2626; }
+.btn-aprovar{ color:#16a34a; }
+.btn-reprovar{ color:#dc2626; }
 
-.status-pendente { color:#d97706; font-weight:bold; }
-.status-aprovado { color:#16a34a; font-weight:bold; }
-.status-reprovado { color:#dc2626; font-weight:bold; }
+.status-pendente{ color:#d97706; font-weight:bold; }
+.status-aprovado{ color:#16a34a; font-weight:bold; }
+.status-reprovado{ color:#dc2626; font-weight:bold; }
 
-table {
+table{
   width:100%;
   border-collapse:collapse;
   margin-top:20px;
 }
 
-th, td {
+th, td{
   padding:10px;
   border-bottom:1px solid #eee;
   text-align:left;
@@ -70,6 +91,7 @@ th, td {
 }
 </style>
 </head>
+
 <body>
 
 <div class="app">
@@ -104,10 +126,8 @@ th, td {
 <button onclick="salvar()">Salvar</button>
 </div>
 
-<!-- BOTÃO -->
 <button onclick="toggleLista()">Lista de aprovações</button>
 
-<!-- LISTA ESCONDIDA -->
 <div class="card" id="cardLista" style="display:none;">
 <h2>Painel de Aprovação</h2>
 
@@ -136,115 +156,105 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-/* MOSTRAR / ESCONDER LISTA */
 function toggleLista(){
-  const card = document.getElementById("cardLista");
-
-  if(card.style.display === "none"){
-    card.style.display = "block";
-    carregarSolicitacoes();
-  } else {
-    card.style.display = "none";
-  }
+const card=document.getElementById("cardLista");
+if(card.style.display==="none"){
+card.style.display="block";
+carregarSolicitacoes();
+}else{
+card.style.display="none";
+}
 }
 
-/* CARREGAR TERAPEUTAS */
-async function carregarTerapeutas() {
+async function carregarTerapeutas(){
+const {data}=await supabaseClient
+.from("terapeutas")
+.select("cpf,nome_profissional")
+.eq("status","Ativo")
+.order("nome_profissional");
 
-  const { data } = await supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional")
-    .eq("status","Ativo")
-    .order("nome_profissional");
+const select=document.getElementById("terapeuta");
+select.innerHTML="";
 
-  const select = document.getElementById("terapeuta");
-  select.innerHTML = "";
-
-  data.forEach(t => {
-    select.innerHTML += `
-      <option value="${t.cpf}">
-        ${t.nome_profissional} - ${t.cpf}
-      </option>
-    `;
-  });
+data.forEach(t=>{
+select.innerHTML+=`
+<option value="${t.cpf}">
+${t.nome_profissional} - ${t.cpf}
+</option>`;
+});
 }
 
-/* SALVAR */
-async function salvar() {
+async function salvar(){
 
-  const dataInicio = document.getElementById("data_inicio").value;
-  const dataFim = document.getElementById("data_fim").value;
+const dataInicio=document.getElementById("data_inicio").value;
+const dataFim=document.getElementById("data_fim").value;
 
-  if (dataFim < dataInicio) {
-    alert("Data fim não pode ser menor que data início.");
-    return;
-  }
-
-  const payload = {
-    terapeuta_cpf: document.getElementById("terapeuta").value,
-    tipo: document.getElementById("tipo").value,
-    data_inicio: dataInicio,
-    data_fim: dataFim,
-    justificativa: document.getElementById("justificativa").value,
-    status: "Pendente"
-  };
-
-  const { error } = await supabaseClient
-    .from("solicitacoes")
-    .insert(payload);
-
-  if (error) return alert("Erro ao salvar");
-
-  alert("Solicitação registrada!");
+if(dataFim<dataInicio){
+alert("Data fim não pode ser menor que data início.");
+return;
 }
 
-/* ALTERAR STATUS */
-async function alterarStatus(id, novoStatus){
-  await supabaseClient
-    .from("solicitacoes")
-    .update({ status: novoStatus })
-    .eq("id", id);
+const payload={
+terapeuta_cpf:document.getElementById("terapeuta").value,
+tipo:document.getElementById("tipo").value,
+data_inicio:dataInicio,
+data_fim:dataFim,
+justificativa:document.getElementById("justificativa").value,
+status:"Pendente"
+};
 
-  carregarSolicitacoes();
+const {error}=await supabaseClient
+.from("solicitacoes")
+.insert(payload);
+
+if(error)return alert("Erro ao salvar");
+
+alert("Solicitação registrada!");
 }
 
-/* CARREGAR LISTA */
-async function carregarSolicitacoes() {
+async function alterarStatus(id,novoStatus){
+await supabaseClient
+.from("solicitacoes")
+.update({status:novoStatus})
+.eq("id",id);
 
-  const { data } = await supabaseClient
-    .from("solicitacoes")
-    .select("*")
-    .order("created_at", { ascending:false });
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  data.forEach(s => {
-
-    let statusClass = "";
-    if (s.status === "Pendente") statusClass = "status-pendente";
-    if (s.status === "Aprovado") statusClass = "status-aprovado";
-    if (s.status === "Reprovado") statusClass = "status-reprovado";
-
-    tbody.innerHTML += `
-      <tr>
-        <td>${s.terapeuta_cpf}</td>
-        <td>${s.tipo}</td>
-        <td>${s.data_inicio} → ${s.data_fim}</td>
-        <td class="${statusClass}">${s.status}</td>
-        <td>
-          <button class="btn-icon btn-aprovar"
-            onclick="alterarStatus('${s.id}','Aprovado')">✔</button>
-
-          <button class="btn-icon btn-reprovar"
-            onclick="alterarStatus('${s.id}','Reprovado')">✖</button>
-        </td>
-      </tr>
-    `;
-  });
+carregarSolicitacoes();
 }
 
-/* INIT */
+async function carregarSolicitacoes(){
+
+const {data}=await supabaseClient
+.from("solicitacoes")
+.select("*")
+.order("created_at",{ascending:false});
+
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
+
+data.forEach(s=>{
+
+let statusClass="";
+if(s.status==="Pendente")statusClass="status-pendente";
+if(s.status==="Aprovado")statusClass="status-aprovado";
+if(s.status==="Reprovado")statusClass="status-reprovado";
+
+tbody.innerHTML+=`
+<tr>
+<td>${s.terapeuta_cpf}</td>
+<td>${s.tipo}</td>
+<td>${s.data_inicio} → ${s.data_fim}</td>
+<td class="${statusClass}">${s.status}</td>
+<td>
+<button class="btn-icon btn-aprovar"
+onclick="alterarStatus('${s.id}','Aprovado')">✔</button>
+
+<button class="btn-icon btn-reprovar"
+onclick="alterarStatus('${s.id}','Reprovado')">✖</button>
+</td>
+</tr>`;
+});
+}
+
 carregarTerapeutas();
 </script>
 

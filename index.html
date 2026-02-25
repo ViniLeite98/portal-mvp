@@ -4,64 +4,61 @@
 <meta charset="UTF-8">
 <title>Dashboard | Hara Spa</title>
 
-<!-- FONT AWESOME -->
 <link rel="stylesheet"
  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
+*{box-sizing:border-box}
 
-/* RESET BASE */
-* {
-  box-sizing: border-box;
-}
-
-body {
+body{
   margin:0;
-  font-family:'Segoe UI', sans-serif;
+  font-family:'Segoe UI',sans-serif;
   background:#f5f7fb;
 }
 
-/* LAYOUT PADRÃO GLOBAL */
-.app {
+.app{
   display:flex;
   min-height:100vh;
 }
 
-#sidebar {
+#sidebar{
   width:260px;
   flex-shrink:0;
 }
 
-.content {
+.content{
   flex:1;
   padding:40px;
 }
 
-/* DASHBOARD */
-
-.card {
+.card{
   background:#fff;
   border-radius:25px;
   padding:30px;
   box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 
-.top-cards {
+.top-cards{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:30px;
   margin-bottom:40px;
 }
 
-.big-number {
+.big-number{
   font-size:60px;
   font-weight:bold;
+  margin-top:10px;
 }
 
-.workforce {
+.label-small{
+  color:#666;
+  font-size:14px;
+}
+
+.workforce{
   background:#fff;
   border-radius:25px;
   padding:30px;
@@ -69,11 +66,11 @@ body {
   gap:40px;
 }
 
-.chart {
+.chart{
   flex:3;
 }
 
-.chart-wrapper {
+.chart-wrapper{
   display:flex;
   align-items:flex-end;
   gap:16px;
@@ -81,48 +78,50 @@ body {
   margin-top:30px;
 }
 
-.bar-container {
+.bar-container{
   display:flex;
   flex-direction:column;
   align-items:center;
   width:40px;
 }
 
-.bar-value {
+.bar-value{
   font-size:12px;
   font-weight:600;
   margin-bottom:6px;
-  color:#333;
 }
 
-.bar {
+.bar{
   width:100%;
   background:linear-gradient(180deg,#6a8fd6,#4f6fb3);
   border-radius:8px 8px 0 0;
-  transition:.3s;
 }
 
-.bar:hover {
-  opacity:.85;
-}
-
-.bar-hour {
+.bar-hour{
   margin-top:8px;
   font-size:12px;
   color:#555;
 }
 
-.work-info {
+.work-info{
   flex:1;
   border-left:1px solid #eee;
   padding-left:30px;
 }
 
-.work-info p {
-  margin:8px 0;
+.rank-item{
+  margin-bottom:12px;
   font-size:14px;
 }
 
+.rank-item strong{
+  color:#4f6fb3;
+}
+
+.rank-top{
+  font-weight:bold;
+  color:#16a34a;
+}
 </style>
 </head>
 
@@ -130,136 +129,172 @@ body {
 
 <div class="app">
 
-  <aside id="sidebar"></aside>
+<aside id="sidebar"></aside>
 
-  <main class="content">
+<main class="content">
 
-    <div class="top-cards">
-      <div class="card">
-        <h3>Equipe</h3>
-        <div class="big-number" id="totalEquipe">0</div>
-        <p>Terapeutas ativas</p>
-      </div>
+<div class="top-cards">
 
-      <div class="card">
-        <h3>Resumo</h3>
-        <p>Dados atualizados em tempo real</p>
-      </div>
+  <div class="card">
+    <h3>Equipe</h3>
+    <div class="big-number" id="totalEquipe">0</div>
+    <div class="label-small">Terapeutas ativas</div>
+  </div>
 
-      <div class="card">
-        <h3>Status</h3>
-        <p>Sistema operacional</p>
-      </div>
-    </div>
+  <div class="card">
+    <h3>Clientes</h3>
+    <div class="big-number" id="totalClientes">0</div>
+    <div class="label-small">Clientes cadastrados</div>
+  </div>
 
-    <div class="workforce">
-
-      <div class="chart">
-        <h3>Força de Trabalho</h3>
-        <div class="chart-wrapper" id="bars"></div>
-      </div>
-
-      <div class="work-info">
-        <h3>Carga horária</h3>
-        <div id="cargaHoraria"></div>
-      </div>
-
-    </div>
-
-  </main>
+  <div class="card">
+    <h3>Serviços</h3>
+    <div class="big-number" id="totalServicos">0</div>
+    <div class="label-small">Serviços ativos</div>
+  </div>
 
 </div>
+
+<div class="workforce">
+
+  <div class="chart">
+    <h3>Força de Trabalho (por hora)</h3>
+    <div class="chart-wrapper" id="bars"></div>
+  </div>
+
+  <div class="work-info">
+    <h3>Carga horária (Ranking)</h3>
+    <div id="cargaHoraria"></div>
+  </div>
+
+</div>
+
+</main>
+</div>
+
+<!-- SUPABASE UMD -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
+document.addEventListener("DOMContentLoaded", async function(){
 
-const supabaseClient = supabase.createClient(
+const supabaseClient = window.supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-async function carregarDashboard() {
+/* =========================
+   CARREGAR NÚMEROS GRANDES
+========================= */
 
-  const { data, error } = await supabaseClient
-    .from("terapeutas")
-    .select("nome_profissional,hora_entrada,hora_saida,status")
-    .eq("status","Ativo")
-    .order("nome_profissional");
+const { data: terapeutas } = await supabaseClient
+  .from("terapeutas")
+  .select("*")
+  .eq("status","Ativo");
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+document.getElementById("totalEquipe").innerText = terapeutas?.length || 0;
 
-  document.getElementById("totalEquipe").innerText = data.length;
+const { data: clientes } = await supabaseClient
+  .from("clientes")
+  .select("*");
 
-  const cargaDiv = document.getElementById("cargaHoraria");
-  cargaDiv.innerHTML = "";
+document.getElementById("totalClientes").innerText = clientes?.length || 0;
 
-  data.forEach(t => {
-    if (!t.hora_entrada || !t.hora_saida) return;
+const { data: servicos } = await supabaseClient
+  .from("servicos")
+  .select("*")
+  .eq("status","ativo");
 
-    const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
-    const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
+document.getElementById("totalServicos").innerText = servicos?.length || 0;
 
-    const totalMin = (h2*60+m2) - (h1*60+m1);
+/* =========================
+   CARGA HORÁRIA RANKING
+========================= */
 
-    const horas = Math.floor(totalMin / 60);
-    const minutos = totalMin % 60;
+let ranking = [];
 
-    cargaDiv.innerHTML += 
-      `<p>${t.nome_profissional}: ${horas}:${minutos.toString().padStart(2,'0')} horas</p>`;
+(terapeutas || []).forEach(t => {
+
+  if (!t.hora_entrada || !t.hora_saida) return;
+
+  const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
+  const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
+
+  const totalMin = (h2*60+m2) - (h1*60+m1);
+  const horas = totalMin / 60;
+
+  ranking.push({
+    nome: t.nome_profissional,
+    horas: horas
   });
 
-  const inicioDia = 9;
-  const fimDia = 21;
-  const contagem = {};
+});
 
-  for (let h = inicioDia; h <= fimDia; h++) contagem[h] = 0;
+ranking.sort((a,b)=>b.horas - a.horas);
 
-  data.forEach(t => {
+const cargaDiv = document.getElementById("cargaHoraria");
+cargaDiv.innerHTML = "";
 
-    if (!t.hora_entrada || !t.hora_saida) return;
+ranking.forEach((r,index)=>{
+  cargaDiv.innerHTML += `
+    <div class="rank-item ${index===0 ? "rank-top" : ""}">
+      ${index+1}º - <strong>${r.nome}</strong> 
+      (${r.horas.toFixed(1)}h)
+    </div>
+  `;
+});
 
-    const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
-    const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
+/* =========================
+   FORÇA DE TRABALHO (GRÁFICO)
+========================= */
 
-    const inicio = h1*60 + m1;
-    const fim = h2*60 + m2;
+const inicioDia = 9;
+const fimDia = 21;
+const contagem = {};
 
-    for (let h = inicioDia; h <= fimDia; h++) {
-      const slotInicio = h * 60;
-      const slotFim = (h + 1) * 60;
+for (let h = inicioDia; h <= fimDia; h++) contagem[h] = 0;
 
-      if (inicio < slotFim && fim >= slotInicio) {
-        contagem[h]++;
-      }
-    }
-  });
+(terapeutas || []).forEach(t => {
 
-  const maxValor = Math.max(...Object.values(contagem));
-  const barsDiv = document.getElementById("bars");
-  barsDiv.innerHTML = "";
+  if (!t.hora_entrada || !t.hora_saida) return;
+
+  const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
+  const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
+
+  const inicio = h1*60 + m1;
+  const fim = h2*60 + m2;
 
   for (let h = inicioDia; h <= fimDia; h++) {
+    const slotInicio = h * 60;
+    const slotFim = (h + 1) * 60;
 
-    const valor = contagem[h];
-    const altura = maxValor === 0 ? 0 : (valor / maxValor) * 200;
-
-    barsDiv.innerHTML += `
-      <div class="bar-container">
-        <div class="bar-value">${valor}</div>
-        <div class="bar" style="height:${altura}px"></div>
-        <div class="bar-hour">${h}:00</div>
-      </div>
-    `;
+    if (inicio < slotFim && fim >= slotInicio) {
+      contagem[h]++;
+    }
   }
+});
 
+const maxValor = Math.max(...Object.values(contagem));
+const barsDiv = document.getElementById("bars");
+barsDiv.innerHTML = "";
+
+for (let h = inicioDia; h <= fimDia; h++) {
+
+  const valor = contagem[h];
+  const altura = maxValor === 0 ? 0 : (valor / maxValor) * 200;
+
+  barsDiv.innerHTML += `
+    <div class="bar-container">
+      <div class="bar-value">${valor}</div>
+      <div class="bar" style="height:${altura}px"></div>
+      <div class="bar-hour">${h}:00</div>
+    </div>
+  `;
 }
 
-carregarDashboard();
-
+});
 </script>
 
 </body>

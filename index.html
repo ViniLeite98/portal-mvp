@@ -254,12 +254,18 @@ for(const t of (terapeutas||[])){
 
   let contadorSemanal=0;
 
-  if(t.tem_folga && String(t.tem_folga).toLowerCase()==="sim" && t.dia_folga){
+  /* ===== FOLGA SEMANAL ===== */
+
+  if(t.tem_folga && String(t.tem_folga).trim().toLowerCase()==="sim" && t.dia_folga){
+
     const diaNumero=mapaDia[t.dia_folga.toLowerCase()];
     if(diaNumero!==undefined){
+
       const admissao=new Date(t.data_inicio);
       const dataBase=admissao>inicioAno?admissao:inicioAno;
+
       let dataLoop=new Date(dataBase);
+
       while(dataLoop<=hoje){
         if(dataLoop.getDay()===diaNumero) contadorSemanal++;
         dataLoop.setDate(dataLoop.getDate()+1);
@@ -267,19 +273,25 @@ for(const t of (terapeutas||[])){
     }
   }
 
+  /* ===== SOMENTE APROVADAS ===== */
+
   const { data: solicitacoes } = await supabaseClient
     .from("solicitacoes")
-    .select("data_inicio,data_fim")
-    .eq("terapeuta_cpf",t.cpf)
-    .eq("status","Aprovado");
+    .select("data_inicio,data_fim,status")
+    .eq("terapeuta_cpf",t.cpf);
 
   let diasAprovados=0;
 
   (solicitacoes||[]).forEach(s=>{
+    if(!s.status) return;
+    if(String(s.status).trim().toLowerCase()!=="aprovado") return;
+
     const inicio=new Date(s.data_inicio);
     const fim=new Date(s.data_fim);
+
     const inicioConsiderado=inicio<inicioAno?inicioAno:inicio;
     const diff=Math.floor((fim-inicioConsiderado)/(1000*60*60*24))+1;
+
     if(diff>0) diasAprovados+=diff;
   });
 

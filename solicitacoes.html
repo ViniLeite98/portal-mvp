@@ -1,200 +1,52 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Solicitações | Hara Spa</title>
-
-<!-- FONT AWESOME (ÍCONES DO SIDEBAR) -->
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
-<style>
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
-}
-
-.app{
-  display:flex;
-  min-height:100vh;
-}
-
-#sidebar{
-  width:260px;
-  flex-shrink:0;
-}
-
-.content{
-  flex:1;
-  padding:40px;
-}
-
-/* SEU CSS ORIGINAL */
-
-.card{
-  background:#fff;
-  border-radius:20px;
-  padding:30px;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-  margin-bottom:30px;
-}
-
-input, select{
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #ddd;
-  width:100%;
-}
-
-button{
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:8px 14px;
-  cursor:pointer;
-  margin-right:6px;
-}
-
-button:hover{ opacity:.9; }
-
-.btn-danger{ background:#dc2626; }
-
-.btn-icon{
-  border:none;
-  background:none;
-  cursor:pointer;
-  font-size:18px;
-  margin-right:8px;
-}
-
-.btn-aprovar{ color:#16a34a; }
-.btn-reprovar{ color:#dc2626; }
-
-.status-pendente{ color:#d97706; font-weight:bold; }
-.status-aprovado{ color:#16a34a; font-weight:bold; }
-.status-reprovado{ color:#dc2626; font-weight:bold; }
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-}
-
-th, td{
-  padding:10px;
-  border-bottom:1px solid #eee;
-  text-align:left;
-  font-size:14px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-
-<aside id="sidebar"></aside>
-
-<main class="content">
-
-<!-- NOVA SOLICITAÇÃO -->
-<div class="card">
-<h2>Nova Solicitação</h2>
-
-<label>Terapeuta</label>
-<select id="terapeuta"></select><br><br>
-
-<label>Tipo</label>
-<select id="tipo">
-<option>Falta</option>
-<option>Férias</option>
-<option>Atestado</option>
-<option>Viagem</option>
-</select><br><br>
-
-<label>Data Início</label>
-<input type="date" id="data_inicio"><br><br>
-
-<label>Data Fim</label>
-<input type="date" id="data_fim"><br><br>
-
-<label>Justificativa</label>
-<input id="justificativa"><br><br>
-
-<button onclick="salvar()">Salvar</button>
-</div>
-
-<button onclick="toggleLista()">Lista de aprovações</button>
-
-<div class="card" id="cardLista" style="display:none;">
-<h2>Painel de Aprovação</h2>
-
-<table>
-<thead>
-<tr>
-<th>Terapeuta</th>
-<th>Tipo</th>
-<th>Período</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
-</div>
-
-</main>
-</div>
-
-<script src="assets/sidebar/sidebar.js"></script>
-
 <script>
+document.addEventListener("DOMContentLoaded", function(){
+
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-/* MOSTRAR / ESCONDER LISTA */
-function toggleLista(){
-  const card=document.getElementById("cardLista");
+let idEdicao = null;
 
+/* ================= MOSTRAR LISTA ================= */
+window.toggleLista = function(){
+  const card=document.getElementById("cardLista");
   if(card.style.display==="none"){
     card.style.display="block";
     carregarSolicitacoes();
   }else{
     card.style.display="none";
   }
-}
+};
 
-/* CARREGAR TERAPEUTAS */
+/* ================= CARREGAR TERAPEUTAS ================= */
 async function carregarTerapeutas(){
-  const {data}=await supabaseClient
+
+  const {data,error}=await supabaseClient
     .from("terapeutas")
     .select("cpf,nome_profissional")
     .eq("status","Ativo")
     .order("nome_profissional");
 
+  if(error){
+    console.error(error);
+    return;
+  }
+
   const select=document.getElementById("terapeuta");
-  select.innerHTML="";
+  select.innerHTML="<option value=''>Selecione</option>";
 
   data.forEach(t=>{
     select.innerHTML+=`
       <option value="${t.cpf}">
-        ${t.nome_profissional} - ${t.cpf}
+        ${t.nome_profissional}
       </option>
     `;
   });
 }
 
-/* SALVAR */
-async function salvar(){
+/* ================= SALVAR / EDITAR ================= */
+window.salvar = async function(){
 
   const dataInicio=document.getElementById("data_inicio").value;
   const dataFim=document.getElementById("data_fim").value;
@@ -209,36 +61,107 @@ async function salvar(){
     tipo:document.getElementById("tipo").value,
     data_inicio:dataInicio,
     data_fim:dataFim,
-    justificativa:document.getElementById("justificativa").value,
-    status:"Pendente"
+    justificativa:document.getElementById("justificativa").value
   };
+
+  let error;
+
+  if(idEdicao){
+    ({error}=await supabaseClient
+      .from("solicitacoes")
+      .update(payload)
+      .eq("id",idEdicao));
+  }else{
+    payload.status="Pendente";
+    ({error}=await supabaseClient
+      .from("solicitacoes")
+      .insert(payload));
+  }
+
+  if(error){
+    console.error(error);
+    alert("Erro ao salvar");
+    return;
+  }
+
+  idEdicao=null;
+  alert("Salvo com sucesso!");
+  carregarSolicitacoes();
+};
+
+/* ================= EDITAR ================= */
+window.editar = async function(id){
+
+  const {data,error}=await supabaseClient
+    .from("solicitacoes")
+    .select("*")
+    .eq("id",id)
+    .single();
+
+  if(error){
+    console.error(error);
+    return;
+  }
+
+  idEdicao=id;
+
+  document.getElementById("terapeuta").value=data.terapeuta_cpf;
+  document.getElementById("tipo").value=data.tipo;
+  document.getElementById("data_inicio").value=data.data_inicio;
+  document.getElementById("data_fim").value=data.data_fim;
+  document.getElementById("justificativa").value=data.justificativa;
+
+  window.scrollTo({top:0,behavior:"smooth"});
+};
+
+/* ================= EXCLUIR ================= */
+window.excluir = async function(id){
+
+  if(!confirm("Excluir solicitação?")) return;
 
   const {error}=await supabaseClient
     .from("solicitacoes")
-    .insert(payload);
+    .delete()
+    .eq("id",id);
 
-  if(error)return alert("Erro ao salvar");
+  if(error){
+    console.error(error);
+    return;
+  }
 
-  alert("Solicitação registrada!");
-}
+  carregarSolicitacoes();
+};
 
-/* ALTERAR STATUS */
-async function alterarStatus(id,novoStatus){
+/* ================= ALTERAR STATUS ================= */
+window.alterarStatus = async function(id,novoStatus){
   await supabaseClient
     .from("solicitacoes")
     .update({status:novoStatus})
     .eq("id",id);
 
   carregarSolicitacoes();
-}
+};
 
-/* CARREGAR LISTA */
+/* ================= CARREGAR LISTA ================= */
 async function carregarSolicitacoes(){
 
-  const {data}=await supabaseClient
+  const {data,error}=await supabaseClient
     .from("solicitacoes")
-    .select("*")
+    .select(`
+      id,
+      tipo,
+      data_inicio,
+      data_fim,
+      status,
+      justificativa,
+      terapeutas(nome_profissional)
+    `)
     .order("created_at",{ascending:false});
+
+  if(error){
+    console.error(error);
+    return;
+  }
 
   const tbody=document.getElementById("lista");
   tbody.innerHTML="";
@@ -252,16 +175,15 @@ async function carregarSolicitacoes(){
 
     tbody.innerHTML+=`
       <tr>
-        <td>${s.terapeuta_cpf}</td>
+        <td>${s.terapeutas?.nome_profissional || ""}</td>
         <td>${s.tipo}</td>
         <td>${s.data_inicio} → ${s.data_fim}</td>
         <td class="${statusClass}">${s.status}</td>
         <td>
-          <button class="btn-icon btn-aprovar"
-            onclick="alterarStatus('${s.id}','Aprovado')">✔</button>
-
-          <button class="btn-icon btn-reprovar"
-            onclick="alterarStatus('${s.id}','Reprovado')">✖</button>
+          <button onclick="editar('${s.id}')">Editar</button>
+          <button onclick="alterarStatus('${s.id}','Aprovado')" class="btn-aprovar">✔</button>
+          <button onclick="alterarStatus('${s.id}','Reprovado')" class="btn-reprovar">✖</button>
+          <button onclick="excluir('${s.id}')" class="btn-danger">Excluir</button>
         </td>
       </tr>
     `;
@@ -270,7 +192,6 @@ async function carregarSolicitacoes(){
 
 /* INIT */
 carregarTerapeutas();
-</script>
 
-</body>
-</html>
+});
+</script>

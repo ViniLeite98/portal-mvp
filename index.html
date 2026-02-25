@@ -73,8 +73,17 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .bar-value{font-size:12px;margin-bottom:6px;}
 .bar-hour{margin-top:6px;font-size:12px;color:#555;}
 
-.rank{flex:1;border-left:1px solid #eee;padding-left:30px;}
-.rank-item{padding:6px 0;border-bottom:1px solid #eee;font-size:14px;}
+.rank{
+  flex:1;
+  border-left:1px solid #eee;
+  padding-left:30px;
+}
+
+.rank-item{
+  padding:6px 0;
+  border-bottom:1px solid #eee;
+  font-size:14px;
+}
 
 .folgas{
   background:#fff;
@@ -171,7 +180,6 @@ document.getElementById("totalServicos").innerText = servicos?.length || 0;
 /* ================= CARGA HORÁRIA ================= */
 
 let ranking = [];
-
 const inicioDia = 9;
 const fimDia = 21;
 let contagem = {};
@@ -192,8 +200,6 @@ for(let h=inicioDia;h<=fimDia;h++) contagem[h]=0;
   }
 });
 
-/* RENDER BARRAS */
-
 const barsDiv=document.getElementById("bars");
 const maxValor=Math.max(...Object.values(contagem));
 
@@ -209,8 +215,6 @@ for(let h=inicioDia;h<=fimDia;h++){
     </div>
   `;
 }
-
-/* RANKING */
 
 ranking.sort((a,b)=>b.minutos-a.minutos);
 
@@ -248,20 +252,19 @@ const folgaDiv=document.getElementById("listaFolgas");
 
 for(const t of (terapeutas||[])){
 
-  if(!t.dia_folga || String(t.tem_folga).toLowerCase()!=="sim") continue;
+  let contadorSemanal=0;
 
-  const diaNumero=mapaDia[t.dia_folga.toLowerCase()];
-  if(diaNumero===undefined) continue;
-
-  const admissao=new Date(t.data_inicio);
-  const dataBase=admissao>inicioAno?admissao:inicioAno;
-
-  let contador=0;
-  let dataLoop=new Date(dataBase);
-
-  while(dataLoop<=hoje){
-    if(dataLoop.getDay()===diaNumero) contador++;
-    dataLoop.setDate(dataLoop.getDate()+1);
+  if(t.tem_folga && String(t.tem_folga).toLowerCase()==="sim" && t.dia_folga){
+    const diaNumero=mapaDia[t.dia_folga.toLowerCase()];
+    if(diaNumero!==undefined){
+      const admissao=new Date(t.data_inicio);
+      const dataBase=admissao>inicioAno?admissao:inicioAno;
+      let dataLoop=new Date(dataBase);
+      while(dataLoop<=hoje){
+        if(dataLoop.getDay()===diaNumero) contadorSemanal++;
+        dataLoop.setDate(dataLoop.getDate()+1);
+      }
+    }
   }
 
   const { data: solicitacoes } = await supabaseClient
@@ -280,7 +283,7 @@ for(const t of (terapeutas||[])){
     if(diff>0) diasAprovados+=diff;
   });
 
-  const total=contador+diasAprovados;
+  const total=contadorSemanal+diasAprovados;
 
   folgaDiv.innerHTML+=`
     <div class="folga-item">

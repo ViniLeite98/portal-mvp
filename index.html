@@ -184,14 +184,13 @@ body{
 </div>
 
 <div class="folgas">
-  <h3>Dias de Folga</h3>
+  <h3>Folgas em 2026</h3>
   <div id="listaFolgas"></div>
 </div>
 
 </main>
 </div>
 
-<!-- SUPABASE CORRETO -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
@@ -204,7 +203,7 @@ const supabaseClient = supabase.createClient(
 );
 
 /* =========================
-   BUSCAR TERAPEUTAS
+   BUSCAR DADOS BASE
 ========================= */
 
 const { data: terapeutas } = await supabaseClient
@@ -212,31 +211,21 @@ const { data: terapeutas } = await supabaseClient
   .select("*")
   .eq("status","Ativo");
 
-document.getElementById("totalEquipe").innerText = terapeutas?.length || 0;
-
-/* =========================
-   CLIENTES
-========================= */
-
 const { data: clientes } = await supabaseClient
   .from("clientes")
   .select("*");
-
-document.getElementById("totalClientes").innerText = clientes?.length || 0;
-
-/* =========================
-   SERVIÇOS
-========================= */
 
 const { data: servicos } = await supabaseClient
   .from("servicos")
   .select("*")
   .eq("status","ativo");
 
+document.getElementById("totalEquipe").innerText = terapeutas?.length || 0;
+document.getElementById("totalClientes").innerText = clientes?.length || 0;
 document.getElementById("totalServicos").innerText = servicos?.length || 0;
 
 /* =========================
-   CARGA HORÁRIA RANKING
+   RANKING CARGA HORÁRIA
 ========================= */
 
 let ranking = [];
@@ -244,8 +233,8 @@ let ranking = [];
 (terapeutas || []).forEach(t=>{
   if(!t.hora_entrada || !t.hora_saida) return;
 
-  const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
-  const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
+  const [h1,m1] = t.hora_entrada.split(":").map(Number);
+  const [h2,m2] = t.hora_saida.split(":").map(Number);
 
   const totalMin = (h2*60+m2) - (h1*60+m1);
 
@@ -284,8 +273,8 @@ for(let h=inicioDia; h<=fimDia; h++) contagem[h]=0;
 (terapeutas || []).forEach(t=>{
   if(!t.hora_entrada || !t.hora_saida) return;
 
-  const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
-  const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
+  const [h1,m1] = t.hora_entrada.split(":").map(Number);
+  const [h2,m2] = t.hora_saida.split(":").map(Number);
 
   const inicio = h1*60 + m1;
   const fim = h2*60 + m2;
@@ -318,22 +307,59 @@ for(let h=inicioDia; h<=fimDia; h++){
 }
 
 /* =========================
-   DIAS DE FOLGA
+   FOLGAS 2026
 ========================= */
 
+const hoje = new Date();
+const inicioAno = new Date(2026,0,1);
 const folgaDiv = document.getElementById("listaFolgas");
 folgaDiv.innerHTML="";
 
-(terapeutas || []).forEach(t=>{
-  if(t.tem_folga==="Sim" && t.dia_folga){
-    folgaDiv.innerHTML+=`
-      <div class="folga-item">
-        ${t.nome_profissional} — 
-        <span class="folga-dia">${t.dia_folga}</span>
-      </div>
-    `;
+for(const t of (terapeutas || [])){
+
+  if(t.tem_folga!=="Sim" || !t.dia_folga) continue;
+
+  const dataAdmissao = new Date(t.data_inicio);
+  const dataBase = dataAdmissao > inicioAno ? dataAdmissao : inicioAno;
+
+  let contadorSemanal = 0;
+  let dataLoop = new Date(dataBase);
+
+  while(dataLoop <= hoje){
+    const diaSemana = dataLoop.toLocaleDateString("pt-BR",{weekday:"long"});
+    if(diaSemana.toLowerCase() === t.dia_folga.toLowerCase()){
+      contadorSemanal++;
+    }
+    dataLoop.setDate(dataLoop.getDate()+1);
   }
-});
+
+  const { data: solicitacoesAprovadas } = await supabaseClient
+    .from("solicitacoes")
+    .select("*")
+    .eq("terapeuta_cpf", t.cpf)
+    .eq("status","Aprovado");
+
+  let diasAprovados = 0;
+
+  (solicitacoesAprovadas || []).forEach(s=>{
+    const inicio = new Date(s.data_inicio);
+    const fim = new Date(s.data_fim);
+
+    const inicioConsiderado = inicio < inicioAno ? inicioAno : inicio;
+    const diff = Math.floor((fim - inicioConsiderado)/(1000*60*60*24))+1;
+
+    if(diff>0) diasAprovados += diff;
+  });
+
+  const totalFolgas = contadorSemanal + diasAprovados;
+
+  folgaDiv.innerHTML += `
+    <div class="folga-item">
+      ${t.nome_profissional} —
+      <span class="folga-dia">${totalFolgas} folgas</span>
+    </div>
+  `;
+}
 
 });
 </script>

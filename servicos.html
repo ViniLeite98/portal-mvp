@@ -1,26 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Serviços | Hara Spa</title>
+
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:'Segoe UI',sans-serif;
+  background:#f5f7fb;
+}
+
+.app{
+  display:flex;
+  min-height:100vh;
+}
+
+#sidebar{
+  width:260px;
+  flex-shrink:0;
+}
+
+.content{
+  flex:1;
+  padding:40px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden;
+}
+
+th,td{
+  padding:14px;
+  border-bottom:1px solid #e5e7eb;
+  font-size:14px;
+  text-align:left;
+}
+
+th{
+  background:#f9fafb;
+  font-weight:600;
+  cursor:pointer;
+}
+
+button{
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:6px 12px;
+  cursor:pointer;
+}
+
+button.excluir{background:#dc2626}
+
+.top-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:16px;
+}
+
+.pagination{
+  margin-top:20px;
+  display:flex;
+  gap:8px;
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
+}
+
+.modal-content{
+  background:#fff;
+  width:600px;
+  border-radius:16px;
+  padding:24px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+
+input,select{
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+  width:100%;
+}
+
+.modal-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:20px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <aside id="sidebar"></aside>
+
+  <main class="content">
+
+    <h1>Serviços</h1>
+    <p>Serviços cadastrados</p>
+
+    <div class="top-actions">
+      <button onclick="abrirNovo()">+ Novo Serviço</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th onclick="ordenar('nome')">Nome</th>
+          <th onclick="ordenar('valor')">Valor</th>
+          <th onclick="ordenar('comissao')">Comissão</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
+
+    <div class="pagination" id="paginacao"></div>
+
+  </main>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+
+    <h3>Cadastro Serviço</h3>
+
+    <div class="grid">
+      <input id="nome" placeholder="Nome do serviço">
+      <input id="valor" type="number" step="0.01" placeholder="Valor">
+      <input id="comissao" type="number" step="0.01" placeholder="Comissão">
+
+      <select id="status">
+        <option value="">Status</option>
+        <option value="ativo">ativo</option>
+        <option value="inativo">inativo</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button onclick="fecharModal()">Cancelar</button>
+      <button onclick="salvar()">Salvar</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- SUPABASE PRIMEIRO -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- SIDEBAR DEPOIS -->
+<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
 
-// ================= SUPABASE =================
 const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-// ================= VARIÁVEIS =================
 let idAtual = null;
 let ordemAtual = { campo: "nome", asc: true };
 let paginaAtual = 1;
 const porPagina = 10;
 let totalRegistros = 0;
 
-// ================= CARREGAR =================
 async function carregar() {
 
   const tbody = document.getElementById("lista");
-  if (!tbody) return; // proteção
+  if (!tbody) return;
 
   const inicio = (paginaAtual - 1) * porPagina;
   const fim = inicio + porPagina - 1;
@@ -37,7 +213,6 @@ async function carregar() {
   }
 
   totalRegistros = count || 0;
-
   tbody.innerHTML = "";
 
   (data || []).forEach(s => {
@@ -58,7 +233,6 @@ async function carregar() {
   renderPaginacao();
 }
 
-// ================= PAGINAÇÃO =================
 function renderPaginacao(){
   const div = document.getElementById("paginacao");
   if (!div) return;
@@ -142,7 +316,6 @@ window.salvar = async function(){
 };
 
 window.editar = async function(id){
-
   idAtual = id;
 
   const { data, error } = await supabaseClient
@@ -170,8 +343,10 @@ window.excluir = async function(id){
   carregar();
 };
 
-// INICIAR
 carregar();
 
 });
 </script>
+
+</body>
+</html>

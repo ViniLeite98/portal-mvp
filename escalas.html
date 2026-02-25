@@ -260,6 +260,91 @@ calendar.appendChild(div);
 }
 }
 
+function mostrarDia(dia){
+const data=new Date(ano,mes,dia);
+document.getElementById("tituloDia").innerText=
+`Dia ${dia}/${mes+1}/${ano}`;
+
+const detalhes=document.getElementById("detalhesDia");
+detalhes.innerHTML="";
+
+const disponiveis=terapeutas.filter(t=>
+t.hora_entrada&&t.hora_saida&&
+!folgaSemanal(t,data)&&
+!folgaAprovada(t,data)
+);
+
+const indisponiveis=terapeutas.filter(t=>
+folgaSemanal(t,data)||folgaAprovada(t,data)
+);
+
+detalhes.innerHTML+=`<div class="section-title">
+Disponíveis (${disponiveis.length})
+</div>`;
+
+disponiveis.forEach(t=>{
+detalhes.innerHTML+=`
+<div class="detail-item">
+<b>${t.nome_profissional}</b><br>
+${t.hora_entrada} – ${t.hora_saida}
+</div>`;
+});
+
+detalhes.innerHTML+=`<div class="section-title">
+Indisponíveis (${indisponiveis.length})
+</div>`;
+
+indisponiveis.forEach(t=>{
+let motivo="";
+if(folgaSemanal(t,data)) motivo=`Folga semanal (${t.dia_folga})`;
+else if(folgaAprovada(t,data)) motivo="Ausência aprovada";
+
+detalhes.innerHTML+=`
+<div class="detail-item">
+<b>${t.nome_profissional}</b>
+<span class="badge-red">${motivo}</span>
+</div>`;
+});
+
+renderForcaTrabalho(disponiveis);
+}
+
+function renderForcaTrabalho(lista){
+const horas=[];
+for(let h=9;h<=21;h++)horas.push(h);
+
+const contagem=horas.map(hora=>
+lista.filter(t=>{
+const he=parseInt((t.hora_entrada||"0").split(":")[0]);
+const hs=parseInt((t.hora_saida||"0").split(":")[0]);
+return hora>=he&&hora<hs;
+}).length
+);
+
+if(chartDia)chartDia.destroy();
+
+chartDia=new Chart(document.getElementById("graficoDia"),{
+type:"bar",
+data:{
+labels:horas.map(h=>h+":00"),
+datasets:[{
+data:contagem,
+backgroundColor:"#2563eb",
+borderRadius:8,
+borderSkipped:false,
+barThickness:28
+}]
+},
+options:{
+plugins:{legend:{display:false}},
+scales:{
+x:{grid:{display:false}},
+y:{beginAtZero:true,ticks:{stepSize:1}}
+}
+}
+});
+}
+
 carregarDados();
 </script>
 

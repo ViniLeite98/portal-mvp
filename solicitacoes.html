@@ -139,7 +139,7 @@ th, td{
 </main>
 </div>
 
-<!-- SUPABASE UMD (CORRETO PARA VERCEL) -->
+<!-- SUPABASE UMD -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 
 <!-- SIDEBAR -->
@@ -147,11 +147,6 @@ th, td{
 
 <script>
 document.addEventListener("DOMContentLoaded", function(){
-
-if(!window.supabase){
-  console.error("Supabase não carregou.");
-  return;
-}
 
 const supabaseClient = window.supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
@@ -173,21 +168,17 @@ window.toggleLista = function(){
 
 /* CARREGAR TERAPEUTAS */
 async function carregarTerapeutas(){
-  const {data,error}=await supabaseClient
+
+  const {data}=await supabaseClient
     .from("terapeutas")
     .select("cpf,nome_profissional")
     .eq("status","Ativo")
     .order("nome_profissional");
 
-  if(error){
-    console.error(error);
-    return;
-  }
-
   const select=document.getElementById("terapeuta");
   select.innerHTML="<option value=''>Selecione</option>";
 
-  data.forEach(t=>{
+  (data || []).forEach(t=>{
     select.innerHTML+=`
       <option value="${t.cpf}">
         ${t.nome_profissional}
@@ -242,16 +233,12 @@ window.salvar = async function(){
 
 /* EDITAR */
 window.editar = async function(id){
-  const {data,error}=await supabaseClient
+
+  const {data}=await supabaseClient
     .from("solicitacoes")
     .select("*")
     .eq("id",id)
     .single();
-
-  if(error){
-    console.error(error);
-    return;
-  }
 
   idEdicao=id;
 
@@ -281,30 +268,27 @@ window.alterarStatus = async function(id,novoStatus){
   carregarSolicitacoes();
 };
 
-/* CARREGAR LISTA */
+/* CARREGAR TODAS AS SOLICITAÇÕES */
 async function carregarSolicitacoes(){
 
-  const {data,error}=await supabaseClient
+  const { data: solicitacoes } = await supabaseClient
     .from("solicitacoes")
-    .select(`
-      id,
-      tipo,
-      data_inicio,
-      data_fim,
-      status,
-      terapeutas(nome_profissional)
-    `)
+    .select("*")
     .order("created_at",{ascending:false});
 
-  if(error){
-    console.error(error);
-    return;
-  }
+  const { data: terapeutas } = await supabaseClient
+    .from("terapeutas")
+    .select("cpf,nome_profissional");
+
+  const mapaTerapeutas = {};
+  (terapeutas || []).forEach(t=>{
+    mapaTerapeutas[t.cpf] = t.nome_profissional;
+  });
 
   const tbody=document.getElementById("lista");
   tbody.innerHTML="";
 
-  data.forEach(s=>{
+  (solicitacoes || []).forEach(s=>{
 
     let statusClass="";
     if(s.status==="Pendente")statusClass="status-pendente";
@@ -313,7 +297,7 @@ async function carregarSolicitacoes(){
 
     tbody.innerHTML+=`
       <tr>
-        <td>${s.terapeutas?.nome_profissional || ""}</td>
+        <td>${mapaTerapeutas[s.terapeuta_cpf] || s.terapeuta_cpf}</td>
         <td>${s.tipo}</td>
         <td>${s.data_inicio} → ${s.data_fim}</td>
         <td class="${statusClass}">${s.status}</td>

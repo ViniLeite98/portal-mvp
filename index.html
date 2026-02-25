@@ -11,27 +11,10 @@
 
 <style>
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
-}
-
-.app{
-  display:flex;
-  min-height:100vh;
-}
-
-#sidebar{
-  width:260px;
-  flex-shrink:0;
-}
-
-.content{
-  flex:1;
-  padding:40px;
-}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
 .card{
   background:#fff;
@@ -53,10 +36,7 @@ body{
   margin-top:10px;
 }
 
-.label-small{
-  color:#666;
-  font-size:14px;
-}
+.label-small{color:#666;font-size:14px;}
 
 .workforce{
   background:#fff;
@@ -67,9 +47,7 @@ body{
   margin-bottom:40px;
 }
 
-.chart{
-  flex:3;
-}
+.chart{flex:3;}
 
 .chart-wrapper{
   display:flex;
@@ -86,11 +64,7 @@ body{
   width:40px;
 }
 
-.bar-value{
-  font-size:12px;
-  font-weight:600;
-  margin-bottom:6px;
-}
+.bar-value{font-size:12px;font-weight:600;margin-bottom:6px;}
 
 .bar{
   width:100%;
@@ -98,11 +72,7 @@ body{
   border-radius:8px 8px 0 0;
 }
 
-.bar-hour{
-  margin-top:8px;
-  font-size:12px;
-  color:#555;
-}
+.bar-hour{margin-top:8px;font-size:12px;color:#555;}
 
 .work-info{
   flex:1;
@@ -110,15 +80,8 @@ body{
   padding-left:30px;
 }
 
-.rank-item{
-  margin-bottom:10px;
-  font-size:14px;
-}
-
-.rank-top{
-  font-weight:bold;
-  color:#16a34a;
-}
+.rank-item{margin-bottom:10px;font-size:14px;}
+.rank-top{font-weight:bold;color:#16a34a;}
 
 .folgas{
   background:#fff;
@@ -133,10 +96,7 @@ body{
   font-size:14px;
 }
 
-.folga-dia{
-  color:#dc2626;
-  font-weight:bold;
-}
+.folga-dia{color:#dc2626;font-weight:bold;}
 </style>
 </head>
 
@@ -152,7 +112,7 @@ body{
   <div class="card">
     <h3>Equipe</h3>
     <div class="big-number" id="totalEquipe">0</div>
-    <div class="label-small">Terapeutas ativas</div>
+    <div class="label-small">Terapeutas cadastradas</div>
   </div>
 
   <div class="card">
@@ -203,13 +163,12 @@ const supabaseClient = supabase.createClient(
 );
 
 /* =========================
-   BUSCAR DADOS BASE
+   BUSCAR DADOS
 ========================= */
 
 const { data: terapeutas } = await supabaseClient
   .from("terapeutas")
-  .select("*")
-  .eq("status","Ativo");
+  .select("*");
 
 const { data: clientes } = await supabaseClient
   .from("clientes")
@@ -218,7 +177,7 @@ const { data: clientes } = await supabaseClient
 const { data: servicos } = await supabaseClient
   .from("servicos")
   .select("*")
-  .eq("status","ativo");
+  .ilike("status","ativo");
 
 document.getElementById("totalEquipe").innerText = terapeutas?.length || 0;
 document.getElementById("totalClientes").innerText = clientes?.length || 0;
@@ -238,22 +197,19 @@ let ranking = [];
 
   const totalMin = (h2*60+m2) - (h1*60+m1);
 
-  ranking.push({
-    nome: t.nome_profissional,
-    minutos: totalMin
-  });
+  ranking.push({nome:t.nome_profissional,minutos:totalMin});
 });
 
-ranking.sort((a,b)=> b.minutos - a.minutos);
+ranking.sort((a,b)=>b.minutos-a.minutos);
 
 const cargaDiv = document.getElementById("cargaHoraria");
-cargaDiv.innerHTML = "";
+cargaDiv.innerHTML="";
 
 ranking.forEach((r,index)=>{
-  const horas = Math.floor(r.minutos/60);
-  const minutos = r.minutos%60;
+  const horas=Math.floor(r.minutos/60);
+  const minutos=r.minutos%60;
 
-  cargaDiv.innerHTML += `
+  cargaDiv.innerHTML+=`
     <div class="rank-item ${index===0?'rank-top':''}">
       ${index+1}. ${r.nome} — ${horas}h ${minutos}m
     </div>
@@ -264,40 +220,40 @@ ranking.forEach((r,index)=>{
    FORÇA DE TRABALHO
 ========================= */
 
-const inicioDia = 9;
-const fimDia = 21;
-const contagem = {};
+const inicioDia=9;
+const fimDia=21;
+const contagem={};
 
-for(let h=inicioDia; h<=fimDia; h++) contagem[h]=0;
+for(let h=inicioDia;h<=fimDia;h++)contagem[h]=0;
 
-(terapeutas || []).forEach(t=>{
-  if(!t.hora_entrada || !t.hora_saida) return;
+(terapeutas||[]).forEach(t=>{
+  if(!t.hora_entrada||!t.hora_saida)return;
 
-  const [h1,m1] = t.hora_entrada.split(":").map(Number);
-  const [h2,m2] = t.hora_saida.split(":").map(Number);
+  const [h1,m1]=t.hora_entrada.split(":").map(Number);
+  const [h2,m2]=t.hora_saida.split(":").map(Number);
 
-  const inicio = h1*60 + m1;
-  const fim = h2*60 + m2;
+  const inicio=h1*60+m1;
+  const fim=h2*60+m2;
 
-  for(let h=inicioDia; h<=fimDia; h++){
-    const slotInicio = h*60;
-    const slotFim = (h+1)*60;
+  for(let h=inicioDia;h<=fimDia;h++){
+    const slotInicio=h*60;
+    const slotFim=(h+1)*60;
 
-    if(inicio < slotFim && fim >= slotInicio){
+    if(inicio<slotFim&&fim>=slotInicio){
       contagem[h]++;
     }
   }
 });
 
-const maxValor = Math.max(...Object.values(contagem));
-const barsDiv = document.getElementById("bars");
+const maxValor=Math.max(...Object.values(contagem));
+const barsDiv=document.getElementById("bars");
 barsDiv.innerHTML="";
 
-for(let h=inicioDia; h<=fimDia; h++){
-  const valor = contagem[h];
-  const altura = maxValor===0?0:(valor/maxValor)*200;
+for(let h=inicioDia;h<=fimDia;h++){
+  const valor=contagem[h];
+  const altura=maxValor===0?0:(valor/maxValor)*200;
 
-  barsDiv.innerHTML += `
+  barsDiv.innerHTML+=`
     <div class="bar-container">
       <div class="bar-value">${valor}</div>
       <div class="bar" style="height:${altura}px"></div>
@@ -310,50 +266,51 @@ for(let h=inicioDia; h<=fimDia; h++){
    FOLGAS 2026
 ========================= */
 
-const hoje = new Date();
-const inicioAno = new Date(2026,0,1);
-const folgaDiv = document.getElementById("listaFolgas");
+const hoje=new Date();
+const inicioAno=new Date(2026,0,1);
+const folgaDiv=document.getElementById("listaFolgas");
 folgaDiv.innerHTML="";
 
-for(const t of (terapeutas || [])){
+for(const t of (terapeutas||[])){
 
-  if(t.tem_folga!=="Sim" || !t.dia_folga) continue;
+  if(!t.dia_folga || !t.tem_folga || String(t.tem_folga).toLowerCase()!=="sim")
+    continue;
 
-  const dataAdmissao = new Date(t.data_inicio);
-  const dataBase = dataAdmissao > inicioAno ? dataAdmissao : inicioAno;
+  const dataAdmissao=new Date(t.data_inicio);
+  const dataBase=dataAdmissao>inicioAno?dataAdmissao:inicioAno;
 
-  let contadorSemanal = 0;
-  let dataLoop = new Date(dataBase);
+  let contadorSemanal=0;
+  let dataLoop=new Date(dataBase);
 
-  while(dataLoop <= hoje){
-    const diaSemana = dataLoop.toLocaleDateString("pt-BR",{weekday:"long"});
-    if(diaSemana.toLowerCase() === t.dia_folga.toLowerCase()){
+  while(dataLoop<=hoje){
+    const diaSemana=dataLoop.toLocaleDateString("pt-BR",{weekday:"long"});
+    if(diaSemana.toLowerCase()===t.dia_folga.toLowerCase()){
       contadorSemanal++;
     }
     dataLoop.setDate(dataLoop.getDate()+1);
   }
 
-  const { data: solicitacoesAprovadas } = await supabaseClient
+  const { data: solicitacoesAprovadas }=await supabaseClient
     .from("solicitacoes")
-    .select("*")
-    .eq("terapeuta_cpf", t.cpf)
+    .select("data_inicio,data_fim")
+    .eq("terapeuta_cpf",t.cpf)
     .eq("status","Aprovado");
 
-  let diasAprovados = 0;
+  let diasAprovados=0;
 
-  (solicitacoesAprovadas || []).forEach(s=>{
-    const inicio = new Date(s.data_inicio);
-    const fim = new Date(s.data_fim);
+  (solicitacoesAprovadas||[]).forEach(s=>{
+    const inicio=new Date(s.data_inicio);
+    const fim=new Date(s.data_fim);
 
-    const inicioConsiderado = inicio < inicioAno ? inicioAno : inicio;
-    const diff = Math.floor((fim - inicioConsiderado)/(1000*60*60*24))+1;
+    const inicioConsiderado=inicio<inicioAno?inicioAno:inicio;
+    const diff=Math.floor((fim-inicioConsiderado)/(1000*60*60*24))+1;
 
-    if(diff>0) diasAprovados += diff;
+    if(diff>0)diasAprovados+=diff;
   });
 
-  const totalFolgas = contadorSemanal + diasAprovados;
+  const totalFolgas=contadorSemanal+diasAprovados;
 
-  folgaDiv.innerHTML += `
+  folgaDiv.innerHTML+=`
     <div class="folga-item">
       ${t.nome_profissional} —
       <span class="folga-dia">${totalFolgas} folgas</span>

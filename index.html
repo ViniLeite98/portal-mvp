@@ -64,6 +64,7 @@ body{
   padding:30px;
   display:flex;
   gap:40px;
+  margin-bottom:40px;
 }
 
 .chart{
@@ -114,13 +115,27 @@ body{
   font-size:14px;
 }
 
-.rank-item strong{
-  color:#4f6fb3;
-}
-
 .rank-top{
   font-weight:bold;
   color:#16a34a;
+}
+
+.folgas{
+  background:#fff;
+  border-radius:25px;
+  padding:30px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+.folga-item{
+  padding:8px 0;
+  border-bottom:1px solid #eee;
+  font-size:14px;
+}
+
+.folga-dia{
+  color:#dc2626;
+  font-weight:bold;
 }
 </style>
 </head>
@@ -169,12 +184,15 @@ body{
 
 </div>
 
+<div class="folgas">
+  <h3>Dias de Folga</h3>
+  <div id="listaFolgas"></div>
+</div>
+
 </main>
 </div>
 
-<!-- SUPABASE UMD -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
@@ -182,11 +200,11 @@ document.addEventListener("DOMContentLoaded", async function(){
 
 const supabaseClient = window.supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+  "SUA_ANON_KEY_AQUI"
 );
 
 /* =========================
-   CARREGAR NÚMEROS GRANDES
+   BUSCAR TERAPEUTAS
 ========================= */
 
 const { data: terapeutas } = await supabaseClient
@@ -196,11 +214,19 @@ const { data: terapeutas } = await supabaseClient
 
 document.getElementById("totalEquipe").innerText = terapeutas?.length || 0;
 
+/* =========================
+   CLIENTES
+========================= */
+
 const { data: clientes } = await supabaseClient
   .from("clientes")
   .select("*");
 
 document.getElementById("totalClientes").innerText = clientes?.length || 0;
+
+/* =========================
+   SERVIÇOS
+========================= */
 
 const { data: servicos } = await supabaseClient
   .from("servicos")
@@ -210,89 +236,22 @@ const { data: servicos } = await supabaseClient
 document.getElementById("totalServicos").innerText = servicos?.length || 0;
 
 /* =========================
-   CARGA HORÁRIA RANKING
+   DIAS DE FOLGA
 ========================= */
 
-let ranking = [];
+const folgaDiv = document.getElementById("listaFolgas");
+folgaDiv.innerHTML = "";
 
-(terapeutas || []).forEach(t => {
-
-  if (!t.hora_entrada || !t.hora_saida) return;
-
-  const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
-  const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
-
-  const totalMin = (h2*60+m2) - (h1*60+m1);
-  const horas = totalMin / 60;
-
-  ranking.push({
-    nome: t.nome_profissional,
-    horas: horas
-  });
-
-});
-
-ranking.sort((a,b)=>b.horas - a.horas);
-
-const cargaDiv = document.getElementById("cargaHoraria");
-cargaDiv.innerHTML = "";
-
-ranking.forEach((r,index)=>{
-  cargaDiv.innerHTML += `
-    <div class="rank-item ${index===0 ? "rank-top" : ""}">
-      ${index+1}º - <strong>${r.nome}</strong> 
-      (${r.horas.toFixed(1)}h)
-    </div>
-  `;
-});
-
-/* =========================
-   FORÇA DE TRABALHO (GRÁFICO)
-========================= */
-
-const inicioDia = 9;
-const fimDia = 21;
-const contagem = {};
-
-for (let h = inicioDia; h <= fimDia; h++) contagem[h] = 0;
-
-(terapeutas || []).forEach(t => {
-
-  if (!t.hora_entrada || !t.hora_saida) return;
-
-  const [h1,m1] = t.hora_entrada.substring(0,5).split(":").map(Number);
-  const [h2,m2] = t.hora_saida.substring(0,5).split(":").map(Number);
-
-  const inicio = h1*60 + m1;
-  const fim = h2*60 + m2;
-
-  for (let h = inicioDia; h <= fimDia; h++) {
-    const slotInicio = h * 60;
-    const slotFim = (h + 1) * 60;
-
-    if (inicio < slotFim && fim >= slotInicio) {
-      contagem[h]++;
-    }
+(terapeutas || []).forEach(t=>{
+  if(t.tem_folga === "Sim" && t.dia_folga){
+    folgaDiv.innerHTML += `
+      <div class="folga-item">
+        ${t.nome_profissional} — 
+        <span class="folga-dia">${t.dia_folga}</span>
+      </div>
+    `;
   }
 });
-
-const maxValor = Math.max(...Object.values(contagem));
-const barsDiv = document.getElementById("bars");
-barsDiv.innerHTML = "";
-
-for (let h = inicioDia; h <= fimDia; h++) {
-
-  const valor = contagem[h];
-  const altura = maxValor === 0 ? 0 : (valor / maxValor) * 200;
-
-  barsDiv.innerHTML += `
-    <div class="bar-container">
-      <div class="bar-value">${valor}</div>
-      <div class="bar" style="height:${altura}px"></div>
-      <div class="bar-hour">${h}:00</div>
-    </div>
-  `;
-}
 
 });
 </script>

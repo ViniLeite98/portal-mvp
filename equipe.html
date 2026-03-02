@@ -71,13 +71,30 @@ button.excluir{background:#dc2626}
 }
 
 .section{margin-bottom:24px}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
 
 input,select{
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
   width:100%;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+}
+
+.field label{
+  font-size:13px;
+  font-weight:600;
+  margin-bottom:4px;
+  color:#374151;
 }
 
 .modal-actions{
@@ -126,11 +143,17 @@ input,select{
 <div class="section">
 <h3>Dados Pessoais</h3>
 <div class="grid">
+
 <input id="nome_completo" placeholder="Nome Completo *">
 <input id="nome_profissional" placeholder="Nome Profissional *">
 <input id="cpf" placeholder="CPF *">
 <input id="rg" placeholder="RG">
+
+<div class="field">
+<label>Data de Nascimento</label>
 <input type="date" id="nascimento">
+</div>
+
 <input id="email" placeholder="Email *">
 
 <select id="tipo_sanguineo">
@@ -140,6 +163,7 @@ input,select{
 <option>AB+</option><option>AB-</option>
 <option>O+</option><option>O-</option>
 </select>
+
 </div>
 </div>
 
@@ -209,9 +233,20 @@ input,select{
 <option>Sábado</option>
 </select>
 
+<div class="field">
+<label>Hora de Entrada</label>
 <input type="time" id="hora_entrada" value="09:00">
+</div>
+
+<div class="field">
+<label>Hora de Saída</label>
 <input type="time" id="hora_saida" value="18:00">
+</div>
+
+<div class="field">
+<label>Data de Início no Hara</label>
 <input type="date" id="data_inicio">
+</div>
 
 <select id="status">
 <option value="">Status</option>
@@ -260,7 +295,13 @@ return obj;
 function setForm(data){
 campos.forEach(c=>{
 const el=document.getElementById(c);
-if(el) el.value=data[c]||"";
+if(el){
+if(c==="hora_entrada" || c==="hora_saida"){
+el.value=data[c]?data[c].substring(0,5):"";
+}else{
+el.value=data[c]||"";
+}
+}
 });
 }
 
@@ -304,15 +345,8 @@ document.getElementById("modal").style.display="flex";
 
 async function editar(cpf){
 cpfAtual=cpf;
-
-const {data,error}=await supabaseClient
-.from("terapeutas")
-.select("*")
-.eq("cpf",cpf)
-.single();
-
+const {data,error}=await supabaseClient.from("terapeutas").select("*").eq("cpf",cpf).single();
 if(error){console.error(error);return;}
-
 setForm(data);
 document.getElementById("cpf").disabled=true;
 document.getElementById("modal").style.display="flex";
@@ -320,14 +354,12 @@ document.getElementById("modal").style.display="flex";
 
 async function salvar(){
 const payload=getPayload();
-
 if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
 alert("Preencha os campos obrigatórios");
 return;
 }
 
 let error;
-
 if(cpfAtual){
 delete payload.cpf;
 ({error}=await supabaseClient.from("terapeutas").update(payload).eq("cpf",cpfAtual));

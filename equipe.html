@@ -12,29 +12,11 @@
 
 <style>
 *{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
-}
-
-.app{
-  display:flex;
-  min-height:100vh;
-}
-
-#sidebar{
-  width:260px;
-  flex-shrink:0;
-}
-
-.content{
-  flex:1;
-  padding:40px;
-}
-
-/* TABELA */
 table{
   width:100%;
   border-collapse:collapse;
@@ -50,10 +32,7 @@ th,td{
   text-align:left;
 }
 
-th{
-  background:#f9fafb;
-  font-weight:600;
-}
+th{background:#f9fafb;font-weight:600;}
 
 button{
   background:#1f2937;
@@ -72,7 +51,6 @@ button.excluir{background:#dc2626}
   margin-bottom:16px;
 }
 
-/* MODAL */
 .modal{
   position:fixed;
   inset:0;
@@ -93,12 +71,7 @@ button.excluir{background:#dc2626}
 }
 
 .section{margin-bottom:24px}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
 
 input,select{
   padding:8px;
@@ -124,16 +97,17 @@ input,select{
 <main class="content">
 
 <h1>Gestão da Equipe</h1>
-<p>Terapeutas cadastradas</p>
+<p>Colaboradores cadastrados</p>
 
 <div class="top-actions">
-<button onclick="abrirNovo()">+ Nova Terapeuta</button>
+<button onclick="abrirNovo()">+ Novo Cadastro</button>
 </div>
 
 <table>
 <thead>
 <tr>
 <th>Nome Profissional</th>
+<th>Cargo</th>
 <th>CPF</th>
 <th>Status</th>
 <th>Ações</th>
@@ -145,7 +119,7 @@ input,select{
 </main>
 </div>
 
-<!-- MODAL COMPLETO -->
+<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
@@ -207,6 +181,18 @@ input,select{
 <div class="section">
 <h3>Dados Funcionais</h3>
 <div class="grid">
+
+<select id="cargo">
+<option value="">Cargo</option>
+<option>Terapeuta Feminina</option>
+<option>Terapeuta Masculino</option>
+<option>Gerente</option>
+<option>Atendente</option>
+<option>Recepcionista</option>
+<option>Faxineira</option>
+<option>Analista</option>
+</select>
+
 <select id="tem_folga">
 <option value="">Tem folga semanal?</option>
 <option>Sim</option>
@@ -223,8 +209,8 @@ input,select{
 <option>Sábado</option>
 </select>
 
-<input type="time" id="hora_entrada">
-<input type="time" id="hora_saida">
+<input type="time" id="hora_entrada" value="09:00">
+<input type="time" id="hora_saida" value="18:00">
 <input type="date" id="data_inicio">
 
 <select id="status">
@@ -232,6 +218,7 @@ input,select{
 <option>Ativo</option>
 <option>Inativo</option>
 </select>
+
 </div>
 </div>
 
@@ -257,7 +244,8 @@ const campos=[
 "nome_completo","nome_profissional","cpf","rg","nascimento","email",
 "tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
 "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-"tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status"
+"cargo","tem_folga","dia_folga",
+"hora_entrada","hora_saida","data_inicio","status"
 ];
 
 function getPayload(){
@@ -279,7 +267,7 @@ if(el) el.value=data[c]||"";
 async function carregar(){
 const {data,error}=await supabaseClient
 .from("terapeutas")
-.select("cpf,nome_profissional,status")
+.select("cpf,nome_profissional,status,cargo")
 .order("nome_profissional");
 
 if(error){console.error(error);return;}
@@ -291,6 +279,7 @@ data.forEach(t=>{
 tbody.innerHTML+=`
 <tr>
 <td>${t.nome_profissional||""}</td>
+<td>${t.cargo||""}</td>
 <td>${t.cpf||""}</td>
 <td>${t.status||""}</td>
 <td>
@@ -307,6 +296,8 @@ campos.forEach(c=>{
 const el=document.getElementById(c);
 if(el) el.value="";
 });
+document.getElementById("hora_entrada").value="09:00";
+document.getElementById("hora_saida").value="18:00";
 document.getElementById("cpf").disabled=false;
 document.getElementById("modal").style.display="flex";
 }
@@ -351,7 +342,7 @@ carregar();
 }
 
 async function excluir(cpf){
-if(!confirm("Excluir terapeuta?"))return;
+if(!confirm("Excluir registro?"))return;
 await supabaseClient.from("terapeutas").delete().eq("cpf",cpf);
 carregar();
 }

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Força de Trabalho | Hara Spa</title>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
+.app { display:flex; min-height:100vh; }
+.content { flex:1; padding:40px; margin-left:260px; }
+
+.header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+}
+
+.card {
+  background:#fff;
+  border-radius:18px;
+  padding:30px;
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:20px;
+}
+
+th, td {
+  padding:12px;
+  text-align:center;
+  border-bottom:1px solid #eee;
+}
+
+th {
+  background:#111827;
+  color:#fff;
+}
+
+.pico {
+  background:#d1fae5;
+  font-weight:600;
+}
+
+button {
+  background:#111827;
+  color:#fff;
+  border:none;
+  padding:8px 14px;
+  border-radius:8px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+  <div id="sidebar"></div>
+
+  <div class="content">
+
+    <div class="header">
+      <h2>Força de Trabalho por Hora</h2>
+      <button onclick="voltar()">Voltar</button>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Qtd Profissionais</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaHoras"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const supabase = supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
+
+// 🔐 Verifica login
+async function checkAuth() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) window.location.href = "login.html";
+}
+
+function voltar() {
+  window.location.href = "index.html";
+}
+
+async function carregarHoras() {
+
+  const { data, error } = await supabase
+    .from("equipe")
+    .select("horario_inicio, horario_fim");
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  const horas = {};
+
+  data.forEach(p => {
+
+    if (!p.horario_inicio || !p.horario_fim) return;
+
+    const inicio = parseInt(p.horario_inicio.split(":")[0]);
+    const fim = parseInt(p.horario_fim.split(":")[0]);
+
+    for (let h = inicio; h < fim; h++) {
+      horas[h] = (horas[h] || 0) + 1;
+    }
+  });
+
+  const tbody = document.getElementById("tabelaHoras");
+
+  // Descobrir pico
+  const max = Math.max(...Object.values(horas));
+
+  Object.entries(horas)
+    .sort((a,b) => a[0] - b[0])
+    .forEach(([hora, qtd]) => {
+
+      const classe = qtd === max ? "pico" : "";
+
+      tbody.innerHTML += `
+        <tr class="${classe}">
+          <td>${hora}:00</td>
+          <td>${qtd}</td>
+        </tr>
+      `;
+    });
+}
+
+checkAuth();
+carregarHoras();
+</script>
+
+</body>
+</html>

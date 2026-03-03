@@ -4,81 +4,103 @@
 <meta charset="UTF-8">
 <title>Dashboard | Hara Spa</title>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
-.app { display:flex; min-height:100vh; }
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
-.content {
-  flex:1;
-  padding:40px;
-  margin-left:260px;
-}
-
-.header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:30px;
-}
-
-.card-grid {
-  display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap:20px;
-}
-
-.card {
+.card{
   background:#fff;
-  border-radius:18px;
-  padding:25px;
-  box-shadow:0 6px 18px rgba(0,0,0,.06);
-  position:relative;
-  transition:0.2s;
+  border-radius:25px;
+  padding:30px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 
-.card:hover {
-  transform:translateY(-3px);
+.top-cards{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:30px;
+  margin-bottom:40px;
 }
 
-.card h3 {
-  margin:0;
+.big-number{
+  font-size:60px;
+  font-weight:bold;
+  margin-top:10px;
+}
+
+.label-small{color:#666;font-size:14px;}
+
+.workforce{
+  background:#fff;
+  border-radius:25px;
+  padding:30px;
+  display:flex;
+  gap:40px;
+  margin-bottom:40px;
+}
+
+.chart{flex:2;}
+
+.chart-wrapper{
+  display:flex;
+  align-items:flex-end;
+  gap:16px;
+  height:260px;
+  margin-top:30px;
+}
+
+.bar-container{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:40px;
+}
+
+.bar{
+  width:100%;
+  background:linear-gradient(180deg,#6a8fd6,#4f6fb3);
+  border-radius:8px 8px 0 0;
+}
+
+.bar-value{font-size:12px;margin-bottom:6px;}
+.bar-hour{margin-top:6px;font-size:12px;color:#555;}
+
+.rank{
+  flex:1;
+  border-left:1px solid #eee;
+  padding-left:30px;
+}
+
+.rank-item{
+  padding:6px 0;
+  border-bottom:1px solid #eee;
   font-size:14px;
-  color:#6b7280;
 }
 
-.card p {
-  font-size:28px;
-  margin:10px 0 0;
-  font-weight:600;
+.folgas{
+  background:#fff;
+  border-radius:25px;
+  padding:30px;
+  box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 
-.tooltip-box {
-  position:absolute;
-  bottom:110%;
-  left:0;
-  background:#111827;
-  color:#fff;
-  padding:14px;
-  border-radius:12px;
-  font-size:13px;
-  min-width:240px;
-  display:none;
-  box-shadow:0 12px 30px rgba(0,0,0,.25);
-  z-index:10;
+.folga-item{
+  padding:8px 0;
+  border-bottom:1px solid #eee;
+  font-size:14px;
 }
 
-.clickable { cursor:pointer; }
-
-button {
-  background:#111827;
-  color:#fff;
-  border:none;
-  padding:8px 14px;
-  border-radius:8px;
-  cursor:pointer;
+.folga-dia{
+  color:#dc2626;
+  font-weight:bold;
 }
 </style>
 </head>
@@ -86,127 +108,210 @@ button {
 <body>
 
 <div class="app">
+<aside id="sidebar"></aside>
 
-  <!-- SIDEBAR -->
-  <div id="sidebar"></div>
+<main class="content">
 
-  <div class="content">
+<div class="top-cards">
 
-    <div class="header">
-      <h2>Dashboard</h2>
-      <button onclick="logout()">Sair</button>
-    </div>
-
-    <div class="card-grid">
-
-      <!-- EQUIPE -->
-      <div class="card" id="cardEquipe">
-        <h3>Equipe</h3>
-        <p id="totalEquipe">0</p>
-        <div class="tooltip-box" id="tooltipEquipe"></div>
-      </div>
-
-      <!-- SOLICITAÇÕES -->
-      <div class="card">
-        <h3>Solicitações Pendentes</h3>
-        <p id="pendentes">0</p>
-      </div>
-
-      <!-- FORÇA DE TRABALHO -->
-      <div class="card clickable" onclick="abrirForcaTrabalho()">
-        <h3>Força de Trabalho por Hora</h3>
-        <p>Visualizar</p>
-      </div>
-
-    </div>
-
+  <div class="card">
+    <h3>Equipe</h3>
+    <div class="big-number" id="totalEquipe">0</div>
+    <div class="label-small">Terapeutas ativas</div>
   </div>
+
+  <div class="card">
+    <h3>Clientes</h3>
+    <div class="big-number" id="totalClientes">0</div>
+    <div class="label-small">Clientes cadastrados</div>
+  </div>
+
+  <div class="card">
+    <h3>Serviços</h3>
+    <div class="big-number" id="totalServicos">0</div>
+    <div class="label-small">Serviços ativos</div>
+  </div>
+
 </div>
 
+<div class="workforce">
+
+  <div class="chart">
+    <h3>Força de Trabalho (por hora)</h3>
+    <div class="chart-wrapper" id="bars"></div>
+  </div>
+
+  <div class="rank">
+    <h3>Carga horária (Ranking)</h3>
+    <div id="ranking"></div>
+  </div>
+
+</div>
+
+<div class="folgas">
+  <h3>Folgas em 2026</h3>
+  <div id="listaFolgas"></div>
+</div>
+
+</main>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+
 <script>
-/* ========= SUPABASE GLOBAL ========= */
-const supabaseClient = window.supabase.createClient(
+document.addEventListener("DOMContentLoaded", async function(){
+
+const supabaseClient = supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-/* ========= AUTH ========= */
-async function checkAuth() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (!session) window.location.href = "login.html";
+/* ================= BUSCAR DADOS ================= */
+
+const { data: terapeutas } = await supabaseClient
+  .from("terapeutas")
+  .select("*")
+  .eq("status","Ativo");
+
+const { data: clientes } = await supabaseClient
+  .from("clientes")
+  .select("*");
+
+const { data: servicos } = await supabaseClient
+  .from("servicos")
+  .select("*")
+  .ilike("status","ativo");
+
+document.getElementById("totalEquipe").innerText = terapeutas?.length || 0;
+document.getElementById("totalClientes").innerText = clientes?.length || 0;
+document.getElementById("totalServicos").innerText = servicos?.length || 0;
+
+/* ================= FORÇA DE TRABALHO ================= */
+
+let ranking = [];
+const inicioDia = 9;
+const fimDia = 21;
+let contagem = {};
+
+for(let h=inicioDia;h<=fimDia;h++) contagem[h]=0;
+
+(terapeutas||[]).forEach(t=>{
+
+  if(!t.hora_entrada || !t.hora_saida) return;
+
+  const [h1,m1]=t.hora_entrada.substring(0,5).split(":").map(Number);
+  const [h2,m2]=t.hora_saida.substring(0,5).split(":").map(Number);
+
+  const inicioMin = h1*60+m1;
+  const fimMin = h2*60+m2;
+
+  const totalMin=fimMin-inicioMin;
+  ranking.push({nome:t.nome_profissional,minutos:totalMin});
+
+  for(let h=inicioDia; h<=fimDia; h++){
+
+    const horaInicio = h * 60;
+    const horaFim = (h+1) * 60;
+
+    // 👇 AJUSTE PARA CONSIDERAR 20H COMO INCLUSO
+    if(inicioMin <= horaFim && fimMin >= horaInicio){
+      contagem[h]++;
+    }
+  }
+});
+
+const barsDiv=document.getElementById("bars");
+const maxValor=Math.max(...Object.values(contagem));
+
+for(let h=inicioDia;h<=fimDia;h++){
+  const valor=contagem[h];
+  const altura=maxValor? (valor/maxValor)*200 : 0;
+
+  barsDiv.innerHTML+=`
+    <div class="bar-container">
+      <div class="bar-value">${valor}</div>
+      <div class="bar" style="height:${altura}px"></div>
+      <div class="bar-hour">${h}:00</div>
+    </div>
+  `;
 }
 
-async function logout() {
-  await supabaseClient.auth.signOut();
-  window.location.href = "login.html";
-}
+ranking.sort((a,b)=>b.minutos-a.minutos);
 
-/* ========= KPI EQUIPE ========= */
-async function carregarEquipe() {
+const rankDiv=document.getElementById("ranking");
 
-  const { data, error } = await supabaseClient
-    .from("equipe")
-    .select("cargo");
+ranking.forEach(r=>{
+  const horas=Math.floor(r.minutos/60);
+  const minutos=r.minutos%60;
 
-  if (error) {
-    console.error(error);
-    return;
+  rankDiv.innerHTML+=`
+    <div class="rank-item">
+      ${r.nome} — ${horas}h ${minutos}m
+    </div>
+  `;
+});
+
+/* ================= FOLGAS 2026 ================= */
+
+const hoje=new Date();
+const inicioAno=new Date(2026,0,1);
+
+const mapaDia={
+  "domingo":0,"segunda":1,"terça":2,"terca":2,
+  "quarta":3,"quinta":4,"sexta":5,
+  "sábado":6,"sabado":6
+};
+
+const folgaDiv=document.getElementById("listaFolgas");
+
+for(const t of (terapeutas||[])){
+
+  let contadorSemanal=0;
+
+  if(t.tem_folga && String(t.tem_folga).trim().toLowerCase()==="sim" && t.dia_folga){
+    const diaNumero=mapaDia[t.dia_folga.toLowerCase()];
+    if(diaNumero!==undefined){
+      const admissao=new Date(t.data_inicio);
+      const dataBase=admissao>inicioAno?admissao:inicioAno;
+      let dataLoop=new Date(dataBase);
+
+      while(dataLoop<=hoje){
+        if(dataLoop.getDay()===diaNumero) contadorSemanal++;
+        dataLoop.setDate(dataLoop.getDate()+1);
+      }
+    }
   }
 
-  const total = data.length;
-  document.getElementById("totalEquipe").innerText = total;
-
-  const agrupado = {};
-  data.forEach(e => {
-    agrupado[e.cargo] = (agrupado[e.cargo] || 0) + 1;
-  });
-
-  let html = "<strong>Distribuição por Cargo</strong><br><br>";
-
-  Object.entries(agrupado).forEach(([cargo, qtd]) => {
-    const perc = ((qtd / total) * 100).toFixed(1);
-    html += `${cargo}: ${qtd} (${perc}%)<br>`;
-  });
-
-  document.getElementById("tooltipEquipe").innerHTML = html;
-}
-
-/* ========= KPI SOLICITAÇÕES ========= */
-async function carregarSolicitacoes() {
-
-  const { count, error } = await supabaseClient
+  const { data: solicitacoes } = await supabaseClient
     .from("solicitacoes")
-    .select("*", { count:"exact", head:true })
-    .eq("status","Pendente");
+    .select("data_inicio,data_fim,status")
+    .eq("terapeuta_cpf",t.cpf);
 
-  if (error) {
-    console.error(error);
-    return;
-  }
+  let diasAprovados=0;
 
-  document.getElementById("pendentes").innerText = count || 0;
-}
+  (solicitacoes||[]).forEach(s=>{
+    if(String(s.status).trim().toLowerCase()!=="aprovado") return;
 
-/* ========= TOOLTIP ========= */
-document.getElementById("cardEquipe")
-  .addEventListener("mouseenter", () => {
-    document.getElementById("tooltipEquipe").style.display = "block";
+    const inicio=new Date(s.data_inicio);
+    const fim=new Date(s.data_fim);
+    const inicioConsiderado=inicio<inicioAno?inicioAno:inicio;
+    const diff=Math.floor((fim-inicioConsiderado)/(1000*60*60*24))+1;
+
+    if(diff>0) diasAprovados+=diff;
   });
 
-document.getElementById("cardEquipe")
-  .addEventListener("mouseleave", () => {
-    document.getElementById("tooltipEquipe").style.display = "none";
-  });
+  const total=contadorSemanal+diasAprovados;
 
-/* ========= REDIRECIONAMENTO ========= */
-function abrirForcaTrabalho() {
-  window.location.href = "forca-trabalho.html";
+  folgaDiv.innerHTML+=`
+    <div class="folga-item">
+      ${t.nome_profissional} —
+      <span class="folga-dia">${total} folgas</span>
+    </div>
+  `;
 }
 
-/* ========= INIT ========= */
-checkAuth();
-carregarEquipe();
-carregarSolicitacoes();
+});
 </script>
 
 </body>

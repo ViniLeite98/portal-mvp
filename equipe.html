@@ -17,6 +17,18 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
 
+.top-bar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:20px;
+}
+
+.filter{
+  display:flex;
+  gap:10px;
+}
+
 table{
   width:100%;
   border-collapse:collapse;
@@ -44,12 +56,6 @@ button{
 }
 
 button.excluir{background:#dc2626}
-
-.top-actions{
-  display:flex;
-  justify-content:flex-end;
-  margin-bottom:16px;
-}
 
 .modal{
   position:fixed;
@@ -97,6 +103,10 @@ input,select{
   font-size:14px;
 }
 
+input.error, select.error{
+  border:2px solid #dc2626;
+}
+
 .modal-actions{
   display:flex;
   justify-content:flex-end;
@@ -115,8 +125,21 @@ input,select{
 
 <h1>Gestão da Equipe</h1>
 
-<div class="top-actions">
+<div class="top-bar">
 <button onclick="abrirNovo()">+ Novo Cadastro</button>
+
+<div class="filter">
+<select id="filtroCargo" onchange="carregar()">
+<option value="">Todos os cargos</option>
+<option>Terapeuta Feminina</option>
+<option>Terapeuta Masculino</option>
+<option>Gerente</option>
+<option>Atendente</option>
+<option>Recepcionista</option>
+<option>Faxineira</option>
+<option>Analista</option>
+</select>
+</div>
 </div>
 
 <table>
@@ -139,7 +162,6 @@ input,select{
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<!-- DADOS PESSOAIS -->
 <div class="section">
 <h3>Dados Pessoais</h3>
 <div class="grid">
@@ -160,99 +182,19 @@ input,select{
 </div>
 
 <div class="field">
-<label>RG</label>
-<input id="rg">
-</div>
-
-<div class="field">
-<label>Data de Nascimento</label>
-<input type="date" id="nascimento">
-</div>
-
-<div class="field">
 <label>Email *</label>
 <input id="email">
 </div>
 
-<div class="field">
-<label>Tipo Sanguíneo</label>
-<select id="tipo_sanguineo">
-<option value="">Selecione</option>
-<option>A+</option><option>A-</option>
-<option>B+</option><option>B-</option>
-<option>AB+</option><option>AB-</option>
-<option>O+</option><option>O-</option>
-</select>
-</div>
-
 </div>
 </div>
 
-<!-- CONTATOS -->
-<div class="section">
-<h3>Contatos</h3>
-<div class="grid">
-
-<div class="field">
-<label>Telefone *</label>
-<input id="telefone">
-</div>
-
-<div class="field">
-<label>Contato de Emergência</label>
-<input id="telefone_emer">
-</div>
-
-</div>
-</div>
-
-<!-- ENDEREÇO -->
-<div class="section">
-<h3>Endereço</h3>
-<div class="grid">
-
-<div class="field"><label>CEP</label><input id="cep"></div>
-<div class="field"><label>Rua</label><input id="rua"></div>
-<div class="field"><label>Número</label><input id="numero"></div>
-<div class="field"><label>Complemento</label><input id="complemento"></div>
-<div class="field"><label>Bairro</label><input id="bairro"></div>
-<div class="field"><label>Cidade</label><input id="cidade"></div>
-<div class="field"><label>UF</label><input id="uf"></div>
-
-</div>
-</div>
-
-<!-- PAGAMENTO -->
-<div class="section">
-<h3>Pagamento</h3>
-<div class="grid">
-
-<div class="field">
-<label>Tipo Chave PIX</label>
-<select id="pix_tipo">
-<option value="">Selecione</option>
-<option>CPF</option>
-<option>Email</option>
-<option>Telefone</option>
-<option>Aleatória</option>
-</select>
-</div>
-
-<div class="field">
-<label>Chave PIX</label>
-<input id="pix_chave">
-</div>
-
-</div>
-</div>
-
-<!-- DADOS FUNCIONAIS -->
 <div class="section">
 <h3>Dados Funcionais</h3>
 <div class="grid">
 
 <div class="field">
-<label>Cargo</label>
+<label>Cargo *</label>
 <select id="cargo">
 <option value="">Selecione</option>
 <option>Terapeuta Feminina</option>
@@ -288,22 +230,17 @@ input,select{
 </div>
 
 <div class="field">
-<label>Hora de Entrada</label>
+<label>Hora de Entrada *</label>
 <input type="time" id="hora_entrada" value="09:00">
 </div>
 
 <div class="field">
-<label>Hora de Saída</label>
+<label>Hora de Saída *</label>
 <input type="time" id="hora_saida" value="18:00">
 </div>
 
 <div class="field">
-<label>Data de Início no Hara</label>
-<input type="date" id="data_inicio">
-</div>
-
-<div class="field">
-<label>Status</label>
+<label>Status *</label>
 <select id="status">
 <option value="">Selecione</option>
 <option>Ativo</option>
@@ -332,112 +269,135 @@ const supabaseClient = supabase.createClient(
 
 let cpfAtual=null;
 
-const campos=[
-"nome_completo","nome_profissional","cpf","rg","nascimento","email",
-"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
-"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-"cargo","tem_folga","dia_folga",
-"hora_entrada","hora_saida","data_inicio","status"
-];
-
-function getPayload(){
-const obj={};
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el && el.value!=="") obj[c]=el.value;
+/* DESABILITAR DIA FOLGA */
+document.getElementById("tem_folga").addEventListener("change", function(){
+  const dia = document.getElementById("dia_folga");
+  if(this.value==="Não"){
+    dia.value="";
+    dia.disabled=true;
+  }else{
+    dia.disabled=false;
+  }
 });
-return obj;
-}
 
-function setForm(data){
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el){
-if(c==="hora_entrada" || c==="hora_saida"){
-el.value=data[c]?data[c].substring(0,5):"";
-}else{
-el.value=data[c]||"";
-}
-}
-});
-}
-
+/* FILTRO POR CARGO */
 async function carregar(){
-const {data,error}=await supabaseClient
-.from("terapeutas")
-.select("cpf,nome_profissional,status,cargo")
-.order("nome_profissional");
+  const filtro = document.getElementById("filtroCargo").value;
 
-if(error){console.error(error);return;}
+  let query = supabaseClient.from("terapeutas")
+  .select("cpf,nome_profissional,status,cargo")
+  .order("nome_profissional");
 
-const tbody=document.getElementById("lista");
-tbody.innerHTML="";
+  if(filtro){
+    query = query.eq("cargo",filtro);
+  }
 
-data.forEach(t=>{
-tbody.innerHTML+=`
-<tr>
-<td>${t.nome_profissional||""}</td>
-<td>${t.cargo||""}</td>
-<td>${t.cpf||""}</td>
-<td>${t.status||""}</td>
-<td>
-<button onclick="editar('${t.cpf}')">Editar</button>
-<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
-</td>
-</tr>`;
-});
+  const {data,error}=await query;
+  if(error){console.error(error);return;}
+
+  const tbody=document.getElementById("lista");
+  tbody.innerHTML="";
+
+  data.forEach(t=>{
+    tbody.innerHTML+=`
+    <tr>
+      <td>${t.nome_profissional||""}</td>
+      <td>${t.cargo||""}</td>
+      <td>${t.cpf||""}</td>
+      <td>${t.status||""}</td>
+      <td>
+        <button onclick="editar('${t.cpf}')">Editar</button>
+        <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+      </td>
+    </tr>`;
+  });
 }
 
-function abrirNovo(){
-cpfAtual=null;
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value="";
-});
-document.getElementById("hora_entrada").value="09:00";
-document.getElementById("hora_saida").value="18:00";
-document.getElementById("cpf").disabled=false;
-document.getElementById("modal").style.display="flex";
-}
+/* VALIDAÇÃO VISUAL */
+function validar(){
+  let valido=true;
+  const obrigatorios=["nome_completo","nome_profissional","cpf","email","cargo","hora_entrada","hora_saida","status"];
 
-async function editar(cpf){
-cpfAtual=cpf;
-const {data,error}=await supabaseClient.from("terapeutas").select("*").eq("cpf",cpf).single();
-if(error){console.error(error);return;}
-setForm(data);
-document.getElementById("cpf").disabled=true;
-document.getElementById("modal").style.display="flex";
+  obrigatorios.forEach(id=>{
+    const el=document.getElementById(id);
+    el.classList.remove("error");
+    if(!el.value){
+      el.classList.add("error");
+      valido=false;
+    }
+  });
+
+  return valido;
 }
 
 async function salvar(){
-const payload=getPayload();
-if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
-alert("Preencha os campos obrigatórios");
-return;
+  if(!validar()){
+    alert("Preencha os campos obrigatórios");
+    return;
+  }
+
+  const payload={
+    nome_completo: nome_completo.value,
+    nome_profissional: nome_profissional.value,
+    cpf: cpf.value,
+    email: email.value,
+    cargo: cargo.value,
+    tem_folga: tem_folga.value,
+    dia_folga: dia_folga.value,
+    hora_entrada: hora_entrada.value,
+    hora_saida: hora_saida.value,
+    status: status.value
+  };
+
+  if(cpfAtual){
+    delete payload.cpf;
+    await supabaseClient.from("terapeutas").update(payload).eq("cpf",cpfAtual);
+  }else{
+    await supabaseClient.from("terapeutas").insert(payload);
+  }
+
+  fecharModal();
+  carregar();
 }
 
-let error;
-if(cpfAtual){
-delete payload.cpf;
-({error}=await supabaseClient.from("terapeutas").update(payload).eq("cpf",cpfAtual));
-}else{
-({error}=await supabaseClient.from("terapeutas").insert(payload));
+function abrirNovo(){
+  cpfAtual=null;
+  document.querySelectorAll("input,select").forEach(e=>{
+    if(e.id!=="hora_entrada" && e.id!=="hora_saida") e.value="";
+  });
+  hora_entrada.value="09:00";
+  hora_saida.value="18:00";
+  dia_folga.disabled=false;
+  cpf.disabled=false;
+  modal.style.display="flex";
 }
 
-if(error){console.error(error);alert("Erro ao salvar");return;}
-
-fecharModal();
-carregar();
+async function editar(cpfSel){
+  cpfAtual=cpfSel;
+  const {data}=await supabaseClient.from("terapeutas").select("*").eq("cpf",cpfSel).single();
+  Object.keys(data).forEach(k=>{
+    const el=document.getElementById(k);
+    if(el){
+      if(k==="hora_entrada"||k==="hora_saida"){
+        el.value=data[k]?.substring(0,5)||"";
+      }else{
+        el.value=data[k]||"";
+      }
+    }
+  });
+  cpf.disabled=true;
+  modal.style.display="flex";
 }
 
-async function excluir(cpf){
-if(!confirm("Excluir registro?"))return;
-await supabaseClient.from("terapeutas").delete().eq("cpf",cpf);
-carregar();
+async function excluir(cpfSel){
+  if(confirm("Excluir registro?")){
+    await supabaseClient.from("terapeutas").delete().eq("cpf",cpfSel);
+    carregar();
+  }
 }
 
 function fecharModal(){
-document.getElementById("modal").style.display="none";
+  modal.style.display="none";
 }
 
 carregar();

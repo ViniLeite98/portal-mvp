@@ -167,12 +167,15 @@ const supabaseClient = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-/* ================= BUSCAR DADOS ================= */
+/* ================= TERAPEUTAS (FILTRADOS) ================= */
 
 const { data: terapeutas } = await supabaseClient
   .from("terapeutas")
   .select("*")
-  .eq("status","Ativo");
+  .eq("status","Ativo")
+  .in("cargo", ["Terapeuta Feminino", "Terapeuta Masculino"]);
+
+/* ================= OUTROS DADOS ================= */
 
 const { data: clientes } = await supabaseClient
   .from("clientes")
@@ -210,11 +213,9 @@ for(let h=inicioDia;h<=fimDia;h++) contagem[h]=0;
   ranking.push({nome:t.nome_profissional,minutos:totalMin});
 
   for(let h=inicioDia; h<=fimDia; h++){
-
     const horaInicio = h * 60;
     const horaFim = (h+1) * 60;
 
-    // 👇 AJUSTE PARA CONSIDERAR 20H COMO INCLUSO
     if(inicioMin <= horaFim && fimMin >= horaInicio){
       contagem[h]++;
     }

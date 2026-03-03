@@ -10,7 +10,12 @@
 <style>
 body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
 .app { display:flex; min-height:100vh; }
-.content { flex:1; padding:40px; margin-left:260px; }
+
+.content {
+  flex:1;
+  padding:40px;
+  margin-left:260px;
+}
 
 .header {
   display:flex;
@@ -34,7 +39,9 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
   transition:0.2s;
 }
 
-.card:hover { transform:translateY(-3px); }
+.card:hover {
+  transform:translateY(-3px);
+}
 
 .card h3 {
   margin:0;
@@ -60,6 +67,7 @@ body { margin:0; font-family:'Segoe UI'; background:#f5f7fb; }
   min-width:240px;
   display:none;
   box-shadow:0 12px 30px rgba(0,0,0,.25);
+  z-index:10;
 }
 
 .clickable { cursor:pointer; }
@@ -78,6 +86,8 @@ button {
 <body>
 
 <div class="app">
+
+  <!-- SIDEBAR -->
   <div id="sidebar"></div>
 
   <div class="content">
@@ -89,17 +99,20 @@ button {
 
     <div class="card-grid">
 
+      <!-- EQUIPE -->
       <div class="card" id="cardEquipe">
         <h3>Equipe</h3>
         <p id="totalEquipe">0</p>
         <div class="tooltip-box" id="tooltipEquipe"></div>
       </div>
 
+      <!-- SOLICITAÇÕES -->
       <div class="card">
         <h3>Solicitações Pendentes</h3>
         <p id="pendentes">0</p>
       </div>
 
+      <!-- FORÇA DE TRABALHO -->
       <div class="card clickable" onclick="abrirForcaTrabalho()">
         <h3>Força de Trabalho por Hora</h3>
         <p>Visualizar</p>
@@ -111,23 +124,35 @@ button {
 </div>
 
 <script>
-const supabase = supabase.createClient(
+/* ========= SUPABASE GLOBAL ========= */
+const supabaseClient = window.supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
+/* ========= AUTH ========= */
 async function checkAuth() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await supabaseClient.auth.getSession();
   if (!session) window.location.href = "login.html";
 }
 
 async function logout() {
-  await supabase.auth.signOut();
+  await supabaseClient.auth.signOut();
   window.location.href = "login.html";
 }
 
+/* ========= KPI EQUIPE ========= */
 async function carregarEquipe() {
-  const { data } = await supabase.from("equipe").select("cargo");
+
+  const { data, error } = await supabaseClient
+    .from("equipe")
+    .select("cargo");
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
   const total = data.length;
   document.getElementById("totalEquipe").innerText = total;
 
@@ -137,6 +162,7 @@ async function carregarEquipe() {
   });
 
   let html = "<strong>Distribuição por Cargo</strong><br><br>";
+
   Object.entries(agrupado).forEach(([cargo, qtd]) => {
     const perc = ((qtd / total) * 100).toFixed(1);
     html += `${cargo}: ${qtd} (${perc}%)<br>`;
@@ -145,25 +171,39 @@ async function carregarEquipe() {
   document.getElementById("tooltipEquipe").innerHTML = html;
 }
 
+/* ========= KPI SOLICITAÇÕES ========= */
 async function carregarSolicitacoes() {
-  const { count } = await supabase
+
+  const { count, error } = await supabaseClient
     .from("solicitacoes")
     .select("*", { count:"exact", head:true })
     .eq("status","Pendente");
 
+  if (error) {
+    console.error(error);
+    return;
+  }
+
   document.getElementById("pendentes").innerText = count || 0;
 }
 
+/* ========= TOOLTIP ========= */
+document.getElementById("cardEquipe")
+  .addEventListener("mouseenter", () => {
+    document.getElementById("tooltipEquipe").style.display = "block";
+  });
+
+document.getElementById("cardEquipe")
+  .addEventListener("mouseleave", () => {
+    document.getElementById("tooltipEquipe").style.display = "none";
+  });
+
+/* ========= REDIRECIONAMENTO ========= */
 function abrirForcaTrabalho() {
   window.location.href = "forca-trabalho.html";
 }
 
-const card = document.getElementById("cardEquipe");
-const tooltip = document.getElementById("tooltipEquipe");
-
-card.addEventListener("mouseenter", () => tooltip.style.display = "block");
-card.addEventListener("mouseleave", () => tooltip.style.display = "none");
-
+/* ========= INIT ========= */
 checkAuth();
 carregarEquipe();
 carregarSolicitacoes();

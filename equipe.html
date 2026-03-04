@@ -48,6 +48,7 @@ button.excluir{background:#dc2626}
 .top-actions{
   display:flex;
   justify-content:flex-end;
+  gap:12px;
   margin-bottom:16px;
 }
 
@@ -104,15 +105,11 @@ button.excluir{background:#dc2626}
 <!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
-
-<!-- FORMULÁRIO -->
-<!-- (Mantém o seu modal completo como já estava) -->
-
+<!-- Seu modal completo continua igual -->
 <div class="modal-actions">
 <button onclick="fecharModal()">Cancelar</button>
 <button onclick="salvar()">Salvar</button>
 </div>
-
 </div>
 </div>
 
@@ -120,8 +117,8 @@ button.excluir{background:#dc2626}
 
 <script>
 const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"SUA_ANON_KEY_AQUI"
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "SUA_ANON_KEY_AQUI"
 );
 
 let cpfAtual = null;
@@ -132,6 +129,11 @@ const campos=[
 "cargo","tem_folga","dia_folga",
 "hora_entrada","hora_saida","data_inicio","status"
 ];
+
+// Variáveis de paginação (apenas uma vez)
+let terapeutasCache = [];
+let paginaAtual = 1;
+const registrosPorPagina = 10;
 
 function getPayload(){
   const obj = {};
@@ -155,10 +157,6 @@ function setForm(data){
   });
 }
 
-let terapeutasCache = [];
-let paginaAtual = 1;
-const registrosPorPagina = 10;
-
 async function carregar(){
   const statusFiltro = document.getElementById("filtroStatus").value;
 
@@ -169,7 +167,7 @@ async function carregar(){
   if(error){ console.error(error); return; }
 
   terapeutasCache = data || [];
-  paginaAtual = 1;
+  paginaAtual = 1; // reset da página
   renderTabela();
   renderPaginacao();
 }
@@ -208,7 +206,7 @@ function renderPaginacao(){
     btn.innerText=i;
     if(i===paginaAtual) btn.style.fontWeight="bold";
     btn.addEventListener("click", ()=>{
-      paginaAtual=i;
+      paginaAtual = i; // ATUALIZA sem redeclarar
       renderTabela();
       renderPaginacao();
     });

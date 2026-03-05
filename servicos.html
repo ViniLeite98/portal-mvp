@@ -59,7 +59,7 @@ gap:10px;
 }
 
 .right-tools button{
-background:#1f2937;
+background:#2563eb;
 color:#fff;
 border:none;
 border-radius:6px;
@@ -68,7 +68,7 @@ cursor:pointer;
 }
 
 .btn-novo{
-background:#2563eb;
+background:#1f2937;
 }
 
 .right-tools select{
@@ -195,12 +195,10 @@ margin-top:20px;
 <div class="topbar">
 
 <div class="left-tools">
-
 <input
 id="buscaServico"
 placeholder="Buscar serviço..."
 oninput="filtrarTabela()">
-
 </div>
 
 <div class="right-tools">
@@ -219,6 +217,7 @@ oninput="filtrarTabela()">
 <option value="5">5</option>
 <option value="10" selected>10</option>
 <option value="20">20</option>
+<option value="todos">Todos</option>
 </select>
 
 </div>
@@ -272,7 +271,6 @@ oninput="filtrarTabela()">
 <div class="modal-actions">
 
 <button onclick="fecharModal()">Cancelar</button>
-
 <button onclick="salvar()">Salvar</button>
 
 </div>
@@ -331,27 +329,14 @@ pag.forEach(s=>{
 
 tbody.innerHTML+=`
 <tr>
-
 <td>${s.nome}</td>
-
 <td>R$ ${Number(s.valor||0).toFixed(2)}</td>
-
 <td>R$ ${Number(s.comissao||0).toFixed(2)}</td>
-
 <td>${s.status||""}</td>
-
 <td>
-
-<button class="btn-editar" onclick="editar('${s.id}')">
-Editar
-</button>
-
-<button class="btn-excluir" onclick="excluir('${s.id}')">
-Excluir
-</button>
-
+<button class="btn-editar" onclick="editar('${s.id}')">Editar</button>
+<button class="btn-excluir" onclick="excluir('${s.id}')">Excluir</button>
 </td>
-
 </tr>
 `
 
@@ -414,6 +399,8 @@ const div=document.getElementById("paginacao")
 
 div.innerHTML=""
 
+if(porPagina>=total) return
+
 for(let i=1;i<=totalPaginas;i++){
 
 div.innerHTML+=`
@@ -431,16 +418,21 @@ ${i}
 window.irPagina=function(p){
 
 paginaAtual=p
-
 render(listaAtual)
 
 }
 
 window.mudarPorPagina=function(){
 
-porPagina=parseInt(
-document.getElementById("porPaginaSelect").value
-)
+const valor=document
+.getElementById("porPaginaSelect")
+.value
+
+if(valor==="todos"){
+porPagina=dados.length
+}else{
+porPagina=parseInt(valor)
+}
 
 paginaAtual=1
 
@@ -452,10 +444,19 @@ render(listaAtual)
 
 window.exportarExcel=function(){
 
+let visivel
+
+if(porPagina>=listaAtual.length){
+
+visivel=listaAtual
+
+}else{
+
 const inicio=(paginaAtual-1)*porPagina
 const fim=inicio+porPagina
+visivel=listaAtual.slice(inicio,fim)
 
-const visivel=listaAtual.slice(inicio,fim)
+}
 
 const exportData=visivel.map(s=>({
 
@@ -526,7 +527,6 @@ await supabaseClient
 }
 
 fecharModal()
-
 carregar()
 
 }

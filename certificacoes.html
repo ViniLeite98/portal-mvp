@@ -38,7 +38,7 @@ h1{
 margin-top:0;
 }
 
-/* FORM NOVO */
+/* FORM */
 
 .form-box{
 background:#fff;
@@ -75,6 +75,19 @@ cursor:pointer;
 button.excluir{background:#dc2626}
 button.editar{background:#f59e0b}
 
+/* BUSCA */
+
+.busca{
+margin-bottom:15px;
+}
+
+.busca input{
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
+width:250px;
+}
+
 /* TABELA */
 
 table{
@@ -95,6 +108,7 @@ font-size:14px;
 th{
 background:#f9fafb;
 text-align:left;
+cursor:pointer;
 }
 
 /* PAGINAÇÃO */
@@ -127,6 +141,7 @@ height:100%;
 background:rgba(0,0,0,0.45);
 align-items:center;
 justify-content:center;
+animation:fadeIn .2s ease;
 }
 
 .modal-box{
@@ -135,6 +150,23 @@ padding:25px;
 border-radius:10px;
 width:420px;
 box-shadow:0 10px 25px rgba(0,0,0,0.2);
+animation:slideUp .25s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0}
+to{opacity:1}
+}
+
+@keyframes slideUp{
+from{
+transform:translateY(30px);
+opacity:0;
+}
+to{
+transform:translateY(0);
+opacity:1;
+}
 }
 
 .modal-form{
@@ -148,10 +180,6 @@ margin-top:15px;
 margin-top:20px;
 display:flex;
 gap:10px;
-}
-
-.modal-actions button{
-flex:1;
 }
 
 .cancelar{
@@ -194,16 +222,27 @@ background:#6b7280;
 
 </div>
 
+<!-- BUSCA -->
+
+<div class="busca">
+<input
+id="buscaTerapeuta"
+placeholder="Buscar terapeuta..."
+oninput="filtrarTabela()">
+</div>
+
 <!-- TABELA -->
 
 <table>
 
 <thead>
 <tr>
-<th>Terapeuta</th>
-<th>Certificação</th>
-<th>Data</th>
+
+<th onclick="ordenar('terapeuta')">Terapeuta ⬍</th>
+<th onclick="ordenar('certificacao')">Certificação ⬍</th>
+<th onclick="ordenar('data')">Data ⬍</th>
 <th>Ações</th>
+
 </tr>
 </thead>
 
@@ -217,7 +256,7 @@ background:#6b7280;
 
 </div>
 
-<!-- MODAL EDITAR -->
+<!-- MODAL -->
 
 <div id="modalEditar" class="modal">
 
@@ -227,20 +266,14 @@ background:#6b7280;
 
 <div class="modal-form">
 
-<div>
 <label>Terapeuta</label>
 <select id="edit_cpf"></select>
-</div>
 
-<div>
 <label>Certificação</label>
 <select id="edit_cert"></select>
-</div>
 
-<div>
 <label>Data</label>
 <input type="date" id="edit_data">
-</div>
 
 </div>
 
@@ -270,7 +303,9 @@ let pagina=1
 let editId=null
 const porPagina=10
 
-/* ================= SELECTS ================= */
+let ordem={campo:null,asc:true}
+
+/* SELECTS */
 
 async function carregarSelects(){
 
@@ -300,14 +335,12 @@ selCert.innerHTML="<option value=''>Selecione</option>"
 selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 })
 
-/* DUPLICAR SELECTS PARA MODAL */
-
 document.getElementById("edit_cpf").innerHTML=selTer.innerHTML
 document.getElementById("edit_cert").innerHTML=selCert.innerHTML
 
 }
 
-/* ================= LISTA ================= */
+/* LISTA */
 
 async function carregarLista(){
 
@@ -328,12 +361,12 @@ render()
 
 }
 
-/* ================= RENDER ================= */
+/* RENDER */
 
-function render(){
+function render(lista=dados){
 
 const inicio=(pagina-1)*porPagina
-const pag=dados.slice(inicio,inicio+porPagina)
+const pag=lista.slice(inicio,inicio+porPagina)
 
 const tbody=document.getElementById("lista")
 
@@ -371,7 +404,64 @@ Excluir
 
 }
 
-/* ================= MODAL ================= */
+/* BUSCA */
+
+function filtrarTabela(){
+
+const termo=document
+.getElementById("buscaTerapeuta")
+.value
+.toLowerCase()
+
+const filtrado=dados.filter(d=>
+d.terapeutas?.nome_profissional
+.toLowerCase()
+.includes(termo)
+)
+
+render(filtrado)
+
+}
+
+/* ORDENAR */
+
+function ordenar(campo){
+
+ordem.asc=
+ordem.campo===campo?!ordem.asc:true
+
+ordem.campo=campo
+
+dados.sort((a,b)=>{
+
+let v1,v2
+
+if(campo==="terapeuta"){
+v1=a.terapeutas?.nome_profissional
+v2=b.terapeutas?.nome_profissional
+}
+
+if(campo==="certificacao"){
+v1=a.certificacoes?.nome
+v2=b.certificacoes?.nome
+}
+
+if(campo==="data"){
+v1=a.data_obtencao
+v2=b.data_obtencao
+}
+
+if(v1<v2) return ordem.asc?-1:1
+if(v1>v2) return ordem.asc?1:-1
+return 0
+
+})
+
+render()
+
+}
+
+/* MODAL */
 
 function abrirModal(id){
 
@@ -388,31 +478,16 @@ document.getElementById("modalEditar").style.display="flex"
 }
 
 function fecharModal(){
-
 document.getElementById("modalEditar").style.display="none"
-
 }
 
-/* ================= ATUALIZAR ================= */
+/* ATUALIZAR */
 
 async function atualizar(){
 
 const cpf=document.getElementById("edit_cpf").value
 const cert=document.getElementById("edit_cert").value
 const data=document.getElementById("edit_data").value
-
-const duplicado=dados.find(d=>
-d.cpf_terapeuta==cpf &&
-d.certificacao_id==cert &&
-d.id!=editId
-)
-
-if(duplicado){
-
-alert("Essa certificação já está vinculada")
-return
-
-}
 
 await supabaseClient
 .from("terapeuta_certificacoes")
@@ -428,7 +503,7 @@ carregarLista()
 
 }
 
-/* ================= NOVO ================= */
+/* NOVO */
 
 async function vincular(){
 
@@ -437,22 +512,8 @@ const cert=document.getElementById("certificacao_id").value
 const data=document.getElementById("data_obtencao").value
 
 if(!cpf||!cert){
-
 alert("Selecione terapeuta e certificação")
 return
-
-}
-
-const duplicado=dados.find(d=>
-d.cpf_terapeuta==cpf &&
-d.certificacao_id==cert
-)
-
-if(duplicado){
-
-alert("Essa certificação já existe")
-return
-
 }
 
 await supabaseClient
@@ -469,7 +530,7 @@ carregarLista()
 
 }
 
-/* ================= EXCLUIR ================= */
+/* EXCLUIR */
 
 async function excluir(id){
 

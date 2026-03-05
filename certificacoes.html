@@ -13,84 +13,86 @@
 *{box-sizing:border-box}
 
 body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:#f5f7fb;
 }
 
 .app{
-  display:flex;
-  min-height:100vh;
+display:flex;
+min-height:100vh;
 }
 
 #sidebar{
-  width:260px;
-  flex-shrink:0;
+width:260px;
+flex-shrink:0;
 }
 
 .content{
-  flex:1;
-  padding:40px;
+flex:1;
+padding:40px;
 }
 
 .form-box{
-  background:#fff;
-  padding:20px;
-  border-radius:12px;
-  display:flex;
-  gap:20px;
-  align-items:end;
-  flex-wrap:wrap;
-  margin-bottom:20px;
+background:#fff;
+padding:20px;
+border-radius:12px;
+display:flex;
+gap:20px;
+align-items:end;
+flex-wrap:wrap;
+margin-bottom:20px;
 }
 
 .form-box div{
-  display:flex;
-  flex-direction:column;
+display:flex;
+flex-direction:column;
 }
 
 select,input{
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-  min-width:200px;
+padding:8px;
+border-radius:6px;
+border:1px solid #d1d5db;
+min-width:200px;
 }
 
 button{
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
+background:#1f2937;
+color:#fff;
+border:none;
+border-radius:6px;
+padding:6px 12px;
+cursor:pointer;
 }
 
-button.excluir{background:#dc2626}
+button.excluir{
+background:#dc2626;
+}
 
 table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
+width:100%;
+border-collapse:collapse;
+background:#fff;
+border-radius:14px;
+overflow:hidden;
 }
 
 th,td{
-  padding:14px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
+padding:14px;
+border-bottom:1px solid #e5e7eb;
+font-size:14px;
+text-align:left;
 }
 
 th{
-  background:#f9fafb;
-  font-weight:600;
+background:#f9fafb;
+font-weight:600;
 }
 
 .pagination{
-  margin-top:20px;
-  display:flex;
-  gap:8px;
+margin-top:20px;
+display:flex;
+gap:8px;
 }
 </style>
 </head>
@@ -98,49 +100,54 @@ th{
 <body>
 
 <div class="app">
-  <aside id="sidebar"></aside>
 
-  <main class="content">
+<aside id="sidebar"></aside>
 
-    <h1>Certificações</h1>
-    <p>Vincular certificações às terapeutas</p>
+<main class="content">
 
-    <div class="form-box">
+<h1>Certificações</h1>
+<p>Vincular certificações às terapeutas</p>
 
-      <div>
-        <label>Terapeuta</label>
-        <select id="cpf_terapeuta"></select>
-      </div>
+<div class="form-box">
 
-      <div>
-        <label>Certificação</label>
-        <select id="certificacao_id"></select>
-      </div>
+<div>
+<label>Terapeuta</label>
+<select id="cpf_terapeuta"></select>
+</div>
 
-      <div>
-        <label>Data</label>
-        <input type="date" id="data_obtencao">
-      </div>
+<div>
+<label>Certificação</label>
+<select id="certificacao_id"></select>
+</div>
 
-      <button onclick="vincular()">Vincular</button>
+<div>
+<label>Data</label>
+<input type="date" id="data_obtencao">
+</div>
 
-    </div>
+<button onclick="vincular()">Vincular</button>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Terapeuta</th>
-          <th>Certificação</th>
-          <th>Data</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
+</div>
 
-    <div class="pagination" id="paginacao"></div>
+<table>
 
-  </main>
+<thead>
+<tr>
+<th>Terapeuta</th>
+<th>Certificação</th>
+<th>Data</th>
+<th>Ações</th>
+</tr>
+</thead>
+
+<tbody id="lista"></tbody>
+
+</table>
+
+<div class="pagination" id="paginacao"></div>
+
+</main>
+
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -159,6 +166,8 @@ let paginaAtualCert = 1;
 const porPagina = 10;
 let totalRegistros = 0;
 
+/* ================= SELECTS ================= */
+
 async function carregarSelects(){
 
 const selectTerapeuta = document.getElementById("cpf_terapeuta");
@@ -167,29 +176,36 @@ const selectCert = document.getElementById("certificacao_id");
 selectTerapeuta.innerHTML = "<option>Carregando...</option>";
 selectCert.innerHTML = "<option>Carregando...</option>";
 
-/* TERAPEUTAS ATIVAS */
+/* SOMENTE TERAPEUTAS ATIVAS */
 
 const { data: terapeutas, error: erroTer } = await supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional")
-.eq("ativo","Ativo")
+.eq("status","Ativo")
 .order("nome_profissional");
 
 if (erroTer) {
+
 console.error(erroTer);
 selectTerapeuta.innerHTML = "<option>Erro ao carregar</option>";
+
 } else {
 
 selectTerapeuta.innerHTML = "<option value=''>Selecione</option>";
 
 (terapeutas || []).forEach(t=>{
+
 selectTerapeuta.innerHTML += `
 <option value="${t.cpf}">
 ${t.nome_profissional}
 </option>
 `;
+
 });
+
 }
+
+/* CERTIFICAÇÕES */
 
 const { data: certificacoes, error: erroCert } = await supabaseClient
 .from("certificacoes")
@@ -197,22 +213,29 @@ const { data: certificacoes, error: erroCert } = await supabaseClient
 .order("nome");
 
 if (erroCert) {
+
 console.error(erroCert);
 selectCert.innerHTML = "<option>Erro ao carregar</option>";
+
 } else {
 
 selectCert.innerHTML = "<option value=''>Selecione</option>";
 
 (certificacoes || []).forEach(c=>{
+
 selectCert.innerHTML += `
 <option value="${c.id}">
 ${c.nome}
 </option>
 `;
+
 });
+
 }
 
 }
+
+/* ================= LISTA ================= */
 
 async function carregarLista(){
 
@@ -240,22 +263,32 @@ const tbody = document.getElementById("lista");
 tbody.innerHTML = "";
 
 (data || []).forEach(item=>{
+
 tbody.innerHTML += `
 <tr>
+
 <td>${item.terapeutas?.nome_profissional || ""}</td>
+
 <td>${item.certificacoes?.nome || ""}</td>
+
 <td>${item.data_obtencao || ""}</td>
+
 <td>
 <button class="excluir" onclick="excluir('${item.id}')">
 Excluir
 </button>
 </td>
+
 </tr>
 `;
+
 });
 
 renderPaginacao();
+
 }
+
+/* ================= PAGINAÇÃO ================= */
 
 function renderPaginacao(){
 
@@ -266,11 +299,12 @@ div.innerHTML="";
 
 for(let i=1;i<=totalPaginas;i++){
 
-div.innerHTML+=`
+div.innerHTML += `
 <button onclick="irPagina(${i})"
 ${i===paginaAtualCert?"style='background:#4f6fb3'":""}>
 ${i}
-</button>`;
+</button>
+`;
 
 }
 
@@ -280,6 +314,8 @@ window.irPagina = function(p){
 paginaAtualCert=p;
 carregarLista();
 };
+
+/* ================= VINCULAR ================= */
 
 window.vincular = async function(){
 
@@ -292,8 +328,10 @@ data_obtencao: document.getElementById("data_obtencao").value || null
 };
 
 if(!payload.cpf_terapeuta || !payload.certificacao_id){
+
 alert("Selecione terapeuta e certificação");
 return;
+
 }
 
 const { error } = await supabaseClient
@@ -301,13 +339,18 @@ const { error } = await supabaseClient
 .insert(payload);
 
 if(error){
+
 console.error(error);
 alert("Erro ao vincular");
 return;
+
 }
 
 carregarLista();
+
 };
+
+/* ================= EXCLUIR ================= */
 
 window.excluir = async function(id){
 
@@ -319,6 +362,7 @@ await supabaseClient
 .eq("id", id);
 
 carregarLista();
+
 };
 
 carregarSelects();

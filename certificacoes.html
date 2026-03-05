@@ -9,6 +9,8 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <style>
 
 *{box-sizing:border-box}
@@ -34,9 +36,7 @@ flex:1;
 padding:40px;
 }
 
-h1{
-margin-top:0;
-}
+h1{margin-top:0}
 
 /* FORM */
 
@@ -75,7 +75,7 @@ cursor:pointer;
 button.excluir{background:#dc2626}
 button.editar{background:#f59e0b}
 
-/* BUSCA + PAGINAÇÃO TOP */
+/* TOPBAR */
 
 .topbar{
 display:flex;
@@ -179,9 +179,7 @@ display:flex;
 gap:10px;
 }
 
-.cancelar{
-background:#6b7280;
-}
+.cancelar{background:#6b7280}
 
 </style>
 </head>
@@ -226,7 +224,12 @@ placeholder="Buscar terapeuta..."
 oninput="filtrarTabela()">
 </div>
 
-<div>
+<div style="display:flex;gap:10px;align-items:center">
+
+<button onclick="exportarExcel()">
+<i class="fa-solid fa-file-excel"></i> Exportar
+</button>
+
 Mostrar
 
 <select id="porPaginaSelect" onchange="mudarPorPagina()">
@@ -235,7 +238,6 @@ Mostrar
 <option value="20">20</option>
 </select>
 
-registros
 </div>
 
 </div>
@@ -305,6 +307,7 @@ let dados=[]
 let pagina=1
 let porPagina=10
 let editId=null
+let listaAtual=[]
 
 let ordem={campo:null,asc:true}
 
@@ -368,6 +371,8 @@ render()
 
 function render(lista=dados){
 
+listaAtual=lista
+
 const inicio=(pagina-1)*porPagina
 const pag=lista.slice(inicio,inicio+porPagina)
 
@@ -378,13 +383,9 @@ pag.forEach(r=>{
 
 tbody.innerHTML+=`
 <tr>
-
 <td>${r.terapeutas?.nome_profissional||""}</td>
-
 <td>${r.certificacoes?.nome||""}</td>
-
 <td>${r.data_obtencao||""}</td>
-
 <td>
 
 <button class="editar"
@@ -398,7 +399,6 @@ Excluir
 </button>
 
 </td>
-
 </tr>
 `
 
@@ -424,7 +424,6 @@ d.terapeutas?.nome_profissional
 )
 
 pagina=1
-
 render(filtrado)
 
 }
@@ -474,7 +473,6 @@ function renderPaginacao(total){
 const totalPaginas=Math.ceil(total/porPagina)
 
 const div=document.getElementById("paginacao")
-
 div.innerHTML=""
 
 for(let i=1;i<=totalPaginas;i++){
@@ -492,10 +490,8 @@ ${i}
 }
 
 function irPagina(p){
-
 pagina=p
-render()
-
+render(listaAtual)
 }
 
 function mudarPorPagina(){
@@ -505,8 +501,31 @@ document.getElementById("porPaginaSelect").value
 )
 
 pagina=1
+render(listaAtual)
 
-render()
+}
+
+/* EXPORTAR */
+
+function exportarExcel(){
+
+const inicio=(pagina-1)*porPagina
+const fim=inicio+porPagina
+
+const visivel=listaAtual.slice(inicio,fim)
+
+const exportData=visivel.map(r=>({
+Terapeuta:r.terapeutas?.nome_profissional,
+Certificacao:r.certificacoes?.nome,
+Data:r.data_obtencao
+}))
+
+const ws=XLSX.utils.json_to_sheet(exportData)
+const wb=XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb,ws,"Certificacoes")
+
+XLSX.writeFile(wb,"certificacoes.xlsx")
 
 }
 

@@ -143,172 +143,192 @@ th{
   </main>
 </div>
 
-<!-- 1️⃣ SUPABASE PRIMEIRO -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-<!-- 2️⃣ SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- 3️⃣ SCRIPT DA PÁGINA -->
 <script>
+
 document.addEventListener("DOMContentLoaded", function(){
 
 const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let paginaAtualCert = 1;
 const porPagina = 10;
 let totalRegistros = 0;
 
-// ================= SELECTS =================
 async function carregarSelects(){
 
-  const selectTerapeuta = document.getElementById("cpf_terapeuta");
-  const selectCert = document.getElementById("certificacao_id");
+const selectTerapeuta = document.getElementById("cpf_terapeuta");
+const selectCert = document.getElementById("certificacao_id");
 
-  selectTerapeuta.innerHTML = "<option>Carregando...</option>";
-  selectCert.innerHTML = "<option>Carregando...</option>";
+selectTerapeuta.innerHTML = "<option>Carregando...</option>";
+selectCert.innerHTML = "<option>Carregando...</option>";
 
-  const { data: terapeutas, error: erroTer } = await supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional")
-    .order("nome_profissional");
+/* SOMENTE TERAPEUTAS ATIVAS */
 
-  if (erroTer) {
-    console.error(erroTer);
-    selectTerapeuta.innerHTML = "<option>Erro ao carregar</option>";
-  } else {
-    selectTerapeuta.innerHTML = "<option value=''>Selecione</option>";
-    (terapeutas || []).forEach(t=>{
-      selectTerapeuta.innerHTML += `
-        <option value="${t.cpf}">
-          ${t.nome_profissional}
-        </option>
-      `;
-    });
-  }
+const { data: terapeutas, error: erroTer } = await supabaseClient
+.from("terapeutas")
+.select("cpf,nome_profissional")
+.eq("ativo", true)
+.order("nome_profissional");
 
-  const { data: certificacoes, error: erroCert } = await supabaseClient
-    .from("certificacoes")
-    .select("id,nome")
-    .order("nome");
+if (erroTer) {
+console.error(erroTer);
+selectTerapeuta.innerHTML = "<option>Erro ao carregar</option>";
+} else {
 
-  if (erroCert) {
-    console.error(erroCert);
-    selectCert.innerHTML = "<option>Erro ao carregar</option>";
-  } else {
-    selectCert.innerHTML = "<option value=''>Selecione</option>";
-    (certificacoes || []).forEach(c=>{
-      selectCert.innerHTML += `
-        <option value="${c.id}">
-          ${c.nome}
-        </option>
-      `;
-    });
-  }
+selectTerapeuta.innerHTML = "<option value=''>Selecione</option>";
+
+(terapeutas || []).forEach(t=>{
+selectTerapeuta.innerHTML += `
+<option value="${t.cpf}">
+${t.nome_profissional}
+</option>
+`;
+});
 }
 
-// ================= LISTA =================
+const { data: certificacoes, error: erroCert } = await supabaseClient
+.from("certificacoes")
+.select("id,nome")
+.order("nome");
+
+if (erroCert) {
+console.error(erroCert);
+selectCert.innerHTML = "<option>Erro ao carregar</option>";
+} else {
+
+selectCert.innerHTML = "<option value=''>Selecione</option>";
+
+(certificacoes || []).forEach(c=>{
+selectCert.innerHTML += `
+<option value="${c.id}">
+${c.nome}
+</option>
+`;
+});
+}
+
+}
+
 async function carregarLista(){
 
-  const inicio = (paginaAtualCert-1)*porPagina;
-  const fim = inicio + porPagina - 1;
+const inicio = (paginaAtualCert-1)*porPagina;
+const fim = inicio + porPagina - 1;
 
-  const { data, error, count } = await supabaseClient
-    .from("terapeuta_certificacoes")
-    .select(`
-      id,
-      data_obtencao,
-      terapeutas(nome_profissional),
-      certificacoes(nome)
-    `,{count:"exact"})
-    .range(inicio,fim);
+const { data, error, count } = await supabaseClient
+.from("terapeuta_certificacoes")
+.select(`
+id,
+data_obtencao,
+terapeutas(nome_profissional),
+certificacoes(nome)
+`,{count:"exact"})
+.range(inicio,fim);
 
-  if(error){
-    console.error(error);
-    return;
-  }
+if(error){
+console.error(error);
+return;
+}
 
-  totalRegistros = count || 0;
+totalRegistros = count || 0;
 
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
+const tbody = document.getElementById("lista");
+tbody.innerHTML = "";
 
-  (data || []).forEach(item=>{
-    tbody.innerHTML += `
-      <tr>
-        <td>${item.terapeutas?.nome_profissional || ""}</td>
-        <td>${item.certificacoes?.nome || ""}</td>
-        <td>${item.data_obtencao || ""}</td>
-        <td>
-          <button class="excluir" onclick="excluir('${item.id}')">
-            Excluir
-          </button>
-        </td>
-      </tr>
-    `;
-  });
+(data || []).forEach(item=>{
+tbody.innerHTML += `
+<tr>
+<td>${item.terapeutas?.nome_profissional || ""}</td>
+<td>${item.certificacoes?.nome || ""}</td>
+<td>${item.data_obtencao || ""}</td>
+<td>
+<button class="excluir" onclick="excluir('${item.id}')">
+Excluir
+</button>
+</td>
+</tr>
+`;
+});
 
-  renderPaginacao();
+renderPaginacao();
+
 }
 
 function renderPaginacao(){
-  const totalPaginas = Math.ceil(totalRegistros/porPagina);
-  const div = document.getElementById("paginacao");
-  div.innerHTML="";
 
-  for(let i=1;i<=totalPaginas;i++){
-    div.innerHTML+=`
-      <button onclick="irPagina(${i})"
-      ${i===paginaAtualCert?"style='background:#4f6fb3'":""}>
-      ${i}
-      </button>`;
-  }
+const totalPaginas = Math.ceil(totalRegistros/porPagina);
+const div = document.getElementById("paginacao");
+
+div.innerHTML="";
+
+for(let i=1;i<=totalPaginas;i++){
+
+div.innerHTML+=`
+<button onclick="irPagina(${i})"
+${i===paginaAtualCert?"style='background:#4f6fb3'":""}>
+${i}
+</button>`;
+
+}
+
 }
 
 window.irPagina = function(p){
-  paginaAtualCert=p;
-  carregarLista();
+paginaAtualCert=p;
+carregarLista();
 };
 
 window.vincular = async function(){
 
-  const payload = {
-    cpf_terapeuta: document.getElementById("cpf_terapeuta").value,
-    certificacao_id: document.getElementById("certificacao_id").value,
-    data_obtencao: document.getElementById("data_obtencao").value || null
-  };
+const payload = {
 
-  if(!payload.cpf_terapeuta || !payload.certificacao_id){
-    alert("Selecione terapeuta e certificação");
-    return;
-  }
+cpf_terapeuta: document.getElementById("cpf_terapeuta").value,
+certificacao_id: document.getElementById("certificacao_id").value,
+data_obtencao: document.getElementById("data_obtencao").value || null
 
-  const { error } = await supabaseClient
-    .from("terapeuta_certificacoes")
-    .insert(payload);
+};
 
-  if(error){
-    console.error(error);
-    alert("Erro ao vincular");
-    return;
-  }
+if(!payload.cpf_terapeuta || !payload.certificacao_id){
+alert("Selecione terapeuta e certificação");
+return;
+}
 
-  carregarLista();
+const { error } = await supabaseClient
+.from("terapeuta_certificacoes")
+.insert(payload);
+
+if(error){
+console.error(error);
+alert("Erro ao vincular");
+return;
+}
+
+carregarLista();
+
 };
 
 window.excluir = async function(id){
-  if(!confirm("Excluir vínculo?")) return;
-  await supabaseClient.from("terapeuta_certificacoes").delete().eq("id", id);
-  carregarLista();
+
+if(!confirm("Excluir vínculo?")) return;
+
+await supabaseClient
+.from("terapeuta_certificacoes")
+.delete()
+.eq("id", id);
+
+carregarLista();
+
 };
 
 carregarSelects();
 carregarLista();
 
 });
+
 </script>
 
 </body>

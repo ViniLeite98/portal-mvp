@@ -36,6 +36,49 @@ flex:1;
 padding:40px;
 }
 
+/* TOPBAR */
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:16px;
+}
+
+.left-tools input{
+padding:8px;
+border:1px solid #d1d5db;
+border-radius:6px;
+width:240px;
+}
+
+.right-tools{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.right-tools button{
+background:#1f2937;
+color:#fff;
+border:none;
+border-radius:6px;
+padding:7px 12px;
+cursor:pointer;
+}
+
+.btn-novo{
+background:#2563eb;
+}
+
+.right-tools select{
+padding:6px;
+border-radius:6px;
+border:1px solid #d1d5db;
+}
+
+/* TABELA */
+
 table{
 width:100%;
 border-collapse:collapse;
@@ -53,40 +96,51 @@ text-align:left;
 
 th{
 background:#f9fafb;
-font-weight:600;
 cursor:pointer;
 }
 
-button{
-background:#1f2937;
+/* BOTÕES */
+
+.btn-editar{
+background:#f59e0b;
 color:#fff;
 border:none;
 border-radius:6px;
-padding:6px 12px;
+padding:6px 10px;
 cursor:pointer;
 }
 
-button.excluir{background:#dc2626}
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:16px;
-}
-
-.busca input{
-padding:8px;
+.btn-excluir{
+background:#dc2626;
+color:#fff;
+border:none;
 border-radius:6px;
-border:1px solid #ccc;
-width:250px;
+padding:6px 10px;
+cursor:pointer;
 }
+
+/* PAGINAÇÃO */
 
 .pagination{
 margin-top:20px;
 display:flex;
 gap:8px;
 }
+
+.pagination button{
+padding:6px 10px;
+border:none;
+border-radius:6px;
+background:#e5e7eb;
+cursor:pointer;
+}
+
+.pagination button.active{
+background:#2563eb;
+color:#fff;
+}
+
+/* MODAL */
 
 .modal{
 position:fixed;
@@ -140,22 +194,26 @@ margin-top:20px;
 
 <div class="topbar">
 
-<div class="busca">
+<div class="left-tools">
+
 <input
 id="buscaServico"
 placeholder="Buscar serviço..."
 oninput="filtrarTabela()">
+
 </div>
 
-<div style="display:flex;gap:10px">
+<div class="right-tools">
 
 <button onclick="exportarExcel()">
 <i class="fa-solid fa-file-excel"></i> Exportar
 </button>
 
-<button onclick="abrirNovo()">+ Novo Serviço</button>
+<button class="btn-novo" onclick="abrirNovo()">
++ Novo Serviço
+</button>
 
-Mostrar
+<span>Mostrar</span>
 
 <select id="porPaginaSelect" onchange="mudarPorPagina()">
 <option value="5">5</option>
@@ -186,6 +244,7 @@ Mostrar
 <div class="pagination" id="paginacao"></div>
 
 </main>
+
 </div>
 
 <div class="modal" id="modal">
@@ -195,8 +254,11 @@ Mostrar
 <h3>Cadastro Serviço</h3>
 
 <div class="grid">
+
 <input id="nome" placeholder="Nome do serviço">
+
 <input id="valor" type="number" step="0.01" placeholder="Valor">
+
 <input id="comissao" type="number" step="0.01" placeholder="Comissão">
 
 <select id="status">
@@ -204,14 +266,19 @@ Mostrar
 <option value="ativo">ativo</option>
 <option value="inativo">inativo</option>
 </select>
+
 </div>
 
 <div class="modal-actions">
+
 <button onclick="fecharModal()">Cancelar</button>
+
 <button onclick="salvar()">Salvar</button>
+
 </div>
 
 </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -226,144 +293,169 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let idAtual=null;
-let dados=[];
-let listaAtual=[];
-let paginaAtual=1;
-let porPagina=10;
-let totalRegistros=0;
+let dados=[]
+let listaAtual=[]
+let paginaAtual=1
+let porPagina=10
+let idAtual=null
+let ordem={campo:"nome",asc:true}
 
-let ordemAtual={campo:"nome",asc:true};
+/* CARREGAR */
 
 async function carregar(){
 
 const {data}=await supabaseClient
 .from("servicos")
-.select("*");
+.select("*")
 
-dados=data||[];
+dados=data||[]
 
-render();
+render()
 
 }
 
+/* RENDER */
+
 function render(lista=dados){
 
-listaAtual=lista;
+listaAtual=lista
 
-const inicio=(paginaAtual-1)*porPagina;
-const fim=inicio+porPagina;
+const inicio=(paginaAtual-1)*porPagina
+const pag=lista.slice(inicio,inicio+porPagina)
 
-const pag=lista.slice(inicio,fim);
+const tbody=document.getElementById("lista")
 
-const tbody=document.getElementById("lista");
-
-tbody.innerHTML="";
+tbody.innerHTML=""
 
 pag.forEach(s=>{
 
 tbody.innerHTML+=`
 <tr>
+
 <td>${s.nome}</td>
+
 <td>R$ ${Number(s.valor||0).toFixed(2)}</td>
+
 <td>R$ ${Number(s.comissao||0).toFixed(2)}</td>
+
 <td>${s.status||""}</td>
+
 <td>
-<button onclick="editar('${s.id}')">Editar</button>
-<button class="excluir" onclick="excluir('${s.id}')">Excluir</button>
-</td>
-</tr>
-`;
 
-});
-
-renderPaginacao(lista.length);
-
-}
-
-function renderPaginacao(total){
-
-const totalPaginas=Math.ceil(total/porPagina);
-
-const div=document.getElementById("paginacao");
-
-div.innerHTML="";
-
-for(let i=1;i<=totalPaginas;i++){
-
-div.innerHTML+=`
-<button onclick="irPagina(${i})"
-${i===paginaAtual?"style='background:#4f6fb3'":""}>
-${i}
+<button class="btn-editar" onclick="editar('${s.id}')">
+Editar
 </button>
-`;
+
+<button class="btn-excluir" onclick="excluir('${s.id}')">
+Excluir
+</button>
+
+</td>
+
+</tr>
+`
+
+})
+
+renderPaginacao(lista.length)
 
 }
 
-}
-
-window.irPagina=function(p){
-paginaAtual=p;
-render(listaAtual);
-};
-
-window.mudarPorPagina=function(){
-
-porPagina=parseInt(
-document.getElementById("porPaginaSelect").value
-);
-
-paginaAtual=1;
-
-render(listaAtual);
-
-};
+/* BUSCA */
 
 window.filtrarTabela=function(){
 
 const termo=document
 .getElementById("buscaServico")
 .value
-.toLowerCase();
+.toLowerCase()
 
 const filtrado=dados.filter(s=>
 s.nome.toLowerCase().includes(termo)
-);
+)
 
-paginaAtual=1;
+paginaAtual=1
 
-render(filtrado);
+render(filtrado)
 
-};
+}
+
+/* ORDENAR */
 
 window.ordenar=function(campo){
 
-ordemAtual.asc=
-ordemAtual.campo===campo?!ordemAtual.asc:true;
+ordem.asc=
+ordem.campo===campo?!ordem.asc:true
 
-ordemAtual.campo=campo;
+ordem.campo=campo
 
 dados.sort((a,b)=>{
 
-let v1=a[campo];
-let v2=b[campo];
+let v1=a[campo]
+let v2=b[campo]
 
-if(v1<v2) return ordemAtual.asc?-1:1;
-if(v1>v2) return ordemAtual.asc?1:-1;
-return 0;
+if(v1<v2) return ordem.asc?-1:1
+if(v1>v2) return ordem.asc?1:-1
+return 0
 
-});
+})
 
-render();
+render()
 
-};
+}
+
+/* PAGINAÇÃO */
+
+function renderPaginacao(total){
+
+const totalPaginas=Math.ceil(total/porPagina)
+
+const div=document.getElementById("paginacao")
+
+div.innerHTML=""
+
+for(let i=1;i<=totalPaginas;i++){
+
+div.innerHTML+=`
+<button
+class="${i===paginaAtual?'active':''}"
+onclick="irPagina(${i})">
+${i}
+</button>
+`
+
+}
+
+}
+
+window.irPagina=function(p){
+
+paginaAtual=p
+
+render(listaAtual)
+
+}
+
+window.mudarPorPagina=function(){
+
+porPagina=parseInt(
+document.getElementById("porPaginaSelect").value
+)
+
+paginaAtual=1
+
+render(listaAtual)
+
+}
+
+/* EXPORTAR */
 
 window.exportarExcel=function(){
 
-const inicio=(paginaAtual-1)*porPagina;
-const fim=inicio+porPagina;
+const inicio=(paginaAtual-1)*porPagina
+const fim=inicio+porPagina
 
-const visivel=listaAtual.slice(inicio,fim);
+const visivel=listaAtual.slice(inicio,fim)
 
 const exportData=visivel.map(s=>({
 
@@ -372,33 +464,37 @@ Valor:s.valor,
 Comissao:s.comissao,
 Status:s.status
 
-}));
+}))
 
-const ws=XLSX.utils.json_to_sheet(exportData);
-const wb=XLSX.utils.book_new();
+const ws=XLSX.utils.json_to_sheet(exportData)
+const wb=XLSX.utils.book_new()
 
-XLSX.utils.book_append_sheet(wb,ws,"Servicos");
+XLSX.utils.book_append_sheet(wb,ws,"Servicos")
 
-XLSX.writeFile(wb,"servicos.xlsx");
+XLSX.writeFile(wb,"servicos.xlsx")
 
-};
+}
+
+/* MODAL */
 
 window.abrirNovo=function(){
 
-idAtual=null;
+idAtual=null
 
-document.getElementById("nome").value="";
-document.getElementById("valor").value="";
-document.getElementById("comissao").value="";
-document.getElementById("status").value="";
+document.getElementById("nome").value=""
+document.getElementById("valor").value=""
+document.getElementById("comissao").value=""
+document.getElementById("status").value=""
 
-document.getElementById("modal").style.display="flex";
+document.getElementById("modal").style.display="flex"
 
-};
+}
 
 window.fecharModal=function(){
-document.getElementById("modal").style.display="none";
-};
+
+document.getElementById("modal").style.display="none"
+
+}
 
 window.salvar=async function(){
 
@@ -407,11 +503,11 @@ nome:document.getElementById("nome").value,
 valor:parseFloat(document.getElementById("valor").value),
 comissao:parseFloat(document.getElementById("comissao").value),
 status:document.getElementById("status").value
-};
+}
 
 if(!payload.nome){
-alert("Nome é obrigatório");
-return;
+alert("Nome é obrigatório")
+return
 }
 
 if(idAtual){
@@ -419,57 +515,57 @@ if(idAtual){
 await supabaseClient
 .from("servicos")
 .update(payload)
-.eq("id",idAtual);
+.eq("id",idAtual)
 
 }else{
 
 await supabaseClient
 .from("servicos")
-.insert(payload);
+.insert(payload)
 
 }
 
-fecharModal();
+fecharModal()
 
-carregar();
+carregar()
 
-};
+}
 
 window.editar=async function(id){
 
-idAtual=id;
+idAtual=id
 
 const {data}=await supabaseClient
 .from("servicos")
 .select("*")
 .eq("id",id)
-.single();
+.single()
 
-document.getElementById("nome").value=data.nome||"";
-document.getElementById("valor").value=data.valor||"";
-document.getElementById("comissao").value=data.comissao||"";
-document.getElementById("status").value=data.status||"";
+document.getElementById("nome").value=data.nome||""
+document.getElementById("valor").value=data.valor||""
+document.getElementById("comissao").value=data.comissao||""
+document.getElementById("status").value=data.status||""
 
-document.getElementById("modal").style.display="flex";
+document.getElementById("modal").style.display="flex"
 
-};
+}
 
 window.excluir=async function(id){
 
-if(!confirm("Excluir serviço?"))return;
+if(!confirm("Excluir serviço?"))return
 
 await supabaseClient
 .from("servicos")
 .delete()
-.eq("id",id);
+.eq("id",id)
 
-carregar();
+carregar()
 
-};
+}
 
-carregar();
+carregar()
 
-});
+})
 </script>
 
 </body>

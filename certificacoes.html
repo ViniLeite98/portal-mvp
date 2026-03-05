@@ -236,6 +236,7 @@ Mostrar
 <option value="5">5</option>
 <option value="10" selected>10</option>
 <option value="20">20</option>
+<option value="todos">Todos</option>
 </select>
 
 </div>
@@ -387,17 +388,8 @@ tbody.innerHTML+=`
 <td>${r.certificacoes?.nome||""}</td>
 <td>${r.data_obtencao||""}</td>
 <td>
-
-<button class="editar"
-onclick="abrirModal('${r.id}')">
-Editar
-</button>
-
-<button class="excluir"
-onclick="excluir('${r.id}')">
-Excluir
-</button>
-
+<button class="editar" onclick="abrirModal('${r.id}')">Editar</button>
+<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
 </td>
 </tr>
 `
@@ -470,10 +462,12 @@ render()
 
 function renderPaginacao(total){
 
-const totalPaginas=Math.ceil(total/porPagina)
-
 const div=document.getElementById("paginacao")
 div.innerHTML=""
+
+if(porPagina>=total) return
+
+const totalPaginas=Math.ceil(total/porPagina)
 
 for(let i=1;i<=totalPaginas;i++){
 
@@ -494,11 +488,19 @@ pagina=p
 render(listaAtual)
 }
 
+/* MOSTRAR */
+
 function mudarPorPagina(){
 
-porPagina=parseInt(
-document.getElementById("porPaginaSelect").value
-)
+const valor=document
+.getElementById("porPaginaSelect")
+.value
+
+if(valor==="todos"){
+porPagina=listaAtual.length||dados.length
+}else{
+porPagina=parseInt(valor)
+}
 
 pagina=1
 render(listaAtual)
@@ -509,10 +511,19 @@ render(listaAtual)
 
 function exportarExcel(){
 
+let visivel
+
+if(porPagina>=listaAtual.length){
+
+visivel=listaAtual
+
+}else{
+
 const inicio=(pagina-1)*porPagina
 const fim=inicio+porPagina
+visivel=listaAtual.slice(inicio,fim)
 
-const visivel=listaAtual.slice(inicio,fim)
+}
 
 const exportData=visivel.map(r=>({
 Terapeuta:r.terapeutas?.nome_profissional,

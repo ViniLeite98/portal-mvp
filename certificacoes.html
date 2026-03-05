@@ -5,17 +5,18 @@
 <title>Certificações | Hara Spa</title>
 
 <link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
+
 *{box-sizing:border-box}
 
 body{
 margin:0;
 font-family:'Segoe UI',sans-serif;
-background:#f5f7fb;
+background:#f4f6fb;
 }
 
 .app{
@@ -33,15 +34,31 @@ flex:1;
 padding:40px;
 }
 
+/* CABEÇALHO */
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+}
+
+.topbar h1{
+margin:0;
+}
+
+/* FORM */
+
 .form-box{
 background:#fff;
 padding:20px;
-border-radius:12px;
+border-radius:10px;
 display:flex;
 gap:20px;
-align-items:end;
 flex-wrap:wrap;
-margin-bottom:20px;
+align-items:end;
+margin-bottom:25px;
+box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
 .form-box div{
@@ -56,12 +73,14 @@ border:1px solid #d1d5db;
 min-width:200px;
 }
 
+/* BOTÕES */
+
 button{
-background:#1f2937;
+background:#2563eb;
 color:#fff;
 border:none;
 border-radius:6px;
-padding:6px 12px;
+padding:8px 14px;
 cursor:pointer;
 }
 
@@ -69,31 +88,63 @@ button.excluir{
 background:#dc2626;
 }
 
+/* FILTROS */
+
+.filtros{
+display:flex;
+gap:15px;
+margin-bottom:20px;
+}
+
+.filtros input,
+.filtros select{
+padding:7px;
+}
+
+/* TABELA */
+
 table{
 width:100%;
 border-collapse:collapse;
 background:#fff;
-border-radius:14px;
+border-radius:10px;
 overflow:hidden;
+box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
 
 th,td{
 padding:14px;
-border-bottom:1px solid #e5e7eb;
+border-bottom:1px solid #eee;
 font-size:14px;
-text-align:left;
 }
 
 th{
 background:#f9fafb;
-font-weight:600;
+text-align:left;
 }
+
+tr:hover{
+background:#f5f7ff;
+}
+
+/* PAGINAÇÃO */
 
 .pagination{
 margin-top:20px;
 display:flex;
 gap:8px;
 }
+
+.pagination button{
+background:#e5e7eb;
+color:#111;
+}
+
+.pagination button.active{
+background:#2563eb;
+color:#fff;
+}
+
 </style>
 </head>
 
@@ -105,8 +156,9 @@ gap:8px;
 
 <main class="content">
 
+<div class="topbar">
 <h1>Certificações</h1>
-<p>Vincular certificações às terapeutas</p>
+</div>
 
 <div class="form-box">
 
@@ -129,6 +181,21 @@ gap:8px;
 
 </div>
 
+<!-- FILTROS -->
+
+<div class="filtros">
+
+<input
+id="buscaTerapeuta"
+placeholder="Buscar terapeuta"
+oninput="filtrar()">
+
+<select id="filtroCertificacao" onchange="filtrar()">
+<option value="">Todas certificações</option>
+</select>
+
+</div>
+
 <table>
 
 <thead>
@@ -136,7 +203,7 @@ gap:8px;
 <th>Terapeuta</th>
 <th>Certificação</th>
 <th>Data</th>
-<th>Ações</th>
+<th></th>
 </tr>
 </thead>
 
@@ -155,83 +222,50 @@ gap:8px;
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function(){
-
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
-let paginaAtualCert = 1;
-const porPagina = 10;
-let totalRegistros = 0;
+let dados = []
+let pagina = 1
+const porPagina = 10
 
 /* ================= SELECTS ================= */
 
 async function carregarSelects(){
 
-const selectTerapeuta = document.getElementById("cpf_terapeuta");
-const selectCert = document.getElementById("certificacao_id");
+const selTer = document.getElementById("cpf_terapeuta")
+const selCert = document.getElementById("certificacao_id")
+const filtroCert = document.getElementById("filtroCertificacao")
 
-selectTerapeuta.innerHTML = "<option>Carregando...</option>";
-selectCert.innerHTML = "<option>Carregando...</option>";
-
-/* SOMENTE TERAPEUTAS ATIVAS */
-
-const { data: terapeutas, error: erroTer } = await supabaseClient
+const {data:terapeutas}=await supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional")
 .eq("status","Ativo")
-.order("nome_profissional");
+.order("nome_profissional")
 
-if (erroTer) {
+selTer.innerHTML="<option value=''>Selecione</option>"
 
-console.error(erroTer);
-selectTerapeuta.innerHTML = "<option>Erro ao carregar</option>";
+terapeutas.forEach(t=>{
+selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
+})
 
-} else {
-
-selectTerapeuta.innerHTML = "<option value=''>Selecione</option>";
-
-(terapeutas || []).forEach(t=>{
-
-selectTerapeuta.innerHTML += `
-<option value="${t.cpf}">
-${t.nome_profissional}
-</option>
-`;
-
-});
-
-}
-
-/* CERTIFICAÇÕES */
-
-const { data: certificacoes, error: erroCert } = await supabaseClient
+const {data:cert}=await supabaseClient
 .from("certificacoes")
 .select("id,nome")
-.order("nome");
+.order("nome")
 
-if (erroCert) {
+selCert.innerHTML="<option value=''>Selecione</option>"
+filtroCert.innerHTML="<option value=''>Todas certificações</option>"
 
-console.error(erroCert);
-selectCert.innerHTML = "<option>Erro ao carregar</option>";
+cert.forEach(c=>{
 
-} else {
+selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 
-selectCert.innerHTML = "<option value=''>Selecione</option>";
+filtroCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 
-(certificacoes || []).forEach(c=>{
-
-selectCert.innerHTML += `
-<option value="${c.id}">
-${c.nome}
-</option>
-`;
-
-});
-
-}
+})
 
 }
 
@@ -239,136 +273,178 @@ ${c.nome}
 
 async function carregarLista(){
 
-const inicio = (paginaAtualCert-1)*porPagina;
-const fim = inicio + porPagina - 1;
-
-const { data, error, count } = await supabaseClient
+const {data}=await supabaseClient
 .from("terapeuta_certificacoes")
 .select(`
 id,
+cpf_terapeuta,
+certificacao_id,
 data_obtencao,
 terapeutas(nome_profissional),
 certificacoes(nome)
-`,{count:"exact"})
-.range(inicio,fim);
+`)
 
-if(error){
-console.error(error);
-return;
+dados=data
+
+render()
+
 }
 
-totalRegistros = count || 0;
+/* ================= RENDER ================= */
 
-const tbody = document.getElementById("lista");
-tbody.innerHTML = "";
+function render(){
 
-(data || []).forEach(item=>{
+const busca=document.getElementById("buscaTerapeuta").value.toLowerCase()
+const filtroCert=document.getElementById("filtroCertificacao").value
 
-tbody.innerHTML += `
+let filtrado=dados.filter(r=>{
+
+let ok=true
+
+if(busca)
+ok=r.terapeutas?.nome_profissional
+.toLowerCase()
+.includes(busca)
+
+if(filtroCert)
+ok=ok && r.certificacao_id==filtroCert
+
+return ok
+
+})
+
+const inicio=(pagina-1)*porPagina
+const pag=filtrado.slice(inicio,inicio+porPagina)
+
+const tbody=document.getElementById("lista")
+tbody.innerHTML=""
+
+pag.forEach(r=>{
+
+tbody.innerHTML+=`
 <tr>
 
-<td>${item.terapeutas?.nome_profissional || ""}</td>
+<td>${r.terapeutas?.nome_profissional}</td>
 
-<td>${item.certificacoes?.nome || ""}</td>
+<td>${r.certificacoes?.nome}</td>
 
-<td>${item.data_obtencao || ""}</td>
+<td>${r.data_obtencao||""}</td>
 
 <td>
-<button class="excluir" onclick="excluir('${item.id}')">
+<button class="excluir"
+onclick="excluir('${r.id}')">
 Excluir
 </button>
 </td>
 
 </tr>
-`;
+`
 
-});
+})
 
-renderPaginacao();
+renderPag(filtrado.length)
 
 }
 
 /* ================= PAGINAÇÃO ================= */
 
-function renderPaginacao(){
+function renderPag(total){
 
-const totalPaginas = Math.ceil(totalRegistros/porPagina);
-const div = document.getElementById("paginacao");
+const paginas=Math.ceil(total/porPagina)
+const div=document.getElementById("paginacao")
 
-div.innerHTML="";
+div.innerHTML=""
 
-for(let i=1;i<=totalPaginas;i++){
+for(let i=1;i<=paginas;i++){
 
-div.innerHTML += `
-<button onclick="irPagina(${i})"
-${i===paginaAtualCert?"style='background:#4f6fb3'":""}>
+div.innerHTML+=`
+<button
+class="${i===pagina?'active':''}"
+onclick="irPagina(${i})">
 ${i}
 </button>
-`;
+`
 
 }
 
 }
 
-window.irPagina = function(p){
-paginaAtualCert=p;
-carregarLista();
-};
+function irPagina(p){
+
+pagina=p
+render()
+
+}
+
+/* ================= FILTRO ================= */
+
+function filtrar(){
+
+pagina=1
+render()
+
+}
 
 /* ================= VINCULAR ================= */
 
-window.vincular = async function(){
+async function vincular(){
 
-const payload = {
+const cpf=document.getElementById("cpf_terapeuta").value
+const cert=document.getElementById("certificacao_id").value
+const data=document.getElementById("data_obtencao").value
 
-cpf_terapeuta: document.getElementById("cpf_terapeuta").value,
-certificacao_id: document.getElementById("certificacao_id").value,
-data_obtencao: document.getElementById("data_obtencao").value || null
+if(!cpf||!cert){
 
-};
-
-if(!payload.cpf_terapeuta || !payload.certificacao_id){
-
-alert("Selecione terapeuta e certificação");
-return;
+alert("Selecione terapeuta e certificação")
+return
 
 }
 
-const { error } = await supabaseClient
+/* BLOQUEIO DUPLICIDADE */
+
+const existe=dados.find(d=>
+d.cpf_terapeuta==cpf &&
+d.certificacao_id==cert
+)
+
+if(existe){
+
+alert("Essa certificação já foi vinculada")
+return
+
+}
+
+await supabaseClient
 .from("terapeuta_certificacoes")
-.insert(payload);
+.insert({
+cpf_terapeuta:cpf,
+certificacao_id:cert,
+data_obtencao:data||null
+})
 
-if(error){
-
-console.error(error);
-alert("Erro ao vincular");
-return;
+carregarLista()
 
 }
-
-carregarLista();
-
-};
 
 /* ================= EXCLUIR ================= */
 
-window.excluir = async function(id){
+async function excluir(id){
 
-if(!confirm("Excluir vínculo?")) return;
+if(!confirm("Excluir vínculo?"))return
 
 await supabaseClient
 .from("terapeuta_certificacoes")
 .delete()
-.eq("id", id);
+.eq("id",id)
 
-carregarLista();
+carregarLista()
 
-};
+}
 
-carregarSelects();
-carregarLista();
+/* INIT */
 
-});
+carregarSelects()
+carregarLista()
 
 </script>
 

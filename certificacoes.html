@@ -143,7 +143,10 @@ th{
   </main>
 </div>
 
+<!-- SUPABASE -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<!-- SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
@@ -159,6 +162,9 @@ let paginaAtualCert = 1;
 const porPagina = 10;
 let totalRegistros = 0;
 
+
+/* ================= SELECTS ================= */
+
 async function carregarSelects(){
 
 const selectTerapeuta = document.getElementById("cpf_terapeuta");
@@ -167,12 +173,12 @@ const selectCert = document.getElementById("certificacao_id");
 selectTerapeuta.innerHTML = "<option>Carregando...</option>";
 selectCert.innerHTML = "<option>Carregando...</option>";
 
-/* SOMENTE TERAPEUTAS ATIVAS */
+/* TERAPEUTAS ATIVAS */
 
 const { data: terapeutas, error: erroTer } = await supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional")
-.eq("ativo", true)
+.eq("ativo","ATIVO")
 .order("nome_profissional");
 
 if (erroTer) {
@@ -190,6 +196,8 @@ ${t.nome_profissional}
 `;
 });
 }
+
+/* CERTIFICACOES */
 
 const { data: certificacoes, error: erroCert } = await supabaseClient
 .from("certificacoes")
@@ -213,6 +221,9 @@ ${c.nome}
 }
 
 }
+
+
+/* ================= LISTA ================= */
 
 async function carregarLista(){
 
@@ -258,6 +269,9 @@ renderPaginacao();
 
 }
 
+
+/* ================= PAGINACAO ================= */
+
 function renderPaginacao(){
 
 const totalPaginas = Math.ceil(totalRegistros/porPagina);
@@ -281,6 +295,9 @@ window.irPagina = function(p){
 paginaAtualCert=p;
 carregarLista();
 };
+
+
+/* ================= VINCULAR ================= */
 
 window.vincular = async function(){
 
@@ -311,6 +328,9 @@ carregarLista();
 
 };
 
+
+/* ================= EXCLUIR ================= */
+
 window.excluir = async function(id){
 
 if(!confirm("Excluir vínculo?")) return;
@@ -323,6 +343,9 @@ await supabaseClient
 carregarLista();
 
 };
+
+
+/* ================= INIT ================= */
 
 carregarSelects();
 carregarLista();

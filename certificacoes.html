@@ -75,9 +75,12 @@ cursor:pointer;
 button.excluir{background:#dc2626}
 button.editar{background:#f59e0b}
 
-/* BUSCA */
+/* BUSCA + PAGINAÇÃO TOP */
 
-.busca{
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
 margin-bottom:15px;
 }
 
@@ -159,14 +162,8 @@ to{opacity:1}
 }
 
 @keyframes slideUp{
-from{
-transform:translateY(30px);
-opacity:0;
-}
-to{
-transform:translateY(0);
-opacity:1;
-}
+from{transform:translateY(30px);opacity:0}
+to{transform:translateY(0);opacity:1}
 }
 
 .modal-form{
@@ -199,8 +196,6 @@ background:#6b7280;
 
 <h1>Certificações</h1>
 
-<!-- FORM NOVO -->
-
 <div class="form-box">
 
 <div>
@@ -222,7 +217,7 @@ background:#6b7280;
 
 </div>
 
-<!-- BUSCA -->
+<div class="topbar">
 
 <div class="busca">
 <input
@@ -231,18 +226,28 @@ placeholder="Buscar terapeuta..."
 oninput="filtrarTabela()">
 </div>
 
-<!-- TABELA -->
+<div>
+Mostrar
+
+<select id="porPaginaSelect" onchange="mudarPorPagina()">
+<option value="5">5</option>
+<option value="10" selected>10</option>
+<option value="20">20</option>
+</select>
+
+registros
+</div>
+
+</div>
 
 <table>
 
 <thead>
 <tr>
-
 <th onclick="ordenar('terapeuta')">Terapeuta ⬍</th>
 <th onclick="ordenar('certificacao')">Certificação ⬍</th>
 <th onclick="ordenar('data')">Data ⬍</th>
 <th>Ações</th>
-
 </tr>
 </thead>
 
@@ -255,8 +260,6 @@ oninput="filtrarTabela()">
 </main>
 
 </div>
-
-<!-- MODAL -->
 
 <div id="modalEditar" class="modal">
 
@@ -300,8 +303,8 @@ const supabaseClient = supabase.createClient(
 
 let dados=[]
 let pagina=1
+let porPagina=10
 let editId=null
-const porPagina=10
 
 let ordem={campo:null,asc:true}
 
@@ -369,7 +372,6 @@ const inicio=(pagina-1)*porPagina
 const pag=lista.slice(inicio,inicio+porPagina)
 
 const tbody=document.getElementById("lista")
-
 tbody.innerHTML=""
 
 pag.forEach(r=>{
@@ -402,6 +404,8 @@ Excluir
 
 })
 
+renderPaginacao(lista.length)
+
 }
 
 /* BUSCA */
@@ -418,6 +422,8 @@ d.terapeutas?.nome_profissional
 .toLowerCase()
 .includes(termo)
 )
+
+pagina=1
 
 render(filtrado)
 
@@ -456,6 +462,49 @@ if(v1>v2) return ordem.asc?1:-1
 return 0
 
 })
+
+render()
+
+}
+
+/* PAGINAÇÃO */
+
+function renderPaginacao(total){
+
+const totalPaginas=Math.ceil(total/porPagina)
+
+const div=document.getElementById("paginacao")
+
+div.innerHTML=""
+
+for(let i=1;i<=totalPaginas;i++){
+
+div.innerHTML+=`
+<button
+class="${i===pagina?'active':''}"
+onclick="irPagina(${i})">
+${i}
+</button>
+`
+
+}
+
+}
+
+function irPagina(p){
+
+pagina=p
+render()
+
+}
+
+function mudarPorPagina(){
+
+porPagina=parseInt(
+document.getElementById("porPaginaSelect").value
+)
+
+pagina=1
 
 render()
 

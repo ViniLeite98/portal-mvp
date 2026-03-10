@@ -26,58 +26,10 @@ display:flex;
 min-height:100vh;
 }
 
-#sidebar{
-width:260px;
-flex-shrink:0;
-}
-
 .content{
 flex:1;
 padding:40px;
 }
-
-/* TOPBAR */
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:16px;
-}
-
-.left-tools input{
-padding:8px;
-border:1px solid #d1d5db;
-border-radius:6px;
-width:240px;
-}
-
-.right-tools{
-display:flex;
-align-items:center;
-gap:10px;
-}
-
-.right-tools button{
-background:#2563eb;
-color:#fff;
-border:none;
-border-radius:6px;
-padding:7px 12px;
-cursor:pointer;
-}
-
-.btn-novo{
-background:#1f2937;
-}
-
-.right-tools select{
-padding:6px;
-border-radius:6px;
-border:1px solid #d1d5db;
-}
-
-/* TABELA */
 
 table{
 width:100%;
@@ -90,8 +42,6 @@ overflow:hidden;
 th,td{
 padding:14px;
 border-bottom:1px solid #e5e7eb;
-font-size:14px;
-text-align:left;
 }
 
 th{
@@ -99,14 +49,12 @@ background:#f9fafb;
 cursor:pointer;
 }
 
-/* BOTÕES */
-
 .btn-editar{
 background:#f59e0b;
 color:#fff;
 border:none;
-border-radius:6px;
 padding:6px 10px;
+border-radius:6px;
 cursor:pointer;
 }
 
@@ -114,33 +62,10 @@ cursor:pointer;
 background:#dc2626;
 color:#fff;
 border:none;
-border-radius:6px;
 padding:6px 10px;
+border-radius:6px;
 cursor:pointer;
 }
-
-/* PAGINAÇÃO */
-
-.pagination{
-margin-top:20px;
-display:flex;
-gap:8px;
-}
-
-.pagination button{
-padding:6px 10px;
-border:none;
-border-radius:6px;
-background:#e5e7eb;
-cursor:pointer;
-}
-
-.pagination button.active{
-background:#2563eb;
-color:#fff;
-}
-
-/* MODAL */
 
 .modal{
 position:fixed;
@@ -149,19 +74,18 @@ background:rgba(0,0,0,.4);
 display:none;
 align-items:center;
 justify-content:center;
-z-index:10;
 }
 
 .modal-content{
 background:#fff;
-width:600px;
+width:500px;
 border-radius:16px;
 padding:24px;
 }
 
 .grid{
 display:grid;
-grid-template-columns:repeat(2,1fr);
+grid-template-columns:1fr 1fr;
 gap:12px;
 }
 
@@ -186,51 +110,20 @@ margin-top:20px;
 
 <div class="app">
 
-<aside id="sidebar"></aside>
-
 <main class="content">
 
 <h1>Serviços</h1>
 
-<div class="topbar">
-
-<div class="left-tools">
-<input
-id="buscaServico"
-placeholder="Buscar serviço..."
-oninput="filtrarTabela()">
-</div>
-
-<div class="right-tools">
-
-<button onclick="exportarExcel()">
-<i class="fa-solid fa-file-excel"></i> Exportar
-</button>
-
-<button class="btn-novo" onclick="abrirNovo()">
-+ Novo Serviço
-</button>
-
-<span>Mostrar</span>
-
-<select id="porPaginaSelect" onchange="mudarPorPagina()">
-<option value="5">5</option>
-<option value="10" selected>10</option>
-<option value="20">20</option>
-<option value="todos">Todos</option>
-</select>
-
-</div>
-
-</div>
+<button onclick="abrirNovo()">+ Novo Serviço</button>
 
 <table>
 
 <thead>
 <tr>
-<th onclick="ordenar('nome')">Nome ⬍</th>
-<th onclick="ordenar('valor')">Valor ⬍</th>
-<th onclick="ordenar('comissao')">Comissão ⬍</th>
+<th>Grupo</th>
+<th>Tempo</th>
+<th>Valor</th>
+<th>Comissão</th>
 <th>Status</th>
 <th>Ações</th>
 </tr>
@@ -239,8 +132,6 @@ oninput="filtrarTabela()">
 <tbody id="lista"></tbody>
 
 </table>
-
-<div class="pagination" id="paginacao"></div>
 
 </main>
 
@@ -254,14 +145,36 @@ oninput="filtrarTabela()">
 
 <div class="grid">
 
-<input id="nome" placeholder="Nome do serviço">
+<select id="grupo">
 
-<input id="valor" type="number" step="0.01" placeholder="Valor">
+<option value="">Grupo</option>
 
-<input id="comissao" type="number" step="0.01" placeholder="Comissão">
+<option>Nuru</option>
+<option>Vivencia</option>
+<option>Four Hands</option>
+<option>Fetiche</option>
+<option>Podolatria</option>
+<option>Pspot</option>
+<option>Voyeur</option>
+<option>Experiência simultânea no Tantra</option>
+<option>Mini Curso Sessão Vivência</option>
+
+</select>
+
+<select id="tempo">
+
+<option value="">Tempo</option>
+<option value="60">60</option>
+<option value="90">90</option>
+<option value="120">120</option>
+
+</select>
+
+<input id="valor" type="number" placeholder="Valor">
+
+<input id="comissao" type="number" placeholder="Comissão">
 
 <select id="status">
-<option value="">Status</option>
 <option value="ativo">ativo</option>
 <option value="inativo">inativo</option>
 </select>
@@ -280,31 +193,23 @@ oninput="filtrarTabela()">
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function(){
-
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
+"SUA_ANON_KEY"
+)
 
 let dados=[]
-let listaAtual=[]
-let paginaAtual=1
-let porPagina=10
 let idAtual=null
-let ordem={campo:"nome",asc:true}
-
-/* CARREGAR */
 
 async function carregar(){
 
-const {data}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("servicos")
 .select("*")
+.order("grupo",{ascending:true})
 
 dados=data||[]
 
@@ -312,203 +217,82 @@ render()
 
 }
 
-/* RENDER */
-
-function render(lista=dados){
-
-listaAtual=lista
-
-const inicio=(paginaAtual-1)*porPagina
-const pag=lista.slice(inicio,inicio+porPagina)
+function render(){
 
 const tbody=document.getElementById("lista")
 
 tbody.innerHTML=""
 
-pag.forEach(s=>{
+dados.forEach(s=>{
 
 tbody.innerHTML+=`
+
 <tr>
-<td>${s.nome}</td>
+
+<td>${s.grupo||""}</td>
+<td>${s.tempo||""} min</td>
 <td>R$ ${Number(s.valor||0).toFixed(2)}</td>
 <td>R$ ${Number(s.comissao||0).toFixed(2)}</td>
 <td>${s.status||""}</td>
+
 <td>
-<button class="btn-editar" onclick="editar('${s.id}')">Editar</button>
-<button class="btn-excluir" onclick="excluir('${s.id}')">Excluir</button>
-</td>
-</tr>
-`
 
-})
-
-renderPaginacao(lista.length)
-
-}
-
-/* BUSCA */
-
-window.filtrarTabela=function(){
-
-const termo=document
-.getElementById("buscaServico")
-.value
-.toLowerCase()
-
-const filtrado=dados.filter(s=>
-s.nome.toLowerCase().includes(termo)
-)
-
-paginaAtual=1
-
-render(filtrado)
-
-}
-
-/* ORDENAR */
-
-window.ordenar=function(campo){
-
-ordem.asc=
-ordem.campo===campo?!ordem.asc:true
-
-ordem.campo=campo
-
-dados.sort((a,b)=>{
-
-let v1=a[campo]
-let v2=b[campo]
-
-if(v1<v2) return ordem.asc?-1:1
-if(v1>v2) return ordem.asc?1:-1
-return 0
-
-})
-
-render()
-
-}
-
-/* PAGINAÇÃO */
-
-function renderPaginacao(total){
-
-const totalPaginas=Math.ceil(total/porPagina)
-
-const div=document.getElementById("paginacao")
-
-div.innerHTML=""
-
-if(porPagina>=total) return
-
-for(let i=1;i<=totalPaginas;i++){
-
-div.innerHTML+=`
-<button
-class="${i===paginaAtual?'active':''}"
-onclick="irPagina(${i})">
-${i}
+<button class="btn-editar" onclick="editar('${s.id}')">
+Editar
 </button>
+
+<button class="btn-excluir" onclick="excluir('${s.id}')">
+Excluir
+</button>
+
+</td>
+
+</tr>
+
 `
 
-}
+})
 
 }
 
-window.irPagina=function(p){
-
-paginaAtual=p
-render(listaAtual)
-
-}
-
-window.mudarPorPagina=function(){
-
-const valor=document
-.getElementById("porPaginaSelect")
-.value
-
-if(valor==="todos"){
-porPagina=dados.length
-}else{
-porPagina=parseInt(valor)
-}
-
-paginaAtual=1
-
-render(listaAtual)
-
-}
-
-/* EXPORTAR */
-
-window.exportarExcel=function(){
-
-let visivel
-
-if(porPagina>=listaAtual.length){
-
-visivel=listaAtual
-
-}else{
-
-const inicio=(paginaAtual-1)*porPagina
-const fim=inicio+porPagina
-visivel=listaAtual.slice(inicio,fim)
-
-}
-
-const exportData=visivel.map(s=>({
-
-Nome:s.nome,
-Valor:s.valor,
-Comissao:s.comissao,
-Status:s.status
-
-}))
-
-const ws=XLSX.utils.json_to_sheet(exportData)
-const wb=XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb,ws,"Servicos")
-
-XLSX.writeFile(wb,"servicos.xlsx")
-
-}
-
-/* MODAL */
-
-window.abrirNovo=function(){
+function abrirNovo(){
 
 idAtual=null
 
-document.getElementById("nome").value=""
+document.getElementById("grupo").value=""
+document.getElementById("tempo").value=""
 document.getElementById("valor").value=""
 document.getElementById("comissao").value=""
-document.getElementById("status").value=""
+document.getElementById("status").value="ativo"
 
 document.getElementById("modal").style.display="flex"
 
 }
 
-window.fecharModal=function(){
+function fecharModal(){
 
 document.getElementById("modal").style.display="none"
 
 }
 
-window.salvar=async function(){
+async function salvar(){
 
 const payload={
-nome:document.getElementById("nome").value,
+
+grupo:document.getElementById("grupo").value,
+tempo:parseInt(document.getElementById("tempo").value),
 valor:parseFloat(document.getElementById("valor").value),
 comissao:parseFloat(document.getElementById("comissao").value),
 status:document.getElementById("status").value
+
 }
 
-if(!payload.nome){
-alert("Nome é obrigatório")
+if(!payload.grupo || !payload.tempo){
+
+alert("Preencha grupo e tempo")
+
 return
+
 }
 
 if(idAtual){
@@ -527,11 +311,12 @@ await supabaseClient
 }
 
 fecharModal()
+
 carregar()
 
 }
 
-window.editar=async function(id){
+async function editar(id){
 
 idAtual=id
 
@@ -541,18 +326,19 @@ const {data}=await supabaseClient
 .eq("id",id)
 .single()
 
-document.getElementById("nome").value=data.nome||""
-document.getElementById("valor").value=data.valor||""
-document.getElementById("comissao").value=data.comissao||""
-document.getElementById("status").value=data.status||""
+document.getElementById("grupo").value=data.grupo
+document.getElementById("tempo").value=data.tempo
+document.getElementById("valor").value=data.valor
+document.getElementById("comissao").value=data.comissao
+document.getElementById("status").value=data.status
 
 document.getElementById("modal").style.display="flex"
 
 }
 
-window.excluir=async function(id){
+async function excluir(id){
 
-if(!confirm("Excluir serviço?"))return
+if(!confirm("Excluir serviço?")) return
 
 await supabaseClient
 .from("servicos")
@@ -565,7 +351,6 @@ carregar()
 
 carregar()
 
-})
 </script>
 
 </body>

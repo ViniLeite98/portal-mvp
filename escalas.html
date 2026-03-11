@@ -160,7 +160,7 @@ body{
 <script>
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let terapeutas=[];
@@ -268,26 +268,11 @@ document.getElementById("tituloDia").innerText=
 const detalhes=document.getElementById("detalhesDia");
 detalhes.innerHTML="";
 
-/* NOVA LÓGICA DE DISPONIBILIDADE */
-
-const agora=new Date();
-const agoraMin=agora.getHours()*60+agora.getMinutes();
-
-const disponiveis=terapeutas.filter(t=>{
-
-if(!t.hora_entrada || !t.hora_saida) return false;
-if(folgaSemanal(t,data)) return false;
-if(folgaAprovada(t,data)) return false;
-
-const [he,me]=t.hora_entrada.split(":").map(Number);
-const [hs,ms]=t.hora_saida.split(":").map(Number);
-
-const inicioMin=he*60+me;
-const fimMin=hs*60+ms;
-
-return agoraMin>=inicioMin && agoraMin<=fimMin;
-
-});
+const disponiveis=terapeutas.filter(t=>
+t.hora_entrada&&t.hora_saida&&
+!folgaSemanal(t,data)&&
+!folgaAprovada(t,data)
+);
 
 const indisponiveis=terapeutas.filter(t=>
 folgaSemanal(t,data)||folgaAprovada(t,data)

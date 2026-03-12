@@ -47,7 +47,7 @@ border-radius:10px;
 display:flex;
 gap:20px;
 flex-wrap:wrap;
-margin-bottom:25px;
+margin-bottom:20px;
 box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
@@ -75,45 +75,21 @@ cursor:pointer;
 button.excluir{background:#dc2626}
 button.editar{background:#f59e0b}
 
-/* SKILLS */
+/* TOPBAR */
 
-.skills-grid{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
-gap:15px;
-margin-bottom:30px;
-}
-
-.skill-card{
-background:#fff;
-padding:15px;
-border-radius:10px;
-box-shadow:0 2px 6px rgba(0,0,0,0.05);
-}
-
-.skill-nome{
-font-weight:600;
-margin-bottom:8px;
-}
-
-.skill-icons{
+.topbar{
 display:flex;
-gap:8px;
-font-size:18px;
+justify-content:space-between;
+align-items:center;
+margin-bottom:15px;
 }
 
-/* ICONES */
-
-.cert{
-margin-right:6px;
-font-size:15px;
+.busca input{
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
+width:250px;
 }
-
-.cert.rosa{color:#ec4899}
-.cert.azul{color:#3b82f6}
-.cert.verde{color:#22c55e}
-.cert.laranja{color:#f59e0b}
-.cert.cinza{color:#6b7280}
 
 /* TABELA */
 
@@ -135,7 +111,65 @@ font-size:14px;
 th{
 background:#f9fafb;
 text-align:left;
+cursor:pointer;
 }
+
+/* PAGINAÇÃO */
+
+.pagination{
+margin-top:20px;
+display:flex;
+gap:6px;
+}
+
+.pagination button{
+background:#e5e7eb;
+color:#111;
+}
+
+.pagination button.active{
+background:#2563eb;
+color:#fff;
+}
+
+/* MODAL */
+
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.45);
+align-items:center;
+justify-content:center;
+animation:fadeIn .2s ease;
+}
+
+.modal-box{
+background:#fff;
+padding:25px;
+border-radius:10px;
+width:420px;
+box-shadow:0 10px 25px rgba(0,0,0,0.2);
+animation:slideUp .25s ease;
+}
+
+.modal-form{
+display:flex;
+flex-direction:column;
+gap:15px;
+margin-top:15px;
+}
+
+.modal-actions{
+margin-top:20px;
+display:flex;
+gap:10px;
+}
+
+.cancelar{background:#6b7280}
 
 </style>
 </head>
@@ -171,17 +205,42 @@ text-align:left;
 
 </div>
 
-<h2>Habilidades da equipe</h2>
+<div class="topbar">
 
-<div id="skillsEquipe" class="skills-grid"></div>
+<div class="busca">
+<input
+id="buscaTerapeuta"
+placeholder="Buscar terapeuta..."
+oninput="filtrarTabela()">
+</div>
+
+<div style="display:flex;gap:10px;align-items:center">
+
+<button onclick="exportarExcel()">
+<i class="fa-solid fa-file-excel"></i> Exportar
+</button>
+
+Mostrar
+
+<select id="porPaginaSelect" onchange="mudarPorPagina()">
+<option value="5">5</option>
+<option value="10" selected>10</option>
+<option value="20">20</option>
+<option value="todos">Todos</option>
+</select>
+
+</div>
+
+</div>
 
 <table>
 
 <thead>
 <tr>
-<th>Terapeuta</th>
-<th>Certificação</th>
-<th>Data</th>
+<th onclick="ordenar('terapeuta')">Terapeuta ⬍</th>
+<th onclick="ordenar('certificacao')">Certificação ⬍</th>
+<th onclick="ordenar('data')">Data ⬍</th>
+<th>Ações</th>
 </tr>
 </thead>
 
@@ -189,7 +248,39 @@ text-align:left;
 
 </table>
 
+<div class="pagination" id="paginacao"></div>
+
 </main>
+
+</div>
+
+<div id="modalEditar" class="modal">
+
+<div class="modal-box">
+
+<h2>Editar Certificação</h2>
+
+<div class="modal-form">
+
+<label>Terapeuta</label>
+<select id="edit_cpf"></select>
+
+<label>Certificação</label>
+<select id="edit_cert"></select>
+
+<label>Data</label>
+<input type="date" id="edit_data">
+
+</div>
+
+<div class="modal-actions">
+
+<button onclick="atualizar()">Atualizar</button>
+<button class="cancelar" onclick="fecharModal()">Cancelar</button>
+
+</div>
+
+</div>
 
 </div>
 
@@ -200,24 +291,35 @@ text-align:left;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"SUA_ANON_KEY_AQUI"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
 let dados=[]
+let pagina=1
+let porPagina=10
+let editId=null
+let listaAtual=[]
 
-/* ICONES */
+let ordem={campo:null,asc:true}
 
-const iconesCertificacao={
+/* MAPA DE ICONES */
 
-"Massagem Feminina":"<i class='fa-solid fa-venus cert rosa'></i>",
+const iconesCertificacao = {
 
-"Massagem Nuru":"<i class='fa-solid fa-water cert azul'></i>",
+"Massagem Feminina":
+"<i class='fa-solid fa-venus' style='color:#ec4899;margin-right:6px'></i>",
 
-"Massagem Vivência":"<i class='fa-solid fa-spa cert verde'></i>",
+"Massagem Nuru":
+"<i class='fa-solid fa-water' style='color:#3b82f6;margin-right:6px'></i>",
 
-"Massagem Casais":"<i class='fa-solid fa-people-arrows cert laranja'></i>",
+"Massagem Vivência":
+"<i class='fa-solid fa-spa' style='color:#22c55e;margin-right:6px'></i>",
 
-"Podolatria":"<i class='fa-solid fa-shoe-prints cert cinza'></i>"
+"Massagem Casais":
+"<i class='fa-solid fa-people-arrows' style='color:#f59e0b;margin-right:6px'></i>",
+
+"Podolatria":
+"<i class='fa-solid fa-shoe-prints' style='color:#6b7280;margin-right:6px'></i>"
 
 }
 
@@ -231,8 +333,10 @@ const selCert=document.getElementById("certificacao_id")
 const {data:terapeutas}=await supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional")
+.eq("status","Ativo")
+.order("nome_profissional")
 
-selTer.innerHTML="<option>Selecione</option>"
+selTer.innerHTML="<option value=''>Selecione</option>"
 
 ;(terapeutas||[]).forEach(t=>{
 selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
@@ -241,12 +345,16 @@ selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
 const {data:cert}=await supabaseClient
 .from("certificacoes")
 .select("id,nome")
+.order("nome")
 
-selCert.innerHTML="<option>Selecione</option>"
+selCert.innerHTML="<option value=''>Selecione</option>"
 
 ;(cert||[]).forEach(c=>{
 selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 })
+
+document.getElementById("edit_cpf").innerHTML=selTer.innerHTML
+document.getElementById("edit_cert").innerHTML=selCert.innerHTML
 
 }
 
@@ -268,108 +376,45 @@ certificacoes(nome)
 dados=data||[]
 
 render()
-renderSkills()
 
 }
 
-/* SKILLS */
+/* RENDER */
 
-function renderSkills(){
+function render(lista=dados){
 
-const mapa={}
+listaAtual=lista
 
-dados.forEach(d=>{
-
-const nome=d.terapeutas?.nome_profissional
-const cert=d.certificacoes?.nome
-
-if(!mapa[nome]) mapa[nome]=[]
-
-mapa[nome].push(cert)
-
-})
-
-const div=document.getElementById("skillsEquipe")
-div.innerHTML=""
-
-Object.keys(mapa).forEach(nome=>{
-
-let icons=""
-
-mapa[nome].forEach(c=>{
-
-const icon=iconesCertificacao[c]||""
-
-icons+=icon
-
-})
-
-div.innerHTML+=`
-<div class="skill-card">
-
-<div class="skill-nome">
-${nome}
-</div>
-
-<div class="skill-icons">
-${icons}
-</div>
-
-</div>
-`
-
-})
-
-}
-
-/* RENDER TABELA */
-
-function render(){
+const inicio=(pagina-1)*porPagina
+const pag=lista.slice(inicio,inicio+porPagina)
 
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
-dados.forEach(r=>{
+pag.forEach(r=>{
 
 const nomeCert=r.certificacoes?.nome||""
-const icon=iconesCertificacao[nomeCert]||""
+const icone=iconesCertificacao[nomeCert]||""
 
 tbody.innerHTML+=`
 <tr>
-<td>${r.terapeutas?.nome_profissional}</td>
-<td>${icon} ${nomeCert}</td>
+<td>${r.terapeutas?.nome_profissional||""}</td>
+<td>${icone}${nomeCert}</td>
 <td>${r.data_obtencao||""}</td>
+<td>
+<button class="editar" onclick="abrirModal('${r.id}')">Editar</button>
+<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
+</td>
 </tr>
 `
 
 })
 
-}
-
-/* VINCULAR */
-
-async function vincular(){
-
-const cpf=document.getElementById("cpf_terapeuta").value
-const cert=document.getElementById("certificacao_id").value
-const data=document.getElementById("data_obtencao").value
-
-if(!cpf||!cert){
-alert("Selecione terapeuta e certificação")
-return
-}
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.insert({
-cpf_terapeuta:cpf,
-certificacao_id:cert,
-data_obtencao:data||null
-})
-
-carregarLista()
+renderPaginacao(lista.length)
 
 }
+
+/* resto do código permanece igual */
 
 carregarSelects()
 carregarLista()

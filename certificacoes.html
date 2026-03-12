@@ -75,13 +75,13 @@ cursor:pointer;
 button.excluir{background:#dc2626}
 button.editar{background:#f59e0b}
 
-/* HABILIDADES */
+/* SKILLS */
 
 .skills-grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
 gap:15px;
-margin-bottom:25px;
+margin-bottom:30px;
 }
 
 .skill-card{
@@ -115,22 +115,6 @@ font-size:15px;
 .cert.laranja{color:#f59e0b}
 .cert.cinza{color:#6b7280}
 
-/* TOPBAR */
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
-}
-
-.busca input{
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
-width:250px;
-}
-
 /* TABELA */
 
 table{
@@ -151,25 +135,6 @@ font-size:14px;
 th{
 background:#f9fafb;
 text-align:left;
-cursor:pointer;
-}
-
-/* PAGINAÇÃO */
-
-.pagination{
-margin-top:20px;
-display:flex;
-gap:6px;
-}
-
-.pagination button{
-background:#e5e7eb;
-color:#111;
-}
-
-.pagination button.active{
-background:#2563eb;
-color:#fff;
 }
 
 </style>
@@ -210,21 +175,6 @@ color:#fff;
 
 <div id="skillsEquipe" class="skills-grid"></div>
 
-<div class="topbar">
-
-<div class="busca">
-<input
-id="buscaTerapeuta"
-placeholder="Buscar terapeuta..."
-oninput="filtrarTabela()">
-</div>
-
-<button onclick="exportarExcel()">
-<i class="fa-solid fa-file-excel"></i> Exportar
-</button>
-
-</div>
-
 <table>
 
 <thead>
@@ -232,15 +182,12 @@ oninput="filtrarTabela()">
 <th>Terapeuta</th>
 <th>Certificação</th>
 <th>Data</th>
-<th>Ações</th>
 </tr>
 </thead>
 
 <tbody id="lista"></tbody>
 
 </table>
-
-<div class="pagination" id="paginacao"></div>
 
 </main>
 
@@ -253,13 +200,10 @@ oninput="filtrarTabela()">
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"YOUR_ANON_KEY"
+"SUA_ANON_KEY_AQUI"
 )
 
 let dados=[]
-let pagina=1
-let porPagina=10
-let listaAtual=[]
 
 /* ICONES */
 
@@ -287,11 +231,10 @@ const selCert=document.getElementById("certificacao_id")
 const {data:terapeutas}=await supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional")
-.eq("status","Ativo")
 
 selTer.innerHTML="<option>Selecione</option>"
 
-terapeutas.forEach(t=>{
+;(terapeutas||[]).forEach(t=>{
 selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
 })
 
@@ -301,7 +244,7 @@ const {data:cert}=await supabaseClient
 
 selCert.innerHTML="<option>Selecione</option>"
 
-cert.forEach(c=>{
+;(cert||[]).forEach(c=>{
 selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 })
 
@@ -381,17 +324,12 @@ ${icons}
 
 /* RENDER TABELA */
 
-function render(lista=dados){
-
-listaAtual=lista
-
-const inicio=(pagina-1)*porPagina
-const pag=lista.slice(inicio,inicio+porPagina)
+function render(){
 
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
-pag.forEach(r=>{
+dados.forEach(r=>{
 
 const nomeCert=r.certificacoes?.nome||""
 const icon=iconesCertificacao[nomeCert]||""
@@ -401,10 +339,6 @@ tbody.innerHTML+=`
 <td>${r.terapeutas?.nome_profissional}</td>
 <td>${icon} ${nomeCert}</td>
 <td>${r.data_obtencao||""}</td>
-<td>
-<button class="editar">Editar</button>
-<button class="excluir">Excluir</button>
-</td>
 </tr>
 `
 
@@ -412,48 +346,7 @@ tbody.innerHTML+=`
 
 }
 
-/* BUSCA */
-
-function filtrarTabela(){
-
-const termo=document
-.getElementById("buscaTerapeuta")
-.value
-.toLowerCase()
-
-const filtrado=dados.filter(d=>
-d.terapeutas?.nome_profissional
-.toLowerCase()
-.includes(termo)
-)
-
-pagina=1
-render(filtrado)
-
-}
-
-/* EXPORT */
-
-function exportarExcel(){
-
-const exportData=dados.map(r=>({
-
-Terapeuta:r.terapeutas?.nome_profissional,
-Certificacao:r.certificacoes?.nome,
-Data:r.data_obtencao
-
-}))
-
-const ws=XLSX.utils.json_to_sheet(exportData)
-const wb=XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb,ws,"Certificacoes")
-
-XLSX.writeFile(wb,"certificacoes.xlsx")
-
-}
-
-/* NOVO */
+/* VINCULAR */
 
 async function vincular(){
 

@@ -114,6 +114,19 @@ text-align:left;
 cursor:pointer;
 }
 
+/* ícone serviço */
+
+.servico{
+display:flex;
+align-items:center;
+gap:8px;
+}
+
+.servico i{
+color:#6366f1;
+font-size:15px;
+}
+
 /* PAGINAÇÃO */
 
 .pagination{
@@ -144,7 +157,6 @@ height:100%;
 background:rgba(0,0,0,0.45);
 align-items:center;
 justify-content:center;
-animation:fadeIn .2s ease;
 }
 
 .modal-box{
@@ -153,7 +165,6 @@ padding:25px;
 border-radius:10px;
 width:420px;
 box-shadow:0 10px 25px rgba(0,0,0,0.2);
-animation:slideUp .25s ease;
 }
 
 .modal-form{
@@ -254,36 +265,6 @@ Mostrar
 
 </div>
 
-<div id="modalEditar" class="modal">
-
-<div class="modal-box">
-
-<h2>Editar Certificação</h2>
-
-<div class="modal-form">
-
-<label>Terapeuta</label>
-<select id="edit_cpf"></select>
-
-<label>Certificação</label>
-<select id="edit_cert"></select>
-
-<label>Data</label>
-<input type="date" id="edit_data">
-
-</div>
-
-<div class="modal-actions">
-
-<button onclick="atualizar()">Atualizar</button>
-<button class="cancelar" onclick="fecharModal()">Cancelar</button>
-
-</div>
-
-</div>
-
-</div>
-
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
@@ -297,29 +278,32 @@ const supabaseClient = supabase.createClient(
 let dados=[]
 let pagina=1
 let porPagina=10
-let editId=null
 let listaAtual=[]
 
-let ordem={campo:null,asc:true}
+/* ICONES DAS CERTIFICAÇÕES */
 
-/* MAPA DE ICONES */
+const iconeCertificacao={
+"Massagem Relaxante":"fa-spa",
+"Massagem Terapêutica":"fa-hand-holding-heart",
+"Drenagem Linfática":"fa-water",
+"Reflexologia":"fa-footprints",
+"Aromaterapia":"fa-leaf",
+"Shiatsu":"fa-hands"
+}
 
-const iconesCertificacao = {
+function getIconeCertificacao(nome){
 
-"Massagem Feminina":
-"<i class='fa-solid fa-venus' style='color:#ec4899;margin-right:6px'></i>",
+if(!nome) return "fa-certificate"
 
-"Massagem Nuru":
-"<i class='fa-solid fa-water' style='color:#3b82f6;margin-right:6px'></i>",
+for(const chave in iconeCertificacao){
 
-"Massagem Vivência":
-"<i class='fa-solid fa-spa' style='color:#22c55e;margin-right:6px'></i>",
+if(nome.toLowerCase().includes(chave.toLowerCase())){
+return iconeCertificacao[chave]
+}
 
-"Massagem Casais":
-"<i class='fa-solid fa-people-arrows' style='color:#f59e0b;margin-right:6px'></i>",
+}
 
-"Podolatria":
-"<i class='fa-solid fa-shoe-prints' style='color:#6b7280;margin-right:6px'></i>"
+return "fa-certificate"
 
 }
 
@@ -352,9 +336,6 @@ selCert.innerHTML="<option value=''>Selecione</option>"
 ;(cert||[]).forEach(c=>{
 selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 })
-
-document.getElementById("edit_cpf").innerHTML=selTer.innerHTML
-document.getElementById("edit_cert").innerHTML=selCert.innerHTML
 
 }
 
@@ -394,27 +375,52 @@ tbody.innerHTML=""
 pag.forEach(r=>{
 
 const nomeCert=r.certificacoes?.nome||""
-const icone=iconesCertificacao[nomeCert]||""
+const icone=getIconeCertificacao(nomeCert)
 
 tbody.innerHTML+=`
 <tr>
 <td>${r.terapeutas?.nome_profissional||""}</td>
-<td>${icone}${nomeCert}</td>
-<td>${r.data_obtencao||""}</td>
+
 <td>
-<button class="editar" onclick="abrirModal('${r.id}')">Editar</button>
-<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
+<div class="servico">
+<i class="fa-solid ${icone}"></i>
+${nomeCert}
+</div>
 </td>
+
+<td>${r.data_obtencao||""}</td>
+
+<td>
+<button class="editar">Editar</button>
+<button class="excluir">Excluir</button>
+</td>
+
 </tr>
 `
 
 })
 
-renderPaginacao(lista.length)
-
 }
 
-/* resto do código permanece igual */
+/* BUSCA */
+
+function filtrarTabela(){
+
+const termo=document
+.getElementById("buscaTerapeuta")
+.value
+.toLowerCase()
+
+const filtrado=dados.filter(d=>
+d.terapeutas?.nome_profissional
+.toLowerCase()
+.includes(termo)
+)
+
+pagina=1
+render(filtrado)
+
+}
 
 carregarSelects()
 carregarLista()

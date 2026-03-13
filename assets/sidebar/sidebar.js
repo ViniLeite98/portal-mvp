@@ -62,5 +62,10 @@ document.getElementById("sidebar").innerHTML = `
     <span>Despesas</span>
   </a>
 
+  <a href="fluxo_caixa.html" class="menu-item ${paginaAtual === 'fluxo_caixa.html' ? 'active' : ''}">
+    <i class="fa-solid fa-cash-register"></i>
+    <span>Fluxo de Caixa</span>
+  </a>
+
 </div>
 `;

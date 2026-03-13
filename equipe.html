@@ -5,43 +5,23 @@
 <title>Gestão da Equipe | Hara Spa</title>
 
 <link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-
 *{box-sizing:border-box}
-
-body{
-margin:0;
-font-family:'Segoe UI',sans-serif;
-background:#f5f7fb;
-}
-
-.app{
-display:flex;
-min-height:100vh;
-}
-
-#sidebar{
-width:260px;
-flex-shrink:0;
-}
-
-.content{
-flex:1;
-padding:40px;
-}
-
-/* TOPO */
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
 .topbar{
 display:flex;
 justify-content:space-between;
 align-items:center;
-margin-bottom:20px;
+margin-bottom:16px;
 gap:20px;
 }
 
@@ -51,13 +31,6 @@ border:1px solid #d1d5db;
 border-radius:6px;
 width:260px;
 }
-
-.top-actions{
-display:flex;
-gap:12px;
-}
-
-/* TABELA */
 
 table{
 width:100%;
@@ -74,12 +47,7 @@ font-size:14px;
 text-align:left;
 }
 
-th{
-background:#f9fafb;
-font-weight:600;
-}
-
-/* BOTÕES */
+th{background:#f9fafb;font-weight:600;}
 
 button{
 background:#1f2937;
@@ -90,11 +58,13 @@ padding:6px 12px;
 cursor:pointer;
 }
 
-button.excluir{
-background:#dc2626;
-}
+button.excluir{background:#dc2626}
 
-/* MODAL */
+.top-actions{
+display:flex;
+justify-content:flex-end;
+gap:12px;
+}
 
 .modal{
 position:fixed;
@@ -115,9 +85,7 @@ border-radius:18px;
 padding:28px;
 }
 
-.section{
-margin-bottom:28px;
-}
+.section{margin-bottom:28px}
 
 .grid{
 display:grid;
@@ -150,14 +118,12 @@ justify-content:flex-end;
 gap:10px;
 margin-top:20px;
 }
-
 </style>
 </head>
 
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -174,21 +140,17 @@ oninput="filtrarTabela()">
 </div>
 
 <div class="top-actions">
-
 <select id="filtroStatus">
 <option value="">Todos</option>
 <option value="Ativo">Ativo</option>
 <option value="Inativo">Inativo</option>
 </select>
-
 <button onclick="abrirNovo()">+ Novo Cadastro</button>
-
 </div>
 
 </div>
 
 <table>
-
 <thead>
 <tr>
 <th>Nome Profissional</th>
@@ -198,9 +160,7 @@ oninput="filtrarTabela()">
 <th>Ações</th>
 </tr>
 </thead>
-
 <tbody id="lista"></tbody>
-
 </table>
 
 </main>
@@ -212,7 +172,6 @@ oninput="filtrarTabela()">
 
 <div class="section">
 <h3>Dados Pessoais</h3>
-
 <div class="grid">
 
 <div class="field">
@@ -276,42 +235,36 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let dados=[]
-let cpfAtual=null
+let cpfAtual=null;
+let dados=[];
 
 async function carregar(){
 
-const statusFiltro = document.getElementById("filtroStatus").value
+const statusFiltro = document.getElementById("filtroStatus").value;
 
 let query = supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional,status,cargo")
-.order("nome_profissional")
+.order("nome_profissional");
 
-if(statusFiltro){
-query = query.eq("status", statusFiltro)
-}
+if(statusFiltro) query = query.eq("status", statusFiltro);
 
-const {data,error}=await query
+const {data,error}=await query;
 
-if(error){
-console.error(error)
-return
-}
+if(error){ console.error(error); return; }
 
-dados=data
+dados=data;
 
-render(dados)
+render(data);
 
 }
 
 function render(lista){
 
-const tbody=document.getElementById("lista")
-tbody.innerHTML=""
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
 
 lista.forEach(t=>{
-
 tbody.innerHTML+=`
 <tr>
 <td>${t.nome_profissional||""}</td>
@@ -322,9 +275,8 @@ tbody.innerHTML+=`
 <button onclick="editar('${t.cpf}')">Editar</button>
 <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
-</tr>`
-
-})
+</tr>`;
+});
 
 }
 
@@ -333,25 +285,23 @@ function filtrarTabela(){
 const termo=document
 .getElementById("buscaEquipe")
 .value
-.toLowerCase()
+.toLowerCase();
 
 const filtrado=dados.filter(t =>
 (t.nome_profissional||"").toLowerCase().includes(termo)
-)
+);
 
-render(filtrado)
+render(filtrado);
 
 }
 
-document
-.getElementById("filtroStatus")
-.addEventListener("change", carregar)
+document.getElementById("filtroStatus").addEventListener("change", carregar);
 
 function fecharModal(){
-document.getElementById("modal").style.display="none"
+document.getElementById("modal").style.display="none";
 }
 
-carregar()
+carregar();
 
 </script>
 

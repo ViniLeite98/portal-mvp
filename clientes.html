@@ -34,6 +34,26 @@ body{
   padding:40px;
 }
 
+/* TOPO */
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:16px;
+}
+
+.left-tools input{
+padding:8px;
+border:1px solid #d1d5db;
+border-radius:6px;
+width:260px;
+}
+
+.top-actions{
+display:flex;
+gap:10px;
+}
+
 /* TABELA */
 table{
   width:100%;
@@ -66,12 +86,6 @@ button{
 }
 
 button.excluir{background:#dc2626}
-
-.top-actions{
-  display:flex;
-  justify-content:flex-end;
-  margin-bottom:16px;
-}
 
 /* MODAL */
 .modal{
@@ -127,8 +141,19 @@ input,textarea{
 <h1>Clientes</h1>
 <p>Clientes cadastrados</p>
 
+<div class="topbar">
+
+<div class="left-tools">
+<input
+id="buscaCliente"
+placeholder="Buscar cliente..."
+oninput="filtrarTabela()">
+</div>
+
 <div class="top-actions">
 <button onclick="abrirNovo()">+ Novo Cliente</button>
+</div>
+
 </div>
 
 <table>
@@ -185,6 +210,7 @@ const supabaseClient = supabase.createClient(
 );
 
 let idAtual=null;
+let dados=[];
 
 const campos=[
 "nome","cpf_cnpj","telefone_1","telefone_2",
@@ -215,10 +241,17 @@ const {data,error}=await supabaseClient
 
 if(error){console.error(error);return;}
 
+dados=data;
+
+render(dados);
+}
+
+function render(lista){
+
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
 
-data.forEach(c=>{
+lista.forEach(c=>{
 tbody.innerHTML+=`
 <tr>
 <td>${c.nome||""}</td>
@@ -230,6 +263,22 @@ tbody.innerHTML+=`
 </td>
 </tr>`;
 });
+
+}
+
+function filtrarTabela(){
+
+const termo=document
+.getElementById("buscaCliente")
+.value
+.toLowerCase();
+
+const filtrado=dados.filter(c =>
+(c.nome||"").toLowerCase().includes(termo)
+);
+
+render(filtrado);
+
 }
 
 function abrirNovo(){

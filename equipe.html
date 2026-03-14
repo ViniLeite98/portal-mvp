@@ -52,6 +52,12 @@ button.excluir{background:#dc2626}
   margin-bottom:16px;
 }
 
+.top-actions input{
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+}
+
 .modal{
   position:fixed;
   inset:0;
@@ -116,14 +122,23 @@ input,select{
 
 <h1>Gestão da Equipe</h1>
 
-<!-- FILTRO STATUS -->
 <div class="top-actions">
-  <select id="filtroStatus">
-    <option value="">Todos</option>
-    <option value="Ativo">Ativo</option>
-    <option value="Inativo">Inativo</option>
-  </select>
-  <button onclick="abrirNovo()">+ Novo Cadastro</button>
+
+<input 
+type="text"
+id="pesquisaNome"
+placeholder="Pesquisar profissional..."
+onkeyup="filtrarTabela()"
+>
+
+<select id="filtroStatus">
+<option value="">Todos</option>
+<option value="Ativo">Ativo</option>
+<option value="Inativo">Inativo</option>
+</select>
+
+<button onclick="abrirNovo()">+ Novo Cadastro</button>
+
 </div>
 
 <table>
@@ -142,11 +157,9 @@ input,select{
 </main>
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<!-- DADOS PESSOAIS -->
 <div class="section">
 <h3>Dados Pessoais</h3>
 <div class="grid">
@@ -195,7 +208,6 @@ input,select{
 </div>
 </div>
 
-<!-- CONTATOS -->
 <div class="section">
 <h3>Contatos</h3>
 <div class="grid">
@@ -213,7 +225,6 @@ input,select{
 </div>
 </div>
 
-<!-- ENDEREÇO -->
 <div class="section">
 <h3>Endereço</h3>
 <div class="grid">
@@ -229,7 +240,6 @@ input,select{
 </div>
 </div>
 
-<!-- PAGAMENTO -->
 <div class="section">
 <h3>Pagamento</h3>
 <div class="grid">
@@ -253,7 +263,6 @@ input,select{
 </div>
 </div>
 
-<!-- DADOS FUNCIONAIS -->
 <div class="section">
 <h3>Dados Funcionais</h3>
 <div class="grid">
@@ -332,9 +341,10 @@ input,select{
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
+
 const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let cpfAtual=null;
@@ -348,124 +358,170 @@ const campos=[
 ];
 
 function getPayload(){
-  const obj={};
-  campos.forEach(c=>{
-    const el=document.getElementById(c);
-    if(el && el.value!=="") obj[c]=el.value;
-  });
-  return obj;
+const obj={};
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el && el.value!=="") obj[c]=el.value;
+});
+return obj;
 }
 
 function setForm(data){
-  campos.forEach(c=>{
-    const el=document.getElementById(c);
-    if(el){
-      if(c==="hora_entrada" || c==="hora_saida"){
-        el.value=data[c]?data[c].substring(0,5):"";
-      }else{
-        el.value=data[c]||"";
-      }
-    }
-  });
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el){
+if(c==="hora_entrada" || c==="hora_saida"){
+el.value=data[c]?data[c].substring(0,5):"";
+}else{
+el.value=data[c]||"";
+}
+}
+});
 }
 
-// FUNÇÃO DE CARREGAR COM FILTRO
 async function carregar(){
-  const statusFiltro = document.getElementById("filtroStatus").value;
 
-  let query = supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional,status,cargo")
-    .order("nome_profissional");
+const statusFiltro = document.getElementById("filtroStatus").value;
 
-  if(statusFiltro) query = query.eq("status", statusFiltro);
+let query = supabaseClient
+.from("terapeutas")
+.select("cpf,nome_profissional,status,cargo")
+.order("nome_profissional");
 
-  const {data,error}=await query;
+if(statusFiltro) query = query.eq("status", statusFiltro);
 
-  if(error){ console.error(error); return; }
+const {data,error}=await query;
 
-  const tbody=document.getElementById("lista");
-  tbody.innerHTML="";
+if(error){ console.error(error); return; }
 
-  data.forEach(t=>{
-    tbody.innerHTML+=`
-      <tr>
-        <td>${t.nome_profissional||""}</td>
-        <td>${t.cargo||""}</td>
-        <td>${t.cpf||""}</td>
-        <td>${t.status||""}</td>
-        <td>
-          <button onclick="editar('${t.cpf}')">Editar</button>
-          <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
-        </td>
-      </tr>`;
-  });
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
+
+data.forEach(t=>{
+tbody.innerHTML+=`
+<tr>
+<td>${t.nome_profissional||""}</td>
+<td>${t.cargo||""}</td>
+<td>${t.cpf||""}</td>
+<td>${t.status||""}</td>
+<td>
+<button onclick="editar('${t.cpf}')">Editar</button>
+<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+</td>
+</tr>`;
+});
+
+filtrarTabela();
 }
 
-// MODAL
+function filtrarTabela(){
+
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
+
+linhas.forEach(linha=>{
+const nome = linha.children[0].innerText.toLowerCase();
+
+if(nome.includes(filtro)){
+linha.style.display="";
+}else{
+linha.style.display="none";
+}
+});
+}
+
 function abrirNovo(){
-  cpfAtual=null;
-  campos.forEach(c=>{
-    const el=document.getElementById(c);
-    if(el) el.value="";
-  });
-  document.getElementById("hora_entrada").value="09:00";
-  document.getElementById("hora_saida").value="18:00";
+cpfAtual=null;
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
+document.getElementById("hora_entrada").value="09:00";
+document.getElementById("hora_saida").value="18:00";
 
-  const cpfEl = document.getElementById("cpf");
-  if(cpfEl) cpfEl.disabled = false;
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = false;
 
-  document.getElementById("modal").style.display="flex";
+document.getElementById("modal").style.display="flex";
 }
 
 async function editar(cpf){
-  cpfAtual=cpf;
-  const {data,error}=await supabaseClient.from("terapeutas").select("*").eq("cpf",cpf).single();
-  if(error){console.error(error);return;}
-  setForm(data);
 
-  const cpfEl = document.getElementById("cpf");
-  if(cpfEl) cpfEl.disabled = true;
+cpfAtual=cpf;
 
-  document.getElementById("modal").style.display="flex";
+const {data,error}=await supabaseClient
+.from("terapeutas")
+.select("*")
+.eq("cpf",cpf)
+.single();
+
+if(error){console.error(error);return;}
+
+setForm(data);
+
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = true;
+
+document.getElementById("modal").style.display="flex";
 }
 
 async function salvar(){
-  const payload=getPayload();
-  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
-    alert("Preencha os campos obrigatórios");
-    return;
-  }
 
-  let error;
-  if(cpfAtual){
-    delete payload.cpf;
-    ({error}=await supabaseClient.from("terapeutas").update(payload).eq("cpf",cpfAtual));
-  }else{
-    ({error}=await supabaseClient.from("terapeutas").insert(payload));
-  }
+const payload=getPayload();
 
-  if(error){console.error(error);alert("Erro ao salvar");return;}
+if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
+alert("Preencha os campos obrigatórios");
+return;
+}
 
-  fecharModal();
-  carregar();
+let error;
+
+if(cpfAtual){
+
+delete payload.cpf;
+
+({error}=await supabaseClient
+.from("terapeutas")
+.update(payload)
+.eq("cpf",cpfAtual));
+
+}else{
+
+({error}=await supabaseClient
+.from("terapeutas")
+.insert(payload));
+
+}
+
+if(error){
+console.error(error);
+alert("Erro ao salvar");
+return;
+}
+
+fecharModal();
+carregar();
 }
 
 async function excluir(cpf){
-  if(!confirm("Excluir registro?"))return;
-  await supabaseClient.from("terapeutas").delete().eq("cpf",cpf);
-  carregar();
+if(!confirm("Excluir registro?"))return;
+
+await supabaseClient
+.from("terapeutas")
+.delete()
+.eq("cpf",cpf);
+
+carregar();
 }
 
 function fecharModal(){
-  document.getElementById("modal").style.display="none";
+document.getElementById("modal").style.display="none";
 }
 
-// LISTENER DO SELECT
 document.getElementById("filtroStatus").addEventListener("change", carregar);
 
-// CARREGAR INICIAL
 carregar();
+
 </script>
 
 </body>

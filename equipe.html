@@ -47,29 +47,15 @@ button.excluir{background:#dc2626}
 
 .top-actions{
   display:flex;
-  justify-content:space-between;
-  align-items:center;
+  justify-content:flex-end;
   gap:12px;
   margin-bottom:16px;
 }
 
-.search-box{
-  position:relative;
-}
-
-.search-box input{
-  padding:10px 35px 10px 12px;
-  border-radius:8px;
+.top-actions input{
+  padding:8px;
+  border-radius:6px;
   border:1px solid #d1d5db;
-  width:260px;
-}
-
-.search-box i{
-  position:absolute;
-  right:10px;
-  top:50%;
-  transform:translateY(-50%);
-  color:#6b7280;
 }
 
 .modal{
@@ -138,20 +124,18 @@ input,select{
 
 <div class="top-actions">
 
-<div style="display:flex;gap:10px;align-items:center">
-
-<div class="search-box">
-<input id="pesquisa" placeholder="Pesquisar nome, cargo ou CPF">
-<i class="fa fa-search"></i>
-</div>
+<input 
+type="text"
+id="pesquisaNome"
+placeholder="Pesquisar profissional..."
+onkeyup="filtrarTabela()"
+>
 
 <select id="filtroStatus">
 <option value="">Todos</option>
 <option value="Ativo">Ativo</option>
 <option value="Inativo">Inativo</option>
 </select>
-
-</div>
 
 <button onclick="abrirNovo()">+ Novo Cadastro</button>
 
@@ -173,7 +157,6 @@ input,select{
 </main>
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
@@ -225,6 +208,128 @@ input,select{
 </div>
 </div>
 
+<div class="section">
+<h3>Contatos</h3>
+<div class="grid">
+
+<div class="field">
+<label>Telefone *</label>
+<input id="telefone">
+</div>
+
+<div class="field">
+<label>Contato de Emergência</label>
+<input id="telefone_emer">
+</div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Endereço</h3>
+<div class="grid">
+
+<div class="field"><label>CEP</label><input id="cep"></div>
+<div class="field"><label>Rua</label><input id="rua"></div>
+<div class="field"><label>Número</label><input id="numero"></div>
+<div class="field"><label>Complemento</label><input id="complemento"></div>
+<div class="field"><label>Bairro</label><input id="bairro"></div>
+<div class="field"><label>Cidade</label><input id="cidade"></div>
+<div class="field"><label>UF</label><input id="uf"></div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Pagamento</h3>
+<div class="grid">
+
+<div class="field">
+<label>Tipo Chave PIX</label>
+<select id="pix_tipo">
+<option value="">Selecione</option>
+<option>CPF</option>
+<option>Email</option>
+<option>Telefone</option>
+<option>Aleatória</option>
+</select>
+</div>
+
+<div class="field">
+<label>Chave PIX</label>
+<input id="pix_chave">
+</div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Dados Funcionais</h3>
+<div class="grid">
+
+<div class="field">
+<label>Cargo</label>
+<select id="cargo">
+<option value="">Selecione</option>
+<option>Terapeuta Feminina</option>
+<option>Terapeuta Masculino</option>
+<option>Gerente</option>
+<option>Atendente</option>
+<option>Recepcionista</option>
+<option>Faxineira</option>
+<option>Analista</option>
+</select>
+</div>
+
+<div class="field">
+<label>Tem folga semanal?</label>
+<select id="tem_folga">
+<option value="">Selecione</option>
+<option>Sim</option>
+<option>Não</option>
+</select>
+</div>
+
+<div class="field">
+<label>Dia da Folga</label>
+<select id="dia_folga">
+<option value="">Selecione</option>
+<option>Segunda</option>
+<option>Terça</option>
+<option>Quarta</option>
+<option>Quinta</option>
+<option>Sexta</option>
+<option>Sábado</option>
+</select>
+</div>
+
+<div class="field">
+<label>Hora de Entrada</label>
+<input type="time" id="hora_entrada" value="09:00">
+</div>
+
+<div class="field">
+<label>Hora de Saída</label>
+<input type="time" id="hora_saida" value="18:00">
+</div>
+
+<div class="field">
+<label>Data de Início no Hara</label>
+<input type="date" id="data_inicio">
+</div>
+
+<div class="field">
+<label>Status</label>
+<select id="status">
+<option value="">Selecione</option>
+<option>Ativo</option>
+<option>Inativo</option>
+</select>
+</div>
+
+</div>
+</div>
+
 <div class="modal-actions">
 <button onclick="fecharModal()">Cancelar</button>
 <button onclick="salvar()">Salvar</button>
@@ -244,35 +349,55 @@ const supabaseClient = supabase.createClient(
 
 let cpfAtual=null;
 
-async function carregar(){
+const campos=[
+"nome_completo","nome_profissional","cpf","rg","nascimento","email",
+"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
+"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
+"cargo","tem_folga","dia_folga",
+"hora_entrada","hora_saida","data_inicio","status"
+];
 
-const statusFiltro=document.getElementById("filtroStatus").value
-const pesquisa=document.getElementById("pesquisa").value.toLowerCase()
-
-let query=supabaseClient
-.from("terapeutas")
-.select("cpf,nome_profissional,status,cargo")
-.order("nome_profissional")
-
-if(statusFiltro) query=query.eq("status",statusFiltro)
-
-const {data,error}=await query
-
-if(error){
-console.error(error)
-return
+function getPayload(){
+const obj={};
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el && el.value!=="") obj[c]=el.value;
+});
+return obj;
 }
 
-const tbody=document.getElementById("lista")
-tbody.innerHTML=""
+function setForm(data){
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el){
+if(c==="hora_entrada" || c==="hora_saida"){
+el.value=data[c]?data[c].substring(0,5):"";
+}else{
+el.value=data[c]||"";
+}
+}
+});
+}
 
-data
-.filter(t=>{
-const texto=(t.nome_profissional+" "+t.cargo+" "+t.cpf).toLowerCase()
-return texto.includes(pesquisa)
-})
-.forEach(t=>{
+async function carregar(){
 
+const statusFiltro = document.getElementById("filtroStatus").value;
+
+let query = supabaseClient
+.from("terapeutas")
+.select("cpf,nome_profissional,status,cargo")
+.order("nome_profissional");
+
+if(statusFiltro) query = query.eq("status", statusFiltro);
+
+const {data,error}=await query;
+
+if(error){ console.error(error); return; }
+
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
+
+data.forEach(t=>{
 tbody.innerHTML+=`
 <tr>
 <td>${t.nome_profissional||""}</td>
@@ -283,16 +408,119 @@ tbody.innerHTML+=`
 <button onclick="editar('${t.cpf}')">Editar</button>
 <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
-</tr>`
+</tr>`;
+});
 
-})
+filtrarTabela();
+}
+
+function filtrarTabela(){
+
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
+
+linhas.forEach(linha=>{
+const nome = linha.children[0].innerText.toLowerCase();
+
+if(nome.includes(filtro)){
+linha.style.display="";
+}else{
+linha.style.display="none";
+}
+});
+}
+
+function abrirNovo(){
+cpfAtual=null;
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
+document.getElementById("hora_entrada").value="09:00";
+document.getElementById("hora_saida").value="18:00";
+
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = false;
+
+document.getElementById("modal").style.display="flex";
+}
+
+async function editar(cpf){
+
+cpfAtual=cpf;
+
+const {data,error}=await supabaseClient
+.from("terapeutas")
+.select("*")
+.eq("cpf",cpf)
+.single();
+
+if(error){console.error(error);return;}
+
+setForm(data);
+
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = true;
+
+document.getElementById("modal").style.display="flex";
+}
+
+async function salvar(){
+
+const payload=getPayload();
+
+if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
+alert("Preencha os campos obrigatórios");
+return;
+}
+
+let error;
+
+if(cpfAtual){
+
+delete payload.cpf;
+
+({error}=await supabaseClient
+.from("terapeutas")
+.update(payload)
+.eq("cpf",cpfAtual));
+
+}else{
+
+({error}=await supabaseClient
+.from("terapeutas")
+.insert(payload));
 
 }
 
-document.getElementById("filtroStatus").addEventListener("change",carregar)
-document.getElementById("pesquisa").addEventListener("input",carregar)
+if(error){
+console.error(error);
+alert("Erro ao salvar");
+return;
+}
 
-carregar()
+fecharModal();
+carregar();
+}
+
+async function excluir(cpf){
+if(!confirm("Excluir registro?"))return;
+
+await supabaseClient
+.from("terapeutas")
+.delete()
+.eq("cpf",cpf);
+
+carregar();
+}
+
+function fecharModal(){
+document.getElementById("modal").style.display="none";
+}
+
+document.getElementById("filtroStatus").addEventListener("change", carregar);
+
+carregar();
 
 </script>
 

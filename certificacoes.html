@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -324,8 +324,6 @@ Mostrar
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function(){
-
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
@@ -336,9 +334,12 @@ let pagina=1
 let porPagina=10
 let editId=null
 let listaAtual=[]
+
 let ordem={campo:null,asc:true}
 
-window.iconeCertificacao=function(nome){
+/* ICONES */
+
+function iconeCertificacao(nome){
 
 if(!nome) return "fa-certificate"
 
@@ -353,6 +354,8 @@ if(nome.includes("shiatsu")) return "fa-hands"
 return "fa-certificate"
 
 }
+
+/* SELECTS */
 
 async function carregarSelects(){
 
@@ -387,6 +390,8 @@ document.getElementById("edit_cert").innerHTML=selCert.innerHTML
 
 }
 
+/* LISTA */
+
 async function carregarLista(){
 
 const {data}=await supabaseClient
@@ -401,11 +406,252 @@ certificacoes(nome)
 `)
 
 dados=data||[]
+
 render()
 
 }
 
-window.vincular=async function(){
+/* RENDER */
+
+function render(lista=dados){
+
+listaAtual=lista
+
+const inicio=(pagina-1)*porPagina
+const pag=lista.slice(inicio,inicio+porPagina)
+
+const tbody=document.getElementById("lista")
+tbody.innerHTML=""
+
+pag.forEach(r=>{
+
+const nomeCert=r.certificacoes?.nome||""
+const icone=iconeCertificacao(nomeCert)
+
+tbody.innerHTML+=`
+<tr>
+<td>${r.terapeutas?.nome_profissional||""}</td>
+
+<td>
+<div class="servico">
+<i class="fa-solid ${icone}"></i>
+${nomeCert}
+</div>
+</td>
+
+<td>${r.data_obtencao||""}</td>
+
+<td>
+<button class="editar" onclick="abrirModal('${r.id}')">Editar</button>
+<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
+</td>
+</tr>
+`
+
+})
+
+renderPaginacao(lista.length)
+
+}
+
+/* BUSCA */
+
+function filtrarTabela(){
+
+const termoTer=document
+.getElementById("buscaTerapeuta")
+.value
+.toLowerCase()
+
+const termoCert=document
+.getElementById("buscaCertificacao")
+.value
+.toLowerCase()
+
+const filtrado=dados.filter(d=>
+
+(d.terapeutas?.nome_profissional||"")
+.toLowerCase()
+.includes(termoTer)
+
+&&
+
+(d.certificacoes?.nome||"")
+.toLowerCase()
+.includes(termoCert)
+
+)
+
+pagina=1
+render(filtrado)
+
+}
+
+/* ORDENAR */
+
+function ordenar(campo){
+
+ordem.asc=
+ordem.campo===campo?!ordem.asc:true
+
+ordem.campo=campo
+
+dados.sort((a,b)=>{
+
+let v1,v2
+
+if(campo==="terapeuta"){
+v1=a.terapeutas?.nome_profissional
+v2=b.terapeutas?.nome_profissional
+}
+
+if(campo==="certificacao"){
+v1=a.certificacoes?.nome
+v2=b.certificacoes?.nome
+}
+
+if(campo==="data"){
+v1=a.data_obtencao
+v2=b.data_obtencao
+}
+
+if(v1<v2) return ordem.asc?-1:1
+if(v1>v2) return ordem.asc?1:-1
+return 0
+
+})
+
+render()
+
+}
+
+/* PAGINAÇÃO */
+
+function renderPaginacao(total){
+
+const div=document.getElementById("paginacao")
+div.innerHTML=""
+
+if(porPagina>=total) return
+
+const totalPaginas=Math.ceil(total/porPagina)
+
+for(let i=1;i<=totalPaginas;i++){
+
+div.innerHTML+=`
+<button
+class="${i===pagina?'active':''}"
+onclick="irPagina(${i})">
+${i}
+</button>
+`
+
+}
+
+}
+
+function irPagina(p){
+pagina=p
+render(listaAtual)
+}
+
+/* MOSTRAR */
+
+function mudarPorPagina(){
+
+const valor=document
+.getElementById("porPaginaSelect")
+.value
+
+if(valor==="todos"){
+porPagina=listaAtual.length||dados.length
+}else{
+porPagina=parseInt(valor)
+}
+
+pagina=1
+render(listaAtual)
+
+}
+
+/* EXPORTAR */
+
+function exportarExcel(){
+
+let visivel
+
+if(porPagina>=listaAtual.length){
+
+visivel=listaAtual
+
+}else{
+
+const inicio=(pagina-1)*porPagina
+const fim=inicio+porPagina
+visivel=listaAtual.slice(inicio,fim)
+
+}
+
+const exportData=visivel.map(r=>({
+Terapeuta:r.terapeutas?.nome_profissional,
+Certificacao:r.certificacoes?.nome,
+Data:r.data_obtencao
+}))
+
+const ws=XLSX.utils.json_to_sheet(exportData)
+const wb=XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb,ws,"Certificacoes")
+
+XLSX.writeFile(wb,"certificacoes.xlsx")
+
+}
+
+/* MODAL */
+
+function abrirModal(id){
+
+const item=dados.find(d=>d.id==id)
+
+editId=id
+
+document.getElementById("edit_cpf").value=item.cpf_terapeuta
+document.getElementById("edit_cert").value=item.certificacao_id
+document.getElementById("edit_data").value=item.data_obtencao
+
+document.getElementById("modalEditar").style.display="flex"
+
+}
+
+function fecharModal(){
+document.getElementById("modalEditar").style.display="none"
+}
+
+/* ATUALIZAR */
+
+async function atualizar(){
+
+const cpf=document.getElementById("edit_cpf").value
+const cert=document.getElementById("edit_cert").value
+const data=document.getElementById("edit_data").value
+
+await supabaseClient
+.from("terapeuta_certificacoes")
+.update({
+cpf_terapeuta:cpf,
+certificacao_id:cert,
+data_obtencao:data
+})
+.eq("id",editId)
+
+fecharModal()
+carregarLista()
+
+}
+
+/* NOVO */
+
+async function vincular(){
 
 const cpf=document.getElementById("cpf_terapeuta").value
 const cert=document.getElementById("certificacao_id").value
@@ -425,6 +671,22 @@ data_obtencao:data||null
 })
 
 document.getElementById("data_obtencao").value=""
+
+carregarLista()
+
+}
+
+/* EXCLUIR */
+
+async function excluir(id){
+
+if(!confirm("Excluir vínculo?"))return
+
+await supabaseClient
+.from("terapeuta_certificacoes")
+.delete()
+.eq("id",id)
+
 carregarLista()
 
 }
@@ -432,7 +694,6 @@ carregarLista()
 carregarSelects()
 carregarLista()
 
-})
 </script>
 
 </body>

@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -39,8 +39,6 @@ padding:40px;
 
 h1{margin-top:0}
 
-/* FORM */
-
 .form-box{
 background:#fff;
 padding:20px;
@@ -76,8 +74,6 @@ cursor:pointer;
 button.excluir{background:#dc2626}
 button.editar{background:#f59e0b}
 
-/* TOPBAR */
-
 .topbar{
 display:flex;
 justify-content:space-between;
@@ -96,8 +92,6 @@ border-radius:6px;
 border:1px solid #ccc;
 width:220px;
 }
-
-/* TABELA */
 
 table{
 width:100%;
@@ -120,8 +114,6 @@ text-align:left;
 cursor:pointer;
 }
 
-/* CERTIFICAÇÃO COM ÍCONE */
-
 .servico{
 display:flex;
 align-items:center;
@@ -131,8 +123,6 @@ gap:8px;
 .servico i{
 color:#6366f1;
 }
-
-/* PAGINAÇÃO */
 
 .pagination{
 margin-top:20px;
@@ -149,8 +139,6 @@ color:#111;
 background:#2563eb;
 color:#fff;
 }
-
-/* MODAL */
 
 .modal{
 display:none;
@@ -172,16 +160,6 @@ border-radius:10px;
 width:420px;
 box-shadow:0 10px 25px rgba(0,0,0,0.2);
 animation:slideUp .25s ease;
-}
-
-@keyframes fadeIn{
-from{opacity:0}
-to{opacity:1}
-}
-
-@keyframes slideUp{
-from{transform:translateY(30px);opacity:0}
-to{transform:translateY(0);opacity:1}
 }
 
 .modal-form{
@@ -237,15 +215,9 @@ gap:10px;
 
 <div class="busca">
 
-<input
-id="buscaTerapeuta"
-placeholder="Buscar terapeuta..."
-oninput="filtrarTabela()">
+<input id="buscaTerapeuta" placeholder="Buscar terapeuta..." oninput="filtrarTabela()">
 
-<input
-id="buscaCertificacao"
-placeholder="Buscar certificação..."
-oninput="filtrarTabela()">
+<input id="buscaCertificacao" placeholder="Buscar certificação..." oninput="filtrarTabela()">
 
 </div>
 
@@ -289,36 +261,6 @@ Mostrar
 
 </div>
 
-<div id="modalEditar" class="modal">
-
-<div class="modal-box">
-
-<h2>Editar Certificação</h2>
-
-<div class="modal-form">
-
-<label>Terapeuta</label>
-<select id="edit_cpf"></select>
-
-<label>Certificação</label>
-<select id="edit_cert"></select>
-
-<label>Data</label>
-<input type="date" id="edit_data">
-
-</div>
-
-<div class="modal-actions">
-
-<button onclick="atualizar()">Atualizar</button>
-<button class="cancelar" onclick="fecharModal()">Cancelar</button>
-
-</div>
-
-</div>
-
-</div>
-
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
@@ -337,19 +279,25 @@ let listaAtual=[]
 
 let ordem={campo:null,asc:true}
 
-/* ICONES */
+/* ICONES CORRIGIDOS */
 
 function iconeCertificacao(nome){
 
 if(!nome) return "fa-certificate"
 
-nome=nome.toLowerCase()
+nome = nome.toLowerCase()
 
+if(nome.includes("feminina")) return "fa-spa"
+if(nome.includes("casais")) return "fa-heart"
+if(nome.includes("nuru")) return "fa-water"
+if(nome.includes("vivência") || nome.includes("vivencia")) return "fa-seedling"
+
+if(nome.includes("shiatsu")) return "fa-hands"
 if(nome.includes("aroma")) return "fa-leaf"
 if(nome.includes("reflex")) return "fa-footprints"
 if(nome.includes("drenagem")) return "fa-water"
-if(nome.includes("massagem")) return "fa-spa"
-if(nome.includes("shiatsu")) return "fa-hands"
+
+if(nome.includes("podo")) return "fa-shoe-prints"
 
 return "fa-certificate"
 
@@ -384,9 +332,6 @@ selCert.innerHTML="<option value=''>Selecione</option>"
 ;(cert||[]).forEach(c=>{
 selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 })
-
-document.getElementById("edit_cpf").innerHTML=selTer.innerHTML
-document.getElementById("edit_cert").innerHTML=selCert.innerHTML
 
 }
 
@@ -451,243 +396,6 @@ ${nomeCert}
 })
 
 renderPaginacao(lista.length)
-
-}
-
-/* BUSCA */
-
-function filtrarTabela(){
-
-const termoTer=document
-.getElementById("buscaTerapeuta")
-.value
-.toLowerCase()
-
-const termoCert=document
-.getElementById("buscaCertificacao")
-.value
-.toLowerCase()
-
-const filtrado=dados.filter(d=>
-
-(d.terapeutas?.nome_profissional||"")
-.toLowerCase()
-.includes(termoTer)
-
-&&
-
-(d.certificacoes?.nome||"")
-.toLowerCase()
-.includes(termoCert)
-
-)
-
-pagina=1
-render(filtrado)
-
-}
-
-/* ORDENAR */
-
-function ordenar(campo){
-
-ordem.asc=
-ordem.campo===campo?!ordem.asc:true
-
-ordem.campo=campo
-
-dados.sort((a,b)=>{
-
-let v1,v2
-
-if(campo==="terapeuta"){
-v1=a.terapeutas?.nome_profissional
-v2=b.terapeutas?.nome_profissional
-}
-
-if(campo==="certificacao"){
-v1=a.certificacoes?.nome
-v2=b.certificacoes?.nome
-}
-
-if(campo==="data"){
-v1=a.data_obtencao
-v2=b.data_obtencao
-}
-
-if(v1<v2) return ordem.asc?-1:1
-if(v1>v2) return ordem.asc?1:-1
-return 0
-
-})
-
-render()
-
-}
-
-/* PAGINAÇÃO */
-
-function renderPaginacao(total){
-
-const div=document.getElementById("paginacao")
-div.innerHTML=""
-
-if(porPagina>=total) return
-
-const totalPaginas=Math.ceil(total/porPagina)
-
-for(let i=1;i<=totalPaginas;i++){
-
-div.innerHTML+=`
-<button
-class="${i===pagina?'active':''}"
-onclick="irPagina(${i})">
-${i}
-</button>
-`
-
-}
-
-}
-
-function irPagina(p){
-pagina=p
-render(listaAtual)
-}
-
-/* MOSTRAR */
-
-function mudarPorPagina(){
-
-const valor=document
-.getElementById("porPaginaSelect")
-.value
-
-if(valor==="todos"){
-porPagina=listaAtual.length||dados.length
-}else{
-porPagina=parseInt(valor)
-}
-
-pagina=1
-render(listaAtual)
-
-}
-
-/* EXPORTAR */
-
-function exportarExcel(){
-
-let visivel
-
-if(porPagina>=listaAtual.length){
-
-visivel=listaAtual
-
-}else{
-
-const inicio=(pagina-1)*porPagina
-const fim=inicio+porPagina
-visivel=listaAtual.slice(inicio,fim)
-
-}
-
-const exportData=visivel.map(r=>({
-Terapeuta:r.terapeutas?.nome_profissional,
-Certificacao:r.certificacoes?.nome,
-Data:r.data_obtencao
-}))
-
-const ws=XLSX.utils.json_to_sheet(exportData)
-const wb=XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb,ws,"Certificacoes")
-
-XLSX.writeFile(wb,"certificacoes.xlsx")
-
-}
-
-/* MODAL */
-
-function abrirModal(id){
-
-const item=dados.find(d=>d.id==id)
-
-editId=id
-
-document.getElementById("edit_cpf").value=item.cpf_terapeuta
-document.getElementById("edit_cert").value=item.certificacao_id
-document.getElementById("edit_data").value=item.data_obtencao
-
-document.getElementById("modalEditar").style.display="flex"
-
-}
-
-function fecharModal(){
-document.getElementById("modalEditar").style.display="none"
-}
-
-/* ATUALIZAR */
-
-async function atualizar(){
-
-const cpf=document.getElementById("edit_cpf").value
-const cert=document.getElementById("edit_cert").value
-const data=document.getElementById("edit_data").value
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.update({
-cpf_terapeuta:cpf,
-certificacao_id:cert,
-data_obtencao:data
-})
-.eq("id",editId)
-
-fecharModal()
-carregarLista()
-
-}
-
-/* NOVO */
-
-async function vincular(){
-
-const cpf=document.getElementById("cpf_terapeuta").value
-const cert=document.getElementById("certificacao_id").value
-const data=document.getElementById("data_obtencao").value
-
-if(!cpf||!cert){
-alert("Selecione terapeuta e certificação")
-return
-}
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.insert({
-cpf_terapeuta:cpf,
-certificacao_id:cert,
-data_obtencao:data||null
-})
-
-document.getElementById("data_obtencao").value=""
-
-carregarLista()
-
-}
-
-/* EXCLUIR */
-
-async function excluir(id){
-
-if(!confirm("Excluir vínculo?"))return
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.delete()
-.eq("id",id)
-
-carregarLista()
 
 }
 

@@ -1,4 +1,3 @@
-
 ```html
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -14,7 +13,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-
 *{box-sizing:border-box}
 
 body{
@@ -39,6 +37,8 @@ padding:40px;
 }
 
 h1{margin-top:0}
+
+/* FORM */
 
 .form-box{
 background:#fff;
@@ -75,6 +75,8 @@ cursor:pointer;
 button.excluir{background:#dc2626}
 button.editar{background:#f59e0b}
 
+/* TOPBAR */
+
 .topbar{
 display:flex;
 justify-content:space-between;
@@ -93,6 +95,8 @@ border-radius:6px;
 border:1px solid #ccc;
 width:220px;
 }
+
+/* TABELA */
 
 table{
 width:100%;
@@ -115,6 +119,8 @@ text-align:left;
 cursor:pointer;
 }
 
+/* CERTIFICAÇÃO COM ÍCONE */
+
 .servico{
 display:flex;
 align-items:center;
@@ -124,6 +130,8 @@ gap:8px;
 .servico i{
 color:#6366f1;
 }
+
+/* PAGINAÇÃO */
 
 .pagination{
 margin-top:20px;
@@ -140,44 +148,6 @@ color:#111;
 background:#2563eb;
 color:#fff;
 }
-
-.modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.45);
-align-items:center;
-justify-content:center;
-animation:fadeIn .2s ease;
-}
-
-.modal-box{
-background:#fff;
-padding:25px;
-border-radius:10px;
-width:420px;
-box-shadow:0 10px 25px rgba(0,0,0,0.2);
-animation:slideUp .25s ease;
-}
-
-.modal-form{
-display:flex;
-flex-direction:column;
-gap:15px;
-margin-top:15px;
-}
-
-.modal-actions{
-margin-top:20px;
-display:flex;
-gap:10px;
-}
-
-.cancelar{background:#6b7280}
-
 </style>
 </head>
 
@@ -216,15 +186,9 @@ gap:10px;
 
 <div class="busca">
 
-<input
-id="buscaTerapeuta"
-placeholder="Buscar terapeuta..."
-oninput="filtrarTabela()">
+<input id="buscaTerapeuta" placeholder="Buscar terapeuta..." oninput="filtrarTabela()">
 
-<input
-id="buscaCertificacao"
-placeholder="Buscar certificação..."
-oninput="filtrarTabela()">
+<input id="buscaCertificacao" placeholder="Buscar certificação..." oninput="filtrarTabela()">
 
 </div>
 
@@ -283,10 +247,9 @@ let pagina=1
 let porPagina=10
 let editId=null
 let listaAtual=[]
-
 let ordem={campo:null,asc:true}
 
-/* ICONES CORRIGIDOS */
+/* ICONES MELHORADOS */
 
 function iconeCertificacao(nome){
 
@@ -310,12 +273,14 @@ return "fa-certificate"
 
 }
 
-/* RESTO DO SEU CÓDIGO CONTINUA IGUAL */
+/* SELECTS */
 
 async function carregarSelects(){
 
 const selTer=document.getElementById("cpf_terapeuta")
 const selCert=document.getElementById("certificacao_id")
+
+if(!selTer || !selCert) return
 
 const {data:terapeutas}=await supabaseClient
 .from("terapeutas")
@@ -340,15 +305,74 @@ selCert.innerHTML="<option value=''>Selecione</option>"
 selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 })
 
-document.getElementById("edit_cpf").innerHTML=selTer.innerHTML
-document.getElementById("edit_cert").innerHTML=selCert.innerHTML
+}
+
+/* LISTA */
+
+async function carregarLista(){
+
+const {data}=await supabaseClient
+.from("terapeuta_certificacoes")
+.select(`
+id,
+cpf_terapeuta,
+certificacao_id,
+data_obtencao,
+terapeutas(nome_profissional),
+certificacoes(nome)
+`)
+
+dados=data||[]
+render()
 
 }
 
-/* TODO O RESTO DO SEU SCRIPT CONTINUA IGUAL */
+/* RENDER */
 
+function render(lista=dados){
+
+listaAtual=lista
+
+const inicio=(pagina-1)*porPagina
+const pag=lista.slice(inicio,inicio+porPagina)
+
+const tbody=document.getElementById("lista")
+if(!tbody) return
+
+tbody.innerHTML=""
+
+pag.forEach(r=>{
+
+const nomeCert=r.certificacoes?.nome||""
+const icone=iconeCertificacao(nomeCert)
+
+tbody.innerHTML+=`
+<tr>
+<td>${r.terapeutas?.nome_profissional||""}</td>
+<td>
+<div class="servico">
+<i class="fa-solid ${icone}"></i>
+${nomeCert}
+</div>
+</td>
+<td>${r.data_obtencao||""}</td>
+<td>
+<button class="editar">Editar</button>
+<button class="excluir">Excluir</button>
+</td>
+</tr>
+`
+
+})
+
+}
+
+/* INICIALIZAÇÃO SEGURA */
+
+document.addEventListener("DOMContentLoaded",()=>{
 carregarSelects()
 carregarLista()
+})
 
 </script>
 

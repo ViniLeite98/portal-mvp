@@ -17,31 +17,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
 
-.top-actions{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-
-.left-actions{
-  display:flex;
-  gap:12px;
-}
-
-.left-actions input{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  width:220px;
-}
-
-.left-actions select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-}
-
 table{
   width:100%;
   border-collapse:collapse;
@@ -60,16 +35,39 @@ th,td{
 th{background:#f9fafb;font-weight:600;}
 
 button{
-  background:#2563eb;
+  background:#1f2937;
   color:#fff;
   border:none;
-  border-radius:8px;
-  padding:8px 14px;
+  border-radius:6px;
+  padding:6px 12px;
   cursor:pointer;
 }
 
 button.excluir{background:#dc2626}
-button.editar{background:#f59e0b}
+
+.top-actions{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+
+.left-actions{
+  display:flex;
+  gap:12px;
+}
+
+.left-actions input{
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+}
+
+.left-actions select{
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
+}
 
 .modal{
   position:fixed;
@@ -244,6 +242,26 @@ const supabaseClient = supabase.createClient(
 
 let cpfAtual=null;
 
+const campos=[
+"nome_completo","nome_profissional","cpf","email","cargo","status"
+];
+
+function getPayload(){
+const obj={};
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el && el.value!=="") obj[c]=el.value;
+});
+return obj;
+}
+
+function setForm(data){
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value=data[c]||"";
+});
+}
+
 async function carregar(){
 
 const statusFiltro = document.getElementById("filtroStatus").value;
@@ -255,9 +273,13 @@ let query = supabaseClient
 
 if(statusFiltro) query = query.eq("status", statusFiltro);
 
-const {data,error}=await query;
+const { data, error } = await query;
 
-if(error){ console.error(error); return; }
+if(error){
+console.error(error);
+alert("Erro ao carregar dados");
+return;
+}
 
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -270,7 +292,7 @@ tbody.innerHTML+=`
 <td>${t.cpf||""}</td>
 <td>${t.status||""}</td>
 <td>
-<button class="editar" onclick="editar('${t.cpf}')">Editar</button>
+<button onclick="editar('${t.cpf}')">Editar</button>
 <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
 </tr>`;
@@ -291,7 +313,84 @@ linha.style.display = nome.includes(filtro) ? "" : "none";
 
 function abrirNovo(){
 cpfAtual=null;
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
+
+document.getElementById("cpf").disabled = false;
 document.getElementById("modal").style.display="flex";
+}
+
+async function editar(cpf){
+
+cpfAtual = cpf;
+
+const { data, error } = await supabaseClient
+.from("terapeutas")
+.select("*")
+.eq("cpf", cpf)
+.maybeSingle();
+
+if(error || !data){
+alert("Erro ao carregar");
+return;
+}
+
+setForm(data);
+document.getElementById("cpf").disabled = true;
+document.getElementById("modal").style.display="flex";
+}
+
+async function salvar(){
+
+const payload = getPayload();
+
+if(!payload.nome_completo || !payload.nome_profissional || !payload.email){
+alert("Preencha os campos obrigatórios");
+return;
+}
+
+let response;
+
+if(cpfAtual){
+delete payload.cpf;
+
+response = await supabaseClient
+.from("terapeutas")
+.update(payload)
+.eq("cpf", cpfAtual);
+
+}else{
+response = await supabaseClient
+.from("terapeutas")
+.insert(payload);
+}
+
+if(response.error){
+console.error(response.error);
+alert("Erro ao salvar");
+return;
+}
+
+fecharModal();
+await carregar();
+}
+
+async function excluir(cpf){
+if(!confirm("Excluir registro?")) return;
+
+const { error } = await supabaseClient
+.from("terapeutas")
+.delete()
+.eq("cpf", cpf);
+
+if(error){
+alert("Erro ao excluir");
+return;
+}
+
+carregar();
 }
 
 function fecharModal(){

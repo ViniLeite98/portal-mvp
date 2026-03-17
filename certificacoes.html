@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -13,314 +12,69 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-
 *{box-sizing:border-box}
-
-body{
-margin:0;
-font-family:'Segoe UI',sans-serif;
-background:#f4f6fb;
-}
-
-.app{
-display:flex;
-min-height:100vh;
-}
-
-#sidebar{
-width:260px;
-flex-shrink:0;
-}
-
-.content{
-flex:1;
-padding:40px;
-}
-
-h1{margin-top:0}
-
-/* FORM */
-
-.form-box{
-background:#fff;
-padding:20px;
-border-radius:10px;
-display:flex;
-gap:20px;
-flex-wrap:wrap;
-margin-bottom:20px;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-.form-box div{
-display:flex;
-flex-direction:column;
-}
-
-select,input{
-padding:8px;
-border-radius:6px;
-border:1px solid #d1d5db;
-min-width:200px;
-}
-
-button{
-background:#2563eb;
-color:#fff;
-border:none;
-padding:7px 14px;
-border-radius:6px;
-cursor:pointer;
-}
-
-button.excluir{background:#dc2626}
-button.editar{background:#f59e0b}
-
-/* TOPBAR */
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
-}
-
-.busca{
-display:flex;
-gap:10px;
-}
-
-.busca input{
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
-width:220px;
-}
-
-/* TABELA */
-
-table{
-width:100%;
-border-collapse:collapse;
-background:#fff;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-th,td{
-padding:12px;
-border-bottom:1px solid #eee;
-font-size:14px;
-}
-
-th{
-background:#f9fafb;
-text-align:left;
-cursor:pointer;
-}
-
-/* CERTIFICAÇÃO COM ÍCONE */
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;}
+.content{flex:1;padding:40px;}
 
 .servico{
 display:flex;
 align-items:center;
 gap:8px;
 }
-
 .servico i{
 color:#6366f1;
 }
-
-/* PAGINAÇÃO */
-
-.pagination{
-margin-top:20px;
-display:flex;
-gap:6px;
+button{
+border:none;
+padding:6px 12px;
+border-radius:6px;
+cursor:pointer;
 }
-
-.pagination button{
-background:#e5e7eb;
-color:#111;
-}
-
-.pagination button.active{
-background:#2563eb;
-color:#fff;
-}
-
-/* MODAL */
-
-.modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.45);
-align-items:center;
-justify-content:center;
-animation:fadeIn .2s ease;
-}
-
-.modal-box{
-background:#fff;
-padding:25px;
-border-radius:10px;
-width:420px;
-box-shadow:0 10px 25px rgba(0,0,0,0.2);
-animation:slideUp .25s ease;
-}
-
-@keyframes fadeIn{
-from{opacity:0}
-to{opacity:1}
-}
-
-@keyframes slideUp{
-from{transform:translateY(30px);opacity:0}
-to{transform:translateY(0);opacity:1}
-}
-
-.modal-form{
-display:flex;
-flex-direction:column;
-gap:15px;
-margin-top:15px;
-}
-
-.modal-actions{
-margin-top:20px;
-display:flex;
-gap:10px;
-}
-
-.cancelar{background:#6b7280}
-
+.editar{background:#f59e0b;color:#fff;}
+.excluir{background:#dc2626;color:#fff;}
 </style>
 </head>
 
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
-
 <h1>Certificações</h1>
 
-<div class="form-box">
-
-<div>
-<label>Terapeuta</label>
-<select id="cpf_terapeuta"></select>
-</div>
-
-<div>
-<label>Certificação</label>
-<select id="certificacao_id"></select>
-</div>
-
-<div>
-<label>Data</label>
-<input type="date" id="data_obtencao">
-</div>
-
-<button onclick="vincular()">Vincular</button>
-
-</div>
-
-<div class="topbar">
-
-<div class="busca">
-
-<input
-id="buscaTerapeuta"
-placeholder="Buscar terapeuta..."
-oninput="filtrarTabela()">
-
-<input
-id="buscaCertificacao"
-placeholder="Buscar certificação..."
-oninput="filtrarTabela()">
-
-</div>
-
-<div style="display:flex;gap:10px;align-items:center">
-
-<button onclick="exportarExcel()">
-<i class="fa-solid fa-file-excel"></i> Exportar
-</button>
-
-Mostrar
-
-<select id="porPaginaSelect" onchange="mudarPorPagina()">
-<option value="5">5</option>
-<option value="10" selected>10</option>
-<option value="20">20</option>
-<option value="todos">Todos</option>
-</select>
-
-</div>
-
-</div>
-
 <table>
-
 <thead>
 <tr>
-<th onclick="ordenar('terapeuta')">Terapeuta ⬍</th>
-<th onclick="ordenar('certificacao')">Certificação ⬍</th>
-<th onclick="ordenar('data')">Data ⬍</th>
+<th>Terapeuta</th>
+<th>Certificação</th>
+<th>Data</th>
 <th>Ações</th>
 </tr>
 </thead>
 
 <tbody id="lista"></tbody>
-
 </table>
 
-<div class="pagination" id="paginacao"></div>
-
 </main>
-
 </div>
 
-<div id="modalEditar" class="modal">
+<div id="modalEditar" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);align-items:center;justify-content:center;">
+<div style="background:#fff;padding:20px;border-radius:10px;width:300px;">
+<h3>Editar</h3>
 
-<div class="modal-box">
+<select id="edit_cpf"></select><br><br>
+<select id="edit_cert"></select><br><br>
+<input type="date" id="edit_data"><br><br>
 
-<h2>Editar Certificação</h2>
-
-<div class="modal-form">
-
-<label>Terapeuta</label>
-<select id="edit_cpf"></select>
-
-<label>Certificação</label>
-<select id="edit_cert"></select>
-
-<label>Data</label>
-<input type="date" id="edit_data">
-
+<button onclick="atualizar()">Salvar</button>
+<button onclick="fecharModal()">Cancelar</button>
 </div>
-
-<div class="modal-actions">
-
-<button onclick="atualizar()">Atualizar</button>
-<button class="cancelar" onclick="fecharModal()">Cancelar</button>
-
-</div>
-
-</div>
-
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
@@ -330,12 +84,16 @@ const supabaseClient = supabase.createClient(
 )
 
 let dados=[]
-let pagina=1
-let porPagina=10
 let editId=null
-let listaAtual=[]
 
-let ordem={campo:null,asc:true}
+/* 🔥 NORMALIZAÇÃO (AQUI ESTÁ A CHAVE) */
+function normalizar(txt){
+return txt
+.toLowerCase()
+.normalize("NFD")
+.replace(/[\u0300-\u036f]/g,"")
+.trim()
+}
 
 /* ICONES */
 
@@ -343,60 +101,22 @@ function iconeCertificacao(nome){
 
 if(!nome) return "fa-certificate"
 
-nome = nome.toLowerCase()
+const n = normalizar(nome)
 
 /* MASSAGENS */
+if(n.includes("feminina")) return "fa-person-dress"
+if(n.includes("casais")) return "fa-user-group"
+if(n.includes("nuru")) return "fa-droplet"
+if(n.includes("viv")) return "fa-spa"
 
-if(nome.includes("massagem feminina")) return "fa-person-dress"
-if(nome.includes("massagem casais")) return "fa-user-group"
-if(nome.includes("massagem nuru")) return "fa-droplet"
-if(nome.includes("massagem vivência")) return "fa-spa"
+/* 🔥 PODOLATRIA (AGORA FUNCIONA SEM ERRO) */
+if(n.includes("podo")) return "fa-footprints"
 
-/* TERAPIAS */
-
-if(nome.includes("podologia") || nome.includes("podolatria")) return "fa-footprints"
-if(nome.includes("reflexologia")) return "fa-shoe-prints"
-if(nome.includes("shiatsu")) return "fa-hands"
-
-/* PADRÃO */
+/* OUTROS */
+if(n.includes("reflex")) return "fa-shoe-prints"
+if(n.includes("shiatsu")) return "fa-hands"
 
 return "fa-certificate"
-
-}
-
-/* SELECTS */
-
-async function carregarSelects(){
-
-const selTer=document.getElementById("cpf_terapeuta")
-const selCert=document.getElementById("certificacao_id")
-
-const {data:terapeutas}=await supabaseClient
-.from("terapeutas")
-.select("cpf,nome_profissional")
-.eq("status","Ativo")
-.order("nome_profissional")
-
-selTer.innerHTML="<option value=''>Selecione</option>"
-
-;(terapeutas||[]).forEach(t=>{
-selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
-})
-
-const {data:cert}=await supabaseClient
-.from("certificacoes")
-.select("id,nome")
-.order("nome")
-
-selCert.innerHTML="<option value=''>Selecione</option>"
-
-;(cert||[]).forEach(c=>{
-selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
-})
-
-document.getElementById("edit_cpf").innerHTML=selTer.innerHTML
-document.getElementById("edit_cert").innerHTML=selCert.innerHTML
-
 }
 
 /* LISTA */
@@ -415,31 +135,24 @@ certificacoes(nome)
 `)
 
 dados=data||[]
-
 render()
-
 }
 
 /* RENDER */
 
-function render(lista=dados){
-
-listaAtual=lista
-
-const inicio=(pagina-1)*porPagina
-const pag=lista.slice(inicio,inicio+porPagina)
+function render(){
 
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
-pag.forEach(r=>{
+dados.forEach(r=>{
 
-const nomeCert=r.certificacoes?.nome||""
-const icone=iconeCertificacao(nomeCert)
+const nomeCert = r.certificacoes?.nome || ""
+const icone = iconeCertificacao(nomeCert)
 
-tbody.innerHTML+=`
+tbody.innerHTML += `
 <tr>
-<td>${r.terapeutas?.nome_profissional||""}</td>
+<td>${r.terapeutas?.nome_profissional || ""}</td>
 
 <td>
 <div class="servico">
@@ -448,7 +161,7 @@ ${nomeCert}
 </div>
 </td>
 
-<td>${r.data_obtencao||""}</td>
+<td>${r.data_obtencao || ""}</td>
 
 <td>
 <button class="editar" onclick="abrirModal('${r.id}')">Editar</button>
@@ -456,180 +169,31 @@ ${nomeCert}
 </td>
 </tr>
 `
-
 })
-
-renderPaginacao(lista.length)
-
-}
-
-/* BUSCA */
-
-function filtrarTabela(){
-
-const termoTer=document
-.getElementById("buscaTerapeuta")
-.value
-.toLowerCase()
-
-const termoCert=document
-.getElementById("buscaCertificacao")
-.value
-.toLowerCase()
-
-const filtrado=dados.filter(d=>
-
-(d.terapeutas?.nome_profissional||"")
-.toLowerCase()
-.includes(termoTer)
-
-&&
-
-(d.certificacoes?.nome||"")
-.toLowerCase()
-.includes(termoCert)
-
-)
-
-pagina=1
-render(filtrado)
-
-}
-
-/* ORDENAR */
-
-function ordenar(campo){
-
-ordem.asc=
-ordem.campo===campo?!ordem.asc:true
-
-ordem.campo=campo
-
-dados.sort((a,b)=>{
-
-let v1,v2
-
-if(campo==="terapeuta"){
-v1=a.terapeutas?.nome_profissional
-v2=b.terapeutas?.nome_profissional
-}
-
-if(campo==="certificacao"){
-v1=a.certificacoes?.nome
-v2=b.certificacoes?.nome
-}
-
-if(campo==="data"){
-v1=a.data_obtencao
-v2=b.data_obtencao
-}
-
-if(v1<v2) return ordem.asc?-1:1
-if(v1>v2) return ordem.asc?1:-1
-return 0
-
-})
-
-render()
-
-}
-
-/* PAGINAÇÃO */
-
-function renderPaginacao(total){
-
-const div=document.getElementById("paginacao")
-div.innerHTML=""
-
-if(porPagina>=total) return
-
-const totalPaginas=Math.ceil(total/porPagina)
-
-for(let i=1;i<=totalPaginas;i++){
-
-div.innerHTML+=`
-<button
-class="${i===pagina?'active':''}"
-onclick="irPagina(${i})">
-${i}
-</button>
-`
-
-}
-
-}
-
-function irPagina(p){
-pagina=p
-render(listaAtual)
-}
-
-/* MOSTRAR */
-
-function mudarPorPagina(){
-
-const valor=document
-.getElementById("porPaginaSelect")
-.value
-
-if(valor==="todos"){
-porPagina=listaAtual.length||dados.length
-}else{
-porPagina=parseInt(valor)
-}
-
-pagina=1
-render(listaAtual)
-
-}
-
-/* EXPORTAR */
-
-function exportarExcel(){
-
-let visivel
-
-if(porPagina>=listaAtual.length){
-
-visivel=listaAtual
-
-}else{
-
-const inicio=(pagina-1)*porPagina
-const fim=inicio+porPagina
-visivel=listaAtual.slice(inicio,fim)
-
-}
-
-const exportData=visivel.map(r=>({
-Terapeuta:r.terapeutas?.nome_profissional,
-Certificacao:r.certificacoes?.nome,
-Data:r.data_obtencao
-}))
-
-const ws=XLSX.utils.json_to_sheet(exportData)
-const wb=XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb,ws,"Certificacoes")
-
-XLSX.writeFile(wb,"certificacoes.xlsx")
 
 }
 
 /* MODAL */
 
-function abrirModal(id){
+async function abrirModal(id){
 
-const item=dados.find(d=>d.id==id)
+const item = dados.find(d=>d.id==id)
+editId = id
 
-editId=id
+const {data:terapeutas}=await supabaseClient.from("terapeutas").select("cpf,nome_profissional")
+const {data:certs}=await supabaseClient.from("certificacoes").select("id,nome")
 
-document.getElementById("edit_cpf").value=item.cpf_terapeuta
-document.getElementById("edit_cert").value=item.certificacao_id
-document.getElementById("edit_data").value=item.data_obtencao
+document.getElementById("edit_cpf").innerHTML =
+terapeutas.map(t=>`<option value="${t.cpf}">${t.nome_profissional}</option>`).join("")
+
+document.getElementById("edit_cert").innerHTML =
+certs.map(c=>`<option value="${c.id}">${c.nome}</option>`).join("")
+
+document.getElementById("edit_cpf").value = item.cpf_terapeuta
+document.getElementById("edit_cert").value = item.certificacao_id
+document.getElementById("edit_data").value = item.data_obtencao
 
 document.getElementById("modalEditar").style.display="flex"
-
 }
 
 function fecharModal(){
@@ -640,9 +204,9 @@ document.getElementById("modalEditar").style.display="none"
 
 async function atualizar(){
 
-const cpf=document.getElementById("edit_cpf").value
-const cert=document.getElementById("edit_cert").value
-const data=document.getElementById("edit_data").value
+const cpf = document.getElementById("edit_cpf").value
+const cert = document.getElementById("edit_cert").value
+const data = document.getElementById("edit_data").value
 
 await supabaseClient
 .from("terapeuta_certificacoes")
@@ -655,41 +219,13 @@ data_obtencao:data
 
 fecharModal()
 carregarLista()
-
-}
-
-/* NOVO */
-
-async function vincular(){
-
-const cpf=document.getElementById("cpf_terapeuta").value
-const cert=document.getElementById("certificacao_id").value
-const data=document.getElementById("data_obtencao").value
-
-if(!cpf||!cert){
-alert("Selecione terapeuta e certificação")
-return
-}
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.insert({
-cpf_terapeuta:cpf,
-certificacao_id:cert,
-data_obtencao:data||null
-})
-
-document.getElementById("data_obtencao").value=""
-
-carregarLista()
-
 }
 
 /* EXCLUIR */
 
 async function excluir(id){
 
-if(!confirm("Excluir vínculo?"))return
+if(!confirm("Excluir vínculo?")) return
 
 await supabaseClient
 .from("terapeuta_certificacoes")
@@ -697,14 +233,11 @@ await supabaseClient
 .eq("id",id)
 
 carregarLista()
-
 }
 
-carregarSelects()
 carregarLista()
 
 </script>
 
 </body>
 </html>
-```

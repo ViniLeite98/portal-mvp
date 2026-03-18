@@ -92,6 +92,7 @@ width:350px;
 
 <h1>Fluxo de Caixa</h1>
 
+<!-- CADASTRO -->
 <div class="form-box">
 
 <div class="field">
@@ -128,6 +129,34 @@ width:350px;
 
 </div>
 
+<!-- FILTRO -->
+<div class="form-box">
+
+<div class="field">
+<label>Data Inicial</label>
+<input type="date" id="filtroInicio">
+</div>
+
+<div class="field">
+<label>Data Final</label>
+<input type="date" id="filtroFim">
+</div>
+
+<div class="field">
+<label>Cliente</label>
+<select id="filtroCliente"></select>
+</div>
+
+<div class="field">
+<label>Serviço</label>
+<select id="filtroServico"></select>
+</div>
+
+<button onclick="filtrar()">Filtrar</button>
+<button onclick="limparFiltro()">Limpar</button>
+
+</div>
+
 <table>
 <thead>
 <tr>
@@ -146,7 +175,7 @@ width:350px;
 </main>
 </div>
 
-<!-- MODAL COMPLETO -->
+<!-- MODAL -->
 <div id="modalEditar" class="modal">
 <div class="modal-box">
 
@@ -186,28 +215,28 @@ const supabaseClient = supabase.createClient(
 )
 
 let dados=[]
-let servicosMap={}
 let dadosClientes=[]
 let dadosServicos=[]
+let servicosMap={}
 let editandoId=null
 
-// data hoje
 function hoje(){
 const d = new Date()
 const offset = d.getTimezoneOffset()
 return new Date(d.getTime()-offset*60000).toISOString().split("T")[0]
 }
 
-document.getElementById("data").value = hoje()
+data.value = hoje()
 
-// cálculo
-document.getElementById("valor").oninput = calcular
-document.getElementById("desconto").oninput = calcular
+valor.oninput = calcular
+desconto.oninput = calcular
 
 function calcular(){
-const v = parseFloat(valor.value||0)
-const d = parseFloat(desconto.value||0)
-final.value = v - d
+final.value = (parseFloat(valor.value||0) - parseFloat(desconto.value||0))
+}
+
+function formatar(v){
+return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
 }
 
 // carregar selects
@@ -216,23 +245,25 @@ async function carregarSelects(){
 const {data:clientes} = await supabaseClient.from("clientes").select("*")
 dadosClientes = clientes || []
 
-const selCliente = document.getElementById("cliente")
-selCliente.innerHTML="<option value=''>Selecione</option>"
+cliente.innerHTML = "<option value=''>Selecione</option>"
+filtroCliente.innerHTML = "<option value=''>Todos</option>"
 
 dadosClientes.forEach(c=>{
 const nome = c.nome || c.nome_cliente
-selCliente.innerHTML += `<option value="${c.id}">${nome}</option>`
+cliente.innerHTML += `<option value="${c.id}">${nome}</option>`
+filtroCliente.innerHTML += `<option value="${c.id}">${nome}</option>`
 })
 
 const {data:servicos} = await supabaseClient.from("servicos").select("*")
 dadosServicos = servicos || []
 
-const selServico = document.getElementById("servico")
-selServico.innerHTML="<option value=''>Selecione</option>"
+servico.innerHTML = "<option value=''>Selecione</option>"
+filtroServico.innerHTML = "<option value=''>Todos</option>"
 
 dadosServicos.forEach(s=>{
 servicosMap[s.id]=s
-selServico.innerHTML += `<option value="${s.id}">${s.grupo}</option>`
+servico.innerHTML += `<option value="${s.id}">${s.grupo}</option>`
+filtroServico.innerHTML += `<option value="${s.id}">${s.grupo}</option>`
 })
 
 servico.addEventListener("change",()=>{
@@ -248,30 +279,24 @@ calcular()
 // salvar
 async function salvar(){
 
-const data = document.getElementById("data").value
-const cliente = clienteEl.value
-const servico = servicoEl.value
-const valor = parseFloat(valorEl.value||0)
-const desconto = parseFloat(descontoEl.value||0)
-
-if(!data || !cliente || !servico){
+if(!data.value || !cliente.value || !servico.value){
 alert("Preencha tudo")
 return
 }
 
 await supabaseClient.from("fluxo_caixa").insert({
-data,
-cliente_id:cliente,
-servico_id:servico,
-valor,
-desconto,
-valor_final:valor-desconto
+data:data.value,
+cliente_id:cliente.value,
+servico_id:servico.value,
+valor:parseFloat(valor.value||0),
+desconto:parseFloat(desconto.value||0),
+valor_final:parseFloat(valor.value||0)-parseFloat(desconto.value||0)
 })
 
-clienteEl.value=""
-servicoEl.value=""
-valorEl.value=50
-descontoEl.value=0
+cliente.value=""
+servico.value=""
+valor.value=50
+desconto.value=0
 calcular()
 
 carregarLista()
@@ -285,20 +310,19 @@ const {data} = await supabaseClient
 .select(`*,clientes(*),servicos(*)`)
 .order("data",{ascending:false})
 
-dados=data||[]
-render()
+dados = data || []
+render(dados)
 }
 
-function formatar(v){
-return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
-}
+function render(lista){
 
-function render(){
+lista.forEach(r=>{}) // só pra garantir escopo
 
-lista.innerHTML=""
+const tbody = document.getElementById("lista")
+tbody.innerHTML=""
 
-dados.forEach(r=>{
-lista.innerHTML+=`
+lista.forEach(r=>{
+tbody.innerHTML+=`
 <tr>
 <td>${r.data}</td>
 <td>${r.clientes?.nome || r.clientes?.nome_cliente}</td>
@@ -315,27 +339,55 @@ lista.innerHTML+=`
 })
 }
 
-// abrir editar
+// filtro
+function filtrar(){
+
+let lista = [...dados]
+
+if(filtroInicio.value){
+lista = lista.filter(d=>d.data >= filtroInicio.value)
+}
+
+if(filtroFim.value){
+lista = lista.filter(d=>d.data <= filtroFim.value)
+}
+
+if(filtroCliente.value){
+lista = lista.filter(d=>d.cliente_id == filtroCliente.value)
+}
+
+if(filtroServico.value){
+lista = lista.filter(d=>d.servico_id == filtroServico.value)
+}
+
+render(lista)
+}
+
+function limparFiltro(){
+filtroInicio.value=""
+filtroFim.value=""
+filtroCliente.value=""
+filtroServico.value=""
+render(dados)
+}
+
+// editar
 function abrirEditar(id){
 
 editandoId=id
 const r = dados.find(d=>d.id==id)
 
-// preenche selects
-const selC = document.getElementById("editCliente")
-selC.innerHTML="<option value=''>Selecione</option>"
+editCliente.innerHTML="<option value=''>Selecione</option>"
 dadosClientes.forEach(c=>{
 const nome=c.nome||c.nome_cliente
-selC.innerHTML+=`<option value="${c.id}">${nome}</option>`
+editCliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
 })
 
-const selS = document.getElementById("editServico")
-selS.innerHTML="<option value=''>Selecione</option>"
+editServico.innerHTML="<option value=''>Selecione</option>"
 dadosServicos.forEach(s=>{
-selS.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
+editServico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
 })
 
-// valores
 editData.value=r.data
 editCliente.value=r.cliente_id
 editServico.value=r.servico_id
@@ -345,25 +397,16 @@ editDesconto.value=r.desconto
 modalEditar.style.display="flex"
 }
 
-// salvar edição
 async function salvarEdicao(){
 
-const data = editData.value
-const cliente = editCliente.value
-const servico = editServico.value
-const valor = parseFloat(editValor.value||0)
-const desconto = parseFloat(editDesconto.value||0)
-
-await supabaseClient.from("fluxo_caixa")
-.update({
-data,
-cliente_id:cliente,
-servico_id:servico,
-valor,
-desconto,
-valor_final:valor-desconto
-})
-.eq("id",editandoId)
+await supabaseClient.from("fluxo_caixa").update({
+data:editData.value,
+cliente_id:editCliente.value,
+servico_id:editServico.value,
+valor:parseFloat(editValor.value||0),
+desconto:parseFloat(editDesconto.value||0),
+valor_final:parseFloat(editValor.value||0)-parseFloat(editDesconto.value||0)
+}).eq("id",editandoId)
 
 fecharModal()
 carregarLista()

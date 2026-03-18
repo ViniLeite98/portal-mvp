@@ -12,7 +12,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-
 *{box-sizing:border-box}
 
 body{
@@ -116,10 +115,7 @@ font-size:14px;
 th{
 background:#f9fafb;
 text-align:left;
-cursor:pointer;
 }
-
-/* CERTIFICAÇÃO COM ÍCONE */
 
 .servico{
 display:flex;
@@ -128,6 +124,7 @@ gap:8px;
 }
 
 .servico i{
+margin-left:6px;
 color:#6366f1;
 }
 
@@ -148,55 +145,6 @@ color:#111;
 background:#2563eb;
 color:#fff;
 }
-
-/* MODAL */
-
-.modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.45);
-align-items:center;
-justify-content:center;
-animation:fadeIn .2s ease;
-}
-
-.modal-box{
-background:#fff;
-padding:25px;
-border-radius:10px;
-width:420px;
-box-shadow:0 10px 25px rgba(0,0,0,0.2);
-animation:slideUp .25s ease;
-}
-
-@keyframes fadeIn{
-from{opacity:0}
-to{opacity:1}
-}
-
-@keyframes slideUp{
-from{transform:translateY(30px);opacity:0}
-to{transform:translateY(0);opacity:1}
-}
-
-.modal-form{
-display:flex;
-flex-direction:column;
-gap:15px;
-margin-top:15px;
-}
-
-.modal-actions{
-margin-top:20px;
-display:flex;
-gap:10px;
-}
-
-.cancelar{background:#6b7280}
 
 </style>
 </head>
@@ -232,30 +180,21 @@ gap:10px;
 
 </div>
 
+<!-- LEGENDA -->
+<div style="margin-bottom:10px;font-size:13px;color:#555;">
+<strong>Legenda:</strong>
+<i class="fa-solid fa-person-dress"></i> Feminina |
+<i class="fa-solid fa-user-group"></i> Casais |
+<i class="fa-solid fa-droplet"></i> Nuru |
+<i class="fa-solid fa-spa"></i> Vivência |
+<i class="fa-solid fa-shoe-prints"></i> Podologia
+</div>
+
 <div class="topbar">
 
 <div class="busca">
 
 <input id="buscaTerapeuta" placeholder="Buscar terapeuta..." oninput="filtrarTabela()">
-
-<input id="buscaCertificacao" placeholder="Buscar certificação..." oninput="filtrarTabela()">
-
-</div>
-
-<div style="display:flex;gap:10px;align-items:center">
-
-<button onclick="exportarExcel()">
-<i class="fa-solid fa-file-excel"></i> Exportar
-</button>
-
-Mostrar
-
-<select id="porPaginaSelect" onchange="mudarPorPagina()">
-<option value="5">5</option>
-<option value="10" selected>10</option>
-<option value="20">20</option>
-<option value="todos">Todos</option>
-</select>
 
 </div>
 
@@ -265,9 +204,7 @@ Mostrar
 
 <thead>
 <tr>
-<th onclick="ordenar('terapeuta')">Terapeuta ⬍</th>
-<th onclick="ordenar('certificacao')">Certificação ⬍</th>
-<th onclick="ordenar('data')">Data ⬍</th>
+<th>Terapeuta</th>
 <th>Ações</th>
 </tr>
 </thead>
@@ -276,39 +213,7 @@ Mostrar
 
 </table>
 
-<div class="pagination" id="paginacao"></div>
-
 </main>
-
-</div>
-
-<div id="modalEditar" class="modal">
-
-<div class="modal-box">
-
-<h2>Editar Certificação</h2>
-
-<div class="modal-form">
-
-<label>Terapeuta</label>
-<select id="edit_cpf"></select>
-
-<label>Certificação</label>
-<select id="edit_cert"></select>
-
-<label>Data</label>
-<input type="date" id="edit_data">
-
-</div>
-
-<div class="modal-actions">
-
-<button onclick="atualizar()">Atualizar</button>
-<button class="cancelar" onclick="fecharModal()">Cancelar</button>
-
-</div>
-
-</div>
 
 </div>
 
@@ -323,14 +228,6 @@ const supabaseClient = supabase.createClient(
 )
 
 let dados=[]
-let pagina=1
-let porPagina=10
-let editId=null
-let listaAtual=[]
-
-let ordem={campo:null,asc:true}
-
-/* ICONES (CORRIGIDO) */
 
 function iconeCertificacao(nome){
 
@@ -342,18 +239,11 @@ if(nome.includes("massagem feminina")) return "fa-person-dress"
 if(nome.includes("massagem casais")) return "fa-user-group"
 if(nome.includes("massagem nuru")) return "fa-droplet"
 if(nome.includes("massagem vivência")) return "fa-spa"
-
-/* CORREÇÃO AQUI 👇 */
 if(nome.includes("podologia") || nome.includes("podolatria")) return "fa-shoe-prints"
-
-if(nome.includes("reflexologia")) return "fa-shoe-prints"
-if(nome.includes("shiatsu")) return "fa-hands"
 
 return "fa-certificate"
 
 }
-
-/* RESTO DO CÓDIGO IGUAL (SEM ALTERAÇÃO) */
 
 async function carregarSelects(){
 
@@ -364,7 +254,6 @@ const {data:terapeutas}=await supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional")
 .eq("status","Ativo")
-.order("nome_profissional")
 
 selTer.innerHTML="<option value=''>Selecione</option>"
 
@@ -375,16 +264,12 @@ selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
 const {data:cert}=await supabaseClient
 .from("certificacoes")
 .select("id,nome")
-.order("nome")
 
 selCert.innerHTML="<option value=''>Selecione</option>"
 
 ;(cert||[]).forEach(c=>{
 selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 })
-
-document.getElementById("edit_cpf").innerHTML=selTer.innerHTML
-document.getElementById("edit_cert").innerHTML=selCert.innerHTML
 
 }
 
@@ -395,10 +280,8 @@ const {data}=await supabaseClient
 .select(`
 id,
 cpf_terapeuta,
-certificacao_id,
-data_obtencao,
-terapeutas(nome_profissional),
-certificacoes(nome)
+certificacoes(nome),
+terapeutas(nome_profissional)
 `)
 
 dados=data||[]
@@ -407,199 +290,64 @@ render()
 
 }
 
-function render(lista=dados){
+function render(){
 
-listaAtual=lista
+const agrupado={}
 
-const inicio=(pagina-1)*porPagina
-const pag=lista.slice(inicio,inicio+porPagina)
+dados.forEach(r=>{
+
+const nome=r.terapeutas?.nome_profissional||"Sem nome"
+const cert=r.certificacoes?.nome||""
+
+if(!agrupado[nome]){
+agrupado[nome]={nome,certs:[],ids:[]}
+}
+
+agrupado[nome].certs.push(cert)
+agrupado[nome].ids.push(r.id)
+
+})
 
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
-pag.forEach(r=>{
+Object.values(agrupado).forEach(t=>{
 
-const nomeCert=r.certificacoes?.nome||""
-const icone=iconeCertificacao(nomeCert)
+let icones=""
+
+t.certs.forEach(c=>{
+icones+=`<i class="fa-solid ${iconeCertificacao(c)}" title="${c}"></i>`
+})
 
 tbody.innerHTML+=`
 <tr>
-<td>${r.terapeutas?.nome_profissional||""}</td>
-
 <td>
 <div class="servico">
-<i class="fa-solid ${icone}"></i>
-${nomeCert}
+<strong>${t.nome}</strong>
+${icones}
 </div>
 </td>
 
-<td>${r.data_obtencao||""}</td>
-
 <td>
-<button class="editar" onclick="abrirModal('${r.id}')">Editar</button>
-<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
+<button class="excluir" onclick="excluir('${t.ids[0]}')">Excluir</button>
 </td>
 </tr>
 `
 
 })
 
-renderPaginacao(lista.length)
-
 }
 
 function filtrarTabela(){
 
-const termoTer=document.getElementById("buscaTerapeuta").value.toLowerCase()
-const termoCert=document.getElementById("buscaCertificacao").value.toLowerCase()
+const termo=document.getElementById("buscaTerapeuta").value.toLowerCase()
 
 const filtrado=dados.filter(d=>
-(d.terapeutas?.nome_profissional||"").toLowerCase().includes(termoTer)
-&&
-(d.certificacoes?.nome||"").toLowerCase().includes(termoCert)
+(d.terapeutas?.nome_profissional||"").toLowerCase().includes(termo)
 )
 
-pagina=1
-render(filtrado)
-
-}
-
-function ordenar(campo){
-
-ordem.asc=ordem.campo===campo?!ordem.asc:true
-ordem.campo=campo
-
-dados.sort((a,b)=>{
-
-let v1,v2
-
-if(campo==="terapeuta"){
-v1=a.terapeutas?.nome_profissional
-v2=b.terapeutas?.nome_profissional
-}
-
-if(campo==="certificacao"){
-v1=a.certificacoes?.nome
-v2=b.certificacoes?.nome
-}
-
-if(campo==="data"){
-v1=a.data_obtencao
-v2=b.data_obtencao
-}
-
-if(v1<v2) return ordem.asc?-1:1
-if(v1>v2) return ordem.asc?1:-1
-return 0
-
-})
-
+dados=filtrado
 render()
-
-}
-
-function renderPaginacao(total){
-
-const div=document.getElementById("paginacao")
-div.innerHTML=""
-
-if(porPagina>=total) return
-
-const totalPaginas=Math.ceil(total/porPagina)
-
-for(let i=1;i<=totalPaginas;i++){
-
-div.innerHTML+=`
-<button class="${i===pagina?'active':''}" onclick="irPagina(${i})">
-${i}
-</button>
-`
-
-}
-
-}
-
-function irPagina(p){
-pagina=p
-render(listaAtual)
-}
-
-function mudarPorPagina(){
-
-const valor=document.getElementById("porPaginaSelect").value
-
-if(valor==="todos"){
-porPagina=listaAtual.length||dados.length
-}else{
-porPagina=parseInt(valor)
-}
-
-pagina=1
-render(listaAtual)
-
-}
-
-function exportarExcel(){
-
-let visivel
-
-if(porPagina>=listaAtual.length){
-visivel=listaAtual
-}else{
-const inicio=(pagina-1)*porPagina
-const fim=inicio+porPagina
-visivel=listaAtual.slice(inicio,fim)
-}
-
-const exportData=visivel.map(r=>({
-Terapeuta:r.terapeutas?.nome_profissional,
-Certificacao:r.certificacoes?.nome,
-Data:r.data_obtencao
-}))
-
-const ws=XLSX.utils.json_to_sheet(exportData)
-const wb=XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb,ws,"Certificacoes")
-XLSX.writeFile(wb,"certificacoes.xlsx")
-
-}
-
-function abrirModal(id){
-
-const item=dados.find(d=>d.id==id)
-
-editId=id
-
-document.getElementById("edit_cpf").value=item.cpf_terapeuta
-document.getElementById("edit_cert").value=item.certificacao_id
-document.getElementById("edit_data").value=item.data_obtencao
-
-document.getElementById("modalEditar").style.display="flex"
-
-}
-
-function fecharModal(){
-document.getElementById("modalEditar").style.display="none"
-}
-
-async function atualizar(){
-
-const cpf=document.getElementById("edit_cpf").value
-const cert=document.getElementById("edit_cert").value
-const data=document.getElementById("edit_data").value
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.update({
-cpf_terapeuta:cpf,
-certificacao_id:cert,
-data_obtencao:data
-})
-.eq("id",editId)
-
-fecharModal()
-carregarLista()
 
 }
 
@@ -607,7 +355,6 @@ async function vincular(){
 
 const cpf=document.getElementById("cpf_terapeuta").value
 const cert=document.getElementById("certificacao_id").value
-const data=document.getElementById("data_obtencao").value
 
 if(!cpf||!cert){
 alert("Selecione terapeuta e certificação")
@@ -616,13 +363,8 @@ return
 
 await supabaseClient
 .from("terapeuta_certificacoes")
-.insert({
-cpf_terapeuta:cpf,
-certificacao_id:cert,
-data_obtencao:data||null
-})
+.insert({cpf_terapeuta:cpf,certificacao_id:cert})
 
-document.getElementById("data_obtencao").value=""
 carregarLista()
 
 }

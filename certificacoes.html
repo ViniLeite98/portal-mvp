@@ -127,6 +127,7 @@ padding:20px;
 border-radius:10px;
 width:420px;
 }
+
 </style>
 </head>
 
@@ -316,7 +317,6 @@ ${icones}
 </tr>
 `
 })
-
 }
 
 function filtrarTabela(){
@@ -357,36 +357,27 @@ let html=""
 
 registros.forEach(r=>{
 html+=`
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-
+<div style="display:flex;justify-content:space-between;margin-bottom:10px">
+<span>${r.certificacoes?.nome} - ${r.data_obtencao || "Sem data"}</span>
 <div>
-<strong>${r.certificacoes?.nome}</strong><br>
-
-<input type="date"
-value="${r.data_obtencao || ''}"
-onchange="editarCert('${r.id}', this.value)">
-</div>
-
-<div style="display:flex;gap:6px">
-<button class="editar">Editar</button>
+<button onclick="editarCert('${r.id}')">Editar</button>
 <button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
 </div>
-
 </div>
 `
 })
 
 document.getElementById("listaCerts").innerHTML=html
 document.getElementById("modalCerts").style.display="flex"
-
 }
 
 function fecharModal(){
 document.getElementById("modalCerts").style.display="none"
 }
 
-async function editarCert(id, novaData){
+async function editarCert(id){
 
+const novaData = prompt("Nova data (YYYY-MM-DD):")
 if(!novaData) return
 
 await supabaseClient
@@ -394,8 +385,7 @@ await supabaseClient
 .update({data_obtencao:novaData})
 .eq("id",id)
 
-alert("Data atualizada ✔")
-
+carregarLista()
 }
 
 async function vincular(){
@@ -431,7 +421,6 @@ await supabaseClient
 .eq("id",id)
 
 carregarLista()
-
 }
 
 function exportarExcel(){
@@ -446,8 +435,8 @@ const ws = XLSX.utils.json_to_sheet(exportData)
 const wb = XLSX.utils.book_new()
 
 XLSX.utils.book_append_sheet(wb, ws, "Certificacoes")
-XLSX.writeFile(wb, "certificacoes.xlsx")
 
+XLSX.writeFile(wb, "certificacoes.xlsx")
 }
 
 carregarSelects()

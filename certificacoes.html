@@ -37,8 +37,6 @@ padding:40px;
 
 h1{margin-top:0}
 
-/* FORM */
-
 .form-box{
 background:#fff;
 padding:20px;
@@ -62,8 +60,6 @@ border:1px solid #d1d5db;
 min-width:200px;
 }
 
-/* BOTÕES */
-
 button{
 background:#2563eb;
 color:#fff;
@@ -75,8 +71,6 @@ cursor:pointer;
 
 button.excluir{background:#dc2626}
 button.editar{background:#f59e0b}
-
-/* TABELA */
 
 table{
 width:100%;
@@ -97,8 +91,6 @@ background:#f9fafb;
 text-align:left;
 }
 
-/* ICONES */
-
 .servico{
 display:flex;
 align-items:center;
@@ -109,8 +101,6 @@ gap:8px;
 margin-left:6px;
 color:#6366f1;
 }
-
-/* MODAL */
 
 .modal{
 display:none;
@@ -140,7 +130,6 @@ width:420px;
 
 <h1>Certificações</h1>
 
-<!-- FORM -->
 <div class="form-box">
 
 <div>
@@ -162,7 +151,6 @@ width:420px;
 
 </div>
 
-<!-- LEGENDA -->
 <div style="margin-bottom:10px;font-size:13px;color:#555;">
 <strong>Legenda:</strong>
 <i class="fa-solid fa-person-dress"></i> Feminina |
@@ -226,7 +214,7 @@ oninput="filtrarTabela()"
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"SEU_TOKEN_AQUI"
 )
 
 let dados=[]
@@ -292,6 +280,14 @@ render(listaFiltrada)
 
 function render(lista){
 
+const ordem = [
+"fa-person-dress",
+"fa-user-group",
+"fa-droplet",
+"fa-spa",
+"fa-shoe-prints"
+]
+
 const agrupado={}
 
 lista.forEach(r=>{
@@ -309,11 +305,22 @@ tbody.innerHTML=""
 
 Object.values(agrupado).forEach(t=>{
 
-let icones=""
+let iconesLista = []
 
 t.certs.forEach(c=>{
-icones+=`<i class="fa-solid ${iconeCertificacao(c.certificacoes?.nome)}"></i>`
+const icone = iconeCertificacao(c.certificacoes?.nome)
+if(!iconesLista.includes(icone)){
+iconesLista.push(icone)
+}
 })
+
+iconesLista.sort((a,b)=>{
+return ordem.indexOf(a) - ordem.indexOf(b)
+})
+
+let icones = iconesLista.map(i =>
+`<i class="fa-solid ${i}"></i>`
+).join("")
 
 tbody.innerHTML+=`
 <tr>

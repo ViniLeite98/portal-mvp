@@ -127,11 +127,6 @@ padding:20px;
 border-radius:10px;
 width:420px;
 }
-
-.modal-box input[type="date"]{
-margin-left:10px;
-}
-
 </style>
 </head>
 
@@ -224,8 +219,6 @@ const supabaseClient = supabase.createClient(
 let dados=[]
 let listaFiltrada=[]
 
-/* ICONES */
-
 function iconeCertificacao(nome){
 if(!nome) return "fa-certificate"
 nome = nome.toLowerCase()
@@ -238,8 +231,6 @@ if(nome.includes("podologia") || nome.includes("podolatria")) return "fa-shoe-pr
 
 return "fa-certificate"
 }
-
-/* SELECTS */
 
 async function carregarSelects(){
 
@@ -267,8 +258,6 @@ selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 
 }
 
-/* LISTA */
-
 async function carregarLista(){
 
 const {data}=await supabaseClient
@@ -286,8 +275,6 @@ listaFiltrada = [...dados]
 render(listaFiltrada)
 
 }
-
-/* RENDER */
 
 function render(lista){
 
@@ -332,8 +319,6 @@ ${icones}
 
 }
 
-/* FILTRO */
-
 function filtrarTabela(){
 
 const termo = document
@@ -360,8 +345,6 @@ render(listaFiltrada)
 
 }
 
-/* MODAL */
-
 function abrirModal(nome){
 
 const registros = dados.filter(d =>
@@ -374,15 +357,21 @@ let html=""
 
 registros.forEach(r=>{
 html+=`
-<div style="display:flex;justify-content:space-between;margin-bottom:10px">
-<span>
-${r.certificacoes?.nome}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+
+<div>
+<strong>${r.certificacoes?.nome}</strong><br>
+
 <input type="date"
 value="${r.data_obtencao || ''}"
 onchange="editarCert('${r.id}', this.value)">
-</span>
+</div>
 
+<div style="display:flex;gap:6px">
+<button class="editar">Editar</button>
 <button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
+</div>
+
 </div>
 `
 })
@@ -396,8 +385,6 @@ function fecharModal(){
 document.getElementById("modalCerts").style.display="none"
 }
 
-/* EDITAR */
-
 async function editarCert(id, novaData){
 
 if(!novaData) return
@@ -407,9 +394,9 @@ await supabaseClient
 .update({data_obtencao:novaData})
 .eq("id",id)
 
-}
+alert("Data atualizada ✔")
 
-/* INSERIR */
+}
 
 async function vincular(){
 
@@ -434,8 +421,6 @@ carregarLista()
 
 }
 
-/* EXCLUIR */
-
 async function excluir(id){
 
 if(!confirm("Excluir vínculo?")) return
@@ -448,8 +433,6 @@ await supabaseClient
 carregarLista()
 
 }
-
-/* EXPORT */
 
 function exportarExcel(){
 
@@ -466,8 +449,6 @@ XLSX.utils.book_append_sheet(wb, ws, "Certificacoes")
 XLSX.writeFile(wb, "certificacoes.xlsx")
 
 }
-
-/* INIT */
 
 carregarSelects()
 carregarLista()

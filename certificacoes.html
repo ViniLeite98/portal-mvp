@@ -37,6 +37,68 @@ padding:40px;
 
 h1{margin-top:0}
 
+/* FORM */
+
+.form-box{
+background:#fff;
+padding:20px;
+border-radius:10px;
+display:flex;
+gap:20px;
+flex-wrap:wrap;
+margin-bottom:20px;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+.form-box div{
+display:flex;
+flex-direction:column;
+}
+
+select,input{
+padding:8px;
+border-radius:6px;
+border:1px solid #d1d5db;
+min-width:200px;
+}
+
+/* BOTÕES */
+
+button{
+background:#2563eb;
+color:#fff;
+border:none;
+padding:7px 14px;
+border-radius:6px;
+cursor:pointer;
+}
+
+button.excluir{background:#dc2626}
+button.editar{background:#f59e0b}
+
+/* TABELA */
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#fff;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #eee;
+}
+
+th{
+background:#f9fafb;
+text-align:left;
+}
+
+/* ICONES */
+
 .servico{
 display:flex;
 align-items:center;
@@ -48,32 +110,8 @@ margin-left:6px;
 color:#6366f1;
 }
 
-button{
-background:#2563eb;
-color:#fff;
-border:none;
-padding:6px 12px;
-border-radius:6px;
-cursor:pointer;
-}
-
-button.excluir{background:#dc2626}
-button.editar{background:#f59e0b}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:#fff;
-border-radius:10px;
-overflow:hidden;
-}
-
-th,td{
-padding:12px;
-border-bottom:1px solid #eee;
-}
-
 /* MODAL */
+
 .modal{
 display:none;
 position:fixed;
@@ -89,6 +127,7 @@ padding:20px;
 border-radius:10px;
 width:420px;
 }
+
 </style>
 </head>
 
@@ -102,9 +141,43 @@ width:420px;
 
 <h1>Certificações</h1>
 
-<input id="buscaTerapeuta" placeholder="Buscar terapeuta..." oninput="filtrarTabela()">
+<!-- FORM CADASTRO -->
+<div class="form-box">
 
+<div>
+<label>Terapeuta</label>
+<select id="cpf_terapeuta"></select>
+</div>
+
+<div>
+<label>Certificação</label>
+<select id="certificacao_id"></select>
+</div>
+
+<div>
+<label>Data</label>
+<input type="date" id="data_obtencao">
+</div>
+
+<button onclick="vincular()">Vincular</button>
+
+</div>
+
+<!-- LEGENDA -->
+<div style="margin-bottom:10px;font-size:13px;color:#555;">
+<strong>Legenda:</strong>
+<i class="fa-solid fa-person-dress"></i> Feminina |
+<i class="fa-solid fa-user-group"></i> Casais |
+<i class="fa-solid fa-droplet"></i> Nuru |
+<i class="fa-solid fa-spa"></i> Vivência |
+<i class="fa-solid fa-shoe-prints"></i> Podologia
+</div>
+
+<!-- BUSCA + EXPORT -->
+<input id="buscaTerapeuta" placeholder="Buscar terapeuta..." oninput="filtrarTabela()">
 <button onclick="exportarExcel()">Exportar Excel</button>
+
+<br><br>
 
 <table>
 <thead>
@@ -117,7 +190,6 @@ width:420px;
 </table>
 
 </main>
-
 </div>
 
 <!-- MODAL -->
@@ -156,9 +228,35 @@ if(nome.includes("podologia") || nome.includes("podolatria")) return "fa-shoe-pr
 return "fa-certificate"
 }
 
+async function carregarSelects(){
+
+const selTer=document.getElementById("cpf_terapeuta")
+const selCert=document.getElementById("certificacao_id")
+
+const {data:terapeutas}=await supabaseClient
+.from("terapeutas")
+.select("cpf,nome_profissional")
+.eq("status","Ativo")
+
+selTer.innerHTML="<option value=''>Selecione</option>"
+;(terapeutas||[]).forEach(t=>{
+selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
+})
+
+const {data:cert}=await supabaseClient
+.from("certificacoes")
+.select("id,nome")
+
+selCert.innerHTML="<option value=''>Selecione</option>"
+;(cert||[]).forEach(c=>{
+selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
+})
+
+}
+
 async function carregarLista(){
 
-const {data,error}=await supabaseClient
+const {data}=await supabaseClient
 .from("terapeuta_certificacoes")
 .select(`
 id,
@@ -166,11 +264,6 @@ data_obtencao,
 certificacoes(nome),
 terapeutas(nome_profissional)
 `)
-
-if(error){
-console.error(error)
-return
-}
 
 dados = data || []
 listaFiltrada = [...dados]
@@ -254,9 +347,7 @@ let html=""
 registros.forEach(r=>{
 html+=`
 <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-<span>
-${r.certificacoes?.nome} - ${r.data_obtencao || "Sem data"}
-</span>
+<span>${r.certificacoes?.nome} - ${r.data_obtencao || "Sem data"}</span>
 <div>
 <button onclick="editarCert('${r.id}')">Editar</button>
 <button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
@@ -284,6 +375,29 @@ await supabaseClient
 .eq("id",id)
 
 carregarLista()
+}
+
+async function vincular(){
+
+const cpf=document.getElementById("cpf_terapeuta").value
+const cert=document.getElementById("certificacao_id").value
+const data=document.getElementById("data_obtencao").value
+
+if(!cpf||!cert){
+alert("Selecione terapeuta e certificação")
+return
+}
+
+await supabaseClient
+.from("terapeuta_certificacoes")
+.insert({
+cpf_terapeuta:cpf,
+certificacao_id:cert,
+data_obtencao:data||null
+})
+
+carregarLista()
+
 }
 
 async function excluir(id){
@@ -314,6 +428,7 @@ XLSX.utils.book_append_sheet(wb, ws, "Certificacoes")
 XLSX.writeFile(wb, "certificacoes.xlsx")
 }
 
+carregarSelects()
 carregarLista()
 
 </script>

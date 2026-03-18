@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <title>Fluxo de Caixa | Hara Spa</title>
 
+<!-- ICONES -->
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<!-- SIDEBAR -->
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
@@ -147,11 +152,12 @@ text-align:left;
 <script>
 
 const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"https://SEU_PROJETO.supabase.co",
+"SEU_TOKEN"
 )
 
 let dados=[]
+let servicosMap={}
 
 // cálculo automático
 document.getElementById("valor").oninput = calcular
@@ -168,38 +174,45 @@ document.getElementById("final").value = valor - desconto
 async function carregarSelects(){
 
 // CLIENTES
-const {data:clientes, error:erroClientes} = await supabaseClient
+const {data:clientes} = await supabaseClient
 .from("clientes")
 .select("*")
-
-console.log("CLIENTES:", clientes)
 
 const selCliente = document.getElementById("cliente")
 selCliente.innerHTML = "<option value=''>Selecione</option>"
 
-if(clientes){
-clientes.forEach(c=>{
+clientes?.forEach(c=>{
 const nome = c.nome || c.nome_cliente || "Sem nome"
 selCliente.innerHTML += `<option value="${c.id}">${nome}</option>`
 })
-}
 
 // SERVIÇOS
-const {data:servicos, error:erroServicos} = await supabaseClient
+const {data:servicos} = await supabaseClient
 .from("servicos")
 .select("*")
-
-console.log("SERVICOS:", servicos)
 
 const selServico = document.getElementById("servico")
 selServico.innerHTML = "<option value=''>Selecione</option>"
 
-if(servicos){
-servicos.forEach(s=>{
-const nome = s.nome || "Sem nome"
+servicos?.forEach(s=>{
+const nome = s.grupo || "Sem nome"
+
+// salva para auto preencher valor
+servicosMap[s.id] = s
+
 selServico.innerHTML += `<option value="${s.id}">${nome}</option>`
 })
+
+// 🔥 AUTO PREENCHER VALOR
+document.getElementById("servico").addEventListener("change", function(){
+const id = this.value
+const servico = servicosMap[id]
+
+if(servico){
+document.getElementById("valor").value = servico.valor || 50
+calcular()
 }
+})
 
 }
 
@@ -233,15 +246,15 @@ carregarLista()
 
 }
 
-// listar
+// lista
 async function carregarLista(){
 
 const {data} = await supabaseClient
 .from("fluxo_caixa")
 .select(`
 *,
-clientes(nome),
-servicos(nome)
+clientes(*),
+servicos(*)
 `)
 .order("data",{ascending:false})
 
@@ -259,8 +272,8 @@ dados.forEach(r=>{
 tbody.innerHTML += `
 <tr>
 <td>${r.data}</td>
-<td>${r.clientes?.nome || ""}</td>
-<td>${r.servicos?.nome || ""}</td>
+<td>${r.clientes?.nome || r.clientes?.nome_cliente || ""}</td>
+<td>${r.servicos?.grupo || ""}</td>
 <td>R$ ${r.valor}</td>
 <td>R$ ${r.desconto}</td>
 <td><strong>R$ ${r.valor_final}</strong></td>

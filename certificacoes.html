@@ -126,25 +126,37 @@ gap:8px;
 .servico i{
 margin-left:6px;
 color:#6366f1;
+cursor:pointer;
 }
 
-/* PAGINAÇÃO */
+/* MODAL */
 
-.pagination{
+.modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.45);
+align-items:center;
+justify-content:center;
+}
+
+.modal-box{
+background:#fff;
+padding:25px;
+border-radius:10px;
+width:420px;
+}
+
+.modal-actions{
 margin-top:20px;
 display:flex;
-gap:6px;
+gap:10px;
 }
 
-.pagination button{
-background:#e5e7eb;
-color:#111;
-}
-
-.pagination button.active{
-background:#2563eb;
-color:#fff;
-}
+.cancelar{background:#6b7280}
 
 </style>
 </head>
@@ -193,9 +205,11 @@ color:#fff;
 <div class="topbar">
 
 <div class="busca">
-
 <input id="buscaTerapeuta" placeholder="Buscar terapeuta..." oninput="filtrarTabela()">
+</div>
 
+<div>
+<button onclick="exportarExcel()">Exportar Excel</button>
 </div>
 
 </div>
@@ -215,6 +229,18 @@ color:#fff;
 
 </main>
 
+</div>
+
+<!-- MODAL -->
+<div id="modalCerts" class="modal">
+  <div class="modal-box">
+    <h2 id="tituloModal"></h2>
+    <div id="listaCerts"></div>
+
+    <div class="modal-actions">
+      <button class="cancelar" onclick="fecharModal()">Fechar</button>
+    </div>
+  </div>
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -280,12 +306,12 @@ const {data}=await supabaseClient
 .select(`
 id,
 cpf_terapeuta,
+data_obtencao,
 certificacoes(nome),
 terapeutas(nome_profissional)
 `)
 
 dados=data||[]
-
 render()
 
 }
@@ -295,17 +321,11 @@ function render(){
 const agrupado={}
 
 dados.forEach(r=>{
-
 const nome=r.terapeutas?.nome_profissional||"Sem nome"
-const cert=r.certificacoes?.nome||""
-
 if(!agrupado[nome]){
-agrupado[nome]={nome,certs:[],ids:[]}
+agrupado[nome]={nome,certs:[]}
 }
-
-agrupado[nome].certs.push(cert)
-agrupado[nome].ids.push(r.id)
-
+agrupado[nome].certs.push(r)
 })
 
 const tbody=document.getElementById("lista")
@@ -316,26 +336,75 @@ Object.values(agrupado).forEach(t=>{
 let icones=""
 
 t.certs.forEach(c=>{
-icones+=`<i class="fa-solid ${iconeCertificacao(c)}" title="${c}"></i>`
+icones+=`<i class="fa-solid ${iconeCertificacao(c.certificacoes?.nome)}" title="${c.certificacoes?.nome}"></i>`
 })
 
 tbody.innerHTML+=`
 <tr>
 <td>
 <div class="servico">
-<strong>${t.nome}</strong>
+<strong onclick="abrirModal('${t.nome}')" style="cursor:pointer">
+${t.nome}
+</strong>
 ${icones}
 </div>
 </td>
 
-<td>
-<button class="excluir" onclick="excluir('${t.ids[0]}')">Excluir</button>
-</td>
+<td>-</td>
 </tr>
 `
 
 })
 
+}
+
+function abrirModal(nome){
+
+const registros = dados.filter(d =>
+d.terapeutas?.nome_profissional === nome
+)
+
+document.getElementById("tituloModal").innerText = nome
+
+let html = ""
+
+registros.forEach(r=>{
+html += `
+<div style="display:flex;justify-content:space-between;margin-bottom:10px">
+<span>
+<i class="fa-solid ${iconeCertificacao(r.certificacoes?.nome)}"></i>
+${r.certificacoes?.nome} - ${r.data_obtencao || "Sem data"}
+</span>
+
+<div>
+<button onclick="editarCert('${r.id}')">Editar</button>
+<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
+</div>
+</div>
+`
+})
+
+document.getElementById("listaCerts").innerHTML = html
+document.getElementById("modalCerts").style.display = "flex"
+
+}
+
+function fecharModal(){
+document.getElementById("modalCerts").style.display="none"
+}
+
+async function editarCert(id){
+
+const novaData = prompt("Nova data (YYYY-MM-DD):")
+
+if(!novaData) return
+
+await supabaseClient
+.from("terapeuta_certificacoes")
+.update({data_obtencao:novaData})
+.eq("id",id)
+
+carregarLista()
 }
 
 function filtrarTabela(){
@@ -355,6 +424,7 @@ async function vincular(){
 
 const cpf=document.getElementById("cpf_terapeuta").value
 const cert=document.getElementById("certificacao_id").value
+const data=document.getElementById("data_obtencao").value
 
 if(!cpf||!cert){
 alert("Selecione terapeuta e certificação")
@@ -363,10 +433,13 @@ return
 
 await supabaseClient
 .from("terapeuta_certificacoes")
-.insert({cpf_terapeuta:cpf,certificacao_id:cert})
+.insert({
+cpf_terapeuta:cpf,
+certificacao_id:cert,
+data_obtencao:data||null
+})
 
 carregarLista()
-
 }
 
 async function excluir(id){
@@ -379,6 +452,22 @@ await supabaseClient
 .eq("id",id)
 
 carregarLista()
+}
+
+function exportarExcel(){
+
+const exportData = dados.map(r => ({
+Terapeuta: r.terapeutas?.nome_profissional,
+Certificacao: r.certificacoes?.nome,
+Data: r.data_obtencao
+}))
+
+const ws = XLSX.utils.json_to_sheet(exportData)
+const wb = XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb, ws, "Certificacoes")
+
+XLSX.writeFile(wb, "certificacoes.xlsx")
 
 }
 

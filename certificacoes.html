@@ -141,7 +141,7 @@ width:420px;
 
 <h1>Certificações</h1>
 
-<!-- FORM CADASTRO -->
+<!-- FORM -->
 <div class="form-box">
 
 <div>
@@ -173,8 +173,13 @@ width:420px;
 <i class="fa-solid fa-shoe-prints"></i> Podologia
 </div>
 
-<!-- BUSCA + EXPORT -->
-<input id="buscaTerapeuta" placeholder="Buscar terapeuta..." oninput="filtrarTabela()">
+<!-- BUSCA -->
+<input 
+id="buscaTerapeuta" 
+placeholder="Buscar terapeuta ou certificação..."
+oninput="filtrarTabela()"
+>
+
 <button onclick="exportarExcel()">Exportar Excel</button>
 
 <br><br>
@@ -316,7 +321,10 @@ ${icones}
 
 function filtrarTabela(){
 
-const termo=document.getElementById("buscaTerapeuta").value.toLowerCase()
+const termo = document
+.getElementById("buscaTerapeuta")
+.value
+.toLowerCase()
 
 if(!termo){
 listaFiltrada = [...dados]
@@ -324,11 +332,14 @@ render(listaFiltrada)
 return
 }
 
-listaFiltrada = dados.filter(d =>
-(d.terapeutas?.nome_profissional||"")
-.toLowerCase()
-.includes(termo)
-)
+listaFiltrada = dados.filter(d => {
+
+const nome = (d.terapeutas?.nome_profissional || "").toLowerCase()
+const cert = (d.certificacoes?.nome || "").toLowerCase()
+
+return nome.includes(termo) || cert.includes(termo)
+
+})
 
 render(listaFiltrada)
 

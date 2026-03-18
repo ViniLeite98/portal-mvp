@@ -127,7 +127,6 @@ padding:20px;
 border-radius:10px;
 width:420px;
 }
-
 </style>
 </head>
 
@@ -173,7 +172,6 @@ width:420px;
 <i class="fa-solid fa-shoe-prints"></i> Podologia
 </div>
 
-<!-- BUSCA -->
 <input 
 id="buscaTerapeuta" 
 placeholder="Buscar terapeuta ou certificação..."
@@ -197,13 +195,27 @@ oninput="filtrarTabela()"
 </main>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL LISTA -->
 <div id="modalCerts" class="modal">
 <div class="modal-box">
 <h3 id="tituloModal"></h3>
 <div id="listaCerts"></div>
 <br>
 <button onclick="fecharModal()">Fechar</button>
+</div>
+</div>
+
+<!-- MODAL DATA -->
+<div id="modalEditarData" class="modal">
+<div class="modal-box">
+<h3>Editar Data</h3>
+
+<input type="date" id="novaDataInput" style="width:100%;margin-bottom:15px;">
+
+<div style="display:flex;gap:10px;justify-content:flex-end">
+<button onclick="salvarNovaData()">Salvar</button>
+<button class="excluir" onclick="fecharModalData()">Cancelar</button>
+</div>
 </div>
 </div>
 
@@ -219,6 +231,7 @@ const supabaseClient = supabase.createClient(
 
 let dados=[]
 let listaFiltrada=[]
+let editandoId=null
 
 function iconeCertificacao(nome){
 if(!nome) return "fa-certificate"
@@ -360,7 +373,7 @@ html+=`
 <div style="display:flex;justify-content:space-between;margin-bottom:10px">
 <span>${r.certificacoes?.nome} - ${r.data_obtencao || "Sem data"}</span>
 <div>
-<button onclick="editarCert('${r.id}')">Editar</button>
+<button onclick="editarCert('${r.id}','${r.data_obtencao || ""}')">Editar</button>
 <button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
 </div>
 </div>
@@ -375,16 +388,35 @@ function fecharModal(){
 document.getElementById("modalCerts").style.display="none"
 }
 
-async function editarCert(id){
+function editarCert(id,dataAtual){
 
-const novaData = prompt("Nova data (YYYY-MM-DD):")
-if(!novaData) return
+editandoId=id
+
+const input=document.getElementById("novaDataInput")
+input.value=dataAtual||""
+
+document.getElementById("modalEditarData").style.display="flex"
+}
+
+function fecharModalData(){
+document.getElementById("modalEditarData").style.display="none"
+}
+
+async function salvarNovaData(){
+
+const novaData=document.getElementById("novaDataInput").value
+
+if(!novaData){
+alert("Selecione uma data")
+return
+}
 
 await supabaseClient
 .from("terapeuta_certificacoes")
 .update({data_obtencao:novaData})
-.eq("id",id)
+.eq("id",editandoId)
 
+fecharModalData()
 carregarLista()
 }
 

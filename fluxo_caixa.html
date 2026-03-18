@@ -4,94 +4,50 @@
 <meta charset="UTF-8">
 <title>Fluxo de Caixa | Hara Spa</title>
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-
-*{box-sizing:border-box}
-
-body{
-margin:0;
-font-family:'Segoe UI',sans-serif;
-background:#f4f6fb;
-}
-
-.app{
-display:flex;
-min-height:100vh;
-}
-
-#sidebar{
-width:260px;
-flex-shrink:0;
-}
-
-.content{
-flex:1;
-padding:40px;
-}
-
-h1{margin-top:0}
-
-/* FORM */
+body{margin:0;font-family:Segoe UI;background:#f4f6fb}
+.app{display:flex}
+.content{flex:1;padding:40px}
 
 .form-box{
 background:#fff;
 padding:20px;
 border-radius:10px;
 display:flex;
-gap:20px;
+gap:15px;
 flex-wrap:wrap;
 margin-bottom:20px;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-.form-box div{
-display:flex;
-flex-direction:column;
 }
 
 input,select{
 padding:8px;
 border-radius:6px;
-border:1px solid #d1d5db;
-min-width:180px;
+border:1px solid #ccc;
 }
 
 button{
 background:#2563eb;
-color:white;
+color:#fff;
 border:none;
-padding:8px 16px;
+padding:10px 15px;
 border-radius:6px;
 cursor:pointer;
 }
 
-/* TABELA */
-
 table{
 width:100%;
+background:#fff;
 border-collapse:collapse;
-background:white;
 border-radius:10px;
 overflow:hidden;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
 th,td{
-padding:12px;
+padding:10px;
 border-bottom:1px solid #eee;
-font-size:14px;
 }
-
-th{
-background:#f9fafb;
-text-align:left;
-}
-
 </style>
 </head>
 
@@ -107,42 +63,23 @@ text-align:left;
 
 <div class="form-box">
 
-<div>
-<label>Data</label>
 <input type="date" id="data">
-</div>
 
-<div>
-<label>Cliente</label>
-<input type="text" id="cliente">
-</div>
+<select id="cliente"></select>
 
-<div>
-<label>Serviço</label>
 <select id="servico"></select>
-</div>
 
-<div>
-<label>Valor</label>
-<input type="number" id="valor">
-</div>
+<input type="number" id="valor" value="50">
 
-<div>
-<label>Desconto</label>
 <input type="number" id="desconto" value="0">
-</div>
 
-<div>
-<label>Valor Final</label>
-<input type="number" id="valor_final" readonly>
-</div>
+<input type="number" id="final" disabled>
 
-<button onclick="adicionar()">Adicionar</button>
+<button onclick="salvar()">Adicionar</button>
 
 </div>
 
 <table>
-
 <thead>
 <tr>
 <th>Data</th>
@@ -151,143 +88,151 @@ text-align:left;
 <th>Valor</th>
 <th>Desconto</th>
 <th>Final</th>
+<th>Ações</th>
 </tr>
 </thead>
-
 <tbody id="lista"></tbody>
-
 </table>
 
 </main>
-
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
 const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"https://SEU_PROJETO.supabase.co",
+"SEU_TOKEN"
 )
 
-let registros=[]
+let dados=[]
 
-/* DATA ATUAL */
-
-document.getElementById("data").value =
-new Date().toISOString().split("T")[0]
-
-/* CARREGAR SERVIÇOS */
-
-async function carregarServicos(){
-
-const {data}=await supabaseClient
-.from("servicos")
-.select("id,nome,valor")
-.order("nome")
-
-const select=document.getElementById("servico")
-
-select.innerHTML="<option value=''>Selecione</option>"
-
-data.forEach(s=>{
-
-select.innerHTML+=`
-<option value="${s.id}" data-valor="${s.valor}">
-${s.nome}
-</option>
-`
-
-})
-
-}
-
-carregarServicos()
-
-/* PREENCHER VALOR AUTOMÁTICO */
-
-document
-.getElementById("servico")
-.addEventListener("change",function(){
-
-const valor =
-this.options[this.selectedIndex].dataset.valor
-
-document.getElementById("valor").value = valor || ""
-
-calcular()
-
-})
-
-/* CALCULAR FINAL */
+// calcular automático
+document.getElementById("valor").oninput = calcular
+document.getElementById("desconto").oninput = calcular
 
 function calcular(){
+const valor = parseFloat(document.getElementById("valor").value || 0)
+const desconto = parseFloat(document.getElementById("desconto").value || 0)
 
-const valor =
-parseFloat(document.getElementById("valor").value) || 0
+document.getElementById("final").value = valor - desconto
+}
 
-const desconto =
-parseFloat(document.getElementById("desconto").value) || 0
+// carregar selects
+async function carregarSelects(){
 
-document.getElementById("valor_final").value =
-valor - desconto
+const {data:clientes} = await supabaseClient
+.from("clientes")
+.select("id,nome")
+
+const selCliente = document.getElementById("cliente")
+selCliente.innerHTML = "<option>Cliente</option>"
+
+clientes.forEach(c=>{
+selCliente.innerHTML += `<option value="${c.id}">${c.nome}</option>`
+})
+
+const {data:servicos} = await supabaseClient
+.from("servicos")
+.select("id,nome")
+
+const selServico = document.getElementById("servico")
+selServico.innerHTML = "<option>Serviço</option>"
+
+servicos.forEach(s=>{
+selServico.innerHTML += `<option value="${s.id}">${s.nome}</option>`
+})
 
 }
 
-document
-.getElementById("valor")
-.addEventListener("input",calcular)
+// salvar
+async function salvar(){
 
-document
-.getElementById("desconto")
-.addEventListener("input",calcular)
+const data = document.getElementById("data").value
+const cliente = document.getElementById("cliente").value
+const servico = document.getElementById("servico").value
+const valor = parseFloat(document.getElementById("valor").value)
+const desconto = parseFloat(document.getElementById("desconto").value || 0)
+const final = valor - desconto
 
-/* ADICIONAR NA TABELA */
-
-function adicionar(){
-
-const data=document.getElementById("data").value
-const cliente=document.getElementById("cliente").value
-const servico=document.getElementById("servico").selectedOptions[0].text
-const valor=document.getElementById("valor").value
-const desconto=document.getElementById("desconto").value
-const final=document.getElementById("valor_final").value
-
-const item={
-data,cliente,servico,valor,desconto,final
+if(!data || !cliente || !servico){
+alert("Preencha tudo")
+return
 }
 
-registros.push(item)
+await supabaseClient
+.from("fluxo_caixa")
+.insert({
+data,
+cliente_id:cliente,
+servico_id:servico,
+valor,
+desconto,
+valor_final:final
+})
+
+carregarLista()
+
+}
+
+// lista
+async function carregarLista(){
+
+const {data} = await supabaseClient
+.from("fluxo_caixa")
+.select(`
+*,
+clientes(nome),
+servicos(nome)
+`)
+.order("data",{ascending:false})
+
+dados = data || []
 
 render()
-
 }
-
-/* RENDER */
 
 function render(){
 
-const tbody=document.getElementById("lista")
-tbody.innerHTML=""
+const tbody = document.getElementById("lista")
+tbody.innerHTML = ""
 
-registros.forEach(r=>{
-
-tbody.innerHTML+=`
+dados.forEach(r=>{
+tbody.innerHTML += `
 <tr>
 <td>${r.data}</td>
-<td>${r.cliente}</td>
-<td>${r.servico}</td>
-<td>${r.valor}</td>
-<td>${r.desconto}</td>
-<td>${r.final}</td>
+<td>${r.clientes?.nome || ""}</td>
+<td>${r.servicos?.nome || ""}</td>
+<td>R$ ${r.valor}</td>
+<td>R$ ${r.desconto}</td>
+<td><strong>R$ ${r.valor_final}</strong></td>
+<td>
+<button onclick="excluir('${r.id}')">Excluir</button>
+</td>
 </tr>
 `
-
 })
 
 }
+
+// excluir
+async function excluir(id){
+
+if(!confirm("Excluir?")) return
+
+await supabaseClient
+.from("fluxo_caixa")
+.delete()
+.eq("id",id)
+
+carregarLista()
+}
+
+// init
+carregarSelects()
+carregarLista()
+calcular()
 
 </script>
 

@@ -9,6 +9,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<!-- EXCEL -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <style>
 body{margin:0;font-family:Segoe UI;background:#f4f6fb}
 .app{display:flex}
@@ -154,6 +157,7 @@ width:350px;
 
 <button onclick="filtrar()">Filtrar</button>
 <button onclick="limparFiltro()">Limpar</button>
+<button onclick="exportarExcel()">Exportar Excel</button>
 
 </div>
 
@@ -215,24 +219,25 @@ const supabaseClient = supabase.createClient(
 )
 
 let dados=[]
+let listaAtual=[]
 let dadosClientes=[]
 let dadosServicos=[]
 let servicosMap={}
 let editandoId=null
 
 function hoje(){
-const d = new Date()
-const offset = d.getTimezoneOffset()
+const d=new Date()
+const offset=d.getTimezoneOffset()
 return new Date(d.getTime()-offset*60000).toISOString().split("T")[0]
 }
 
-data.value = hoje()
+data.value=hoje()
 
-valor.oninput = calcular
-desconto.oninput = calcular
+valor.oninput=calcular
+desconto.oninput=calcular
 
 function calcular(){
-final.value = (parseFloat(valor.value||0) - parseFloat(desconto.value||0))
+final.value=(parseFloat(valor.value||0)-parseFloat(desconto.value||0))
 }
 
 function formatar(v){
@@ -242,34 +247,34 @@ return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
 // carregar selects
 async function carregarSelects(){
 
-const {data:clientes} = await supabaseClient.from("clientes").select("*")
-dadosClientes = clientes || []
+const {data:clientes}=await supabaseClient.from("clientes").select("*")
+dadosClientes=clientes||[]
 
-cliente.innerHTML = "<option value=''>Selecione</option>"
-filtroCliente.innerHTML = "<option value=''>Todos</option>"
+cliente.innerHTML="<option value=''>Selecione</option>"
+filtroCliente.innerHTML="<option value=''>Todos</option>"
 
 dadosClientes.forEach(c=>{
-const nome = c.nome || c.nome_cliente
-cliente.innerHTML += `<option value="${c.id}">${nome}</option>`
-filtroCliente.innerHTML += `<option value="${c.id}">${nome}</option>`
+const nome=c.nome||c.nome_cliente
+cliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
+filtroCliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
 })
 
-const {data:servicos} = await supabaseClient.from("servicos").select("*")
-dadosServicos = servicos || []
+const {data:servicos}=await supabaseClient.from("servicos").select("*")
+dadosServicos=servicos||[]
 
-servico.innerHTML = "<option value=''>Selecione</option>"
-filtroServico.innerHTML = "<option value=''>Todos</option>"
+servico.innerHTML="<option value=''>Selecione</option>"
+filtroServico.innerHTML="<option value=''>Todos</option>"
 
 dadosServicos.forEach(s=>{
 servicosMap[s.id]=s
-servico.innerHTML += `<option value="${s.id}">${s.grupo}</option>`
-filtroServico.innerHTML += `<option value="${s.id}">${s.grupo}</option>`
+servico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
+filtroServico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
 })
 
 servico.addEventListener("change",()=>{
-const s = servicosMap[servico.value]
+const s=servicosMap[servico.value]
 if(s){
-valor.value = s.valor || 50
+valor.value=s.valor||50
 calcular()
 }
 })
@@ -279,7 +284,7 @@ calcular()
 // salvar
 async function salvar(){
 
-if(!data.value || !cliente.value || !servico.value){
+if(!data.value||!cliente.value||!servico.value){
 alert("Preencha tudo")
 return
 }
@@ -305,27 +310,31 @@ carregarLista()
 // lista
 async function carregarLista(){
 
-const {data} = await supabaseClient
+const {data}=await supabaseClient
 .from("fluxo_caixa")
 .select(`*,clientes(*),servicos(*)`)
 .order("data",{ascending:false})
 
-dados = data || []
+dados=data||[]
 render(dados)
 }
 
 function render(lista){
 
-lista.forEach(r=>{}) // só pra garantir escopo
+listaAtual=lista
 
-const tbody = document.getElementById("lista")
+lista.forEach(r=>{})
+
+lista.forEach(r=>{})
+
+const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
 lista.forEach(r=>{
 tbody.innerHTML+=`
 <tr>
 <td>${r.data}</td>
-<td>${r.clientes?.nome || r.clientes?.nome_cliente}</td>
+<td>${r.clientes?.nome||r.clientes?.nome_cliente}</td>
 <td>${r.servicos?.grupo}</td>
 <td>${formatar(r.valor)}</td>
 <td>${formatar(r.desconto)}</td>
@@ -342,22 +351,22 @@ tbody.innerHTML+=`
 // filtro
 function filtrar(){
 
-let lista = [...dados]
+let lista=[...dados]
 
 if(filtroInicio.value){
-lista = lista.filter(d=>d.data >= filtroInicio.value)
+lista=lista.filter(d=>d.data>=filtroInicio.value)
 }
 
 if(filtroFim.value){
-lista = lista.filter(d=>d.data <= filtroFim.value)
+lista=lista.filter(d=>d.data<=filtroFim.value)
 }
 
 if(filtroCliente.value){
-lista = lista.filter(d=>d.cliente_id == filtroCliente.value)
+lista=lista.filter(d=>d.cliente_id==filtroCliente.value)
 }
 
 if(filtroServico.value){
-lista = lista.filter(d=>d.servico_id == filtroServico.value)
+lista=lista.filter(d=>d.servico_id==filtroServico.value)
 }
 
 render(lista)
@@ -371,11 +380,36 @@ filtroServico.value=""
 render(dados)
 }
 
+// exportar
+function exportarExcel(){
+
+if(!listaAtual.length){
+alert("Nada para exportar")
+return
+}
+
+const exportData=listaAtual.map(r=>({
+Data:r.data,
+Cliente:r.clientes?.nome||r.clientes?.nome_cliente,
+Servico:r.servicos?.grupo,
+Valor:r.valor,
+Desconto:r.desconto,
+Final:r.valor_final
+}))
+
+const ws=XLSX.utils.json_to_sheet(exportData)
+const wb=XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb,ws,"Fluxo de Caixa")
+
+XLSX.writeFile(wb,"fluxo_caixa.xlsx")
+}
+
 // editar
 function abrirEditar(id){
 
 editandoId=id
-const r = dados.find(d=>d.id==id)
+const r=dados.find(d=>d.id==id)
 
 editCliente.innerHTML="<option value=''>Selecione</option>"
 dadosClientes.forEach(c=>{

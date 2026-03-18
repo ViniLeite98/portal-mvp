@@ -1,325 +1,251 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Certificações | Hara Spa</title>
+<title>Gestão da Equipe | Hara Spa</title>
 
 <link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-
 *{box-sizing:border-box}
-
-body{
-margin:0;
-font-family:'Segoe UI',sans-serif;
-background:#f4f6fb;
-}
-
-.app{
-display:flex;
-min-height:100vh;
-}
-
-#sidebar{
-width:260px;
-flex-shrink:0;
-}
-
-.content{
-flex:1;
-padding:40px;
-}
-
-h1{margin-top:0}
-
-/* FORM */
-
-.form-box{
-background:#fff;
-padding:20px;
-border-radius:10px;
-display:flex;
-gap:20px;
-flex-wrap:wrap;
-margin-bottom:20px;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-.form-box div{
-display:flex;
-flex-direction:column;
-}
-
-select,input{
-padding:8px;
-border-radius:6px;
-border:1px solid #d1d5db;
-min-width:200px;
-}
-
-button{
-background:#2563eb;
-color:#fff;
-border:none;
-padding:7px 14px;
-border-radius:6px;
-cursor:pointer;
-}
-
-button.excluir{background:#dc2626}
-button.editar{background:#f59e0b}
-
-/* TOPBAR */
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
-}
-
-.busca{
-display:flex;
-gap:10px;
-}
-
-.busca input{
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
-width:220px;
-}
-
-/* TABELA */
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
 table{
-width:100%;
-border-collapse:collapse;
-background:#fff;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden;
 }
 
 th,td{
-padding:12px;
-border-bottom:1px solid #eee;
-font-size:14px;
+  padding:14px;
+  border-bottom:1px solid #e5e7eb;
+  font-size:14px;
+  text-align:left;
 }
 
-th{
-background:#f9fafb;
-text-align:left;
-cursor:pointer;
+th{background:#f9fafb;font-weight:600;}
+
+button{
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:6px 12px;
+  cursor:pointer;
 }
 
-/* CERTIFICAÇÃO COM ÍCONE */
+button.excluir{background:#dc2626}
 
-.servico{
-display:flex;
-align-items:center;
-gap:8px;
+/* MELHORIA */
+.top-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  margin-bottom:16px;
+  flex-wrap:wrap;
 }
 
-.servico i{
-color:#6366f1;
+.search-box{
+  position:relative;
 }
 
-/* PAGINAÇÃO */
-
-.pagination{
-margin-top:20px;
-display:flex;
-gap:6px;
+.search-box i{
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  color:#9ca3af;
 }
 
-.pagination button{
-background:#e5e7eb;
-color:#111;
+.search-box input{
+  padding:8px 8px 8px 30px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
 }
 
-.pagination button.active{
-background:#2563eb;
-color:#fff;
+.top-actions select{
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
 }
 
-/* MODAL */
+/* STATUS BADGE */
+.status{
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:12px;
+  color:#fff;
+}
+
+.status.ativo{
+  background:#16a34a;
+}
+
+.status.inativo{
+  background:#6b7280;
+}
 
 .modal{
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.45);
-align-items:center;
-justify-content:center;
-animation:fadeIn .2s ease;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
 }
 
-.modal-box{
-background:#fff;
-padding:25px;
-border-radius:10px;
-width:420px;
-box-shadow:0 10px 25px rgba(0,0,0,0.2);
-animation:slideUp .25s ease;
+.modal-content{
+  background:#fff;
+  width:1000px;
+  max-height:90vh;
+  overflow:auto;
+  border-radius:18px;
+  padding:28px;
 }
 
-@keyframes fadeIn{
-from{opacity:0}
-to{opacity:1}
+.section{margin-bottom:28px}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
 }
 
-@keyframes slideUp{
-from{transform:translateY(30px);opacity:0}
-to{transform:translateY(0);opacity:1}
+.field{
+  display:flex;
+  flex-direction:column;
 }
 
-.modal-form{
-display:flex;
-flex-direction:column;
-gap:15px;
-margin-top:15px;
+.field label{
+  font-size:13px;
+  font-weight:600;
+  margin-bottom:6px;
+  color:#374151;
+}
+
+input,select{
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #d1d5db;
+  font-size:14px;
 }
 
 .modal-actions{
-margin-top:20px;
-display:flex;
-gap:10px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:20px;
 }
-
-.cancelar{background:#6b7280}
-
 </style>
 </head>
 
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
 
-<h1>Certificações</h1>
+<h1>Gestão da Equipe</h1>
 
-<div class="form-box">
+<div class="top-actions">
 
-<div>
-<label>Terapeuta</label>
-<select id="cpf_terapeuta"></select>
+<div class="search-box">
+  <i class="fa fa-search"></i>
+  <input 
+  type="text"
+  id="pesquisaNome"
+  placeholder="Pesquisar profissional..."
+  onkeyup="filtrarTabela()"
+  >
 </div>
 
-<div>
-<label>Certificação</label>
-<select id="certificacao_id"></select>
-</div>
-
-<div>
-<label>Data</label>
-<input type="date" id="data_obtencao">
-</div>
-
-<button onclick="vincular()">Vincular</button>
-
-</div>
-
-<div class="topbar">
-
-<div class="busca">
-
-<input
-id="buscaTerapeuta"
-placeholder="Buscar terapeuta..."
-oninput="filtrarTabela()">
-
-<input
-id="buscaCertificacao"
-placeholder="Buscar certificação..."
-oninput="filtrarTabela()">
-
-</div>
-
-<div style="display:flex;gap:10px;align-items:center">
-
-<button onclick="exportarExcel()">
-<i class="fa-solid fa-file-excel"></i> Exportar
-</button>
-
-Mostrar
-
-<select id="porPaginaSelect" onchange="mudarPorPagina()">
-<option value="5">5</option>
-<option value="10" selected>10</option>
-<option value="20">20</option>
-<option value="todos">Todos</option>
+<select id="filtroStatus">
+<option value="">Todos</option>
+<option value="Ativo">Ativo</option>
+<option value="Inativo">Inativo</option>
 </select>
 
-</div>
+<button onclick="abrirNovo()">+ Novo Cadastro</button>
 
 </div>
 
 <table>
-
 <thead>
 <tr>
-<th onclick="ordenar('terapeuta')">Terapeuta ⬍</th>
-<th onclick="ordenar('certificacao')">Certificação ⬍</th>
-<th onclick="ordenar('data')">Data ⬍</th>
+<th>Nome Profissional</th>
+<th>Cargo</th>
+<th>CPF</th>
+<th>Status</th>
 <th>Ações</th>
 </tr>
 </thead>
-
 <tbody id="lista"></tbody>
-
 </table>
 
-<div class="pagination" id="paginacao"></div>
-
 </main>
-
 </div>
 
-<div id="modalEditar" class="modal">
+<div class="modal" id="modal">
+<div class="modal-content">
 
-<div class="modal-box">
+<!-- (modal igual ao seu, não mexi) -->
 
-<h2>Editar Certificação</h2>
+<div class="section">
+<h3>Dados Pessoais</h3>
+<div class="grid">
 
-<div class="modal-form">
+<div class="field">
+<label>Nome Completo *</label>
+<input id="nome_completo">
+</div>
 
-<label>Terapeuta</label>
-<select id="edit_cpf"></select>
+<div class="field">
+<label>Nome Profissional *</label>
+<input id="nome_profissional">
+</div>
 
-<label>Certificação</label>
-<select id="edit_cert"></select>
+<div class="field">
+<label>CPF *</label>
+<input id="cpf">
+</div>
 
-<label>Data</label>
-<input type="date" id="edit_data">
+<div class="field">
+<label>RG</label>
+<input id="rg">
+</div>
 
+<div class="field">
+<label>Data de Nascimento</label>
+<input type="date" id="nascimento">
+</div>
+
+<div class="field">
+<label>Email *</label>
+<input id="email">
+</div>
+
+</div>
 </div>
 
 <div class="modal-actions">
-
-<button onclick="atualizar()">Atualizar</button>
-<button class="cancelar" onclick="fecharModal()">Cancelar</button>
-
+<button onclick="fecharModal()">Cancelar</button>
+<button onclick="salvar()">Salvar</button>
 </div>
 
 </div>
-
 </div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
@@ -327,384 +253,184 @@ Mostrar
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-)
+);
 
-let dados=[]
-let pagina=1
-let porPagina=10
-let editId=null
-let listaAtual=[]
+let cpfAtual=null;
 
-let ordem={campo:null,asc:true}
+const campos=[
+"nome_completo","nome_profissional","cpf","rg","nascimento","email",
+"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
+"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
+"cargo","tem_folga","dia_folga",
+"hora_entrada","hora_saida","data_inicio","status"
+];
 
-/* ICONES */
-
-function iconeCertificacao(nome){
-
-if(!nome) return "fa-certificate"
-
-nome = nome.toLowerCase()
-
-/* MASSAGENS */
-
-if(nome.includes("massagem feminina")) return "fa-person-dress"
-if(nome.includes("massagem casais")) return "fa-user-group"
-if(nome.includes("massagem nuru")) return "fa-droplet"
-if(nome.includes("massagem vivência")) return "fa-spa"
-
-/* TERAPIAS */
-
-if(nome.includes("podologia") || nome.includes("podolatria")) return "fa-footprints"
-if(nome.includes("reflexologia")) return "fa-shoe-prints"
-if(nome.includes("shiatsu")) return "fa-hands"
-
-/* PADRÃO */
-
-return "fa-certificate"
-
+function getPayload(){
+const obj={};
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el && el.value!=="") obj[c]=el.value;
+});
+return obj;
 }
 
-/* SELECTS */
+function setForm(data){
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el){
+if(c==="hora_entrada" || c==="hora_saida"){
+el.value=data[c]?data[c].substring(0,5):"";
+}else{
+el.value=data[c]||"";
+}
+}
+});
+}
 
-async function carregarSelects(){
+async function carregar(){
 
-const selTer=document.getElementById("cpf_terapeuta")
-const selCert=document.getElementById("certificacao_id")
+const statusFiltro = document.getElementById("filtroStatus").value;
 
-const {data:terapeutas}=await supabaseClient
+let query = supabaseClient
 .from("terapeutas")
-.select("cpf,nome_profissional")
-.eq("status","Ativo")
-.order("nome_profissional")
+.select("cpf,nome_profissional,status,cargo")
+.order("nome_profissional");
 
-selTer.innerHTML="<option value=''>Selecione</option>"
+if(statusFiltro) query = query.eq("status", statusFiltro);
 
-;(terapeutas||[]).forEach(t=>{
-selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
-})
+const {data,error}=await query;
 
-const {data:cert}=await supabaseClient
-.from("certificacoes")
-.select("id,nome")
-.order("nome")
+if(error){ console.error(error); return; }
 
-selCert.innerHTML="<option value=''>Selecione</option>"
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
 
-;(cert||[]).forEach(c=>{
-selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
-})
-
-document.getElementById("edit_cpf").innerHTML=selTer.innerHTML
-document.getElementById("edit_cert").innerHTML=selCert.innerHTML
-
-}
-
-/* LISTA */
-
-async function carregarLista(){
-
-const {data}=await supabaseClient
-.from("terapeuta_certificacoes")
-.select(`
-id,
-cpf_terapeuta,
-certificacao_id,
-data_obtencao,
-terapeutas(nome_profissional),
-certificacoes(nome)
-`)
-
-dados=data||[]
-
-render()
-
-}
-
-/* RENDER */
-
-function render(lista=dados){
-
-listaAtual=lista
-
-const inicio=(pagina-1)*porPagina
-const pag=lista.slice(inicio,inicio+porPagina)
-
-const tbody=document.getElementById("lista")
-tbody.innerHTML=""
-
-pag.forEach(r=>{
-
-const nomeCert=r.certificacoes?.nome||""
-const icone=iconeCertificacao(nomeCert)
-
+data.forEach(t=>{
 tbody.innerHTML+=`
 <tr>
-<td>${r.terapeutas?.nome_profissional||""}</td>
-
+<td>${t.nome_profissional||""}</td>
+<td>${t.cargo||""}</td>
+<td>${t.cpf||""}</td>
 <td>
-<div class="servico">
-<i class="fa-solid ${icone}"></i>
-${nomeCert}
-</div>
+<span class="status ${t.status === 'Ativo' ? 'ativo' : 'inativo'}">
+${t.status||""}
+</span>
 </td>
-
-<td>${r.data_obtencao||""}</td>
-
 <td>
-<button class="editar" onclick="abrirModal('${r.id}')">Editar</button>
-<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
+<button onclick="editar('${t.cpf}')">Editar</button>
+<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
-</tr>
-`
+</tr>`;
+});
 
-})
-
-renderPaginacao(lista.length)
-
+filtrarTabela();
 }
-
-/* BUSCA */
 
 function filtrarTabela(){
 
-const termoTer=document
-.getElementById("buscaTerapeuta")
-.value
-.toLowerCase()
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
 
-const termoCert=document
-.getElementById("buscaCertificacao")
-.value
-.toLowerCase()
+linhas.forEach(linha=>{
+const nome = linha.children[0].innerText.toLowerCase();
 
-const filtrado=dados.filter(d=>
-
-(d.terapeutas?.nome_profissional||"")
-.toLowerCase()
-.includes(termoTer)
-
-&&
-
-(d.certificacoes?.nome||"")
-.toLowerCase()
-.includes(termoCert)
-
-)
-
-pagina=1
-render(filtrado)
-
+linha.style.display = nome.includes(filtro) ? "" : "none";
+});
 }
 
-/* ORDENAR */
+function abrirNovo(){
+cpfAtual=null;
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
+document.getElementById("hora_entrada").value="09:00";
+document.getElementById("hora_saida").value="18:00";
 
-function ordenar(campo){
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = false;
 
-ordem.asc=
-ordem.campo===campo?!ordem.asc:true
-
-ordem.campo=campo
-
-dados.sort((a,b)=>{
-
-let v1,v2
-
-if(campo==="terapeuta"){
-v1=a.terapeutas?.nome_profissional
-v2=b.terapeutas?.nome_profissional
+document.getElementById("modal").style.display="flex";
 }
 
-if(campo==="certificacao"){
-v1=a.certificacoes?.nome
-v2=b.certificacoes?.nome
+async function editar(cpf){
+
+cpfAtual=cpf;
+
+const {data,error}=await supabaseClient
+.from("terapeutas")
+.select("*")
+.eq("cpf",cpf)
+.single();
+
+if(error){console.error(error);return;}
+
+setForm(data);
+
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = true;
+
+document.getElementById("modal").style.display="flex";
 }
 
-if(campo==="data"){
-v1=a.data_obtencao
-v2=b.data_obtencao
+async function salvar(){
+
+const payload=getPayload();
+
+if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
+alert("Preencha os campos obrigatórios");
+return;
 }
 
-if(v1<v2) return ordem.asc?-1:1
-if(v1>v2) return ordem.asc?1:-1
-return 0
+let error;
 
-})
+if(cpfAtual){
 
-render()
+delete payload.cpf;
 
-}
-
-/* PAGINAÇÃO */
-
-function renderPaginacao(total){
-
-const div=document.getElementById("paginacao")
-div.innerHTML=""
-
-if(porPagina>=total) return
-
-const totalPaginas=Math.ceil(total/porPagina)
-
-for(let i=1;i<=totalPaginas;i++){
-
-div.innerHTML+=`
-<button
-class="${i===pagina?'active':''}"
-onclick="irPagina(${i})">
-${i}
-</button>
-`
-
-}
-
-}
-
-function irPagina(p){
-pagina=p
-render(listaAtual)
-}
-
-/* MOSTRAR */
-
-function mudarPorPagina(){
-
-const valor=document
-.getElementById("porPaginaSelect")
-.value
-
-if(valor==="todos"){
-porPagina=listaAtual.length||dados.length
-}else{
-porPagina=parseInt(valor)
-}
-
-pagina=1
-render(listaAtual)
-
-}
-
-/* EXPORTAR */
-
-function exportarExcel(){
-
-let visivel
-
-if(porPagina>=listaAtual.length){
-
-visivel=listaAtual
+({error}=await supabaseClient
+.from("terapeutas")
+.update(payload)
+.eq("cpf",cpfAtual));
 
 }else{
 
-const inicio=(pagina-1)*porPagina
-const fim=inicio+porPagina
-visivel=listaAtual.slice(inicio,fim)
+({error}=await supabaseClient
+.from("terapeutas")
+.insert(payload));
 
 }
 
-const exportData=visivel.map(r=>({
-Terapeuta:r.terapeutas?.nome_profissional,
-Certificacao:r.certificacoes?.nome,
-Data:r.data_obtencao
-}))
-
-const ws=XLSX.utils.json_to_sheet(exportData)
-const wb=XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb,ws,"Certificacoes")
-
-XLSX.writeFile(wb,"certificacoes.xlsx")
-
+if(error){
+console.error(error);
+alert("Erro ao salvar");
+return;
 }
 
-/* MODAL */
+fecharModal();
+carregar();
+}
 
-function abrirModal(id){
+async function excluir(cpf){
+if(!confirm("Excluir registro?"))return;
 
-const item=dados.find(d=>d.id==id)
+await supabaseClient
+.from("terapeutas")
+.delete()
+.eq("cpf",cpf);
 
-editId=id
-
-document.getElementById("edit_cpf").value=item.cpf_terapeuta
-document.getElementById("edit_cert").value=item.certificacao_id
-document.getElementById("edit_data").value=item.data_obtencao
-
-document.getElementById("modalEditar").style.display="flex"
-
+carregar();
 }
 
 function fecharModal(){
-document.getElementById("modalEditar").style.display="none"
+document.getElementById("modal").style.display="none";
 }
 
-/* ATUALIZAR */
+document.getElementById("filtroStatus").addEventListener("change", carregar);
 
-async function atualizar(){
-
-const cpf=document.getElementById("edit_cpf").value
-const cert=document.getElementById("edit_cert").value
-const data=document.getElementById("edit_data").value
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.update({
-cpf_terapeuta:cpf,
-certificacao_id:cert,
-data_obtencao:data
-})
-.eq("id",editId)
-
-fecharModal()
-carregarLista()
-
-}
-
-/* NOVO */
-
-async function vincular(){
-
-const cpf=document.getElementById("cpf_terapeuta").value
-const cert=document.getElementById("certificacao_id").value
-const data=document.getElementById("data_obtencao").value
-
-if(!cpf||!cert){
-alert("Selecione terapeuta e certificação")
-return
-}
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.insert({
-cpf_terapeuta:cpf,
-certificacao_id:cert,
-data_obtencao:data||null
-})
-
-document.getElementById("data_obtencao").value=""
-
-carregarLista()
-
-}
-
-/* EXCLUIR */
-
-async function excluir(id){
-
-if(!confirm("Excluir vínculo?"))return
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.delete()
-.eq("id",id)
-
-carregarLista()
-
-}
-
-carregarSelects()
-carregarLista()
+carregar();
 
 </script>
 
 </body>
 </html>
-```

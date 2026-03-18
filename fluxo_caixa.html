@@ -19,12 +19,20 @@ display:flex;
 gap:15px;
 flex-wrap:wrap;
 margin-bottom:20px;
+align-items:flex-end;
+}
+
+.field{
+display:flex;
+flex-direction:column;
+font-size:13px;
 }
 
 input,select{
 padding:8px;
 border-radius:6px;
 border:1px solid #ccc;
+min-width:160px;
 }
 
 button{
@@ -63,17 +71,35 @@ border-bottom:1px solid #eee;
 
 <div class="form-box">
 
+<div class="field">
+<label>Data</label>
 <input type="date" id="data">
+</div>
 
+<div class="field">
+<label>Cliente</label>
 <select id="cliente"></select>
+</div>
 
+<div class="field">
+<label>Serviço</label>
 <select id="servico"></select>
+</div>
 
+<div class="field">
+<label>Valor (R$)</label>
 <input type="number" id="valor" value="50">
+</div>
 
+<div class="field">
+<label>Desconto (R$)</label>
 <input type="number" id="desconto" value="0">
+</div>
 
+<div class="field">
+<label>Valor Final</label>
 <input type="number" id="final" disabled>
+</div>
 
 <button onclick="salvar()">Adicionar</button>
 
@@ -98,6 +124,7 @@ border-bottom:1px solid #eee;
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
@@ -122,27 +149,41 @@ document.getElementById("final").value = valor - desconto
 // carregar selects
 async function carregarSelects(){
 
-const {data:clientes} = await supabaseClient
+// CLIENTES
+const {data:clientes, error:erroClientes} = await supabaseClient
 .from("clientes")
-.select("id,nome")
+.select("*")
+
+console.log("CLIENTES:", clientes)
 
 const selCliente = document.getElementById("cliente")
-selCliente.innerHTML = "<option>Cliente</option>"
+selCliente.innerHTML = "<option value=''>Selecione</option>"
 
+if(clientes){
 clientes.forEach(c=>{
-selCliente.innerHTML += `<option value="${c.id}">${c.nome}</option>`
-})
+// AJUSTE AQUI SE NOME FOR DIFERENTE
+const nome = c.nome || c.nome_cliente || "Sem nome"
 
-const {data:servicos} = await supabaseClient
+selCliente.innerHTML += `<option value="${c.id}">${nome}</option>`
+})
+}
+
+// SERVIÇOS
+const {data:servicos, error:erroServicos} = await supabaseClient
 .from("servicos")
-.select("id,nome")
+.select("*")
+
+console.log("SERVICOS:", servicos)
 
 const selServico = document.getElementById("servico")
-selServico.innerHTML = "<option>Serviço</option>"
+selServico.innerHTML = "<option value=''>Selecione</option>"
 
+if(servicos){
 servicos.forEach(s=>{
-selServico.innerHTML += `<option value="${s.id}">${s.nome}</option>`
+const nome = s.nome || "Sem nome"
+selServico.innerHTML += `<option value="${s.id}">${nome}</option>`
 })
+}
 
 }
 
@@ -157,7 +198,7 @@ const desconto = parseFloat(document.getElementById("desconto").value || 0)
 const final = valor - desconto
 
 if(!data || !cliente || !servico){
-alert("Preencha tudo")
+alert("Preencha todos os campos")
 return
 }
 

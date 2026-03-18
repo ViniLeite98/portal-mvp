@@ -128,6 +128,10 @@ border-radius:10px;
 width:420px;
 }
 
+.modal-box input[type="date"]{
+margin-left:10px;
+}
+
 </style>
 </head>
 
@@ -220,6 +224,8 @@ const supabaseClient = supabase.createClient(
 let dados=[]
 let listaFiltrada=[]
 
+/* ICONES */
+
 function iconeCertificacao(nome){
 if(!nome) return "fa-certificate"
 nome = nome.toLowerCase()
@@ -232,6 +238,8 @@ if(nome.includes("podologia") || nome.includes("podolatria")) return "fa-shoe-pr
 
 return "fa-certificate"
 }
+
+/* SELECTS */
 
 async function carregarSelects(){
 
@@ -259,6 +267,8 @@ selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 
 }
 
+/* LISTA */
+
 async function carregarLista(){
 
 const {data}=await supabaseClient
@@ -276,6 +286,8 @@ listaFiltrada = [...dados]
 render(listaFiltrada)
 
 }
+
+/* RENDER */
 
 function render(lista){
 
@@ -317,7 +329,10 @@ ${icones}
 </tr>
 `
 })
+
 }
+
+/* FILTRO */
 
 function filtrarTabela(){
 
@@ -345,6 +360,8 @@ render(listaFiltrada)
 
 }
 
+/* MODAL */
+
 function abrirModal(nome){
 
 const registros = dados.filter(d =>
@@ -358,26 +375,31 @@ let html=""
 registros.forEach(r=>{
 html+=`
 <div style="display:flex;justify-content:space-between;margin-bottom:10px">
-<span>${r.certificacoes?.nome} - ${r.data_obtencao || "Sem data"}</span>
-<div>
-<button onclick="editarCert('${r.id}')">Editar</button>
+<span>
+${r.certificacoes?.nome}
+<input type="date"
+value="${r.data_obtencao || ''}"
+onchange="editarCert('${r.id}', this.value)">
+</span>
+
 <button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
-</div>
 </div>
 `
 })
 
 document.getElementById("listaCerts").innerHTML=html
 document.getElementById("modalCerts").style.display="flex"
+
 }
 
 function fecharModal(){
 document.getElementById("modalCerts").style.display="none"
 }
 
-async function editarCert(id){
+/* EDITAR */
 
-const novaData = prompt("Nova data (YYYY-MM-DD):")
+async function editarCert(id, novaData){
+
 if(!novaData) return
 
 await supabaseClient
@@ -385,8 +407,9 @@ await supabaseClient
 .update({data_obtencao:novaData})
 .eq("id",id)
 
-carregarLista()
 }
+
+/* INSERIR */
 
 async function vincular(){
 
@@ -411,6 +434,8 @@ carregarLista()
 
 }
 
+/* EXCLUIR */
+
 async function excluir(id){
 
 if(!confirm("Excluir vínculo?")) return
@@ -421,7 +446,10 @@ await supabaseClient
 .eq("id",id)
 
 carregarLista()
+
 }
+
+/* EXPORT */
 
 function exportarExcel(){
 
@@ -435,9 +463,11 @@ const ws = XLSX.utils.json_to_sheet(exportData)
 const wb = XLSX.utils.book_new()
 
 XLSX.utils.book_append_sheet(wb, ws, "Certificacoes")
-
 XLSX.writeFile(wb, "certificacoes.xlsx")
+
 }
+
+/* INIT */
 
 carregarSelects()
 carregarLista()

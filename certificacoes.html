@@ -35,88 +35,6 @@ flex:1;
 padding:40px;
 }
 
-h1{margin-top:0}
-
-/* FORM */
-
-.form-box{
-background:#fff;
-padding:20px;
-border-radius:10px;
-display:flex;
-gap:20px;
-flex-wrap:wrap;
-margin-bottom:20px;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-.form-box div{
-display:flex;
-flex-direction:column;
-}
-
-select,input{
-padding:8px;
-border-radius:6px;
-border:1px solid #d1d5db;
-min-width:200px;
-}
-
-button{
-background:#2563eb;
-color:#fff;
-border:none;
-padding:7px 14px;
-border-radius:6px;
-cursor:pointer;
-}
-
-button.excluir{background:#dc2626}
-button.editar{background:#f59e0b}
-
-/* TOPBAR */
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:15px;
-}
-
-.busca{
-display:flex;
-gap:10px;
-}
-
-.busca input{
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
-width:220px;
-}
-
-/* TABELA */
-
-table{
-width:100%;
-border-collapse:collapse;
-background:#fff;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-th,td{
-padding:12px;
-border-bottom:1px solid #eee;
-font-size:14px;
-}
-
-th{
-background:#f9fafb;
-text-align:left;
-}
-
 .servico{
 display:flex;
 align-items:center;
@@ -126,10 +44,32 @@ gap:8px;
 .servico i{
 margin-left:6px;
 color:#6366f1;
+}
+
+button{
+background:#2563eb;
+color:#fff;
+border:none;
+padding:6px 12px;
+border-radius:6px;
 cursor:pointer;
 }
 
-/* MODAL */
+button.excluir{background:#dc2626}
+button.editar{background:#f59e0b}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#fff;
+border-radius:10px;
+overflow:hidden;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #eee;
+}
 
 .modal{
 display:none;
@@ -145,18 +85,10 @@ justify-content:center;
 
 .modal-box{
 background:#fff;
-padding:25px;
+padding:20px;
 border-radius:10px;
-width:420px;
+width:400px;
 }
-
-.modal-actions{
-margin-top:20px;
-display:flex;
-gap:10px;
-}
-
-.cancelar{background:#6b7280}
 
 </style>
 </head>
@@ -171,80 +103,34 @@ gap:10px;
 
 <h1>Certificações</h1>
 
-<div class="form-box">
+<input id="buscaTerapeuta" placeholder="Buscar..." oninput="filtrarTabela()">
 
-<div>
-<label>Terapeuta</label>
-<select id="cpf_terapeuta"></select>
-</div>
-
-<div>
-<label>Certificação</label>
-<select id="certificacao_id"></select>
-</div>
-
-<div>
-<label>Data</label>
-<input type="date" id="data_obtencao">
-</div>
-
-<button onclick="vincular()">Vincular</button>
-
-</div>
-
-<!-- LEGENDA -->
-<div style="margin-bottom:10px;font-size:13px;color:#555;">
-<strong>Legenda:</strong>
-<i class="fa-solid fa-person-dress"></i> Feminina |
-<i class="fa-solid fa-user-group"></i> Casais |
-<i class="fa-solid fa-droplet"></i> Nuru |
-<i class="fa-solid fa-spa"></i> Vivência |
-<i class="fa-solid fa-shoe-prints"></i> Podologia
-</div>
-
-<div class="topbar">
-
-<div class="busca">
-<input id="buscaTerapeuta" placeholder="Buscar terapeuta..." oninput="filtrarTabela()">
-</div>
-
-<div>
 <button onclick="exportarExcel()">Exportar Excel</button>
-</div>
-
-</div>
 
 <table>
-
 <thead>
 <tr>
 <th>Terapeuta</th>
 <th>Ações</th>
 </tr>
 </thead>
-
 <tbody id="lista"></tbody>
-
 </table>
 
 </main>
-
 </div>
 
 <!-- MODAL -->
 <div id="modalCerts" class="modal">
-  <div class="modal-box">
-    <h2 id="tituloModal"></h2>
-    <div id="listaCerts"></div>
-
-    <div class="modal-actions">
-      <button class="cancelar" onclick="fecharModal()">Fechar</button>
-    </div>
-  </div>
+<div class="modal-box">
+<h3 id="tituloModal"></h3>
+<div id="listaCerts"></div>
+<br>
+<button onclick="fecharModal()">Fechar</button>
+</div>
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
@@ -254,6 +140,7 @@ const supabaseClient = supabase.createClient(
 )
 
 let dados=[]
+let listaFiltrada=[]
 
 function iconeCertificacao(nome){
 
@@ -271,61 +158,37 @@ return "fa-certificate"
 
 }
 
-async function carregarSelects(){
-
-const selTer=document.getElementById("cpf_terapeuta")
-const selCert=document.getElementById("certificacao_id")
-
-const {data:terapeutas}=await supabaseClient
-.from("terapeutas")
-.select("cpf,nome_profissional")
-.eq("status","Ativo")
-
-selTer.innerHTML="<option value=''>Selecione</option>"
-
-;(terapeutas||[]).forEach(t=>{
-selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
-})
-
-const {data:cert}=await supabaseClient
-.from("certificacoes")
-.select("id,nome")
-
-selCert.innerHTML="<option value=''>Selecione</option>"
-
-;(cert||[]).forEach(c=>{
-selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
-})
-
-}
-
 async function carregarLista(){
 
 const {data}=await supabaseClient
 .from("terapeuta_certificacoes")
 .select(`
 id,
-cpf_terapeuta,
 data_obtencao,
 certificacoes(nome),
 terapeutas(nome_profissional)
 `)
 
-dados=data||[]
-render()
+dados = data || []
+listaFiltrada = [...dados]
+
+render(listaFiltrada)
 
 }
 
-function render(){
+function render(lista){
 
 const agrupado={}
 
-dados.forEach(r=>{
+lista.forEach(r=>{
 const nome=r.terapeutas?.nome_profissional||"Sem nome"
+
 if(!agrupado[nome]){
 agrupado[nome]={nome,certs:[]}
 }
+
 agrupado[nome].certs.push(r)
+
 })
 
 const tbody=document.getElementById("lista")
@@ -336,25 +199,45 @@ Object.values(agrupado).forEach(t=>{
 let icones=""
 
 t.certs.forEach(c=>{
-icones+=`<i class="fa-solid ${iconeCertificacao(c.certificacoes?.nome)}" title="${c.certificacoes?.nome}"></i>`
+icones+=`<i class="fa-solid ${iconeCertificacao(c.certificacoes?.nome)}"></i>`
 })
 
 tbody.innerHTML+=`
 <tr>
 <td>
 <div class="servico">
-<strong onclick="abrirModal('${t.nome}')" style="cursor:pointer">
-${t.nome}
-</strong>
+<strong>${t.nome}</strong>
 ${icones}
 </div>
 </td>
 
-<td>-</td>
+<td>
+<button class="editar" onclick="abrirModal('${t.nome}')">Editar</button>
+</td>
 </tr>
 `
 
 })
+
+}
+
+function filtrarTabela(){
+
+const termo=document.getElementById("buscaTerapeuta").value.toLowerCase()
+
+if(!termo){
+listaFiltrada = [...dados]
+render(listaFiltrada)
+return
+}
+
+listaFiltrada = dados.filter(d =>
+(d.terapeutas?.nome_profissional||"")
+.toLowerCase()
+.includes(termo)
+)
+
+render(listaFiltrada)
 
 }
 
@@ -366,16 +249,14 @@ d.terapeutas?.nome_profissional === nome
 
 document.getElementById("tituloModal").innerText = nome
 
-let html = ""
+let html=""
 
 registros.forEach(r=>{
-html += `
+html+=`
 <div style="display:flex;justify-content:space-between;margin-bottom:10px">
 <span>
-<i class="fa-solid ${iconeCertificacao(r.certificacoes?.nome)}"></i>
 ${r.certificacoes?.nome} - ${r.data_obtencao || "Sem data"}
 </span>
-
 <div>
 <button onclick="editarCert('${r.id}')">Editar</button>
 <button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
@@ -384,8 +265,8 @@ ${r.certificacoes?.nome} - ${r.data_obtencao || "Sem data"}
 `
 })
 
-document.getElementById("listaCerts").innerHTML = html
-document.getElementById("modalCerts").style.display = "flex"
+document.getElementById("listaCerts").innerHTML=html
+document.getElementById("modalCerts").style.display="flex"
 
 }
 
@@ -396,7 +277,6 @@ document.getElementById("modalCerts").style.display="none"
 async function editarCert(id){
 
 const novaData = prompt("Nova data (YYYY-MM-DD):")
-
 if(!novaData) return
 
 await supabaseClient
@@ -407,44 +287,9 @@ await supabaseClient
 carregarLista()
 }
 
-function filtrarTabela(){
-
-const termo=document.getElementById("buscaTerapeuta").value.toLowerCase()
-
-const filtrado=dados.filter(d=>
-(d.terapeutas?.nome_profissional||"").toLowerCase().includes(termo)
-)
-
-dados=filtrado
-render()
-
-}
-
-async function vincular(){
-
-const cpf=document.getElementById("cpf_terapeuta").value
-const cert=document.getElementById("certificacao_id").value
-const data=document.getElementById("data_obtencao").value
-
-if(!cpf||!cert){
-alert("Selecione terapeuta e certificação")
-return
-}
-
-await supabaseClient
-.from("terapeuta_certificacoes")
-.insert({
-cpf_terapeuta:cpf,
-certificacao_id:cert,
-data_obtencao:data||null
-})
-
-carregarLista()
-}
-
 async function excluir(id){
 
-if(!confirm("Excluir vínculo?"))return
+if(!confirm("Excluir vínculo?")) return
 
 await supabaseClient
 .from("terapeuta_certificacoes")
@@ -471,7 +316,6 @@ XLSX.writeFile(wb, "certificacoes.xlsx")
 
 }
 
-carregarSelects()
 carregarLista()
 
 </script>

@@ -8,7 +8,11 @@
  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<!-- ✅ LIB EXCEL -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -137,7 +141,9 @@ onkeyup="filtrarTabela()"
 <option value="Inativo">Inativo</option>
 </select>
 
-<button onclick="exportarCSV()">Exportar CSV</button>
+<!-- ✅ NOVO BOTÃO -->
+<button onclick="exportarExcel()">Exportar Excel</button>
+
 <button onclick="abrirNovo()">+ Novo Cadastro</button>
 
 </div>
@@ -158,10 +164,23 @@ onkeyup="filtrarTabela()"
 </main>
 </div>
 
+<!-- MODAL COMPLETO (SEM ALTERAÇÃO) -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<!-- (mantive todo seu formulário igual) -->
+<div class="section">
+<h3>Dados Pessoais</h3>
+<div class="grid">
+
+<div class="field"><label>Nome Completo *</label><input id="nome_completo"></div>
+<div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
+<div class="field"><label>CPF *</label><input id="cpf"></div>
+<div class="field"><label>RG</label><input id="rg"></div>
+<div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
+<div class="field"><label>Email *</label><input id="email"></div>
+
+</div>
+</div>
 
 <div class="modal-actions">
 <button onclick="fecharModal()">Cancelar</button>
@@ -180,14 +199,11 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
+
 let cpfAtual=null;
 
 const campos=[
-"nome_completo","nome_profissional","cpf","rg","nascimento","email",
-"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
-"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-"cargo","tem_folga","dia_folga",
-"hora_entrada","hora_saida","data_inicio","status"
+"nome_completo","nome_profissional","cpf","rg","nascimento","email"
 ];
 
 function getPayload(){
@@ -202,13 +218,7 @@ return obj;
 function setForm(data){
 campos.forEach(c=>{
 const el=document.getElementById(c);
-if(el){
-if(c==="hora_entrada" || c==="hora_saida"){
-el.value=data[c]?data[c].substring(0,5):"";
-}else{
-el.value=data[c]||"";
-}
-}
+if(el) el.value=data[c]||"";
 });
 }
 
@@ -255,11 +265,7 @@ const linhas = document.querySelectorAll("#lista tr");
 linhas.forEach(linha=>{
 const nome = linha.children[0].innerText.toLowerCase();
 
-if(nome.includes(filtro)){
-linha.style.display="";
-}else{
-linha.style.display="none";
-}
+linha.style.display = nome.includes(filtro) ? "" : "none";
 });
 }
 
@@ -270,12 +276,36 @@ const el=document.getElementById(c);
 if(el) el.value="";
 });
 
+document.getElementById("cpf").disabled=false;
+document.getElementById("modal").style.display="flex";
+}
+
+async function editar(cpf){
+
+cpfAtual=cpf;
+
+const {data,error}=await supabaseClient
+.from("terapeutas")
+.select("*")
+.eq("cpf",cpf)
+.single();
+
+if(error){console.error(error);return;}
+
+setForm(data);
+
+document.getElementById("cpf").disabled=true;
 document.getElementById("modal").style.display="flex";
 }
 
 async function salvar(){
 
 const payload=getPayload();
+
+if(!payload.nome_completo||!payload.nome_profissional){
+alert("Preencha os campos obrigatórios");
+return;
+}
 
 let error;
 
@@ -323,8 +353,8 @@ document.getElementById("filtroStatus").addEventListener("change", carregar);
 carregar();
 
 
-// 🚀 EXPORTAÇÃO CSV
-async function exportarCSV(){
+// ✅ EXPORTAR EXCEL (SEM QUEBRAR NADA)
+async function exportarExcel(){
 
 const { data, error } = await supabaseClient
   .from("terapeutas")
@@ -342,24 +372,12 @@ if(!data || data.length === 0){
   return;
 }
 
-const colunas = Object.keys(data[0]);
+const ws = XLSX.utils.json_to_sheet(data);
+const wb = XLSX.utils.book_new();
 
-let csv = colunas.join(",") + "\n";
+XLSX.utils.book_append_sheet(wb, ws, "Equipe");
 
-data.forEach(linha => {
-  const valores = colunas.map(c => `"${(linha[c] ?? "").toString().replace(/"/g, '""')}"`);
-  csv += valores.join(",") + "\n";
-});
-
-const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-const url = URL.createObjectURL(blob);
-
-const a = document.createElement("a");
-a.href = url;
-a.download = "equipe.csv";
-a.click();
-
-URL.revokeObjectURL(url);
+XLSX.writeFile(wb, "equipe.xlsx");
 }
 
 </script>

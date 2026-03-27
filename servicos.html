@@ -155,6 +155,18 @@ grid-template-columns:repeat(2,1fr);
 gap:12px;
 }
 
+.grid div{
+display:flex;
+flex-direction:column;
+gap:4px;
+}
+
+.grid label{
+font-size:13px;
+color:#374151;
+font-weight:500;
+}
+
 input,select{
 padding:8px;
 border-radius:6px;
@@ -245,8 +257,10 @@ oninput="filtrarTabela()">
 
 <div class="grid">
 
+<div>
+<label>Grupo</label>
 <select id="grupo">
-<option value="">Grupo</option>
+<option value="">Selecione</option>
 <option>Nuru</option>
 <option>Vivencia</option>
 <option>Four Hands</option>
@@ -257,25 +271,37 @@ oninput="filtrarTabela()">
 <option>Experiência simultânea no Tantra</option>
 <option>Mini Curso Sessão Vivência</option>
 </select>
+</div>
 
+<div>
+<label>Tempo</label>
 <select id="tempo">
-<option value="">Tempo</option>
-<option value="">0</option>
+<option value="">Sem tempo</option>
 <option value="30">30</option>
 <option value="45">45</option>
 <option value="60">60</option>
 <option value="90">90</option>
 <option value="120">120</option>
 </select>
+</div>
 
-<input id="valor" type="number" step="0.01" placeholder="Valor">
+<div>
+<label>Valor</label>
+<input id="valor" type="number" step="0.01">
+</div>
 
-<input id="comissao" type="number" step="0.01" placeholder="Comissão">
+<div>
+<label>Comissão</label>
+<input id="comissao" type="number" step="0.01">
+</div>
 
+<div>
+<label>Status</label>
 <select id="status">
 <option value="ativo">ativo</option>
 <option value="inativo">inativo</option>
 </select>
+</div>
 
 </div>
 
@@ -336,7 +362,7 @@ pag.forEach(s=>{
 tbody.innerHTML+=`
 <tr>
 <td>${s.grupo||""}</td>
-<td>${s.tempo||""} min</td>
+<td>${s.tempo ? s.tempo + " min" : "-"}</td>
 <td>R$ ${Number(s.valor||0).toFixed(2)}</td>
 <td>R$ ${Number(s.comissao||0).toFixed(2)}</td>
 <td>${s.status||""}</td>
@@ -369,126 +395,26 @@ render(filtrado)
 
 }
 
-window.ordenar=function(campo){
-
-ordem.asc=
-ordem.campo===campo?!ordem.asc:true
-
-ordem.campo=campo
-
-dados.sort((a,b)=>{
-
-let v1=a[campo]
-let v2=b[campo]
-
-if(v1<v2) return ordem.asc?-1:1
-if(v1>v2) return ordem.asc?1:-1
-return 0
-
-})
-
-render()
-
-}
-
-function renderPaginacao(total){
-
-const totalPaginas=Math.ceil(total/porPagina)
-const div=document.getElementById("paginacao")
-
-div.innerHTML=""
-
-if(porPagina>=total) return
-
-for(let i=1;i<=totalPaginas;i++){
-
-div.innerHTML+=`
-<button class="${i===paginaAtual?'active':''}"
-onclick="irPagina(${i})">${i}</button>
-`
-
-}
-
-}
-
-window.irPagina=function(p){
-
-paginaAtual=p
-render(listaAtual)
-
-}
-
-window.mudarPorPagina=function(){
-
-const valor=document
-.getElementById("porPaginaSelect")
-.value
-
-if(valor==="todos"){
-porPagina=dados.length
-}else{
-porPagina=parseInt(valor)
-}
-
-paginaAtual=1
-render(listaAtual)
-
-}
-
-window.exportarExcel=function(){
-
-const exportData=dados.map(s=>({
-
-Grupo:s.grupo,
-Tempo:s.tempo,
-Valor:s.valor,
-Comissao:s.comissao,
-Status:s.status
-
-}))
-
-const ws=XLSX.utils.json_to_sheet(exportData)
-const wb=XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb,ws,"Servicos")
-XLSX.writeFile(wb,"servicos.xlsx")
-
-}
-
-window.abrirNovo=function(){
-
-idAtual=null
-
-document.getElementById("grupo").value=""
-document.getElementById("tempo").value=""
-document.getElementById("valor").value=""
-document.getElementById("comissao").value=""
-document.getElementById("status").value="ativo"
-
-document.getElementById("modal").style.display="flex"
-
-}
-
-window.fecharModal=function(){
-
-document.getElementById("modal").style.display="none"
-
-}
-
 window.salvar=async function(){
 
 const payload={
 
 grupo:document.getElementById("grupo").value,
-tempo:parseInt(document.getElementById("tempo").value),
+
+tempo:document.getElementById("tempo").value
+? parseInt(document.getElementById("tempo").value)
+: null,
+
 valor:parseFloat(document.getElementById("valor").value),
+
 comissao:parseFloat(document.getElementById("comissao").value),
+
 status:document.getElementById("status").value
 
 }
 
-if(!payload.grupo || !payload.tempo){
-alert("Grupo e tempo são obrigatórios")
+if(!payload.grupo){
+alert("Grupo é obrigatório")
 return
 }
 
@@ -508,39 +434,6 @@ await supabaseClient
 }
 
 fecharModal()
-carregar()
-
-}
-
-window.editar=async function(id){
-
-idAtual=id
-
-const {data}=await supabaseClient
-.from("servicos")
-.select("*")
-.eq("id",id)
-.single()
-
-document.getElementById("grupo").value=data.grupo||""
-document.getElementById("tempo").value=data.tempo||""
-document.getElementById("valor").value=data.valor||""
-document.getElementById("comissao").value=data.comissao||""
-document.getElementById("status").value=data.status||""
-
-document.getElementById("modal").style.display="flex"
-
-}
-
-window.excluir=async function(id){
-
-if(!confirm("Excluir serviço?"))return
-
-await supabaseClient
-.from("servicos")
-.delete()
-.eq("id",id)
-
 carregar()
 
 }

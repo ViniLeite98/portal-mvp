@@ -1,148 +1,6 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Serviços | Hara Spa</title>
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-.left-tools input{padding:8px;border:1px solid #d1d5db;border-radius:6px;width:240px;}
-.right-tools{display:flex;align-items:center;gap:10px;}
-.right-tools button{background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 12px;cursor:pointer;}
-.btn-novo{background:#1f2937;}
-.right-tools select{padding:6px;border-radius:6px;border:1px solid #d1d5db;}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
-th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
-th{background:#f9fafb;cursor:pointer;}
-.btn-editar{background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;}
-.btn-excluir{background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10;}
-.modal-content{background:#fff;width:600px;border-radius:16px;padding:24px;}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
-.grid div{display:flex;flex-direction:column;gap:4px;}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-<aside id="sidebar"></aside>
-
-<main class="content">
-
-<h1>Serviços</h1>
-
-<div class="topbar">
-
-<div class="left-tools">
-<input id="buscaServico" placeholder="Buscar serviço..." oninput="filtrarTabela()">
-</div>
-
-<div class="right-tools">
-<button onclick="exportarExcel()">Exportar</button>
-<button class="btn-novo" onclick="abrirNovo()">+ Novo Serviço</button>
-</div>
-
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Grupo</th>
-<th>Tempo</th>
-<th>Valor</th>
-<th>Comissão</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-
-<tbody id="lista"></tbody>
-
-</table>
-
-</main>
-</div>
-
-<div class="modal" id="modal">
-<div class="modal-content">
-
-<h3 id="tituloModal">Cadastro Serviço</h3>
-
-<div class="grid">
-
-<div>
-<label>Grupo</label>
-<select id="grupo">
-<option value="">Selecione</option>
-<option>Nuru</option>
-<option>Vivencia</option>
-<option>Four Hands</option>
-<option>Fetiche</option>
-<option>Podolatria</option>
-<option>Pspot</option>
-<option>Voyeur</option>
-<option>Experiência simultânea no Tantra</option>
-<option>Mini Curso Sessão Vivência</option>
-</select>
-</div>
-
-<div>
-<label>Tempo</label>
-<select id="tempo">
-<option value="">Sem tempo</option>
-<option value="30">30</option>
-<option value="45">45</option>
-<option value="60">60</option>
-<option value="90">90</option>
-<option value="120">120</option>
-</select>
-</div>
-
-<div>
-<label>Valor</label>
-<input id="valor" type="number" step="0.01">
-</div>
-
-<div>
-<label>Comissão</label>
-<input id="comissao" type="number" step="0.01">
-</div>
-
-<div>
-<label>Status</label>
-<select id="status">
-<option value="ativo">ativo</option>
-<option value="inativo">inativo</option>
-</select>
-</div>
-
-</div>
-
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
-<button onclick="salvar()">Salvar</button>
-</div>
-
-</div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
+
+document.addEventListener("DOMContentLoaded", function(){
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
@@ -150,22 +8,39 @@ const supabaseClient = supabase.createClient(
 );
 
 let dados=[]
+let listaAtual=[]
+let paginaAtual=1
+let porPagina=10
 let idAtual=null
+let ordem={campo:"grupo",asc:true}
 
 async function carregar(){
-const {data} = await supabaseClient.from("servicos").select("*")
-dados = data || []
+
+const {data}=await supabaseClient
+.from("servicos")
+.select("*")
+
+dados=data||[]
+
 render()
+
 }
 
-function render(){
+function render(lista=dados){
+
+listaAtual=lista
+
+const inicio=(paginaAtual-1)*porPagina
+const pag=lista.slice(inicio,inicio+porPagina)
+
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
-dados.forEach(s=>{
+pag.forEach(s=>{
+
 tbody.innerHTML+=`
 <tr>
-<td>${s.grupo||""}</td>
+<td>${s.nome_exibicao || ""}</td>
 <td>${s.tempo ? s.tempo + " min" : "-"}</td>
 <td>R$ ${Number(s.valor||0).toFixed(2)}</td>
 <td>R$ ${Number(s.comissao||0).toFixed(2)}</td>
@@ -174,30 +49,121 @@ tbody.innerHTML+=`
 <button class="btn-editar" onclick="editar('${s.id}')">Editar</button>
 <button class="btn-excluir" onclick="excluir('${s.id}')">Excluir</button>
 </td>
-</tr>`
+</tr>
+`
+
 })
+
+renderPaginacao(lista.length)
+
 }
 
-window.editar=function(id){
-const s = dados.find(x=>x.id==id)
-if(!s) return
+window.filtrarTabela=function(){
 
-idAtual=id
+const termo=document
+.getElementById("buscaServico")
+.value
+.toLowerCase()
 
-document.getElementById("tituloModal").innerText="Editar Serviço"
-document.getElementById("grupo").value=s.grupo||""
-document.getElementById("tempo").value=s.tempo||""
-document.getElementById("valor").value=s.valor||""
-document.getElementById("comissao").value=s.comissao||""
-document.getElementById("status").value=s.status||"ativo"
+const filtrado=dados.filter(s=>
+(s.nome_exibicao||"").toLowerCase().includes(termo)
+)
 
-document.getElementById("modal").style.display="flex"
+paginaAtual=1
+render(filtrado)
+
+}
+
+window.ordenar=function(campo){
+
+ordem.asc=
+ordem.campo===campo?!ordem.asc:true
+
+ordem.campo=campo
+
+dados.sort((a,b)=>{
+
+let v1=a[campo]
+let v2=b[campo]
+
+if(v1<v2) return ordem.asc?-1:1
+if(v1>v2) return ordem.asc?1:-1
+return 0
+
+})
+
+render()
+
+}
+
+function renderPaginacao(total){
+
+const totalPaginas=Math.ceil(total/porPagina)
+const div=document.getElementById("paginacao")
+
+div.innerHTML=""
+
+if(porPagina>=total) return
+
+for(let i=1;i<=totalPaginas;i++){
+
+div.innerHTML+=`
+<button class="${i===paginaAtual?'active':''}"
+onclick="irPagina(${i})">${i}</button>
+`
+
+}
+
+}
+
+window.irPagina=function(p){
+
+paginaAtual=p
+render(listaAtual)
+
+}
+
+window.mudarPorPagina=function(){
+
+const valor=document
+.getElementById("porPaginaSelect")
+.value
+
+if(valor==="todos"){
+porPagina=dados.length
+}else{
+porPagina=parseInt(valor)
+}
+
+paginaAtual=1
+render(listaAtual)
+
+}
+
+window.exportarExcel=function(){
+
+const exportData=dados.map(s=>({
+
+Servico:s.nome_exibicao,
+Tempo:s.tempo,
+Valor:s.valor,
+Comissao:s.comissao,
+Status:s.status
+
+}))
+
+const ws=XLSX.utils.json_to_sheet(exportData)
+const wb=XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb,ws,"Servicos")
+XLSX.writeFile(wb,"servicos.xlsx")
+
 }
 
 window.abrirNovo=function(){
+
 idAtual=null
 
-document.getElementById("tituloModal").innerText="Novo Serviço"
 document.getElementById("grupo").value=""
 document.getElementById("tempo").value=""
 document.getElementById("valor").value=""
@@ -205,40 +171,97 @@ document.getElementById("comissao").value=""
 document.getElementById("status").value="ativo"
 
 document.getElementById("modal").style.display="flex"
+
 }
 
 window.fecharModal=function(){
+
 document.getElementById("modal").style.display="none"
+
 }
 
 window.salvar=async function(){
 
+const grupo=document.getElementById("grupo").value
+const tempoValor=document.getElementById("tempo").value
+
+const tempo = tempoValor ? parseInt(tempoValor) : null
+
+const nome_exibicao = tempo
+? `${grupo} ${tempo} minutos`
+: grupo
+
 const payload={
-grupo:document.getElementById("grupo").value,
-tempo:document.getElementById("tempo").value ? parseInt(document.getElementById("tempo").value) : null,
+
+grupo:grupo,
+tempo:tempo,
+nome_exibicao:nome_exibicao,
 valor:parseFloat(document.getElementById("valor").value),
 comissao:parseFloat(document.getElementById("comissao").value),
 status:document.getElementById("status").value
+
 }
 
-if(!payload.grupo){
-alert("Grupo obrigatório")
+if(!grupo){
+alert("Grupo é obrigatório")
 return
 }
 
 if(idAtual){
-await supabaseClient.from("servicos").update(payload).eq("id",idAtual)
+
+await supabaseClient
+.from("servicos")
+.update(payload)
+.eq("id",idAtual)
+
 }else{
-await supabaseClient.from("servicos").insert(payload)
+
+await supabaseClient
+.from("servicos")
+.insert(payload)
+
 }
 
 fecharModal()
 carregar()
+
+}
+
+window.editar=async function(id){
+
+idAtual=id
+
+const {data}=await supabaseClient
+.from("servicos")
+.select("*")
+.eq("id",id)
+.single()
+
+document.getElementById("grupo").value=data.grupo||""
+document.getElementById("tempo").value=data.tempo||""
+document.getElementById("valor").value=data.valor||""
+document.getElementById("comissao").value=data.comissao||""
+document.getElementById("status").value=data.status||""
+
+document.getElementById("modal").style.display="flex"
+
+}
+
+window.excluir=async function(id){
+
+if(!confirm("Excluir serviço?"))return
+
+await supabaseClient
+.from("servicos")
+.delete()
+.eq("id",id)
+
+carregar()
+
 }
 
 carregar()
 
-</script>
+})
 
-</body>
-</html>
+</script>

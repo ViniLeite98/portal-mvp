@@ -1,3 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Serviços | Hara Spa</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:#f5f7fb;
+}
+
+.app{
+display:flex;
+min-height:100vh;
+}
+
+#sidebar{
+width:260px;
+flex-shrink:0;
+}
+
+.content{
+flex:1;
+padding:40px;
+}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:16px;
+}
+
+.left-tools input{
+padding:8px;
+border:1px solid #d1d5db;
+border-radius:6px;
+width:240px;
+}
+
+.right-tools{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.right-tools button{
+background:#2563eb;
+color:#fff;
+border:none;
+border-radius:6px;
+padding:7px 12px;
+cursor:pointer;
+}
+
+.btn-novo{
+background:#1f2937;
+}
+
+.right-tools select{
+padding:6px;
+border-radius:6px;
+border:1px solid #d1d5db;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#fff;
+border-radius:14px;
+overflow:hidden;
+}
+
+th,td{
+padding:14px;
+border-bottom:1px solid #e5e7eb;
+font-size:14px;
+text-align:left;
+}
+
+th{
+background:#f9fafb;
+cursor:pointer;
+}
+
+.btn-editar{
+background:#f59e0b;
+color:#fff;
+border:none;
+border-radius:6px;
+padding:6px 10px;
+cursor:pointer;
+}
+
+.btn-excluir{
+background:#dc2626;
+color:#fff;
+border:none;
+border-radius:6px;
+padding:6px 10px;
+cursor:pointer;
+}
+
+.pagination{
+margin-top:20px;
+display:flex;
+gap:8px;
+}
+
+.pagination button{
+padding:6px 10px;
+border:none;
+border-radius:6px;
+background:#e5e7eb;
+cursor:pointer;
+}
+
+.pagination button.active{
+background:#2563eb;
+color:#fff;
+}
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.4);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:10;
+}
+
+.modal-content{
+background:#fff;
+width:600px;
+border-radius:16px;
+padding:24px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:12px;
+}
+
+.grid div{
+display:flex;
+flex-direction:column;
+gap:4px;
+}
+
+.grid label{
+font-size:13px;
+color:#374151;
+font-weight:500;
+}
+
+input,select{
+padding:8px;
+border-radius:6px;
+border:1px solid #d1d5db;
+width:100%;
+}
+
+.modal-actions{
+display:flex;
+justify-content:flex-end;
+gap:10px;
+margin-top:20px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside id="sidebar"></aside>
+
+<main class="content">
+
+<h1>Serviços</h1>
+
+<div class="topbar">
+
+<div class="left-tools">
+<input
+id="buscaServico"
+placeholder="Buscar serviço..."
+oninput="filtrarTabela()">
+</div>
+
+<div class="right-tools">
+
+<button onclick="exportarExcel()">
+<i class="fa-solid fa-file-excel"></i> Exportar
+</button>
+
+<button class="btn-novo" onclick="abrirNovo()">
++ Novo Serviço
+</button>
+
+<span>Mostrar</span>
+
+<select id="porPaginaSelect" onchange="mudarPorPagina()">
+<option value="5">5</option>
+<option value="10" selected>10</option>
+<option value="20">20</option>
+<option value="todos">Todos</option>
+</select>
+
+</div>
+
+</div>
+
+<table>
+
+<thead>
+<tr>
+<th onclick="ordenar('grupo')">Grupo ⬍</th>
+<th onclick="ordenar('tempo')">Tempo ⬍</th>
+<th onclick="ordenar('valor')">Valor ⬍</th>
+<th onclick="ordenar('comissao')">Comissão ⬍</th>
+<th>Status</th>
+<th>Ações</th>
+</tr>
+</thead>
+
+<tbody id="lista"></tbody>
+
+</table>
+
+<div class="pagination" id="paginacao"></div>
+
+</main>
+
+</div>
+
+<div class="modal" id="modal">
+
+<div class="modal-content">
+
+<h3>Cadastro Serviço</h3>
+
+<div class="grid">
+
+<div>
+<label>Grupo</label>
+<select id="grupo">
+<option value="">Selecione</option>
+<option>Nuru</option>
+<option>Vivencia</option>
+<option>Four Hands</option>
+<option>Fetiche</option>
+<option>Podolatria</option>
+<option>Pspot</option>
+<option>Voyeur</option>
+<option>Experiência simultânea no Tantra</option>
+<option>Mini Curso Sessão Vivência</option>
+</select>
+</div>
+
+<div>
+<label>Tempo</label>
+<select id="tempo">
+<option value="">Sem tempo</option>
+<option value="30">30</option>
+<option value="45">45</option>
+<option value="60">60</option>
+<option value="90">90</option>
+<option value="120">120</option>
+</select>
+</div>
+
+<div>
+<label>Valor</label>
+<input id="valor" type="number" step="0.01">
+</div>
+
+<div>
+<label>Comissão</label>
+<input id="comissao" type="number" step="0.01">
+</div>
+
+<div>
+<label>Status</label>
+<select id="status">
+<option value="ativo">ativo</option>
+<option value="inativo">inativo</option>
+</select>
+</div>
+
+</div>
+
+<div class="modal-actions">
+
+<button onclick="fecharModal()">Cancelar</button>
+<button onclick="salvar()">Salvar</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+
 <script>
 
 document.addEventListener("DOMContentLoaded", function(){
@@ -7,29 +328,38 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let dados = []
-let idAtual = null
-let paginaAtual = 1
-let porPagina = 10
+let dados=[]
+let listaAtual=[]
+let paginaAtual=1
+let porPagina=10
+let idAtual=null
+let ordem={campo:"grupo",asc:true}
 
-// ================== CARREGAR ==================
 async function carregar(){
-const {data} = await supabaseClient.from("servicos").select("*")
-dados = data || []
+
+const {data}=await supabaseClient
+.from("servicos")
+.select("*")
+
+dados=data||[]
+
 render()
+
 }
 
-// ================== RENDER ==================
-function render(lista = dados){
+function render(lista=dados){
 
-const tbody = document.getElementById("lista")
-tbody.innerHTML = ""
+listaAtual=lista
 
-const inicio = (paginaAtual-1)*porPagina
-const pag = lista.slice(inicio, inicio+porPagina)
+const inicio=(paginaAtual-1)*porPagina
+const pag=lista.slice(inicio,inicio+porPagina)
+
+const tbody=document.getElementById("lista")
+tbody.innerHTML=""
 
 pag.forEach(s=>{
-tbody.innerHTML += `
+
+tbody.innerHTML+=`
 <tr>
 <td>${s.grupo||""}</td>
 <td>${s.tempo ? s.tempo + " min" : "-"}</td>
@@ -40,58 +370,47 @@ tbody.innerHTML += `
 <button class="btn-editar" onclick="editar('${s.id}')">Editar</button>
 <button class="btn-excluir" onclick="excluir('${s.id}')">Excluir</button>
 </td>
-</tr>`
+</tr>
+`
+
 })
 
+renderPaginacao(lista.length)
+
 }
 
-// ================== EDITAR ==================
-window.editar = function(id){
+window.filtrarTabela=function(){
 
-const s = dados.find(x => x.id == id)
-if(!s) return
+const termo=document
+.getElementById("buscaServico")
+.value
+.toLowerCase()
 
-idAtual = id
+const filtrado=dados.filter(s=>
+(s.grupo||"").toLowerCase().includes(termo)
+)
 
-document.getElementById("grupo").value = s.grupo || ""
-document.getElementById("tempo").value = s.tempo || ""
-document.getElementById("valor").value = s.valor || ""
-document.getElementById("comissao").value = s.comissao || ""
-document.getElementById("status").value = s.status || "ativo"
+paginaAtual=1
+render(filtrado)
 
-document.getElementById("modal").style.display = "flex"
 }
 
-// ================== NOVO ==================
-window.abrirNovo = function(){
+window.salvar=async function(){
 
-idAtual = null
+const payload={
 
-document.getElementById("grupo").value = ""
-document.getElementById("tempo").value = ""
-document.getElementById("valor").value = ""
-document.getElementById("comissao").value = ""
-document.getElementById("status").value = "ativo"
+grupo:document.getElementById("grupo").value,
 
-document.getElementById("modal").style.display = "flex"
-}
-
-// ================== FECHAR ==================
-window.fecharModal = function(){
-document.getElementById("modal").style.display = "none"
-}
-
-// ================== SALVAR ==================
-window.salvar = async function(){
-
-const payload = {
-grupo: document.getElementById("grupo").value,
-tempo: document.getElementById("tempo").value
+tempo:document.getElementById("tempo").value
 ? parseInt(document.getElementById("tempo").value)
 : null,
-valor: parseFloat(document.getElementById("valor").value),
-comissao: parseFloat(document.getElementById("comissao").value),
-status: document.getElementById("status").value
+
+valor:parseFloat(document.getElementById("valor").value),
+
+comissao:parseFloat(document.getElementById("comissao").value),
+
+status:document.getElementById("status").value
+
 }
 
 if(!payload.grupo){
@@ -104,7 +423,7 @@ if(idAtual){
 await supabaseClient
 .from("servicos")
 .update(payload)
-.eq("id", idAtual)
+.eq("id",idAtual)
 
 }else{
 
@@ -119,51 +438,11 @@ carregar()
 
 }
 
-// ================== EXCLUIR ==================
-window.excluir = async function(id){
-
-if(!confirm("Excluir serviço?")) return
-
-await supabaseClient
-.from("servicos")
-.delete()
-.eq("id", id)
-
-carregar()
-
-}
-
-// ================== FILTRO ==================
-window.filtrarTabela = function(){
-
-const termo = document
-.getElementById("buscaServico")
-.value
-.toLowerCase()
-
-const filtrado = dados.filter(s =>
-(s.grupo||"").toLowerCase().includes(termo)
-)
-
-render(filtrado)
-
-}
-
-// ================== EXPORTAR ==================
-window.exportarExcel = function(){
-
-const ws = XLSX.utils.json_to_sheet(dados)
-const wb = XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb, ws, "Serviços")
-
-XLSX.writeFile(wb, "servicos.xlsx")
-
-}
-
-// INIT
 carregar()
 
 })
 
 </script>
+
+</body>
+</html>

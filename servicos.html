@@ -7,31 +7,29 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let dados=[]
-let listaAtual=[]
-let paginaAtual=1
-let porPagina=10
-let idAtual=null
-let ordem={campo:"grupo",asc:true}
+let dados = []
+let idAtual = null
+let paginaAtual = 1
+let porPagina = 10
 
+// ================== CARREGAR ==================
 async function carregar(){
-const {data}=await supabaseClient.from("servicos").select("*")
-dados=data||[]
+const {data} = await supabaseClient.from("servicos").select("*")
+dados = data || []
 render()
 }
 
-function render(lista=dados){
+// ================== RENDER ==================
+function render(lista = dados){
 
-listaAtual=lista
+const tbody = document.getElementById("lista")
+tbody.innerHTML = ""
 
-const inicio=(paginaAtual-1)*porPagina
-const pag=lista.slice(inicio,inicio+porPagina)
-
-const tbody=document.getElementById("lista")
-tbody.innerHTML=""
+const inicio = (paginaAtual-1)*porPagina
+const pag = lista.slice(inicio, inicio+porPagina)
 
 pag.forEach(s=>{
-tbody.innerHTML+=`
+tbody.innerHTML += `
 <tr>
 <td>${s.grupo||""}</td>
 <td>${s.tempo ? s.tempo + " min" : "-"}</td>
@@ -42,18 +40,15 @@ tbody.innerHTML+=`
 <button class="btn-editar" onclick="editar('${s.id}')">Editar</button>
 <button class="btn-excluir" onclick="excluir('${s.id}')">Excluir</button>
 </td>
-</tr>
-`
+</tr>`
 })
 
-renderPaginacao(lista.length)
 }
 
-// 🔥 EDITAR (ESSA É A PARTE QUE FALTAVA)
+// ================== EDITAR ==================
 window.editar = function(id){
 
 const s = dados.find(x => x.id == id)
-
 if(!s) return
 
 idAtual = id
@@ -67,7 +62,7 @@ document.getElementById("status").value = s.status || "ativo"
 document.getElementById("modal").style.display = "flex"
 }
 
-// 🔥 NOVO
+// ================== NOVO ==================
 window.abrirNovo = function(){
 
 idAtual = null
@@ -81,61 +76,22 @@ document.getElementById("status").value = "ativo"
 document.getElementById("modal").style.display = "flex"
 }
 
-// 🔥 FECHAR
+// ================== FECHAR ==================
 window.fecharModal = function(){
 document.getElementById("modal").style.display = "none"
 }
 
-// 🔥 EXCLUIR
-window.excluir = async function(id){
+// ================== SALVAR ==================
+window.salvar = async function(){
 
-if(!confirm("Excluir serviço?")) return
-
-await supabaseClient
-.from("servicos")
-.delete()
-.eq("id", id)
-
-carregar()
-}
-
-// 🔥 EXPORTAR EXCEL
-window.exportarExcel = function(){
-
-const ws = XLSX.utils.json_to_sheet(dados)
-const wb = XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb, ws, "Serviços")
-
-XLSX.writeFile(wb, "servicos.xlsx")
-}
-
-window.filtrarTabela=function(){
-
-const termo=document
-.getElementById("buscaServico")
-.value
-.toLowerCase()
-
-const filtrado=dados.filter(s=>
-(s.grupo||"").toLowerCase().includes(termo)
-)
-
-paginaAtual=1
-render(filtrado)
-
-}
-
-window.salvar=async function(){
-
-const payload={
-grupo:document.getElementById("grupo").value,
-tempo:document.getElementById("tempo").value
+const payload = {
+grupo: document.getElementById("grupo").value,
+tempo: document.getElementById("tempo").value
 ? parseInt(document.getElementById("tempo").value)
 : null,
-valor:parseFloat(document.getElementById("valor").value),
-comissao:parseFloat(document.getElementById("comissao").value),
-status:document.getElementById("status").value
+valor: parseFloat(document.getElementById("valor").value),
+comissao: parseFloat(document.getElementById("comissao").value),
+status: document.getElementById("status").value
 }
 
 if(!payload.grupo){
@@ -148,7 +104,7 @@ if(idAtual){
 await supabaseClient
 .from("servicos")
 .update(payload)
-.eq("id",idAtual)
+.eq("id", idAtual)
 
 }else{
 
@@ -163,6 +119,49 @@ carregar()
 
 }
 
+// ================== EXCLUIR ==================
+window.excluir = async function(id){
+
+if(!confirm("Excluir serviço?")) return
+
+await supabaseClient
+.from("servicos")
+.delete()
+.eq("id", id)
+
+carregar()
+
+}
+
+// ================== FILTRO ==================
+window.filtrarTabela = function(){
+
+const termo = document
+.getElementById("buscaServico")
+.value
+.toLowerCase()
+
+const filtrado = dados.filter(s =>
+(s.grupo||"").toLowerCase().includes(termo)
+)
+
+render(filtrado)
+
+}
+
+// ================== EXPORTAR ==================
+window.exportarExcel = function(){
+
+const ws = XLSX.utils.json_to_sheet(dados)
+const wb = XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb, ws, "Serviços")
+
+XLSX.writeFile(wb, "servicos.xlsx")
+
+}
+
+// INIT
 carregar()
 
 })

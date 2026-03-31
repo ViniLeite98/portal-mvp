@@ -86,10 +86,10 @@ display:block;
 <table>
 <thead>
 <tr>
-<th onclick="ordenar('grupo')">Serviço ⬍</th>
-<th onclick="ordenar('tempo')">Tempo ⬍</th>
-<th onclick="ordenar('valor')">Valor ⬍</th>
-<th onclick="ordenar('comissao')">Comissão ⬍</th>
+<th>Serviço</th>
+<th>Tempo</th>
+<th>Valor</th>
+<th>Comissão</th>
 <th>Status</th>
 <th>Ações</th>
 </tr>
@@ -97,8 +97,6 @@ display:block;
 
 <tbody id="lista"></tbody>
 </table>
-
-<div class="pagination" id="paginacao"></div>
 
 </main>
 </div>
@@ -167,7 +165,6 @@ display:block;
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
@@ -178,9 +175,7 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-
 let dados=[]
-let listaAtual=[]
 let paginaAtual=1
 let porPagina=10
 let idAtual=null
@@ -200,10 +195,8 @@ return (texto || "")
 
 function render(lista=dados){
 
-listaAtual=lista
-
-const inicio=(paginaAtual-1)*porPagina
-const pag=lista.slice(inicio,inicio+porPagina)
+const inicio = (paginaAtual - 1) * porPagina
+const pag = porPagina >= lista.length ? lista : lista.slice(inicio, inicio + porPagina)
 
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
@@ -251,6 +244,28 @@ normalizar(s.status).includes(termo)
 
 paginaAtual=1
 render(filtrado)
+
+}
+
+window.mudarPorPagina=function(){
+
+const valor = document.getElementById("porPaginaSelect").value
+
+if(valor === "todos"){
+porPagina = dados.length
+}else{
+porPagina = parseInt(valor)
+}
+
+paginaAtual=1
+
+const termo = document.getElementById("buscaServico").value
+
+if(termo){
+filtrarTabela()
+}else{
+render()
+}
 
 }
 

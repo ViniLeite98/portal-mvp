@@ -17,20 +17,114 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;}
 .content{flex:1;padding:40px;}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-.left-tools input{padding:8px;border:1px solid #d1d5db;border-radius:6px;width:240px;}
-.right-tools{display:flex;gap:10px;}
-.right-tools button{background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 12px;}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:16px;
+}
+
+.left-tools input{
+padding:8px;
+border:1px solid #d1d5db;
+border-radius:6px;
+width:240px;
+}
+
+.right-tools{
+display:flex;
+gap:10px;
+align-items:center;
+}
+
+.right-tools button{
+background:#2563eb;
+color:#fff;
+border:none;
+border-radius:6px;
+padding:7px 12px;
+cursor:pointer;
+}
+
 .btn-novo{background:#1f2937;}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;}
-th,td{padding:14px;border-bottom:1px solid #e5e7eb;}
-th{background:#f9fafb;cursor:pointer;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;}
-.modal-content{background:#fff;width:600px;border-radius:16px;padding:24px;}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
-input,select{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
-label{font-size:12px;color:#6b7280;margin-bottom:4px;display:block;}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#fff;
+border-radius:14px;
+overflow:hidden;
+}
+
+th, td{
+padding:14px;
+border-bottom:1px solid #e5e7eb;
+vertical-align:middle;
+}
+
+th{
+background:#f9fafb;
+cursor:pointer;
+font-weight:600;
+}
+
+/* 🎯 ALINHAMENTO PROFISSIONAL */
+td:nth-child(2),
+td:nth-child(3),
+td:nth-child(4),
+td:nth-child(5),
+td:nth-child(6){
+text-align:center;
+}
+
+/* hover */
+tr:hover{
+background:#f9fafb;
+}
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.4);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.modal-content{
+background:#fff;
+width:600px;
+border-radius:16px;
+padding:24px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:12px;
+}
+
+input,select{
+padding:8px;
+border-radius:6px;
+border:1px solid #d1d5db;
+width:100%;
+}
+
+label{
+font-size:12px;
+color:#6b7280;
+margin-bottom:4px;
+display:block;
+}
+
+.modal-actions{
+display:flex;
+justify-content:flex-end;
+gap:10px;
+margin-top:20px;
+}
 </style>
 </head>
 
@@ -49,8 +143,13 @@ label{font-size:12px;color:#6b7280;margin-bottom:4px;display:block;}
 </div>
 
 <div class="right-tools">
-<button onclick="exportarExcel()"><i class="fa-solid fa-file-excel"></i> Exportar</button>
-<button class="btn-novo" onclick="abrirNovo()">+ Novo</button>
+<button onclick="exportarExcel()">
+<i class="fa-solid fa-file-excel"></i> Exportar
+</button>
+
+<button class="btn-novo" onclick="abrirNovo()">
++ Novo
+</button>
 
 <select id="porPaginaSelect" onchange="mudarPorPagina()">
 <option value="5">5</option>
@@ -162,6 +261,10 @@ if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
 return s.grupo
 }
 
+function moeda(valor){
+return Number(valor||0).toLocaleString("pt-BR",{minimumFractionDigits:2})
+}
+
 async function carregar(){
 const {data}=await supabaseClient.from("servicos").select("*")
 dados=data||[]
@@ -176,8 +279,8 @@ let valA,valB
 
 switch(ordem.campo){
 case "servico":
-valA = `${a.grupo} ${a.subgrupo||""}`
-valB = `${b.grupo} ${b.subgrupo||""}`
+valA=`${a.grupo} ${a.subgrupo||""}`
+valB=`${b.grupo} ${b.subgrupo||""}`
 break
 case "tempo": valA=a.tempo||0; valB=b.tempo||0; break
 case "valor": valA=a.valor||0; valB=b.valor||0; break
@@ -199,9 +302,9 @@ lista.slice(0,porPagina).forEach(s=>{
 tbody.innerHTML+=`
 <tr>
 <td>${nomeServico(s)}</td>
-<td>${s.tempo? s.tempo+" minutos":"-"}</td>
-<td>R$ ${Number(s.valor||0).toFixed(2)}</td>
-<td>R$ ${Number(s.comissao||0).toFixed(2)}</td>
+<td>${s.tempo? s.tempo+" min":"-"}</td>
+<td>R$ ${moeda(s.valor)}</td>
+<td>R$ ${moeda(s.comissao)}</td>
 <td>${s.status}</td>
 <td>
 <button onclick="editar('${s.id}')">Editar</button>
@@ -211,49 +314,15 @@ tbody.innerHTML+=`
 })
 }
 
-window.ordenar=function(campo){
-if(ordem.campo===campo){ordem.asc=!ordem.asc}
-else{ordem.campo=campo;ordem.asc=true}
-render()
-}
-
 window.filtrarTabela=function(){
 const termo=document.getElementById("buscaServico").value.toLowerCase()
-
-const filtrado=dados.filter(s=>{
-return nomeServico(s).toLowerCase().includes(termo)
-})
-
-render(filtrado)
+render(dados.filter(s=>nomeServico(s).toLowerCase().includes(termo)))
 }
 
 window.mudarPorPagina=function(){
-const valor=document.getElementById("porPaginaSelect").value
-porPagina=valor==="todos"?dados.length:parseInt(valor)
+const v=document.getElementById("porPaginaSelect").value
+porPagina=v==="todos"?dados.length:parseInt(v)
 render()
-}
-
-window.exportarExcel=function(){
-const dadosExcel=dados.map(s=>({
-Serviço:nomeServico(s),
-Tempo:s.tempo?`${s.tempo} minutos`:"-",
-Valor:s.valor,
-Comissão:s.comissao,
-Status:s.status
-}))
-const ws=XLSX.utils.json_to_sheet(dadosExcel)
-const wb=XLSX.utils.book_new()
-XLSX.utils.book_append_sheet(wb,ws,"Serviços")
-XLSX.writeFile(wb,"servicos.xlsx")
-}
-
-function existeDuplicado(payload){
-return dados.some(s =>
-s.grupo===payload.grupo &&
-(s.subgrupo||"")===(payload.subgrupo||"") &&
-(s.tempo||null)===(payload.tempo||null) &&
-s.id!==idAtual
-)
 }
 
 window.salvar=async function(){
@@ -267,7 +336,14 @@ comissao:parseFloat(comissao.value),
 status:status.value
 }
 
-if(existeDuplicado(payload)){
+const duplicado=dados.find(s =>
+s.grupo===payload.grupo &&
+(s.subgrupo||"")===(payload.subgrupo||"") &&
+(s.tempo||null)===(payload.tempo||null) &&
+s.id!==idAtual
+)
+
+if(duplicado){
 alert("Serviço já existe!")
 return
 }
@@ -280,6 +356,21 @@ await supabaseClient.from("servicos").insert(payload)
 
 fecharModal()
 carregar()
+}
+
+window.abrirNovo=function(){
+idAtual=null
+grupo.value=""
+subgrupo.value=""
+tempo.value=""
+valor.value=""
+comissao.value=""
+status.value="ativo"
+modal.style.display="flex"
+}
+
+window.fecharModal=function(){
+modal.style.display="none"
 }
 
 window.editar=function(id){
@@ -299,19 +390,18 @@ await supabaseClient.from("servicos").delete().eq("id",id)
 carregar()
 }
 
-window.abrirNovo=function(){
-idAtual=null
-grupo.value=""
-subgrupo.value=""
-tempo.value=""
-valor.value=""
-comissao.value=""
-status.value="ativo"
-modal.style.display="flex"
-}
-
-window.fecharModal=function(){
-modal.style.display="none"
+window.exportarExcel=function(){
+const dadosExcel=dados.map(s=>({
+Serviço:nomeServico(s),
+Tempo:s.tempo?`${s.tempo} min`:"-",
+Valor:s.valor,
+Comissão:s.comissao,
+Status:s.status
+}))
+const ws=XLSX.utils.json_to_sheet(dadosExcel)
+const wb=XLSX.utils.book_new()
+XLSX.utils.book_append_sheet(wb,ws,"Serviços")
+XLSX.writeFile(wb,"servicos.xlsx")
 }
 
 carregar()

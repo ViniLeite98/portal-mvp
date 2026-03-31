@@ -120,7 +120,17 @@ margin-bottom:20px;
 .grid{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:12px;
+gap:16px;
+}
+
+/* NOVO: LABEL */
+
+label{
+font-size:12px;
+font-weight:600;
+color:#374151;
+margin-bottom:4px;
+display:block;
 }
 
 input,textarea{
@@ -196,23 +206,53 @@ oninput="filtrarTabela()">
 
 <div class="grid">
 
-<input id="nome" placeholder="Nome *">
-<input id="cpf_cnpj" placeholder="CPF/CNPJ">
-<input id="telefone_1" placeholder="Telefone 1">
-<input id="telefone_2" placeholder="Telefone 2">
+<div>
+<label>Nome *</label>
+<input id="nome">
+</div>
+
+<div>
+<label>CPF/CNPJ</label>
+<input id="cpf_cnpj">
+</div>
+
+<div>
+<label>Telefone 1</label>
+<input id="telefone_1">
+</div>
+
+<div>
+<label>Telefone 2</label>
+<input id="telefone_2">
+</div>
+
+<div>
+<label>Data de Nascimento</label>
 <input type="date" id="dt_nasc">
-<input id="email" placeholder="Email">
-<input id="nacionalidade" placeholder="Nacionalidade">
-<input id="endereco" placeholder="Endereço">
+</div>
+
+<div>
+<label>Email</label>
+<input id="email">
+</div>
+
+<div>
+<label>Nacionalidade</label>
+<input id="nacionalidade">
+</div>
+
+<div>
+<label>Endereço</label>
+<input id="endereco">
+</div>
 
 </div>
 
 </div>
 
 <div class="section">
-
-<textarea id="observacao" placeholder="Observação"></textarea>
-
+<label>Observação</label>
+<textarea id="observacao"></textarea>
 </div>
 
 <div class="modal-actions">
@@ -244,31 +284,19 @@ const campos=[
 ];
 
 function getPayload(){
-
 const obj={};
-
 campos.forEach(c=>{
-
 const el=document.getElementById(c);
-
 if(el && el.value!=="") obj[c]=el.value;
-
 });
-
 return obj;
-
 }
 
 function setForm(data){
-
 campos.forEach(c=>{
-
 const el=document.getElementById(c);
-
 if(el) el.value=data[c]||"";
-
 });
-
 }
 
 async function carregar(){
@@ -284,19 +312,15 @@ return;
 }
 
 dados=data;
-
 render(dados);
-
 }
 
 function render(lista){
 
 const tbody=document.getElementById("lista");
-
 tbody.innerHTML="";
 
 lista.forEach(c=>{
-
 tbody.innerHTML+=`
 <tr>
 <td>${c.nome||""}</td>
@@ -308,13 +332,10 @@ tbody.innerHTML+=`
 </td>
 </tr>
 `;
-
 });
-
 }
 
 function filtrarTabela(){
-
 const termo=document
 .getElementById("buscaCliente")
 .value
@@ -325,20 +346,15 @@ const filtrado=dados.filter(c =>
 );
 
 render(filtrado);
-
 }
 
 function abrirNovo(){
-
 idAtual=null;
-
 campos.forEach(c=>{
 const el=document.getElementById(c);
 if(el) el.value="";
 });
-
 document.getElementById("modal").style.display="flex";
-
 }
 
 async function editar(id){
@@ -357,9 +373,7 @@ return;
 }
 
 setForm(data);
-
 document.getElementById("modal").style.display="flex";
-
 }
 
 async function salvar(){
@@ -374,34 +388,24 @@ return;
 let error;
 
 if(idAtual){
-
 ({error}=await supabaseClient
 .from("clientes")
 .update(payload)
 .eq("id",idAtual));
-
 }else{
-
 ({error}=await supabaseClient
 .from("clientes")
 .insert(payload));
-
 }
 
 if(error){
-
 console.error(error);
-
 alert("Erro ao salvar");
-
 return;
-
 }
 
 fecharModal();
-
 carregar();
-
 }
 
 async function excluir(id){
@@ -414,13 +418,10 @@ await supabaseClient
 .eq("id",id);
 
 carregar();
-
 }
 
 function fecharModal(){
-
 document.getElementById("modal").style.display="none";
-
 }
 
 carregar();

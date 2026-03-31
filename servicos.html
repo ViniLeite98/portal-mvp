@@ -9,33 +9,108 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
+#sidebar{width:260px;}
 .content{flex:1;padding:40px;}
+
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-.left-tools input{padding:8px;border:1px solid #d1d5db;border-radius:6px;width:240px;}
-.right-tools{display:flex;align-items:center;gap:10px;}
-.right-tools button{background:#2563eb;color:#fff;border:none;border-radius:6px;padding:7px 12px;cursor:pointer;}
+
+.left-tools input{
+padding:8px;
+border:1px solid #d1d5db;
+border-radius:6px;
+width:240px;
+}
+
+.right-tools{display:flex;gap:10px;align-items:center;}
+
+.right-tools button{
+background:#2563eb;
+color:#fff;
+border:none;
+border-radius:6px;
+padding:7px 12px;
+cursor:pointer;
+}
+
 .btn-novo{background:#1f2937;}
-.right-tools select{padding:6px;border-radius:6px;border:1px solid #d1d5db;}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
-th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
-th{background:#f9fafb;cursor:pointer;}
-.btn-editar{background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;}
-.btn-excluir{background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;}
-.pagination{margin-top:20px;display:flex;gap:8px;}
-.pagination button{padding:6px 10px;border:none;border-radius:6px;background:#e5e7eb;cursor:pointer;}
-.pagination button.active{background:#2563eb;color:#fff;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10;}
-.modal-content{background:#fff;width:600px;border-radius:16px;padding:24px;}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
-input,select{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#fff;
+border-radius:14px;
+overflow:hidden;
+}
+
+th,td{
+padding:14px;
+border-bottom:1px solid #e5e7eb;
+font-size:14px;
+text-align:left;
+}
+
+th{background:#f9fafb;}
+
+.btn-editar{background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 10px;}
+.btn-excluir{background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 10px;}
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.4);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.modal-content{
+background:#fff;
+width:600px;
+border-radius:16px;
+padding:24px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:16px;
+}
+
+/* ICONES */
+.input-group{
+position:relative;
+}
+
+.input-group i{
+position:absolute;
+left:10px;
+top:50%;
+transform:translateY(-50%);
+color:#6b7280;
+}
+
+.input-group input,
+.input-group select{
+padding-left:32px;
+}
+
+input,select{
+padding:8px;
+border-radius:6px;
+border:1px solid #d1d5db;
+width:100%;
+}
+
+.modal-actions{
+display:flex;
+justify-content:flex-end;
+gap:10px;
+margin-top:20px;
+}
 </style>
 </head>
 
@@ -55,33 +130,18 @@ input,select{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
 </div>
 
 <div class="right-tools">
-<button onclick="exportarExcel()">
-<i class="fa-solid fa-file-excel"></i> Exportar
-</button>
-
-<button class="btn-novo" onclick="abrirNovo()">
-+ Novo Serviço
-</button>
-
-<span>Mostrar</span>
-
-<select id="porPaginaSelect" onchange="mudarPorPagina()">
-<option value="5">5</option>
-<option value="10" selected>10</option>
-<option value="20">20</option>
-<option value="todos">Todos</option>
-</select>
-
+<button onclick="abrirNovo()">+ Novo Serviço</button>
 </div>
+
 </div>
 
 <table>
 <thead>
 <tr>
-<th onclick="ordenar('grupo')">Serviço ⬍</th>
-<th onclick="ordenar('tempo')">Tempo ⬍</th>
-<th onclick="ordenar('valor')">Valor ⬍</th>
-<th onclick="ordenar('comissao')">Comissão ⬍</th>
+<th>Serviço</th>
+<th>Tempo</th>
+<th>Valor</th>
+<th>Comissão</th>
 <th>Status</th>
 <th>Ações</th>
 </tr>
@@ -90,11 +150,10 @@ input,select{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
 <tbody id="lista"></tbody>
 </table>
 
-<div class="pagination" id="paginacao"></div>
-
 </main>
 </div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
@@ -102,6 +161,8 @@ input,select{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
 
 <div class="grid">
 
+<div class="input-group">
+<i class="fa-solid fa-layer-group"></i>
 <select id="grupo">
 <option value="">Grupo</option>
 <option>Nuru</option>
@@ -114,7 +175,10 @@ input,select{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
 <option>Experiência simultânea no Tantra</option>
 <option>Mini Curso Sessão Vivência</option>
 </select>
+</div>
 
+<div class="input-group">
+<i class="fa-regular fa-clock"></i>
 <select id="tempo">
 <option value="">Sem tempo</option>
 <option value="30">30</option>
@@ -123,14 +187,25 @@ input,select{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
 <option value="90">90</option>
 <option value="120">120</option>
 </select>
+</div>
 
+<div class="input-group">
+<i class="fa-solid fa-dollar-sign"></i>
 <input id="valor" type="number" step="0.01" placeholder="Valor">
-<input id="comissao" type="number" step="0.01" placeholder="Comissão">
+</div>
 
+<div class="input-group">
+<i class="fa-solid fa-hand-holding-dollar"></i>
+<input id="comissao" type="number" step="0.01" placeholder="Comissão">
+</div>
+
+<div class="input-group">
+<i class="fa-solid fa-toggle-on"></i>
 <select id="status">
 <option value="ativo">ativo</option>
 <option value="inativo">inativo</option>
 </select>
+</div>
 
 </div>
 
@@ -142,43 +217,32 @@ input,select{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-document.addEventListener("DOMContentLoaded", function(){
-
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI":"anon","iat":1770657485,"exp":2086233485}.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-
 let dados=[]
-let listaAtual=[]
-let paginaAtual=1
-let porPagina=10
 let idAtual=null
-let ordem={campo:"grupo",asc:true}
 
 async function carregar(){
-const {data}=await supabaseClient.from("servicos").select("*")
+const {data,error}=await supabaseClient.from("servicos").select("*")
+if(error){console.error(error);return}
 dados=data||[]
-render()
+render(dados)
 }
 
-function render(lista=dados){
-
-listaAtual=lista
-
-const inicio=(paginaAtual-1)*porPagina
-const pag=lista.slice(inicio,inicio+porPagina)
+function render(lista){
 
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
-pag.forEach(s=>{
+lista.forEach(s=>{
 
 const nomeServico = s.tempo 
   ? `${s.grupo} ${s.tempo} minutos`
@@ -186,38 +250,45 @@ const nomeServico = s.tempo
 
 tbody.innerHTML+=`
 <tr>
-<td>${nomeServico||""}</td>
-<td>${s.tempo ? s.tempo + " minutos" : "-"}</td>
+<td>${nomeServico}</td>
+<td>${s.tempo||"-"}</td>
 <td>R$ ${Number(s.valor||0).toFixed(2)}</td>
 <td>R$ ${Number(s.comissao||0).toFixed(2)}</td>
-<td>${s.status||""}</td>
+<td>${s.status}</td>
 <td>
 <button class="btn-editar" onclick="editar('${s.id}')">Editar</button>
 <button class="btn-excluir" onclick="excluir('${s.id}')">Excluir</button>
 </td>
 </tr>
 `
-
 })
-
-renderPaginacao(lista.length)
 
 }
 
-window.salvar=async function(){
+function filtrarTabela(){
+
+const termo=document.getElementById("buscaServico").value.toLowerCase()
+
+const filtrado=dados.filter(s =>
+`${s.grupo||""} ${s.tempo||""}`.toLowerCase().includes(termo)
+)
+
+render(filtrado)
+
+}
+
+async function salvar(){
 
 const payload={
-grupo:document.getElementById("grupo").value,
-tempo:document.getElementById("tempo").value 
-  ? parseInt(document.getElementById("tempo").value)
-  : null,
-valor:parseFloat(document.getElementById("valor").value),
-comissao:parseFloat(document.getElementById("comissao").value),
-status:document.getElementById("status").value
+grupo:grupo.value,
+tempo:tempo.value?parseInt(tempo.value):null,
+valor:parseFloat(valor.value),
+comissao:parseFloat(comissao.value),
+status:status.value
 }
 
 if(!payload.grupo){
-alert("Grupo é obrigatório")
+alert("Grupo obrigatório")
 return
 }
 
@@ -232,43 +303,41 @@ carregar()
 
 }
 
-window.editar=function(id){
+function editar(id){
 idAtual=id
-const data=dados.find(s=>s.id==id)
-if(!data) return
+const s=dados.find(x=>x.id==id)
+if(!s)return
 
-document.getElementById("grupo").value=data.grupo||""
-document.getElementById("tempo").value=data.tempo||""
-document.getElementById("valor").value=data.valor||""
-document.getElementById("comissao").value=data.comissao||""
-document.getElementById("status").value=data.status||""
+grupo.value=s.grupo||""
+tempo.value=s.tempo||""
+valor.value=s.valor||""
+comissao.value=s.comissao||""
+status.value=s.status||""
 
-document.getElementById("modal").style.display="flex"
+modal.style.display="flex"
 }
 
-window.excluir=async function(id){
+async function excluir(id){
 if(!confirm("Excluir serviço?"))return
 await supabaseClient.from("servicos").delete().eq("id",id)
 carregar()
 }
 
-window.abrirNovo=function(){
+function abrirNovo(){
 idAtual=null
-document.getElementById("grupo").value=""
-document.getElementById("tempo").value=""
-document.getElementById("valor").value=""
-document.getElementById("comissao").value=""
-document.getElementById("status").value="ativo"
-document.getElementById("modal").style.display="flex"
+grupo.value=""
+tempo.value=""
+valor.value=""
+comissao.value=""
+status.value="ativo"
+modal.style.display="flex"
 }
 
-window.fecharModal=function(){
-document.getElementById("modal").style.display="none"
+function fecharModal(){
+modal.style.display="none"
 }
 
 carregar()
-
-})
 
 </script>
 

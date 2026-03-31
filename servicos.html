@@ -236,7 +236,7 @@ margin-top:20px;
 </div>
 </div>
 
-<!-- ✅ SUPABASE CORRETO -->
+<!-- SUPABASE -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
@@ -269,7 +269,7 @@ return (s.grupo||"").toLowerCase().includes(termo)
 lista.sort((a,b)=>{
 let A=a[ordem.campo]||0
 let B=b[ordem.campo]||0
-return ordem.asc ? A>B?1:-1 : A<B?1:-1
+return ordem.asc ? (A>B?1:-1) : (A<B?1:-1)
 })
 
 return lista
@@ -313,19 +313,25 @@ if(porPagina==="todos") return
 const totalPaginas=Math.ceil(total/porPagina)
 
 for(let i=1;i<=totalPaginas;i++){
-div.innerHTML+=`<button onclick="irPagina(${i})">${i}</button>`
+div.innerHTML+=`<button class="${i===paginaAtual?'active':''}" onclick="irPagina(${i})">${i}</button>`
 }
 }
 
+function irPagina(p){paginaAtual=p;render()}
 function filtrarTabela(){paginaAtual=1;render()}
 function ordenar(c){
-ordem.campo=c
+if(ordem.campo===c){
 ordem.asc=!ordem.asc
+}else{
+ordem.campo=c
+ordem.asc=true
+}
 render()
 }
 function mudarPorPagina(){
 const v=document.getElementById("porPaginaSelect").value
 porPagina=v==="todos"?"todos":parseInt(v)
+paginaAtual=1
 render()
 }
 
@@ -338,12 +344,13 @@ document.getElementById("modal").style.display="flex"
 function editar(id){
 idAtual=id
 const s=dados.find(x=>x.id==id)
-document.getElementById("grupo").value=s.grupo
-document.getElementById("tempo").value=s.tempo
-document.getElementById("valor").value=s.valor
-document.getElementById("comissao").value=s.comissao
-document.getElementById("status").value=s.status
-document.getElementById("modal").style.display="flex"
+if(!s)return
+grupo.value=s.grupo||""
+tempo.value=s.tempo||""
+valor.value=s.valor||""
+comissao.value=s.comissao||""
+status.value=s.status||""
+modal.style.display="flex"
 }
 
 async function salvar(){
@@ -353,6 +360,11 @@ tempo:tempo.value?parseInt(tempo.value):null,
 valor:parseFloat(valor.value),
 comissao:parseFloat(comissao.value),
 status:status.value
+}
+
+if(!payload.grupo){
+alert("Grupo obrigatório")
+return
 }
 
 if(idAtual){
@@ -373,7 +385,7 @@ carregar()
 }
 
 function fecharModal(){
-document.getElementById("modal").style.display="none"
+modal.style.display="none"
 }
 
 carregar()

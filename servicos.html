@@ -25,7 +25,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .right-tools select{padding:6px;border-radius:6px;border:1px solid #d1d5db;}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
-th{background:#f9fafb;}
+th{background:#f9fafb;cursor:pointer;}
 .btn-editar{background:#f59e0b;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;}
 .btn-excluir{background:#dc2626;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10;}
@@ -76,11 +76,11 @@ label{font-size:12px;color:#6b7280;margin-bottom:4px;display:block;}
 <table>
 <thead>
 <tr>
-<th>Serviço</th>
-<th>Tempo</th>
-<th>Valor</th>
-<th>Comissão</th>
-<th>Status</th>
+<th onclick="ordenar('servico')">Serviço ⬍</th>
+<th onclick="ordenar('tempo')">Tempo ⬍</th>
+<th onclick="ordenar('valor')">Valor ⬍</th>
+<th onclick="ordenar('comissao')">Comissão ⬍</th>
+<th onclick="ordenar('status')">Status ⬍</th>
 <th>Ações</th>
 </tr>
 </thead>
@@ -169,6 +169,7 @@ let dados=[]
 let paginaAtual=1
 let porPagina=10
 let idAtual=null
+let ordem={campo:null,asc:true}
 
 async function carregar(){
 const {data}=await supabaseClient.from("servicos").select("*")
@@ -215,21 +216,60 @@ tbody.innerHTML+=`
 
 }
 
+window.ordenar=function(campo){
+
+if(ordem.campo===campo){
+ordem.asc=!ordem.asc
+}else{
+ordem.campo=campo
+ordem.asc=true
+}
+
+let lista=[...dados]
+
+const termo=document.getElementById("buscaServico").value
+
+if(termo){
+const termoNorm=normalizar(termo)
+
+lista=lista.filter(s=>{
+const nomeServico=s.tempo?`${s.grupo} ${s.tempo} minutos`:s.grupo
+return normalizar(nomeServico).includes(termoNorm)||normalizar(s.status).includes(termoNorm)
+})
+}
+
+lista.sort((a,b)=>{
+
+let valA,valB
+
+switch(campo){
+case "servico": valA=a.grupo||""; valB=b.grupo||""; break
+case "tempo": valA=a.tempo||0; valB=b.tempo||0; break
+case "valor": valA=a.valor||0; valB=b.valor||0; break
+case "comissao": valA=a.comissao||0; valB=b.comissao||0; break
+case "status": valA=a.status||""; valB=b.status||""; break
+}
+
+if(typeof valA==="string"){valA=valA.toLowerCase();valB=valB.toLowerCase()}
+
+if(valA>valB)return ordem.asc?1:-1
+if(valA<valB)return ordem.asc?-1:1
+return 0
+
+})
+
+paginaAtual=1
+render(lista)
+
+}
+
 window.filtrarTabela=function(){
 
-const termo = normalizar(document.getElementById("buscaServico").value)
+const termo=normalizar(document.getElementById("buscaServico").value)
 
-const filtrado = dados.filter(s => {
-
-const nomeServico = s.tempo 
-  ? `${s.grupo} ${s.tempo} minutos`
-  : s.grupo
-
-return (
-normalizar(nomeServico).includes(termo) ||
-normalizar(s.status).includes(termo)
-)
-
+const filtrado=dados.filter(s=>{
+const nomeServico=s.tempo?`${s.grupo} ${s.tempo} minutos`:s.grupo
+return normalizar(nomeServico).includes(termo)||normalizar(s.status).includes(termo)
 })
 
 paginaAtual=1
@@ -239,62 +279,41 @@ render(filtrado)
 
 window.mudarPorPagina=function(){
 
-const valor = document.getElementById("porPaginaSelect").value
+const valor=document.getElementById("porPaginaSelect").value
 
-if(valor === "todos"){
-porPagina = dados.length
-}else{
-porPagina = parseInt(valor)
-}
+porPagina=valor==="todos"?dados.length:parseInt(valor)
 
 paginaAtual=1
 
-const termo = document.getElementById("buscaServico").value
-
-if(termo){
-filtrarTabela()
-}else{
-render()
-}
+document.getElementById("buscaServico").value?filtrarTabela():render()
 
 }
 
 window.exportarExcel=function(){
 
-let lista = dados
-
-const termo = document.getElementById("buscaServico").value
+let lista=dados
+const termo=document.getElementById("buscaServico").value
 
 if(termo){
-const termoNorm = normalizar(termo)
-
-lista = dados.filter(s => {
-
-const nomeServico = s.tempo 
-  ? `${s.grupo} ${s.tempo} minutos`
-  : s.grupo
-
-return (
-normalizar(nomeServico).includes(termoNorm) ||
-normalizar(s.status).includes(termoNorm)
-)
-
+const termoNorm=normalizar(termo)
+lista=dados.filter(s=>{
+const nomeServico=s.tempo?`${s.grupo} ${s.tempo} minutos`:s.grupo
+return normalizar(nomeServico).includes(termoNorm)||normalizar(s.status).includes(termoNorm)
 })
 }
 
-const dadosExcel = lista.map(s => ({
-Serviço: s.tempo ? `${s.grupo} ${s.tempo} minutos` : s.grupo,
-Tempo: s.tempo ? `${s.tempo} minutos` : "-",
-Valor: Number(s.valor || 0),
-Comissão: Number(s.comissao || 0),
-Status: s.status
+const dadosExcel=lista.map(s=>({
+Serviço:s.tempo?`${s.grupo} ${s.tempo} minutos`:s.grupo,
+Tempo:s.tempo?`${s.tempo} minutos`:"-",
+Valor:Number(s.valor||0),
+Comissão:Number(s.comissao||0),
+Status:s.status
 }))
 
-const ws = XLSX.utils.json_to_sheet(dadosExcel)
-const wb = XLSX.utils.book_new()
-XLSX.utils.book_append_sheet(wb, ws, "Serviços")
-
-XLSX.writeFile(wb, "servicos.xlsx")
+const ws=XLSX.utils.json_to_sheet(dadosExcel)
+const wb=XLSX.utils.book_new()
+XLSX.utils.book_append_sheet(wb,ws,"Serviços")
+XLSX.writeFile(wb,"servicos.xlsx")
 
 }
 
@@ -302,18 +321,13 @@ window.salvar=async function(){
 
 const payload={
 grupo:document.getElementById("grupo").value,
-tempo:document.getElementById("tempo").value 
-  ? parseInt(document.getElementById("tempo").value)
-  : null,
+tempo:document.getElementById("tempo").value?parseInt(document.getElementById("tempo").value):null,
 valor:parseFloat(document.getElementById("valor").value),
 comissao:parseFloat(document.getElementById("comissao").value),
 status:document.getElementById("status").value
 }
 
-if(!payload.grupo){
-alert("Grupo é obrigatório")
-return
-}
+if(!payload.grupo){alert("Grupo é obrigatório");return}
 
 if(idAtual){
 await supabaseClient.from("servicos").update(payload).eq("id",idAtual)
@@ -329,7 +343,7 @@ carregar()
 window.editar=function(id){
 idAtual=id
 const data=dados.find(s=>s.id==id)
-if(!data) return
+if(!data)return
 
 document.getElementById("grupo").value=data.grupo||""
 document.getElementById("tempo").value=data.tempo||""

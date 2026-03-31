@@ -36,7 +36,6 @@ th{background:#f9fafb;cursor:pointer;}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
 input,select{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
 
-/* NOVO */
 label{
 font-size:12px;
 color:#6b7280;
@@ -176,21 +175,26 @@ document.addEventListener("DOMContentLoaded", function(){
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"SUA_ANON_KEY_AQUI"
 );
-
 
 let dados=[]
 let listaAtual=[]
 let paginaAtual=1
 let porPagina=10
 let idAtual=null
-let ordem={campo:"grupo",asc:true}
 
 async function carregar(){
 const {data}=await supabaseClient.from("servicos").select("*")
 dados=data||[]
 render()
+}
+
+function normalizar(texto){
+return (texto || "")
+.toLowerCase()
+.normalize("NFD")
+.replace(/[\u0300-\u036f]/g, "")
 }
 
 function render(lista=dados){
@@ -224,6 +228,28 @@ tbody.innerHTML+=`
 `
 
 })
+
+}
+
+window.filtrarTabela=function(){
+
+const termo = normalizar(document.getElementById("buscaServico").value)
+
+const filtrado = dados.filter(s => {
+
+const nomeServico = s.tempo 
+  ? `${s.grupo} ${s.tempo} minutos`
+  : s.grupo
+
+return (
+normalizar(nomeServico).includes(termo) ||
+normalizar(s.status).includes(termo)
+)
+
+})
+
+paginaAtual=1
+render(filtrado)
 
 }
 

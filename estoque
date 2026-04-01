@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Estoque | Hara Spa</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+body{
+margin:0;
+font-family:'Segoe UI';
+background:#f4f6fb;
+}
+
+.app{display:flex}
+.content{flex:1;padding:40px}
+
+.form-box{
+background:#fff;
+padding:20px;
+border-radius:10px;
+display:flex;
+gap:15px;
+margin-bottom:20px;
+}
+
+input,select{
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+button{
+background:#2563eb;
+color:#fff;
+border:none;
+padding:8px 14px;
+border-radius:6px;
+cursor:pointer;
+}
+
+.baixo{
+color:red;
+font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+<aside id="sidebar"></aside>
+
+<main class="content">
+
+<h1>Estoque</h1>
+
+<div class="form-box">
+
+<input id="nome" placeholder="Produto">
+<input id="unidade" placeholder="Unidade (ml, un)">
+<input id="minimo" type="number" placeholder="Estoque mínimo">
+
+<button onclick="criarProduto()">Cadastrar</button>
+
+</div>
+
+<table border="1" width="100%" style="background:#fff;border-radius:10px">
+<thead>
+<tr>
+<th>Produto</th>
+<th>Saldo</th>
+<th>Status</th>
+<th>Ações</th>
+</tr>
+</thead>
+
+<tbody id="lista"></tbody>
+</table>
+
+</main>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+
+<script>
+
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+)
+
+async function criarProduto(){
+
+const nome = document.getElementById("nome").value
+const unidade = document.getElementById("unidade").value
+const minimo = document.getElementById("minimo").value
+
+if(!nome){
+alert("Digite o nome")
+return
+}
+
+await supabaseClient
+.from("produtos")
+.insert({
+nome,
+unidade,
+estoque_minimo: minimo || 0
+})
+
+carregar()
+
+}
+
+async function carregar(){
+
+const {data} = await supabaseClient
+.from("estoque_atual")
+.select("*")
+.order("nome")
+
+const tbody = document.getElementById("lista")
+tbody.innerHTML=""
+
+data.forEach(p=>{
+
+const baixo = p.saldo <= p.estoque_minimo
+
+tbody.innerHTML+=`
+<tr>
+<td>${p.nome}</td>
+<td>${p.saldo} ${p.unidade || ""}</td>
+<td class="${baixo ? 'baixo' : ''}">
+${baixo ? 'Baixo' : 'OK'}
+</td>
+
+<td>
+<button onclick="entrada('${p.id}')">Entrada</button>
+<button onclick="saida('${p.id}')">Saída</button>
+</td>
+</tr>
+`
+})
+
+}
+
+async function entrada(id){
+
+const qtd = prompt("Quantidade entrada:")
+if(!qtd) return
+
+await supabaseClient
+.from("movimentacoes_estoque")
+.insert({
+produto_id:id,
+tipo:"entrada",
+quantidade:qtd,
+origem:"manual"
+})
+
+carregar()
+}
+
+async function saida(id){
+
+const qtd = prompt("Quantidade saída:")
+if(!qtd) return
+
+await supabaseClient
+.from("movimentacoes_estoque")
+.insert({
+produto_id:id,
+tipo:"saida",
+quantidade:qtd,
+origem:"uso"
+})
+
+carregar()
+}
+
+carregar()
+
+</script>
+
+</body>
+</html>

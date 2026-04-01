@@ -68,4 +68,9 @@ document.getElementById("sidebar").innerHTML = `
   </a>
 
 </div>
+
+<a href="estoque.html" class="menu-item ${paginaAtual === 'estoque.html' ? 'active' : ''}">
+  <i class="fa-solid fa-boxes-stacked"></i>
+  <span>Estoque</span>
+</a>
 `;

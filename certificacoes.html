@@ -71,6 +71,7 @@ cursor:pointer;
 
 button.excluir{background:#dc2626}
 button.editar{background:#f59e0b}
+button.salvar{background:#16a34a}
 
 table{
 width:100%;
@@ -123,7 +124,6 @@ width:420px;
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -151,18 +151,9 @@ width:420px;
 
 </div>
 
-<div style="margin-bottom:10px;font-size:13px;color:#555;">
-<strong>Legenda:</strong>
-<i class="fa-solid fa-person-dress"></i> Feminina |
-<i class="fa-solid fa-user-group"></i> Casais |
-<i class="fa-solid fa-droplet"></i> Nuru |
-<i class="fa-solid fa-spa"></i> Vivência |
-<i class="fa-solid fa-shoe-prints"></i> Podologia
-</div>
-
 <input 
 id="buscaTerapeuta" 
-placeholder="Buscar profssional ou certificação..."
+placeholder="Buscar profissional ou certificação..."
 oninput="filtrarTabela()"
 >
 
@@ -193,20 +184,6 @@ oninput="filtrarTabela()"
 </div>
 </div>
 
-<!-- MODAL DATA -->
-<div id="modalEditarData" class="modal">
-<div class="modal-box">
-<h3>Editar Data</h3>
-
-<input type="date" id="novaDataInput" style="width:100%;margin-bottom:15px;">
-
-<div style="display:flex;gap:10px;justify-content:flex-end">
-<button onclick="salvarNovaData()">Salvar</button>
-<button class="excluir" onclick="fecharModalData()">Cancelar</button>
-</div>
-</div>
-</div>
-
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
@@ -217,20 +194,18 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
-
 let dados=[]
 let listaFiltrada=[]
-let editandoId=null
 
 function iconeCertificacao(nome){
 if(!nome) return "fa-certificate"
 nome = nome.toLowerCase()
 
-if(nome.includes("massagem feminina")) return "fa-person-dress"
-if(nome.includes("massagem casais")) return "fa-user-group"
-if(nome.includes("massagem nuru")) return "fa-droplet"
-if(nome.includes("massagem vivência")) return "fa-spa"
-if(nome.includes("podologia") || nome.includes("podolatria")) return "fa-shoe-prints"
+if(nome.includes("feminina")) return "fa-person-dress"
+if(nome.includes("casais")) return "fa-user-group"
+if(nome.includes("nuru")) return "fa-droplet"
+if(nome.includes("vivência")) return "fa-spa"
+if(nome.includes("podologia")) return "fa-shoe-prints"
 
 return "fa-certificate"
 }
@@ -281,14 +256,6 @@ render(listaFiltrada)
 
 function render(lista){
 
-const ordem = [
-"fa-person-dress",
-"fa-user-group",
-"fa-droplet",
-"fa-spa",
-"fa-shoe-prints"
-]
-
 const agrupado={}
 
 lista.forEach(r=>{
@@ -306,30 +273,10 @@ tbody.innerHTML=""
 
 Object.values(agrupado).forEach(t=>{
 
-let iconesLista = []
-
-t.certs.forEach(c=>{
-const icone = iconeCertificacao(c.certificacoes?.nome)
-if(!iconesLista.includes(icone)){
-iconesLista.push(icone)
-}
-})
-
-iconesLista.sort((a,b)=>{
-return ordem.indexOf(a) - ordem.indexOf(b)
-})
-
-let icones = iconesLista.map(i =>
-`<i class="fa-solid ${i}"></i>`
-).join("")
-
 tbody.innerHTML+=`
 <tr>
 <td>
-<div class="servico">
 <strong>${t.nome}</strong>
-${icones}
-</div>
 </td>
 
 <td>
@@ -378,12 +325,23 @@ let html=""
 
 registros.forEach(r=>{
 html+=`
-<div style="display:flex;justify-content:space-between;margin-bottom:10px">
-<span>${r.certificacoes?.nome} - ${r.data_obtencao || "Sem data"}</span>
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+
+<span style="flex:1">${r.certificacoes?.nome}</span>
+
+<input 
+type="date" 
+value="${r.data_obtencao || ""}" 
+id="data_${r.id}"
+style="margin:0 10px"
+onchange="destacar(this)"
+>
+
 <div>
-<button onclick="editarCert('${r.id}','${r.data_obtencao || ""}')">Editar</button>
+<button class="salvar" onclick="salvarLinha('${r.id}')">Salvar</button>
 <button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
 </div>
+
 </div>
 `
 })
@@ -392,27 +350,17 @@ document.getElementById("listaCerts").innerHTML=html
 document.getElementById("modalCerts").style.display="flex"
 }
 
+function destacar(input){
+input.style.border="2px solid orange"
+}
+
 function fecharModal(){
 document.getElementById("modalCerts").style.display="none"
 }
 
-function editarCert(id,dataAtual){
+async function salvarLinha(id){
 
-editandoId=id
-
-const input=document.getElementById("novaDataInput")
-input.value=dataAtual||""
-
-document.getElementById("modalEditarData").style.display="flex"
-}
-
-function fecharModalData(){
-document.getElementById("modalEditarData").style.display="none"
-}
-
-async function salvarNovaData(){
-
-const novaData=document.getElementById("novaDataInput").value
+const novaData = document.getElementById(`data_${id}`).value
 
 if(!novaData){
 alert("Selecione uma data")
@@ -422,9 +370,8 @@ return
 await supabaseClient
 .from("terapeuta_certificacoes")
 .update({data_obtencao:novaData})
-.eq("id",editandoId)
+.eq("id",id)
 
-fecharModalData()
 carregarLista()
 }
 
@@ -448,7 +395,6 @@ data_obtencao:data||null
 })
 
 carregarLista()
-
 }
 
 async function excluir(id){

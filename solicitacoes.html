@@ -5,128 +5,111 @@
 <title>Solicitações | Hara Spa</title>
 
 <link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI;background:#f4f6fb}
+.app{display:flex}
+.content{flex:1;padding:40px}
 
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
+/* KPI */
+.kpi-container{
+display:flex;
+gap:15px;
+margin-bottom:20px;
 }
 
-.app{
-  display:flex;
-  min-height:100vh;
+.card-kpi{
+background:#fff;
+padding:15px;
+border-radius:12px;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+min-width:120px;
+text-align:center;
 }
 
-#sidebar{
-  width:260px;
-  flex-shrink:0;
+.card-kpi h3{
+margin:0;
+font-size:22px;
 }
 
-.content{
-  flex:1;
-  padding:40px;
+.card-kpi span{
+font-size:12px;
+color:#6b7280;
 }
 
-.card{
-  background:#fff;
-  border-radius:20px;
-  padding:30px;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-  margin-bottom:30px;
+/* tabela */
+table{
+width:100%;
+background:#fff;
+border-collapse:collapse;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
-input, select{
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #ddd;
-  width:100%;
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
 }
+
+.status-pendente{color:#f59e0b;font-weight:600;}
+.status-aprovado{color:#16a34a;font-weight:600;}
+.status-rejeitado{color:#dc2626;font-weight:600;}
 
 button{
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:8px 14px;
-  cursor:pointer;
-  margin-right:6px;
+padding:6px 10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
 }
 
-button:hover{ opacity:.9; }
-
-.btn-danger{ background:#dc2626; }
-.btn-aprovar{ background:#16a34a; }
-.btn-reprovar{ background:#dc2626; }
-
-.status-pendente{ color:#d97706; font-weight:bold; }
-.status-aprovado{ color:#16a34a; font-weight:bold; }
-.status-reprovado{ color:#dc2626; font-weight:bold; }
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-}
-
-th, td{
-  padding:10px;
-  border-bottom:1px solid #eee;
-  text-align:left;
-  font-size:14px;
-}
+.btn-aprovar{background:#16a34a;color:#fff;}
+.btn-rejeitar{background:#dc2626;color:#fff;}
 </style>
 </head>
 
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
 
-<div class="card">
-<h2>Nova Solicitação</h2>
+<h1>Solicitações</h1>
 
-<label>Terapeuta</label>
-<select id="terapeuta"></select><br><br>
+<!-- KPI -->
+<div class="kpi-container">
 
-<label>Tipo</label>
-<select id="tipo">
-<option>Falta</option>
-<option>Férias</option>
-<option>Atestado</option>
-<option>Viagem</option>
-</select><br><br>
-
-<label>Data Início</label>
-<input type="date" id="data_inicio"><br><br>
-
-<label>Data Fim</label>
-<input type="date" id="data_fim"><br><br>
-
-<label>Justificativa</label>
-<input id="justificativa"><br><br>
-
-<button onclick="salvar()">Salvar</button>
+<div class="card-kpi">
+<h3 id="kpiTotal">0</h3>
+<span>Total</span>
 </div>
 
-<button onclick="toggleLista()">Lista de aprovações</button>
+<div class="card-kpi">
+<h3 id="kpiPendente">0</h3>
+<span>Pendentes</span>
+</div>
 
-<div class="card" id="cardLista" style="display:none;">
-<h2>Painel de Aprovação</h2>
+<div class="card-kpi">
+<h3 id="kpiAprovado">0</h3>
+<span>Aprovadas</span>
+</div>
+
+<div class="card-kpi">
+<h3 id="kpiRejeitado">0</h3>
+<span>Rejeitadas</span>
+</div>
+
+</div>
 
 <table>
 <thead>
 <tr>
+<th>Data</th>
 <th>Terapeuta</th>
-<th>Tipo</th>
 <th>Período</th>
 <th>Status</th>
 <th>Ações</th>
@@ -134,187 +117,105 @@ th, td{
 </thead>
 <tbody id="lista"></tbody>
 </table>
-</div>
 
 </main>
 </div>
 
-<!-- SUPABASE UMD -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-<!-- SIDEBAR -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function(){
 
+// 🔥 COLOCA SUA ANON KEY AQUI
 const supabaseClient = window.supabase.createClient(
   "https://rymehgsoarjeecuwyhny.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let idEdicao = null;
+let dados=[]
 
-/* MOSTRAR LISTA */
-window.toggleLista = function(){
-  const card=document.getElementById("cardLista");
-  if(card.style.display==="none"){
-    card.style.display="block";
-    carregarSolicitacoes();
-  }else{
-    card.style.display="none";
-  }
-};
+// 🚀 carregar dados
+async function carregar(){
 
-/* CARREGAR TERAPEUTAS */
-async function carregarTerapeutas(){
+const {data} = await supabaseClient
+.from("solicitacoes")
+.select("*")
+.order("data_inicio",{ascending:false})
 
-  const {data}=await supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional")
-    .eq("status","Ativo")
-    .order("nome_profissional");
+dados = data || []
 
-  const select=document.getElementById("terapeuta");
-  select.innerHTML="<option value=''>Selecione</option>";
-
-  (data || []).forEach(t=>{
-    select.innerHTML+=`
-      <option value="${t.cpf}">
-        ${t.nome_profissional}
-      </option>
-    `;
-  });
+render(dados)
+atualizarKPIs(dados)
 }
 
-/* SALVAR / EDITAR */
-window.salvar = async function(){
+// 🎯 KPI
+function atualizarKPIs(lista){
 
-  const dataInicio=document.getElementById("data_inicio").value;
-  const dataFim=document.getElementById("data_fim").value;
+const total = lista.length
+const pendente = lista.filter(s => s.status === "Pendente").length
+const aprovado = lista.filter(s => s.status === "Aprovado").length
+const rejeitado = lista.filter(s => s.status === "Rejeitado").length
 
-  if(dataFim<dataInicio){
-    alert("Data fim não pode ser menor que data início.");
-    return;
-  }
+kpiTotal.innerText = total
+kpiPendente.innerText = pendente
+kpiAprovado.innerText = aprovado
+kpiRejeitado.innerText = rejeitado
 
-  const payload={
-    terapeuta_cpf:document.getElementById("terapeuta").value,
-    tipo:document.getElementById("tipo").value,
-    data_inicio:dataInicio,
-    data_fim:dataFim,
-    justificativa:document.getElementById("justificativa").value
-  };
-
-  let error;
-
-  if(idEdicao){
-    ({error}=await supabaseClient
-      .from("solicitacoes")
-      .update(payload)
-      .eq("id",idEdicao));
-  }else{
-    payload.status="Pendente";
-    ({error}=await supabaseClient
-      .from("solicitacoes")
-      .insert(payload));
-  }
-
-  if(error){
-    console.error(error);
-    alert("Erro ao salvar");
-    return;
-  }
-
-  idEdicao=null;
-  alert("Salvo com sucesso!");
-  carregarSolicitacoes();
-};
-
-/* EDITAR */
-window.editar = async function(id){
-
-  const {data}=await supabaseClient
-    .from("solicitacoes")
-    .select("*")
-    .eq("id",id)
-    .single();
-
-  idEdicao=id;
-
-  document.getElementById("terapeuta").value=data.terapeuta_cpf;
-  document.getElementById("tipo").value=data.tipo;
-  document.getElementById("data_inicio").value=data.data_inicio;
-  document.getElementById("data_fim").value=data.data_fim;
-  document.getElementById("justificativa").value=data.justificativa;
-
-  window.scrollTo({top:0,behavior:"smooth"});
-};
-
-/* EXCLUIR */
-window.excluir = async function(id){
-  if(!confirm("Excluir solicitação?")) return;
-  await supabaseClient.from("solicitacoes").delete().eq("id",id);
-  carregarSolicitacoes();
-};
-
-/* ALTERAR STATUS */
-window.alterarStatus = async function(id,novoStatus){
-  await supabaseClient
-    .from("solicitacoes")
-    .update({status:novoStatus})
-    .eq("id",id);
-
-  carregarSolicitacoes();
-};
-
-/* CARREGAR TODAS AS SOLICITAÇÕES */
-async function carregarSolicitacoes(){
-
-  const { data: solicitacoes } = await supabaseClient
-    .from("solicitacoes")
-    .select("*")
-    .order("created_at",{ascending:false});
-
-  const { data: terapeutas } = await supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional");
-
-  const mapaTerapeutas = {};
-  (terapeutas || []).forEach(t=>{
-    mapaTerapeutas[t.cpf] = t.nome_profissional;
-  });
-
-  const tbody=document.getElementById("lista");
-  tbody.innerHTML="";
-
-  (solicitacoes || []).forEach(s=>{
-
-    let statusClass="";
-    if(s.status==="Pendente")statusClass="status-pendente";
-    if(s.status==="Aprovado")statusClass="status-aprovado";
-    if(s.status==="Reprovado")statusClass="status-reprovado";
-
-    tbody.innerHTML+=`
-      <tr>
-        <td>${mapaTerapeutas[s.terapeuta_cpf] || s.terapeuta_cpf}</td>
-        <td>${s.tipo}</td>
-        <td>${s.data_inicio} → ${s.data_fim}</td>
-        <td class="${statusClass}">${s.status}</td>
-        <td>
-          <button onclick="editar('${s.id}')">Editar</button>
-          <button onclick="alterarStatus('${s.id}','Aprovado')" class="btn-aprovar">✔</button>
-          <button onclick="alterarStatus('${s.id}','Reprovado')" class="btn-reprovar">✖</button>
-          <button onclick="excluir('${s.id}')" class="btn-danger">Excluir</button>
-        </td>
-      </tr>
-    `;
-  });
 }
 
-carregarTerapeutas();
+// 🧾 render tabela
+function render(lista){
 
-});
+const tbody = document.getElementById("lista")
+tbody.innerHTML=""
+
+lista.forEach(s=>{
+
+let classe = ""
+if(s.status==="Pendente") classe="status-pendente"
+if(s.status==="Aprovado") classe="status-aprovado"
+if(s.status==="Rejeitado") classe="status-rejeitado"
+
+tbody.innerHTML += `
+<tr>
+<td>${s.data_inicio}</td>
+<td>${s.nome_terapeuta || "-"}</td>
+<td>${s.data_inicio} até ${s.data_fim}</td>
+<td class="${classe}">${s.status}</td>
+<td>
+<button class="btn-aprovar" onclick="aprovar('${s.id}')">Aprovar</button>
+<button class="btn-rejeitar" onclick="rejeitar('${s.id}')">Rejeitar</button>
+</td>
+</tr>
+`
+})
+
+}
+
+// ✅ aprovar
+async function aprovar(id){
+
+await supabaseClient
+.from("solicitacoes")
+.update({status:"Aprovado"})
+.eq("id",id)
+
+carregar()
+}
+
+// ❌ rejeitar
+async function rejeitar(id){
+
+await supabaseClient
+.from("solicitacoes")
+.update({status:"Rejeitado"})
+.eq("id",id)
+
+carregar()
+}
+
+carregar()
+
 </script>
 
 </body>

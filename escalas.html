@@ -7,7 +7,8 @@
 <link rel="stylesheet"
  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- ❌ REMOVIDO chart.js -->
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
@@ -147,10 +148,7 @@ body{
 
 </div>
 
-<div class="card" style="margin-top:20px;">
-<h3>Força de Trabalho</h3>
-<canvas id="graficoDia" height="120"></canvas>
-</div>
+<!-- ❌ REMOVIDO CARD FORÇA DE TRABALHO -->
 
 </main>
 </div>
@@ -160,12 +158,11 @@ body{
 <script>
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"SUA_ANON_KEY_AQUI"
 );
 
 let terapeutas=[];
 let solicitacoes=[];
-let chartDia=null;
 
 let hoje=new Date();
 let ano=hoje.getFullYear();
@@ -186,15 +183,15 @@ return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][date.g
 
 function folgaSemanal(t,data){
 if(!t.tem_folga||!t.dia_folga)return false;
-return t.tem_folga==="Sim"&&
+return t.tem_folga==="Sim" &&
 diaSemana(data)===t.dia_folga.toLowerCase();
 }
 
 function folgaAprovada(t,data){
 return solicitacoes.some(s=>
-s.status==="Aprovado"&&
-s.terapeuta_cpf===t.cpf&&
-data>=new Date(s.data_inicio)&&
+s.status==="Aprovado" &&
+s.terapeuta_cpf===t.cpf &&
+data>=new Date(s.data_inicio) &&
 data<=new Date(s.data_fim)
 );
 }
@@ -209,7 +206,7 @@ const {data:dadosSolicitacoes}=await supabaseClient
 .from("solicitacoes")
 .select("*")
 .eq("status","Aprovado")
- .in("cargo", ["Terapeuta Feminino","Terapeuta Masculino"]);
+.in("cargo", ["Terapeuta Feminino","Terapeuta Masculino"]);
 
 terapeutas=dadosTerapeutas||[];
 solicitacoes=dadosSolicitacoes||[];
@@ -263,6 +260,7 @@ calendar.appendChild(div);
 
 function mostrarDia(dia){
 const data=new Date(ano,mes,dia);
+
 document.getElementById("tituloDia").innerText=
 `Dia ${dia}/${mes+1}/${ano}`;
 
@@ -306,7 +304,7 @@ detalhes.innerHTML+=`
 <span class="badge-red">${motivo}</span>
 </div>`;
 });
-
+}
 
 carregarDados();
 </script>

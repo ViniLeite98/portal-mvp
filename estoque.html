@@ -26,9 +26,10 @@ border-radius:10px;
 display:flex;
 gap:15px;
 margin-bottom:20px;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
-input,select{
+input{
 padding:8px;
 border-radius:6px;
 border:1px solid #ccc;
@@ -46,6 +47,19 @@ cursor:pointer;
 .baixo{
 color:red;
 font-weight:bold;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+background:#fff;
+border-radius:10px;
+overflow:hidden;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #eee;
 }
 </style>
 </head>
@@ -69,7 +83,7 @@ font-weight:bold;
 
 </div>
 
-<table border="1" width="100%" style="background:#fff;border-radius:10px">
+<table>
 <thead>
 <tr>
 <th>Produto</th>
@@ -97,12 +111,23 @@ const supabaseClient = supabase.createClient(
 
 async function criarProduto(){
 
-const nome = document.getElementById("nome").value
+const nome = document.getElementById("nome").value.trim()
 const unidade = document.getElementById("unidade").value
 const minimo = document.getElementById("minimo").value
 
 if(!nome){
-alert("Digite o nome")
+alert("Digite o nome do produto")
+return
+}
+
+// 🔥 BLOQUEIO DE DUPLICIDADE
+const { data: existente } = await supabaseClient
+.from("produtos")
+.select("id")
+.ilike("nome", nome)
+
+if(existente && existente.length > 0){
+alert("Produto já cadastrado")
 return
 }
 
@@ -113,6 +138,11 @@ nome,
 unidade,
 estoque_minimo: minimo || 0
 })
+
+// limpar campos
+document.getElementById("nome").value=""
+document.getElementById("unidade").value=""
+document.getElementById("minimo").value=""
 
 carregar()
 
@@ -152,7 +182,7 @@ ${baixo ? 'Baixo' : 'OK'}
 
 async function entrada(id){
 
-const qtd = prompt("Quantidade entrada:")
+const qtd = prompt("Quantidade de entrada:")
 if(!qtd) return
 
 await supabaseClient
@@ -169,7 +199,7 @@ carregar()
 
 async function saida(id){
 
-const qtd = prompt("Quantidade saída:")
+const qtd = prompt("Quantidade de saída:")
 if(!qtd) return
 
 await supabaseClient

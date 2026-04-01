@@ -108,6 +108,19 @@ width:350px;
 </div>
 
 <div class="field">
+<label>Origem</label>
+<select id="origem">
+<option value="">Selecione</option>
+<option>Instagram</option>
+<option>Google</option>
+<option>Indicação</option>
+<option>Cliente antigo</option>
+<option>WhatsApp</option>
+<option>Outro</option>
+</select>
+</div>
+
+<div class="field">
 <label>Valor</label>
 <input type="number" id="valor" value="50">
 </div>
@@ -159,6 +172,7 @@ width:350px;
 <tr>
 <th>Data</th>
 <th>Cliente</th>
+<th>Origem</th>
 <th>Serviço</th>
 <th>Valor</th>
 <th>Desconto</th>
@@ -186,6 +200,17 @@ width:350px;
 <label>Serviço</label>
 <select id="editServico"></select>
 
+<label>Origem</label>
+<select id="editOrigem">
+<option value="">Selecione</option>
+<option>Instagram</option>
+<option>Google</option>
+<option>Indicação</option>
+<option>Cliente antigo</option>
+<option>WhatsApp</option>
+<option>Outro</option>
+</select>
+
 <label>Valor</label>
 <input type="number" id="editValor">
 
@@ -207,7 +232,7 @@ width:350px;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"SUA_ANON_KEY_AQUI"
 )
 
 let dados=[]
@@ -303,6 +328,7 @@ tbody.innerHTML+=`
 <tr>
 <td>${r.data}</td>
 <td>${r.clientes?.nome||r.clientes?.nome_cliente}</td>
+<td>${r.origem_lead || "-"}</td>
 <td>${nomeServico(r.servicos)}</td>
 <td>${formatar(r.valor)}</td>
 <td>${formatar(r.desconto)}</td>
@@ -345,6 +371,7 @@ return
 const exportData=listaAtual.map(r=>({
 Data:r.data,
 Cliente:r.clientes?.nome||r.clientes?.nome_cliente,
+Origem:r.origem_lead,
 Servico:nomeServico(r.servicos),
 Valor:r.valor,
 Desconto:r.desconto,
@@ -379,8 +406,24 @@ editCliente.value=r.cliente_id
 editServico.value=r.servico_id
 editValor.value=r.valor
 editDesconto.value=r.desconto
+editOrigem.value=r.origem_lead || ""
 
 modalEditar.style.display="flex"
+}
+
+async function salvar(){
+
+await supabaseClient.from("fluxo_caixa").insert({
+data:data.value,
+cliente_id:cliente.value,
+servico_id:servico.value,
+valor:parseFloat(valor.value||0),
+desconto:parseFloat(desconto.value||0),
+valor_final:parseFloat(valor.value||0)-parseFloat(desconto.value||0),
+origem_lead: origem.value || null
+})
+
+carregarLista()
 }
 
 async function salvarEdicao(){
@@ -391,7 +434,8 @@ cliente_id:editCliente.value,
 servico_id:editServico.value,
 valor:parseFloat(editValor.value||0),
 desconto:parseFloat(editDesconto.value||0),
-valor_final:parseFloat(editValor.value||0)-parseFloat(editDesconto.value||0)
+valor_final:parseFloat(editValor.value||0)-parseFloat(editDesconto.value||0),
+origem_lead: editOrigem.value || null
 }).eq("id",editandoId)
 
 fecharModal()

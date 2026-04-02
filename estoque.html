@@ -56,7 +56,13 @@ border:none;
 padding:12px;
 border-radius:12px;
 cursor:pointer;
-width:100%;
+}
+
+/* botão pequeno */
+.btn-small{
+width:auto;
+padding:6px 10px;
+font-size:12px;
 }
 
 .lista-item{
@@ -169,10 +175,15 @@ const supabaseClient = supabase.createClient(
 
 async function carregarProdutos(){
 
-const {data} = await supabaseClient
+const {data, error} = await supabaseClient
 .from("produtos")
 .select("id,nome")
 .order("nome")
+
+if(error){
+console.error(error)
+return
+}
 
 const select = document.getElementById("produto")
 select.innerHTML=""
@@ -185,10 +196,15 @@ select.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 
 async function carregarEstoque(){
 
-const {data} = await supabaseClient
+const {data, error} = await supabaseClient
 .from("estoque_atual")
 .select("*")
 .order("nome")
+
+if(error){
+console.error(error)
+return
+}
 
 const div = document.getElementById("lista")
 div.innerHTML=""
@@ -212,8 +228,8 @@ ${baixo ? '⚠️ Repor' : 'OK'}
 </div>
 </div>
 
-<button onclick="excluirProduto('${p.id}')" 
-style="background:#dc2626;padding:6px 10px;font-size:12px;border-radius:8px">
+<button class="btn-small" onclick="excluirProduto('${p.id}')" 
+style="background:#dc2626;border-radius:8px">
 🗑
 </button>
 
@@ -225,7 +241,7 @@ style="background:#dc2626;padding:6px 10px;font-size:12px;border-radius:8px">
 
 async function carregarMovimentacoes(){
 
-const {data} = await supabaseClient
+const {data, error} = await supabaseClient
 .from("movimentacoes_estoque")
 .select(`
 quantidade,
@@ -235,6 +251,11 @@ produtos(nome)
 `)
 .order("data", { ascending: false })
 .limit(20)
+
+if(error){
+console.error(error)
+return
+}
 
 const div = document.getElementById("movimentacoes")
 div.innerHTML=""
@@ -256,27 +277,27 @@ async function registrar(){
 
 const produto = document.getElementById("produto").value
 const quantidade = document.getElementById("quantidade").value
-const profissional = document.getElementById("profissional").value
-const data = document.getElementById("data").value
 
 if(!produto || !quantidade){
 alert("Preencha os campos")
 return
 }
 
-await supabaseClient
+const { error } = await supabaseClient
 .from("movimentacoes_estoque")
 .insert({
 produto_id:produto,
 tipo:"saida",
-quantidade,
-origem:"uso",
-observacao:profissional,
-data: data || new Date()
+quantidade
 })
 
+if(error){
+console.error(error)
+alert("Erro ao registrar")
+return
+}
+
 document.getElementById("quantidade").value=""
-document.getElementById("profissional").value=""
 
 carregarEstoque()
 carregarMovimentacoes()
@@ -300,12 +321,12 @@ const { data: existente } = await supabaseClient
 .select("id")
 .ilike("nome", nome)
 
-if(existente.length > 0){
+if(existente && existente.length > 0){
 alert("Produto já existe")
 return
 }
 
-await supabaseClient
+const { error } = await supabaseClient
 .from("produtos")
 .insert({
 nome,
@@ -313,6 +334,12 @@ categoria,
 unidade,
 estoque_minimo: minimo || 0
 })
+
+if(error){
+console.error(error)
+alert("Erro ao cadastrar produto")
+return
+}
 
 document.getElementById("novo_nome").value=""
 document.getElementById("novo_categoria").value=""
@@ -326,7 +353,7 @@ carregarEstoque()
 
 async function excluirProduto(id){
 
-if(!confirm("Excluir produto? Isso apagará todo histórico.")) return
+if(!confirm("Excluir produto?")) return
 
 await supabaseClient
 .from("produtos")

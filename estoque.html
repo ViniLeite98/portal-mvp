@@ -32,6 +32,8 @@ border-radius:16px;
 box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
 
+h1{margin-bottom:20px}
+
 input,select{
 width:100%;
 padding:10px;
@@ -50,28 +52,33 @@ color:#fff;
 cursor:pointer;
 }
 
+button:hover{
+opacity:0.9;
+}
+
 .lista-item{
 display:flex;
 justify-content:space-between;
 align-items:center;
-padding:12px;
+padding:14px;
 border-radius:12px;
 background:#f9fafb;
 margin-bottom:10px;
 }
 
+.lista-item:hover{
+background:#f1f5f9;
+}
+
 .qtd{
 font-weight:bold;
+font-size:18px;
+color:#111827;
 }
 
-.repor{
-color:#dc2626;
+.categoria{
 font-size:12px;
-}
-
-.ok{
-color:#16a34a;
-font-size:12px;
+color:#777;
 }
 </style>
 </head>
@@ -93,6 +100,7 @@ font-size:12px;
 <h3>Novo Produto</h3>
 
 <input id="nome" placeholder="Nome">
+
 <select id="categoria">
 <option value="">Categoria</option>
 <option>Bebida</option>
@@ -102,7 +110,7 @@ font-size:12px;
 </select>
 
 <input id="unidade" placeholder="Unidade (ml, un)">
-<input id="minimo" type="number" placeholder="Alerta de reposição">
+<input id="minimo" type="number" placeholder="Alerta de reposição (opcional)">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
@@ -150,12 +158,13 @@ alert("Digite o nome")
 return
 }
 
+// evita duplicado
 const { data: existe } = await supabaseClient
 .from("produtos")
 .select("id")
 .ilike("nome", nome)
 
-if(existe.length){
+if(existe && existe.length){
 alert("Produto já existe")
 return
 }
@@ -168,6 +177,12 @@ categoria:document.getElementById("categoria").value,
 unidade:document.getElementById("unidade").value,
 estoque_minimo:document.getElementById("minimo").value || 0
 })
+
+// limpa campos
+document.getElementById("nome").value=""
+document.getElementById("categoria").value=""
+document.getElementById("unidade").value=""
+document.getElementById("minimo").value=""
 
 carregar()
 
@@ -183,32 +198,29 @@ const {data} = await supabaseClient
 const lista = document.getElementById("lista")
 lista.innerHTML=""
 
+// lista
 data.forEach(p=>{
-
-const baixo = p.saldo <= p.estoque_minimo
 
 lista.innerHTML+=`
 <div class="lista-item">
 
 <div>
 <div><strong>${p.nome}</strong></div>
-<div>${p.categoria || ""}</div>
+<div class="categoria">${p.categoria || ""}</div>
 </div>
 
-<div style="text-align:right">
-<div class="qtd">${p.saldo} ${p.unidade || ""}</div>
-<div class="${baixo ? 'repor':'ok'}">
-${baixo ? '⚠️ Repor' : 'OK'}
-</div>
+<div class="qtd">
+${p.saldo} ${p.unidade || ""}
 </div>
 
 </div>
 `
 })
 
-// select
+// select movimentação
 const sel=document.getElementById("produtoMov")
 sel.innerHTML=""
+
 data.forEach(p=>{
 sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 })
@@ -220,13 +232,20 @@ async function entrada(){
 const id=document.getElementById("produtoMov").value
 const qtd=document.getElementById("qtd").value
 
-if(!qtd) return
+if(!qtd){
+alert("Digite a quantidade")
+return
+}
 
-await supabaseClient.from("movimentacoes_estoque").insert({
+await supabaseClient
+.from("movimentacoes_estoque")
+.insert({
 produto_id:id,
 tipo:"entrada",
 quantidade:qtd
 })
+
+document.getElementById("qtd").value=""
 
 carregar()
 }
@@ -236,13 +255,20 @@ async function saida(){
 const id=document.getElementById("produtoMov").value
 const qtd=document.getElementById("qtd").value
 
-if(!qtd) return
+if(!qtd){
+alert("Digite a quantidade")
+return
+}
 
-await supabaseClient.from("movimentacoes_estoque").insert({
+await supabaseClient
+.from("movimentacoes_estoque")
+.insert({
 produto_id:id,
 tipo:"saida",
 quantidade:qtd
 })
+
+document.getElementById("qtd").value=""
 
 carregar()
 }

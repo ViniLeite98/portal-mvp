@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Estoque | Hara Spa</title>
+<title>Materiais | Hara Spa</title>
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -19,47 +19,55 @@ background:#f4f6fb;
 .app{display:flex}
 .content{flex:1;padding:40px}
 
-.form-box{
+.grid{
+display:grid;
+grid-template-columns: 1fr 1fr;
+gap:30px;
+}
+
+.card{
 background:#fff;
-padding:20px;
-border-radius:10px;
-display:flex;
-gap:15px;
-margin-bottom:20px;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
+padding:25px;
+border-radius:20px;
+box-shadow:0 5px 15px rgba(0,0,0,0.05);
+}
+
+h1{margin-bottom:5px}
+.sub{color:#555;margin-bottom:30px}
+
+label{
+display:block;
+margin-top:15px;
+margin-bottom:5px;
 }
 
 input{
-padding:8px;
-border-radius:6px;
+width:100%;
+padding:10px;
+border-radius:12px;
 border:1px solid #ccc;
 }
 
 button{
-background:#2563eb;
+margin-top:20px;
+background:#334155;
 color:#fff;
 border:none;
-padding:8px 14px;
-border-radius:6px;
-cursor:pointer;
-}
-
-.baixo{
-color:red;
-font-weight:bold;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:#fff;
-border-radius:10px;
-overflow:hidden;
-}
-
-th,td{
 padding:12px;
-border-bottom:1px solid #eee;
+border-radius:12px;
+cursor:pointer;
+width:100%;
+}
+
+.lista-item{
+display:flex;
+justify-content:space-between;
+margin-bottom:12px;
+font-size:15px;
+}
+
+.qtd{
+font-weight:bold;
 }
 </style>
 </head>
@@ -71,30 +79,40 @@ border-bottom:1px solid #eee;
 
 <main class="content">
 
-<h1>Estoque</h1>
+<h1>Materiais</h1>
+<div class="sub">Controle de utilização e estoque</div>
 
-<div class="form-box">
+<div class="grid">
 
-<input id="nome" placeholder="Produto">
-<input id="unidade" placeholder="Unidade (ml, un)">
-<input id="minimo" type="number" placeholder="Estoque mínimo">
+<!-- ESQUERDA -->
+<div class="card">
 
-<button onclick="criarProduto()">Cadastrar</button>
+<label>Material</label>
+<select id="produto"></select>
+
+<label>Data</label>
+<input type="date" id="data">
+
+<label>Profissional</label>
+<input id="profissional">
+
+<label>Quantidade</label>
+<input type="number" id="quantidade">
+
+<button onclick="registrar()">+ Adicionar</button>
 
 </div>
 
-<table>
-<thead>
-<tr>
-<th>Produto</th>
-<th>Saldo</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
+<!-- DIREITA -->
+<div class="card">
 
-<tbody id="lista"></tbody>
-</table>
+<h3>Estoque</h3>
+
+<div id="lista"></div>
+
+</div>
+
+</div>
 
 </main>
 </div>
@@ -109,112 +127,73 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
-async function criarProduto(){
+async function carregarProdutos(){
 
-const nome = document.getElementById("nome").value.trim()
-const unidade = document.getElementById("unidade").value
-const minimo = document.getElementById("minimo").value
-
-if(!nome){
-alert("Digite o nome do produto")
-return
-}
-
-// 🔥 BLOQUEIO DE DUPLICIDADE
-const { data: existente } = await supabaseClient
+const {data} = await supabaseClient
 .from("produtos")
-.select("id")
-.ilike("nome", nome)
+.select("id,nome")
+.order("nome")
 
-if(existente && existente.length > 0){
-alert("Produto já cadastrado")
-return
-}
+const select = document.getElementById("produto")
+select.innerHTML=""
 
-await supabaseClient
-.from("produtos")
-.insert({
-nome,
-unidade,
-estoque_minimo: minimo || 0
+data.forEach(p=>{
+select.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 })
 
-// limpar campos
-document.getElementById("nome").value=""
-document.getElementById("unidade").value=""
-document.getElementById("minimo").value=""
-
-carregar()
-
 }
 
-async function carregar(){
+async function carregarEstoque(){
 
 const {data} = await supabaseClient
 .from("estoque_atual")
 .select("*")
 .order("nome")
 
-const tbody = document.getElementById("lista")
-tbody.innerHTML=""
+const div = document.getElementById("lista")
+div.innerHTML=""
 
 data.forEach(p=>{
-
-const baixo = p.saldo <= p.estoque_minimo
-
-tbody.innerHTML+=`
-<tr>
-<td>${p.nome}</td>
-<td>${p.saldo} ${p.unidade || ""}</td>
-<td class="${baixo ? 'baixo' : ''}">
-${baixo ? 'Baixo' : 'OK'}
-</td>
-
-<td>
-<button onclick="entrada('${p.id}')">Entrada</button>
-<button onclick="saida('${p.id}')">Saída</button>
-</td>
-</tr>
+div.innerHTML+=`
+<div class="lista-item">
+<span>${p.nome}</span>
+<span class="qtd">${p.saldo} ${p.unidade || "un"}</span>
+</div>
 `
 })
 
 }
 
-async function entrada(id){
+async function registrar(){
 
-const qtd = prompt("Quantidade de entrada:")
-if(!qtd) return
+const produto = document.getElementById("produto").value
+const quantidade = document.getElementById("quantidade").value
+const profissional = document.getElementById("profissional").value
 
-await supabaseClient
-.from("movimentacoes_estoque")
-.insert({
-produto_id:id,
-tipo:"entrada",
-quantidade:qtd,
-origem:"manual"
-})
-
-carregar()
+if(!produto || !quantidade){
+alert("Preencha os campos")
+return
 }
 
-async function saida(id){
-
-const qtd = prompt("Quantidade de saída:")
-if(!qtd) return
-
 await supabaseClient
 .from("movimentacoes_estoque")
 .insert({
-produto_id:id,
+produto_id:produto,
 tipo:"saida",
-quantidade:qtd,
-origem:"uso"
+quantidade,
+origem:"uso",
+observacao:profissional
 })
 
-carregar()
+document.getElementById("quantidade").value=""
+document.getElementById("profissional").value=""
+
+carregarEstoque()
+
 }
 
-carregar()
+carregarProdutos()
+carregarEstoque()
 
 </script>
 

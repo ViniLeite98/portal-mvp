@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Controle de Materiais | Hara Spa</title>
+<title>Estoque | Hara Spa</title>
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -21,74 +21,57 @@ background:#f4f6fb;
 
 .grid{
 display:grid;
-grid-template-columns: 1fr 1fr;
+grid-template-columns: 320px 1fr;
 gap:30px;
 }
 
 .card{
 background:#fff;
-padding:25px;
-border-radius:20px;
+padding:20px;
+border-radius:16px;
 box-shadow:0 5px 15px rgba(0,0,0,0.05);
-}
-
-h1{margin-bottom:5px}
-.sub{color:#555;margin-bottom:30px}
-
-label{
-display:block;
-margin-top:15px;
-margin-bottom:5px;
 }
 
 input,select{
 width:100%;
 padding:10px;
-border-radius:12px;
+border-radius:10px;
 border:1px solid #ccc;
+margin-bottom:10px;
 }
 
 button{
-margin-top:20px;
-background:#334155;
-color:#fff;
+width:100%;
+padding:10px;
 border:none;
-padding:12px;
-border-radius:12px;
+border-radius:10px;
+background:#2563eb;
+color:#fff;
 cursor:pointer;
-}
-
-/* botão pequeno */
-.btn-small{
-width:auto;
-padding:6px 10px;
-font-size:12px;
 }
 
 .lista-item{
 display:flex;
 justify-content:space-between;
 align-items:center;
-margin-bottom:12px;
 padding:12px;
 border-radius:12px;
 background:#f9fafb;
-}
-
-.lista-item:hover{
-background:#f1f5f9;
+margin-bottom:10px;
 }
 
 .qtd{
 font-weight:bold;
-font-size:16px;
 }
 
-.mov{
-display:flex;
-justify-content:space-between;
-font-size:13px;
-margin-bottom:6px;
+.repor{
+color:#dc2626;
+font-size:12px;
+}
+
+.ok{
+color:#16a34a;
+font-size:12px;
 }
 </style>
 </head>
@@ -100,61 +83,46 @@ margin-bottom:6px;
 
 <main class="content">
 
-<h1>Controle de Materiais</h1>
-<div class="sub">Gerencie consumo, estoque e reposição</div>
+<h1>Estoque</h1>
 
 <div class="grid">
 
-<!-- ESQUERDA -->
+<!-- CADASTRO -->
 <div class="card">
-
-<h3>Registrar Uso</h3>
-
-<label>Material</label>
-<select id="produto"></select>
-
-<label>Data</label>
-<input type="date" id="data">
-
-<label>Profissional</label>
-<input id="profissional">
-
-<label>Quantidade</label>
-<input type="number" id="quantidade">
-
-<button onclick="registrar()">+ Adicionar</button>
-
-<hr style="margin:25px 0">
 
 <h3>Novo Produto</h3>
 
-<input id="novo_nome" placeholder="Nome do produto">
-
-<select id="novo_categoria">
-  <option value="">Categoria</option>
-  <option value="Bebida">Bebida</option>
-  <option value="Higiene">Higiene</option>
-  <option value="Comida">Comida</option>
-  <option value="Outros">Outros</option>
+<input id="nome" placeholder="Nome">
+<select id="categoria">
+<option value="">Categoria</option>
+<option>Bebida</option>
+<option>Higiene</option>
+<option>Comida</option>
+<option>Outros</option>
 </select>
 
-<input id="novo_unidade" placeholder="Unidade (ml, un)">
-<input id="novo_minimo" type="number" placeholder="⚠️ Alerta de reposição (ex: 10)">
+<input id="unidade" placeholder="Unidade (ml, un)">
+<input id="minimo" type="number" placeholder="Alerta de reposição">
 
-<button onclick="criarProduto()">+ Cadastrar Produto</button>
+<button onclick="criarProduto()">Cadastrar</button>
+
+<hr style="margin:15px 0">
+
+<h3>Movimentar</h3>
+
+<select id="produtoMov"></select>
+<input id="qtd" type="number" placeholder="Quantidade">
+
+<button onclick="entrada()">+ Entrada</button>
+<button onclick="saida()" style="background:#dc2626;margin-top:5px">- Saída</button>
 
 </div>
 
-<!-- DIREITA -->
+<!-- LISTA -->
 <div class="card">
 
-<h3>Estoque</h3>
+<h3>Produtos</h3>
 <div id="lista"></div>
-
-<hr style="margin:20px 0">
-
-<h3>Movimentações</h3>
-<div id="movimentacoes" style="max-height:250px;overflow:auto"></div>
 
 </div>
 
@@ -173,202 +141,113 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
-async function carregarProdutos(){
-
-const {data, error} = await supabaseClient
-.from("produtos")
-.select("id,nome")
-.order("nome")
-
-if(error){
-console.error(error)
-return
-}
-
-const select = document.getElementById("produto")
-select.innerHTML=""
-
-data.forEach(p=>{
-select.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
-})
-
-}
-
-async function carregarEstoque(){
-
-const {data, error} = await supabaseClient
-.from("estoque_atual")
-.select("*")
-.order("nome")
-
-if(error){
-console.error(error)
-return
-}
-
-const div = document.getElementById("lista")
-div.innerHTML=""
-
-data.forEach(p=>{
-
-const baixo = p.saldo <= (p.estoque_minimo || 0)
-
-div.innerHTML+=`
-<div class="lista-item">
-
-<div>
-<div style="font-weight:600">${p.nome}</div>
-<div style="font-size:12px;color:#777">${p.categoria || "Sem categoria"}</div>
-</div>
-
-<div style="text-align:right">
-<div class="qtd">${p.saldo} ${p.unidade || "un"}</div>
-<div style="font-size:12px;color:${baixo ? '#dc2626' : '#16a34a'}">
-${baixo ? '⚠️ Repor' : 'OK'}
-</div>
-</div>
-
-<button class="btn-small" onclick="excluirProduto('${p.id}')" 
-style="background:#dc2626;border-radius:8px">
-🗑
-</button>
-
-</div>
-`
-})
-
-}
-
-async function carregarMovimentacoes(){
-
-const {data, error} = await supabaseClient
-.from("movimentacoes_estoque")
-.select(`
-quantidade,
-tipo,
-data,
-produtos(nome)
-`)
-.order("data", { ascending: false })
-.limit(20)
-
-if(error){
-console.error(error)
-return
-}
-
-const div = document.getElementById("movimentacoes")
-div.innerHTML=""
-
-data.forEach(m=>{
-div.innerHTML+=`
-<div class="mov">
-<span>${m.produtos?.nome}</span>
-<span style="color:${m.tipo === 'entrada' ? 'green' : 'red'}">
-${m.tipo === 'entrada' ? '+' : '-'} ${m.quantidade}
-</span>
-</div>
-`
-})
-
-}
-
-async function registrar(){
-
-const produto = document.getElementById("produto").value
-const quantidade = document.getElementById("quantidade").value
-
-if(!produto || !quantidade){
-alert("Preencha os campos")
-return
-}
-
-const { error } = await supabaseClient
-.from("movimentacoes_estoque")
-.insert({
-produto_id:produto,
-tipo:"saida",
-quantidade
-})
-
-if(error){
-console.error(error)
-alert("Erro ao registrar")
-return
-}
-
-document.getElementById("quantidade").value=""
-
-carregarEstoque()
-carregarMovimentacoes()
-
-}
-
 async function criarProduto(){
 
-const nome = document.getElementById("novo_nome").value.trim()
-const categoria = document.getElementById("novo_categoria").value
-const unidade = document.getElementById("novo_unidade").value
-const minimo = document.getElementById("novo_minimo").value
+const nome = document.getElementById("nome").value.trim()
 
 if(!nome){
 alert("Digite o nome")
 return
 }
 
-const { data: existente } = await supabaseClient
+const { data: existe } = await supabaseClient
 .from("produtos")
 .select("id")
 .ilike("nome", nome)
 
-if(existente && existente.length > 0){
+if(existe.length){
 alert("Produto já existe")
 return
 }
 
-const { error } = await supabaseClient
+await supabaseClient
 .from("produtos")
 .insert({
 nome,
-categoria,
-unidade,
-estoque_minimo: minimo || 0
+categoria:document.getElementById("categoria").value,
+unidade:document.getElementById("unidade").value,
+estoque_minimo:document.getElementById("minimo").value || 0
 })
 
-if(error){
-console.error(error)
-alert("Erro ao cadastrar produto")
-return
-}
-
-document.getElementById("novo_nome").value=""
-document.getElementById("novo_categoria").value=""
-document.getElementById("novo_unidade").value=""
-document.getElementById("novo_minimo").value=""
-
-carregarProdutos()
-carregarEstoque()
+carregar()
 
 }
 
-async function excluirProduto(id){
+async function carregar(){
 
-if(!confirm("Excluir produto?")) return
+const {data} = await supabaseClient
+.from("estoque_atual")
+.select("*")
+.order("nome")
 
-await supabaseClient
-.from("produtos")
-.delete()
-.eq("id",id)
+const lista = document.getElementById("lista")
+lista.innerHTML=""
 
-carregarProdutos()
-carregarEstoque()
-carregarMovimentacoes()
+data.forEach(p=>{
+
+const baixo = p.saldo <= p.estoque_minimo
+
+lista.innerHTML+=`
+<div class="lista-item">
+
+<div>
+<div><strong>${p.nome}</strong></div>
+<div>${p.categoria || ""}</div>
+</div>
+
+<div style="text-align:right">
+<div class="qtd">${p.saldo} ${p.unidade || ""}</div>
+<div class="${baixo ? 'repor':'ok'}">
+${baixo ? '⚠️ Repor' : 'OK'}
+</div>
+</div>
+
+</div>
+`
+})
+
+// select
+const sel=document.getElementById("produtoMov")
+sel.innerHTML=""
+data.forEach(p=>{
+sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
+})
 
 }
 
-carregarProdutos()
-carregarEstoque()
-carregarMovimentacoes()
+async function entrada(){
+
+const id=document.getElementById("produtoMov").value
+const qtd=document.getElementById("qtd").value
+
+if(!qtd) return
+
+await supabaseClient.from("movimentacoes_estoque").insert({
+produto_id:id,
+tipo:"entrada",
+quantidade:qtd
+})
+
+carregar()
+}
+
+async function saida(){
+
+const id=document.getElementById("produtoMov").value
+const qtd=document.getElementById("qtd").value
+
+if(!qtd) return
+
+await supabaseClient.from("movimentacoes_estoque").insert({
+produto_id:id,
+tipo:"saida",
+quantidade:qtd
+})
+
+carregar()
+}
+
+carregar()
 
 </script>
 

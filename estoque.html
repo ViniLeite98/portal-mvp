@@ -41,7 +41,7 @@ margin-top:15px;
 margin-bottom:5px;
 }
 
-input{
+input,select{
 width:100%;
 padding:10px;
 border-radius:12px;
@@ -69,6 +69,13 @@ font-size:15px;
 .qtd{
 font-weight:bold;
 }
+
+.mov{
+display:flex;
+justify-content:space-between;
+font-size:13px;
+margin-bottom:6px;
+}
 </style>
 </head>
 
@@ -87,6 +94,8 @@ font-weight:bold;
 <!-- ESQUERDA -->
 <div class="card">
 
+<h3>Registrar Uso</h3>
+
 <label>Material</label>
 <select id="produto"></select>
 
@@ -101,14 +110,28 @@ font-weight:bold;
 
 <button onclick="registrar()">+ Adicionar</button>
 
+<hr style="margin:25px 0">
+
+<h3>Novo Produto</h3>
+
+<input id="novo_nome" placeholder="Nome do produto">
+<input id="novo_unidade" placeholder="Unidade (ml, un)">
+<input id="novo_minimo" type="number" placeholder="Estoque mínimo">
+
+<button onclick="criarProduto()">+ Cadastrar Produto</button>
+
 </div>
 
 <!-- DIREITA -->
 <div class="card">
 
 <h3>Estoque</h3>
-
 <div id="lista"></div>
+
+<hr style="margin:20px 0">
+
+<h3>Movimentações</h3>
+<div id="movimentacoes" style="max-height:250px;overflow:auto"></div>
 
 </div>
 
@@ -164,11 +187,41 @@ div.innerHTML+=`
 
 }
 
+async function carregarMovimentacoes(){
+
+const {data} = await supabaseClient
+.from("movimentacoes_estoque")
+.select(`
+quantidade,
+tipo,
+data,
+produtos(nome)
+`)
+.order("data", { ascending: false })
+.limit(20)
+
+const div = document.getElementById("movimentacoes")
+div.innerHTML=""
+
+data.forEach(m=>{
+div.innerHTML+=`
+<div class="mov">
+<span>${m.produtos?.nome}</span>
+<span style="color:${m.tipo === 'entrada' ? 'green' : 'red'}">
+${m.tipo === 'entrada' ? '+' : '-'} ${m.quantidade}
+</span>
+</div>
+`
+})
+
+}
+
 async function registrar(){
 
 const produto = document.getElementById("produto").value
 const quantidade = document.getElementById("quantidade").value
 const profissional = document.getElementById("profissional").value
+const data = document.getElementById("data").value
 
 if(!produto || !quantidade){
 alert("Preencha os campos")
@@ -182,18 +235,59 @@ produto_id:produto,
 tipo:"saida",
 quantidade,
 origem:"uso",
-observacao:profissional
+observacao:profissional,
+data: data || new Date()
 })
 
 document.getElementById("quantidade").value=""
 document.getElementById("profissional").value=""
 
 carregarEstoque()
+carregarMovimentacoes()
+
+}
+
+async function criarProduto(){
+
+const nome = document.getElementById("novo_nome").value.trim()
+const unidade = document.getElementById("novo_unidade").value
+const minimo = document.getElementById("novo_minimo").value
+
+if(!nome){
+alert("Digite o nome")
+return
+}
+
+const { data: existente } = await supabaseClient
+.from("produtos")
+.select("id")
+.ilike("nome", nome)
+
+if(existente.length > 0){
+alert("Produto já existe")
+return
+}
+
+await supabaseClient
+.from("produtos")
+.insert({
+nome,
+unidade,
+estoque_minimo: minimo || 0
+})
+
+document.getElementById("novo_nome").value=""
+document.getElementById("novo_unidade").value=""
+document.getElementById("novo_minimo").value=""
+
+carregarProdutos()
+carregarEstoque()
 
 }
 
 carregarProdutos()
 carregarEstoque()
+carregarMovimentacoes()
 
 </script>
 

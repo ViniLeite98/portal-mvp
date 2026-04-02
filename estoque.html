@@ -62,6 +62,7 @@ width:100%;
 .lista-item{
 display:flex;
 justify-content:space-between;
+align-items:center;
 margin-bottom:12px;
 font-size:15px;
 }
@@ -115,6 +116,15 @@ margin-bottom:6px;
 <h3>Novo Produto</h3>
 
 <input id="novo_nome" placeholder="Nome do produto">
+
+<select id="novo_categoria">
+  <option value="">Categoria</option>
+  <option value="Bebida">Bebida</option>
+  <option value="Higiene">Higiene</option>
+  <option value="Comida">Comida</option>
+  <option value="Outros">Outros</option>
+</select>
+
 <input id="novo_unidade" placeholder="Unidade (ml, un)">
 <input id="novo_minimo" type="number" placeholder="Estoque mínimo">
 
@@ -179,8 +189,23 @@ div.innerHTML=""
 data.forEach(p=>{
 div.innerHTML+=`
 <div class="lista-item">
-<span>${p.nome}</span>
+
+<div>
+<div>${p.nome}</div>
+<div style="font-size:12px;color:#777">${p.categoria || ""}</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px">
+
 <span class="qtd">${p.saldo} ${p.unidade || "un"}</span>
+
+<button onclick="excluirProduto('${p.id}')" 
+style="background:#dc2626;padding:5px 10px;font-size:12px">
+Excluir
+</button>
+
+</div>
+
 </div>
 `
 })
@@ -250,6 +275,7 @@ carregarMovimentacoes()
 async function criarProduto(){
 
 const nome = document.getElementById("novo_nome").value.trim()
+const categoria = document.getElementById("novo_categoria").value
 const unidade = document.getElementById("novo_unidade").value
 const minimo = document.getElementById("novo_minimo").value
 
@@ -272,16 +298,33 @@ await supabaseClient
 .from("produtos")
 .insert({
 nome,
+categoria,
 unidade,
 estoque_minimo: minimo || 0
 })
 
 document.getElementById("novo_nome").value=""
+document.getElementById("novo_categoria").value=""
 document.getElementById("novo_unidade").value=""
 document.getElementById("novo_minimo").value=""
 
 carregarProdutos()
 carregarEstoque()
+
+}
+
+async function excluirProduto(id){
+
+if(!confirm("Excluir produto? Isso apagará todo histórico.")) return
+
+await supabaseClient
+.from("produtos")
+.delete()
+.eq("id",id)
+
+carregarProdutos()
+carregarEstoque()
+carregarMovimentacoes()
 
 }
 

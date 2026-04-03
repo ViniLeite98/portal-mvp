@@ -32,6 +32,7 @@ border-radius:16px;
 box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
 
+/* FORM */
 input,select{
 width:100%;
 padding:10px;
@@ -55,19 +56,12 @@ background:#dc2626;
 margin-top:5px;
 }
 
-/* LISTA */
-.categoria-titulo{
-margin-top:15px;
-font-weight:bold;
-color:#111827;
-}
-
+/* LISTA ESTILO PONTILHADO */
 .lista-linha{
 display:flex;
 align-items:center;
-margin-bottom:10px;
+margin-bottom:12px;
 font-size:15px;
-position:relative;
 }
 
 .nome{
@@ -83,18 +77,6 @@ margin:0 10px;
 .valor{
 white-space:nowrap;
 font-weight:500;
-}
-
-.btn-delete{
-opacity:0;
-margin-left:10px;
-cursor:pointer;
-color:#dc2626;
-transition:0.2s;
-}
-
-.lista-linha:hover .btn-delete{
-opacity:1;
 }
 </style>
 </head>
@@ -116,15 +98,9 @@ opacity:1;
 
 <h3>Novo Material</h3>
 
-<input id="nome" placeholder="Nome do material">
-
-<select id="categoria">
-<option value="">Categoria</option>
-<option>Higiene</option>
-<option>Bebida</option>
-<option>Alimento</option>
-<option>Outros</option>
-</select>
+<input id="nome" placeholder="Nome">
+<input id="unidade" placeholder="Unidade (un, ml)">
+<input id="quantidade_inicial" type="number" placeholder="Quantidade inicial">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
@@ -143,11 +119,7 @@ opacity:1;
 <!-- DIREITA -->
 <div class="card">
 
-<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-  <h3>Estoque</h3>
-  <strong>Quantidade</strong>
-</div>
-
+<h3>Estoque</h3>
 <div id="lista"></div>
 
 </div>
@@ -170,20 +142,50 @@ const supabaseClient = supabase.createClient(
 async function criarProduto(){
 
 const nome = document.getElementById("nome").value.trim()
-const categoria = document.getElementById("categoria").value
+const unidade = document.getElementById("unidade").value
+const qtdInicial = parseFloat(document.getElementById("quantidade_inicial").value) || 0
 
 if(!nome){
 alert("Digite o nome")
 return
 }
 
-await supabaseClient.from("produtos").insert({
-nome,
-categoria
-})
+// evita duplicado
+const { data: existe } = await supabaseClient
+.from("produtos")
+.select("id")
+.ilike("nome", nome)
 
+if(existe && existe.length){
+alert("Já existe")
+return
+}
+
+// cria produto
+const { data: produto } = await supabaseClient
+.from("produtos")
+.insert({
+nome,
+unidade
+})
+.select()
+.single()
+
+// cria estoque inicial
+if(qtdInicial > 0){
+await supabaseClient
+.from("movimentacoes_estoque")
+.insert({
+produto_id: produto.id,
+tipo:"entrada",
+quantidade:qtdInicial
+})
+}
+
+// limpar
 document.getElementById("nome").value=""
-document.getElementById("categoria").value=""
+document.getElementById("unidade").value=""
+document.getElementById("quantidade_inicial").value=""
 
 carregar()
 }
@@ -193,24 +195,12 @@ async function carregar(){
 const {data} = await supabaseClient
 .from("estoque_atual")
 .select("*")
-.order("categoria")
+.order("nome")
 
 const lista = document.getElementById("lista")
 lista.innerHTML=""
 
-let categoriaAtual = ""
-
 data.forEach(p=>{
-
-if(p.categoria !== categoriaAtual){
-categoriaAtual = p.categoria
-
-lista.innerHTML += `
-<div class="categoria-titulo">
-${categoriaAtual || "Sem categoria"}
-</div>
-`
-}
 
 lista.innerHTML+=`
 <div class="lista-linha">
@@ -220,10 +210,8 @@ lista.innerHTML+=`
 <span class="pontos"></span>
 
 <span class="valor">
-${p.saldo}
+${p.saldo} ${p.unidade || 'un'}
 </span>
-
-<i class="fa-solid fa-trash btn-delete" onclick="excluir('${p.id}')"></i>
 
 </div>
 `
@@ -263,6 +251,7 @@ const qtd=parseFloat(document.getElementById("qtd").value)
 
 if(!qtd) return
 
+// saldo atual
 const { data } = await supabaseClient
 .from("estoque_atual")
 .select("saldo")
@@ -281,18 +270,6 @@ quantidade:qtd
 })
 
 document.getElementById("qtd").value=""
-carregar()
-}
-
-async function excluir(id){
-
-if(!confirm("Excluir material?")) return
-
-await supabaseClient
-.from("produtos")
-.delete()
-.eq("id", id)
-
 carregar()
 }
 

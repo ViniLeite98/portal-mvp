@@ -32,7 +32,6 @@ border-radius:16px;
 box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
 
-/* FORM */
 input,select{
 width:100%;
 padding:10px;
@@ -56,12 +55,13 @@ background:#dc2626;
 margin-top:5px;
 }
 
-/* LISTA ESTILO PONTILHADO */
+/* LISTA */
 .lista-linha{
 display:flex;
 align-items:center;
 margin-bottom:12px;
 font-size:15px;
+position:relative;
 }
 
 .nome{
@@ -77,6 +77,19 @@ margin:0 10px;
 .valor{
 white-space:nowrap;
 font-weight:500;
+}
+
+/* DELETE */
+.btn-delete{
+opacity:0;
+margin-left:10px;
+cursor:pointer;
+color:#dc2626;
+transition:0.2s;
+}
+
+.lista-linha:hover .btn-delete{
+opacity:1;
 }
 </style>
 </head>
@@ -99,8 +112,7 @@ font-weight:500;
 <h3>Novo Material</h3>
 
 <input id="nome" placeholder="Nome">
-<input id="unidade" placeholder="Unidade (un, ml)">
-<input id="quantidade_inicial" type="number" placeholder="Quantidade inicial">
+<input id="unidade" placeholder="Unidade (opcional)">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
@@ -119,7 +131,11 @@ font-weight:500;
 <!-- DIREITA -->
 <div class="card">
 
-<h3>Estoque</h3>
+<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+  <h3>Estoque</h3>
+  <strong>Quantidade</strong>
+</div>
+
 <div id="lista"></div>
 
 </div>
@@ -142,8 +158,6 @@ const supabaseClient = supabase.createClient(
 async function criarProduto(){
 
 const nome = document.getElementById("nome").value.trim()
-const unidade = document.getElementById("unidade").value
-const qtdInicial = parseFloat(document.getElementById("quantidade_inicial").value) || 0
 
 if(!nome){
 alert("Digite o nome")
@@ -161,31 +175,12 @@ alert("Já existe")
 return
 }
 
-// cria produto
-const { data: produto } = await supabaseClient
-.from("produtos")
-.insert({
-nome,
-unidade
-})
-.select()
-.single()
-
-// cria estoque inicial
-if(qtdInicial > 0){
 await supabaseClient
-.from("movimentacoes_estoque")
-.insert({
-produto_id: produto.id,
-tipo:"entrada",
-quantidade:qtdInicial
-})
-}
+.from("produtos")
+.insert({ nome })
 
-// limpar
 document.getElementById("nome").value=""
 document.getElementById("unidade").value=""
-document.getElementById("quantidade_inicial").value=""
 
 carregar()
 }
@@ -210,8 +205,10 @@ lista.innerHTML+=`
 <span class="pontos"></span>
 
 <span class="valor">
-${p.saldo} ${p.unidade || 'un'}
+${p.saldo} un
 </span>
+
+<i class="fa-solid fa-trash btn-delete" onclick="excluir('${p.id}')"></i>
 
 </div>
 `
@@ -251,7 +248,6 @@ const qtd=parseFloat(document.getElementById("qtd").value)
 
 if(!qtd) return
 
-// saldo atual
 const { data } = await supabaseClient
 .from("estoque_atual")
 .select("saldo")
@@ -270,6 +266,18 @@ quantidade:qtd
 })
 
 document.getElementById("qtd").value=""
+carregar()
+}
+
+async function excluir(id){
+
+if(!confirm("Excluir material?")) return
+
+await supabaseClient
+.from("produtos")
+.delete()
+.eq("id", id)
+
 carregar()
 }
 

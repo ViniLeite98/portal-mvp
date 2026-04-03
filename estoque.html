@@ -32,8 +32,6 @@ border-radius:16px;
 box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
 
-h1{margin-bottom:20px}
-
 input,select{
 width:100%;
 padding:10px;
@@ -52,7 +50,10 @@ color:#fff;
 cursor:pointer;
 }
 
-button:hover{opacity:0.9}
+.btn-danger{
+background:#dc2626;
+margin-top:5px;
+}
 
 .lista-item{
 display:flex;
@@ -77,6 +78,21 @@ font-size:18px;
 font-size:12px;
 color:#777;
 }
+
+.linha-direita{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.btn-delete{
+background:#dc2626;
+border:none;
+color:#fff;
+padding:6px 10px;
+border-radius:8px;
+cursor:pointer;
+}
 </style>
 </head>
 
@@ -91,7 +107,7 @@ color:#777;
 
 <div class="grid">
 
-<!-- CADASTRO -->
+<!-- ESQUERDA -->
 <div class="card">
 
 <h3>Novo Produto</h3>
@@ -107,7 +123,6 @@ color:#777;
 </select>
 
 <input id="unidade" placeholder="Unidade (ml, un)">
-<input id="minimo" type="number" placeholder="Alerta de reposição (opcional)">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
@@ -119,11 +134,11 @@ color:#777;
 <input id="qtd" type="number" placeholder="Quantidade">
 
 <button onclick="entrada()">+ Entrada</button>
-<button onclick="saida()" style="background:#dc2626;margin-top:5px">- Saída</button>
+<button class="btn-danger" onclick="saida()">- Saída</button>
 
 </div>
 
-<!-- LISTA -->
+<!-- DIREITA -->
 <div class="card">
 
 <h3>Produtos</h3>
@@ -168,15 +183,13 @@ return
 await supabaseClient.from("produtos").insert({
 nome,
 categoria:document.getElementById("categoria").value,
-unidade:document.getElementById("unidade").value,
-estoque_minimo:document.getElementById("minimo").value || 0
+unidade:document.getElementById("unidade").value
 })
 
-// limpa
+// limpar
 document.getElementById("nome").value=""
 document.getElementById("categoria").value=""
 document.getElementById("unidade").value=""
-document.getElementById("minimo").value=""
 
 carregar()
 }
@@ -191,12 +204,7 @@ const {data} = await supabaseClient
 const lista = document.getElementById("lista")
 lista.innerHTML=""
 
-// lista
 data.forEach(p=>{
-
-const cor = p.saldo <= (p.estoque_minimo || 0)
-? "#dc2626"
-: "#111827"
 
 lista.innerHTML+=`
 <div class="lista-item">
@@ -206,15 +214,23 @@ lista.innerHTML+=`
 <div class="categoria">${p.categoria || ""}</div>
 </div>
 
-<div class="qtd" style="color:${cor}">
-${p.saldo} ${p.unidade || ""}
+<div class="linha-direita">
+
+<div class="qtd">
+${p.saldo} ${p.unidade || 'un'}
+</div>
+
+<button class="btn-delete" onclick="excluir('${p.id}')">
+🗑
+</button>
+
 </div>
 
 </div>
 `
 })
 
-// select movimentação
+// select
 const sel=document.getElementById("produtoMov")
 sel.innerHTML=""
 
@@ -230,7 +246,7 @@ const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 if(!qtd || qtd <= 0){
-alert("Digite uma quantidade válida")
+alert("Quantidade inválida")
 return
 }
 
@@ -250,21 +266,21 @@ const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 if(!qtd || qtd <= 0){
-alert("Digite uma quantidade válida")
+alert("Quantidade inválida")
 return
 }
 
-// 🔥 consulta saldo
+// pega saldo
 const { data } = await supabaseClient
 .from("estoque_atual")
 .select("saldo")
 .eq("id", id)
 .single()
 
-const saldoAtual = data?.saldo || 0
+const saldo = data?.saldo || 0
 
-if(qtd > saldoAtual){
-alert(`Estoque insuficiente. Disponível: ${saldoAtual}`)
+if(qtd > saldo){
+alert(`Estoque insuficiente: ${saldo}`)
 return
 }
 
@@ -275,6 +291,20 @@ quantidade:qtd
 })
 
 document.getElementById("qtd").value=""
+carregar()
+}
+
+async function excluir(id){
+
+if(!confirm("Excluir produto?")){
+return
+}
+
+await supabaseClient
+.from("produtos")
+.delete()
+.eq("id", id)
+
 carregar()
 }
 

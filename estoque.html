@@ -32,7 +32,6 @@ border-radius:16px;
 box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
 
-/* FORM */
 input,select{
 width:100%;
 padding:10px;
@@ -56,7 +55,7 @@ background:#dc2626;
 margin-top:5px;
 }
 
-/* LISTA ESTILO PONTILHADO */
+/* LISTA */
 .lista-linha{
 display:flex;
 align-items:center;
@@ -100,7 +99,6 @@ font-weight:500;
 
 <input id="nome" placeholder="Nome">
 <input id="unidade" placeholder="Unidade (un, ml)">
-<input id="quantidade_inicial" type="number" placeholder="Quantidade inicial">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
@@ -143,7 +141,6 @@ async function criarProduto(){
 
 const nome = document.getElementById("nome").value.trim()
 const unidade = document.getElementById("unidade").value
-const qtdInicial = parseFloat(document.getElementById("quantidade_inicial").value) || 0
 
 if(!nome){
 alert("Digite o nome")
@@ -162,30 +159,16 @@ return
 }
 
 // cria produto
-const { data: produto } = await supabaseClient
+await supabaseClient
 .from("produtos")
 .insert({
 nome,
 unidade
 })
-.select()
-.single()
-
-// cria estoque inicial
-if(qtdInicial > 0){
-await supabaseClient
-.from("movimentacoes_estoque")
-.insert({
-produto_id: produto.id,
-tipo:"entrada",
-quantidade:qtdInicial
-})
-}
 
 // limpar
 document.getElementById("nome").value=""
 document.getElementById("unidade").value=""
-document.getElementById("quantidade_inicial").value=""
 
 carregar()
 }
@@ -251,7 +234,6 @@ const qtd=parseFloat(document.getElementById("qtd").value)
 
 if(!qtd) return
 
-// saldo atual
 const { data } = await supabaseClient
 .from("estoque_atual")
 .select("saldo")

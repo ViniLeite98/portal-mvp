@@ -2,124 +2,223 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Materiais</title>
+<title>Estoque | Hara Spa</title>
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
 <style>
 body{
-font-family:Arial;
+margin:0;
+font-family:'Segoe UI';
 background:#f4f6fb;
-padding:40px;
 }
 
-.container{
-display:flex;
-gap:40px;
+.app{display:flex}
+.content{flex:1;padding:40px}
+
+.grid{
+display:grid;
+grid-template-columns: 320px 1fr;
+gap:30px;
 }
 
 .card{
 background:#fff;
 padding:20px;
 border-radius:16px;
-width:350px;
 box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
 
-input{
+input,select{
 width:100%;
 padding:10px;
-margin-bottom:10px;
 border-radius:10px;
 border:1px solid #ccc;
+margin-bottom:10px;
 }
 
 button{
+width:100%;
 padding:10px;
 border:none;
 border-radius:10px;
-background:#334155;
+background:#2563eb;
 color:#fff;
 cursor:pointer;
-width:100%;
 }
 
-.lista{
-background:#fff;
-padding:20px;
-border-radius:16px;
-flex:1;
-box-shadow:0 5px 15px rgba(0,0,0,0.05);
+.btn-danger{
+background:#dc2626;
+margin-top:5px;
 }
 
-.item{
+.lista-item{
 display:flex;
 justify-content:space-between;
+align-items:center;
+padding:14px;
+border-radius:12px;
+background:#f9fafb;
 margin-bottom:10px;
-font-size:15px;
+}
+
+.lista-item:hover{
+background:#f1f5f9;
 }
 
 .qtd{
 font-weight:bold;
+font-size:18px;
+}
+
+.categoria{
+font-size:12px;
+color:#777;
+}
+
+.linha-direita{
+display:flex;
+align-items:center;
+gap:10px;
+}
+
+.btn-delete{
+background:#dc2626;
+border:none;
+color:#fff;
+padding:6px 10px;
+border-radius:8px;
+cursor:pointer;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Materiais</h1>
-<p>Controle simples</p>
+<div class="app">
+<aside id="sidebar"></aside>
 
-<div class="container">
+<main class="content">
 
-<!-- FORM -->
+<h1>Estoque</h1>
+
+<div class="grid">
+
+<!-- ESQUERDA -->
 <div class="card">
 
-<input id="nome" placeholder="Material">
-<input id="quantidade" type="number" placeholder="Quantidade">
-<input id="unidade" placeholder="Unidade (un, ml)">
+<h3>Novo Produto</h3>
 
-<button onclick="salvar()">+ Adicionar</button>
+<input id="nome" placeholder="Nome">
+
+<select id="categoria">
+<option value="">Categoria</option>
+<option>Bebida</option>
+<option>Higiene</option>
+<option>Comida</option>
+<option>Outros</option>
+</select>
+
+<input id="unidade" placeholder="Unidade (ml, un)">
+<input id="quantidade_inicial" type="number" placeholder="Quantidade inicial">
+
+<button onclick="criarProduto()">Cadastrar</button>
+
+<hr style="margin:15px 0">
+
+<h3>Movimentar</h3>
+
+<select id="produtoMov"></select>
+<input id="qtd" type="number" placeholder="Quantidade">
+
+<button onclick="entrada()">+ Entrada</button>
+<button class="btn-danger" onclick="saida()">- Saída</button>
 
 </div>
 
-<!-- LISTA -->
-<div class="lista">
-<h3>Estoque</h3>
+<!-- DIREITA -->
+<div class="card">
+
+<h3>Produtos</h3>
 <div id="lista"></div>
+
 </div>
 
+</div>
+
+</main>
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"SUA_ANON_KEY"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
-async function salvar(){
+async function criarProduto(){
 
-const nome = document.getElementById("nome").value
-const quantidade = document.getElementById("quantidade").value
+const nome = document.getElementById("nome").value.trim()
+const categoria = document.getElementById("categoria").value
 const unidade = document.getElementById("unidade").value
+const qtdInicial = parseFloat(document.getElementById("quantidade_inicial").value) || 0
 
-if(!nome) return alert("Digite o nome")
+if(!nome){
+alert("Digite o nome")
+return
+}
 
-await supabaseClient
-.from("materiais")
+// evita duplicado
+const { data: existe } = await supabaseClient
+.from("produtos")
+.select("id")
+.ilike("nome", nome)
+
+if(existe && existe.length){
+alert("Produto já existe")
+return
+}
+
+// cria produto
+const { data: produto, error } = await supabaseClient
+.from("produtos")
 .insert({
 nome,
-quantidade,
+categoria,
 unidade
 })
+.select()
+.single()
 
+if(error){
+console.error(error)
+alert("Erro ao criar produto")
+return
+}
+
+// cria estoque inicial
+if(qtdInicial > 0){
+await supabaseClient
+.from("movimentacoes_estoque")
+.insert({
+produto_id: produto.id,
+tipo: "entrada",
+quantidade: qtdInicial,
+origem: "inicial"
+})
+}
+
+// limpar
 document.getElementById("nome").value=""
-document.getElementById("quantidade").value=""
+document.getElementById("categoria").value=""
 document.getElementById("unidade").value=""
+document.getElementById("quantidade_inicial").value=""
 
 carregar()
 }
@@ -127,23 +226,113 @@ carregar()
 async function carregar(){
 
 const {data} = await supabaseClient
-.from("materiais")
+.from("estoque_atual")
 .select("*")
 .order("nome")
 
-const div = document.getElementById("lista")
-div.innerHTML=""
+const lista = document.getElementById("lista")
+lista.innerHTML=""
 
-data.forEach(m=>{
+data.forEach(p=>{
 
-div.innerHTML+=`
-<div class="item">
-<span>${m.nome}</span>
-<span class="qtd">${m.quantidade} ${m.unidade || ""}</span>
+lista.innerHTML+=`
+<div class="lista-item">
+
+<div>
+<div><strong>${p.nome}</strong></div>
+<div class="categoria">${p.categoria || ""}</div>
+</div>
+
+<div class="linha-direita">
+
+<div class="qtd">
+${p.saldo} ${p.unidade || 'un'}
+</div>
+
+<button class="btn-delete" onclick="excluir('${p.id}')">
+🗑
+</button>
+
+</div>
+
 </div>
 `
 })
 
+// select
+const sel=document.getElementById("produtoMov")
+sel.innerHTML=""
+
+data.forEach(p=>{
+sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
+})
+
+}
+
+async function entrada(){
+
+const id=document.getElementById("produtoMov").value
+const qtd=parseFloat(document.getElementById("qtd").value)
+
+if(!qtd || qtd <= 0){
+alert("Quantidade inválida")
+return
+}
+
+await supabaseClient.from("movimentacoes_estoque").insert({
+produto_id:id,
+tipo:"entrada",
+quantidade:qtd
+})
+
+document.getElementById("qtd").value=""
+carregar()
+}
+
+async function saida(){
+
+const id=document.getElementById("produtoMov").value
+const qtd=parseFloat(document.getElementById("qtd").value)
+
+if(!qtd || qtd <= 0){
+alert("Quantidade inválida")
+return
+}
+
+// saldo atual
+const { data } = await supabaseClient
+.from("estoque_atual")
+.select("saldo")
+.eq("id", id)
+.single()
+
+const saldo = data?.saldo || 0
+
+if(qtd > saldo){
+alert(`Estoque insuficiente: ${saldo}`)
+return
+}
+
+await supabaseClient.from("movimentacoes_estoque").insert({
+produto_id:id,
+tipo:"saida",
+quantidade:qtd
+})
+
+document.getElementById("qtd").value=""
+carregar()
+}
+
+async function excluir(id){
+
+if(!confirm("Excluir produto?")) return
+
+await supabaseClient
+.from("produtos")
+.delete()
+.eq("id", id)
+
+carregar()
 }
 
 carregar()

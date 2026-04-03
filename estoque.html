@@ -79,7 +79,7 @@ white-space:nowrap;
 font-weight:500;
 }
 
-/* BOTÃO EXCLUIR */
+/* DELETE */
 .btn-delete{
 opacity:0;
 margin-left:10px;
@@ -112,7 +112,7 @@ opacity:1;
 <h3>Novo Material</h3>
 
 <input id="nome" placeholder="Nome">
-<input id="unidade" placeholder="Unidade (un, ml)">
+<input id="unidade" placeholder="Unidade (opcional)">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
@@ -131,7 +131,11 @@ opacity:1;
 <!-- DIREITA -->
 <div class="card">
 
-<h3>Estoque</h3>
+<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+  <h3>Estoque</h3>
+  <strong>Quantidade</strong>
+</div>
+
 <div id="lista"></div>
 
 </div>
@@ -154,16 +158,26 @@ const supabaseClient = supabase.createClient(
 async function criarProduto(){
 
 const nome = document.getElementById("nome").value.trim()
-const unidade = document.getElementById("unidade").value
 
 if(!nome){
 alert("Digite o nome")
 return
 }
 
+// evita duplicado
+const { data: existe } = await supabaseClient
+.from("produtos")
+.select("id")
+.ilike("nome", nome)
+
+if(existe && existe.length){
+alert("Já existe")
+return
+}
+
 await supabaseClient
 .from("produtos")
-.insert({ nome, unidade })
+.insert({ nome })
 
 document.getElementById("nome").value=""
 document.getElementById("unidade").value=""
@@ -191,7 +205,7 @@ lista.innerHTML+=`
 <span class="pontos"></span>
 
 <span class="valor">
-${p.saldo} ${p.unidade || 'un'}
+${p.saldo} un
 </span>
 
 <i class="fa-solid fa-trash btn-delete" onclick="excluir('${p.id}')"></i>

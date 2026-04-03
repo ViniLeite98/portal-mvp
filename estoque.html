@@ -123,6 +123,7 @@ cursor:pointer;
 </select>
 
 <input id="unidade" placeholder="Unidade (ml, un)">
+<input id="quantidade_inicial" type="number" placeholder="Quantidade inicial">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
@@ -164,12 +165,16 @@ const supabaseClient = supabase.createClient(
 async function criarProduto(){
 
 const nome = document.getElementById("nome").value.trim()
+const categoria = document.getElementById("categoria").value
+const unidade = document.getElementById("unidade").value
+const qtdInicial = parseFloat(document.getElementById("quantidade_inicial").value) || 0
 
 if(!nome){
 alert("Digite o nome")
 return
 }
 
+// evita duplicado
 const { data: existe } = await supabaseClient
 .from("produtos")
 .select("id")
@@ -180,16 +185,40 @@ alert("Produto já existe")
 return
 }
 
-await supabaseClient.from("produtos").insert({
+// cria produto
+const { data: produto, error } = await supabaseClient
+.from("produtos")
+.insert({
 nome,
-categoria:document.getElementById("categoria").value,
-unidade:document.getElementById("unidade").value
+categoria,
+unidade
 })
+.select()
+.single()
+
+if(error){
+console.error(error)
+alert("Erro ao criar produto")
+return
+}
+
+// cria estoque inicial
+if(qtdInicial > 0){
+await supabaseClient
+.from("movimentacoes_estoque")
+.insert({
+produto_id: produto.id,
+tipo: "entrada",
+quantidade: qtdInicial,
+origem: "inicial"
+})
+}
 
 // limpar
 document.getElementById("nome").value=""
 document.getElementById("categoria").value=""
 document.getElementById("unidade").value=""
+document.getElementById("quantidade_inicial").value=""
 
 carregar()
 }
@@ -270,7 +299,7 @@ alert("Quantidade inválida")
 return
 }
 
-// pega saldo
+// saldo atual
 const { data } = await supabaseClient
 .from("estoque_atual")
 .select("saldo")
@@ -296,9 +325,7 @@ carregar()
 
 async function excluir(id){
 
-if(!confirm("Excluir produto?")){
-return
-}
+if(!confirm("Excluir produto?")) return
 
 await supabaseClient
 .from("produtos")

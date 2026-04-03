@@ -52,9 +52,7 @@ color:#fff;
 cursor:pointer;
 }
 
-button:hover{
-opacity:0.9;
-}
+button:hover{opacity:0.9}
 
 .lista-item{
 display:flex;
@@ -73,7 +71,6 @@ background:#f1f5f9;
 .qtd{
 font-weight:bold;
 font-size:18px;
-color:#111827;
 }
 
 .categoria{
@@ -158,7 +155,6 @@ alert("Digite o nome")
 return
 }
 
-// evita duplicado
 const { data: existe } = await supabaseClient
 .from("produtos")
 .select("id")
@@ -169,23 +165,20 @@ alert("Produto já existe")
 return
 }
 
-await supabaseClient
-.from("produtos")
-.insert({
+await supabaseClient.from("produtos").insert({
 nome,
 categoria:document.getElementById("categoria").value,
 unidade:document.getElementById("unidade").value,
 estoque_minimo:document.getElementById("minimo").value || 0
 })
 
-// limpa campos
+// limpa
 document.getElementById("nome").value=""
 document.getElementById("categoria").value=""
 document.getElementById("unidade").value=""
 document.getElementById("minimo").value=""
 
 carregar()
-
 }
 
 async function carregar(){
@@ -201,6 +194,10 @@ lista.innerHTML=""
 // lista
 data.forEach(p=>{
 
+const cor = p.saldo <= (p.estoque_minimo || 0)
+? "#dc2626"
+: "#111827"
+
 lista.innerHTML+=`
 <div class="lista-item">
 
@@ -209,7 +206,7 @@ lista.innerHTML+=`
 <div class="categoria">${p.categoria || ""}</div>
 </div>
 
-<div class="qtd">
+<div class="qtd" style="color:${cor}">
 ${p.saldo} ${p.unidade || ""}
 </div>
 
@@ -230,46 +227,54 @@ sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 async function entrada(){
 
 const id=document.getElementById("produtoMov").value
-const qtd=document.getElementById("qtd").value
+const qtd=parseFloat(document.getElementById("qtd").value)
 
-if(!qtd){
-alert("Digite a quantidade")
+if(!qtd || qtd <= 0){
+alert("Digite uma quantidade válida")
 return
 }
 
-await supabaseClient
-.from("movimentacoes_estoque")
-.insert({
+await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id:id,
 tipo:"entrada",
 quantidade:qtd
 })
 
 document.getElementById("qtd").value=""
-
 carregar()
 }
 
 async function saida(){
 
 const id=document.getElementById("produtoMov").value
-const qtd=document.getElementById("qtd").value
+const qtd=parseFloat(document.getElementById("qtd").value)
 
-if(!qtd){
-alert("Digite a quantidade")
+if(!qtd || qtd <= 0){
+alert("Digite uma quantidade válida")
 return
 }
 
-await supabaseClient
-.from("movimentacoes_estoque")
-.insert({
+// 🔥 consulta saldo
+const { data } = await supabaseClient
+.from("estoque_atual")
+.select("saldo")
+.eq("id", id)
+.single()
+
+const saldoAtual = data?.saldo || 0
+
+if(qtd > saldoAtual){
+alert(`Estoque insuficiente. Disponível: ${saldoAtual}`)
+return
+}
+
+await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id:id,
 tipo:"saida",
 quantidade:qtd
 })
 
 document.getElementById("qtd").value=""
-
 carregar()
 }
 

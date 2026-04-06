@@ -96,13 +96,8 @@ transition:0.2s;
 opacity:1;
 }
 
-.btn-zerar{
-color:#f59e0b;
-}
-
-.btn-delete{
-color:#dc2626;
-}
+.btn-zerar{color:#f59e0b;}
+.btn-delete{color:#dc2626;}
 </style>
 </head>
 
@@ -124,6 +119,7 @@ color:#dc2626;
 <h3>Novo Material</h3>
 
 <input id="nome" placeholder="Nome">
+<input id="valor" type="number" step="0.01" placeholder="Valor da unidade (R$)">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
@@ -144,7 +140,7 @@ color:#dc2626;
 
 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
   <h3>Estoque</h3>
-  <strong>Quantidade</strong>
+  <strong>Qtd | Valor</strong>
 </div>
 
 <div id="lista"></div>
@@ -169,27 +165,19 @@ const supabaseClient = supabase.createClient(
 async function criarProduto(){
 
 const nome = document.getElementById("nome").value.trim()
+const valor = parseFloat(document.getElementById("valor").value)
 
 if(!nome){
 alert("Digite o nome")
 return
 }
 
-const { data: existe } = await supabaseClient
-.from("produtos")
-.select("id")
-.ilike("nome", nome)
-
-if(existe && existe.length){
-alert("Já existe")
-return
-}
-
 await supabaseClient
 .from("produtos")
-.insert({ nome })
+.insert({ nome, valor })
 
 document.getElementById("nome").value=""
+document.getElementById("valor").value=""
 
 carregar()
 }
@@ -206,6 +194,8 @@ lista.innerHTML=""
 
 data.forEach(p=>{
 
+const total = (p.valor || 0) * (p.saldo || 0)
+
 lista.innerHTML+=`
 <div class="lista-linha">
 
@@ -213,11 +203,13 @@ lista.innerHTML+=`
 
 <span class="pontos"></span>
 
-<span class="valor">${p.saldo}</span>
+<span class="valor">
+${p.saldo} | R$ ${total.toFixed(2)}
+</span>
 
 <div class="acoes">
-<i class="fa-solid fa-xmark btn-acao btn-zerar" title="Zerar estoque" onclick="zerar('${p.id}', ${p.saldo})"></i>
-<i class="fa-solid fa-trash btn-acao btn-delete" title="Excluir produto" onclick="excluir('${p.id}')"></i>
+<i class="fa-solid fa-xmark btn-acao btn-zerar" onclick="zerar('${p.id}', ${p.saldo})"></i>
+<i class="fa-solid fa-trash btn-acao btn-delete" onclick="excluir('${p.id}')"></i>
 </div>
 
 </div>
@@ -285,8 +277,6 @@ if(saldo <= 0){
 alert("Já está zerado")
 return
 }
-
-if(!confirm("Zerar estoque desse material?")) return
 
 await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id: id,

@@ -129,9 +129,15 @@ opacity:1;
 
 <div class="card">
 
-<div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+<div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
   <h3>Estoque</h3>
-  <strong>Qtd | Valor</strong>
+
+  <div style="display:flex; gap:10px; align-items:center;">
+    <strong>Qtd | Valor</strong>
+    <button onclick="exportarExcel()" style="width:auto; padding:6px 12px; font-size:13px;">
+      <i class="fa-solid fa-file-excel"></i> Exportar
+    </button>
+  </div>
 </div>
 
 <div id="lista"></div>
@@ -144,6 +150,7 @@ opacity:1;
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
@@ -197,7 +204,7 @@ ${p.saldo} | R$ ${total.toFixed(2)}
 </span>
 
 <div class="acoes">
-<i class="fa-solid fa-pen btn-acao btn-edit" title="Editar valor" onclick="editarValor('${p.id}', ${p.valor || 0})"></i>
+<i class="fa-solid fa-pen btn-acao btn-edit" onclick="editarValor('${p.id}', ${p.valor || 0})"></i>
 <i class="fa-solid fa-xmark btn-acao btn-zerar" onclick="zerar('${p.id}', ${p.saldo})"></i>
 <i class="fa-solid fa-trash btn-acao btn-delete" onclick="excluir('${p.id}')"></i>
 </div>
@@ -214,6 +221,33 @@ data.forEach(p=>{
 sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 })
 
+}
+
+async function exportarExcel(){
+
+const {data} = await supabaseClient
+.from("estoque_atual")
+.select("*")
+.order("nome")
+
+if(!data || data.length === 0){
+alert("Sem dados")
+return
+}
+
+const dados = data.map(p => ({
+Nome: p.nome,
+Quantidade: p.saldo,
+"Valor Unitário": p.valor || 0,
+"Valor Total": (p.valor || 0) * (p.saldo || 0)
+}))
+
+const ws = XLSX.utils.json_to_sheet(dados)
+const wb = XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb, ws, "Estoque")
+
+XLSX.writeFile(wb, "estoque.xlsx")
 }
 
 async function editarValor(id, valorAtual){

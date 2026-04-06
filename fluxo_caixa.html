@@ -63,7 +63,7 @@ padding:10px;
 border-bottom:1px solid #eee;
 }
 
-/* 🔥 MODAL CORRIGIDO */
+/* 🔥 MODAL MELHORADO */
 .modal{
 display:none;
 position:fixed;
@@ -96,17 +96,6 @@ gap:12px;
 
 .modal-grid .full{
 grid-column:span 2;
-}
-
-.modal-field{
-display:flex;
-flex-direction:column;
-}
-
-.modal-field label{
-font-size:12px;
-margin-bottom:4px;
-color:#555;
 }
 
 .modal-box input,
@@ -203,7 +192,7 @@ margin-top:20px;
 </main>
 </div>
 
-<!-- 🔥 MODAL -->
+<!-- 🔥 MODAL EDITAR MELHORADO -->
 <div id="modalEditar" class="modal">
 <div class="modal-box">
 
@@ -211,22 +200,22 @@ margin-top:20px;
 
 <div class="modal-grid">
 
-<div class="modal-field">
+<div>
 <label>Data</label>
 <input type="date" id="editData">
 </div>
 
-<div class="modal-field">
+<div>
 <label>Cliente</label>
 <select id="editCliente"></select>
 </div>
 
-<div class="modal-field full">
+<div class="full">
 <label>Serviço</label>
 <select id="editServico"></select>
 </div>
 
-<div class="modal-field">
+<div>
 <label>Origem</label>
 <select id="editOrigem">
 <option value="">Selecione</option>
@@ -239,17 +228,17 @@ margin-top:20px;
 </select>
 </div>
 
-<div class="modal-field">
+<div>
 <label>Valor</label>
 <input type="number" id="editValor">
 </div>
 
-<div class="modal-field">
+<div>
 <label>Desconto</label>
 <input type="number" id="editDesconto">
 </div>
 
-<div class="modal-field full">
+<div class="full">
 <label>Valor Final</label>
 <input type="number" id="editFinal" disabled>
 </div>
@@ -269,41 +258,20 @@ margin-top:20px;
 
 <script>
 
+// 🔥 NOVO CALCULO EDIT
 function calcularEdit(){
 editFinal.value = (parseFloat(editValor.value||0) - parseFloat(editDesconto.value||0))
 }
 
-editValor.addEventListener("input", calcularEdit)
-editDesconto.addEventListener("input", calcularEdit)
+editValor.oninput = calcularEdit
+editDesconto.oninput = calcularEdit
 
-// 🔥 SUA FUNÇÃO ORIGINAL AJUSTADA
-function abrirEditar(id){
-
-editandoId=id
-const r=dados.find(d=>d.id==id)
-
-editCliente.innerHTML="<option value=''>Selecione</option>"
-dadosClientes.forEach(c=>{
-const nome=c.nome||c.nome_cliente
-editCliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
-})
-
-editServico.innerHTML="<option value=''>Selecione</option>"
-dadosServicos.forEach(s=>{
-editServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
-})
-
-editData.value=r.data
-editCliente.value=r.cliente_id
-editServico.value=r.servico_id
-editValor.value=r.valor
-editDesconto.value=r.desconto
-editOrigem.value=r.origem_lead || ""
-
-// 🔥 FIX
-editFinal.value = (r.valor - r.desconto)
-
-modalEditar.style.display="flex"
+// 🔥 AJUSTE NO ABRIR EDITAR
+const abrirEditarOriginal = abrirEditar
+abrirEditar = function(id){
+abrirEditarOriginal(id)
+const r = dados.find(d=>d.id==id)
+editFinal.value = r.valor - r.desconto
 }
 
 </script>

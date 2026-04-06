@@ -50,23 +50,16 @@ color:#fff;
 cursor:pointer;
 }
 
-.btn-danger{
-background:#dc2626;
-margin-top:5px;
-}
+.btn-danger{background:#dc2626;margin-top:5px;}
 
-/* LISTA */
 .lista-linha{
 display:flex;
 align-items:center;
 margin-bottom:12px;
 font-size:15px;
-position:relative;
 }
 
-.nome{
-white-space:nowrap;
-}
+.nome{white-space:nowrap;}
 
 .pontos{
 flex:1;
@@ -79,7 +72,6 @@ white-space:nowrap;
 font-weight:500;
 }
 
-/* AÇÕES */
 .acoes{
 display:flex;
 gap:10px;
@@ -96,6 +88,7 @@ transition:0.2s;
 opacity:1;
 }
 
+.btn-edit{color:#2563eb;}
 .btn-zerar{color:#f59e0b;}
 .btn-delete{color:#dc2626;}
 </style>
@@ -113,7 +106,6 @@ opacity:1;
 
 <div class="grid">
 
-<!-- ESQUERDA -->
 <div class="card">
 
 <h3>Novo Material</h3>
@@ -135,7 +127,6 @@ opacity:1;
 
 </div>
 
-<!-- DIREITA -->
 <div class="card">
 
 <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
@@ -165,16 +156,14 @@ const supabaseClient = supabase.createClient(
 async function criarProduto(){
 
 const nome = document.getElementById("nome").value.trim()
-const valor = parseFloat(document.getElementById("valor").value)
+const valor = parseFloat(document.getElementById("valor").value) || 0
 
 if(!nome){
 alert("Digite o nome")
 return
 }
 
-await supabaseClient
-.from("produtos")
-.insert({ nome, valor })
+await supabaseClient.from("produtos").insert({ nome, valor })
 
 document.getElementById("nome").value=""
 document.getElementById("valor").value=""
@@ -208,6 +197,7 @@ ${p.saldo} | R$ ${total.toFixed(2)}
 </span>
 
 <div class="acoes">
+<i class="fa-solid fa-pen btn-acao btn-edit" title="Editar valor" onclick="editarValor('${p.id}', ${p.valor || 0})"></i>
 <i class="fa-solid fa-xmark btn-acao btn-zerar" onclick="zerar('${p.id}', ${p.saldo})"></i>
 <i class="fa-solid fa-trash btn-acao btn-delete" onclick="excluir('${p.id}')"></i>
 </div>
@@ -226,11 +216,23 @@ sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 
 }
 
-async function entrada(){
+async function editarValor(id, valorAtual){
 
+const novo = prompt("Novo valor (R$):", valorAtual)
+
+if(novo === null) return
+
+await supabaseClient
+.from("produtos")
+.update({ valor: parseFloat(novo) || 0 })
+.eq("id", id)
+
+carregar()
+}
+
+async function entrada(){
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
-
 if(!qtd) return
 
 await supabaseClient.from("movimentacoes_estoque").insert({
@@ -244,10 +246,8 @@ carregar()
 }
 
 async function saida(){
-
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
-
 if(!qtd) return
 
 const { data } = await supabaseClient
@@ -272,30 +272,18 @@ carregar()
 }
 
 async function zerar(id, saldo){
-
-if(saldo <= 0){
-alert("Já está zerado")
-return
-}
-
+if(saldo <= 0){ alert("Já está zerado"); return }
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id: id,
-tipo: "saida",
-quantidade: saldo
+produto_id:id,
+tipo:"saida",
+quantidade:saldo
 })
-
 carregar()
 }
 
 async function excluir(id){
-
 if(!confirm("Excluir material?")) return
-
-await supabaseClient
-.from("produtos")
-.delete()
-.eq("id", id)
-
+await supabaseClient.from("produtos").delete().eq("id", id)
 carregar()
 }
 

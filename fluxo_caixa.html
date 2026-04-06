@@ -1,313 +1,14 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Fluxo de Caixa | Hara Spa</title>
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
-<style>
-body{margin:0;font-family:Segoe UI;background:#f4f6fb}
-.app{display:flex}
-.content{flex:1;padding:40px}
-
-.form-box{
-background:#fff;
-padding:20px;
-border-radius:10px;
-display:flex;
-gap:15px;
-flex-wrap:wrap;
-margin-bottom:20px;
-align-items:flex-end;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-.field{display:flex;flex-direction:column;font-size:13px;}
-
-input,select{
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
-min-width:160px;
-}
-
-button{
-background:#2563eb;
-color:#fff;
-border:none;
-padding:10px 15px;
-border-radius:6px;
-cursor:pointer;
-}
-
-button.editar{background:#f59e0b}
-button.excluir{background:#dc2626}
-
-table{
-width:100%;
-background:#fff;
-border-collapse:collapse;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #eee;
-}
-
-/* MODAL BONITO */
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.5);
-backdrop-filter:blur(4px);
-align-items:center;
-justify-content:center;
-z-index:999;
-}
-
-.modal-box{
-background:#fff;
-padding:25px;
-border-radius:14px;
-width:420px;
-box-shadow:0 10px 30px rgba(0,0,0,0.2);
-animation:fadeIn .2s ease;
-}
-
-.modal-box h3{
-margin:0 0 15px;
-font-size:20px;
-font-weight:600;
-}
-
-.modal-grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-}
-
-.modal-grid .full{
-grid-column:span 2;
-}
-
-.modal-box label{
-font-size:12px;
-color:#555;
-margin-bottom:4px;
-}
-
-.modal-box input,
-.modal-box select{
-width:100%;
-padding:10px;
-border-radius:8px;
-border:1px solid #ddd;
-font-size:14px;
-}
-
-.modal-actions{
-display:flex;
-justify-content:flex-end;
-gap:10px;
-margin-top:20px;
-}
-
-.btn-save{background:#2563eb;}
-.btn-cancel{background:#e5e7eb;color:#111;}
-
-@keyframes fadeIn{
-from{transform:scale(0.95);opacity:0}
-to{transform:scale(1);opacity:1}
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-<aside id="sidebar"></aside>
-
-<main class="content">
-
-<h1>Fluxo de Caixa</h1>
-
-<div class="form-box">
-
-<div class="field">
-<label>Data</label>
-<input type="date" id="data">
-</div>
-
-<div class="field">
-<label>Cliente</label>
-<select id="cliente"></select>
-</div>
-
-<div class="field">
-<label>Serviço</label>
-<select id="servico"></select>
-</div>
-
-<div class="field">
-<label>Origem</label>
-<select id="origem">
-<option value="">Selecione</option>
-<option>Instagram</option>
-<option>Google</option>
-<option>Indicação</option>
-<option>Cliente antigo</option>
-<option>WhatsApp</option>
-<option>Outro</option>
-</select>
-</div>
-
-<div class="field">
-<label>Valor</label>
-<input type="number" id="valor" value="50">
-</div>
-
-<div class="field">
-<label>Desconto</label>
-<input type="number" id="desconto" value="0">
-</div>
-
-<div class="field">
-<label>Final</label>
-<input type="number" id="final" disabled>
-</div>
-
-<button onclick="salvar()">Adicionar</button>
-
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Data</th>
-<th>Cliente</th>
-<th>Origem</th>
-<th>Serviço</th>
-<th>Valor</th>
-<th>Desconto</th>
-<th>Final</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
-
-</main>
-</div>
-
-<!-- MODAL -->
-<div id="modalEditar" class="modal">
-  <div class="modal-box">
-
-    <h3>Editar Lançamento</h3>
-
-    <div class="modal-grid">
-
-      <div>
-        <label>Data</label>
-        <input type="date" id="editData">
-      </div>
-
-      <div>
-        <label>Cliente</label>
-        <select id="editCliente"></select>
-      </div>
-
-      <div class="full">
-        <label>Serviço</label>
-        <select id="editServico"></select>
-      </div>
-
-      <div>
-        <label>Origem</label>
-        <select id="editOrigem">
-          <option value="">Selecione</option>
-          <option>Instagram</option>
-          <option>Google</option>
-          <option>Indicação</option>
-          <option>Cliente antigo</option>
-          <option>WhatsApp</option>
-          <option>Outro</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Valor</label>
-        <input type="number" id="editValor">
-      </div>
-
-      <div>
-        <label>Desconto</label>
-        <input type="number" id="editDesconto">
-      </div>
-
-      <div class="full">
-        <label>Valor Final</label>
-        <input type="number" id="editFinal" disabled>
-      </div>
-
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-save" onclick="salvarEdicao()">Salvar</button>
-    </div>
-
-  </div>
-</div>
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/sidebar/sidebar.js"></script>
+<!-- 🔥 SUBSTITUI APENAS ESSE TRECHO NO SEU JS -->
 
 <script>
 
-const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-)
-
-let dados=[]
-let dadosClientes=[]
-let dadosServicos=[]
-let servicosMap={}
-let editandoId=null
-
-function hoje(){
-const d=new Date()
-const offset=d.getTimezoneOffset()
-return new Date(d.getTime()-offset*60000).toISOString().split("T")[0]
-}
-
-data.value=hoje()
-
-function calcular(){
-final.value=(valor.value||0)-(desconto.value||0)
-}
-valor.oninput=calcular
-desconto.oninput=calcular
-
-function calcularEdit(){
-editFinal.value=(editValor.value||0)-(editDesconto.value||0)
-}
-editValor.oninput=calcularEdit
-editDesconto.oninput=calcularEdit
-
-function formatar(v){
-return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+// 🔥 VOLTA FUNÇÃO ORIGINAL (ESSENCIAL)
+function nomeServico(s){
+if(!s) return ""
+if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} minutos`
+if(s.subgrupo) return `${s.grupo} ${s.subgrupo}`
+if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
+return s.grupo
 }
 
 async function carregarSelects(){
@@ -321,20 +22,16 @@ const nome=c.nome||c.nome_cliente
 cliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
 })
 
+// 🔥 SERVIÇOS CORRIGIDO
 const {data:servicos}=await supabaseClient.from("servicos").select("*")
 dadosServicos=servicos||[]
 
 servico.innerHTML="<option value=''>Selecione</option>"
 dadosServicos.forEach(s=>{
 servicosMap[s.id]=s
-servico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
+servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 })
-}
 
-async function carregarLista(){
-const {data}=await supabaseClient.from("fluxo_caixa").select(`*,clientes(*),servicos(*)`).order("data",{ascending:false})
-dados=data||[]
-render(dados)
 }
 
 function render(lista){
@@ -347,7 +44,7 @@ tbody.innerHTML+=`
 <td>${r.data}</td>
 <td>${r.clientes?.nome||r.clientes?.nome_cliente}</td>
 <td>${r.origem_lead || "-"}</td>
-<td>${r.servicos?.grupo}</td>
+<td>${nomeServico(r.servicos)}</td> <!-- 🔥 AQUI -->
 <td>${formatar(r.valor)}</td>
 <td>${formatar(r.desconto)}</td>
 <td><strong>${formatar(r.valor_final)}</strong></td>
@@ -374,52 +71,6 @@ editDesconto.value=r.desconto
 editOrigem.value=r.origem_lead || ""
 editFinal.value=r.valor - r.desconto
 
-modalEditar.style.display="flex"
 }
-
-async function salvar(){
-await supabaseClient.from("fluxo_caixa").insert({
-data:data.value,
-cliente_id:cliente.value,
-servico_id:servico.value,
-valor:+valor.value,
-desconto:+desconto.value,
-valor_final:+valor.value - +desconto.value,
-origem_lead: origem.value
-})
-carregarLista()
-}
-
-async function salvarEdicao(){
-await supabaseClient.from("fluxo_caixa").update({
-data:editData.value,
-cliente_id:editCliente.value,
-servico_id:editServico.value,
-valor:+editValor.value,
-desconto:+editDesconto.value,
-valor_final:+editValor.value - +editDesconto.value,
-origem_lead: editOrigem.value
-}).eq("id",editandoId)
-
-fecharModal()
-carregarLista()
-}
-
-function fecharModal(){
-modalEditar.style.display="none"
-}
-
-async function excluir(id){
-if(!confirm("Excluir?")) return
-await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
-carregarLista()
-}
-
-carregarSelects()
-carregarLista()
-calcular()
 
 </script>
-
-</body>
-</html>

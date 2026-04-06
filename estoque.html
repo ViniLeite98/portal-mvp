@@ -79,17 +79,29 @@ white-space:nowrap;
 font-weight:500;
 }
 
-/* DELETE */
-.btn-delete{
-opacity:0;
+/* AÇÕES */
+.acoes{
+display:flex;
+gap:10px;
 margin-left:10px;
+}
+
+.btn-acao{
 cursor:pointer;
-color:#dc2626;
+opacity:0;
 transition:0.2s;
 }
 
-.lista-linha:hover .btn-delete{
+.lista-linha:hover .btn-acao{
 opacity:1;
+}
+
+.btn-zerar{
+color:#f59e0b;
+}
+
+.btn-delete{
+color:#dc2626;
 }
 </style>
 </head>
@@ -163,7 +175,6 @@ alert("Digite o nome")
 return
 }
 
-// evita duplicado
 const { data: existe } = await supabaseClient
 .from("produtos")
 .select("id")
@@ -202,11 +213,12 @@ lista.innerHTML+=`
 
 <span class="pontos"></span>
 
-<span class="valor">
-${p.saldo} un
-</span>
+<span class="valor">${p.saldo}</span>
 
-<i class="fa-solid fa-trash btn-delete" onclick="excluir('${p.id}')"></i>
+<div class="acoes">
+<i class="fa-solid fa-xmark btn-acao btn-zerar" title="Zerar estoque" onclick="zerar('${p.id}', ${p.saldo})"></i>
+<i class="fa-solid fa-trash btn-acao btn-delete" title="Excluir produto" onclick="excluir('${p.id}')"></i>
+</div>
 
 </div>
 `
@@ -264,6 +276,24 @@ quantidade:qtd
 })
 
 document.getElementById("qtd").value=""
+carregar()
+}
+
+async function zerar(id, saldo){
+
+if(saldo <= 0){
+alert("Já está zerado")
+return
+}
+
+if(!confirm("Zerar estoque desse material?")) return
+
+await supabaseClient.from("movimentacoes_estoque").insert({
+produto_id: id,
+tipo: "saida",
+quantidade: saldo
+})
+
 carregar()
 }
 

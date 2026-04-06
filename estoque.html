@@ -72,6 +72,7 @@ white-space:nowrap;
 font-weight:500;
 }
 
+/* AÇÕES */
 .acoes{
 display:flex;
 gap:10px;
@@ -192,12 +193,12 @@ lista.innerHTML+=`
 
 <span class="pontos"></span>
 
-<span class="valor">
-${p.saldo} | R$ ${total.toFixed(2)}
+<span class="valor" id="valor-${p.id}">
+${p.saldo} | ${total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
 </span>
 
 <div class="acoes">
-<i class="fa-solid fa-pen btn-acao btn-edit" title="Editar valor" onclick="editarValor('${p.id}', ${p.valor || 0})"></i>
+<i class="fa-solid fa-pen btn-acao btn-edit" onclick="editarInline('${p.id}', ${p.valor || 0})"></i>
 <i class="fa-solid fa-xmark btn-acao btn-zerar" onclick="zerar('${p.id}', ${p.saldo})"></i>
 <i class="fa-solid fa-trash btn-acao btn-delete" onclick="excluir('${p.id}')"></i>
 </div>
@@ -216,23 +217,44 @@ sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 
 }
 
-async function editarValor(id, valorAtual){
+function editarInline(id, valorAtual){
 
-const novo = prompt("Novo valor (R$):", valorAtual)
+const el = document.getElementById(`valor-${id}`)
 
-if(novo === null) return
+el.innerHTML = `
+<input type="number" id="input-${id}" value="${valorAtual}" step="0.01" style="width:90px">
+`
+
+const input = document.getElementById(`input-${id}`)
+input.focus()
+
+input.addEventListener("keydown", function(e){
+if(e.key === "Enter"){
+salvarValor(id, input.value)
+}
+})
+
+input.addEventListener("blur", function(){
+salvarValor(id, input.value)
+})
+
+}
+
+async function salvarValor(id, valor){
 
 await supabaseClient
 .from("produtos")
-.update({ valor: parseFloat(novo) || 0 })
+.update({ valor: parseFloat(valor) || 0 })
 .eq("id", id)
 
 carregar()
 }
 
 async function entrada(){
+
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
+
 if(!qtd) return
 
 await supabaseClient.from("movimentacoes_estoque").insert({
@@ -246,8 +268,10 @@ carregar()
 }
 
 async function saida(){
+
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
+
 if(!qtd) return
 
 const { data } = await supabaseClient
@@ -272,18 +296,32 @@ carregar()
 }
 
 async function zerar(id, saldo){
-if(saldo <= 0){ alert("Já está zerado"); return }
+
+if(saldo <= 0){
+alert("Já está zerado")
+return
+}
+
+if(!confirm("Zerar estoque?")) return
+
 await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id:id,
 tipo:"saida",
 quantidade:saldo
 })
+
 carregar()
 }
 
 async function excluir(id){
+
 if(!confirm("Excluir material?")) return
-await supabaseClient.from("produtos").delete().eq("id", id)
+
+await supabaseClient
+.from("produtos")
+.delete()
+.eq("id", id)
+
 carregar()
 }
 

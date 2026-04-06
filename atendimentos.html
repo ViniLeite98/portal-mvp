@@ -5,81 +5,43 @@
 <title>Atendimentos | Hara Spa</title>
 
 <link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-*{box-sizing:border-box}
+body{margin:0;font-family:Segoe UI;background:#f4f6fb}
+.app{display:flex}
+.content{flex:1;padding:40px}
 
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
+.card{
+background:#fff;
+padding:20px;
+border-radius:12px;
+margin-bottom:20px;
 }
 
-.app{
-  display:flex;
-  min-height:100vh;
-}
-
-#sidebar{
-  width:260px;
-  flex-shrink:0;
-}
-
-.content{
-  flex:1;
-  padding:40px;
-}
-
-/* HEADER */
-.top-actions{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-
-/* TABLE */
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-}
-
-th,td{
-  padding:14px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
-}
-
-th{
-  background:#f9fafb;
-  font-weight:600;
+input,select{
+padding:10px;
+border-radius:8px;
+border:1px solid #ccc;
+width:100%;
+margin-bottom:10px;
 }
 
 button{
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
+padding:10px;
+border:none;
+border-radius:8px;
+background:#2563eb;
+color:#fff;
+cursor:pointer;
 }
 
-button.excluir{background:#dc2626}
-
-button.editar{background:#4f6fb3}
-
-/* PAGINATION */
-.pagination{
-  margin-top:20px;
-  display:flex;
-  gap:8px;
+.linha{
+display:flex;
+gap:10px;
+margin-bottom:10px;
 }
 </style>
 </head>
@@ -87,137 +49,148 @@ button.editar{background:#4f6fb3}
 <body>
 
 <div class="app">
-  <aside id="sidebar"></aside>
+<aside id="sidebar"></aside>
 
-  <main class="content">
+<main class="content">
 
-    <div class="top-actions">
-      <div>
-        <h1>Atendimentos</h1>
-        <p>Histórico de sessões realizadas</p>
-      </div>
-    </div>
+<h1>Atendimento</h1>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Terapeuta</th>
-          <th>Cliente</th>
-          <th>Serviço</th>
-          <th>Valor</th>
-          <th>Status</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody id="lista"></tbody>
-    </table>
+<div class="card">
 
-    <div class="pagination" id="paginacao"></div>
+<select id="cliente"></select>
+<select id="servico"></select>
 
-  </main>
+<h3>Materiais utilizados</h3>
+
+<div id="materiais"></div>
+
+<button onclick="addMaterial()">+ Adicionar Material</button>
+
+<br><br>
+
+<button onclick="salvar()">Salvar Atendimento</button>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</main>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
 const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"SUA_ANON_KEY"
+)
 
-let paginaAtual = 1;
-const porPagina = 10;
-let totalRegistros = 0;
+let produtos=[]
 
 async function carregar(){
 
-  const inicio = (paginaAtual-1)*porPagina;
-  const fim = inicio + porPagina - 1;
+// clientes
+const {data:clientes}=await supabaseClient.from("clientes").select("*")
+cliente.innerHTML="<option>Cliente</option>"
+clientes.forEach(c=>{
+cliente.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
+})
 
-  const { data, error, count } = await supabaseClient
-    .from("atendimentos")
-    .select(`
-      id,
-      data_atendimento,
-      valor,
-      status,
-      terapeutas(nome_profissional),
-      clientes(nome),
-      servicos(nome)
-    `,{count:"exact"})
-    .order("data_atendimento",{ascending:false})
-    .range(inicio,fim);
+// serviços
+const {data:servicos}=await supabaseClient.from("servicos").select("*")
+servico.innerHTML="<option>Serviço</option>"
+servicos.forEach(s=>{
+servico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
+})
 
-  if(error){
-    console.error(error);
-    return;
-  }
+// produtos
+const {data:p}=await supabaseClient.from("produtos").select("*")
+produtos=p
 
-  totalRegistros = count;
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML="";
-
-  data.forEach(a=>{
-    tbody.innerHTML+=`
-      <tr>
-        <td>${a.data_atendimento || ""}</td>
-        <td>${a.terapeutas?.nome_profissional || ""}</td>
-        <td>${a.clientes?.nome || ""}</td>
-        <td>${a.servicos?.nome || ""}</td>
-        <td>R$ ${Number(a.valor || 0).toFixed(2)}</td>
-        <td>${a.status || ""}</td>
-        <td>
-          <button class="editar">Editar</button>
-          <button class="excluir" onclick="excluir('${a.id}')">Excluir</button>
-        </td>
-      </tr>
-    `;
-  });
-
-  renderPaginacao();
 }
 
-function renderPaginacao(){
-  const totalPaginas = Math.ceil(totalRegistros/porPagina);
-  const div = document.getElementById("paginacao");
-  div.innerHTML="";
+function addMaterial(){
 
-  for(let i=1;i<=totalPaginas;i++){
-    div.innerHTML+=`
-      <button onclick="irPagina(${i})"
-      ${i===paginaAtual?"style='background:#4f6fb3'":""}>
-      ${i}
-      </button>`;
-  }
+const div=document.createElement("div")
+div.className="linha"
+
+div.innerHTML=`
+<select class="produto"></select>
+<input type="number" class="qtd" placeholder="Qtd">
+`
+
+const select=div.querySelector(".produto")
+
+produtos.forEach(p=>{
+select.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
+})
+
+document.getElementById("materiais").appendChild(div)
 }
 
-function irPagina(p){
-  paginaAtual=p;
-  carregar();
+async function salvar(){
+
+// 1️⃣ cria atendimento
+const {data, error} = await supabaseClient
+.from("atendimentos")
+.insert({
+cliente_id: cliente.value,
+servico_id: servico.value,
+data: new Date().toISOString()
+})
+.select()
+.single()
+
+const atendimentoId = data.id
+
+// 2️⃣ materiais
+const linhas=document.querySelectorAll(".linha")
+
+for(const l of linhas){
+
+const produto = l.querySelector(".produto").value
+const qtd = parseFloat(l.querySelector(".qtd").value)
+
+if(!qtd) continue
+
+// salva relação
+await supabaseClient.from("atendimento_materiais").insert({
+atendimento_id: atendimentoId,
+produto_id: produto,
+quantidade: qtd
+})
+
+// baixa estoque
+await supabaseClient.from("movimentacoes_estoque").insert({
+produto_id: produto,
+tipo: "saida",
+quantidade: qtd
+})
+
 }
 
-async function excluir(id){
+// 3️⃣ fluxo de caixa automático
 
-  if(!confirm("Excluir atendimento?")) return;
+const {data:serv} = await supabaseClient
+.from("servicos")
+.select("valor")
+.eq("id", servico.value)
+.single()
 
-  const { error } = await supabaseClient
-    .from("atendimentos")
-    .delete()
-    .eq("id",id);
+await supabaseClient.from("fluxo_caixa").insert({
+data: new Date().toISOString().split("T")[0],
+cliente_id: cliente.value,
+servico_id: servico.value,
+valor: serv.valor,
+desconto: 0,
+valor_final: serv.valor
+})
 
-  if(error){
-    console.error(error);
-    return;
-  }
+alert("Atendimento salvo com sucesso!")
 
-  carregar();
 }
 
-carregar();
+carregar()
 
 </script>
 

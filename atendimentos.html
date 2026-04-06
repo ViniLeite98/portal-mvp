@@ -82,7 +82,7 @@ width:350px;
 .mat-linha{
 display:flex;
 gap:5px;
-margin-bottom:5px;
+margin-top:5px;
 }
 </style>
 </head>
@@ -128,7 +128,7 @@ margin-bottom:5px;
 
 <div class="field">
 <label>Valor</label>
-<input type="number" id="valor">
+<input type="number" id="valor" value="50">
 </div>
 
 <div class="field">
@@ -142,11 +142,9 @@ margin-bottom:5px;
 </div>
 
 <!-- 🔥 MATERIAIS -->
-<div class="field" style="min-width:250px;">
+<div class="field">
 <label>Materiais usados</label>
-
 <div id="materiais"></div>
-
 <button type="button" onclick="addMaterial()">+ Material</button>
 </div>
 
@@ -154,13 +152,17 @@ margin-bottom:5px;
 
 </div>
 
+<!-- resto continua igual -->
 <table>
 <thead>
 <tr>
 <th>Data</th>
 <th>Cliente</th>
+<th>Origem</th>
 <th>Serviço</th>
-<th>Valor Final</th>
+<th>Valor</th>
+<th>Desconto</th>
+<th>Final</th>
 <th>Ações</th>
 </tr>
 </thead>
@@ -180,7 +182,14 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
+let dados=[]
+let listaAtual=[]
+let dadosClientes=[]
+let dadosServicos=[]
+let servicosMap={}
 let produtos=[]
+
+// NOVO
 
 function hoje(){
 const d=new Date()
@@ -197,35 +206,39 @@ function calcular(){
 final.value=(parseFloat(valor.value||0)-parseFloat(desconto.value||0))
 }
 
-async function carregar(){
+async function carregarSelects(){
 
-// clientes
 const {data:clientes}=await supabaseClient.from("clientes").select("*")
-cliente.innerHTML=""
-clientes.forEach(c=>{
+dadosClientes=clientes||[]
+
+cliente.innerHTML="<option value=''>Selecione</option>"
+
+dadosClientes.forEach(c=>{
 cliente.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 })
 
-// serviços
 const {data:servicos}=await supabaseClient.from("servicos").select("*")
-servico.innerHTML=""
-servicos.forEach(s=>{
+dadosServicos=servicos||[]
+
+servico.innerHTML="<option value=''>Selecione</option>"
+
+dadosServicos.forEach(s=>{
+servicosMap[s.id]=s
 servico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
 })
 
-// produtos
-const {data:p}=await supabaseClient.from("produtos").select("*")
-produtos=p
-
-servico.addEventListener("change", async ()=>{
-const {data:s}=await supabaseClient.from("servicos").select("*").eq("id",servico.value).single()
+servico.addEventListener("change",()=>{
+const s=servicosMap[servico.value]
 if(s){
-valor.value=s.valor || 0
+valor.value=s.valor||50
 calcular()
 }
 })
 
-carregarLista()
+// 🔥 produtos
+const {data:p}=await supabaseClient.from("produtos").select("*")
+produtos=p || []
+
 }
 
 function addMaterial(){
@@ -235,7 +248,7 @@ div.className="mat-linha"
 
 div.innerHTML=`
 <select class="mat-prod"></select>
-<input type="number" class="mat-qtd" placeholder="Qtd">
+<input type="number" class="mat-qtd" placeholder="Qtd" style="width:80px">
 `
 
 const select=div.querySelector(".mat-prod")
@@ -244,12 +257,12 @@ produtos.forEach(p=>{
 select.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 })
 
-document.getElementById("materiais").appendChild(div)
+materiais.appendChild(div)
 }
 
 async function salvar(){
 
-// fluxo
+// salva fluxo
 const {data:novo} = await supabaseClient
 .from("fluxo_caixa")
 .insert({
@@ -258,16 +271,14 @@ cliente_id:cliente.value,
 servico_id:servico.value,
 valor:parseFloat(valor.value||0),
 desconto:parseFloat(desconto.value||0),
-valor_final:parseFloat(final.value||0),
+valor_final:parseFloat(valor.value||0)-parseFloat(desconto.value||0),
 origem_lead: origem.value || null
 })
 .select()
 .single()
 
-const fluxoId = novo.id
-
-// materiais
-const linhas=document.querySelectorAll("#materiais .mat-linha")
+// 🔥 materiais
+const linhas=document.querySelectorAll(".mat-linha")
 
 for(const l of linhas){
 
@@ -277,7 +288,7 @@ const qtd = parseFloat(l.querySelector(".mat-qtd").value)
 if(!qtd) continue
 
 await supabaseClient.from("fluxo_materiais").insert({
-fluxo_id: fluxoId,
+fluxo_id: novo.id,
 produto_id: produto,
 quantidade: qtd
 })
@@ -290,7 +301,7 @@ quantidade: qtd
 
 }
 
-document.getElementById("materiais").innerHTML=""
+materiais.innerHTML=""
 
 carregarLista()
 }
@@ -302,16 +313,21 @@ const {data}=await supabaseClient
 .select(`*,clientes(*),servicos(*)`)
 .order("data",{ascending:false})
 
+dados=data||[]
+
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
-data.forEach(r=>{
+dados.forEach(r=>{
 tbody.innerHTML+=`
 <tr>
 <td>${r.data}</td>
 <td>${r.clientes?.nome}</td>
+<td>${r.origem_lead || "-"}</td>
 <td>${r.servicos?.grupo}</td>
-<td>R$ ${r.valor_final}</td>
+<td>${r.valor}</td>
+<td>${r.desconto}</td>
+<td><strong>${r.valor_final}</strong></td>
 <td>
 <button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
 </td>
@@ -326,7 +342,9 @@ await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
 carregarLista()
 }
 
-carregar()
+carregarSelects()
+carregarLista()
+calcular()
 
 </script>
 

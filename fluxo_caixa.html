@@ -63,7 +63,7 @@ padding:10px;
 border-bottom:1px solid #eee;
 }
 
-/* ===== MODAL NOVO ===== */
+/* ===== MODAL BONITO ===== */
 .modal{
 display:none;
 position:fixed;
@@ -276,9 +276,7 @@ cursor:pointer;
 
 <div class="modal-actions">
 
-<button class="btn-excluir" onclick="excluir(editandoId)">
-🗑 Excluir
-</button>
+<button class="btn-excluir" onclick="excluir(editandoId)">🗑 Excluir</button>
 
 <div class="modal-actions-right">
 <button class="salvar" onclick="salvarEdicao()">Salvar</button>
@@ -297,7 +295,7 @@ cursor:pointer;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
 let dados=[]
@@ -340,32 +338,17 @@ const {data:clientes}=await supabaseClient.from("clientes").select("*")
 dadosClientes=clientes||[]
 
 cliente.innerHTML="<option value=''>Selecione</option>"
-filtroCliente.innerHTML="<option value=''>Todos</option>"
-
 dadosClientes.forEach(c=>{
-const nome=c.nome||c.nome_cliente
-cliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
-filtroCliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
+cliente.innerHTML+=`<option value="${c.id}">${c.nome||c.nome_cliente}</option>`
 })
 
 const {data:servicos}=await supabaseClient.from("servicos").select("*")
 dadosServicos=servicos||[]
 
 servico.innerHTML="<option value=''>Selecione</option>"
-filtroServico.innerHTML="<option value=''>Todos</option>"
-
 dadosServicos.forEach(s=>{
 servicosMap[s.id]=s
 servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
-filtroServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
-})
-
-servico.addEventListener("change",()=>{
-const s=servicosMap[servico.value]
-if(s){
-valor.value=s.valor||50
-calcular()
-}
 })
 
 }
@@ -378,17 +361,11 @@ const {data}=await supabaseClient
 .order("data",{ascending:false})
 
 dados=data||[]
-render(dados)
-}
-
-function render(lista){
-
-listaAtual=lista
 
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
-lista.forEach(r=>{
+dados.forEach(r=>{
 tbody.innerHTML+=`
 <tr>
 <td>${r.data}</td>
@@ -412,15 +389,15 @@ function abrirEditar(id){
 editandoId=id
 const r=dados.find(d=>d.id==id)
 
-editCliente.innerHTML="<option value=''>Selecione</option>"
-dadosClientes.forEach(c=>{
-const nome=c.nome||c.nome_cliente
-editCliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
-})
-
+/* 🔥 CORREÇÃO DO SERVIÇO */
 editServico.innerHTML="<option value=''>Selecione</option>"
 dadosServicos.forEach(s=>{
 editServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
+})
+
+editCliente.innerHTML="<option value=''>Selecione</option>"
+dadosClientes.forEach(c=>{
+editCliente.innerHTML+=`<option value="${c.id}">${c.nome||c.nome_cliente}</option>`
 })
 
 editData.value=r.data

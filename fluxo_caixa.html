@@ -16,113 +16,114 @@ body{margin:0;font-family:Segoe UI;background:#f4f6fb}
 .app{display:flex}
 .content{flex:1;padding:40px}
 
+/* FORM */
 .form-box{
 background:#fff;
 padding:20px;
-border-radius:10px;
+border-radius:12px;
 display:flex;
 gap:15px;
 flex-wrap:wrap;
 margin-bottom:20px;
 align-items:flex-end;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
+box-shadow:0 4px 12px rgba(0,0,0,0.06);
 }
 
 .field{display:flex;flex-direction:column;font-size:13px;}
 
 input,select{
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
+padding:10px;
+border-radius:8px;
+border:1px solid #ddd;
 min-width:160px;
 }
 
+/* BOTÕES */
 button{
 background:#2563eb;
 color:#fff;
 border:none;
-padding:10px 15px;
-border-radius:6px;
+padding:10px 16px;
+border-radius:8px;
 cursor:pointer;
+font-weight:500;
 }
 
 button.editar{background:#f59e0b}
-button.excluir{background:#dc2626}
+button.excluir{background:#ef4444}
 
+/* TABELA */
 table{
 width:100%;
 background:#fff;
 border-collapse:collapse;
-border-radius:10px;
+border-radius:12px;
 overflow:hidden;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
+box-shadow:0 4px 12px rgba(0,0,0,0.06);
 }
 
 th,td{
-padding:10px;
+padding:12px;
 border-bottom:1px solid #eee;
 }
 
-/* ===== MODAL NOVO ===== */
+/* ===== MODAL AJUSTADO ===== */
 .modal{
 display:none;
 position:fixed;
 inset:0;
-background:rgba(0,0,0,0.5);
+background:rgba(0,0,0,0.6);
 align-items:center;
 justify-content:center;
-z-index:999;
+z-index:9999;
 }
 
 .modal-box{
 background:#fff;
 padding:30px;
 border-radius:16px;
-width:520px;
-box-shadow:0 10px 30px rgba(0,0,0,0.15);
+width:560px;
+max-width:95%;
+box-shadow:0 20px 40px rgba(0,0,0,0.2);
 animation:fadeIn .2s ease;
 }
 
 @keyframes fadeIn{
-from{opacity:0;transform:translateY(10px)}
+from{opacity:0;transform:translateY(20px)}
 to{opacity:1;transform:translateY(0)}
 }
 
 .modal-box h3{
-margin:0 0 20px;
-font-size:20px;
-font-weight:600;
+margin-bottom:20px;
+font-size:22px;
 }
 
+/* GRID CORRETO */
 .modal-grid{
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:15px;
 }
 
-.modal-box label{
-font-size:12px;
-color:#555;
-margin-bottom:4px;
-display:block;
+.modal-field{
+display:flex;
+flex-direction:column;
 }
 
-.modal-box input,
-.modal-box select{
-width:100%;
+.modal-field label{
+font-size:12px;
+margin-bottom:4px;
+color:#555;
+}
+
+.modal-field input,
+.modal-field select{
 padding:10px;
 border-radius:8px;
 border:1px solid #ddd;
-font-size:14px;
 }
 
-.modal-box input:focus,
-.modal-box select:focus{
-border-color:#2563eb;
-outline:none;
-box-shadow:0 0 0 2px rgba(37,99,235,0.1);
-}
-
+/* BOTÕES */
 .modal-actions{
 display:flex;
 justify-content:flex-end;
@@ -130,22 +131,12 @@ gap:10px;
 margin-top:20px;
 }
 
-.btn{
-padding:10px 16px;
-border-radius:8px;
-border:none;
-cursor:pointer;
-font-weight:500;
-}
-
 .btn-primary{
 background:#2563eb;
-color:#fff;
 }
 
 .btn-danger{
 background:#ef4444;
-color:#fff;
 }
 </style>
 </head>
@@ -231,26 +222,26 @@ color:#fff;
 <div id="modalEditar" class="modal">
   <div class="modal-box">
 
-    <h3>✏️ Editar lançamento</h3>
+    <h3>Editar lançamento</h3>
 
     <div class="modal-grid">
 
-      <div>
+      <div class="modal-field">
         <label>Data</label>
         <input type="date" id="editData">
       </div>
 
-      <div>
+      <div class="modal-field">
         <label>Cliente</label>
         <select id="editCliente"></select>
       </div>
 
-      <div>
+      <div class="modal-field">
         <label>Serviço</label>
         <select id="editServico"></select>
       </div>
 
-      <div>
+      <div class="modal-field">
         <label>Origem</label>
         <select id="editOrigem">
           <option value="">Selecione</option>
@@ -263,12 +254,12 @@ color:#fff;
         </select>
       </div>
 
-      <div>
+      <div class="modal-field">
         <label>Valor</label>
         <input type="number" id="editValor">
       </div>
 
-      <div>
+      <div class="modal-field">
         <label>Desconto</label>
         <input type="number" id="editDesconto">
       </div>
@@ -276,8 +267,8 @@ color:#fff;
     </div>
 
     <div class="modal-actions">
-      <button class="btn btn-primary" onclick="salvarEdicao()">💾 Salvar</button>
-      <button class="btn btn-danger" onclick="fecharModal()">Cancelar</button>
+      <button class="btn-primary" onclick="salvarEdicao()">Salvar</button>
+      <button class="btn-danger" onclick="fecharModal()">Cancelar</button>
     </div>
 
   </div>
@@ -290,12 +281,10 @@ color:#fff;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"SUA_ANON_KEY_AQUI"
 )
 
 let dados=[]
-let dadosClientes=[]
-let dadosServicos=[]
 let editandoId=null
 
 function hoje(){
@@ -313,32 +302,10 @@ function calcular(){
 final.value=(parseFloat(valor.value||0)-parseFloat(desconto.value||0))
 }
 
-async function carregarSelects(){
-
-const {data:clientes}=await supabaseClient.from("clientes").select("*")
-dadosClientes=clientes||[]
-
-cliente.innerHTML="<option value=''>Selecione</option>"
-dadosClientes.forEach(c=>{
-cliente.innerHTML+=`<option value="${c.id}">${c.nome||c.nome_cliente}</option>`
-})
-
-const {data:servicos}=await supabaseClient.from("servicos").select("*")
-dadosServicos=servicos||[]
-
-servico.innerHTML="<option value=''>Selecione</option>"
-dadosServicos.forEach(s=>{
-servico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
-})
-
-}
-
 async function carregarLista(){
-
 const {data}=await supabaseClient
 .from("fluxo_caixa")
 .select(`*,clientes(*),servicos(*)`)
-.order("data",{ascending:false})
 
 dados=data||[]
 
@@ -364,13 +331,10 @@ tbody.innerHTML+=`
 }
 
 function abrirEditar(id){
-
 editandoId=id
 const r=dados.find(d=>d.id==id)
 
 editData.value=r.data
-editCliente.value=r.cliente_id
-editServico.value=r.servico_id
 editValor.value=r.valor
 editDesconto.value=r.desconto
 editOrigem.value=r.origem_lead||""
@@ -379,30 +343,23 @@ modalEditar.style.display="flex"
 }
 
 async function salvar(){
-
 await supabaseClient.from("fluxo_caixa").insert({
 data:data.value,
-cliente_id:cliente.value,
-servico_id:servico.value,
-valor:parseFloat(valor.value||0),
-desconto:parseFloat(desconto.value||0),
-valor_final:parseFloat(valor.value||0)-parseFloat(desconto.value||0),
-origem_lead: origem.value || null
+valor:valor.value,
+desconto:desconto.value,
+valor_final:valor.value-desconto.value
 })
 
 carregarLista()
 }
 
 async function salvarEdicao(){
-
 await supabaseClient.from("fluxo_caixa").update({
 data:editData.value,
-cliente_id:editCliente.value,
-servico_id:editServico.value,
-valor:parseFloat(editValor.value||0),
-desconto:parseFloat(editDesconto.value||0),
-valor_final:parseFloat(editValor.value||0)-parseFloat(editDesconto.value||0),
-origem_lead: editOrigem.value || null
+valor:editValor.value,
+desconto:editDesconto.value,
+valor_final:editValor.value-editDesconto.value,
+origem_lead: editOrigem.value
 }).eq("id",editandoId)
 
 fecharModal()
@@ -413,7 +370,6 @@ function fecharModal(){
 modalEditar.style.display="none"
 }
 
-carregarSelects()
 carregarLista()
 calcular()
 

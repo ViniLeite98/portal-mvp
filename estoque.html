@@ -10,12 +10,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-body{
-margin:0;
-font-family:'Segoe UI';
-background:#f4f6fb;
-}
-
+body{margin:0;font-family:'Segoe UI';background:#f4f6fb;}
 .app{display:flex}
 .content{flex:1;padding:40px}
 
@@ -27,7 +22,7 @@ gap:30px;
 
 .card{
 background:#fff;
-padding:20px;
+padding:25px;
 border-radius:16px;
 box-shadow:0 5px 15px rgba(0,0,0,0.05);
 }
@@ -60,17 +55,8 @@ font-size:15px;
 }
 
 .nome{white-space:nowrap;}
-
-.pontos{
-flex:1;
-border-bottom:1px dashed #999;
-margin:0 10px;
-}
-
-.valor{
-white-space:nowrap;
-font-weight:500;
-}
+.pontos{flex:1;border-bottom:1px dashed #999;margin:0 10px;}
+.valor{white-space:nowrap;font-weight:500;}
 
 .acoes{
 display:flex;
@@ -78,19 +64,28 @@ gap:10px;
 margin-left:10px;
 }
 
-.btn-acao{
-cursor:pointer;
-opacity:0;
-transition:0.2s;
-}
-
-.lista-linha:hover .btn-acao{
-opacity:1;
-}
+.btn-acao{cursor:pointer;opacity:0;transition:0.2s;}
+.lista-linha:hover .btn-acao{opacity:1;}
 
 .btn-edit{color:#2563eb;}
 .btn-zerar{color:#f59e0b;}
 .btn-delete{color:#dc2626;}
+
+.modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.4);
+align-items:center;
+justify-content:center;
+}
+
+.modal-box{
+background:#fff;
+padding:20px;
+border-radius:12px;
+width:300px;
+}
 </style>
 </head>
 
@@ -140,6 +135,10 @@ opacity:1;
   </div>
 </div>
 
+<!-- 🔍 BUSCA + TOTAL -->
+<input id="busca" placeholder="🔍 Buscar material..." oninput="filtrarLista()">
+<div id="totalEstoque" style="margin:5px 0 15px; font-weight:600;"></div>
+
 <div id="lista"></div>
 
 </div>
@@ -147,6 +146,17 @@ opacity:1;
 </div>
 
 </main>
+</div>
+
+<!-- ✏️ MODAL EDITAR -->
+<div id="modalEdit" class="modal">
+<div class="modal-box">
+<h3>Editar Material</h3>
+<input id="editNome" placeholder="Nome">
+<input id="editValor" type="number" placeholder="Valor">
+<button onclick="salvarEdicaoMaterial()">Salvar</button>
+<button class="btn-danger" onclick="fecharEdit()">Cancelar</button>
+</div>
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -157,46 +167,58 @@ opacity:1;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
+let listaGlobal=[]
+let editandoMaterialId=null
+
 async function criarProduto(){
+const nome=document.getElementById("nome").value.trim()
+const valor=parseFloat(document.getElementById("valor").value)||0
+if(!nome){alert("Digite o nome");return}
 
-const nome = document.getElementById("nome").value.trim()
-const valor = parseFloat(document.getElementById("valor").value) || 0
+await supabaseClient.from("produtos").insert({nome,valor})
 
-if(!nome){
-alert("Digite o nome")
-return
-}
-
-await supabaseClient.from("produtos").insert({ nome, valor })
-
-document.getElementById("nome").value=""
-document.getElementById("valor").value=""
+nome.value=""
+valor.value=""
 
 carregar()
 }
 
 async function carregar(){
 
-const {data} = await supabaseClient
-.from("estoque_atual")
-.select("*")
-.order("nome")
+const {data}=await supabaseClient.from("estoque_atual").select("*").order("nome")
 
-const lista = document.getElementById("lista")
-lista.innerHTML=""
+listaGlobal=data||[]
 
+renderLista(listaGlobal)
+
+// select
+const sel=document.getElementById("produtoMov")
+sel.innerHTML=""
 data.forEach(p=>{
+sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
+})
 
-const total = (p.valor || 0) * (p.saldo || 0)
+}
 
-lista.innerHTML+=`
+function renderLista(lista){
+
+const listaDiv=document.getElementById("lista")
+listaDiv.innerHTML=""
+
+let totalGeral=0
+
+lista.forEach(p=>{
+
+const total=(p.valor||0)*(p.saldo||0)
+totalGeral+=total
+
+listaDiv.innerHTML+=`
 <div class="lista-linha">
 
 <span class="nome">${p.nome}</span>
-
 <span class="pontos"></span>
 
 <span class="valor">
@@ -204,8 +226,8 @@ ${p.saldo} | R$ ${total.toFixed(2)}
 </span>
 
 <div class="acoes">
-<i class="fa-solid fa-pen btn-acao btn-edit" onclick="editarValor('${p.id}', ${p.valor || 0})"></i>
-<i class="fa-solid fa-xmark btn-acao btn-zerar" onclick="zerar('${p.id}', ${p.saldo})"></i>
+<i class="fa-solid fa-pen btn-acao btn-edit" onclick="abrirEditar('${p.id}','${p.nome}',${p.valor||0})"></i>
+<i class="fa-solid fa-xmark btn-acao btn-zerar" onclick="zerar('${p.id}',${p.saldo})"></i>
 <i class="fa-solid fa-trash btn-acao btn-delete" onclick="excluir('${p.id}')"></i>
 </div>
 
@@ -213,111 +235,77 @@ ${p.saldo} | R$ ${total.toFixed(2)}
 `
 })
 
-// select
-const sel=document.getElementById("produtoMov")
-sel.innerHTML=""
-
-data.forEach(p=>{
-sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
-})
+document.getElementById("totalEstoque").innerText=
+"💰 Total em estoque: R$ "+totalGeral.toFixed(2)
 
 }
 
-async function exportarExcel(){
-
-const {data} = await supabaseClient
-.from("estoque_atual")
-.select("*")
-.order("nome")
-
-if(!data || data.length === 0){
-alert("Sem dados")
-return
+function filtrarLista(){
+const termo=document.getElementById("busca").value.toLowerCase()
+const filtrado=listaGlobal.filter(p=>p.nome.toLowerCase().includes(termo))
+renderLista(filtrado)
 }
 
-const dados = data.map(p => ({
-Nome: p.nome,
-Quantidade: p.saldo,
-"Valor Unitário": p.valor || 0,
-"Valor Total": (p.valor || 0) * (p.saldo || 0)
-}))
-
-const ws = XLSX.utils.json_to_sheet(dados)
-const wb = XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb, ws, "Estoque")
-
-XLSX.writeFile(wb, "estoque.xlsx")
+function abrirEditar(id,nome,valor){
+editandoMaterialId=id
+document.getElementById("editNome").value=nome
+document.getElementById("editValor").value=valor
+document.getElementById("modalEdit").style.display="flex"
 }
 
-async function editarValor(id, valorAtual){
+function fecharEdit(){
+document.getElementById("modalEdit").style.display="none"
+}
 
-const novo = prompt("Novo valor (R$):", valorAtual)
+async function salvarEdicaoMaterial(){
+const nome=document.getElementById("editNome").value
+const valor=parseFloat(document.getElementById("editValor").value)||0
 
-if(novo === null) return
+await supabaseClient.from("produtos")
+.update({nome,valor})
+.eq("id",editandoMaterialId)
 
-await supabaseClient
-.from("produtos")
-.update({ valor: parseFloat(novo) || 0 })
-.eq("id", id)
-
+fecharEdit()
 carregar()
 }
 
 async function entrada(){
-const id=document.getElementById("produtoMov").value
-const qtd=parseFloat(document.getElementById("qtd").value)
-if(!qtd) return
+const id=produtoMov.value
+const qtd=parseFloat(qtd.value)
+if(!qtd)return
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"entrada",
-quantidade:qtd
+produto_id:id,tipo:"entrada",quantidade:qtd
 })
 
-document.getElementById("qtd").value=""
+qtd.value=""
 carregar()
 }
 
 async function saida(){
-const id=document.getElementById("produtoMov").value
-const qtd=parseFloat(document.getElementById("qtd").value)
-if(!qtd) return
-
-const { data } = await supabaseClient
-.from("estoque_atual")
-.select("saldo")
-.eq("id", id)
-.single()
-
-if(qtd > data.saldo){
-alert("Estoque insuficiente")
-return
-}
+const id=produtoMov.value
+const qtd=parseFloat(qtd.value)
+if(!qtd)return
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"saida",
-quantidade:qtd
+produto_id:id,tipo:"saida",quantidade:qtd
 })
 
-document.getElementById("qtd").value=""
+qtd.value=""
 carregar()
 }
 
-async function zerar(id, saldo){
-if(saldo <= 0){ alert("Já está zerado"); return }
+async function zerar(id,saldo){
+if(saldo<=0)return
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"saida",
-quantidade:saldo
+produto_id:id,tipo:"saida",quantidade:saldo
 })
 carregar()
 }
 
 async function excluir(id){
-if(!confirm("Excluir material?")) return
-await supabaseClient.from("produtos").delete().eq("id", id)
+if(!confirm("Excluir material?"))return
+await supabaseClient.from("produtos").delete().eq("id",id)
 carregar()
 }
 

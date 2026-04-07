@@ -63,7 +63,7 @@ padding:10px;
 border-bottom:1px solid #eee;
 }
 
-/* ===== NOVO MODAL ===== */
+/* ===== MODAL BONITO ===== */
 .modal{
 display:none;
 position:fixed;
@@ -115,13 +115,26 @@ gap:10px;
 margin-top:20px;
 }
 
-.modal-actions .salvar{
+.modal-actions button{
+padding:10px 16px;
+border-radius:8px;
+border:none;
+cursor:pointer;
+font-weight:500;
+}
+
+.salvar{
 background:#2563eb;
 color:#fff;
 }
 
-.modal-actions .cancelar{
+.cancelar{
 background:#ef4444;
+color:#fff;
+}
+
+.btn-excluir{
+background:#dc2626;
 color:#fff;
 }
 </style>
@@ -253,6 +266,7 @@ color:#fff;
 </div>
 
 <div class="modal-actions">
+<button class="btn-excluir" onclick="excluir(editandoId)">Excluir</button>
 <button class="salvar" onclick="salvarEdicao()">Salvar</button>
 <button class="cancelar" onclick="fecharModal()">Cancelar</button>
 </div>
@@ -267,12 +281,14 @@ color:#fff;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
 let dados=[]
+let listaAtual=[]
 let dadosClientes=[]
 let dadosServicos=[]
+let servicosMap={}
 let editandoId=null
 
 function hoje(){
@@ -290,7 +306,36 @@ function calcular(){
 final.value=(parseFloat(valor.value||0)-parseFloat(desconto.value||0))
 }
 
+function formatar(v){
+return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+}
+
+async function carregarSelects(){
+
+const {data:clientes}=await supabaseClient.from("clientes").select("*")
+dadosClientes=clientes||[]
+
+cliente.innerHTML="<option value=''>Selecione</option>"
+
+dadosClientes.forEach(c=>{
+const nome=c.nome||c.nome_cliente
+cliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
+})
+
+const {data:servicos}=await supabaseClient.from("servicos").select("*")
+dadosServicos=servicos||[]
+
+servico.innerHTML="<option value=''>Selecione</option>"
+
+dadosServicos.forEach(s=>{
+servicosMap[s.id]=s
+servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
+})
+
+}
+
 async function carregarLista(){
+
 const {data}=await supabaseClient
 .from("fluxo_caixa")
 .select(`*,clientes(*),servicos(*)`)
@@ -307,12 +352,13 @@ tbody.innerHTML+=`
 <td>${r.data}</td>
 <td>${r.clientes?.nome||r.clientes?.nome_cliente}</td>
 <td>${r.origem_lead || "-"}</td>
-<td>${r.servicos?.grupo||""}</td>
-<td>${r.valor}</td>
-<td>${r.desconto}</td>
-<td>${r.valor_final}</td>
+<td>${nomeServico(r.servicos)}</td>
+<td>${formatar(r.valor)}</td>
+<td>${formatar(r.desconto)}</td>
+<td><strong>${formatar(r.valor_final)}</strong></td>
 <td>
 <button class="editar" onclick="abrirEditar('${r.id}')">Editar</button>
+<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
 </td>
 </tr>
 `
@@ -320,20 +366,33 @@ tbody.innerHTML+=`
 }
 
 function abrirEditar(id){
+
 editandoId=id
 const r=dados.find(d=>d.id==id)
+
+editCliente.innerHTML="<option value=''>Selecione</option>"
+dadosClientes.forEach(c=>{
+const nome=c.nome||c.nome_cliente
+editCliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
+})
+
+editServico.innerHTML="<option value=''>Selecione</option>"
+dadosServicos.forEach(s=>{
+editServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
+})
 
 editData.value=r.data
 editCliente.value=r.cliente_id
 editServico.value=r.servico_id
 editValor.value=r.valor
 editDesconto.value=r.desconto
-editOrigem.value=r.origem_lead||""
+editOrigem.value=r.origem_lead || ""
 
 modalEditar.style.display="flex"
 }
 
 async function salvar(){
+
 await supabaseClient.from("fluxo_caixa").insert({
 data:data.value,
 cliente_id:cliente.value,
@@ -348,6 +407,7 @@ carregarLista()
 }
 
 async function salvarEdicao(){
+
 await supabaseClient.from("fluxo_caixa").update({
 data:editData.value,
 cliente_id:editCliente.value,
@@ -366,6 +426,13 @@ function fecharModal(){
 modalEditar.style.display="none"
 }
 
+async function excluir(id){
+if(!confirm("Excluir?")) return
+await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
+carregarLista()
+}
+
+carregarSelects()
 carregarLista()
 calcular()
 

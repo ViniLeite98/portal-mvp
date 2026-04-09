@@ -34,8 +34,6 @@ flex:1;
 padding:40px;
 }
 
-/* TOPO */
-
 .topbar{
 display:flex;
 justify-content:space-between;
@@ -49,8 +47,6 @@ border:1px solid #d1d5db;
 border-radius:6px;
 width:260px;
 }
-
-/* TABELA */
 
 table{
 width:100%;
@@ -72,8 +68,6 @@ background:#f9fafb;
 font-weight:600;
 }
 
-/* BOTÕES */
-
 button{
 background:#1f2937;
 color:#fff;
@@ -91,8 +85,6 @@ background:#dc2626;
 display:flex;
 gap:10px;
 }
-
-/* MODAL */
 
 .modal{
 position:fixed;
@@ -122,8 +114,6 @@ display:grid;
 grid-template-columns:repeat(3,1fr);
 gap:16px;
 }
-
-/* NOVO: LABEL */
 
 label{
 font-size:12px;
@@ -378,11 +368,23 @@ document.getElementById("modal").style.display="flex";
 
 async function salvar(){
 
-const payload=getPayload();
+let payload = getPayload();
 
 if(!payload.nome){
 alert("Nome é obrigatório");
 return;
+}
+
+/* 🔥 REGRA AQUI */
+if(!idAtual && payload.nome && payload.telefone_1){
+
+const telefoneLimpo = payload.telefone_1.replace(/\D/g,'');
+const finalTelefone = telefoneLimpo.slice(-4);
+
+if(finalTelefone){
+payload.nome = `${payload.nome} ${finalTelefone}`;
+}
+
 }
 
 let error;

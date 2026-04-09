@@ -262,7 +262,7 @@ oninput="filtrarTabela()">
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"SEU_ANON_KEY_AQUI"
+"SUA_ANON_KEY_AQUI"
 );
 
 let idAtual=null;
@@ -289,6 +289,21 @@ if(el) el.value=data[c]||"";
 });
 }
 
+/* 🔥 FUNÇÃO DE EXIBIÇÃO (AQUI ESTÁ A MÁGICA) */
+function formatarNome(c){
+
+if(!c.nome) return "";
+
+if(!c.telefone_1) return c.nome;
+
+const telefoneLimpo = c.telefone_1.replace(/\D/g,'');
+const finalTelefone = telefoneLimpo.slice(-4);
+
+if(!finalTelefone) return c.nome;
+
+return `${c.nome}${finalTelefone}`;
+}
+
 async function carregar(){
 
 const {data,error}=await supabaseClient
@@ -313,7 +328,7 @@ tbody.innerHTML="";
 lista.forEach(c=>{
 tbody.innerHTML+=`
 <tr>
-<td>${c.nome||""}</td>
+<td>${formatarNome(c)}</td>
 <td>${c.telefone_1||""}</td>
 <td>${c.email||""}</td>
 <td>
@@ -373,18 +388,6 @@ let payload = getPayload();
 if(!payload.nome){
 alert("Nome é obrigatório");
 return;
-}
-
-/* 🔥 REGRA FINAL (sem espaço) */
-if(!idAtual && payload.nome && payload.telefone_1){
-
-const telefoneLimpo = payload.telefone_1.replace(/\D/g,'');
-const finalTelefone = telefoneLimpo.slice(-4);
-
-if(finalTelefone){
-payload.nome = `${payload.nome}${finalTelefone}`;
-}
-
 }
 
 let error;

@@ -291,21 +291,16 @@ if(el) el.value=data[c]||"";
 
 /* EXIBE nome + últimos 4 dígitos */
 function formatarNome(c){
-
 if(!c.nome) return "";
-
 if(!c.telefone_1) return c.nome;
 
 const telefoneLimpo = c.telefone_1.replace(/\D/g,'');
 const finalTelefone = telefoneLimpo.slice(-4);
 
-if(!finalTelefone) return c.nome;
-
-return `${c.nome}${finalTelefone}`;
+return finalTelefone ? `${c.nome}${finalTelefone}` : c.nome;
 }
 
 async function carregar(){
-
 const {data,error}=await supabaseClient
 .from("clientes")
 .select("*")
@@ -321,7 +316,6 @@ render(dados);
 }
 
 function render(lista){
-
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
 
@@ -341,15 +335,10 @@ tbody.innerHTML+=`
 }
 
 function filtrarTabela(){
-const termo=document
-.getElementById("buscaCliente")
-.value
-.toLowerCase();
-
+const termo=document.getElementById("buscaCliente").value.toLowerCase();
 const filtrado=dados.filter(c =>
 (c.nome||"").toLowerCase().includes(termo)
 );
-
 render(filtrado);
 }
 
@@ -363,7 +352,6 @@ document.getElementById("modal").style.display="flex";
 }
 
 async function editar(id){
-
 idAtual=id;
 
 const {data,error}=await supabaseClient
@@ -390,6 +378,36 @@ alert("Nome é obrigatório");
 return;
 }
 
+if(!payload.telefone_1){
+alert("Telefone é obrigatório");
+return;
+}
+
+/* 🔥 VALIDA DUPLICIDADE */
+let query = supabaseClient
+.from("clientes")
+.select("*")
+.eq("nome", payload.nome)
+.eq("telefone_1", payload.telefone_1);
+
+if(idAtual){
+query = query.neq("id", idAtual);
+}
+
+const { data: existente, error: erroBusca } = await query;
+
+if(erroBusca){
+console.error(erroBusca);
+alert("Erro ao validar cliente");
+return;
+}
+
+if(existente && existente.length > 0){
+alert("Cliente já cadastrado com esse nome e telefone");
+return;
+}
+
+/* 💾 SALVAR */
 let error;
 
 if(idAtual){
@@ -414,7 +432,6 @@ carregar();
 }
 
 async function excluir(id){
-
 if(!confirm("Excluir cliente?")) return;
 
 await supabaseClient

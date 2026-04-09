@@ -289,27 +289,32 @@ if(el) el.value=data[c]||"";
 });
 }
 
-/* nome exibido */
+/* EXIBE nome + últimos 4 dígitos */
 function formatarNome(c){
 if(!c.nome) return "";
 if(!c.telefone_1) return c.nome;
 
-const t=c.telefone_1.replace(/\D/g,'').slice(-4);
-return t?`${c.nome}${t}`:c.nome;
+const telefoneLimpo = c.telefone_1.replace(/\D/g,'');
+const finalTelefone = telefoneLimpo.slice(-4);
+
+return finalTelefone ? `${c.nome}${finalTelefone}` : c.nome;
 }
 
-/* carregar */
 async function carregar(){
-const {data}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("clientes")
 .select("*")
 .order("nome");
 
-dados=data||[];
+if(error){
+console.error(error);
+return;
+}
+
+dados=data;
 render(dados);
 }
 
-/* render */
 function render(lista){
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -329,36 +334,21 @@ tbody.innerHTML+=`
 });
 }
 
-/* 🔥 BUSCA MELHORADA */
 function filtrarTabela(){
+const termo=document.getElementById("buscaCliente").value.toLowerCase();
 
-const termoOriginal = document
-.getElementById("buscaCliente")
-.value
-.toLowerCase();
-
-const termoNumero = termoOriginal.replace(/\D/g,'');
-
-const filtrado = dados.filter(c => {
-
-const nome = (c.nome || "").toLowerCase();
-const telefone = (c.telefone_1 || "").replace(/\D/g,'');
-
-return (
-nome.includes(termoOriginal) ||
-telefone.includes(termoNumero)
+const filtrado=dados.filter(c =>
+(c.nome||"").toLowerCase().includes(termo)
 );
-
-});
 
 render(filtrado);
 }
 
-/* modal */
 function abrirNovo(){
 idAtual=null;
 campos.forEach(c=>{
-document.getElementById(c).value="";
+const el=document.getElementById(c);
+if(el) el.value="";
 });
 modal.style.display="flex";
 }
@@ -366,64 +356,96 @@ modal.style.display="flex";
 async function editar(id){
 idAtual=id;
 
-const {data}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("clientes")
 .select("*")
 .eq("id",id)
 .single();
 
+if(error){
+console.error(error);
+return;
+}
+
 setForm(data);
 modal.style.display="flex";
 }
 
-/* salvar */
 async function salvar(){
 
-let payload=getPayload();
+let payload = getPayload();
 
+/* obrigatórios */
 if(!payload.nome){
-alert("Nome obrigatório");
+alert("Nome é obrigatório");
 return;
 }
 
 if(!payload.telefone_1){
-alert("Telefone obrigatório");
+alert("Telefone é obrigatório");
 return;
 }
 
 /* limpa telefone */
-const tel=payload.telefone_1.replace(/\D/g,'');
-payload.telefone_1=tel;
+const telefoneLimpo = payload.telefone_1.replace(/\D/g,'');
+payload.telefone_1 = telefoneLimpo;
 
-/* duplicidade */
-let q=supabaseClient.from("clientes").select("*")
-.eq("nome",payload.nome)
-.eq("telefone_1",tel);
+/* valida duplicidade */
+let query = supabaseClient
+.from("clientes")
+.select("*")
+.eq("nome", payload.nome)
+.eq("telefone_1", telefoneLimpo);
 
-if(idAtual) q=q.neq("id",idAtual);
+if(idAtual){
+query = query.neq("id", idAtual);
+}
 
-let {data}=await q;
+const { data: existente, error: erroBusca } = await query;
 
-if(data && data.length){
-alert("Cliente já existe");
+if(erroBusca){
+console.error(erroBusca);
+alert("Erro ao validar cliente");
+return;
+}
+
+if(existente && existente.length > 0){
+alert("Cliente já cadastrado com esse nome e telefone");
 return;
 }
 
 /* salvar */
+let error;
+
 if(idAtual){
-await supabaseClient.from("clientes").update(payload).eq("id",idAtual);
+({error}=await supabaseClient
+.from("clientes")
+.update(payload)
+.eq("id",idAtual));
 }else{
-await supabaseClient.from("clientes").insert(payload);
+({error}=await supabaseClient
+.from("clientes")
+.insert(payload));
+}
+
+if(error){
+console.error(error);
+alert("Erro ao salvar");
+return;
 }
 
 fecharModal();
 carregar();
 }
 
-/* excluir */
 async function excluir(id){
 if(!confirm("Excluir cliente?")) return;
-await supabaseClient.from("clientes").delete().eq("id",id);
+
+await supabaseClient
+.from("clientes")
+.delete()
+.eq("id",id);
+
 carregar();
 }
 

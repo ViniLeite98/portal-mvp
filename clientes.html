@@ -17,9 +17,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.left-tools{display:flex;gap:10px;align-items:center;}
 .left-tools input{padding:8px;border:1px solid #d1d5db;border-radius:6px;width:260px;}
-select{padding:6px;border-radius:6px;}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
 th{background:#f9fafb;font-weight:600;}
@@ -28,7 +26,9 @@ button.excluir{background:#dc2626;}
 .top-actions{display:flex;gap:10px;}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10;}
 .modal-content{background:#fff;width:900px;max-height:90vh;overflow:auto;border-radius:16px;padding:24px;}
+.section{margin-bottom:20px;}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+label{font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;display:block;}
 input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
 .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
 </style>
@@ -42,26 +42,16 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 <main class="content">
 
 <h1>Clientes</h1>
+<p>Clientes cadastrados</p>
 
 <div class="topbar">
-
 <div class="left-tools">
-
-<input id="buscaCliente" placeholder="Buscar..." oninput="filtrarTabela()">
-
-<select id="limiteSelect" onchange="alterarLimite()">
-<option value="5">5</option>
-<option value="10">10</option>
-<option value="20" selected>20</option>
-<option value="todos">Todos</option>
-</select>
-
+<input id="buscaCliente" placeholder="Buscar cliente..." oninput="filtrarTabela()">
 </div>
 
 <div class="top-actions">
 <button onclick="abrirNovo()">+ Novo Cliente</button>
 </div>
-
 </div>
 
 <table>
@@ -73,7 +63,6 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 <th>Ações</th>
 </tr>
 </thead>
-
 <tbody id="lista"></tbody>
 </table>
 
@@ -84,18 +73,27 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 <div class="modal" id="modal">
 <div class="modal-content">
 
+<div class="section">
+<h3>Dados do Cliente</h3>
+
 <div class="grid">
-<input id="nome" placeholder="Nome">
-<input id="cpf_cnpj" placeholder="CPF/CNPJ">
-<input id="telefone_1" placeholder="Telefone">
-<input id="telefone_2" placeholder="Telefone 2">
-<input type="date" id="dt_nasc">
-<input id="email" placeholder="Email">
-<input id="nacionalidade" placeholder="Nacionalidade">
-<input id="endereco" placeholder="Endereço">
+
+<div><label>Nome *</label><input id="nome"></div>
+<div><label>CPF/CNPJ</label><input id="cpf_cnpj"></div>
+<div><label>Telefone 1 *</label><input id="telefone_1"></div>
+<div><label>Telefone 2</label><input id="telefone_2"></div>
+<div><label>Data de Nascimento</label><input type="date" id="dt_nasc"></div>
+<div><label>Email</label><input id="email"></div>
+<div><label>Nacionalidade</label><input id="nacionalidade"></div>
+<div><label>Endereço</label><input id="endereco"></div>
+
+</div>
 </div>
 
-<textarea id="observacao" placeholder="Observação"></textarea>
+<div class="section">
+<label>Observação</label>
+<textarea id="observacao"></textarea>
+</div>
 
 <div class="modal-actions">
 <button onclick="fecharModal()">Cancelar</button>
@@ -116,37 +114,15 @@ const supabaseClient = supabase.createClient(
 
 const modal = document.getElementById("modal");
 
-let idAtual = null;
-let limite = 20;
+let idAtual=null;
 
-/* ================= LIMITE ================= */
-
-function alterarLimite(){
-const valor = document.getElementById("limiteSelect").value;
-
-if(valor === "todos"){
-limite = null;
-}else{
-limite = parseInt(valor);
-}
-
-carregar();
-}
-
-/* ================= LOAD ================= */
-
+/* 🔥 CARREGA APENAS 50 */
 async function carregar(){
-
-let query = supabaseClient
+const {data,error}=await supabaseClient
 .from("clientes")
 .select("*")
-.order("nome");
-
-if(limite){
-query = query.limit(limite);
-}
-
-const {data,error} = await query;
+.order("nome")
+.limit(50);
 
 if(error){
 console.error(error);
@@ -155,8 +131,6 @@ return;
 
 render(data);
 }
-
-/* ================= RENDER ================= */
 
 function render(lista){
 const tbody=document.getElementById("lista");
@@ -177,8 +151,7 @@ tbody.innerHTML+=`
 });
 }
 
-/* ================= BUSCA ================= */
-
+/* 🔥 BUSCA INTELIGENTE */
 async function filtrarTabela(){
 
 const termo = document.getElementById("buscaCliente").value.trim();
@@ -202,16 +175,10 @@ if(numeroBusca.length >= 3){
 query = query.ilike("telefone_1", `%${numeroBusca}%`);
 }
 
-if(limite){
-query = query.limit(limite);
-}
-
-const { data } = await query;
+const { data } = await query.limit(50);
 
 render(data);
 }
-
-/* ================= CRUD ================= */
 
 function abrirNovo(){
 idAtual=null;
@@ -232,7 +199,6 @@ modal.style.display="flex";
 }
 
 async function salvar(){
-
 let payload={};
 
 document.querySelectorAll("input, textarea").forEach(i=>{
@@ -252,8 +218,6 @@ carregar();
 }
 
 async function excluir(id){
-if(!confirm("Excluir cliente?")) return;
-
 await supabaseClient.from("clientes").delete().eq("id",id);
 carregar();
 }
@@ -261,8 +225,6 @@ carregar();
 function fecharModal(){
 modal.style.display="none";
 }
-
-/* ================= INIT ================= */
 
 carregar();
 

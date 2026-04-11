@@ -12,137 +12,31 @@
 
 <style>
 *{box-sizing:border-box}
-
-body{
-margin:0;
-font-family:'Segoe UI',sans-serif;
-background:#f5f7fb;
-}
-
-.app{
-display:flex;
-min-height:100vh;
-}
-
-#sidebar{
-width:260px;
-flex-shrink:0;
-}
-
-.content{
-flex:1;
-padding:40px;
-}
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:20px;
-}
-
-.left-tools input{
-padding:8px;
-border:1px solid #d1d5db;
-border-radius:6px;
-width:260px;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:#fff;
-border-radius:14px;
-overflow:hidden;
-}
-
-th,td{
-padding:14px;
-border-bottom:1px solid #e5e7eb;
-font-size:14px;
-text-align:left;
-}
-
-th{
-background:#f9fafb;
-font-weight:600;
-}
-
-button{
-background:#1f2937;
-color:#fff;
-border:none;
-border-radius:6px;
-padding:6px 12px;
-cursor:pointer;
-}
-
-button.excluir{
-background:#dc2626;
-}
-
-.top-actions{
-display:flex;
-gap:10px;
-}
-
-.modal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.4);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:10;
-}
-
-.modal-content{
-background:#fff;
-width:900px;
-max-height:90vh;
-overflow:auto;
-border-radius:16px;
-padding:24px;
-}
-
-.section{
-margin-bottom:20px;
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:16px;
-}
-
-label{
-font-size:12px;
-font-weight:600;
-color:#374151;
-margin-bottom:4px;
-display:block;
-}
-
-input,textarea{
-padding:8px;
-border-radius:6px;
-border:1px solid #d1d5db;
-width:100%;
-}
-
-.modal-actions{
-display:flex;
-justify-content:flex-end;
-gap:10px;
-margin-top:20px;
-}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.left-tools input{padding:8px;border:1px solid #d1d5db;border-radius:6px;width:260px;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
+th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
+th{background:#f9fafb;font-weight:600;}
+button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
+button.excluir{background:#dc2626;}
+.top-actions{display:flex;gap:10px;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10;}
+.modal-content{background:#fff;width:900px;max-height:90vh;overflow:auto;border-radius:16px;padding:24px;}
+.section{margin-bottom:20px;}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+label{font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;display:block;}
+input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
 </style>
 </head>
 
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -153,10 +47,7 @@ margin-top:20px;
 <div class="topbar">
 
 <div class="left-tools">
-<input
-id="buscaCliente"
-placeholder="Buscar cliente..."
-oninput="filtrarTabela()">
+<input id="buscaCliente" placeholder="Buscar cliente..." oninput="filtrarTabela()">
 </div>
 
 <div class="top-actions">
@@ -166,7 +57,6 @@ oninput="filtrarTabela()">
 </div>
 
 <table>
-
 <thead>
 <tr>
 <th>Nome</th>
@@ -177,7 +67,6 @@ oninput="filtrarTabela()">
 </thead>
 
 <tbody id="lista"></tbody>
-
 </table>
 
 </main>
@@ -187,11 +76,9 @@ oninput="filtrarTabela()">
 <!-- MODAL -->
 
 <div class="modal" id="modal">
-
 <div class="modal-content">
 
 <div class="section">
-
 <h3>Dados do Cliente</h3>
 
 <div class="grid">
@@ -237,7 +124,6 @@ oninput="filtrarTabela()">
 </div>
 
 </div>
-
 </div>
 
 <div class="section">
@@ -246,14 +132,11 @@ oninput="filtrarTabela()">
 </div>
 
 <div class="modal-actions">
-
 <button onclick="fecharModal()">Cancelar</button>
 <button onclick="salvar()">Salvar</button>
-
 </div>
 
 </div>
-
 </div>
 
 <script src="assets/sidebar/sidebar.js"></script>
@@ -289,7 +172,6 @@ if(el) el.value=data[c]||"";
 });
 }
 
-/* EXIBE nome + últimos 4 dígitos */
 function formatarNome(c){
 if(!c.nome) return "";
 if(!c.telefone_1) return c.nome;
@@ -334,12 +216,19 @@ tbody.innerHTML+=`
 });
 }
 
+/* 🔥 BUSCA AJUSTADA */
 function filtrarTabela(){
-const termo=document.getElementById("buscaCliente").value.toLowerCase();
 
-const filtrado=dados.filter(c =>
-(c.nome||"").toLowerCase().includes(termo)
-);
+const termo = document.getElementById("buscaCliente").value.toLowerCase();
+
+const filtrado = dados.filter(c => {
+
+const nome = (c.nome || "").toLowerCase();
+const telefone = (c.telefone_1 || "").replace(/\D/g,'');
+
+return nome.includes(termo) || telefone.includes(termo);
+
+});
 
 render(filtrado);
 }
@@ -375,57 +264,34 @@ async function salvar(){
 
 let payload = getPayload();
 
-/* obrigatórios */
-if(!payload.nome){
-alert("Nome é obrigatório");
-return;
-}
+if(!payload.nome){ alert("Nome obrigatório"); return; }
+if(!payload.telefone_1){ alert("Telefone obrigatório"); return; }
 
-if(!payload.telefone_1){
-alert("Telefone é obrigatório");
-return;
-}
+payload.telefone_1 = payload.telefone_1.replace(/\D/g,'');
 
-/* limpa telefone */
-const telefoneLimpo = payload.telefone_1.replace(/\D/g,'');
-payload.telefone_1 = telefoneLimpo;
-
-/* valida duplicidade */
 let query = supabaseClient
 .from("clientes")
 .select("*")
 .eq("nome", payload.nome)
-.eq("telefone_1", telefoneLimpo);
+.eq("telefone_1", payload.telefone_1);
 
 if(idAtual){
 query = query.neq("id", idAtual);
 }
 
-const { data: existente, error: erroBusca } = await query;
-
-if(erroBusca){
-console.error(erroBusca);
-alert("Erro ao validar cliente");
-return;
-}
+const { data: existente } = await query;
 
 if(existente && existente.length > 0){
-alert("Cliente já cadastrado com esse nome e telefone");
+alert("Cliente já cadastrado");
 return;
 }
 
-/* salvar */
 let error;
 
 if(idAtual){
-({error}=await supabaseClient
-.from("clientes")
-.update(payload)
-.eq("id",idAtual));
+({error}=await supabaseClient.from("clientes").update(payload).eq("id",idAtual));
 }else{
-({error}=await supabaseClient
-.from("clientes")
-.insert(payload));
+({error}=await supabaseClient.from("clientes").insert(payload));
 }
 
 if(error){
@@ -441,11 +307,7 @@ carregar();
 async function excluir(id){
 if(!confirm("Excluir cliente?")) return;
 
-await supabaseClient
-.from("clientes")
-.delete()
-.eq("id",id);
-
+await supabaseClient.from("clientes").delete().eq("id",id);
 carregar();
 }
 

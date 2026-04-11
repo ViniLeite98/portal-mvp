@@ -116,7 +116,7 @@ const modal = document.getElementById("modal");
 
 let idAtual=null;
 
-/* 🔥 CARREGA APENAS 50 */
+/* ================= LOAD ================= */
 async function carregar(){
 const {data,error}=await supabaseClient
 .from("clientes")
@@ -132,6 +132,7 @@ return;
 render(data);
 }
 
+/* ================= RENDER ================= */
 function render(lista){
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -151,7 +152,7 @@ tbody.innerHTML+=`
 });
 }
 
-/* 🔥 BUSCA INTELIGENTE */
+/* ================= BUSCA ================= */
 async function filtrarTabela(){
 
 const termo = document.getElementById("buscaCliente").value.trim();
@@ -180,6 +181,8 @@ const { data } = await query.limit(50);
 render(data);
 }
 
+/* ================= CRUD ================= */
+
 function abrirNovo(){
 idAtual=null;
 document.querySelectorAll("input, textarea").forEach(i=>i.value="");
@@ -198,15 +201,46 @@ if(el) el.value=data[k];
 modal.style.display="flex";
 }
 
+/* 🔥 SALVAR COM VALIDAÇÃO */
 async function salvar(){
+
 let payload={};
 
 document.querySelectorAll("input, textarea").forEach(i=>{
 if(i.id && i.value) payload[i.id]=i.value;
 });
 
+if(!payload.nome){
+alert("Nome obrigatório");
+return;
+}
+
+if(!payload.telefone_1){
+alert("Telefone obrigatório");
+return;
+}
+
 payload.telefone_1 = payload.telefone_1.replace(/\D/g,'');
 
+/* 🔥 VERIFICA DUPLICADO */
+let query = supabaseClient
+.from("clientes")
+.select("id")
+.eq("nome", payload.nome)
+.eq("telefone_1", payload.telefone_1);
+
+if(idAtual){
+query = query.neq("id", idAtual);
+}
+
+const { data: existente } = await query;
+
+if(existente && existente.length > 0){
+alert("⚠️ Cliente já cadastrado!");
+return;
+}
+
+/* salva */
 if(idAtual){
 await supabaseClient.from("clientes").update(payload).eq("id",idAtual);
 }else{
@@ -218,6 +252,8 @@ carregar();
 }
 
 async function excluir(id){
+if(!confirm("Excluir cliente?")) return;
+
 await supabaseClient.from("clientes").delete().eq("id",id);
 carregar();
 }
@@ -225,6 +261,8 @@ carregar();
 function fecharModal(){
 modal.style.display="none";
 }
+
+/* ================= INIT ================= */
 
 carregar();
 

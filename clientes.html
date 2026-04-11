@@ -8,7 +8,9 @@
  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -42,16 +44,18 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 <main class="content">
 
 <h1>Clientes</h1>
-<p>Clientes cadastrados</p>
 
 <div class="topbar">
+
 <div class="left-tools">
 <input id="buscaCliente" placeholder="Buscar cliente..." oninput="filtrarTabela()">
 </div>
 
 <div class="top-actions">
+<button onclick="exportarExcel()">📊 Exportar Excel</button>
 <button onclick="abrirNovo()">+ Novo Cliente</button>
 </div>
+
 </div>
 
 <table>
@@ -63,6 +67,7 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 <th>Ações</th>
 </tr>
 </thead>
+
 <tbody id="lista"></tbody>
 </table>
 
@@ -181,6 +186,39 @@ const { data } = await query.limit(50);
 render(data);
 }
 
+/* ================= EXPORTAR EXCEL ================= */
+async function exportarExcel(){
+
+const { data, error } = await supabaseClient
+.from("clientes")
+.select("*")
+.order("nome");
+
+if(error){
+console.error(error);
+alert("Erro ao exportar");
+return;
+}
+
+const formatado = data.map(c => ({
+Nome: c.nome,
+Telefone: c.telefone_1,
+Email: c.email,
+CPF_CNPJ: c.cpf_cnpj,
+Nascimento: c.dt_nasc,
+Nacionalidade: c.nacionalidade,
+Endereco: c.endereco,
+Observacao: c.observacao
+}));
+
+const ws = XLSX.utils.json_to_sheet(formatado);
+const wb = XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb, ws, "Clientes");
+
+XLSX.writeFile(wb, "clientes.xlsx");
+}
+
 /* ================= CRUD ================= */
 
 function abrirNovo(){
@@ -201,7 +239,6 @@ if(el) el.value=data[k];
 modal.style.display="flex";
 }
 
-/* 🔥 SALVAR COM VALIDAÇÃO */
 async function salvar(){
 
 let payload={};
@@ -222,7 +259,7 @@ return;
 
 payload.telefone_1 = payload.telefone_1.replace(/\D/g,'');
 
-/* 🔥 VERIFICA DUPLICADO */
+/* valida duplicado */
 let query = supabaseClient
 .from("clientes")
 .select("id")
@@ -240,7 +277,6 @@ alert("⚠️ Cliente já cadastrado!");
 return;
 }
 
-/* salva */
 if(idAtual){
 await supabaseClient.from("clientes").update(payload).eq("id",idAtual);
 }else{

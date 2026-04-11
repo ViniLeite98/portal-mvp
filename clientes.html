@@ -115,43 +115,21 @@ const supabaseClient = supabase.createClient(
 const modal = document.getElementById("modal");
 
 let idAtual=null;
-let dados=[];
 
-const campos=[
-"nome","cpf_cnpj","telefone_1","telefone_2",
-"dt_nasc","email","nacionalidade","endereco","observacao"
-];
-
-function getPayload(){
-const obj={};
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el && el.value!=="") obj[c]=el.value;
-});
-return obj;
-}
-
-function setForm(data){
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value=data[c]||"";
-});
-}
-
-function formatarNome(c){
-if(!c.nome) return "";
-const tel=(c.telefone_1||"").replace(/\D/g,'');
-return tel ? `${c.nome}${tel.slice(-4)}` : c.nome;
-}
-
+/* 🔥 CARREGA APENAS 50 */
 async function carregar(){
-const {data}=await supabaseClient
+const {data,error}=await supabaseClient
 .from("clientes")
 .select("*")
-.order("nome");
+.order("nome")
+.limit(50);
 
-dados=data;
-render(dados);
+if(error){
+console.error(error);
+return;
+}
+
+render(data);
 }
 
 function render(lista){
@@ -161,7 +139,7 @@ tbody.innerHTML="";
 lista.forEach(c=>{
 tbody.innerHTML+=`
 <tr>
-<td>${formatarNome(c)}</td>
+<td>${c.nome}</td>
 <td>${c.telefone_1||""}</td>
 <td>${c.email||""}</td>
 <td>
@@ -184,7 +162,6 @@ return;
 }
 
 const partes = termo.split(" ");
-
 let nomeBusca = partes.filter(p => isNaN(p)).join(" ");
 let numeroBusca = partes.join("").replace(/\D/g,'');
 
@@ -205,22 +182,29 @@ render(data);
 
 function abrirNovo(){
 idAtual=null;
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value="";
-});
+document.querySelectorAll("input, textarea").forEach(i=>i.value="");
 modal.style.display="flex";
 }
 
 async function editar(id){
 idAtual=id;
 const {data}=await supabaseClient.from("clientes").select("*").eq("id",id).single();
-setForm(data);
+
+Object.keys(data).forEach(k=>{
+const el=document.getElementById(k);
+if(el) el.value=data[k];
+});
+
 modal.style.display="flex";
 }
 
 async function salvar(){
-let payload=getPayload();
+let payload={};
+
+document.querySelectorAll("input, textarea").forEach(i=>{
+if(i.id && i.value) payload[i.id]=i.value;
+});
+
 payload.telefone_1 = payload.telefone_1.replace(/\D/g,'');
 
 if(idAtual){

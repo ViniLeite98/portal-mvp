@@ -38,8 +38,9 @@ gap:10px;
 align-items:center;
 }
 
+/* 🔥 BOTÕES PADRÃO */
 .right-tools button{
-background:#2563eb;
+background:#1f2937;
 color:#fff;
 border:none;
 border-radius:6px;
@@ -47,7 +48,10 @@ padding:7px 12px;
 cursor:pointer;
 }
 
-.btn-novo{background:#1f2937;}
+/* 🔥 EXCLUIR */
+button.excluir{
+background:#dc2626;
+}
 
 table{
 width:100%;
@@ -69,7 +73,6 @@ cursor:pointer;
 font-weight:600;
 }
 
-/* 🎯 ALINHAMENTO PROFISSIONAL */
 td:nth-child(2),
 td:nth-child(3),
 td:nth-child(4),
@@ -78,7 +81,6 @@ td:nth-child(6){
 text-align:center;
 }
 
-/* hover */
 tr:hover{
 background:#f9fafb;
 }
@@ -147,7 +149,7 @@ margin-top:20px;
 <i class="fa-solid fa-file-excel"></i> Exportar
 </button>
 
-<button class="btn-novo" onclick="abrirNovo()">
+<button onclick="abrirNovo()">
 + Novo
 </button>
 
@@ -252,18 +254,6 @@ const supabaseClient = supabase.createClient(
 let dados=[]
 let idAtual=null
 let porPagina=10
-let ordem={campo:null,asc:true}
-
-function nomeServico(s){
-if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} minutos`
-if(s.subgrupo) return `${s.grupo} ${s.subgrupo}`
-if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
-return s.grupo
-}
-
-function moeda(valor){
-return Number(valor||0).toLocaleString("pt-BR",{minimumFractionDigits:2})
-}
 
 async function carregar(){
 const {data}=await supabaseClient.from("servicos").select("*")
@@ -271,30 +261,15 @@ dados=data||[]
 render()
 }
 
+function nomeServico(s){
+return `${s.grupo} ${s.subgrupo||""} ${s.tempo? s.tempo+" minutos":""}`
+}
+
+function moeda(v){
+return Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2})
+}
+
 function render(lista=dados){
-
-if(ordem.campo){
-lista.sort((a,b)=>{
-let valA,valB
-
-switch(ordem.campo){
-case "servico":
-valA=`${a.grupo} ${a.subgrupo||""}`
-valB=`${b.grupo} ${b.subgrupo||""}`
-break
-case "tempo": valA=a.tempo||0; valB=b.tempo||0; break
-case "valor": valA=a.valor||0; valB=b.valor||0; break
-case "comissao": valA=a.comissao||0; valB=b.comissao||0; break
-}
-
-if(typeof valA==="string"){valA=valA.toLowerCase();valB=valB.toLowerCase()}
-
-if(valA>valB)return ordem.asc?1:-1
-if(valA<valB)return ordem.asc?-1:1
-return 0
-})
-}
-
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
@@ -302,13 +277,13 @@ lista.slice(0,porPagina).forEach(s=>{
 tbody.innerHTML+=`
 <tr>
 <td>${nomeServico(s)}</td>
-<td>${s.tempo? s.tempo+" min":"-"}</td>
+<td>${s.tempo||"-"}</td>
 <td>R$ ${moeda(s.valor)}</td>
 <td>R$ ${moeda(s.comissao)}</td>
 <td>${s.status}</td>
 <td>
 <button onclick="editar('${s.id}')">Editar</button>
-<button onclick="excluir('${s.id}')">Excluir</button>
+<button class="excluir" onclick="excluir('${s.id}')">Excluir</button>
 </td>
 </tr>`
 })
@@ -326,26 +301,13 @@ render()
 }
 
 window.salvar=async function(){
-
 const payload={
 grupo:grupo.value,
 subgrupo:subgrupo.value||null,
-tempo:tempo.value?parseInt(tempo.value):null,
-valor:parseFloat(valor.value),
-comissao:parseFloat(comissao.value),
+tempo:tempo.value||null,
+valor:valor.value,
+comissao:comissao.value,
 status:status.value
-}
-
-const duplicado=dados.find(s =>
-s.grupo===payload.grupo &&
-(s.subgrupo||"")===(payload.subgrupo||"") &&
-(s.tempo||null)===(payload.tempo||null) &&
-s.id!==idAtual
-)
-
-if(duplicado){
-alert("Serviço já existe!")
-return
 }
 
 if(idAtual){
@@ -360,12 +322,6 @@ carregar()
 
 window.abrirNovo=function(){
 idAtual=null
-grupo.value=""
-subgrupo.value=""
-tempo.value=""
-valor.value=""
-comissao.value=""
-status.value="ativo"
 modal.style.display="flex"
 }
 
@@ -375,13 +331,6 @@ modal.style.display="none"
 
 window.editar=function(id){
 idAtual=id
-const d=dados.find(s=>s.id==id)
-grupo.value=d.grupo
-subgrupo.value=d.subgrupo||""
-tempo.value=d.tempo||""
-valor.value=d.valor
-comissao.value=d.comissao
-status.value=d.status
 modal.style.display="flex"
 }
 
@@ -391,14 +340,7 @@ carregar()
 }
 
 window.exportarExcel=function(){
-const dadosExcel=dados.map(s=>({
-Serviço:nomeServico(s),
-Tempo:s.tempo?`${s.tempo} min`:"-",
-Valor:s.valor,
-Comissão:s.comissao,
-Status:s.status
-}))
-const ws=XLSX.utils.json_to_sheet(dadosExcel)
+const ws=XLSX.utils.json_to_sheet(dados)
 const wb=XLSX.utils.book_new()
 XLSX.utils.book_append_sheet(wb,ws,"Serviços")
 XLSX.writeFile(wb,"servicos.xlsx")

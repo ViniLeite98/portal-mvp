@@ -249,7 +249,7 @@ font-size:12px;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
 let listaFuncionarios = []
@@ -257,8 +257,6 @@ let listaFuncionarios = []
 async function criarProduto(){
 const nome = document.getElementById("nome").value.trim()
 const valor = parseFloat(document.getElementById("valor").value) || 0
-
-if(!nome) return
 
 await supabaseClient.from("produtos").insert({ nome, valor })
 
@@ -273,6 +271,7 @@ async function carregar(){
 const {data} = await supabaseClient
 .from("estoque_atual")
 .select("*")
+.eq("ativo", true)
 .order("nome")
 
 const lista = document.getElementById("lista")
@@ -295,13 +294,11 @@ lista.innerHTML+=`
 
 <span class="pontos"></span>
 
-<span class="valor">
-${p.saldo} | R$ ${total.toFixed(2)}
-</span>
+<span class="valor">${p.saldo} | R$ ${total.toFixed(2)}</span>
 
 <div class="acoes">
-<i class="fa-solid fa-pen btn-acao btn-edit" onclick="editarValor('${p.id}', ${p.valor || 0})"></i>
-<i class="fa-solid fa-trash btn-acao btn-delete" onclick="excluirProduto('${p.id}')"></i>
+<i class="fa-solid fa-pen btn-edit" onclick="editarValor('${p.id}', ${p.valor})"></i>
+<i class="fa-solid fa-trash btn-delete" onclick="desativarProduto('${p.id}')"></i>
 </div>
 
 </div>
@@ -313,72 +310,28 @@ selModal.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 
 }
 
-async function editarValor(id, valorAtual){
-const novo = prompt("Novo valor:", valorAtual)
-if(novo === null) return
+async function desativarProduto(id){
+
+if(!confirm("Remover produto da lista?")) return
 
 await supabaseClient
 .from("produtos")
-.update({ valor: parseFloat(novo) || 0 })
+.update({ ativo:false })
 .eq("id", id)
 
 carregar()
 }
 
-async function excluirProduto(id){
-if(!confirm("Excluir produto?")) return
+async function editarValor(id, valorAtual){
 
-await supabaseClient.from("produtos").delete().eq("id", id)
+const novo = prompt("Novo valor:", valorAtual)
+
+await supabaseClient
+.from("produtos")
+.update({ valor: parseFloat(novo) })
+.eq("id", id)
 
 carregar()
-carregarLog()
-}
-
-async function carregarFuncionarios(){
-const { data } = await supabaseClient
-.from("terapeutas")
-.select("nome_profissional")
-.eq("status","Ativo")
-
-listaFuncionarios = data || []
-}
-
-const input = document.getElementById("responsavelBusca")
-const listaSug = document.getElementById("listaSugestoes")
-
-input.addEventListener("input", ()=>{
-
-const termo = input.value.toLowerCase()
-
-if(!termo){
-listaSug.style.display="none"
-return
-}
-
-const filtrados = listaFuncionarios.filter(t =>
-t.nome_profissional.toLowerCase().includes(termo)
-)
-
-listaSug.innerHTML = filtrados.map(t =>
-`<div onclick="selecionarFuncionario('${t.nome_profissional}')">${t.nome_profissional}</div>`
-).join("")
-
-listaSug.style.display="block"
-
-})
-
-function selecionarFuncionario(nome){
-input.value = nome
-listaSug.style.display="none"
-}
-
-function abrirModalSaida(){
-document.getElementById("modalSaida").style.display="flex"
-document.getElementById("dataSaida").value = new Date().toISOString().split("T")[0]
-}
-
-function fecharModal(){
-document.getElementById("modalSaida").style.display="none"
 }
 
 async function entrada(){
@@ -391,17 +344,15 @@ tipo:"entrada",
 quantidade:qtd
 })
 
-document.getElementById("qtd").value=""
 carregar()
 carregarLog()
 }
 
 async function confirmarSaida(){
-
-const id = document.getElementById("produtoSaida").value
-const qtd = parseFloat(document.getElementById("qtdModal").value)
-const responsavel = document.getElementById("responsavelBusca").value
-const data = document.getElementById("dataSaida").value
+const id=document.getElementById("produtoSaida").value
+const qtd=parseFloat(document.getElementById("qtdModal").value)
+const responsavel=document.getElementById("responsavelBusca").value
+const data=document.getElementById("dataSaida").value
 
 await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id:id,
@@ -416,6 +367,15 @@ carregar()
 carregarLog()
 }
 
+function abrirModalSaida(){
+document.getElementById("modalSaida").style.display="flex"
+document.getElementById("dataSaida").value=new Date().toISOString().split("T")[0]
+}
+
+function fecharModal(){
+document.getElementById("modalSaida").style.display="none"
+}
+
 async function carregarLog(){
 
 const { data } = await supabaseClient
@@ -427,41 +387,25 @@ responsavel,
 data,
 produtos(nome)
 `)
-.order("created_at", { ascending: false })
-.limit(20)
+.order("created_at",{ascending:false})
 
-const container = document.getElementById("logMovimentacoes")
-
-container.innerHTML = ""
-
-if(!data || data.length === 0){
-container.innerHTML = "<p style='color:#999'>Sem movimentações ainda</p>"
-return
-}
+const container=document.getElementById("logMovimentacoes")
+container.innerHTML=""
 
 data.forEach(m=>{
-
-container.innerHTML += `
+container.innerHTML+=`
 <div class="log-linha">
-
-<span class="log-produto">${m.produtos?.nome || "-"}</span>
-
+<span class="log-produto">${m.produtos?.nome}</span>
 <span class="log-tipo ${m.tipo}">
-${m.tipo === "entrada" ? "+" : "-"} ${m.quantidade}
+${m.tipo==="entrada"?"+":"-"} ${m.quantidade}
 </span>
-
-<span class="log-info">
-${m.responsavel || "-"} | ${m.data || ""}
-</span>
-
+<span class="log-info">${m.responsavel} | ${m.data}</span>
 </div>
 `
-
 })
 }
 
 carregar()
-carregarFuncionarios()
 carregarLog()
 
 </script>

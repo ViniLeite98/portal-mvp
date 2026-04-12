@@ -45,7 +45,7 @@ width:100%;
 padding:10px;
 border:none;
 border-radius:10px;
-background:#334155;
+background:#000;
 color:#fff;
 cursor:pointer;
 }
@@ -102,7 +102,7 @@ opacity:1;
 <main class="content">
 
 <h1>Materiais</h1>
-<p>Controle simples</p>
+<p>Controle de estoque</p>
 
 <div class="grid">
 
@@ -117,13 +117,25 @@ opacity:1;
 
 <hr style="margin:15px 0">
 
-<h3>Movimentar</h3>
+<h3>Entrada de Estoque</h3>
 
 <select id="produtoMov"></select>
-<input id="qtd" type="number" placeholder="Quantidade">
 
-<button onclick="entrada()">+ Entrada</button>
-<button class="btn-danger" onclick="saida()">- Saída</button>
+<input id="qtd" type="number" placeholder="Quantidade">
+<input id="custo" type="number" step="0.01" placeholder="Custo unitário (R$)">
+<input id="fornecedor" placeholder="Fornecedor">
+<input id="responsavel" placeholder="Quem registrou">
+<input id="data" type="date">
+
+<button onclick="entrada()">Registrar Entrada</button>
+
+<hr style="margin:15px 0">
+
+<h3>Saída</h3>
+
+<input id="qtdSaida" type="number" placeholder="Quantidade">
+
+<button class="btn-danger" onclick="saida()">Registrar Saída</button>
 
 </div>
 
@@ -223,66 +235,48 @@ sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 
 }
 
-async function exportarExcel(){
+async function entrada(){
 
-const {data} = await supabaseClient
-.from("estoque_atual")
-.select("*")
-.order("nome")
+const id = document.getElementById("produtoMov").value
+const qtd = parseFloat(document.getElementById("qtd").value)
+const custo = parseFloat(document.getElementById("custo").value) || 0
+const fornecedor = document.getElementById("fornecedor").value
+const responsavel = document.getElementById("responsavel").value
+const data = document.getElementById("data").value
 
-if(!data || data.length === 0){
-alert("Sem dados")
+if(!qtd){
+alert("Digite a quantidade")
 return
 }
-
-const dados = data.map(p => ({
-Nome: p.nome,
-Quantidade: p.saldo,
-"Valor Unitário": p.valor || 0,
-"Valor Total": (p.valor || 0) * (p.saldo || 0)
-}))
-
-const ws = XLSX.utils.json_to_sheet(dados)
-const wb = XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb, ws, "Estoque")
-
-XLSX.writeFile(wb, "estoque.xlsx")
-}
-
-async function editarValor(id, valorAtual){
-
-const novo = prompt("Novo valor (R$):", valorAtual)
-
-if(novo === null) return
-
-await supabaseClient
-.from("produtos")
-.update({ valor: parseFloat(novo) || 0 })
-.eq("id", id)
-
-carregar()
-}
-
-async function entrada(){
-const id=document.getElementById("produtoMov").value
-const qtd=parseFloat(document.getElementById("qtd").value)
-if(!qtd) return
 
 await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id:id,
 tipo:"entrada",
-quantidade:qtd
+quantidade:qtd,
+custo:custo,
+fornecedor:fornecedor,
+responsavel:responsavel,
+data:data || new Date().toISOString()
 })
 
 document.getElementById("qtd").value=""
+document.getElementById("custo").value=""
+document.getElementById("fornecedor").value=""
+document.getElementById("responsavel").value=""
+document.getElementById("data").value=""
+
 carregar()
 }
 
 async function saida(){
-const id=document.getElementById("produtoMov").value
-const qtd=parseFloat(document.getElementById("qtd").value)
-if(!qtd) return
+
+const id = document.getElementById("produtoMov").value
+const qtd = parseFloat(document.getElementById("qtdSaida").value)
+
+if(!qtd){
+alert("Digite a quantidade")
+return
+}
 
 const { data } = await supabaseClient
 .from("estoque_atual")
@@ -301,17 +295,19 @@ tipo:"saida",
 quantidade:qtd
 })
 
-document.getElementById("qtd").value=""
+document.getElementById("qtdSaida").value=""
 carregar()
 }
 
 async function zerar(id, saldo){
 if(saldo <= 0){ alert("Já está zerado"); return }
+
 await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id:id,
 tipo:"saida",
 quantidade:saldo
 })
+
 carregar()
 }
 
@@ -319,6 +315,42 @@ async function excluir(id){
 if(!confirm("Excluir material?")) return
 await supabaseClient.from("produtos").delete().eq("id", id)
 carregar()
+}
+
+async function editarValor(id, valorAtual){
+
+const novo = prompt("Novo valor (R$):", valorAtual)
+
+if(novo === null) return
+
+await supabaseClient
+.from("produtos")
+.update({ valor: parseFloat(novo) || 0 })
+.eq("id", id)
+
+carregar()
+}
+
+async function exportarExcel(){
+
+const {data} = await supabaseClient
+.from("estoque_atual")
+.select("*")
+.order("nome")
+
+const dados = data.map(p => ({
+Nome: p.nome,
+Quantidade: p.saldo,
+"Valor Unitário": p.valor || 0,
+"Valor Total": (p.valor || 0) * (p.saldo || 0)
+}))
+
+const ws = XLSX.utils.json_to_sheet(dados)
+const wb = XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb, ws, "Estoque")
+
+XLSX.writeFile(wb, "estoque.xlsx")
 }
 
 carregar()

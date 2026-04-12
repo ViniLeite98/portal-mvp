@@ -10,6 +10,9 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
+<!-- 🔥 EXCEL -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
@@ -50,6 +53,7 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 </div>
 
 <div class="top-actions">
+<button onclick="exportarExcel()">📊 Exportar Excel</button>
 <button onclick="abrirNovo()">+ Novo Cliente</button>
 </div>
 </div>
@@ -116,7 +120,7 @@ const modal = document.getElementById("modal");
 
 let idAtual=null;
 
-/* ================= LOAD ================= */
+/* LOAD */
 async function carregar(){
 const {data,error}=await supabaseClient
 .from("clientes")
@@ -132,7 +136,7 @@ return;
 render(data);
 }
 
-/* ================= RENDER ================= */
+/* RENDER */
 function render(lista){
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -152,7 +156,7 @@ tbody.innerHTML+=`
 });
 }
 
-/* ================= BUSCA ================= */
+/* BUSCA */
 async function filtrarTabela(){
 
 const termo = document.getElementById("buscaCliente").value.trim();
@@ -181,7 +185,60 @@ const { data } = await query.limit(50);
 render(data);
 }
 
-/* ================= CRUD ================= */
+/* 🔥 EXPORTAÇÃO SEM LIMITE (FUNCIONA MESMO) */
+async function exportarExcel(){
+
+let todos = [];
+let ultimoId = 0;
+const limite = 1000;
+
+while(true){
+
+const { data, error } = await supabaseClient
+.from("clientes")
+.select("*")
+.gt("id", ultimoId)
+.order("id", { ascending: true })
+.limit(limite);
+
+if(error){
+console.error(error);
+alert("Erro ao exportar");
+return;
+}
+
+if(!data || data.length === 0) break;
+
+todos = todos.concat(data);
+
+ultimoId = data[data.length - 1].id;
+
+if(data.length < limite) break;
+}
+
+console.log("Total exportado:", todos.length);
+
+const formatado = todos.map(c => ({
+Nome: c.nome,
+Telefone: c.telefone_1,
+Email: c.email,
+CPF_CNPJ: c.cpf_cnpj,
+Nascimento: c.dt_nasc,
+Nacionalidade: c.nacionalidade,
+Endereco: c.endereco,
+Observacao: c.observacao
+}));
+
+const ws = XLSX.utils.json_to_sheet(formatado);
+const wb = XLSX.utils.book_new();
+
+XLSX.utils.book_append_sheet(wb, ws, "Clientes");
+
+XLSX.writeFile(wb, "clientes.xlsx");
+
+}
+
+/* CRUD */
 
 function abrirNovo(){
 idAtual=null;
@@ -201,7 +258,6 @@ if(el) el.value=data[k];
 modal.style.display="flex";
 }
 
-/* 🔥 SALVAR COM VALIDAÇÃO */
 async function salvar(){
 
 let payload={};
@@ -222,7 +278,6 @@ return;
 
 payload.telefone_1 = payload.telefone_1.replace(/\D/g,'');
 
-/* 🔥 VERIFICA DUPLICADO */
 let query = supabaseClient
 .from("clientes")
 .select("id")
@@ -240,7 +295,6 @@ alert("⚠️ Cliente já cadastrado!");
 return;
 }
 
-/* salva */
 if(idAtual){
 await supabaseClient.from("clientes").update(payload).eq("id",idAtual);
 }else{
@@ -261,8 +315,6 @@ carregar();
 function fecharModal(){
 modal.style.display="none";
 }
-
-/* ================= INIT ================= */
 
 carregar();
 

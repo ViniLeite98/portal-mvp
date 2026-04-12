@@ -356,7 +356,13 @@ async function carregarLog(){
 
 const { data } = await supabaseClient
 .from("movimentacoes_estoque")
-.select("*")
+.select(`
+quantidade,
+tipo,
+responsavel,
+data,
+produtos(nome)
+`)
 .order("created_at", { ascending: false })
 .limit(20)
 
@@ -369,27 +375,25 @@ container.innerHTML = "<p style='color:#999'>Sem movimentações ainda</p>"
 return
 }
 
-for (let m of data){
-
-const { data: produto } = await supabaseClient
-.from("produtos")
-.select("nome")
-.eq("id", m.produto_id)
-.single()
+data.forEach(m=>{
 
 container.innerHTML += `
 <div class="log-linha">
-<span class="log-produto">${produto?.nome || "-"}</span>
+
+<span class="log-produto">${m.produtos?.nome || "-"}</span>
+
 <span class="log-tipo ${m.tipo}">
 ${m.tipo === "entrada" ? "+" : "-"} ${m.quantidade}
 </span>
+
 <span class="log-info">
 ${m.responsavel || "-"} | ${m.data || ""}
 </span>
+
 </div>
 `
-}
 
+})
 }
 
 carregar()

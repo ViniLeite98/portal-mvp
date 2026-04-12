@@ -116,7 +116,7 @@ const modal = document.getElementById("modal");
 
 let idAtual=null;
 
-/* ================= LOAD ================= */
+/* LOAD */
 async function carregar(){
 const {data,error}=await supabaseClient
 .from("clientes")
@@ -132,15 +132,24 @@ return;
 render(data);
 }
 
-/* ================= RENDER ================= */
+/* 🔥 RENDER AJUSTADO (AQUI FOI A ÚNICA MUDANÇA) */
 function render(lista){
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
 
 lista.forEach(c=>{
+
+let telefone = (c.telefone_1 || "").replace(/\D/g,'');
+let finalTelefone = telefone.slice(-4);
+
+let nomeFormatado = c.nome;
+if(finalTelefone){
+nomeFormatado = `${c.nome}${finalTelefone}`;
+}
+
 tbody.innerHTML+=`
 <tr>
-<td>${c.nome}</td>
+<td>${nomeFormatado}</td>
 <td>${c.telefone_1||""}</td>
 <td>${c.email||""}</td>
 <td>
@@ -152,7 +161,7 @@ tbody.innerHTML+=`
 });
 }
 
-/* ================= BUSCA ================= */
+/* BUSCA (NOME + TELEFONE) */
 async function filtrarTabela(){
 
 const termo = document.getElementById("buscaCliente").value.trim();
@@ -181,7 +190,7 @@ const { data } = await query.limit(50);
 render(data);
 }
 
-/* ================= CRUD ================= */
+/* CRUD */
 
 function abrirNovo(){
 idAtual=null;
@@ -201,7 +210,6 @@ if(el) el.value=data[k];
 modal.style.display="flex";
 }
 
-/* 🔥 SALVAR COM VALIDAÇÃO */
 async function salvar(){
 
 let payload={};
@@ -222,7 +230,6 @@ return;
 
 payload.telefone_1 = payload.telefone_1.replace(/\D/g,'');
 
-/* 🔥 VERIFICA DUPLICADO */
 let query = supabaseClient
 .from("clientes")
 .select("id")
@@ -240,7 +247,6 @@ alert("⚠️ Cliente já cadastrado!");
 return;
 }
 
-/* salva */
 if(idAtual){
 await supabaseClient.from("clientes").update(payload).eq("id",idAtual);
 }else{
@@ -261,8 +267,6 @@ carregar();
 function fecharModal(){
 modal.style.display="none";
 }
-
-/* ================= INIT ================= */
 
 carregar();
 

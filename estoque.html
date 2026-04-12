@@ -40,13 +40,6 @@ border:1px solid #ccc;
 margin-bottom:10px;
 }
 
-label{
-font-size:13px;
-margin-bottom:3px;
-display:block;
-color:#555;
-}
-
 button{
 width:100%;
 padding:10px;
@@ -241,24 +234,6 @@ const supabaseClient = supabase.createClient(
 
 let listaFuncionarios = []
 
-async function criarProduto(){
-const nome = document.getElementById("nome").value.trim()
-const valor = parseFloat(document.getElementById("valor").value) || 0
-
-if(!nome){
-alert("Digite o nome")
-return
-}
-
-await supabaseClient.from("produtos").insert({ nome, valor })
-
-document.getElementById("nome").value=""
-document.getElementById("valor").value=""
-
-carregar()
-carregarLog()
-}
-
 async function carregar(){
 
 const {data} = await supabaseClient
@@ -299,22 +274,8 @@ const { data } = await supabaseClient
 .from("terapeutas")
 .select("nome_profissional")
 .eq("status","Ativo")
-.order("nome_profissional")
 
 listaFuncionarios = data || []
-}
-
-function abrirModalSaida(){
-
-document.getElementById("modalSaida").style.display="flex"
-
-const hoje = new Date().toISOString().split("T")[0]
-document.getElementById("dataSaida").value = hoje
-
-}
-
-function fecharModal(){
-document.getElementById("modalSaida").style.display="none"
 }
 
 const input = document.getElementById("responsavelBusca")
@@ -334,9 +295,7 @@ t.nome_profissional.toLowerCase().includes(termo)
 )
 
 listaSug.innerHTML = filtrados.map(t =>
-`<div onclick="selecionarFuncionario('${t.nome_profissional}')">
-${t.nome_profissional}
-</div>`
+`<div onclick="selecionarFuncionario('${t.nome_profissional}')">${t.nome_profissional}</div>`
 ).join("")
 
 listaSug.style.display="block"
@@ -348,49 +307,19 @@ input.value = nome
 listaSug.style.display="none"
 }
 
-async function confirmarSaida(){
-
-const id = document.getElementById("produtoSaida").value
-const qtd = parseFloat(document.getElementById("qtdModal").value)
-const responsavel = document.getElementById("responsavelBusca").value
-const data = document.getElementById("dataSaida").value
-
-if(!qtd){
-alert("Digite a quantidade")
-return
+function abrirModalSaida(){
+document.getElementById("modalSaida").style.display="flex"
+document.getElementById("dataSaida").value = new Date().toISOString().split("T")[0]
 }
 
-const { data: estoque } = await supabaseClient
-.from("estoque_atual")
-.select("saldo")
-.eq("id", id)
-.single()
-
-if(qtd > estoque.saldo){
-alert("Estoque insuficiente")
-return
-}
-
-await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"saida",
-quantidade:qtd,
-responsavel:responsavel,
-data:data
-})
-
-document.getElementById("qtdModal").value=""
-document.getElementById("responsavelBusca").value=""
-
-fecharModal()
-carregar()
-carregarLog()
+function fecharModal(){
+document.getElementById("modalSaida").style.display="none"
 }
 
 async function entrada(){
+
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
-if(!qtd) return
 
 await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id:id,
@@ -403,17 +332,31 @@ carregar()
 carregarLog()
 }
 
+async function confirmarSaida(){
+
+const id = document.getElementById("produtoSaida").value
+const qtd = parseFloat(document.getElementById("qtdModal").value)
+const responsavel = document.getElementById("responsavelBusca").value
+const data = document.getElementById("dataSaida").value
+
+await supabaseClient.from("movimentacoes_estoque").insert({
+produto_id:id,
+tipo:"saida",
+quantidade:qtd,
+responsavel:responsavel,
+data:data
+})
+
+fecharModal()
+carregar()
+carregarLog()
+}
+
 async function carregarLog(){
 
 const { data } = await supabaseClient
 .from("movimentacoes_estoque")
-.select(`
-quantidade,
-tipo,
-responsavel,
-data,
-produtos(nome)
-`)
+.select("*")
 .order("created_at", { ascending: false })
 .limit(20)
 
@@ -421,25 +364,32 @@ const container = document.getElementById("logMovimentacoes")
 
 container.innerHTML = ""
 
-;(data || []).forEach(m=>{
+if(!data || data.length === 0){
+container.innerHTML = "<p style='color:#999'>Sem movimentações ainda</p>"
+return
+}
+
+for (let m of data){
+
+const { data: produto } = await supabaseClient
+.from("produtos")
+.select("nome")
+.eq("id", m.produto_id)
+.single()
 
 container.innerHTML += `
 <div class="log-linha">
-
-<span class="log-produto">${m.produtos?.nome || "-"}</span>
-
+<span class="log-produto">${produto?.nome || "-"}</span>
 <span class="log-tipo ${m.tipo}">
 ${m.tipo === "entrada" ? "+" : "-"} ${m.quantidade}
 </span>
-
 <span class="log-info">
 ${m.responsavel || "-"} | ${m.data || ""}
 </span>
-
 </div>
 `
+}
 
-})
 }
 
 carregar()

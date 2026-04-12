@@ -72,6 +72,26 @@ white-space:nowrap;
 font-weight:500;
 }
 
+/* ações */
+.acoes{
+display:flex;
+gap:10px;
+margin-left:10px;
+}
+
+.btn-acao{
+cursor:pointer;
+opacity:0;
+transition:0.2s;
+}
+
+.lista-linha:hover .btn-acao{
+opacity:1;
+}
+
+.btn-edit{color:#2563eb;}
+.btn-delete{color:#dc2626;}
+
 /* MODAL */
 .modal{
 display:none;
@@ -234,6 +254,20 @@ const supabaseClient = supabase.createClient(
 
 let listaFuncionarios = []
 
+async function criarProduto(){
+const nome = document.getElementById("nome").value.trim()
+const valor = parseFloat(document.getElementById("valor").value) || 0
+
+if(!nome) return
+
+await supabaseClient.from("produtos").insert({ nome, valor })
+
+document.getElementById("nome").value=""
+document.getElementById("valor").value=""
+
+carregar()
+}
+
 async function carregar(){
 
 const {data} = await supabaseClient
@@ -256,9 +290,20 @@ const total = (p.valor || 0) * (p.saldo || 0)
 
 lista.innerHTML+=`
 <div class="lista-linha">
+
 <span class="nome">${p.nome}</span>
+
 <span class="pontos"></span>
-<span class="valor">${p.saldo} | R$ ${total.toFixed(2)}</span>
+
+<span class="valor">
+${p.saldo} | R$ ${total.toFixed(2)}
+</span>
+
+<div class="acoes">
+<i class="fa-solid fa-pen btn-acao btn-edit" onclick="editarValor('${p.id}', ${p.valor || 0})"></i>
+<i class="fa-solid fa-trash btn-acao btn-delete" onclick="excluirProduto('${p.id}')"></i>
+</div>
+
 </div>
 `
 
@@ -268,8 +313,28 @@ selModal.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 
 }
 
-async function carregarFuncionarios(){
+async function editarValor(id, valorAtual){
+const novo = prompt("Novo valor:", valorAtual)
+if(novo === null) return
 
+await supabaseClient
+.from("produtos")
+.update({ valor: parseFloat(novo) || 0 })
+.eq("id", id)
+
+carregar()
+}
+
+async function excluirProduto(id){
+if(!confirm("Excluir produto?")) return
+
+await supabaseClient.from("produtos").delete().eq("id", id)
+
+carregar()
+carregarLog()
+}
+
+async function carregarFuncionarios(){
 const { data } = await supabaseClient
 .from("terapeutas")
 .select("nome_profissional")
@@ -317,7 +382,6 @@ document.getElementById("modalSaida").style.display="none"
 }
 
 async function entrada(){
-
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 

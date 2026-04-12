@@ -102,7 +102,7 @@ const modal = document.getElementById("modal");
 
 let idAtual=null;
 
-/* ================= LOAD ================= */
+/* LOAD */
 async function carregar(){
 const {data}=await supabaseClient
 .from("clientes")
@@ -113,7 +113,7 @@ const {data}=await supabaseClient
 render(data);
 }
 
-/* ================= RENDER ================= */
+/* RENDER */
 function render(lista){
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -133,7 +133,7 @@ tbody.innerHTML+=`
 });
 }
 
-/* ================= BUSCA ================= */
+/* BUSCA */
 async function filtrarTabela(){
 
 const termo = document.getElementById("buscaCliente").value.trim();
@@ -162,34 +162,51 @@ const { data } = await query.limit(50);
 render(data);
 }
 
-/* ================= EXPORTAR TODOS ================= */
+/* 🔥 EXPORTAR TODOS (CORRIGIDO DEFINITIVO) */
 async function exportarExcel(){
 
 let todos = [];
-let from = 0;
-const limit = 1000;
+let pagina = 0;
+const limite = 1000;
 
 while(true){
 
-const { data } = await supabaseClient
+const from = pagina * limite;
+const to = from + limite - 1;
+
+const { data, error } = await supabaseClient
 .from("clientes")
 .select("*")
-.order("nome")
-.range(from, from + limit - 1);
+.order("id") // ESSENCIAL
+.range(from, to);
+
+if(error){
+console.error(error);
+alert("Erro ao exportar");
+return;
+}
 
 if(!data || data.length === 0) break;
 
 todos = todos.concat(data);
 
-if(data.length < limit) break;
+if(data.length < limite) break;
 
-from += limit;
+pagina++;
 }
 
+console.log("Total exportado:", todos.length);
+
+/* formata */
 const formatado = todos.map(c => ({
 Nome: c.nome,
 Telefone: c.telefone_1,
-Email: c.email
+Email: c.email,
+CPF_CNPJ: c.cpf_cnpj,
+Nascimento: c.dt_nasc,
+Nacionalidade: c.nacionalidade,
+Endereco: c.endereco,
+Observacao: c.observacao
 }));
 
 const ws = XLSX.utils.json_to_sheet(formatado);
@@ -200,7 +217,7 @@ XLSX.utils.book_append_sheet(wb, ws, "Clientes");
 XLSX.writeFile(wb, "clientes.xlsx");
 }
 
-/* ================= CRUD ================= */
+/* CRUD */
 
 function abrirNovo(){
 idAtual=null;
@@ -232,7 +249,7 @@ return;
 
 telefone = telefone.replace(/\D/g,'');
 
-/* 🔥 valida duplicado */
+/* duplicado */
 let query = supabaseClient
 .from("clientes")
 .select("id")

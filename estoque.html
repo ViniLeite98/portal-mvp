@@ -91,6 +91,23 @@ opacity:1;
 .btn-edit{color:#2563eb;}
 .btn-zerar{color:#f59e0b;}
 .btn-delete{color:#dc2626;}
+
+/* MODAL */
+.modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.4);
+align-items:center;
+justify-content:center;
+}
+
+.modal-box{
+background:#fff;
+padding:20px;
+border-radius:12px;
+width:350px;
+}
 </style>
 </head>
 
@@ -123,7 +140,7 @@ opacity:1;
 <input id="qtd" type="number" placeholder="Quantidade">
 
 <button onclick="entrada()">+ Entrada</button>
-<button class="btn-danger" onclick="saida()">- Saída</button>
+<button class="btn-danger" onclick="abrirModalSaida()">- Saída</button>
 
 </div>
 
@@ -147,6 +164,26 @@ opacity:1;
 </div>
 
 </main>
+</div>
+
+<!-- MODAL SAÍDA -->
+<div id="modalSaida" class="modal">
+<div class="modal-box">
+
+<h3>Registrar Saída</h3>
+
+<select id="produtoSaida"></select>
+
+<input id="qtdModal" type="number" placeholder="Quantidade">
+
+<input id="responsavelSaida" placeholder="Quem usou">
+
+<div style="display:flex; gap:10px; margin-top:10px;">
+<button onclick="confirmarSaida()">Salvar</button>
+<button class="btn-danger" onclick="fecharModal()">Cancelar</button>
+</div>
+
+</div>
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -213,54 +250,62 @@ ${p.saldo} | R$ ${total.toFixed(2)}
 `
 })
 
-// select
+// select principal
 const sel=document.getElementById("produtoMov")
 sel.innerHTML=""
 
+// select modal
+const selModal=document.getElementById("produtoSaida")
+selModal.innerHTML=""
+
 data.forEach(p=>{
 sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
+selModal.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 })
 
 }
 
-async function exportarExcel(){
+function abrirModalSaida(){
+document.getElementById("modalSaida").style.display="flex"
+}
 
-const {data} = await supabaseClient
-.from("estoque_atual")
-.select("*")
-.order("nome")
+function fecharModal(){
+document.getElementById("modalSaida").style.display="none"
+}
 
-if(!data || data.length === 0){
-alert("Sem dados")
+async function confirmarSaida(){
+
+const id = document.getElementById("produtoSaida").value
+const qtd = parseFloat(document.getElementById("qtdModal").value)
+const responsavel = document.getElementById("responsavelSaida").value
+
+if(!qtd){
+alert("Digite a quantidade")
 return
 }
 
-const dados = data.map(p => ({
-Nome: p.nome,
-Quantidade: p.saldo,
-"Valor Unitário": p.valor || 0,
-"Valor Total": (p.valor || 0) * (p.saldo || 0)
-}))
+const { data } = await supabaseClient
+.from("estoque_atual")
+.select("saldo")
+.eq("id", id)
+.single()
 
-const ws = XLSX.utils.json_to_sheet(dados)
-const wb = XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb, ws, "Estoque")
-
-XLSX.writeFile(wb, "estoque.xlsx")
+if(qtd > data.saldo){
+alert("Estoque insuficiente")
+return
 }
 
-async function editarValor(id, valorAtual){
+await supabaseClient.from("movimentacoes_estoque").insert({
+produto_id:id,
+tipo:"saida",
+quantidade:qtd,
+responsavel:responsavel
+})
 
-const novo = prompt("Novo valor (R$):", valorAtual)
+document.getElementById("qtdModal").value=""
+document.getElementById("responsavelSaida").value=""
 
-if(novo === null) return
-
-await supabaseClient
-.from("produtos")
-.update({ valor: parseFloat(novo) || 0 })
-.eq("id", id)
-
+fecharModal()
 carregar()
 }
 
@@ -279,39 +324,15 @@ document.getElementById("qtd").value=""
 carregar()
 }
 
-async function saida(){
-const id=document.getElementById("produtoMov").value
-const qtd=parseFloat(document.getElementById("qtd").value)
-if(!qtd) return
-
-const { data } = await supabaseClient
-.from("estoque_atual")
-.select("saldo")
-.eq("id", id)
-.single()
-
-if(qtd > data.saldo){
-alert("Estoque insuficiente")
-return
-}
-
-await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"saida",
-quantidade:qtd
-})
-
-document.getElementById("qtd").value=""
-carregar()
-}
-
 async function zerar(id, saldo){
 if(saldo <= 0){ alert("Já está zerado"); return }
+
 await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id:id,
 tipo:"saida",
 quantidade:saldo
 })
+
 carregar()
 }
 
@@ -319,6 +340,42 @@ async function excluir(id){
 if(!confirm("Excluir material?")) return
 await supabaseClient.from("produtos").delete().eq("id", id)
 carregar()
+}
+
+async function editarValor(id, valorAtual){
+
+const novo = prompt("Novo valor (R$):", valorAtual)
+
+if(novo === null) return
+
+await supabaseClient
+.from("produtos")
+.update({ valor: parseFloat(novo) || 0 })
+.eq("id", id)
+
+carregar()
+}
+
+async function exportarExcel(){
+
+const {data} = await supabaseClient
+.from("estoque_atual")
+.select("*")
+.order("nome")
+
+const dados = data.map(p => ({
+Nome: p.nome,
+Quantidade: p.saldo,
+"Valor Unitário": p.valor || 0,
+"Valor Total": (p.valor || 0) * (p.saldo || 0)
+}))
+
+const ws = XLSX.utils.json_to_sheet(dados)
+const wb = XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb, ws, "Estoque")
+
+XLSX.writeFile(wb, "estoque.xlsx")
 }
 
 carregar()

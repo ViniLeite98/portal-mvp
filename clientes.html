@@ -1,137 +1,6 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Clientes | Hara Spa</title>
-
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;}
-.content{flex:1;padding:40px;}
-.topbar{display:flex;justify-content:space-between;margin-bottom:20px;}
-input{padding:8px;border-radius:6px;border:1px solid #ccc;}
-
-table{width:100%;background:#fff;border-collapse:collapse;}
-th,td{padding:12px;border-bottom:1px solid #eee;}
-
-button{background:#1f2937;color:#fff;border:none;padding:6px 12px;border-radius:6px;}
-.excluir{background:#dc2626;}
-
-.modal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.4);
-display:none;
-align-items:center;
-justify-content:center;
-}
-
-.modal-content{
-background:#fff;
-padding:20px;
-border-radius:10px;
-width:600px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-<aside id="sidebar"></aside>
-
-<main class="content">
-
-<h1>Clientes</h1>
-
-<input id="buscaCliente" placeholder="Buscar..." oninput="filtrarTabela()">
-
-<button onclick="abrirNovo()">+ Novo Cliente</button>
-
-<table>
-<thead>
-<tr>
-<th>Nome</th>
-<th>Telefone</th>
-<th>Email</th>
-<th>Ações</th>
-</tr>
-</thead>
-
-<tbody id="lista"></tbody>
-</table>
-
-</main>
-</div>
-
-<div class="modal" id="modal">
-<div class="modal-content">
-
-<input id="nome" placeholder="Nome"><br><br>
-<input id="telefone_1" placeholder="Telefone"><br><br>
-<input id="email" placeholder="Email"><br><br>
-
-<button onclick="salvar()">Salvar</button>
-<button onclick="fecharModal()">Cancelar</button>
-
-</div>
-</div>
-
 <script>
 
-const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
-
-let idAtual=null;
-
-/* LOAD */
-async function carregar(){
-const {data}=await supabaseClient
-.from("clientes")
-.select("*")
-.order("nome")
-.limit(50);
-
-render(data);
-}
-
-/* RENDER */
-function render(lista){
-const tbody=document.getElementById("lista");
-tbody.innerHTML="";
-
-lista.forEach(c=>{
-
-let tel = (c.telefone_1||"").replace(/\D/g,'');
-let final = tel.slice(-4);
-
-let nome = final ? `${c.nome}${final}` : c.nome;
-
-tbody.innerHTML+=`
-<tr>
-<td>${nome}</td>
-<td>${c.telefone_1||""}</td>
-<td>${c.email||""}</td>
-<td>
-<button onclick="editar('${c.id}')">Editar</button>
-<button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
-</td>
-</tr>
-`;
-});
-}
-
-/* 🔥 BUSCA INTELIGENTE */
+/* BUSCA (NOME OU TELEFONE - CORRIGIDO) */
 async function filtrarTabela(){
 
 const termo = document.getElementById("buscaCliente").value.trim();
@@ -141,97 +10,23 @@ carregar();
 return;
 }
 
+/* limpa número */
 const numero = termo.replace(/\D/g,'');
 
+/* 🔥 OR em vez de AND */
 let query = supabaseClient
 .from("clientes")
 .select("*")
 .or(`nome.ilike.%${termo}%,telefone_1.ilike.%${numero}%`);
 
-const { data } = await query.limit(50);
+const { data, error } = await query.limit(50);
+
+if(error){
+console.error(error);
+return;
+}
 
 render(data);
 }
 
-/* CRUD */
-
-function abrirNovo(){
-idAtual=null;
-document.querySelectorAll("input").forEach(i=>i.value="");
-modal.style.display="flex";
-}
-
-async function editar(id){
-idAtual=id;
-const {data}=await supabaseClient.from("clientes").select("*").eq("id",id).single();
-
-document.getElementById("nome").value=data.nome;
-document.getElementById("telefone_1").value=data.telefone_1;
-document.getElementById("email").value=data.email;
-
-modal.style.display="flex";
-}
-
-async function salvar(){
-
-let nome=document.getElementById("nome").value.trim().toLowerCase();
-let telefone=document.getElementById("telefone_1").value.replace(/\D/g,'');
-
-if(!nome || !telefone){
-alert("Nome e telefone obrigatórios");
-return;
-}
-
-/* padroniza telefone */
-if(telefone.length === 8){
-telefone = "11" + telefone;
-}
-
-if(telefone.length === 10){
-telefone = telefone.slice(0,2)+"9"+telefone.slice(2);
-}
-
-/* valida duplicidade */
-let query = supabaseClient
-.from("clientes")
-.select("id")
-.ilike("nome", nome)
-.eq("telefone_1", telefone);
-
-if(idAtual){
-query = query.neq("id", idAtual);
-}
-
-const { data } = await query;
-
-if(data.length){
-alert("Cliente já existe");
-return;
-}
-
-/* salva */
-if(idAtual){
-await supabaseClient.from("clientes").update({nome, telefone_1:telefone, email}).eq("id",idAtual);
-}else{
-await supabaseClient.from("clientes").insert({nome, telefone_1:telefone, email});
-}
-
-fecharModal();
-carregar();
-}
-
-async function excluir(id){
-await supabaseClient.from("clientes").delete().eq("id",id);
-carregar();
-}
-
-function fecharModal(){
-modal.style.display="none";
-}
-
-carregar();
-
 </script>
-
-</body>
-</html>

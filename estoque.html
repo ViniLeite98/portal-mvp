@@ -79,6 +79,7 @@ white-space:nowrap;
 font-weight:500;
 }
 
+/* MODAL */
 .modal{
 display:none;
 position:fixed;
@@ -96,9 +97,7 @@ width:350px;
 }
 
 /* AUTOCOMPLETE */
-.autocomplete{
-position:relative;
-}
+.autocomplete{position:relative;}
 
 .sugestoes{
 position:absolute;
@@ -121,6 +120,33 @@ cursor:pointer;
 
 .sugestoes div:hover{
 background:#f1f5f9;
+}
+
+/* LOG */
+.log-linha{
+display:flex;
+align-items:center;
+font-size:14px;
+margin-bottom:8px;
+}
+
+.log-produto{font-weight:500;}
+
+.log-tipo{
+margin:0 8px;
+font-size:12px;
+padding:2px 6px;
+border-radius:6px;
+color:#fff;
+}
+
+.entrada{ background:#16a34a; }
+.saida{ background:#dc2626; }
+
+.log-info{
+margin-left:auto;
+color:#555;
+font-size:12px;
 }
 </style>
 </head>
@@ -158,8 +184,15 @@ background:#f1f5f9;
 </div>
 
 <div class="card">
+
 <h3>Estoque</h3>
 <div id="lista"></div>
+
+<hr style="margin:20px 0">
+
+<h3>Movimentações</h3>
+<div id="logMovimentacoes"></div>
+
 </div>
 
 </div>
@@ -223,6 +256,7 @@ document.getElementById("nome").value=""
 document.getElementById("valor").value=""
 
 carregar()
+carregarLog()
 }
 
 async function carregar(){
@@ -350,6 +384,7 @@ document.getElementById("responsavelBusca").value=""
 
 fecharModal()
 carregar()
+carregarLog()
 }
 
 async function entrada(){
@@ -365,10 +400,51 @@ quantidade:qtd
 
 document.getElementById("qtd").value=""
 carregar()
+carregarLog()
+}
+
+async function carregarLog(){
+
+const { data } = await supabaseClient
+.from("movimentacoes_estoque")
+.select(`
+quantidade,
+tipo,
+responsavel,
+data,
+produtos(nome)
+`)
+.order("created_at", { ascending: false })
+.limit(20)
+
+const container = document.getElementById("logMovimentacoes")
+
+container.innerHTML = ""
+
+;(data || []).forEach(m=>{
+
+container.innerHTML += `
+<div class="log-linha">
+
+<span class="log-produto">${m.produtos?.nome || "-"}</span>
+
+<span class="log-tipo ${m.tipo}">
+${m.tipo === "entrada" ? "+" : "-"} ${m.quantidade}
+</span>
+
+<span class="log-info">
+${m.responsavel || "-"} | ${m.data || ""}
+</span>
+
+</div>
+`
+
+})
 }
 
 carregar()
 carregarFuncionarios()
+carregarLog()
 
 </script>
 

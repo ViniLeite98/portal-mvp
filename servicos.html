@@ -38,16 +38,15 @@ gap:10px;
 align-items:center;
 }
 
+/* 🔥 PADRÃO BOTÕES */
 .right-tools button{
-background:#2563eb;
+background:#1f2937;
 color:#fff;
 border:none;
 border-radius:6px;
 padding:7px 12px;
 cursor:pointer;
 }
-
-.btn-novo{background:#1f2937;}
 
 table{
 width:100%;
@@ -69,7 +68,6 @@ cursor:pointer;
 font-weight:600;
 }
 
-/* 🎯 ALINHAMENTO PROFISSIONAL */
 td:nth-child(2),
 td:nth-child(3),
 td:nth-child(4),
@@ -78,7 +76,6 @@ td:nth-child(6){
 text-align:center;
 }
 
-/* hover */
 tr:hover{
 background:#f9fafb;
 }
@@ -125,6 +122,11 @@ justify-content:flex-end;
 gap:10px;
 margin-top:20px;
 }
+
+/* 🔥 EXCLUIR */
+button.excluir{
+background:#dc2626;
+}
 </style>
 </head>
 
@@ -143,12 +145,14 @@ margin-top:20px;
 </div>
 
 <div class="right-tools">
+
 <button onclick="exportarExcel()">
 <i class="fa-solid fa-file-excel"></i> Exportar
 </button>
 
-<button class="btn-novo" onclick="abrirNovo()">
-+ Novo
+<!-- 🔥 BOTÃO AJUSTADO -->
+<button onclick="abrirNovo()">
+Cadastrar Novo Serviço
 </button>
 
 <select id="porPaginaSelect" onchange="mudarPorPagina()">
@@ -157,6 +161,7 @@ margin-top:20px;
 <option value="20">20</option>
 <option value="todos">Todos</option>
 </select>
+
 </div>
 </div>
 
@@ -246,7 +251,7 @@ margin-top:20px;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
 let dados=[]
@@ -273,28 +278,6 @@ render()
 
 function render(lista=dados){
 
-if(ordem.campo){
-lista.sort((a,b)=>{
-let valA,valB
-
-switch(ordem.campo){
-case "servico":
-valA=`${a.grupo} ${a.subgrupo||""}`
-valB=`${b.grupo} ${b.subgrupo||""}`
-break
-case "tempo": valA=a.tempo||0; valB=b.tempo||0; break
-case "valor": valA=a.valor||0; valB=b.valor||0; break
-case "comissao": valA=a.comissao||0; valB=b.comissao||0; break
-}
-
-if(typeof valA==="string"){valA=valA.toLowerCase();valB=valB.toLowerCase()}
-
-if(valA>valB)return ordem.asc?1:-1
-if(valA<valB)return ordem.asc?-1:1
-return 0
-})
-}
-
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
@@ -308,7 +291,7 @@ tbody.innerHTML+=`
 <td>${s.status}</td>
 <td>
 <button onclick="editar('${s.id}')">Editar</button>
-<button onclick="excluir('${s.id}')">Excluir</button>
+<button class="excluir" onclick="excluir('${s.id}')">Excluir</button>
 </td>
 </tr>`
 })
@@ -334,18 +317,6 @@ tempo:tempo.value?parseInt(tempo.value):null,
 valor:parseFloat(valor.value),
 comissao:parseFloat(comissao.value),
 status:status.value
-}
-
-const duplicado=dados.find(s =>
-s.grupo===payload.grupo &&
-(s.subgrupo||"")===(payload.subgrupo||"") &&
-(s.tempo||null)===(payload.tempo||null) &&
-s.id!==idAtual
-)
-
-if(duplicado){
-alert("Serviço já existe!")
-return
 }
 
 if(idAtual){

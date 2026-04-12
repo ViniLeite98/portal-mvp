@@ -79,26 +79,6 @@ white-space:nowrap;
 font-weight:500;
 }
 
-.acoes{
-display:flex;
-gap:10px;
-margin-left:10px;
-}
-
-.btn-acao{
-cursor:pointer;
-opacity:0;
-transition:0.2s;
-}
-
-.lista-linha:hover .btn-acao{
-opacity:1;
-}
-
-.btn-edit{color:#2563eb;}
-.btn-zerar{color:#f59e0b;}
-.btn-delete{color:#dc2626;}
-
 .modal{
 display:none;
 position:fixed;
@@ -152,17 +132,7 @@ width:350px;
 
 <div class="card">
 
-<div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
-  <h3>Estoque</h3>
-
-  <div style="display:flex; gap:10px; align-items:center;">
-    <strong>Qtd | Valor</strong>
-    <button onclick="exportarExcel()" style="width:auto; padding:6px 12px; font-size:13px;">
-      <i class="fa-solid fa-file-excel"></i> Exportar
-    </button>
-  </div>
-</div>
-
+<h3>Estoque</h3>
 <div id="lista"></div>
 
 </div>
@@ -199,18 +169,16 @@ width:350px;
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"SEU_ANON_KEY_AQUI"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
 async function criarProduto(){
-
 const nome = document.getElementById("nome").value.trim()
 const valor = parseFloat(document.getElementById("valor").value) || 0
 
@@ -265,7 +233,7 @@ async function carregarFuncionarios(){
 
 const { data } = await supabaseClient
 .from("funcionarios")
-.select("id,nome")
+.select("nome")
 .order("nome")
 
 const select = document.getElementById("responsavelSaida")
@@ -342,26 +310,6 @@ quantidade:qtd
 
 document.getElementById("qtd").value=""
 carregar()
-}
-
-async function exportarExcel(){
-
-const {data} = await supabaseClient
-.from("estoque_atual")
-.select("*")
-
-const dados = data.map(p => ({
-Nome: p.nome,
-Quantidade: p.saldo,
-Valor: p.valor
-}))
-
-const ws = XLSX.utils.json_to_sheet(dados)
-const wb = XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb, ws, "Estoque")
-
-XLSX.writeFile(wb, "estoque.xlsx")
 }
 
 carregar()

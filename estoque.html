@@ -95,10 +95,32 @@ border-radius:12px;
 width:350px;
 }
 
-/* lista com scroll */
-#responsavelSaida{
-height:120px;
+/* AUTOCOMPLETE */
+.autocomplete{
+position:relative;
+}
+
+.sugestoes{
+position:absolute;
+top:100%;
+left:0;
+right:0;
+background:#fff;
+border:1px solid #ccc;
+border-radius:8px;
+max-height:150px;
 overflow-y:auto;
+z-index:10;
+display:none;
+}
+
+.sugestoes div{
+padding:10px;
+cursor:pointer;
+}
+
+.sugestoes div:hover{
+background:#f1f5f9;
 }
 </style>
 </head>
@@ -111,7 +133,6 @@ overflow-y:auto;
 <main class="content">
 
 <h1>Materiais</h1>
-<p>Controle simples</p>
 
 <div class="grid">
 
@@ -137,10 +158,8 @@ overflow-y:auto;
 </div>
 
 <div class="card">
-
 <h3>Estoque</h3>
 <div id="lista"></div>
-
 </div>
 
 </div>
@@ -161,8 +180,10 @@ overflow-y:auto;
 <input id="qtdModal" type="number">
 
 <label>Quem usou</label>
-<input id="responsavelBusca" placeholder="Digite o nome..." oninput="filtrarResponsavel()">
-<select id="responsavelSaida"></select>
+<div class="autocomplete">
+<input id="responsavelBusca" placeholder="Digite o nome..." autocomplete="off">
+<div id="listaSugestoes" class="sugestoes"></div>
+</div>
 
 <label>Data</label>
 <input id="dataSaida" type="date">
@@ -247,32 +268,6 @@ const { data } = await supabaseClient
 .order("nome_profissional")
 
 listaFuncionarios = data || []
-
-renderFuncionarios(listaFuncionarios)
-}
-
-function renderFuncionarios(lista){
-
-const select = document.getElementById("responsavelSaida")
-
-select.innerHTML = ""
-
-lista.forEach(t=>{
-select.innerHTML += `<option value="${t.nome_profissional}">${t.nome_profissional}</option>`
-})
-
-}
-
-function filtrarResponsavel(){
-
-const termo = document.getElementById("responsavelBusca").value.toLowerCase()
-
-const filtrados = listaFuncionarios.filter(t =>
-t.nome_profissional.toLowerCase().includes(termo)
-)
-
-renderFuncionarios(filtrados)
-
 }
 
 function abrirModalSaida(){
@@ -288,11 +283,42 @@ function fecharModal(){
 document.getElementById("modalSaida").style.display="none"
 }
 
+const input = document.getElementById("responsavelBusca")
+const listaSug = document.getElementById("listaSugestoes")
+
+input.addEventListener("input", ()=>{
+
+const termo = input.value.toLowerCase()
+
+if(!termo){
+listaSug.style.display="none"
+return
+}
+
+const filtrados = listaFuncionarios.filter(t =>
+t.nome_profissional.toLowerCase().includes(termo)
+)
+
+listaSug.innerHTML = filtrados.map(t =>
+`<div onclick="selecionarFuncionario('${t.nome_profissional}')">
+${t.nome_profissional}
+</div>`
+).join("")
+
+listaSug.style.display="block"
+
+})
+
+function selecionarFuncionario(nome){
+input.value = nome
+listaSug.style.display="none"
+}
+
 async function confirmarSaida(){
 
 const id = document.getElementById("produtoSaida").value
 const qtd = parseFloat(document.getElementById("qtdModal").value)
-const responsavel = document.getElementById("responsavelSaida").value
+const responsavel = document.getElementById("responsavelBusca").value
 const data = document.getElementById("dataSaida").value
 
 if(!qtd){

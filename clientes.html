@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
-<!-- 🔥 EXCEL -->
+<!-- Excel -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -27,13 +27,8 @@ th{background:#f9fafb;font-weight:600;}
 button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
 button.excluir{background:#dc2626;}
 .top-actions{display:flex;gap:10px;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10;}
-.modal-content{background:#fff;width:900px;max-height:90vh;overflow:auto;border-radius:16px;padding:24px;}
-.section{margin-bottom:20px;}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-label{font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;display:block;}
-input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;}
+.modal-content{background:#fff;padding:20px;border-radius:10px;width:500px;}
 </style>
 </head>
 
@@ -45,11 +40,10 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 <main class="content">
 
 <h1>Clientes</h1>
-<p>Clientes cadastrados</p>
 
 <div class="topbar">
 <div class="left-tools">
-<input id="buscaCliente" placeholder="Buscar cliente..." oninput="filtrarTabela()">
+<input id="buscaCliente" placeholder="Buscar..." oninput="filtrarTabela()">
 </div>
 
 <div class="top-actions">
@@ -67,6 +61,7 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 <th>Ações</th>
 </tr>
 </thead>
+
 <tbody id="lista"></tbody>
 </table>
 
@@ -77,32 +72,12 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<div class="section">
-<h3>Dados do Cliente</h3>
+<input id="nome" placeholder="Nome"><br><br>
+<input id="telefone_1" placeholder="Telefone"><br><br>
+<input id="email" placeholder="Email"><br><br>
 
-<div class="grid">
-
-<div><label>Nome *</label><input id="nome"></div>
-<div><label>CPF/CNPJ</label><input id="cpf_cnpj"></div>
-<div><label>Telefone 1 *</label><input id="telefone_1"></div>
-<div><label>Telefone 2</label><input id="telefone_2"></div>
-<div><label>Data de Nascimento</label><input type="date" id="dt_nasc"></div>
-<div><label>Email</label><input id="email"></div>
-<div><label>Nacionalidade</label><input id="nacionalidade"></div>
-<div><label>Endereço</label><input id="endereco"></div>
-
-</div>
-</div>
-
-<div class="section">
-<label>Observação</label>
-<textarea id="observacao"></textarea>
-</div>
-
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
 <button onclick="salvar()">Salvar</button>
-</div>
+<button onclick="fecharModal()">Cancelar</button>
 
 </div>
 </div>
@@ -122,29 +97,33 @@ let idAtual=null;
 
 /* LOAD */
 async function carregar(){
-const {data,error}=await supabaseClient
+const {data}=await supabaseClient
 .from("clientes")
 .select("*")
 .order("nome")
 .limit(50);
 
-if(error){
-console.error(error);
-return;
-}
-
 render(data);
 }
 
-/* RENDER */
+/* 🔥 RENDER AJUSTADO */
 function render(lista){
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
 
 lista.forEach(c=>{
+
+let telefone = (c.telefone_1 || "").replace(/\D/g,'');
+let finalTelefone = telefone.slice(-4);
+
+let nomeFormatado = c.nome;
+if(finalTelefone){
+nomeFormatado = `${c.nome}${finalTelefone}`;
+}
+
 tbody.innerHTML+=`
 <tr>
-<td>${c.nome}</td>
+<td>${nomeFormatado}</td>
 <td>${c.telefone_1||""}</td>
 <td>${c.email||""}</td>
 <td>
@@ -166,26 +145,15 @@ carregar();
 return;
 }
 
-const partes = termo.split(" ");
-let nomeBusca = partes.filter(p => isNaN(p)).join(" ");
-let numeroBusca = partes.join("").replace(/\D/g,'');
-
 let query = supabaseClient.from("clientes").select("*");
-
-if(nomeBusca){
-query = query.ilike("nome", `%${nomeBusca}%`);
-}
-
-if(numeroBusca.length >= 3){
-query = query.ilike("telefone_1", `%${numeroBusca}%`);
-}
+query = query.ilike("nome", `%${termo}%`);
 
 const { data } = await query.limit(50);
 
 render(data);
 }
 
-/* 🔥 EXPORTAÇÃO SEM LIMITE (FUNCIONA MESMO) */
+/* 🔥 EXPORTAR TODOS */
 async function exportarExcel(){
 
 let todos = [];
@@ -194,39 +162,25 @@ const limite = 1000;
 
 while(true){
 
-const { data, error } = await supabaseClient
+const { data } = await supabaseClient
 .from("clientes")
 .select("*")
 .gt("id", ultimoId)
-.order("id", { ascending: true })
+.order("id")
 .limit(limite);
-
-if(error){
-console.error(error);
-alert("Erro ao exportar");
-return;
-}
 
 if(!data || data.length === 0) break;
 
 todos = todos.concat(data);
-
 ultimoId = data[data.length - 1].id;
 
 if(data.length < limite) break;
 }
 
-console.log("Total exportado:", todos.length);
-
 const formatado = todos.map(c => ({
 Nome: c.nome,
 Telefone: c.telefone_1,
-Email: c.email,
-CPF_CNPJ: c.cpf_cnpj,
-Nascimento: c.dt_nasc,
-Nacionalidade: c.nacionalidade,
-Endereco: c.endereco,
-Observacao: c.observacao
+Email: c.email
 }));
 
 const ws = XLSX.utils.json_to_sheet(formatado);
@@ -235,14 +189,13 @@ const wb = XLSX.utils.book_new();
 XLSX.utils.book_append_sheet(wb, ws, "Clientes");
 
 XLSX.writeFile(wb, "clientes.xlsx");
-
 }
 
 /* CRUD */
 
 function abrirNovo(){
 idAtual=null;
-document.querySelectorAll("input, textarea").forEach(i=>i.value="");
+document.querySelectorAll("input").forEach(i=>i.value="");
 modal.style.display="flex";
 }
 
@@ -250,55 +203,30 @@ async function editar(id){
 idAtual=id;
 const {data}=await supabaseClient.from("clientes").select("*").eq("id",id).single();
 
-Object.keys(data).forEach(k=>{
-const el=document.getElementById(k);
-if(el) el.value=data[k];
-});
+document.getElementById("nome").value=data.nome;
+document.getElementById("telefone_1").value=data.telefone_1;
+document.getElementById("email").value=data.email;
 
 modal.style.display="flex";
 }
 
 async function salvar(){
 
-let payload={};
+let nome=document.getElementById("nome").value;
+let telefone=document.getElementById("telefone_1").value;
+let email=document.getElementById("email").value;
 
-document.querySelectorAll("input, textarea").forEach(i=>{
-if(i.id && i.value) payload[i.id]=i.value;
-});
-
-if(!payload.nome){
-alert("Nome obrigatório");
+if(!nome || !telefone){
+alert("Nome e telefone obrigatórios");
 return;
 }
 
-if(!payload.telefone_1){
-alert("Telefone obrigatório");
-return;
-}
-
-payload.telefone_1 = payload.telefone_1.replace(/\D/g,'');
-
-let query = supabaseClient
-.from("clientes")
-.select("id")
-.eq("nome", payload.nome)
-.eq("telefone_1", payload.telefone_1);
+telefone = telefone.replace(/\D/g,'');
 
 if(idAtual){
-query = query.neq("id", idAtual);
-}
-
-const { data: existente } = await query;
-
-if(existente && existente.length > 0){
-alert("⚠️ Cliente já cadastrado!");
-return;
-}
-
-if(idAtual){
-await supabaseClient.from("clientes").update(payload).eq("id",idAtual);
+await supabaseClient.from("clientes").update({nome, telefone_1:telefone, email}).eq("id",idAtual);
 }else{
-await supabaseClient.from("clientes").insert(payload);
+await supabaseClient.from("clientes").insert({nome, telefone_1:telefone, email});
 }
 
 fecharModal();
@@ -306,7 +234,7 @@ carregar();
 }
 
 async function excluir(id){
-if(!confirm("Excluir cliente?")) return;
+if(!confirm("Excluir?")) return;
 
 await supabaseClient.from("clientes").delete().eq("id",id);
 carregar();

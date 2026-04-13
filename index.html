@@ -36,8 +36,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
   margin-top:10px;
 }
 
-.label-small{color:#666;font-size:14px;}
-
 .workforce{
   background:#fff;
   border-radius:25px;
@@ -46,8 +44,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
   gap:40px;
   margin-bottom:40px;
 }
-
-.chart{flex:2;}
 
 .chart-wrapper{
   display:flex;
@@ -69,39 +65,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
   background:linear-gradient(180deg,#6a8fd6,#4f6fb3);
   border-radius:8px 8px 0 0;
 }
-
-.bar-value{font-size:12px;margin-bottom:6px;}
-.bar-hour{margin-top:6px;font-size:12px;color:#555;}
-
-.rank{
-  flex:1;
-  border-left:1px solid #eee;
-  padding-left:30px;
-}
-
-.rank-item{
-  padding:6px 0;
-  border-bottom:1px solid #eee;
-  font-size:14px;
-}
-
-.folgas{
-  background:#fff;
-  border-radius:25px;
-  padding:30px;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
-
-.folga-item{
-  padding:8px 0;
-  border-bottom:1px solid #eee;
-  font-size:14px;
-}
-
-.folga-dia{
-  color:#dc2626;
-  font-weight:bold;
-}
 </style>
 </head>
 
@@ -113,43 +76,31 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 <main class="content">
 
 <div class="top-cards">
-
   <div class="card">
     <h3>Equipe</h3>
     <div class="big-number" id="totalEquipe">0</div>
-    <div class="label-small">Terapeutas ativas</div>
   </div>
 
   <div class="card">
     <h3>Clientes</h3>
     <div class="big-number" id="totalClientes">0</div>
-    <div class="label-small">Clientes cadastrados</div>
   </div>
 
   <div class="card">
     <h3>Serviços</h3>
     <div class="big-number" id="totalServicos">0</div>
-    <div class="label-small">Serviços ativos</div>
   </div>
-
 </div>
 
 <div class="workforce">
-
-  <div class="chart">
-    <h3>Força de Trabalho (por hora)</h3>
+  <div>
+    <h3>Força de Trabalho</h3>
     <div class="chart-wrapper" id="bars"></div>
   </div>
-
-  <div class="rank">
-    <h3>Carga horária (Ranking)</h3>
-    <div id="ranking"></div>
-  </div>
-
 </div>
 
-<div class="folgas">
-  <h3>Folgas em 2026</h3>
+<div>
+  <h3>Folgas</h3>
   <div id="listaFolgas"></div>
 </div>
 
@@ -172,12 +123,11 @@ const supabaseClient = supabase.createClient(
 const { data: terapeutas } = await supabaseClient
   .from("terapeutas")
   .select("*")
-  .eq("status", "Ativo")
-  .in("cargo", ["Terapeuta Feminina", "Terapeuta Masculino"]);
+  .eq("status", "Ativo");
 
-/* ================= CLIENTES (CORRIGIDO) ================= */
+/* ================= CLIENTES ================= */
 
-const clientesPromise = supabaseClient
+const { count } = await supabaseClient
   .from("clientes")
   .select("*", { count: "exact", head: true });
 
@@ -185,46 +135,47 @@ const clientesPromise = supabaseClient
 
 const { data: servicos } = await supabaseClient
   .from("servicos")
-  .select("*")
-  .ilike("status","ativo");
-
-/* ================= AGUARDA CLIENTES ================= */
-
-const { count: totalClientes } = await clientesPromise;
+  .select("*");
 
 /* ================= TOTALS ================= */
 
 document.getElementById("totalEquipe").innerText = terapeutas?.length || 0;
-document.getElementById("totalClientes").innerText = totalClientes || 0;
+document.getElementById("totalClientes").innerText = count || 0;
 document.getElementById("totalServicos").innerText = servicos?.length || 0;
 
-/* ================= FORÇA DE TRABALHO ================= */
+/* ================= FORÇA DE TRABALHO DINÂMICA ================= */
 
-let ranking = [];
-const inicioDia = 9;
-const fimDia = 21;
 let contagem = {};
-
-for(let h=inicioDia;h<=fimDia;h++) contagem[h]=0;
+let menorHora = 23;
+let maiorHora = 0;
 
 (terapeutas||[]).forEach(t=>{
-
   if(!t.hora_entrada || !t.hora_saida) return;
 
-  const [h1,m1]=t.hora_entrada.substring(0,5).split(":").map(Number);
-  const [h2,m2]=t.hora_saida.substring(0,5).split(":").map(Number);
+  const hEntrada = parseInt(t.hora_entrada.substring(0,2));
+  const hSaida = parseInt(t.hora_saida.substring(0,2));
 
-  const inicioMin = h1*60+m1;
-  const fimMin = h2*60+m2;
+  if(hEntrada < menorHora) menorHora = hEntrada;
+  if(hSaida > maiorHora) maiorHora = hSaida;
+});
 
-  const totalMin=fimMin-inicioMin;
-  ranking.push({nome:t.nome_profissional,minutos:totalMin});
+if(menorHora > maiorHora){
+  menorHora = 9;
+  maiorHora = 18;
+}
 
-  for(let h=inicioDia; h<=fimDia; h++){
-    const horaInicio = h * 60;
-    const horaFim = (h+1) * 60;
+for(let h=menorHora; h<=maiorHora; h++){
+  contagem[h]=0;
+}
 
-    if(inicioMin <= horaFim && fimMin >= horaInicio){
+(terapeutas||[]).forEach(t=>{
+  if(!t.hora_entrada || !t.hora_saida) return;
+
+  const h1=parseInt(t.hora_entrada.substring(0,2));
+  const h2=parseInt(t.hora_saida.substring(0,2));
+
+  for(let h=menorHora; h<=maiorHora; h++){
+    if(h>=h1 && h<=h2){
       contagem[h]++;
     }
   }
@@ -233,91 +184,44 @@ for(let h=inicioDia;h<=fimDia;h++) contagem[h]=0;
 const barsDiv=document.getElementById("bars");
 const maxValor=Math.max(...Object.values(contagem));
 
-for(let h=inicioDia;h<=fimDia;h++){
+for(let h=menorHora; h<=maiorHora; h++){
   const valor=contagem[h];
+  if(valor===0) continue;
+
   const altura=maxValor? (valor/maxValor)*200 : 0;
 
   barsDiv.innerHTML+=`
     <div class="bar-container">
-      <div class="bar-value">${valor}</div>
+      <div>${valor}</div>
       <div class="bar" style="height:${altura}px"></div>
-      <div class="bar-hour">${h}:00</div>
+      <div>${h}:00</div>
     </div>
   `;
 }
-
-ranking.sort((a,b)=>b.minutos-a.minutos);
-
-const rankDiv=document.getElementById("ranking");
-
-ranking.forEach(r=>{
-  const horas=Math.floor(r.minutos/60);
-  const minutos=r.minutos%60;
-
-  rankDiv.innerHTML+=`
-    <div class="rank-item">
-      ${r.nome} — ${horas}h ${minutos}m
-    </div>
-  `;
-});
 
 /* ================= FOLGAS ================= */
 
 const hoje=new Date();
 const inicioAno=new Date(2026,0,1);
-
-const mapaDia={
-  "domingo":0,"segunda":1,"terça":2,"terca":2,
-  "quarta":3,"quinta":4,"sexta":5,
-  "sábado":6,"sabado":6
-};
-
 const folgaDiv=document.getElementById("listaFolgas");
-folgaDiv.innerHTML="";
 
 for(const t of (terapeutas||[])){
 
-  let contadorSemanal=0;
-
-  if(t.tem_folga && String(t.tem_folga).trim().toLowerCase()==="sim" && t.dia_folga){
-    const diaNumero=mapaDia[t.dia_folga.toLowerCase()];
-    if(diaNumero!==undefined){
-      const admissao=new Date(t.data_inicio);
-      const dataBase=admissao>inicioAno?admissao:inicioAno;
-      let dataLoop=new Date(dataBase);
-
-      while(dataLoop<=hoje){
-        if(dataLoop.getDay()===diaNumero) contadorSemanal++;
-        dataLoop.setDate(dataLoop.getDate()+1);
-      }
-    }
-  }
+  let contador=0;
 
   const { data: solicitacoes } = await supabaseClient
     .from("solicitacoes")
-    .select("data_inicio,data_fim,status")
+    .select("*")
     .eq("terapeuta_cpf",t.cpf);
 
-  let diasAprovados=0;
-
   (solicitacoes||[]).forEach(s=>{
-    if(String(s.status).trim().toLowerCase()!=="aprovado") return;
-
-    const inicio=new Date(s.data_inicio);
-    const fim=new Date(s.data_fim);
-    const inicioConsiderado=inicio<inicioAno?inicioAno:inicio;
-    const diff=Math.floor((fim-inicioConsiderado)/(1000*60*60*24))+1;
-
-    if(diff>0) diasAprovados+=diff;
+    if(s.status==="aprovado"){
+      contador++;
+    }
   });
 
-  const total=contadorSemanal+diasAprovados;
-
   folgaDiv.innerHTML+=`
-    <div class="folga-item">
-      ${t.nome_profissional} —
-      <span class="folga-dia">${total} folgas</span>
-    </div>
+    <div>${t.nome_profissional}: ${contador}</div>
   `;
 }
 

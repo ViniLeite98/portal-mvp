@@ -29,10 +29,7 @@ th,td{
   padding:14px;
   border-bottom:1px solid #e5e7eb;
   font-size:14px;
-  text-align:left;
 }
-
-th{background:#f9fafb;font-weight:600;}
 
 button{
   background:#1f2937;
@@ -43,21 +40,6 @@ button{
   cursor:pointer;
 }
 
-button.excluir{background:#dc2626}
-
-.top-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:12px;
-  margin-bottom:16px;
-}
-
-.top-actions input{
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-}
-
 .modal{
   position:fixed;
   inset:0;
@@ -65,19 +47,14 @@ button.excluir{background:#dc2626}
   display:none;
   align-items:center;
   justify-content:center;
-  z-index:10;
 }
 
 .modal-content{
   background:#fff;
   width:1000px;
-  max-height:90vh;
-  overflow:auto;
-  border-radius:18px;
   padding:28px;
+  border-radius:18px;
 }
-
-.section{margin-bottom:28px}
 
 .grid{
   display:grid;
@@ -90,25 +67,10 @@ button.excluir{background:#dc2626}
   flex-direction:column;
 }
 
-.field label{
-  font-size:13px;
-  font-weight:600;
-  margin-bottom:6px;
-  color:#374151;
-}
-
 input,select{
   padding:10px;
   border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:14px;
-}
-
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:20px;
+  border:1px solid #ccc;
 }
 </style>
 </head>
@@ -122,32 +84,14 @@ input,select{
 
 <h1>Gestão da Equipe</h1>
 
-<div class="top-actions">
-
-<input 
-type="text"
-id="pesquisaNome"
-placeholder="Pesquisar profissional..."
-onkeyup="filtrarTabela()"
->
-
-<select id="filtroStatus">
-<option value="">Todos</option>
-<option value="Ativo">Ativo</option>
-<option value="Inativo">Inativo</option>
-</select>
-
 <button onclick="abrirNovo()">+ Novo Cadastro</button>
-
-</div>
 
 <table>
 <thead>
 <tr>
-<th>Nome Profissional</th>
+<th>Nome</th>
 <th>Cargo</th>
 <th>CPF</th>
-<th>Status</th>
 <th>Docs</th>
 <th>Ações</th>
 </tr>
@@ -161,65 +105,39 @@ onkeyup="filtrarTabela()"
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<div class="section">
-<h3>Dados Pessoais</h3>
 <div class="grid">
 
 <div class="field">
-<label>Nome Completo *</label>
-<input id="nome_completo">
-</div>
-
-<div class="field">
-<label>Nome Profissional *</label>
+<label>Nome Profissional</label>
 <input id="nome_profissional">
 </div>
 
 <div class="field">
-<label>CPF *</label>
+<label>CPF</label>
 <input id="cpf">
 </div>
 
 <div class="field">
+<label>Cargo</label>
+<input id="cargo">
+</div>
+
+<div class="field">
 <label>RG</label>
-<input type="file" id="rg_file" accept=".pdf,image/*">
+<input type="file" id="rg_file">
 </div>
 
 <div class="field">
-<label>Comprovante de Residência</label>
-<input type="file" id="comprovante_file" accept=".pdf,image/*">
-</div>
-
-<div class="field">
-<label>Data de Nascimento</label>
-<input type="date" id="nascimento">
-</div>
-
-<div class="field">
-<label>Email *</label>
-<input id="email">
-</div>
-
-<div class="field">
-<label>Tipo Sanguíneo</label>
-<select id="tipo_sanguineo">
-<option value="">Selecione</option>
-<option>A+</option><option>A-</option>
-<option>B+</option><option>B-</option>
-<option>AB+</option><option>AB-</option>
-<option>O+</option><option>O-</option>
-</select>
+<label>Comprovante</label>
+<input type="file" id="comprovante_file">
 </div>
 
 </div>
-</div>
 
-<!-- resto do HTML igual -->
+<br>
 
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
 <button onclick="salvar()">Salvar</button>
-</div>
+<button onclick="fecharModal()">Cancelar</button>
 
 </div>
 </div>
@@ -233,15 +151,10 @@ const supabaseClient = supabase.createClient(
 
 let cpfAtual=null;
 
-const campos=[
-"nome_completo","nome_profissional","cpf","nascimento","email",
-"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
-"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-"cargo","tem_folga","dia_folga",
-"hora_entrada","hora_saida","data_inicio","status"
-];
-
+/* upload */
 async function uploadArquivo(file, pasta){
+    if(!file) return null;
+
     const nome = Date.now()+"_"+file.name;
 
     const { error } = await supabaseClient.storage
@@ -249,6 +162,7 @@ async function uploadArquivo(file, pasta){
         .upload(pasta+"/"+nome, file);
 
     if(error){
+        console.error(error);
         alert("Erro upload");
         return null;
     }
@@ -260,43 +174,110 @@ async function uploadArquivo(file, pasta){
     return data.publicUrl;
 }
 
+/* carregar */
+async function carregar(){
+    const { data } = await supabaseClient
+        .from("terapeutas")
+        .select("*")
+        .order("nome_profissional");
+
+    const tbody=document.getElementById("lista");
+    tbody.innerHTML="";
+
+    data.forEach(t=>{
+        tbody.innerHTML+=`
+        <tr>
+            <td>${t.nome_profissional||""}</td>
+            <td>${t.cargo||""}</td>
+            <td>${t.cpf||""}</td>
+            <td>
+                ${t.rg_url ? `<a href="${t.rg_url}" target="_blank">RG</a>` : ""}
+                ${t.comprovante_url ? `<a href="${t.comprovante_url}" target="_blank">Comp</a>` : ""}
+            </td>
+            <td>
+                <button onclick="editar('${t.cpf}')">Editar</button>
+                <button onclick="excluir('${t.cpf}')">Excluir</button>
+            </td>
+        </tr>`;
+    });
+}
+
+/* abrir */
+function abrirNovo(){
+    cpfAtual=null;
+    document.querySelectorAll("input").forEach(i=>i.value="");
+    modal.style.display="flex";
+}
+
+/* editar */
+async function editar(cpf){
+    cpfAtual=cpf;
+
+    const { data } = await supabaseClient
+        .from("terapeutas")
+        .select("*")
+        .eq("cpf",cpf)
+        .single();
+
+    nome_profissional.value=data.nome_profissional;
+    cargo.value=data.cargo;
+    document.getElementById("cpf").value=data.cpf;
+
+    modal.style.display="flex";
+}
+
+/* salvar */
 async function salvar(){
 
-const payload={};
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el && el.value!=="") payload[c]=el.value;
-});
+    let payload={
+        nome_profissional: nome_profissional.value,
+        cpf: cpf.value,
+        cargo: cargo.value
+    };
 
-const rgFile = document.getElementById("rg_file").files[0];
-const compFile = document.getElementById("comprovante_file").files[0];
+    const rgFile = document.getElementById("rg_file").files[0];
+    const compFile = document.getElementById("comprovante_file").files[0];
 
-if(rgFile){
-    payload.rg_url = await uploadArquivo(rgFile,"rg");
+    if(rgFile){
+        payload.rg_url = await uploadArquivo(rgFile,"rg");
+    }
+
+    if(compFile){
+        payload.comprovante_url = await uploadArquivo(compFile,"comprovante");
+    }
+
+    if(cpfAtual){
+        await supabaseClient
+            .from("terapeutas")
+            .update(payload)
+            .eq("cpf",cpfAtual);
+    }else{
+        await supabaseClient
+            .from("terapeutas")
+            .insert(payload);
+    }
+
+    fecharModal();
+    carregar();
 }
 
-if(compFile){
-    payload.comprovante_url = await uploadArquivo(compFile,"comprovante");
+/* excluir */
+async function excluir(cpf){
+    if(!confirm("Excluir?")) return;
+
+    await supabaseClient
+        .from("terapeutas")
+        .delete()
+        .eq("cpf",cpf);
+
+    carregar();
 }
 
-if(cpfAtual){
-delete payload.cpf;
-
-await supabaseClient
-.from("terapeutas")
-.update(payload)
-.eq("cpf",cpfAtual);
-
-}else{
-
-await supabaseClient
-.from("terapeutas")
-.insert(payload);
+function fecharModal(){
+    modal.style.display="none";
 }
 
-fecharModal();
 carregar();
-}
 
 </script>
 

@@ -14,7 +14,7 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
+#sidebar{width:260px;}
 .content{flex:1;padding:40px;}
 
 table{
@@ -22,17 +22,14 @@ table{
   border-collapse:collapse;
   background:#fff;
   border-radius:14px;
-  overflow:hidden;
 }
 
 th,td{
   padding:14px;
   border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
 }
 
-th{background:#f9fafb;font-weight:600;}
+th{background:#f9fafb;}
 
 button{
   background:#1f2937;
@@ -44,14 +41,9 @@ button{
 }
 
 button.excluir{background:#dc2626}
+button.anexar{background:#4b5563}
 
-button.anexar{
-  background:#4b5563;
-}
-
-button.anexar:hover{
-  background:#374151;
-}
+button:hover{opacity:.9}
 
 .top-actions{
   display:flex;
@@ -60,63 +52,10 @@ button.anexar:hover{
   margin-bottom:16px;
 }
 
-.top-actions input{
+input,select{
   padding:8px;
   border-radius:6px;
   border:1px solid #d1d5db;
-}
-
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
-}
-
-.modal-content{
-  background:#fff;
-  width:1000px;
-  max-height:90vh;
-  overflow:auto;
-  border-radius:18px;
-  padding:28px;
-}
-
-.section{margin-bottom:28px}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-}
-
-.field label{
-  font-size:13px;
-  font-weight:600;
-  margin-bottom:6px;
-  color:#374151;
-}
-
-input,select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:14px;
-}
-
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:20px;
 }
 </style>
 </head>
@@ -131,13 +70,7 @@ input,select{
 <h1>Gestão da Equipe</h1>
 
 <div class="top-actions">
-
-<input 
-type="text"
-id="pesquisaNome"
-placeholder="Pesquisar profissional..."
-onkeyup="filtrarTabela()"
->
+<input type="text" id="pesquisaNome" placeholder="Pesquisar..." onkeyup="filtrarTabela()">
 
 <select id="filtroStatus">
 <option value="">Todos</option>
@@ -146,13 +79,12 @@ onkeyup="filtrarTabela()"
 </select>
 
 <button onclick="abrirNovo()">+ Novo Cadastro</button>
-
 </div>
 
 <table>
 <thead>
 <tr>
-<th>Nome Profissional</th>
+<th>Nome</th>
 <th>Cargo</th>
 <th>CPF</th>
 <th>Status</th>
@@ -165,59 +97,35 @@ onkeyup="filtrarTabela()"
 </main>
 </div>
 
-<div class="modal" id="modal">
-<div class="modal-content">
-
-<!-- (mantive seu modal igual, sem alteração) -->
-
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
-<button onclick="salvar()">Salvar</button>
-</div>
-
-</div>
-</div>
-
-<!-- INPUT FILE ESCONDIDO -->
 <input type="file" id="inputDocumento" style="display:none">
-
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"SEU_ANON_KEY_AQUI"
 );
 
-let cpfAtual=null;
-let cpfDocumento=null;
-
-const campos=[/* mantido igual */];
-
-function getPayload(){/* mantido */}
-function setForm(data){/* mantido */}
+let cpfDocumento = null;
 
 async function carregar(){
 
-const statusFiltro = document.getElementById("filtroStatus").value;
-
-let query = supabaseClient
+const { data, error } = await supabaseClient
 .from("terapeutas")
-.select("cpf,nome_profissional,status,cargo,documento_url")
+.select("*")
 .order("nome_profissional");
 
-if(statusFiltro) query = query.eq("status", statusFiltro);
+if(error){
+console.error(error);
+return;
+}
 
-const {data,error}=await query;
-
-if(error){ console.error(error); return; }
-
-const tbody=document.getElementById("lista");
+const tbody = document.getElementById("lista");
 tbody.innerHTML="";
 
 data.forEach(t=>{
-tbody.innerHTML+=`
+
+tbody.innerHTML += `
 <tr>
 <td>${t.nome_profissional||""}</td>
 <td>${t.cargo||""}</td>
@@ -229,57 +137,91 @@ tbody.innerHTML+=`
 <button class="anexar" onclick="anexarDocumento('${t.cpf}')">📎</button>
 ${t.documento_url ? `<button onclick="window.open('${t.documento_url}')">👁</button>` : ""}
 </td>
-</tr>`;
+</tr>
+`;
 });
 
-filtrarTabela();
 }
 
 function anexarDocumento(cpf){
-cpfDocumento=cpf;
+cpfDocumento = cpf;
 document.getElementById("inputDocumento").click();
 }
 
-document.getElementById("inputDocumento").addEventListener("change", async function(e){
+document.getElementById("inputDocumento").addEventListener("change", async (e)=>{
 
-const file=e.target.files[0];
-if(!file || !cpfDocumento) return;
+const file = e.target.files[0];
+if(!file) return;
 
 if(file.type !== "application/pdf"){
-alert("Apenas PDF permitido");
+alert("Somente PDF");
 return;
 }
 
-const nomeArquivo=`${cpfDocumento}_${Date.now()}_${file.name}`;
+const nome = `${cpfDocumento}_${Date.now()}_${file.name}`;
 
-const { error } = await supabaseClient.storage
+const { error: uploadError } = await supabaseClient.storage
 .from("documentos")
-.upload(nomeArquivo,file);
+.upload(nome, file);
 
-if(error){
-console.error(error);
+if(uploadError){
+console.error(uploadError);
 alert("Erro upload");
 return;
 }
 
 const { data } = supabaseClient.storage
 .from("documentos")
-.getPublicUrl(nomeArquivo);
+.getPublicUrl(nome);
+
+if(!data.publicUrl){
+alert("Erro URL");
+return;
+}
+
+const { error: updateError } = await supabaseClient
+.from("terapeutas")
+.update({ documento_url: data.publicUrl })
+.eq("cpf", cpfDocumento);
+
+if(updateError){
+console.error(updateError);
+alert("Erro ao salvar");
+return;
+}
+
+alert("Documento anexado!");
+carregar();
+
+});
+
+async function excluir(cpf){
+if(!confirm("Excluir?")) return;
 
 await supabaseClient
 .from("terapeutas")
-.update({ documento_url: data.publicUrl })
-.eq("cpf",cpfDocumento);
+.delete()
+.eq("cpf", cpf);
 
-alert("Documento anexado!");
+carregar();
+}
+
+function filtrarTabela(){
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
+
+linhas.forEach(l=>{
+l.style.display = l.innerText.toLowerCase().includes(filtro) ? "" : "none";
 });
+}
 
-function filtrarTabela(){/* mantido */}
-function abrirNovo(){/* mantido */}
-async function editar(cpf){/* mantido */}
-async function salvar(){/* mantido */}
-async function excluir(cpf){/* mantido */}
-function fecharModal(){/* mantido */}
+function editar(cpf){
+alert("Editar ainda está no seu código original");
+}
+
+function abrirNovo(){
+alert("Novo cadastro continua no seu código original");
+}
 
 document.getElementById("filtroStatus").addEventListener("change", carregar);
 

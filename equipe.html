@@ -1,228 +1,3 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Gestão da Equipe | Hara Spa</title>
-
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-}
-
-th,td{
-  padding:14px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
-}
-
-th{background:#f9fafb;font-weight:600;}
-
-button{
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
-}
-
-button.excluir{background:#dc2626}
-
-.top-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:12px;
-  margin-bottom:16px;
-}
-
-.top-actions input{
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-}
-
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
-}
-
-.modal-content{
-  background:#fff;
-  width:1000px;
-  max-height:90vh;
-  overflow:auto;
-  border-radius:18px;
-  padding:28px;
-}
-
-.section{margin-bottom:28px}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-}
-
-.field label{
-  font-size:13px;
-  font-weight:600;
-  margin-bottom:6px;
-  color:#374151;
-}
-
-input,select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:14px;
-}
-
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:20px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-<aside id="sidebar"></aside>
-
-<main class="content">
-
-<h1>Gestão da Equipe</h1>
-
-<div class="top-actions">
-
-<input 
-type="text"
-id="pesquisaNome"
-placeholder="Pesquisar profissional..."
-onkeyup="filtrarTabela()"
->
-
-<select id="filtroStatus">
-<option value="">Todos</option>
-<option value="Ativo">Ativo</option>
-<option value="Inativo">Inativo</option>
-</select>
-
-<button onclick="abrirNovo()">+ Novo Cadastro</button>
-
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Nome Profissional</th>
-<th>Cargo</th>
-<th>CPF</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
-
-</main>
-</div>
-
-<div class="modal" id="modal">
-<div class="modal-content">
-
-<div class="section">
-<h3>Dados Pessoais</h3>
-<div class="grid">
-
-<div class="field">
-<label>Nome Completo *</label>
-<input id="nome_completo">
-</div>
-
-<div class="field">
-<label>Nome Profissional *</label>
-<input id="nome_profissional">
-</div>
-
-<div class="field">
-<label>CPF *</label>
-<input id="cpf">
-</div>
-
-<div class="field">
-<label>RG</label>
-<input type="file" id="rg_file" accept=".pdf,image/*">
-</div>
-
-<div class="field">
-<label>Comprovante de Residência</label>
-<input type="file" id="comprovante_file" accept=".pdf,image/*">
-</div>
-
-<div class="field">
-<label>Data de Nascimento</label>
-<input type="date" id="nascimento">
-</div>
-
-<div class="field">
-<label>Email *</label>
-<input id="email">
-</div>
-
-<div class="field">
-<label>Tipo Sanguíneo</label>
-<select id="tipo_sanguineo">
-<option value="">Selecione</option>
-<option>A+</option><option>A-</option>
-<option>B+</option><option>B-</option>
-<option>AB+</option><option>AB-</option>
-<option>O+</option><option>O-</option>
-</select>
-</div>
-
-</div>
-</div>
-
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
-<button onclick="salvar()">Salvar</button>
-</div>
-
-</div>
-</div>
-
-<script src="assets/sidebar/sidebar.js"></script>
-
 <script>
 
 const supabaseClient = supabase.createClient(
@@ -249,6 +24,20 @@ if(el && el.value!=="") obj[c]=el.value;
 return obj;
 }
 
+function setForm(data){
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el){
+if(c==="hora_entrada" || c==="hora_saida"){
+el.value=data[c]?data[c].substring(0,5):"";
+}else{
+el.value=data[c]||"";
+}
+}
+});
+}
+
+/* 🔥 upload */
 async function uploadArquivo(file, pasta){
     if(!file) return null;
 
@@ -271,10 +60,90 @@ async function uploadArquivo(file, pasta){
     return data.publicUrl;
 }
 
+/* 🔥 carregar */
+async function carregar(){
+
+const statusFiltro = document.getElementById("filtroStatus").value;
+
+let query = supabaseClient
+.from("terapeutas")
+.select("cpf,nome_profissional,status,cargo")
+.order("nome_profissional");
+
+if(statusFiltro) query = query.eq("status", statusFiltro);
+
+const {data,error}=await query;
+
+if(error){ console.error(error); return; }
+
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
+
+data.forEach(t=>{
+tbody.innerHTML+=`
+<tr>
+<td>${t.nome_profissional||""}</td>
+<td>${t.cargo||""}</td>
+<td>${t.cpf||""}</td>
+<td>${t.status||""}</td>
+<td>
+<button onclick="editar('${t.cpf}')">Editar</button>
+<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+</td>
+</tr>`;
+});
+
+filtrarTabela();
+}
+
+function filtrarTabela(){
+
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
+
+linhas.forEach(linha=>{
+const nome = linha.children[0].innerText.toLowerCase();
+
+if(nome.includes(filtro)){
+linha.style.display="";
+}else{
+linha.style.display="none";
+}
+});
+}
+
+function abrirNovo(){
+cpfAtual=null;
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
+
+document.getElementById("modal").style.display="flex";
+}
+
+async function editar(cpf){
+
+cpfAtual=cpf;
+
+const {data,error}=await supabaseClient
+.from("terapeutas")
+.select("*")
+.eq("cpf",cpf)
+.single();
+
+if(error){console.error(error);return;}
+
+setForm(data);
+
+document.getElementById("modal").style.display="flex";
+}
+
 async function salvar(){
 
 const payload=getPayload();
 
+/* 🔥 upload integrado */
 const rgFile = document.getElementById("rg_file")?.files[0];
 const compFile = document.getElementById("comprovante_file")?.files[0];
 
@@ -322,11 +191,23 @@ fecharModal();
 carregar();
 }
 
+async function excluir(cpf){
+if(!confirm("Excluir registro?"))return;
+
+await supabaseClient
+.from("terapeutas")
+.delete()
+.eq("cpf",cpf);
+
+carregar();
+}
+
 function fecharModal(){
 document.getElementById("modal").style.display="none";
 }
 
-</script>
+document.getElementById("filtroStatus").addEventListener("change", carregar);
 
-</body>
-</html>
+carregar();
+
+</script>

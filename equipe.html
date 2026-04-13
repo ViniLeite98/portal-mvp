@@ -44,8 +44,6 @@ button{
 }
 
 button.excluir{background:#dc2626}
-button.anexar{background:#4b5563}
-button.ver{background:#059669}
 
 .top-actions{
   display:flex;
@@ -126,7 +124,12 @@ input,select{
 
 <div class="top-actions">
 
-<input type="text" id="pesquisaNome" placeholder="Pesquisar profissional..." onkeyup="filtrarTabela()">
+<input 
+type="text"
+id="pesquisaNome"
+placeholder="Pesquisar profissional..."
+onkeyup="filtrarTabela()"
+>
 
 <select id="filtroStatus">
 <option value="">Todos</option>
@@ -157,7 +160,175 @@ input,select{
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<!-- MANTIVE TODO SEU MODAL ORIGINAL AQUI (não alterado) -->
+<div class="section">
+<h3>Dados Pessoais</h3>
+<div class="grid">
+
+<div class="field">
+<label>Nome Completo *</label>
+<input id="nome_completo">
+</div>
+
+<div class="field">
+<label>Nome Profissional *</label>
+<input id="nome_profissional">
+</div>
+
+<div class="field">
+<label>CPF *</label>
+<input id="cpf">
+</div>
+
+<div class="field">
+<label>RG</label>
+<input id="rg">
+</div>
+
+<div class="field">
+<label>Data de Nascimento</label>
+<input type="date" id="nascimento">
+</div>
+
+<div class="field">
+<label>Email *</label>
+<input id="email">
+</div>
+
+<div class="field">
+<label>Tipo Sanguíneo</label>
+<select id="tipo_sanguineo">
+<option value="">Selecione</option>
+<option>A+</option><option>A-</option>
+<option>B+</option><option>B-</option>
+<option>AB+</option><option>AB-</option>
+<option>O+</option><option>O-</option>
+</select>
+</div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Contatos</h3>
+<div class="grid">
+
+<div class="field">
+<label>Telefone *</label>
+<input id="telefone">
+</div>
+
+<div class="field">
+<label>Contato de Emergência</label>
+<input id="telefone_emer">
+</div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Endereço</h3>
+<div class="grid">
+
+<div class="field"><label>CEP</label><input id="cep"></div>
+<div class="field"><label>Rua</label><input id="rua"></div>
+<div class="field"><label>Número</label><input id="numero"></div>
+<div class="field"><label>Complemento</label><input id="complemento"></div>
+<div class="field"><label>Bairro</label><input id="bairro"></div>
+<div class="field"><label>Cidade</label><input id="cidade"></div>
+<div class="field"><label>UF</label><input id="uf"></div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Pagamento</h3>
+<div class="grid">
+
+<div class="field">
+<label>Tipo Chave PIX</label>
+<select id="pix_tipo">
+<option value="">Selecione</option>
+<option>CPF</option>
+<option>Email</option>
+<option>Telefone</option>
+<option>Aleatória</option>
+</select>
+</div>
+
+<div class="field">
+<label>Chave PIX</label>
+<input id="pix_chave">
+</div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Dados Funcionais</h3>
+<div class="grid">
+
+<div class="field">
+<label>Cargo</label>
+<select id="cargo">
+<option value="">Selecione</option>
+<option>Terapeuta Feminina</option>
+<option>Terapeuta Masculino</option>
+<option>Gerente</option>
+<option>Atendente</option>
+<option>Recepcionista</option>
+<option>Faxineira</option>
+<option>Analista</option>
+</select>
+</div>
+
+<div class="field">
+<label>Tem folga semanal?</label>
+<select id="tem_folga">
+<option value="">Selecione</option>
+<option>Sim</option>
+<option>Não</option>
+</select>
+</div>
+
+<div class="field">
+<label>Dia da Folga</label>
+<select id="dia_folga">
+<option value="">Selecione</option>
+<option>Segunda</option>
+<option>Terça</option>
+<option>Quarta</option>
+<option>Quinta</option>
+<option>Sexta</option>
+<option>Sábado</option>
+</select>
+</div>
+
+<div class="field">
+<label>Hora de Entrada</label>
+<input type="time" id="hora_entrada" value="09:00">
+</div>
+
+<div class="field">
+<label>Hora de Saída</label>
+<input type="time" id="hora_saida" value="18:00">
+</div>
+
+<div class="field">
+<label>Data de Início no Hara</label>
+<input type="date" id="data_inicio">
+</div>
+
+<div class="field">
+<label>Status</label>
+<select id="status">
+<option value="">Selecione</option>
+<option>Ativo</option>
+<option>Inativo</option>
+</select>
+</div>
+
+</div>
+</div>
 
 <div class="modal-actions">
 <button onclick="fecharModal()">Cancelar</button>
@@ -166,9 +337,6 @@ input,select{
 
 </div>
 </div>
-
-<!-- INPUT FILE -->
-<input type="file" id="inputDocumento" style="display:none">
 
 <script src="assets/sidebar/sidebar.js"></script>
 
@@ -180,7 +348,6 @@ const supabaseClient = supabase.createClient(
 );
 
 let cpfAtual=null;
-let cpfDocumento=null;
 
 const campos=[
 "nome_completo","nome_profissional","cpf","rg","nascimento","email",
@@ -218,7 +385,7 @@ const statusFiltro = document.getElementById("filtroStatus").value;
 
 let query = supabaseClient
 .from("terapeutas")
-.select("cpf,nome_profissional,status,cargo,documento_url")
+.select("cpf,nome_profissional,status,cargo")
 .order("nome_profissional");
 
 if(statusFiltro) query = query.eq("status", statusFiltro);
@@ -240,8 +407,6 @@ tbody.innerHTML+=`
 <td>
 <button onclick="editar('${t.cpf}')">Editar</button>
 <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
-<button class="anexar" onclick="anexarDocumento('${t.cpf}')">📎</button>
-${t.documento_url ? `<button class="ver" onclick="window.open('${t.documento_url}')">👁</button>` : ""}
 </td>
 </tr>`;
 });
@@ -249,50 +414,19 @@ ${t.documento_url ? `<button class="ver" onclick="window.open('${t.documento_url
 filtrarTabela();
 }
 
-function anexarDocumento(cpf){
-cpfDocumento=cpf;
-const input=document.getElementById("inputDocumento");
-input.value="";
-input.click();
-}
-
-document.getElementById("inputDocumento").addEventListener("change", async function(e){
-
-const file=e.target.files[0];
-if(!file || !cpfDocumento) return;
-
-const nomeArquivo=`${cpfDocumento}_${Date.now()}_${file.name}`;
-
-const { error } = await supabaseClient.storage
-.from("documentos")
-.upload(nomeArquivo,file,{upsert:true});
-
-if(error){
-console.error(error);
-alert("Erro upload");
-return;
-}
-
-const { data } = supabaseClient.storage
-.from("documentos")
-.getPublicUrl(nomeArquivo);
-
-await supabaseClient
-.from("terapeutas")
-.update({ documento_url: data.publicUrl })
-.eq("cpf",cpfDocumento);
-
-alert("Documento anexado!");
-carregar();
-
-});
-
 function filtrarTabela(){
-const filtro=document.getElementById("pesquisaNome").value.toLowerCase();
-const linhas=document.querySelectorAll("#lista tr");
 
-linhas.forEach(l=>{
-l.style.display=l.innerText.toLowerCase().includes(filtro)?"":"none";
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
+
+linhas.forEach(linha=>{
+const nome = linha.children[0].innerText.toLowerCase();
+
+if(nome.includes(filtro)){
+linha.style.display="";
+}else{
+linha.style.display="none";
+}
 });
 }
 
@@ -302,10 +436,17 @@ campos.forEach(c=>{
 const el=document.getElementById(c);
 if(el) el.value="";
 });
+document.getElementById("hora_entrada").value="09:00";
+document.getElementById("hora_saida").value="18:00";
+
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = false;
+
 document.getElementById("modal").style.display="flex";
 }
 
 async function editar(cpf){
+
 cpfAtual=cpf;
 
 const {data,error}=await supabaseClient
@@ -328,9 +469,15 @@ async function salvar(){
 
 const payload=getPayload();
 
+if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
+alert("Preencha os campos obrigatórios");
+return;
+}
+
 let error;
 
 if(cpfAtual){
+
 delete payload.cpf;
 
 ({error}=await supabaseClient

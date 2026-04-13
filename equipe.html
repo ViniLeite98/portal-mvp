@@ -4,114 +4,25 @@
 <meta charset="UTF-8">
 <title>Gestão da Equipe | Hara Spa</title>
 
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
+body{margin:0;font-family:'Segoe UI';background:#f5f7fb}
+.app{display:flex}
+#sidebar{width:260px}
+.content{flex:1;padding:40px}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-}
+table{width:100%;background:#fff;border-collapse:collapse}
+th,td{padding:12px;border-bottom:1px solid #ddd}
 
-th,td{
-  padding:14px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
-}
+button{padding:6px 10px;border:none;border-radius:6px;color:#fff;cursor:pointer}
+.excluir{background:#dc2626}
+.anexar{background:#4b5563}
+.ver{background:#059669}
 
-th{background:#f9fafb;font-weight:600;}
-
-button{
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
-}
-
-button.excluir{background:#dc2626}
-button.anexar{background:#4b5563}
-button.ver{background:#059669}
-
-.top-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:12px;
-  margin-bottom:16px;
-}
-
-.top-actions input{
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-}
-
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
-}
-
-.modal-content{
-  background:#fff;
-  width:1000px;
-  max-height:90vh;
-  overflow:auto;
-  border-radius:18px;
-  padding:28px;
-}
-
-.section{margin-bottom:28px}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-}
-
-.field label{
-  font-size:13px;
-  font-weight:600;
-  margin-bottom:6px;
-  color:#374151;
-}
-
-input,select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:14px;
-}
-
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:20px;
-}
+.modal{position:fixed;inset:0;background:#0005;display:none;align-items:center;justify-content:center}
+.modal-content{background:#fff;padding:20px;border-radius:12px;width:400px}
 </style>
 </head>
 
@@ -122,26 +33,14 @@ input,select{
 
 <main class="content">
 
-<h1>Gestão da Equipe</h1>
+<h2>Gestão da Equipe</h2>
 
-<div class="top-actions">
-
-<input type="text" id="pesquisaNome" placeholder="Pesquisar profissional..." onkeyup="filtrarTabela()">
-
-<select id="filtroStatus">
-<option value="">Todos</option>
-<option value="Ativo">Ativo</option>
-<option value="Inativo">Inativo</option>
-</select>
-
-<button onclick="abrirNovo()">+ Novo Cadastro</button>
-
-</div>
+<input id="pesquisaNome" placeholder="Pesquisar..." onkeyup="filtrarTabela()">
 
 <table>
 <thead>
 <tr>
-<th>Nome Profissional</th>
+<th>Nome</th>
 <th>Cargo</th>
 <th>CPF</th>
 <th>Status</th>
@@ -154,19 +53,25 @@ input,select{
 </main>
 </div>
 
-<!-- MODAL (mantido completo) -->
+<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
+<input id="nome_profissional" placeholder="Nome"><br><br>
+<input id="cargo" placeholder="Cargo"><br><br>
+<input id="cpf"><br><br>
+<select id="status">
+<option>Ativo</option>
+<option>Inativo</option>
+</select>
+
+<br><br>
 <button onclick="salvar()">Salvar</button>
-</div>
+<button onclick="fecharModal()">Cancelar</button>
 
 </div>
 </div>
 
-<!-- INPUT FILE -->
 <input type="file" id="inputDocumento" style="display:none">
 
 <script src="assets/sidebar/sidebar.js"></script>
@@ -175,50 +80,19 @@ input,select{
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
 let cpfAtual=null;
 let cpfDocumento=null;
 
-const campos=[
-"nome_completo","nome_profissional","cpf","rg","nascimento","email",
-"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
-"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-"cargo","tem_folga","dia_folga",
-"hora_entrada","hora_saida","data_inicio","status"
-];
-
-function getPayload(){
-const obj={};
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el && el.value!=="") obj[c]=el.value;
-});
-return obj;
-}
-
-function setForm(data){
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el){
-if(c==="hora_entrada" || c==="hora_saida"){
-el.value=data[c]?data[c].substring(0,5):"";
-}else{
-el.value=data[c]||"";
-}
-}
-});
-}
-
 async function carregar(){
 
 const {data,error}=await supabaseClient
 .from("terapeutas")
-.select("*")
-.order("nome_profissional");
+.select("*");
 
-if(error){ console.error(error); return; }
+if(error){console.error(error);return;}
 
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -239,24 +113,64 @@ ${t.documento_url ? `<button class="ver" onclick="window.open('${t.documento_url
 </tr>`;
 });
 
-filtrarTabela();
+}
+
+function editar(cpf){
+cpfAtual=cpf;
+
+supabaseClient
+.from("terapeutas")
+.select("*")
+.eq("cpf",cpf)
+.single()
+.then(({data,error})=>{
+if(error){console.error(error);return;}
+
+document.getElementById("nome_profissional").value=data.nome_profissional||"";
+document.getElementById("cargo").value=data.cargo||"";
+document.getElementById("cpf").value=data.cpf||"";
+document.getElementById("status").value=data.status||"";
+
+document.getElementById("modal").style.display="flex";
+});
+
+}
+
+function salvar(){
+
+const payload={
+nome_profissional:document.getElementById("nome_profissional").value,
+cargo:document.getElementById("cargo").value,
+status:document.getElementById("status").value
+};
+
+supabaseClient
+.from("terapeutas")
+.update(payload)
+.eq("cpf",cpfAtual)
+.then(()=>{
+fecharModal();
+carregar();
+});
+
 }
 
 function anexarDocumento(cpf){
 cpfDocumento=cpf;
+document.getElementById("inputDocumento").value="";
 document.getElementById("inputDocumento").click();
 }
 
-document.getElementById("inputDocumento").addEventListener("change", async function(e){
+document.getElementById("inputDocumento").addEventListener("change", async e=>{
 
 const file=e.target.files[0];
-if(!file || !cpfDocumento) return;
+if(!file) return;
 
-const nomeArquivo=`${cpfDocumento}_${Date.now()}_${file.name}`;
+const nome=`${cpfDocumento}_${Date.now()}_${file.name}`;
 
-const { error } = await supabaseClient.storage
+const {error}=await supabaseClient.storage
 .from("documentos")
-.upload(nomeArquivo,file);
+.upload(nome,file,{upsert:true});
 
 if(error){
 console.error(error);
@@ -264,93 +178,35 @@ alert("Erro upload");
 return;
 }
 
-const { data } = supabaseClient.storage
+const {data}=supabaseClient.storage
 .from("documentos")
-.getPublicUrl(nomeArquivo);
+.getPublicUrl(nome);
 
 await supabaseClient
 .from("terapeutas")
-.update({ documento_url: data.publicUrl })
+.update({documento_url:data.publicUrl})
 .eq("cpf",cpfDocumento);
 
-alert("Documento anexado!");
+alert("Upload ok");
 carregar();
 
 });
+
+function excluir(cpf){
+if(!confirm("Excluir?"))return;
+
+supabaseClient
+.from("terapeutas")
+.delete()
+.eq("cpf",cpf)
+.then(carregar);
+}
 
 function filtrarTabela(){
 const filtro=document.getElementById("pesquisaNome").value.toLowerCase();
-const linhas=document.querySelectorAll("#lista tr");
-
-linhas.forEach(l=>{
-l.style.display=l.innerText.toLowerCase().includes(filtro)?"":"none";
+document.querySelectorAll("#lista tr").forEach(tr=>{
+tr.style.display=tr.innerText.toLowerCase().includes(filtro)?"":"none";
 });
-}
-
-function abrirNovo(){
-cpfAtual=null;
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value="";
-});
-document.getElementById("modal").style.display="flex";
-}
-
-async function editar(cpf){
-cpfAtual=cpf;
-
-const {data,error}=await supabaseClient
-.from("terapeutas")
-.select("*")
-.eq("cpf",cpf)
-.single();
-
-if(error){console.error(error);return;}
-
-setForm(data);
-document.getElementById("modal").style.display="flex";
-}
-
-async function salvar(){
-
-const payload=getPayload();
-
-let error;
-
-if(cpfAtual){
-delete payload.cpf;
-
-({error}=await supabaseClient
-.from("terapeutas")
-.update(payload)
-.eq("cpf",cpfAtual));
-
-}else{
-
-({error}=await supabaseClient
-.from("terapeutas")
-.insert(payload));
-}
-
-if(error){
-console.error(error);
-alert("Erro ao salvar");
-return;
-}
-
-fecharModal();
-carregar();
-}
-
-async function excluir(cpf){
-if(!confirm("Excluir?"))return;
-
-await supabaseClient
-.from("terapeutas")
-.delete()
-.eq("cpf",cpf);
-
-carregar();
 }
 
 function fecharModal(){

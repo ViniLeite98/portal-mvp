@@ -14,10 +14,29 @@ document.getElementById("sidebar").innerHTML = `
 
   <div class="menu-title">CADASTROS</div>
 
-  <a href="equipe.html" class="menu-item ${paginaAtual === 'equipe.html' ? 'active' : ''}">
+  <!-- 🔥 EQUIPE COM SUBMENU -->
+  <div class="menu-item">
     <i class="fa-solid fa-users"></i>
     <span>Equipe</span>
-  </a>
+  </div>
+
+  <div style="margin-left:20px">
+
+    <a href="equipe.html" class="menu-item ${paginaAtual === 'equipe.html' ? 'active' : ''}">
+      <span>Cadastro</span>
+    </a>
+
+    <a href="rh_documentos.html" class="menu-item ${paginaAtual === 'rh_documentos.html' ? 'active' : ''}">
+      <span>Documentos</span>
+    </a>
+
+    <a href="rh_faltas.html" class="menu-item ${paginaAtual === 'rh_faltas.html' ? 'active' : ''}">
+      <span>Faltas / Atestados</span>
+    </a>
+
+  </div>
+
+  <!-- RESTO NORMAL -->
 
   <a href="clientes.html" class="menu-item ${paginaAtual === 'clientes.html' ? 'active' : ''}">
     <i class="fa-solid fa-user"></i>

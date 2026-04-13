@@ -1,8 +1,5 @@
 const paginaAtual = window.location.pathname.split("/").pop();
 
-const paginasEquipe = ["equipe.html","rh_documentos.html","rh_faltas.html"];
-const equipeAtiva = paginasEquipe.includes(paginaAtual);
-
 document.getElementById("sidebar").innerHTML = `
 <div class="sidebar">
 
@@ -17,29 +14,10 @@ document.getElementById("sidebar").innerHTML = `
 
   <div class="menu-title">CADASTROS</div>
 
-  <!-- 🔥 EQUIPE -->
-  <div class="menu-item" onclick="toggleEquipe()" style="cursor:pointer;">
+  <a href="equipe.html" class="menu-item ${paginaAtual === 'equipe.html' ? 'active' : ''}">
     <i class="fa-solid fa-users"></i>
     <span>Equipe</span>
-  </div>
-
-  <div id="submenuEquipe" style="margin-left:20px; display:${equipeAtiva ? 'block' : 'none'}">
-
-    <a href="equipe.html" class="menu-item ${paginaAtual === 'equipe.html' ? 'active' : ''}">
-      <span>Cadastro</span>
-    </a>
-
-    <a href="rh_documentos.html" class="menu-item ${paginaAtual === 'rh_documentos.html' ? 'active' : ''}">
-      <span>Documentos</span>
-    </a>
-
-    <a href="rh_faltas.html" class="menu-item ${paginaAtual === 'rh_faltas.html' ? 'active' : ''}">
-      <span>Faltas / Atestados</span>
-    </a>
-
-  </div>
-
-  <!-- RESTO NORMAL -->
+  </a>
 
   <a href="clientes.html" class="menu-item ${paginaAtual === 'clientes.html' ? 'active' : ''}">
     <i class="fa-solid fa-user"></i>
@@ -89,10 +67,10 @@ document.getElementById("sidebar").innerHTML = `
     <span>Fluxo de Caixa</span>
   </a>
 
-  <a href="estoque.html" class="menu-item ${paginaAtual === 'estoque.html' ? 'active' : ''}">
-    <i class="fa-solid fa-boxes-stacked"></i>
-    <span>Estoque</span>
-  </a>
-
 </div>
+
+<a href="estoque.html" class="menu-item ${paginaAtual === 'estoque.html' ? 'active' : ''}">
+  <i class="fa-solid fa-boxes-stacked"></i>
+  <span>Estoque</span>
+</a>
 `;

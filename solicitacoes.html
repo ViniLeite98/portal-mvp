@@ -11,27 +11,10 @@
 
 <style>
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
-}
-
-.app{
-  display:flex;
-  min-height:100vh;
-}
-
-#sidebar{
-  width:260px;
-  flex-shrink:0;
-}
-
-.content{
-  flex:1;
-  padding:40px;
-}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
 .card{
   background:#fff;
@@ -58,8 +41,6 @@ button{
   margin-right:6px;
 }
 
-button:hover{ opacity:.9; }
-
 .btn-danger{ background:#dc2626; }
 .btn-aprovar{ background:#16a34a; }
 .btn-reprovar{ background:#dc2626; }
@@ -68,25 +49,14 @@ button:hover{ opacity:.9; }
 .status-aprovado{ color:#16a34a; font-weight:bold; }
 .status-reprovado{ color:#dc2626; font-weight:bold; }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:20px;
-}
-
-th, td{
-  padding:10px;
-  border-bottom:1px solid #eee;
-  text-align:left;
-  font-size:14px;
-}
+table{width:100%;border-collapse:collapse;margin-top:20px;}
+th,td{padding:10px;border-bottom:1px solid #eee;font-size:14px;}
 </style>
 </head>
 
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -114,6 +84,9 @@ th, td{
 <label>Justificativa</label>
 <input id="justificativa"><br><br>
 
+<label>Atestado</label>
+<input type="file" id="atestado" multiple><br><br>
+
 <button onclick="salvar()">Salvar</button>
 </div>
 
@@ -139,10 +112,7 @@ th, td{
 </main>
 </div>
 
-<!-- SUPABASE UMD -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
-<!-- SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
@@ -155,7 +125,6 @@ const supabaseClient = window.supabase.createClient(
 
 let idEdicao = null;
 
-/* MOSTRAR LISTA */
 window.toggleLista = function(){
   const card=document.getElementById("cardLista");
   if(card.style.display==="none"){
@@ -166,59 +135,64 @@ window.toggleLista = function(){
   }
 };
 
-/* CARREGAR TERAPEUTAS */
 async function carregarTerapeutas(){
-
   const {data}=await supabaseClient
     .from("terapeutas")
     .select("cpf,nome_profissional")
-    .eq("status","Ativo")
-    .order("nome_profissional");
+    .eq("status","Ativo");
 
   const select=document.getElementById("terapeuta");
   select.innerHTML="<option value=''>Selecione</option>";
 
-  (data || []).forEach(t=>{
-    select.innerHTML+=`
-      <option value="${t.cpf}">
-        ${t.nome_profissional}
-      </option>
-    `;
+  (data||[]).forEach(t=>{
+    select.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`;
   });
 }
 
-/* SALVAR / EDITAR */
 window.salvar = async function(){
 
-  const dataInicio=document.getElementById("data_inicio").value;
-  const dataFim=document.getElementById("data_fim").value;
+  const tipo = document.getElementById("tipo").value;
+  const files = document.getElementById("atestado").files;
 
-  if(dataFim<dataInicio){
-    alert("Data fim não pode ser menor que data início.");
-    return;
+  let urls = [];
+
+  if(tipo === "Atestado" && files.length > 0){
+
+    for(let file of files){
+
+      const nome = `${Date.now()}_${file.name}`;
+
+      const { error } = await supabaseClient.storage
+        .from("atestados")
+        .upload(nome, file, { upsert:true });
+
+      if(error){
+        console.error(error);
+        alert("Erro upload");
+        return;
+      }
+
+      const { data } = supabaseClient.storage
+        .from("atestados")
+        .getPublicUrl(nome);
+
+      urls.push(data.publicUrl);
+    }
   }
 
   const payload={
     terapeuta_cpf:document.getElementById("terapeuta").value,
-    tipo:document.getElementById("tipo").value,
-    data_inicio:dataInicio,
-    data_fim:dataFim,
-    justificativa:document.getElementById("justificativa").value
+    tipo,
+    data_inicio:document.getElementById("data_inicio").value,
+    data_fim:document.getElementById("data_fim").value,
+    justificativa:document.getElementById("justificativa").value,
+    atestado_url: urls.length ? JSON.stringify(urls) : null,
+    status:"Pendente"
   };
 
-  let error;
-
-  if(idEdicao){
-    ({error}=await supabaseClient
-      .from("solicitacoes")
-      .update(payload)
-      .eq("id",idEdicao));
-  }else{
-    payload.status="Pendente";
-    ({error}=await supabaseClient
-      .from("solicitacoes")
-      .insert(payload));
-  }
+  const { error } = await supabaseClient
+    .from("solicitacoes")
+    .insert(payload);
 
   if(error){
     console.error(error);
@@ -226,91 +200,53 @@ window.salvar = async function(){
     return;
   }
 
-  idEdicao=null;
-  alert("Salvo com sucesso!");
+  alert("Salvo!");
   carregarSolicitacoes();
 };
 
-/* EDITAR */
-window.editar = async function(id){
-
-  const {data}=await supabaseClient
-    .from("solicitacoes")
-    .select("*")
-    .eq("id",id)
-    .single();
-
-  idEdicao=id;
-
-  document.getElementById("terapeuta").value=data.terapeuta_cpf;
-  document.getElementById("tipo").value=data.tipo;
-  document.getElementById("data_inicio").value=data.data_inicio;
-  document.getElementById("data_fim").value=data.data_fim;
-  document.getElementById("justificativa").value=data.justificativa;
-
-  window.scrollTo({top:0,behavior:"smooth"});
-};
-
-/* EXCLUIR */
-window.excluir = async function(id){
-  if(!confirm("Excluir solicitação?")) return;
-  await supabaseClient.from("solicitacoes").delete().eq("id",id);
-  carregarSolicitacoes();
-};
-
-/* ALTERAR STATUS */
-window.alterarStatus = async function(id,novoStatus){
-  await supabaseClient
-    .from("solicitacoes")
-    .update({status:novoStatus})
-    .eq("id",id);
-
-  carregarSolicitacoes();
-};
-
-/* CARREGAR TODAS AS SOLICITAÇÕES */
 async function carregarSolicitacoes(){
 
-  const { data: solicitacoes } = await supabaseClient
+  const { data } = await supabaseClient
     .from("solicitacoes")
     .select("*")
     .order("created_at",{ascending:false});
 
-  const { data: terapeutas } = await supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional");
-
-  const mapaTerapeutas = {};
-  (terapeutas || []).forEach(t=>{
-    mapaTerapeutas[t.cpf] = t.nome_profissional;
-  });
-
   const tbody=document.getElementById("lista");
   tbody.innerHTML="";
 
-  (solicitacoes || []).forEach(s=>{
+  (data||[]).forEach(s=>{
 
-    let statusClass="";
-    if(s.status==="Pendente")statusClass="status-pendente";
-    if(s.status==="Aprovado")statusClass="status-aprovado";
-    if(s.status==="Reprovado")statusClass="status-reprovado";
+    let botoesArquivos = "";
+
+    if(s.atestado_url){
+      try{
+        const arquivos = JSON.parse(s.atestado_url);
+        arquivos.forEach((url,i)=>{
+          botoesArquivos += `<button onclick="window.open('${url}')">👁 ${i+1}</button>`;
+        });
+      }catch{}
+    }
 
     tbody.innerHTML+=`
       <tr>
-        <td>${mapaTerapeutas[s.terapeuta_cpf] || s.terapeuta_cpf}</td>
+        <td>${s.terapeuta_cpf}</td>
         <td>${s.tipo}</td>
         <td>${s.data_inicio} → ${s.data_fim}</td>
-        <td class="${statusClass}">${s.status}</td>
+        <td>${s.status}</td>
         <td>
+          ${botoesArquivos}
           <button onclick="editar('${s.id}')">Editar</button>
-          <button onclick="alterarStatus('${s.id}','Aprovado')" class="btn-aprovar">✔</button>
-          <button onclick="alterarStatus('${s.id}','Reprovado')" class="btn-reprovar">✖</button>
-          <button onclick="excluir('${s.id}')" class="btn-danger">Excluir</button>
+          <button onclick="excluir('${s.id}')">Excluir</button>
         </td>
       </tr>
     `;
   });
 }
+
+window.excluir = async function(id){
+  await supabaseClient.from("solicitacoes").delete().eq("id",id);
+  carregarSolicitacoes();
+};
 
 carregarTerapeutas();
 

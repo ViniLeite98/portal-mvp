@@ -116,7 +116,6 @@ body{
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -179,34 +178,56 @@ return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][date.g
 
 function folgaSemanal(t,data){
 if(!t.tem_folga||!t.dia_folga)return false;
-return t.tem_folga==="Sim"&&
+return t.tem_folga==="Sim" &&
 diaSemana(data)===t.dia_folga.toLowerCase();
 }
 
 function folgaAprovada(t,data){
 return solicitacoes.some(s=>
-s.status==="Aprovado"&&
-s.terapeuta_cpf===t.cpf&&
-data>=new Date(s.data_inicio)&&
+s.terapeuta_cpf===t.cpf &&
+data>=new Date(s.data_inicio) &&
 data<=new Date(s.data_fim)
 );
 }
 
 async function carregarDados(){
-const {data:dadosTerapeutas}=await supabaseClient
+
+// 🔹 TERAPEUTAS
+const {data:terapData, error:terapError} = await supabaseClient
 .from("terapeutas")
 .select("*")
-.eq("status","Ativo")
-.in("cargo", ["Terapeuta Feminina","Terapeuta Masculino"]);
+.eq("status","Ativo");
 
-const {data:dadosSolicitacoes}=await supabaseClient
+console.log("TERAPEUTAS:", terapData);
+console.log("ERRO TERAPEUTAS:", terapError);
+
+terapeutas = terapData || [];
+
+
+// 🔹 SOLICITAÇÕES (com fallback)
+let {data:solData, error:solError} = await supabaseClient
 .from("solicitacoes")
 .select("*")
-.eq("status","Aprovado")
-.in("cargo", ["Terapeuta Feminina","Terapeuta Masculino"]);
+.eq("status","Aprovado");
 
-terapeutas=dadosTerapeutas||[];
-solicitacoes=dadosSolicitacoes||[];
+console.log("SOLICITACOES 1:", solData);
+console.log("ERRO 1:", solError);
+
+// 🚨 se deu erro, tenta sem filtro
+if(solError){
+console.warn("Tentando fallback...");
+const {data:fallbackData, error:fallbackError} = await supabaseClient
+.from("solicitacoes")
+.select("*");
+
+console.log("FALLBACK:", fallbackData);
+console.log("ERRO FALLBACK:", fallbackError);
+
+solicitacoes = fallbackData || [];
+}else{
+solicitacoes = solData || [];
+}
+
 renderCalendar();
 }
 
@@ -235,8 +256,8 @@ continue;
 }
 
 const disponiveis=terapeutas.filter(t=>
-t.hora_entrada&&t.hora_saida&&
-!folgaSemanal(t,dataDia)&&
+t.hora_entrada && t.hora_saida &&
+!folgaSemanal(t,dataDia) &&
 !folgaAprovada(t,dataDia)
 );
 
@@ -264,13 +285,13 @@ const detalhes=document.getElementById("detalhesDia");
 detalhes.innerHTML="";
 
 const disponiveis=terapeutas.filter(t=>
-t.hora_entrada&&t.hora_saida&&
-!folgaSemanal(t,data)&&
+t.hora_entrada && t.hora_saida &&
+!folgaSemanal(t,data) &&
 !folgaAprovada(t,data)
 );
 
 const indisponiveis=terapeutas.filter(t=>
-folgaSemanal(t,data)||folgaAprovada(t,data)
+folgaSemanal(t,data) || folgaAprovada(t,data)
 );
 
 detalhes.innerHTML+=`<div class="section-title">
@@ -292,7 +313,7 @@ Indisponíveis (${indisponiveis.length})
 indisponiveis.forEach(t=>{
 let motivo="";
 if(folgaSemanal(t,data)) motivo=`Folga semanal (${t.dia_folga})`;
-else if(folgaAprovada(t,data)) motivo="Ausência aprovada";
+else motivo="Ausência";
 
 detalhes.innerHTML+=`
 <div class="detail-item">

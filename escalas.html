@@ -20,15 +20,8 @@ body{
   background:#f5f7fb;
 }
 
-.app{
-  display:flex;
-  min-height:100vh;
-}
-
-#sidebar{
-  width:260px;
-  flex-shrink:0;
-}
+.app{ display:flex; min-height:100vh; }
+#sidebar{ width:260px; flex-shrink:0; }
 
 .content{
   flex:1;
@@ -42,7 +35,6 @@ body{
   align-items:center;
 }
 
-/* 🔥 novo */
 .bloqueio{
   margin-top:10px;
   display:flex;
@@ -85,14 +77,10 @@ body{
   padding:10px;
   cursor:pointer;
   min-height:90px;
-  transition:.2s;
 }
-
-.day:hover{ transform:translateY(-2px); }
 
 .day-number{ font-weight:700; }
 
-/* 🔥 alterado */
 .day-fechado{
   background:#f3f4f6;
   color:#9ca3af;
@@ -124,7 +112,6 @@ body{
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -134,7 +121,6 @@ body{
 <input type="date" id="dataSelecionada">
 </div>
 
-<!-- 🔥 NOVO BLOQUEIO -->
 <div class="bloqueio">
 <input type="date" id="bloquearData">
 <button onclick="bloquearDia()">Bloquear dia</button>
@@ -166,16 +152,15 @@ body{
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-const supabase = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let terapeutas=[];
 let solicitacoes=[];
 let diasBloqueados = JSON.parse(localStorage.getItem("diasBloqueados") || "[]");
 
-/* 🔥 FERIADOS FIXOS */
 const feriados = [
 "01-01","04-21","05-01","09-07",
 "10-12","11-02","11-15","12-25"
@@ -194,7 +179,6 @@ mes=d.getMonth();
 renderCalendar();
 });
 
-/* 🔥 BLOQUEIO MANUAL */
 function bloquearDia(){
 const data=document.getElementById("bloquearData").value;
 if(!data) return alert("Escolha uma data");
@@ -214,8 +198,6 @@ return feriados.includes(md);
 function diaBloqueado(data){
 return diasBloqueados.includes(data.toISOString().split("T")[0]);
 }
-
-/* 👇 NÃO MEXI NADA DAQUI PRA BAIXO (seu código original) */
 
 function diaSemana(date){
 return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][date.getDay()];
@@ -270,7 +252,6 @@ const dataDia=new Date(ano,mes,d);
 const div=document.createElement("div");
 div.className="day";
 
-/* 🔥 AQUI FOI A ÚNICA MUDANÇA REAL */
 if(
 dataDia.getDay()===0 ||
 ehFeriado(dataDia) ||
@@ -306,7 +287,6 @@ calendar.appendChild(div);
 function mostrarDia(dia){
 const data=new Date(ano,mes,dia);
 
-/* 🔥 BLOQUEIO AQUI TAMBÉM */
 if(ehFeriado(data) || diaBloqueado(data) || data.getDay()===0){
 document.getElementById("tituloDia").innerText="Clínica fechada";
 document.getElementById("detalhesDia").innerHTML="Sem atendimento";

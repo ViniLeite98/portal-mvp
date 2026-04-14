@@ -7,7 +7,6 @@
 <link rel="stylesheet"
  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
@@ -147,11 +146,6 @@ body{
 
 </div>
 
-<div class="card" style="margin-top:20px;">
-<h3>Força de Trabalho</h3>
-<canvas id="graficoDia" height="120"></canvas>
-</div>
-
 </main>
 </div>
 
@@ -165,7 +159,6 @@ const supabaseClient = supabase.createClient(
 
 let terapeutas=[];
 let solicitacoes=[];
-let chartDia=null;
 
 let hoje=new Date();
 let ano=hoje.getFullYear();
@@ -204,13 +197,13 @@ const {data:dadosTerapeutas}=await supabaseClient
 .from("terapeutas")
 .select("*")
 .eq("status","Ativo")
- .in("cargo", ["Terapeuta Feminina","Terapeuta Masculino"]);
+.in("cargo", ["Terapeuta Feminina","Terapeuta Masculino"]);
 
 const {data:dadosSolicitacoes}=await supabaseClient
 .from("solicitacoes")
 .select("*")
 .eq("status","Aprovado")
- .in("cargo", ["Terapeuta Feminina","Terapeuta Masculino"]);
+.in("cargo", ["Terapeuta Feminina","Terapeuta Masculino"]);
 
 terapeutas=dadosTerapeutas||[];
 solicitacoes=dadosSolicitacoes||[];
@@ -306,44 +299,6 @@ detalhes.innerHTML+=`
 <b>${t.nome_profissional}</b>
 <span class="badge-red">${motivo}</span>
 </div>`;
-});
-
-renderForcaTrabalho(disponiveis);
-}
-
-function renderForcaTrabalho(lista){
-const horas=[];
-for(let h=9;h<=21;h++)horas.push(h);
-
-const contagem=horas.map(hora=>
-lista.filter(t=>{
-const he=parseInt((t.hora_entrada||"0").split(":")[0]);
-const hs=parseInt((t.hora_saida||"0").split(":")[0]);
-return hora>=he&&hora<hs;
-}).length
-);
-
-if(chartDia)chartDia.destroy();
-
-chartDia=new Chart(document.getElementById("graficoDia"),{
-type:"bar",
-data:{
-labels:horas.map(h=>h+":00"),
-datasets:[{
-data:contagem,
-backgroundColor:"#2563eb",
-borderRadius:8,
-borderSkipped:false,
-barThickness:28
-}]
-},
-options:{
-plugins:{legend:{display:false}},
-scales:{
-x:{grid:{display:false}},
-y:{beginAtZero:true,ticks:{stepSize:1}}
-}
-}
 });
 }
 

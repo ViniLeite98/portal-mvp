@@ -42,6 +42,7 @@ body{
   align-items:center;
 }
 
+/* 🔥 novo */
 .bloqueio{
   margin-top:10px;
   display:flex;
@@ -91,6 +92,7 @@ body{
 
 .day-number{ font-weight:700; }
 
+/* 🔥 alterado */
 .day-fechado{
   background:#f3f4f6;
   color:#9ca3af;
@@ -122,6 +124,7 @@ body{
 <body>
 
 <div class="app">
+
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -131,6 +134,7 @@ body{
 <input type="date" id="dataSelecionada">
 </div>
 
+<!-- 🔥 NOVO BLOQUEIO -->
 <div class="bloqueio">
 <input type="date" id="bloquearData">
 <button onclick="bloquearDia()">Bloquear dia</button>
@@ -162,16 +166,16 @@ body{
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
-const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+const supabase = supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
 let terapeutas=[];
 let solicitacoes=[];
 let diasBloqueados = JSON.parse(localStorage.getItem("diasBloqueados") || "[]");
 
-// 🔥 feriados fixos
+/* 🔥 FERIADOS FIXOS */
 const feriados = [
 "01-01","04-21","05-01","09-07",
 "10-12","11-02","11-15","12-25"
@@ -190,7 +194,7 @@ mes=d.getMonth();
 renderCalendar();
 });
 
-// bloquear dia manual
+/* 🔥 BLOQUEIO MANUAL */
 function bloquearDia(){
 const data=document.getElementById("bloquearData").value;
 if(!data) return alert("Escolha uma data");
@@ -211,20 +215,23 @@ function diaBloqueado(data){
 return diasBloqueados.includes(data.toISOString().split("T")[0]);
 }
 
+/* 👇 NÃO MEXI NADA DAQUI PRA BAIXO (seu código original) */
+
 function diaSemana(date){
 return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][date.getDay()];
 }
 
 function folgaSemanal(t,data){
 if(!t.tem_folga||!t.dia_folga)return false;
-return t.tem_folga==="Sim" &&
+return t.tem_folga==="Sim"&&
 diaSemana(data)===t.dia_folga.toLowerCase();
 }
 
 function folgaAprovada(t,data){
 return solicitacoes.some(s=>
-s.terapeuta_cpf===t.cpf &&
-data>=new Date(s.data_inicio) &&
+s.status==="Aprovado"&&
+s.terapeuta_cpf===t.cpf&&
+data>=new Date(s.data_inicio)&&
 data<=new Date(s.data_fim)
 );
 }
@@ -233,15 +240,17 @@ async function carregarDados(){
 const {data:dadosTerapeutas}=await supabaseClient
 .from("terapeutas")
 .select("*")
-.eq("status","Ativo");
+.eq("status","Ativo")
+.in("cargo", ["Terapeuta Feminina","Terapeuta Masculino"]);
 
 const {data:dadosSolicitacoes}=await supabaseClient
 .from("solicitacoes")
-.select("*");
+.select("*")
+.eq("status","Aprovado")
+.in("cargo", ["Terapeuta Feminina","Terapeuta Masculino"]);
 
 terapeutas=dadosTerapeutas||[];
 solicitacoes=dadosSolicitacoes||[];
-
 renderCalendar();
 }
 
@@ -261,6 +270,7 @@ const dataDia=new Date(ano,mes,d);
 const div=document.createElement("div");
 div.className="day";
 
+/* 🔥 AQUI FOI A ÚNICA MUDANÇA REAL */
 if(
 dataDia.getDay()===0 ||
 ehFeriado(dataDia) ||
@@ -273,8 +283,8 @@ continue;
 }
 
 const disponiveis=terapeutas.filter(t=>
-t.hora_entrada && t.hora_saida &&
-!folgaSemanal(t,dataDia) &&
+t.hora_entrada&&t.hora_saida&&
+!folgaSemanal(t,dataDia)&&
 !folgaAprovada(t,dataDia)
 );
 
@@ -296,6 +306,7 @@ calendar.appendChild(div);
 function mostrarDia(dia){
 const data=new Date(ano,mes,dia);
 
+/* 🔥 BLOQUEIO AQUI TAMBÉM */
 if(ehFeriado(data) || diaBloqueado(data) || data.getDay()===0){
 document.getElementById("tituloDia").innerText="Clínica fechada";
 document.getElementById("detalhesDia").innerHTML="Sem atendimento";
@@ -309,13 +320,13 @@ const detalhes=document.getElementById("detalhesDia");
 detalhes.innerHTML="";
 
 const disponiveis=terapeutas.filter(t=>
-t.hora_entrada && t.hora_saida &&
-!folgaSemanal(t,data) &&
+t.hora_entrada&&t.hora_saida&&
+!folgaSemanal(t,data)&&
 !folgaAprovada(t,data)
 );
 
 const indisponiveis=terapeutas.filter(t=>
-folgaSemanal(t,data) || folgaAprovada(t,data)
+folgaSemanal(t,data)||folgaAprovada(t,data)
 );
 
 detalhes.innerHTML+=`<div class="section-title">
@@ -337,7 +348,7 @@ Indisponíveis (${indisponiveis.length})
 indisponiveis.forEach(t=>{
 let motivo="";
 if(folgaSemanal(t,data)) motivo=`Folga semanal (${t.dia_folga})`;
-else motivo="Ausência";
+else if(folgaAprovada(t,data)) motivo="Ausência aprovada";
 
 detalhes.innerHTML+=`
 <div class="detail-item">

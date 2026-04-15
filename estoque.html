@@ -9,6 +9,8 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
 <style>
 body{
 margin:0;
@@ -41,35 +43,26 @@ margin-bottom:10px;
 }
 
 button{
-width:100%;
-padding:10px;
+padding:8px 10px;
 border:none;
-border-radius:10px;
+border-radius:8px;
+cursor:pointer;
 background:#334155;
 color:#fff;
-cursor:pointer;
 }
 
-.btn-danger{background:#dc2626;margin-top:5px;}
+.btn-danger{background:#dc2626;}
 
 .lista-linha{
 display:flex;
 align-items:center;
 margin-bottom:12px;
-font-size:15px;
 }
-
-.nome{white-space:nowrap;}
 
 .pontos{
 flex:1;
 border-bottom:1px dashed #999;
 margin:0 10px;
-}
-
-.valor{
-white-space:nowrap;
-font-weight:500;
 }
 
 .acoes{
@@ -78,13 +71,6 @@ gap:5px;
 margin-left:10px;
 }
 
-.acoes button{
-width:auto;
-padding:5px 8px;
-border-radius:6px;
-}
-
-/* MODAL */
 .modal{
 display:none;
 position:fixed;
@@ -119,19 +105,19 @@ width:350px;
 <h3>Novo Material</h3>
 
 <input id="nome" placeholder="Nome">
-<input id="valor" type="number" step="0.01" placeholder="Valor da unidade (R$)">
+<input id="valor" type="number" placeholder="Valor">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
-<hr style="margin:15px 0">
+<hr>
 
 <h3>Movimentar</h3>
 
 <select id="produtoMov"></select>
-<input id="qtd" type="number" placeholder="Quantidade">
+<input id="qtd" type="number">
 
-<button onclick="entrada()">+ Entrada</button>
-<button class="btn-danger" onclick="saida()">- Saída</button>
+<button onclick="entrada()">Entrada</button>
+<button class="btn-danger" onclick="saida()">Saida</button>
 
 </div>
 
@@ -139,7 +125,7 @@ width:350px;
 
 <h3>Estoque</h3>
 
-<input id="buscarMaterial" placeholder="Buscar material..." oninput="filtrarLista()">
+<input id="buscarMaterial" placeholder="Buscar..." oninput="filtrarLista()">
 
 <div id="lista"></div>
 
@@ -150,7 +136,7 @@ width:350px;
 </main>
 </div>
 
-<!-- MODAL EDITAR -->
+<!-- MODAL -->
 <div id="modalEditar" class="modal">
 <div class="modal-box">
 
@@ -159,16 +145,13 @@ width:350px;
 <input id="editNome">
 <input id="editValor" type="number">
 
-<div style="display:flex; gap:10px; margin-top:10px;">
+<div style="display:flex;gap:10px;margin-top:10px;">
 <button onclick="salvarEdicao()">Salvar</button>
 <button class="btn-danger" onclick="fecharEditar()">Cancelar</button>
 </div>
 
 </div>
 </div>
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
@@ -204,21 +187,21 @@ data.forEach(p=>{
 const nomeSeguro = (p.nome || "").replace(/'/g, "")
 const total = (p.valor || 0) * (p.saldo || 0)
 
-lista.innerHTML+=`
-<div class="lista-linha">
-<span class="nome">${p.nome}</span>
-<span class="pontos"></span>
-<span class="valor">${p.saldo} | R$ ${total.toFixed(2)}</span>
+lista.innerHTML+=
+'<div class="lista-linha">'+
+'<span>'+p.nome+'</span>'+
+'<span class="pontos"></span>'+
+'<span>'+p.saldo+' | R$ '+total.toFixed(2)+'</span>'+
 
-<div class="acoes">
-<button onclick="abrirEditar(${p.id}, '${nomeSeguro}', ${p.valor || 0})">✏️</button>
-<button class="btn-danger" onclick="excluirProduto(${p.id})">🗑️</button>
-</div>
+'<div class="acoes">'+
+'<button onclick="abrirEditar('+p.id+', \''+nomeSeguro+'\', '+(p.valor||0)+')">Editar</button>'+
+'<button class="btn-danger" onclick="excluirProduto('+p.id+')">Excluir</button>'+
+'</div>'+
 
-</div>
-`
+'</div>'
 
-sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
+sel.innerHTML+='<option value="'+p.id+'">'+p.nome+'</option>'
+
 })
 }
 
@@ -245,9 +228,6 @@ const valor=parseFloat(document.getElementById("valor").value)
 
 await supabaseClient.from("produtos").insert({nome, valor})
 
-document.getElementById("nome").value=""
-document.getElementById("valor").value=""
-
 carregar()
 }
 
@@ -257,9 +237,7 @@ const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"entrada",
-quantidade:qtd
+produto_id:id,tipo:"entrada",quantidade:qtd
 })
 
 carregar()
@@ -271,9 +249,7 @@ const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"saida",
-quantidade:qtd
+produto_id:id,tipo:"saida",quantidade:qtd
 })
 
 carregar()

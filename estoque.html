@@ -78,8 +78,8 @@ background:#fff;padding:20px;border-radius:12px;width:350px;
 <select id="produtoMov"></select>
 <input id="qtd" type="number">
 
-<button onclick="entrada()">Entrada</button>
-<button class="btn-danger" onclick="saida()">Saida</button>
+<button onclick="compra()">Compra</button>
+<button class="btn-danger" onclick="uso()">Uso</button>
 
 </div>
 
@@ -227,25 +227,31 @@ await supabaseClient.from("produtos").insert({nome, valor})
 carregar()
 }
 
-async function entrada(){
+async function compra(){
 
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,tipo:"entrada",quantidade:qtd
+produto_id:id,
+tipo:"entrada",
+tipo_movimentacao:"compra",
+quantidade:qtd
 })
 
 carregar()
 }
 
-async function saida(){
+async function uso(){
 
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,tipo:"saida",quantidade:qtd
+produto_id:id,
+tipo:"saida",
+tipo_movimentacao:"uso",
+quantidade:qtd
 })
 
 carregar()
@@ -306,6 +312,7 @@ await supabaseClient
 .insert({
 produto_id: produtoEditando,
 tipo: diferenca > 0 ? "entrada" : "saida",
+tipo_movimentacao:"ajuste",
 quantidade: Math.abs(diferenca),
 responsavel: "Ajuste manual"
 })

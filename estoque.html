@@ -180,7 +180,7 @@ font-size:12px;
 
 <h3>Estoque</h3>
 
-<!-- 🔥 BUSCA -->
+<!-- 🔍 BUSCA -->
 <input id="buscarMaterial" placeholder="Buscar material..." oninput="filtrarLista()">
 
 <div id="lista"></div>
@@ -233,11 +233,11 @@ font-size:12px;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
 let listaFuncionarios = []
-let listaProdutos = []
+let listaOriginal = []
 
 async function carregar(){
 
@@ -246,11 +246,12 @@ const {data} = await supabaseClient
 .select("*")
 .order("nome")
 
-listaProdutos = data || []
-renderLista(listaProdutos)
+listaOriginal = data || []
+
+renderizarLista(listaOriginal)
 }
 
-function renderLista(data){
+function renderizarLista(data){
 
 const lista = document.getElementById("lista")
 lista.innerHTML=""
@@ -284,15 +285,15 @@ function filtrarLista(){
 const termo = document.getElementById("buscarMaterial").value.toLowerCase()
 
 if(!termo){
-renderLista(listaProdutos)
+renderizarLista(listaOriginal)
 return
 }
 
-const filtrados = listaProdutos.filter(p =>
+const filtrados = listaOriginal.filter(p =>
 p.nome.toLowerCase().includes(termo)
 )
 
-renderLista(filtrados)
+renderizarLista(filtrados)
 }
 
 async function carregarFuncionarios(){

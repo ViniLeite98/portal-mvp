@@ -9,6 +9,8 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
 <style>
 body{
 margin:0;
@@ -41,22 +43,20 @@ margin-bottom:10px;
 }
 
 button{
-width:100%;
-padding:10px;
+padding:8px 10px;
 border:none;
-border-radius:10px;
+border-radius:8px;
+cursor:pointer;
 background:#334155;
 color:#fff;
-cursor:pointer;
 }
 
-.btn-danger{background:#dc2626;margin-top:5px;}
+.btn-danger{background:#dc2626;}
 
 .lista-linha{
 display:flex;
 align-items:center;
 margin-bottom:12px;
-font-size:15px;
 }
 
 .nome{white-space:nowrap;}
@@ -67,10 +67,7 @@ border-bottom:1px dashed #999;
 margin:0 10px;
 }
 
-.valor{
-white-space:nowrap;
-font-weight:500;
-}
+.valor{white-space:nowrap;}
 
 .acoes{
 display:flex;
@@ -78,13 +75,6 @@ gap:5px;
 margin-left:10px;
 }
 
-.acoes button{
-width:auto;
-padding:5px 8px;
-border-radius:6px;
-}
-
-/* MODAL */
 .modal{
 display:none;
 position:fixed;
@@ -106,6 +96,7 @@ width:350px;
 <body>
 
 <div class="app">
+
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -119,19 +110,19 @@ width:350px;
 <h3>Novo Material</h3>
 
 <input id="nome" placeholder="Nome">
-<input id="valor" type="number" step="0.01" placeholder="Valor da unidade (R$)">
+<input id="valor" type="number" step="0.01" placeholder="Valor">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
-<hr style="margin:15px 0">
+<hr>
 
 <h3>Movimentar</h3>
 
 <select id="produtoMov"></select>
-<input id="qtd" type="number" placeholder="Quantidade">
+<input id="qtd" type="number">
 
-<button onclick="entrada()">+ Entrada</button>
-<button class="btn-danger" onclick="saida()">- Saída</button>
+<button onclick="entrada()">Entrada</button>
+<button class="btn-danger" onclick="saida()">Saida</button>
 
 </div>
 
@@ -139,7 +130,7 @@ width:350px;
 
 <h3>Estoque</h3>
 
-<input id="buscarMaterial" placeholder="Buscar material..." oninput="filtrarLista()">
+<input id="buscarMaterial" placeholder="Buscar..." oninput="filtrarLista()">
 
 <div id="lista"></div>
 
@@ -159,7 +150,7 @@ width:350px;
 <input id="editNome">
 <input id="editValor" type="number">
 
-<div style="display:flex; gap:10px; margin-top:10px;">
+<div style="display:flex;gap:10px;margin-top:10px;">
 <button onclick="salvarEdicao()">Salvar</button>
 <button class="btn-danger" onclick="fecharEditar()">Cancelar</button>
 </div>
@@ -167,14 +158,13 @@ width:350px;
 </div>
 </div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 )
 
 let listaOriginal = []
@@ -201,29 +191,35 @@ sel.innerHTML=""
 
 data.forEach(p=>{
 
-const nomeSeguro = (p.nome || "").replace(/'/g, "")
 const total = (p.valor || 0) * (p.saldo || 0)
+const nomeSeguro = (p.nome || "").replace(/'/g, "")
 
-lista.innerHTML+=`
-<div class="lista-linha">
+const div = document.createElement("div")
+div.className = "lista-linha"
+
+div.innerHTML = `
 <span class="nome">${p.nome}</span>
 <span class="pontos"></span>
 <span class="valor">${p.saldo} | R$ ${total.toFixed(2)}</span>
 
 <div class="acoes">
-<button onclick="abrirEditar(${p.id}, '${nomeSeguro}', ${p.valor || 0})">✏️</button>
-<button class="btn-danger" onclick="excluirProduto(${p.id})">🗑️</button>
-</div>
-
+<button class="btn-edit">Editar</button>
+<button class="btn-danger">Excluir</button>
 </div>
 `
 
-sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
+// eventos seguros (sem quebrar HTML)
+div.querySelector(".btn-edit").onclick = () => abrirEditar(p.id, nomeSeguro, p.valor || 0)
+div.querySelector(".btn-danger").onclick = () => excluirProduto(p.id)
+
+lista.appendChild(div)
+
+sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`
+
 })
 }
 
 function filtrarLista(){
-
 const termo = document.getElementById("buscarMaterial").value.toLowerCase()
 
 if(!termo){
@@ -245,35 +241,26 @@ const valor=parseFloat(document.getElementById("valor").value)
 
 await supabaseClient.from("produtos").insert({nome, valor})
 
-document.getElementById("nome").value=""
-document.getElementById("valor").value=""
-
 carregar()
 }
 
 async function entrada(){
-
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"entrada",
-quantidade:qtd
+produto_id:id,tipo:"entrada",quantidade:qtd
 })
 
 carregar()
 }
 
 async function saida(){
-
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"saida",
-quantidade:qtd
+produto_id:id,tipo:"saida",quantidade:qtd
 })
 
 carregar()
@@ -283,28 +270,24 @@ async function excluirProduto(id){
 
 if(!confirm("Excluir material?")) return
 
-await supabaseClient
-.from("movimentacoes_estoque")
-.delete()
-.eq("produto_id", id)
+await supabaseClient.from("movimentacoes_estoque")
+.delete().eq("produto_id", id)
 
-await supabaseClient
-.from("produtos")
-.delete()
-.eq("id", id)
+await supabaseClient.from("produtos")
+.delete().eq("id", id)
 
 carregar()
 }
 
 function abrirEditar(id, nome, valor){
-produtoEditando=id
-document.getElementById("editNome").value=nome
-document.getElementById("editValor").value=valor
-document.getElementById("modalEditar").style.display="flex"
+produtoEditando = id
+document.getElementById("editNome").value = nome
+document.getElementById("editValor").value = valor
+document.getElementById("modalEditar").style.display = "flex"
 }
 
 function fecharEditar(){
-document.getElementById("modalEditar").style.display="none"
+document.getElementById("modalEditar").style.display = "none"
 }
 
 async function salvarEdicao(){

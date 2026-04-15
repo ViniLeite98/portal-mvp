@@ -7,7 +7,7 @@
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 body{
@@ -56,10 +56,7 @@ cursor:pointer;
 display:flex;
 align-items:center;
 margin-bottom:12px;
-font-size:15px;
 }
-
-.nome{white-space:nowrap;}
 
 .pontos{
 flex:1;
@@ -67,100 +64,24 @@ border-bottom:1px dashed #999;
 margin:0 10px;
 }
 
-.valor{
-white-space:nowrap;
-font-weight:500;
-}
+.valor{white-space:nowrap;}
 
 .btn-delete{
 background:#dc2626;
-margin-left:10px;
 width:35px;
 height:35px;
+margin-left:10px;
+border-radius:8px;
 display:flex;
 align-items:center;
 justify-content:center;
-border-radius:8px;
-}
-
-/* MODAL */
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.4);
-align-items:center;
-justify-content:center;
-}
-
-.modal-box{
-background:#fff;
-padding:20px;
-border-radius:12px;
-width:350px;
-}
-
-/* AUTOCOMPLETE */
-.autocomplete{position:relative;}
-
-.sugestoes{
-position:absolute;
-top:100%;
-left:0;
-right:0;
-background:#fff;
-border:1px solid #ccc;
-border-radius:8px;
-max-height:150px;
-overflow-y:auto;
-z-index:10;
-display:none;
-}
-
-.sugestoes div{
-padding:10px;
-cursor:pointer;
-}
-
-.sugestoes div:hover{
-background:#f1f5f9;
-}
-
-/* LOG */
-.log-linha{
-display:flex;
-align-items:center;
-font-size:14px;
-margin-bottom:8px;
-}
-
-.log-produto{font-weight:500;}
-
-.log-tipo{
-margin:0 8px;
-font-size:12px;
-padding:2px 6px;
-border-radius:6px;
-color:#fff;
-}
-
-.entrada{ background:#16a34a; }
-.saida{ background:#dc2626; }
-
-.log-info{
-margin-left:auto;
-color:#555;
-font-size:12px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="app">
-<aside id="sidebar"></aside>
-
-<main class="content">
+<div class="content">
 
 <h1>Materiais</h1>
 
@@ -171,19 +92,19 @@ font-size:12px;
 <h3>Novo Material</h3>
 
 <input id="nome" placeholder="Nome">
-<input id="valor" type="number" step="0.01" placeholder="Valor da unidade (R$)">
+<input id="valor" type="number" placeholder="Valor">
 
 <button onclick="criarProduto()">Cadastrar</button>
 
-<hr style="margin:15px 0">
+<hr>
 
 <h3>Movimentar</h3>
 
 <select id="produtoMov"></select>
-<input id="qtd" type="number" placeholder="Quantidade">
+<input id="qtd" type="number">
 
 <button onclick="entrada()">+ Entrada</button>
-<button class="btn-danger" onclick="abrirModalSaida()">- Saída</button>
+<button class="btn-danger" onclick="saida()">- Saída</button>
 
 </div>
 
@@ -191,53 +112,15 @@ font-size:12px;
 
 <h3>Estoque</h3>
 
-<input id="buscarMaterial" placeholder="Buscar material..." oninput="filtrarLista()">
+<input id="buscarMaterial" placeholder="Buscar..." oninput="filtrarLista()">
 
 <div id="lista"></div>
 
-<hr style="margin:20px 0">
-
-<h3>Movimentações</h3>
-<div id="logMovimentacoes"></div>
-
 </div>
 
 </div>
 
-</main>
 </div>
-
-<!-- MODAL -->
-<div id="modalSaida" class="modal">
-<div class="modal-box">
-
-<h3>Registrar Saída</h3>
-
-<label>Produto</label>
-<select id="produtoSaida"></select>
-
-<label>Quantidade</label>
-<input id="qtdModal" type="number">
-
-<label>Quem usou</label>
-<div class="autocomplete">
-<input id="responsavelBusca" placeholder="Digite o nome..." autocomplete="off">
-<div id="listaSugestoes" class="sugestoes"></div>
-</div>
-
-<label>Data</label>
-<input id="dataSaida" type="date">
-
-<div style="display:flex; gap:10px; margin-top:10px;">
-<button onclick="confirmarSaida()">Salvar</button>
-<button class="btn-danger" onclick="fecharModal()">Cancelar</button>
-</div>
-
-</div>
-</div>
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
@@ -246,7 +129,6 @@ const supabase = supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let listaFuncionarios = []
 let listaOriginal = []
 
 async function carregar(){
@@ -266,10 +148,7 @@ const lista = document.getElementById("lista")
 lista.innerHTML=""
 
 const sel=document.getElementById("produtoMov")
-const selModal=document.getElementById("produtoSaida")
-
 sel.innerHTML=""
-selModal.innerHTML=""
 
 data.forEach(p=>{
 
@@ -277,7 +156,7 @@ const total = (p.valor || 0) * (p.saldo || 0)
 
 lista.innerHTML+=`
 <div class="lista-linha">
-<span class="nome">${p.nome}</span>
+<span>${p.nome}</span>
 <span class="pontos"></span>
 <span class="valor">${p.saldo} | R$ ${total.toFixed(2)}</span>
 
@@ -288,7 +167,6 @@ lista.innerHTML+=`
 `
 
 sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
-selModal.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 
 })
 }
@@ -309,74 +187,19 @@ p.nome.toLowerCase().includes(termo)
 renderizarLista(filtrados)
 }
 
-async function excluirProduto(id){
+async function criarProduto(){
 
-const confirmar = confirm("Tem certeza que deseja excluir este material?")
+const nome = document.getElementById("nome").value
+const valor = parseFloat(document.getElementById("valor").value)
 
-if(!confirmar) return
-
-await supabaseClient
-.from("movimentacoes_estoque")
-.delete()
-.eq("produto_id", id)
-
-await supabaseClient
-.from("produtos")
-.delete()
-.eq("id", id)
-
-alert("Material excluído!")
-
-carregar()
-carregarLog()
-}
-
-async function carregarFuncionarios(){
-
-const { data } = await supabaseClient
-.from("terapeutas")
-.select("nome_profissional")
-.eq("status","Ativo")
-
-listaFuncionarios = data || []
-}
-
-const input = document.getElementById("responsavelBusca")
-const listaSug = document.getElementById("listaSugestoes")
-
-input.addEventListener("input", ()=>{
-
-const termo = input.value.toLowerCase()
-
-if(!termo){
-listaSug.style.display="none"
-return
-}
-
-const filtrados = listaFuncionarios.filter(t =>
-t.nome_profissional.toLowerCase().includes(termo)
-)
-
-listaSug.innerHTML = filtrados.map(t =>
-`<div onclick="selecionarFuncionario('${t.nome_profissional}')">${t.nome_profissional}</div>`
-).join("")
-
-listaSug.style.display="block"
-
+await supabaseClient.from("produtos").insert({
+nome, valor
 })
 
-function selecionarFuncionario(nome){
-input.value = nome
-listaSug.style.display="none"
-}
+document.getElementById("nome").value=""
+document.getElementById("valor").value=""
 
-function abrirModalSaida(){
-document.getElementById("modalSaida").style.display="flex"
-document.getElementById("dataSaida").value = new Date().toISOString().split("T")[0]
-}
-
-function fecharModal(){
-document.getElementById("modalSaida").style.display="none"
+carregar()
 }
 
 async function entrada(){
@@ -392,75 +215,41 @@ quantidade:qtd
 
 document.getElementById("qtd").value=""
 carregar()
-carregarLog()
 }
 
-async function confirmarSaida(){
+async function saida(){
 
-const id = document.getElementById("produtoSaida").value
-const qtd = parseFloat(document.getElementById("qtdModal").value)
-const responsavel = document.getElementById("responsavelBusca").value
-const data = document.getElementById("dataSaida").value
+const id=document.getElementById("produtoMov").value
+const qtd=parseFloat(document.getElementById("qtd").value)
 
 await supabaseClient.from("movimentacoes_estoque").insert({
 produto_id:id,
 tipo:"saida",
-quantidade:qtd,
-responsavel:responsavel,
-data:data
+quantidade:qtd
 })
 
-fecharModal()
+document.getElementById("qtd").value=""
 carregar()
-carregarLog()
 }
 
-async function carregarLog(){
+async function excluirProduto(id){
 
-const { data } = await supabaseClient
+if(!confirm("Excluir material?")) return
+
+await supabaseClient
 .from("movimentacoes_estoque")
-.select(`
-quantidade,
-tipo,
-responsavel,
-data,
-produtos(nome)
-`)
-.order("created_at", { ascending: false })
-.limit(20)
+.delete()
+.eq("produto_id", id)
 
-const container = document.getElementById("logMovimentacoes")
+await supabaseClient
+.from("produtos")
+.delete()
+.eq("id", id)
 
-container.innerHTML = ""
-
-if(!data || data.length === 0){
-container.innerHTML = "<p style='color:#999'>Sem movimentações ainda</p>"
-return
-}
-
-data.forEach(m=>{
-
-container.innerHTML += `
-<div class="log-linha">
-
-<span class="log-produto">${m.produtos?.nome || "-"}</span>
-
-<span class="log-tipo ${m.tipo}">
-${m.tipo === "entrada" ? "+" : "-"} ${m.quantidade}
-</span>
-
-<span class="log-info">
-${m.responsavel || "-"} | ${m.data || ""}
-</span>
-
-</div>
-`
-})
+carregar()
 }
 
 carregar()
-carregarFuncionarios()
-carregarLog()
 
 </script>
 

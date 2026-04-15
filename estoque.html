@@ -9,6 +9,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<!-- 🔥 IMPORTANTE: só uma vez -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
@@ -96,7 +97,6 @@ width:350px;
 <body>
 
 <div class="app">
-
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -158,14 +158,16 @@ width:350px;
 </div>
 </div>
 
+<!-- SIDEBAR -->
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-const supabase = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
+<!-- 🔥 UMA ÚNICA INSTÂNCIA -->
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+)
 
 let listaOriginal = []
 let produtoEditando = null
@@ -192,7 +194,6 @@ sel.innerHTML=""
 data.forEach(p=>{
 
 const total = (p.valor || 0) * (p.saldo || 0)
-const nomeSeguro = (p.nome || "").replace(/'/g, "")
 
 const div = document.createElement("div")
 div.className = "lista-linha"
@@ -208,8 +209,7 @@ div.innerHTML = `
 </div>
 `
 
-// eventos seguros (sem quebrar HTML)
-div.querySelector(".btn-edit").onclick = () => abrirEditar(p.id, nomeSeguro, p.valor || 0)
+div.querySelector(".btn-edit").onclick = () => abrirEditar(p.id, p.nome, p.valor || 0)
 div.querySelector(".btn-danger").onclick = () => excluirProduto(p.id)
 
 lista.appendChild(div)
@@ -220,6 +220,7 @@ sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`
 }
 
 function filtrarLista(){
+
 const termo = document.getElementById("buscarMaterial").value.toLowerCase()
 
 if(!termo){
@@ -245,22 +246,28 @@ carregar()
 }
 
 async function entrada(){
+
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,tipo:"entrada",quantidade:qtd
+produto_id:id,
+tipo:"entrada",
+quantidade:qtd
 })
 
 carregar()
 }
 
 async function saida(){
+
 const id=document.getElementById("produtoMov").value
 const qtd=parseFloat(document.getElementById("qtd").value)
 
 await supabaseClient.from("movimentacoes_estoque").insert({
-produto_id:id,tipo:"saida",quantidade:qtd
+produto_id:id,
+tipo:"saida",
+quantidade:qtd
 })
 
 carregar()
@@ -270,24 +277,28 @@ async function excluirProduto(id){
 
 if(!confirm("Excluir material?")) return
 
-await supabaseClient.from("movimentacoes_estoque")
-.delete().eq("produto_id", id)
+await supabaseClient
+.from("movimentacoes_estoque")
+.delete()
+.eq("produto_id", id)
 
-await supabaseClient.from("produtos")
-.delete().eq("id", id)
+await supabaseClient
+.from("produtos")
+.delete()
+.eq("id", id)
 
 carregar()
 }
 
 function abrirEditar(id, nome, valor){
-produtoEditando = id
-document.getElementById("editNome").value = nome
-document.getElementById("editValor").value = valor
-document.getElementById("modalEditar").style.display = "flex"
+produtoEditando=id
+document.getElementById("editNome").value=nome
+document.getElementById("editValor").value=valor
+document.getElementById("modalEditar").style.display="flex"
 }
 
 function fecharEditar(){
-document.getElementById("modalEditar").style.display = "none"
+document.getElementById("modalEditar").style.display="none"
 }
 
 async function salvarEdicao(){

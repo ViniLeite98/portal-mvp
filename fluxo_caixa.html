@@ -235,13 +235,29 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
-
 let dados=[]
 let listaAtual=[]
 let dadosClientes=[]
 let dadosServicos=[]
 let servicosMap={}
 let editandoId=null
+
+function nomeCliente(c){
+  if(!c) return ""
+
+  const nome = c.nome || c.nome_cliente || ""
+
+  const telefone =
+    c.telefone ||
+    c.celular ||
+    c.phone ||
+    c.whatsapp ||
+    ""
+
+  const final = telefone ? telefone.slice(-4) : ""
+
+  return final ? `${nome} ${final}` : nome
+}
 
 function nomeServico(s){
 if(!s) return ""
@@ -279,9 +295,8 @@ cliente.innerHTML="<option value=''>Selecione</option>"
 filtroCliente.innerHTML="<option value=''>Todos</option>"
 
 dadosClientes.forEach(c=>{
-const nome=c.nome||c.nome_cliente
-cliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
-filtroCliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
+cliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
+filtroCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 })
 
 const {data:servicos}=await supabaseClient.from("servicos").select("*")
@@ -328,7 +343,7 @@ lista.forEach(r=>{
 tbody.innerHTML+=`
 <tr>
 <td>${r.data}</td>
-<td>${r.clientes?.nome||r.clientes?.nome_cliente}</td>
+<td>${nomeCliente(r.clientes)}</td>
 <td>${r.origem_lead || "-"}</td>
 <td>${nomeServico(r.servicos)}</td>
 <td>${formatar(r.valor)}</td>
@@ -371,7 +386,7 @@ return
 
 const exportData=listaAtual.map(r=>({
 Data:r.data,
-Cliente:r.clientes?.nome||r.clientes?.nome_cliente,
+Cliente:nomeCliente(r.clientes),
 Origem:r.origem_lead,
 Servico:nomeServico(r.servicos),
 Valor:r.valor,
@@ -393,8 +408,7 @@ const r=dados.find(d=>d.id==id)
 
 editCliente.innerHTML="<option value=''>Selecione</option>"
 dadosClientes.forEach(c=>{
-const nome=c.nome||c.nome_cliente
-editCliente.innerHTML+=`<option value="${c.id}">${nome}</option>`
+editCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 })
 
 editServico.innerHTML="<option value=''>Selecione</option>"

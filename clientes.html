@@ -2,35 +2,66 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Clientes | Hara Spa</title>
+<title>Fluxo de Caixa | Hara Spa</title>
 
 <link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.left-tools input{padding:8px;border:1px solid #d1d5db;border-radius:6px;width:260px;}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
-th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
-th{background:#f9fafb;font-weight:600;}
-button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
-button.excluir{background:#dc2626;}
-.top-actions{display:flex;gap:10px;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10;}
-.modal-content{background:#fff;width:900px;max-height:90vh;overflow:auto;border-radius:16px;padding:24px;}
-.section{margin-bottom:20px;}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-label{font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;display:block;}
-input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+body{margin:0;font-family:Segoe UI;background:#f4f6fb}
+.app{display:flex}
+.content{flex:1;padding:40px}
+
+.form-box{
+background:#fff;
+padding:20px;
+border-radius:10px;
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+margin-bottom:20px;
+align-items:flex-end;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+.field{display:flex;flex-direction:column;font-size:13px;}
+
+input,select{
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
+min-width:160px;
+}
+
+button{
+background:#2563eb;
+color:#fff;
+border:none;
+padding:10px 15px;
+border-radius:6px;
+cursor:pointer;
+}
+
+button.editar{background:#f59e0b}
+button.excluir{background:#dc2626}
+
+table{
+width:100%;
+background:#fff;
+border-collapse:collapse;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
+}
 </style>
 </head>
 
@@ -41,25 +72,95 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 
 <main class="content">
 
-<h1>Clientes</h1>
-<p>Clientes cadastrados</p>
+<h1>Fluxo de Caixa</h1>
 
-<div class="topbar">
-<div class="left-tools">
-<input id="buscaCliente" placeholder="Buscar cliente..." oninput="filtrarTabela()">
+<div class="form-box">
+
+<div class="field">
+<label>Data</label>
+<input type="date" id="data">
 </div>
 
-<div class="top-actions">
-<button onclick="abrirNovo()">+ Novo Cliente</button>
+<div class="field">
+<label>Cliente</label>
+<select id="cliente"></select>
 </div>
+
+<div class="field">
+<label>Serviço</label>
+<select id="servico"></select>
+</div>
+
+<div class="field">
+<label>Origem</label>
+<select id="origem">
+<option value="">Selecione</option>
+<option>Instagram</option>
+<option>Google</option>
+<option>Indicação</option>
+<option>Cliente antigo</option>
+<option>WhatsApp</option>
+<option>Outro</option>
+</select>
+</div>
+
+<div class="field">
+<label>Valor</label>
+<input type="number" id="valor" value="50">
+</div>
+
+<div class="field">
+<label>Desconto</label>
+<input type="number" id="desconto" value="0">
+</div>
+
+<div class="field">
+<label>Final</label>
+<input type="number" id="final" disabled>
+</div>
+
+<button onclick="salvar()">Adicionar</button>
+
+</div>
+
+<div class="form-box">
+
+<div class="field">
+<label>Data Inicial</label>
+<input type="date" id="filtroInicio">
+</div>
+
+<div class="field">
+<label>Data Final</label>
+<input type="date" id="filtroFim">
+</div>
+
+<div class="field">
+<label>Cliente</label>
+<select id="filtroCliente"></select>
+</div>
+
+<div class="field">
+<label>Serviço</label>
+<select id="filtroServico"></select>
+</div>
+
+<button onclick="filtrar()">Filtrar</button>
+<button onclick="limparFiltro()">Limpar</button>
+<button onclick="exportarExcel()">Exportar Excel</button>
+
 </div>
 
 <table>
 <thead>
 <tr>
-<th>Nome</th>
-<th>Telefone</th>
-<th>Email</th>
+<th>Data</th>
+<th>Cliente</th>
+<th>Origem</th>
+<th>Serviço</th>
+<th>Valor</th>
+<th>Desconto</th>
+<th>Final</th>
 <th>Ações</th>
 </tr>
 </thead>
@@ -69,206 +170,174 @@ input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%
 </main>
 </div>
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-<div class="modal-content">
-
-<div class="section">
-<h3>Dados do Cliente</h3>
-
-<div class="grid">
-
-<div><label>Nome *</label><input id="nome"></div>
-<div><label>CPF/CNPJ</label><input id="cpf_cnpj"></div>
-<div><label>Telefone 1 *</label><input id="telefone_1"></div>
-<div><label>Telefone 2</label><input id="telefone_2"></div>
-<div><label>Data de Nascimento</label><input type="date" id="dt_nasc"></div>
-<div><label>Email</label><input id="email"></div>
-<div><label>Nacionalidade</label><input id="nacionalidade"></div>
-<div><label>Endereço</label><input id="endereco"></div>
-
-</div>
-</div>
-
-<div class="section">
-<label>Observação</label>
-<textarea id="observacao"></textarea>
-</div>
-
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
-<button onclick="salvar()">Salvar</button>
-</div>
-
-</div>
-</div>
-
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
+// 🔥 SUPABASE
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
+)
 
-const modal = document.getElementById("modal");
+// 🔥 MESMA LÓGICA DO CLIENTES
+function nomeCliente(c){
+  if(!c) return ""
 
-let idAtual=null;
+  let telefone = (c.telefone_1 || "").replace(/\D/g,'')
+  let final = telefone.slice(-4)
 
-/* LOAD */
-async function carregar(){
-const {data,error}=await supabaseClient
-.from("clientes")
-.select("*")
-.order("nome")
-.limit(50);
-
-if(error){
-console.error(error);
-return;
+  return final ? `${c.nome} ${final}` : c.nome
 }
 
-render(data);
+let dados=[]
+let listaAtual=[]
+let dadosClientes=[]
+let dadosServicos=[]
+let servicosMap={}
+
+function nomeServico(s){
+if(!s) return ""
+if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} minutos`
+if(s.subgrupo) return `${s.grupo} ${s.subgrupo}`
+if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
+return s.grupo
 }
 
-/* 🔥 RENDER AJUSTADO (AQUI FOI A ÚNICA MUDANÇA) */
+function hoje(){
+const d=new Date()
+const offset=d.getTimezoneOffset()
+return new Date(d.getTime()-offset*60000).toISOString().split("T")[0]
+}
+
+data.value=hoje()
+
+valor.oninput=calcular
+desconto.oninput=calcular
+
+function calcular(){
+final.value=(parseFloat(valor.value||0)-parseFloat(desconto.value||0))
+}
+
+function formatar(v){
+return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
+}
+
+async function carregarSelects(){
+
+const {data:clientes}=await supabaseClient.from("clientes").select("*")
+dadosClientes=clientes||[]
+
+cliente.innerHTML="<option value=''>Selecione</option>"
+filtroCliente.innerHTML="<option value=''>Todos</option>"
+
+dadosClientes.forEach(c=>{
+cliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
+filtroCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
+})
+
+const {data:servicos}=await supabaseClient.from("servicos").select("*")
+dadosServicos=servicos||[]
+
+servico.innerHTML="<option value=''>Selecione</option>"
+filtroServico.innerHTML="<option value=''>Todos</option>"
+
+dadosServicos.forEach(s=>{
+servicosMap[s.id]=s
+servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
+filtroServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
+})
+
+}
+
+async function carregarLista(){
+
+const {data}=await supabaseClient
+.from("fluxo_caixa")
+.select(`*,clientes(*),servicos(*)`)
+.order("data",{ascending:false})
+
+dados=data||[]
+render(dados)
+}
+
 function render(lista){
-const tbody=document.getElementById("lista");
-tbody.innerHTML="";
 
-lista.forEach(c=>{
+listaAtual=lista
+const tbody=document.getElementById("lista")
+tbody.innerHTML=""
 
-let telefone = (c.telefone_1 || "").replace(/\D/g,'');
-let finalTelefone = telefone.slice(-4);
-
-let nomeFormatado = c.nome;
-if(finalTelefone){
-nomeFormatado = `${c.nome}${finalTelefone}`;
-}
-
+lista.forEach(r=>{
 tbody.innerHTML+=`
 <tr>
-<td>${nomeFormatado}</td>
-<td>${c.telefone_1||""}</td>
-<td>${c.email||""}</td>
-<td>
-<button onclick="editar('${c.id}')">Editar</button>
-<button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
-</td>
+<td>${r.data}</td>
+<td>${nomeCliente(r.clientes)}</td>
+<td>${r.origem_lead || "-"}</td>
+<td>${nomeServico(r.servicos)}</td>
+<td>${formatar(r.valor)}</td>
+<td>${formatar(r.desconto)}</td>
+<td><strong>${formatar(r.valor_final)}</strong></td>
+<td>-</td>
 </tr>
-`;
-});
+`
+})
 }
 
-/* BUSCA (NOME + TELEFONE) */
-async function filtrarTabela(){
+function filtrar(){
+let lista=[...dados]
 
-const termo = document.getElementById("buscaCliente").value.trim();
+if(filtroInicio.value) lista=lista.filter(d=>d.data>=filtroInicio.value)
+if(filtroFim.value) lista=lista.filter(d=>d.data<=filtroFim.value)
+if(filtroCliente.value) lista=lista.filter(d=>d.cliente_id==filtroCliente.value)
+if(filtroServico.value) lista=lista.filter(d=>d.servico_id==filtroServico.value)
 
-if(!termo){
-carregar();
-return;
+render(lista)
 }
 
-const partes = termo.split(" ");
-let nomeBusca = partes.filter(p => isNaN(p)).join(" ");
-let numeroBusca = partes.join("").replace(/\D/g,'');
-
-let query = supabaseClient.from("clientes").select("*");
-
-if(nomeBusca){
-query = query.ilike("nome", `%${nomeBusca}%`);
+function limparFiltro(){
+filtroInicio.value=""
+filtroFim.value=""
+filtroCliente.value=""
+filtroServico.value=""
+render(dados)
 }
 
-if(numeroBusca.length >= 3){
-query = query.ilike("telefone_1", `%${numeroBusca}%`);
-}
+function exportarExcel(){
 
-const { data } = await query.limit(50);
+const exportData=listaAtual.map(r=>({
+Data:r.data,
+Cliente:nomeCliente(r.clientes),
+Servico:nomeServico(r.servicos),
+Valor:r.valor,
+Final:r.valor_final
+}))
 
-render(data);
-}
+const ws=XLSX.utils.json_to_sheet(exportData)
+const wb=XLSX.utils.book_new()
 
-/* CRUD */
-
-function abrirNovo(){
-idAtual=null;
-document.querySelectorAll("input, textarea").forEach(i=>i.value="");
-modal.style.display="flex";
-}
-
-async function editar(id){
-idAtual=id;
-const {data}=await supabaseClient.from("clientes").select("*").eq("id",id).single();
-
-Object.keys(data).forEach(k=>{
-const el=document.getElementById(k);
-if(el) el.value=data[k];
-});
-
-modal.style.display="flex";
+XLSX.utils.book_append_sheet(wb,ws,"Fluxo de Caixa")
+XLSX.writeFile(wb,"fluxo_caixa.xlsx")
 }
 
 async function salvar(){
 
-let payload={};
+await supabaseClient.from("fluxo_caixa").insert({
+data:data.value,
+cliente_id:cliente.value,
+servico_id:servico.value,
+valor:parseFloat(valor.value||0),
+desconto:parseFloat(desconto.value||0),
+valor_final:parseFloat(valor.value||0)-parseFloat(desconto.value||0),
+origem_lead: origem.value || null
+})
 
-document.querySelectorAll("input, textarea").forEach(i=>{
-if(i.id && i.value) payload[i.id]=i.value;
-});
-
-if(!payload.nome){
-alert("Nome obrigatório");
-return;
+carregarLista()
 }
 
-if(!payload.telefone_1){
-alert("Telefone obrigatório");
-return;
-}
-
-payload.telefone_1 = payload.telefone_1.replace(/\D/g,'');
-
-let query = supabaseClient
-.from("clientes")
-.select("id")
-.eq("nome", payload.nome)
-.eq("telefone_1", payload.telefone_1);
-
-if(idAtual){
-query = query.neq("id", idAtual);
-}
-
-const { data: existente } = await query;
-
-if(existente && existente.length > 0){
-alert("⚠️ Cliente já cadastrado!");
-return;
-}
-
-if(idAtual){
-await supabaseClient.from("clientes").update(payload).eq("id",idAtual);
-}else{
-await supabaseClient.from("clientes").insert(payload);
-}
-
-fecharModal();
-carregar();
-}
-
-async function excluir(id){
-if(!confirm("Excluir cliente?")) return;
-
-await supabaseClient.from("clientes").delete().eq("id",id);
-carregar();
-}
-
-function fecharModal(){
-modal.style.display="none";
-}
-
-carregar();
+carregarSelects()
+carregarLista()
+calcular()
 
 </script>
 

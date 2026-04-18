@@ -62,6 +62,22 @@ th,td{
 padding:10px;
 border-bottom:1px solid #eee;
 }
+
+.modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.4);
+align-items:center;
+justify-content:center;
+}
+
+.modal-box{
+background:#fff;
+padding:20px;
+border-radius:10px;
+width:350px;
+}
 </style>
 </head>
 
@@ -123,34 +139,6 @@ border-bottom:1px solid #eee;
 
 </div>
 
-<div class="form-box">
-
-<div class="field">
-<label>Data Inicial</label>
-<input type="date" id="filtroInicio">
-</div>
-
-<div class="field">
-<label>Data Final</label>
-<input type="date" id="filtroFim">
-</div>
-
-<div class="field">
-<label>Cliente</label>
-<select id="filtroCliente"></select>
-</div>
-
-<div class="field">
-<label>Serviço</label>
-<select id="filtroServico"></select>
-</div>
-
-<button onclick="filtrar()">Filtrar</button>
-<button onclick="limparFiltro()">Limpar</button>
-<button onclick="exportarExcel()">Exportar Excel</button>
-
-</div>
-
 <table>
 <thead>
 <tr>
@@ -170,6 +158,46 @@ border-bottom:1px solid #eee;
 </main>
 </div>
 
+<!-- MODAL -->
+<div id="modalEditar" class="modal">
+<div class="modal-box">
+
+<h3>Editar</h3>
+
+<label>Data</label>
+<input type="date" id="editData">
+
+<label>Cliente</label>
+<select id="editCliente"></select>
+
+<label>Serviço</label>
+<select id="editServico"></select>
+
+<label>Origem</label>
+<select id="editOrigem">
+<option value="">Selecione</option>
+<option>Instagram</option>
+<option>Google</option>
+<option>Indicação</option>
+<option>Cliente antigo</option>
+<option>WhatsApp</option>
+<option>Outro</option>
+</select>
+
+<label>Valor</label>
+<input type="number" id="editValor">
+
+<label>Desconto</label>
+<input type="number" id="editDesconto">
+
+<br><br>
+
+<button onclick="salvarEdicao()">Salvar</button>
+<button class="excluir" onclick="fecharModal()">Cancelar</button>
+
+</div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
@@ -181,27 +209,22 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
-// 🔥 MESMA LÓGICA DO CLIENTES
+// 🔥 PADRÃO CLIENTE
 function nomeCliente(c){
   if(!c) return ""
-
   let telefone = (c.telefone_1 || "").replace(/\D/g,'')
   let final = telefone.slice(-4)
-
   return final ? `${c.nome} ${final}` : c.nome
 }
 
 let dados=[]
-let listaAtual=[]
 let dadosClientes=[]
 let dadosServicos=[]
 let servicosMap={}
+let editandoId=null
 
 function nomeServico(s){
 if(!s) return ""
-if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} minutos`
-if(s.subgrupo) return `${s.grupo} ${s.subgrupo}`
-if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
 return s.grupo
 }
 
@@ -230,24 +253,29 @@ const {data:clientes}=await supabaseClient.from("clientes").select("*")
 dadosClientes=clientes||[]
 
 cliente.innerHTML="<option value=''>Selecione</option>"
-filtroCliente.innerHTML="<option value=''>Todos</option>"
 
 dadosClientes.forEach(c=>{
 cliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
-filtroCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 })
 
 const {data:servicos}=await supabaseClient.from("servicos").select("*")
 dadosServicos=servicos||[]
 
 servico.innerHTML="<option value=''>Selecione</option>"
-filtroServico.innerHTML="<option value=''>Todos</option>"
 
 dadosServicos.forEach(s=>{
 servicosMap[s.id]=s
 servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
-filtroServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 })
+
+// 🔥 AUTO VALOR
+servico.onchange = ()=>{
+const s = servicosMap[servico.value]
+if(s){
+valor.value = s.valor || 50
+calcular()
+}
+}
 
 }
 
@@ -259,17 +287,15 @@ const {data}=await supabaseClient
 .order("data",{ascending:false})
 
 dados=data||[]
-render(dados)
+render()
 }
 
-function render(lista){
+function render(){
 
-listaAtual=lista
-const tbody=document.getElementById("lista")
-tbody.innerHTML=""
+lista.innerHTML=""
 
-lista.forEach(r=>{
-tbody.innerHTML+=`
+dados.forEach(r=>{
+lista.innerHTML+=`
 <tr>
 <td>${r.data}</td>
 <td>${nomeCliente(r.clientes)}</td>
@@ -277,47 +303,26 @@ tbody.innerHTML+=`
 <td>${nomeServico(r.servicos)}</td>
 <td>${formatar(r.valor)}</td>
 <td>${formatar(r.desconto)}</td>
-<td><strong>${formatar(r.valor_final)}</strong></td>
-<td>-</td>
+<td>${formatar(r.valor_final)}</td>
+<td>
+<button class="editar" onclick="abrirEditar('${r.id}')">Editar</button>
+<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
+</td>
 </tr>
 `
 })
 }
 
-function filtrar(){
-let lista=[...dados]
+function abrirEditar(id){
+editandoId=id
+const r=dados.find(d=>d.id==id)
 
-if(filtroInicio.value) lista=lista.filter(d=>d.data>=filtroInicio.value)
-if(filtroFim.value) lista=lista.filter(d=>d.data<=filtroFim.value)
-if(filtroCliente.value) lista=lista.filter(d=>d.cliente_id==filtroCliente.value)
-if(filtroServico.value) lista=lista.filter(d=>d.servico_id==filtroServico.value)
+editData.value=r.data
+editValor.value=r.valor
+editDesconto.value=r.desconto
+editOrigem.value=r.origem_lead || ""
 
-render(lista)
-}
-
-function limparFiltro(){
-filtroInicio.value=""
-filtroFim.value=""
-filtroCliente.value=""
-filtroServico.value=""
-render(dados)
-}
-
-function exportarExcel(){
-
-const exportData=listaAtual.map(r=>({
-Data:r.data,
-Cliente:nomeCliente(r.clientes),
-Servico:nomeServico(r.servicos),
-Valor:r.valor,
-Final:r.valor_final
-}))
-
-const ws=XLSX.utils.json_to_sheet(exportData)
-const wb=XLSX.utils.book_new()
-
-XLSX.utils.book_append_sheet(wb,ws,"Fluxo de Caixa")
-XLSX.writeFile(wb,"fluxo_caixa.xlsx")
+modalEditar.style.display="flex"
 }
 
 async function salvar(){
@@ -332,6 +337,30 @@ valor_final:parseFloat(valor.value||0)-parseFloat(desconto.value||0),
 origem_lead: origem.value || null
 })
 
+carregarLista()
+}
+
+async function salvarEdicao(){
+
+await supabaseClient.from("fluxo_caixa").update({
+data:editData.value,
+valor:parseFloat(editValor.value||0),
+desconto:parseFloat(editDesconto.value||0),
+valor_final:parseFloat(editValor.value||0)-parseFloat(editDesconto.value||0),
+origem_lead: editOrigem.value || null
+}).eq("id",editandoId)
+
+fecharModal()
+carregarLista()
+}
+
+function fecharModal(){
+modalEditar.style.display="none"
+}
+
+async function excluir(id){
+if(!confirm("Excluir?")) return
+await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
 carregarLista()
 }
 

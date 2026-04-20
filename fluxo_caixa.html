@@ -9,6 +9,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<!-- SELECT2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -35,10 +38,6 @@ padding:8px;
 border-radius:6px;
 border:1px solid #ccc;
 min-width:160px;
-}
-
-#buscaCliente{
-margin-bottom:5px;
 }
 
 button{
@@ -103,7 +102,6 @@ width:350px;
 
 <div class="field">
 <label>Cliente</label>
-<input type="text" id="buscaCliente" placeholder="Buscar cliente...">
 <select id="cliente"></select>
 </div>
 
@@ -233,11 +231,15 @@ width:350px;
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
+<!-- SELECT2 -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"SEU_ANON_KEY_AQUI"
 )
 
 function nomeCliente(c){
@@ -278,40 +280,42 @@ async function carregarSelects(){
 const {data:clientes}=await supabaseClient.from("clientes").select("*")
 dadosClientes=clientes||[]
 
-popularClientes(dadosClientes)
+cliente.innerHTML="<option value=''>Selecione</option>"
+filtroCliente.innerHTML="<option value=''>Todos</option>"
+
+dadosClientes.forEach(c=>{
+cliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
+filtroCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
+})
 
 const {data:servicos}=await supabaseClient.from("servicos").select("*")
 dadosServicos=servicos||[]
 
 servico.innerHTML="<option value=''>Selecione</option>"
+filtroServico.innerHTML="<option value=''>Todos</option>"
 
 dadosServicos.forEach(s=>{
 servicosMap[s.id]=s
 servico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
+filtroServico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
 })
+
+// 🔥 ATIVA SELECT2 (BUSCA)
+setTimeout(() => {
+
+  $('#cliente').select2({
+    placeholder: "Buscar cliente...",
+    width: '180px'
+  })
+
+  $('#filtroCliente').select2({
+    placeholder: "Todos",
+    width: '180px'
+  })
+
+}, 200)
 
 }
-
-function popularClientes(lista){
-cliente.innerHTML="<option value=''>Selecione</option>"
-filtroCliente.innerHTML="<option value=''>Todos</option>"
-
-lista.forEach(c=>{
-cliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
-filtroCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
-})
-}
-
-// 🔥 BUSCA CLIENTE
-buscaCliente.addEventListener("input",()=>{
-const termo = buscaCliente.value.toLowerCase()
-
-const filtrados = dadosClientes.filter(c =>
-nomeCliente(c).toLowerCase().includes(termo)
-)
-
-popularClientes(filtrados)
-})
 
 async function carregarLista(){
 
@@ -370,10 +374,6 @@ if(!confirm("Excluir?")) return
 await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
 carregarLista()
 }
-
-function filtrar(){}
-function limparFiltro(){}
-function exportarExcel(){}
 
 carregarSelects()
 carregarLista()

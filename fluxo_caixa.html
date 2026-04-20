@@ -239,7 +239,7 @@ width:350px;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"SEU_ANON_KEY_AQUI"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
 function nomeCliente(c){
@@ -255,6 +255,7 @@ let listaAtual=[]
 let dadosClientes=[]
 let dadosServicos=[]
 let servicosMap={}
+let editandoId=null
 
 function hoje(){
 const d=new Date()
@@ -300,20 +301,11 @@ servico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
 filtroServico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
 })
 
-// 🔥 ATIVA SELECT2 (BUSCA)
+// 🔥 ativa busca dentro do select
 setTimeout(() => {
-
-  $('#cliente').select2({
-    placeholder: "Buscar cliente...",
-    width: '180px'
-  })
-
-  $('#filtroCliente').select2({
-    placeholder: "Todos",
-    width: '180px'
-  })
-
-}, 200)
+  $('#cliente').select2({placeholder:"Buscar cliente...", width:'180px'})
+  $('#filtroCliente').select2({placeholder:"Todos", width:'180px'})
+},200)
 
 }
 
@@ -354,6 +346,35 @@ tbody.innerHTML+=`
 })
 }
 
+function abrirEditar(id){
+
+editandoId=id
+const r=dados.find(d=>d.id==id)
+
+editCliente.innerHTML="<option value=''>Selecione</option>"
+dadosClientes.forEach(c=>{
+editCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
+})
+
+editServico.innerHTML="<option value=''>Selecione</option>"
+dadosServicos.forEach(s=>{
+editServico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
+})
+
+editData.value=r.data
+editCliente.value=r.cliente_id
+editServico.value=r.servico_id
+editValor.value=r.valor
+editDesconto.value=r.desconto
+editOrigem.value=r.origem_lead || ""
+
+document.getElementById("modalEditar").style.display="flex"
+}
+
+function fecharModal(){
+document.getElementById("modalEditar").style.display="none"
+}
+
 async function salvar(){
 
 await supabaseClient.from("fluxo_caixa").insert({
@@ -369,10 +390,69 @@ origem_lead: origem.value || null
 carregarLista()
 }
 
+async function salvarEdicao(){
+
+await supabaseClient.from("fluxo_caixa").update({
+data:editData.value,
+cliente_id:editCliente.value,
+servico_id:editServico.value,
+valor:parseFloat(editValor.value||0),
+desconto:parseFloat(editDesconto.value||0),
+valor_final:parseFloat(editValor.value||0)-parseFloat(editDesconto.value||0),
+origem_lead: editOrigem.value || null
+}).eq("id",editandoId)
+
+fecharModal()
+carregarLista()
+}
+
 async function excluir(id){
 if(!confirm("Excluir?")) return
 await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
 carregarLista()
+}
+
+function filtrar(){
+let lista=[...dados]
+
+if(filtroInicio.value) lista=lista.filter(d=>d.data>=filtroInicio.value)
+if(filtroFim.value) lista=lista.filter(d=>d.data<=filtroFim.value)
+if(filtroCliente.value) lista=lista.filter(d=>d.cliente_id==filtroCliente.value)
+if(filtroServico.value) lista=lista.filter(d=>d.servico_id==filtroServico.value)
+
+render(lista)
+}
+
+function limparFiltro(){
+filtroInicio.value=""
+filtroFim.value=""
+filtroCliente.value=""
+filtroServico.value=""
+render(dados)
+}
+
+function exportarExcel(){
+
+if(!listaAtual.length){
+alert("Nada para exportar")
+return
+}
+
+const exportData=listaAtual.map(r=>({
+Data:r.data,
+Cliente:nomeCliente(r.clientes),
+Origem:r.origem_lead,
+Servico:r.servicos?.grupo,
+Valor:r.valor,
+Desconto:r.desconto,
+Final:r.valor_final
+}))
+
+const ws=XLSX.utils.json_to_sheet(exportData)
+const wb=XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb,ws,"Fluxo de Caixa")
+XLSX.writeFile(wb,"fluxo_caixa.xlsx")
 }
 
 carregarSelects()

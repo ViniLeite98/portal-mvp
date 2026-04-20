@@ -250,6 +250,14 @@ function nomeCliente(c){
   return final ? `${nome} ${final}` : nome
 }
 
+function nomeServico(s){
+if(!s) return ""
+if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} minutos`
+if(s.subgrupo) return `${s.grupo} ${s.subgrupo}`
+if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
+return s.grupo
+}
+
 let dados=[]
 let listaAtual=[]
 let dadosClientes=[]
@@ -297,14 +305,23 @@ filtroServico.innerHTML="<option value=''>Todos</option>"
 
 dadosServicos.forEach(s=>{
 servicosMap[s.id]=s
-servico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
-filtroServico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
+servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
+filtroServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 })
 
-// 🔥 ativa busca dentro do select
+servico.addEventListener("change",()=>{
+const s=servicosMap[servico.value]
+if(s){
+valor.value=s.valor||50
+calcular()
+}
+})
+
 setTimeout(() => {
   $('#cliente').select2({placeholder:"Buscar cliente...", width:'180px'})
+  $('#servico').select2({placeholder:"Buscar serviço...", width:'200px'})
   $('#filtroCliente').select2({placeholder:"Todos", width:'180px'})
+  $('#filtroServico').select2({placeholder:"Todos", width:'200px'})
 },200)
 
 }
@@ -333,7 +350,7 @@ tbody.innerHTML+=`
 <td>${r.data}</td>
 <td>${nomeCliente(r.clientes)}</td>
 <td>${r.origem_lead || "-"}</td>
-<td>${r.servicos?.grupo || ""}</td>
+<td>${nomeServico(r.servicos)}</td>
 <td>${formatar(r.valor)}</td>
 <td>${formatar(r.desconto)}</td>
 <td><strong>${formatar(r.valor_final)}</strong></td>
@@ -358,7 +375,7 @@ editCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 
 editServico.innerHTML="<option value=''>Selecione</option>"
 dadosServicos.forEach(s=>{
-editServico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
+editServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 })
 
 editData.value=r.data
@@ -442,7 +459,7 @@ const exportData=listaAtual.map(r=>({
 Data:r.data,
 Cliente:nomeCliente(r.clientes),
 Origem:r.origem_lead,
-Servico:r.servicos?.grupo,
+Servico:nomeServico(r.servicos),
 Valor:r.valor,
 Desconto:r.desconto,
 Final:r.valor_final

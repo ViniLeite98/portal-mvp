@@ -18,30 +18,69 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 #sidebar{width:260px;}
 .content{flex:1;padding:40px;}
 
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
-.left-tools input{padding:8px;border:1px solid #d1d5db;border-radius:6px;width:240px;}
-.right-tools{display:flex;gap:10px;align-items:center;}
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:16px;
+}
 
+.left-tools input{
+padding:8px;
+border:1px solid #d1d5db;
+border-radius:6px;
+width:240px;
+}
+
+.right-tools{
+display:flex;
+gap:10px;
+align-items:center;
+}
+
+/* BOTÕES TOPO (mantém padrão) */
 .right-tools button{
-background:#1f2937;color:#fff;border:none;border-radius:6px;padding:7px 12px;cursor:pointer;
+background:#1f2937;
+color:#fff;
+border:none;
+border-radius:6px;
+padding:7px 12px;
+cursor:pointer;
 }
 
+/* 🔥 BOTÕES DA TABELA */
 td button{
-background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;
+background:#1f2937;
+color:#fff;
+border:none;
+border-radius:6px;
+padding:6px 12px;
+cursor:pointer;
 }
 
-td button.excluir{background:#dc2626;}
+/* 🔥 EXCLUIR */
+td button.excluir{
+background:#dc2626;
+}
 
 table{
-width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;
+width:100%;
+border-collapse:collapse;
+background:#fff;
+border-radius:14px;
+overflow:hidden;
 }
 
 th, td{
-padding:14px;border-bottom:1px solid #e5e7eb;vertical-align:middle;
+padding:14px;
+border-bottom:1px solid #e5e7eb;
+vertical-align:middle;
 }
 
 th{
-background:#f9fafb;cursor:pointer;font-weight:600;
+background:#f9fafb;
+cursor:pointer;
+font-weight:600;
 }
 
 td:nth-child(2),
@@ -52,30 +91,51 @@ td:nth-child(6){
 text-align:center;
 }
 
-tr:hover{background:#f9fafb;}
+tr:hover{
+background:#f9fafb;
+}
 
 .modal{
-position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.4);
+display:none;
+align-items:center;
+justify-content:center;
 }
 
 .modal-content{
-background:#fff;width:600px;border-radius:16px;padding:24px;
+background:#fff;
+width:600px;
+border-radius:16px;
+padding:24px;
 }
 
 .grid{
-display:grid;grid-template-columns:repeat(2,1fr);gap:12px;
+display:grid;
+grid-template-columns:repeat(2,1fr);
+gap:12px;
 }
 
 input,select{
-padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;
+padding:8px;
+border-radius:6px;
+border:1px solid #d1d5db;
+width:100%;
 }
 
 label{
-font-size:12px;color:#6b7280;margin-bottom:4px;display:block;
+font-size:12px;
+color:#6b7280;
+margin-bottom:4px;
+display:block;
 }
 
 .modal-actions{
-display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
+display:flex;
+justify-content:flex-end;
+gap:10px;
+margin-top:20px;
 }
 </style>
 </head>
@@ -99,7 +159,9 @@ display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
 <i class="fa-solid fa-file-excel"></i> Exportar
 </button>
 
-<button onclick="abrirNovo()">+ Novo Serviço</button>
+<button onclick="abrirNovo()">
++ Novo Serviço
+</button>
 
 <select id="porPaginaSelect" onchange="mudarPorPagina()">
 <option value="5">5</option>
@@ -113,10 +175,10 @@ display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
 <table>
 <thead>
 <tr>
-<th>Serviço</th>
-<th>Tempo</th>
-<th>Valor</th>
-<th>Comissão</th>
+<th onclick="ordenar('servico')">Serviço</th>
+<th onclick="ordenar('tempo')">Tempo</th>
+<th onclick="ordenar('valor')">Valor</th>
+<th onclick="ordenar('comissao')">Comissão</th>
 <th>Status</th>
 <th>Ações</th>
 </tr>
@@ -147,7 +209,7 @@ display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
 
 <div>
 <label>Subgrupo</label>
-<input id="subgrupo">
+<input id="subgrupo" placeholder="Ex: Nay">
 </div>
 
 <div>
@@ -189,19 +251,22 @@ display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
 </div>
 </div>
 
-<!-- 🔥 ORDEM CORRETA -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
+
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
 
 let dados=[]
 let idAtual=null
 let porPagina=10
 
 async function carregar(){
-const {data}=await client.from("servicos").select("*")
+const {data}=await supabaseClient.from("servicos").select("*")
 dados=data||[]
 render()
 }
@@ -234,18 +299,18 @@ tbody.innerHTML+=`
 })
 }
 
-function filtrarTabela(){
+window.filtrarTabela=function(){
 const termo=document.getElementById("buscaServico").value.toLowerCase()
 render(dados.filter(s=>nomeServico(s).toLowerCase().includes(termo)))
 }
 
-function mudarPorPagina(){
+window.mudarPorPagina=function(){
 const v=document.getElementById("porPaginaSelect").value
 porPagina=v==="todos"?dados.length:parseInt(v)
 render()
 }
 
-async function salvar(){
+window.salvar=async function(){
 const payload={
 grupo:grupo.value,
 subgrupo:subgrupo.value||null,
@@ -256,35 +321,35 @@ status:status.value
 }
 
 if(idAtual){
-await client.from("servicos").update(payload).eq("id",idAtual)
+await supabaseClient.from("servicos").update(payload).eq("id",idAtual)
 }else{
-await client.from("servicos").insert(payload)
+await supabaseClient.from("servicos").insert(payload)
 }
 
 fecharModal()
 carregar()
 }
 
-function abrirNovo(){
+window.abrirNovo=function(){
 idAtual=null
 modal.style.display="flex"
 }
 
-function fecharModal(){
+window.fecharModal=function(){
 modal.style.display="none"
 }
 
-function editar(id){
+window.editar=function(id){
 idAtual=id
 modal.style.display="flex"
 }
 
-async function excluir(id){
-await client.from("servicos").delete().eq("id",id)
+window.excluir=async function(id){
+await supabaseClient.from("servicos").delete().eq("id",id)
 carregar()
 }
 
-function exportarExcel(){
+window.exportarExcel=function(){
 const ws=XLSX.utils.json_to_sheet(dados)
 const wb=XLSX.utils.book_new()
 XLSX.utils.book_append_sheet(wb,ws,"Serviços")

@@ -156,8 +156,56 @@ onkeyup="filtrarTabela()"
 </main>
 </div>
 
+<!-- MODAL COMPLETO -->
 <div class="modal" id="modal">
 <div class="modal-content">
+
+<div class="section">
+<h3>Dados Pessoais</h3>
+<div class="grid">
+<div class="field"><label>Nome Completo</label><input id="nome_completo"></div>
+<div class="field"><label>Nome Profissional</label><input id="nome_profissional"></div>
+<div class="field"><label>CPF</label><input id="cpf"></div>
+<div class="field"><label>Email</label><input id="email"></div>
+<div class="field"><label>Telefone</label><input id="telefone"></div>
+<div class="field"><label>Telefone Emergência</label><input id="telefone_emer"></div>
+<div class="field"><label>Data Nascimento</label><input type="date" id="nascimento"></div>
+</div>
+</div>
+
+<div class="section">
+<h3>Endereço</h3>
+<div class="grid">
+<div class="field"><label>CEP</label><input id="cep"></div>
+<div class="field"><label>Rua</label><input id="rua"></div>
+<div class="field"><label>Número</label><input id="numero"></div>
+<div class="field"><label>Bairro</label><input id="bairro"></div>
+<div class="field"><label>Cidade</label><input id="cidade"></div>
+<div class="field"><label>UF</label><input id="uf"></div>
+</div>
+</div>
+
+<div class="section">
+<h3>Profissional</h3>
+<div class="grid">
+<div class="field"><label>Cargo</label><input id="cargo"></div>
+<div class="field"><label>Status</label>
+<select id="status">
+<option>Ativo</option>
+<option>Inativo</option>
+</select>
+</div>
+<div class="field"><label>Data Início</label><input type="date" id="data_inicio"></div>
+<div class="field"><label>Entrada</label><input type="time" id="hora_entrada"></div>
+<div class="field"><label>Saída</label><input type="time" id="hora_saida"></div>
+<div class="field"><label>Folga</label>
+<select id="tem_folga">
+<option value="">Não</option>
+<option value="Sim">Sim</option>
+</select>
+</div>
+</div>
+</div>
 
 <div class="modal-actions">
 <button onclick="fecharModal()">Cancelar</button>
@@ -167,7 +215,6 @@ onkeyup="filtrarTabela()"
 </div>
 </div>
 
-<!-- 🔥 SOMENTE ISSO IMPORTA -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
@@ -217,9 +264,7 @@ let query = client
 
 if(statusFiltro) query = query.eq("status", statusFiltro);
 
-const {data,error}=await query;
-
-if(error){ console.error(error); return; }
+const {data}=await query;
 
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -259,15 +304,6 @@ const el=document.getElementById(c);
 if(el) el.value="";
 });
 
-const entrada = document.getElementById("hora_entrada");
-const saida = document.getElementById("hora_saida");
-
-if(entrada) entrada.value="09:00";
-if(saida) saida.value="18:00";
-
-const cpfEl = document.getElementById("cpf");
-if(cpfEl) cpfEl.disabled=false;
-
 document.getElementById("modal").style.display="flex";
 }
 
@@ -275,18 +311,13 @@ async function editar(cpf){
 
 cpfAtual=cpf;
 
-const {data,error}=await client
+const {data}=await client
 .from("terapeutas")
 .select("*")
 .eq("cpf",cpf)
 .single();
 
-if(error){console.error(error);return;}
-
 setForm(data);
-
-const cpfEl = document.getElementById("cpf");
-if(cpfEl) cpfEl.disabled=true;
 
 document.getElementById("modal").style.display="flex";
 }
@@ -300,28 +331,20 @@ alert("Preencha os campos obrigatórios");
 return;
 }
 
-let error;
-
 if(cpfAtual){
 delete payload.cpf;
 
-({error}=await client
+await client
 .from("terapeutas")
 .update(payload)
-.eq("cpf",cpfAtual));
+.eq("cpf",cpfAtual);
 
 }else{
 
-({error}=await client
+await client
 .from("terapeutas")
-.insert(payload));
+.insert(payload);
 
-}
-
-if(error){
-console.error(error);
-alert("Erro ao salvar");
-return;
 }
 
 fecharModal();

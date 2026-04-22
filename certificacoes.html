@@ -60,6 +60,7 @@ border:1px solid #d1d5db;
 min-width:200px;
 }
 
+/* BOTÕES */
 button{
 background:#000;
 color:#fff;
@@ -82,6 +83,7 @@ button.editar{
 background:#000;
 }
 
+/* TABELA */
 table{
 width:100%;
 border-collapse:collapse;
@@ -101,6 +103,7 @@ background:#f9fafb;
 text-align:left;
 }
 
+/* ÍCONES */
 .servico{
 display:flex;
 align-items:center;
@@ -111,12 +114,14 @@ gap:8px;
 margin-left:6px;
 }
 
-.icone-fa-person-dress { color:#ec4899; }
-.icone-fa-user-group { color:#3b82f6; }
-.icone-fa-droplet { color:#06b6d4; }
-.icone-fa-spa { color:#10b981; }
-.icone-fa-shoe-prints { color:#f59e0b; }
+/* CORES DOS ÍCONES */
+.icone-fa-person-dress { color:#ec4899; }   /* feminina */
+.icone-fa-user-group { color:#3b82f6; }     /* casais */
+.icone-fa-droplet { color:#06b6d4; }        /* nuru */
+.icone-fa-spa { color:#10b981; }            /* vivência */
+.icone-fa-shoe-prints { color:#f59e0b; }    /* podologia */
 
+/* MODAL */
 .modal{
 display:none;
 position:fixed;
@@ -166,6 +171,15 @@ width:420px;
 
 </div>
 
+<div style="margin-bottom:10px;font-size:13px;color:#555;">
+<strong>Legenda:</strong>
+<i class="fa-solid fa-person-dress icone-fa-person-dress"></i> Feminina |
+<i class="fa-solid fa-user-group icone-fa-user-group"></i> Casais |
+<i class="fa-solid fa-droplet icone-fa-droplet"></i> Nuru |
+<i class="fa-solid fa-spa icone-fa-spa"></i> Vivência |
+<i class="fa-solid fa-shoe-prints icone-fa-shoe-prints"></i> Podologia
+</div>
+
 <input 
 id="buscaTerapeuta" 
 placeholder="Buscar profissional ou certificação..."
@@ -189,6 +203,7 @@ oninput="filtrarTabela()"
 </main>
 </div>
 
+<!-- MODAL LISTA -->
 <div id="modalCerts" class="modal">
 <div class="modal-box">
 <h3 id="tituloModal"></h3>
@@ -198,6 +213,7 @@ oninput="filtrarTabela()"
 </div>
 </div>
 
+<!-- MODAL DATA -->
 <div id="modalEditarData" class="modal">
 <div class="modal-box">
 <h3>Editar Data</h3>
@@ -211,12 +227,15 @@ oninput="filtrarTabela()"
 </div>
 </div>
 
-<!-- 🔥 PADRÃO GLOBAL -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
+
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+)
 
 let dados=[]
 let listaFiltrada=[]
@@ -240,7 +259,7 @@ async function carregarSelects(){
 const selTer=document.getElementById("cpf_terapeuta")
 const selCert=document.getElementById("certificacao_id")
 
-const {data:terapeutas}=await client
+const {data:terapeutas}=await supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional")
 .eq("status","Ativo")
@@ -250,7 +269,7 @@ selTer.innerHTML="<option value=''>Selecione</option>"
 selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
 })
 
-const {data:cert}=await client
+const {data:cert}=await supabaseClient
 .from("certificacoes")
 .select("id,nome")
 
@@ -263,7 +282,7 @@ selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 
 async function carregarLista(){
 
-const {data}=await client
+const {data}=await supabaseClient
 .from("terapeuta_certificacoes")
 .select(`
 id,
@@ -276,6 +295,7 @@ dados = data || []
 listaFiltrada = [...dados]
 
 render(listaFiltrada)
+
 }
 
 function render(lista){
@@ -418,7 +438,7 @@ alert("Selecione uma data")
 return
 }
 
-await client
+await supabaseClient
 .from("terapeuta_certificacoes")
 .update({data_obtencao:novaData})
 .eq("id",editandoId)
@@ -438,7 +458,7 @@ alert("Selecione terapeuta e certificação")
 return
 }
 
-await client
+await supabaseClient
 .from("terapeuta_certificacoes")
 .insert({
 cpf_terapeuta:cpf,
@@ -454,7 +474,7 @@ async function excluir(id){
 
 if(!confirm("Excluir vínculo?")) return
 
-await client
+await supabaseClient
 .from("terapeuta_certificacoes")
 .delete()
 .eq("id",id)
@@ -480,7 +500,7 @@ XLSX.writeFile(wb, "certificacoes.xlsx")
 
 carregarSelects()
 carregarLista()
-
+ 
 </script>
 
 </body>

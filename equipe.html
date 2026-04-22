@@ -2,42 +2,55 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Equipe | Hara Spa</title>
+<title>Gestão da Equipe | Hara Spa</title>
+
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-body{margin:0;font-family:Arial;background:#f5f5f5}
-.app{display:flex}
-.content{flex:1;padding:30px}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;}
+.content{flex:1;padding:40px;}
 
 table{
 width:100%;
 background:#fff;
+border-radius:14px;
 border-collapse:collapse;
-border-radius:10px;
+overflow:hidden;
 }
 
 th,td{
-padding:10px;
+padding:14px;
 border-bottom:1px solid #eee;
 }
 
 button{
-padding:6px 10px;
+background:#1f2937;
+color:#fff;
 border:none;
+padding:6px 12px;
 border-radius:6px;
 cursor:pointer;
-background:#2563eb;
-color:#fff;
 }
 
 button.excluir{background:#dc2626}
 
+.top-actions{
+display:flex;
+gap:10px;
+justify-content:flex-end;
+margin-bottom:20px;
+}
+
 .modal{
 position:fixed;
 inset:0;
-background:rgba(0,0,0,0.4);
+background:rgba(0,0,0,.4);
 display:none;
 align-items:center;
 justify-content:center;
@@ -46,16 +59,16 @@ justify-content:center;
 .modal-content{
 background:#fff;
 width:1000px;
-padding:20px;
-border-radius:10px;
 max-height:90vh;
 overflow:auto;
+border-radius:16px;
+padding:25px;
 }
 
 .grid{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:10px;
+gap:15px;
 }
 
 .field{
@@ -63,19 +76,24 @@ display:flex;
 flex-direction:column;
 }
 
-label{
+.field label{
 font-size:12px;
-color:#555;
+color:#6b7280;
+margin-bottom:4px;
 }
 
 input,select{
-padding:8px;
+padding:10px;
+border-radius:8px;
 border:1px solid #ccc;
-border-radius:6px;
 }
 
-.input-error{
-border:2px solid red;
+.section{margin-bottom:25px}
+
+.modal-actions{
+display:flex;
+justify-content:flex-end;
+gap:10px;
 }
 </style>
 </head>
@@ -85,10 +103,21 @@ border:2px solid red;
 <div class="app">
 <aside id="sidebar"></aside>
 
-<div class="content">
+<main class="content">
 
-<h2>Equipe</h2>
+<h1>Gestão da Equipe</h1>
+
+<div class="top-actions">
+<input id="pesquisaNome" placeholder="Buscar..." onkeyup="filtrarTabela()">
+
+<select id="filtroStatus">
+<option value="">Todos</option>
+<option>Ativo</option>
+<option>Inativo</option>
+</select>
+
 <button onclick="abrirNovo()">+ Novo</button>
+</div>
 
 <table>
 <thead>
@@ -96,26 +125,82 @@ border:2px solid red;
 <th>Nome</th>
 <th>Cargo</th>
 <th>CPF</th>
+<th>Status</th>
 <th>Ações</th>
 </tr>
 </thead>
 <tbody id="lista"></tbody>
 </table>
 
-</div>
+</main>
 </div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
+<div class="section">
+<h3>Dados Pessoais</h3>
 <div class="grid">
 
 <div class="field"><label>Nome Completo</label><input id="nome_completo"></div>
 <div class="field"><label>Nome Profissional</label><input id="nome_profissional"></div>
 <div class="field"><label>CPF</label><input id="cpf"></div>
 
+<div class="field"><label>RG</label><input id="rg"></div>
+<div class="field"><label>Nascimento</label><input type="date" id="nascimento"></div>
 <div class="field"><label>Email</label><input id="email"></div>
+
+<div class="field"><label>Tipo Sanguíneo</label><input id="tipo_sanguineo"></div>
 <div class="field"><label>Telefone</label><input id="telefone"></div>
+<div class="field"><label>Telefone Emergência</label><input id="telefone_emer"></div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Endereço</h3>
+<div class="grid">
+
+<div class="field"><label>CEP</label><input id="cep"></div>
+<div class="field"><label>Rua</label><input id="rua"></div>
+<div class="field"><label>Número</label><input id="numero"></div>
+
+<div class="field"><label>Complemento</label><input id="complemento"></div>
+<div class="field"><label>Bairro</label><input id="bairro"></div>
+<div class="field"><label>Cidade</label><input id="cidade"></div>
+
+<div class="field"><label>UF</label><input id="uf"></div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Pagamento</h3>
+<div class="grid">
+
+<div class="field">
+<label>Tipo PIX</label>
+<select id="pix_tipo">
+<option value="">Selecione</option>
+<option>CPF</option>
+<option>Email</option>
+<option>Telefone</option>
+</select>
+</div>
+
+<div class="field">
+<label>Chave PIX</label>
+<input id="pix_chave">
+</div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Profissional</h3>
+<div class="grid">
+
 <div class="field"><label>Cargo</label><input id="cargo"></div>
 
 <div class="field">
@@ -126,78 +211,74 @@ border:2px solid red;
 </select>
 </div>
 
+<div class="field"><label>Data Início</label><input type="date" id="data_inicio"></div>
+
+<div class="field"><label>Entrada</label><input type="time" id="hora_entrada"></div>
+<div class="field"><label>Saída</label><input type="time" id="hora_saida"></div>
+
+<div class="field">
+<label>Tem Folga</label>
+<select id="tem_folga">
+<option value="">Não</option>
+<option>Sim</option>
+</select>
 </div>
 
-<br>
+<div class="field">
+<label>Dia da Folga</label>
+<select id="dia_folga">
+<option value="">Selecione</option>
+<option>Segunda</option>
+<option>Terça</option>
+<option>Quarta</option>
+<option>Quinta</option>
+<option>Sexta</option>
+<option>Sábado</option>
+<option>Domingo</option>
+</select>
+</div>
 
-<button onclick="salvar()">Salvar</button>
+</div>
+</div>
+
+<div class="modal-actions">
 <button onclick="fecharModal()">Cancelar</button>
+<button onclick="salvar()">Salvar</button>
+</div>
 
 </div>
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-let idAtual = null
+let cpfAtual=null
 
-// ================= VALIDAÇÃO =================
-
-function validarEmail(email){
-return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-}
-
-function validarCPF(cpf){
-cpf=cpf.replace(/\D/g,'')
-if(cpf.length!==11 || /^(\d)\1+$/.test(cpf)) return false
-return true
-}
-
-function validar(){
-let ok=true
-
-document.querySelectorAll("input").forEach(i=>{
-i.classList.remove("input-error")
-})
-
-if(!nome_completo.value){nome_completo.classList.add("input-error");ok=false}
-if(!nome_profissional.value){nome_profissional.classList.add("input-error");ok=false}
-if(!cpf.value){cpf.classList.add("input-error");ok=false}
-
-if(email.value && !validarEmail(email.value)){
-email.classList.add("input-error")
-alert("Email inválido")
-return false
-}
-
-if(cpf.value && !validarCPF(cpf.value)){
-cpf.classList.add("input-error")
-alert("CPF inválido")
-return false
-}
-
-if(!ok){
-alert("Preencha os obrigatórios")
-return false
-}
-
-return true
-}
-
-// ================= CRUD =================
+const campos=[
+"nome_completo","nome_profissional","cpf","rg","nascimento","email",
+"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
+"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
+"cargo","tem_folga","dia_folga",
+"hora_entrada","hora_saida","data_inicio","status"
+]
 
 function getPayload(){
-return {
-nome_completo:nome_completo.value,
-nome_profissional:nome_profissional.value,
-cpf:cpf.value,
-email:email.value,
-telefone:telefone.value,
-cargo:cargo.value,
-status:status.value
+let obj={}
+campos.forEach(c=>{
+let el=document.getElementById(c)
+if(el && el.value!=="") obj[c]=el.value
+})
+return obj
 }
+
+function setForm(data){
+campos.forEach(c=>{
+let el=document.getElementById(c)
+if(el) el.value=data[c]||""
+})
 }
 
 async function carregar(){
@@ -207,80 +288,68 @@ let html=""
 data.forEach(t=>{
 html+=`
 <tr>
-<td>${t.nome_profissional}</td>
+<td>${t.nome_profissional||""}</td>
 <td>${t.cargo||""}</td>
-<td>${t.cpf}</td>
+<td>${t.cpf||""}</td>
+<td>${t.status||""}</td>
 <td>
-<button onclick="editar('${t.id}')">Editar</button>
-<button class="excluir" onclick="excluir('${t.id}')">Excluir</button>
+<button onclick="editar('${t.cpf}')">Editar</button>
+<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
 </tr>`
 })
 
-lista.innerHTML=html
+document.getElementById("lista").innerHTML=html
 }
 
 function abrirNovo(){
-idAtual=null
-document.querySelectorAll("input").forEach(i=>i.value="")
-modal.style.display="flex"
+cpfAtual=null
+campos.forEach(c=>{
+let el=document.getElementById(c)
+if(el) el.value=""
+})
+document.getElementById("modal").style.display="flex"
 }
 
-async function editar(id){
-idAtual=id
-
-const {data}=await client
-.from("terapeutas")
-.select("*")
-.eq("id",id)
-.single()
-
-nome_completo.value=data.nome_completo
-nome_profissional.value=data.nome_profissional
-cpf.value=data.cpf
-email.value=data.email
-telefone.value=data.telefone
-cargo.value=data.cargo
-status.value=data.status
-
-modal.style.display="flex"
+async function editar(cpf){
+cpfAtual=cpf
+const {data}=await client.from("terapeutas").select("*").eq("cpf",cpf).single()
+setForm(data)
+document.getElementById("modal").style.display="flex"
 }
 
 async function salvar(){
-
-if(!validar()) return
-
 let payload=getPayload()
 
-if(idAtual){
-await client
-.from("terapeutas")
-.update(payload)
-.eq("id",idAtual)
+if(cpfAtual){
+delete payload.cpf
+await client.from("terapeutas").update(payload).eq("cpf",cpfAtual)
 }else{
-await client
-.from("terapeutas")
-.insert(payload)
+await client.from("terapeutas").insert(payload)
 }
 
 fecharModal()
 carregar()
 }
 
-async function excluir(id){
+async function excluir(cpf){
 if(!confirm("Excluir?")) return
-
-await client
-.from("terapeutas")
-.delete()
-.eq("id",id)
-
+await client.from("terapeutas").delete().eq("cpf",cpf)
 carregar()
 }
 
 function fecharModal(){
-modal.style.display="none"
+document.getElementById("modal").style.display="none"
 }
+
+function filtrarTabela(){
+let filtro=document.getElementById("pesquisaNome").value.toLowerCase()
+document.querySelectorAll("#lista tr").forEach(tr=>{
+tr.style.display = tr.innerText.toLowerCase().includes(filtro) ? "" : "none"
+})
+}
+
+document.getElementById("filtroStatus").addEventListener("change",carregar)
 
 carregar()
 

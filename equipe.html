@@ -2,112 +2,54 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Gestão da Equipe | Hara Spa</title>
-
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<title>Equipe | Hara Spa</title>
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
+body{margin:0;font-family:Segoe UI;background:#f4f6fb}
+.app{display:flex}
+.content{flex:1;padding:40px}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-}
-
-th,td{
-  padding:14px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
-}
-
-th{background:#f9fafb;font-weight:600;}
-
-button{
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
-}
-
-button.excluir{background:#dc2626}
-
-.top-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:12px;
-  margin-bottom:16px;
-}
-
-.top-actions input{
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-}
-
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
-}
-
-.modal-content{
-  background:#fff;
-  width:1000px;
-  max-height:90vh;
-  overflow:auto;
-  border-radius:18px;
-  padding:28px;
-}
-
-.section{margin-bottom:28px}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-}
-
-.field label{
-  font-size:13px;
-  font-weight:600;
-  margin-bottom:6px;
-  color:#374151;
+.form{
+background:#fff;
+padding:20px;
+border-radius:10px;
+margin-bottom:20px;
+display:flex;
+gap:10px;
+flex-wrap:wrap;
 }
 
 input,select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:14px;
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
 }
 
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:20px;
+button{
+padding:8px 14px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+background:#2563eb;
+color:#fff;
+}
+
+button.excluir{background:#dc2626}
+button.editar{background:#f59e0b}
+
+table{
+width:100%;
+background:#fff;
+border-collapse:collapse;
+border-radius:10px;
+overflow:hidden;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
 }
 </style>
 </head>
@@ -119,33 +61,27 @@ input,select{
 
 <main class="content">
 
-<h1>Gestão da Equipe</h1>
+<h1>Equipe</h1>
 
-<div class="top-actions">
+<div class="form">
 
-<input 
-type="text"
-id="pesquisaNome"
-placeholder="Pesquisar profissional..."
-onkeyup="filtrarTabela()"
->
+<input id="nome" placeholder="Nome">
+<input id="telefone" placeholder="Telefone">
 
-<select id="filtroStatus">
-<option value="">Todos</option>
+<select id="status">
 <option value="Ativo">Ativo</option>
 <option value="Inativo">Inativo</option>
 </select>
 
-<button onclick="abrirNovo()">+ Novo Cadastro</button>
+<button onclick="salvar()">Salvar</button>
 
 </div>
 
 <table>
 <thead>
 <tr>
-<th>Nome Profissional</th>
-<th>Cargo</th>
-<th>CPF</th>
+<th>Nome</th>
+<th>Telefone</th>
 <th>Status</th>
 <th>Ações</th>
 </tr>
@@ -156,188 +92,126 @@ onkeyup="filtrarTabela()"
 </main>
 </div>
 
-<div class="modal" id="modal">
-<div class="modal-content">
-
-<!-- (modal mantido igual, não alterei nada estrutural) -->
-
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
-<button onclick="salvar()">Salvar</button>
-</div>
-
-</div>
-</div>
-
-<!-- 🔥 ORDEM CORRETA -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-let cpfAtual=null;
+let dados = []
+let editandoId = null
 
-const campos=[
-"nome_completo","nome_profissional","cpf","rg","nascimento","email",
-"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
-"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-"cargo","tem_folga","dia_folga",
-"hora_entrada","hora_saida","data_inicio","status"
-];
-
-function getPayload(){
-const obj={};
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el && el.value!=="") obj[c]=el.value;
-});
-return obj;
-}
-
-function setForm(data){
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el){
-if(c==="hora_entrada" || c==="hora_saida"){
-el.value=data[c]?data[c].substring(0,5):"";
-}else{
-el.value=data[c]||"";
-}
-}
-});
+function get(id){
+return document.getElementById(id)
 }
 
 async function carregar(){
 
-const statusFiltro = document.getElementById("filtroStatus").value;
-
-let query = client
-.from("terapeutas")
-.select("cpf,nome_profissional,status,cargo")
-.order("nome_profissional");
-
-if(statusFiltro) query = query.eq("status", statusFiltro);
-
-const {data,error}=await query;
-
-if(error){ console.error(error); return; }
-
-const tbody=document.getElementById("lista");
-tbody.innerHTML="";
-
-data.forEach(t=>{
-tbody.innerHTML+=`
-<tr>
-<td>${t.nome_profissional||""}</td>
-<td>${t.cargo||""}</td>
-<td>${t.cpf||""}</td>
-<td>${t.status||""}</td>
-<td>
-<button onclick="editar('${t.cpf}')">Editar</button>
-<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
-</td>
-</tr>`;
-});
-
-filtrarTabela();
-}
-
-function filtrarTabela(){
-const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
-const linhas = document.querySelectorAll("#lista tr");
-
-linhas.forEach(linha=>{
-const nome = linha.children[0].innerText.toLowerCase();
-linha.style.display = nome.includes(filtro) ? "" : "none";
-});
-}
-
-function abrirNovo(){
-cpfAtual=null;
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value="";
-});
-document.getElementById("hora_entrada").value="09:00";
-document.getElementById("hora_saida").value="18:00";
-
-document.getElementById("cpf").disabled=false;
-document.getElementById("modal").style.display="flex";
-}
-
-async function editar(cpf){
-
-cpfAtual=cpf;
-
-const {data,error}=await client
+const {data} = await client
 .from("terapeutas")
 .select("*")
-.eq("cpf",cpf)
-.single();
+.order("nome_profissional")
 
-if(error){console.error(error);return;}
+dados = data || []
+render()
+}
 
-setForm(data);
-document.getElementById("cpf").disabled=true;
-document.getElementById("modal").style.display="flex";
+function render(){
+
+let html = ""
+
+dados.forEach(d=>{
+html += `
+<tr>
+<td>${d.nome_profissional}</td>
+<td>${d.telefone || ""}</td>
+<td>${d.status}</td>
+<td>
+<button class="editar" onclick="editar('${d.id}')">Editar</button>
+<button class="excluir" onclick="excluir('${d.id}')">Excluir</button>
+</td>
+</tr>
+`
+})
+
+get("lista").innerHTML = html
 }
 
 async function salvar(){
 
-const payload=getPayload();
+const nomeEl = get("nome")
+const telEl = get("telefone")
+const statusEl = get("status")
 
-if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
-alert("Preencha os campos obrigatórios");
-return;
+if(!nomeEl){
+alert("Campo nome não encontrado")
+return
 }
 
-let error;
+const nome = nomeEl.value.trim()
+const telefone = telEl.value
+const status = statusEl.value
 
-if(cpfAtual){
-delete payload.cpf;
+if(!nome){
+alert("Digite o nome")
+return
+}
 
-({error}=await client
+if(editandoId){
+
+await client
 .from("terapeutas")
-.update(payload)
-.eq("cpf",cpfAtual));
+.update({
+nome_profissional: nome,
+telefone,
+status
+})
+.eq("id", editandoId)
+
+editandoId = null
 
 }else{
 
-({error}=await client
+await client
 .from("terapeutas")
-.insert(payload));
-
+.insert({
+nome_profissional: nome,
+telefone,
+status
+})
 }
 
-if(error){
-console.error(error);
-alert("Erro ao salvar");
-return;
+nomeEl.value = ""
+telEl.value = ""
+statusEl.value = "Ativo"
+
+carregar()
 }
 
-fecharModal();
-carregar();
+function editar(id){
+
+const d = dados.find(x=>x.id==id)
+
+get("nome").value = d.nome_profissional
+get("telefone").value = d.telefone || ""
+get("status").value = d.status
+
+editandoId = id
 }
 
-async function excluir(cpf){
-if(!confirm("Excluir registro?"))return;
+async function excluir(id){
+
+if(!confirm("Excluir?")) return
 
 await client
 .from("terapeutas")
 .delete()
-.eq("cpf",cpf);
+.eq("id", id)
 
-carregar();
+carregar()
 }
 
-function fecharModal(){
-document.getElementById("modal").style.display="none";
-}
-
-document.getElementById("filtroStatus").addEventListener("change", carregar);
-
-carregar();
+carregar()
 
 </script>
 

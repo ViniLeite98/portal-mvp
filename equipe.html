@@ -8,92 +8,107 @@
  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
-#sidebar{width:260px;}
+#sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
 
 table{
-width:100%;
-background:#fff;
-border-radius:14px;
-border-collapse:collapse;
-overflow:hidden;
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  border-radius:14px;
+  overflow:hidden;
 }
 
 th,td{
-padding:14px;
-border-bottom:1px solid #eee;
+  padding:14px;
+  border-bottom:1px solid #e5e7eb;
+  font-size:14px;
+  text-align:left;
 }
 
+th{background:#f9fafb;font-weight:600;}
+
 button{
-background:#1f2937;
-color:#fff;
-border:none;
-padding:6px 12px;
-border-radius:6px;
-cursor:pointer;
+  background:#1f2937;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:6px 12px;
+  cursor:pointer;
 }
 
 button.excluir{background:#dc2626}
 
 .top-actions{
-display:flex;
-gap:10px;
-justify-content:flex-end;
-margin-bottom:20px;
+  display:flex;
+  justify-content:flex-end;
+  gap:12px;
+  margin-bottom:16px;
+}
+
+.top-actions input{
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #d1d5db;
 }
 
 .modal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.4);
-display:none;
-align-items:center;
-justify-content:center;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.4);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
 }
 
 .modal-content{
-background:#fff;
-width:1000px;
-max-height:90vh;
-overflow:auto;
-border-radius:16px;
-padding:25px;
+  background:#fff;
+  width:1000px;
+  max-height:90vh;
+  overflow:auto;
+  border-radius:18px;
+  padding:28px;
 }
 
+.section{margin-bottom:28px}
+
 .grid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:15px;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
 }
 
 .field{
-display:flex;
-flex-direction:column;
+  display:flex;
+  flex-direction:column;
 }
 
 .field label{
-font-size:12px;
-color:#6b7280;
-margin-bottom:4px;
+  font-size:13px;
+  font-weight:600;
+  margin-bottom:6px;
+  color:#374151;
 }
 
 input,select{
-padding:10px;
-border-radius:8px;
-border:1px solid #ccc;
+  padding:10px;
+  border-radius:8px;
+  border:1px solid #d1d5db;
+  font-size:14px;
 }
 
-.section{margin-bottom:25px}
-
 .modal-actions{
-display:flex;
-justify-content:flex-end;
-gap:10px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:20px;
 }
 </style>
 </head>
@@ -108,21 +123,28 @@ gap:10px;
 <h1>Gestão da Equipe</h1>
 
 <div class="top-actions">
-<input id="pesquisaNome" placeholder="Buscar..." onkeyup="filtrarTabela()">
+
+<input 
+type="text"
+id="pesquisaNome"
+placeholder="Pesquisar profissional..."
+onkeyup="filtrarTabela()"
+>
 
 <select id="filtroStatus">
 <option value="">Todos</option>
-<option>Ativo</option>
-<option>Inativo</option>
+<option value="Ativo">Ativo</option>
+<option value="Inativo">Inativo</option>
 </select>
 
-<button onclick="abrirNovo()">+ Novo</button>
+<button onclick="abrirNovo()">+ Novo Cadastro</button>
+
 </div>
 
 <table>
 <thead>
 <tr>
-<th>Nome</th>
+<th>Nome Profissional</th>
 <th>Cargo</th>
 <th>CPF</th>
 <th>Status</th>
@@ -135,7 +157,6 @@ gap:10px;
 </main>
 </div>
 
-<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
@@ -143,17 +164,63 @@ gap:10px;
 <h3>Dados Pessoais</h3>
 <div class="grid">
 
-<div class="field"><label>Nome Completo</label><input id="nome_completo"></div>
-<div class="field"><label>Nome Profissional</label><input id="nome_profissional"></div>
-<div class="field"><label>CPF</label><input id="cpf"></div>
+<div class="field">
+<label>Nome Completo *</label>
+<input id="nome_completo">
+</div>
 
-<div class="field"><label>RG</label><input id="rg"></div>
-<div class="field"><label>Nascimento</label><input type="date" id="nascimento"></div>
-<div class="field"><label>Email</label><input id="email"></div>
+<div class="field">
+<label>Nome Profissional *</label>
+<input id="nome_profissional">
+</div>
 
-<div class="field"><label>Tipo Sanguíneo</label><input id="tipo_sanguineo"></div>
-<div class="field"><label>Telefone</label><input id="telefone"></div>
-<div class="field"><label>Telefone Emergência</label><input id="telefone_emer"></div>
+<div class="field">
+<label>CPF *</label>
+<input id="cpf">
+</div>
+
+<div class="field">
+<label>RG</label>
+<input id="rg">
+</div>
+
+<div class="field">
+<label>Data de Nascimento</label>
+<input type="date" id="nascimento">
+</div>
+
+<div class="field">
+<label>Email *</label>
+<input id="email">
+</div>
+
+<div class="field">
+<label>Tipo Sanguíneo</label>
+<select id="tipo_sanguineo">
+<option value="">Selecione</option>
+<option>A+</option><option>A-</option>
+<option>B+</option><option>B-</option>
+<option>AB+</option><option>AB-</option>
+<option>O+</option><option>O-</option>
+</select>
+</div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Contatos</h3>
+<div class="grid">
+
+<div class="field">
+<label>Telefone *</label>
+<input id="telefone">
+</div>
+
+<div class="field">
+<label>Contato de Emergência</label>
+<input id="telefone_emer">
+</div>
 
 </div>
 </div>
@@ -165,11 +232,9 @@ gap:10px;
 <div class="field"><label>CEP</label><input id="cep"></div>
 <div class="field"><label>Rua</label><input id="rua"></div>
 <div class="field"><label>Número</label><input id="numero"></div>
-
 <div class="field"><label>Complemento</label><input id="complemento"></div>
 <div class="field"><label>Bairro</label><input id="bairro"></div>
 <div class="field"><label>Cidade</label><input id="cidade"></div>
-
 <div class="field"><label>UF</label><input id="uf"></div>
 
 </div>
@@ -180,12 +245,13 @@ gap:10px;
 <div class="grid">
 
 <div class="field">
-<label>Tipo PIX</label>
+<label>Tipo Chave PIX</label>
 <select id="pix_tipo">
 <option value="">Selecione</option>
 <option>CPF</option>
 <option>Email</option>
 <option>Telefone</option>
+<option>Aleatória</option>
 </select>
 </div>
 
@@ -198,29 +264,29 @@ gap:10px;
 </div>
 
 <div class="section">
-<h3>Profissional</h3>
+<h3>Dados Funcionais</h3>
 <div class="grid">
 
-<div class="field"><label>Cargo</label><input id="cargo"></div>
-
 <div class="field">
-<label>Status</label>
-<select id="status">
-<option>Ativo</option>
-<option>Inativo</option>
+<label>Cargo</label>
+<select id="cargo">
+<option value="">Selecione</option>
+<option>Terapeuta Feminina</option>
+<option>Terapeuta Masculino</option>
+<option>Gerente</option>
+<option>Atendente</option>
+<option>Recepcionista</option>
+<option>Faxineira</option>
+<option>Analista</option>
 </select>
 </div>
 
-<div class="field"><label>Data Início</label><input type="date" id="data_inicio"></div>
-
-<div class="field"><label>Entrada</label><input type="time" id="hora_entrada"></div>
-<div class="field"><label>Saída</label><input type="time" id="hora_saida"></div>
-
 <div class="field">
-<label>Tem Folga</label>
+<label>Tem folga semanal?</label>
 <select id="tem_folga">
-<option value="">Não</option>
+<option value="">Selecione</option>
 <option>Sim</option>
+<option>Não</option>
 </select>
 </div>
 
@@ -234,7 +300,30 @@ gap:10px;
 <option>Quinta</option>
 <option>Sexta</option>
 <option>Sábado</option>
-<option>Domingo</option>
+</select>
+</div>
+
+<div class="field">
+<label>Hora de Entrada</label>
+<input type="time" id="hora_entrada" value="09:00">
+</div>
+
+<div class="field">
+<label>Hora de Saída</label>
+<input type="time" id="hora_saida" value="18:00">
+</div>
+
+<div class="field">
+<label>Data de Início no Hara</label>
+<input type="date" id="data_inicio">
+</div>
+
+<div class="field">
+<label>Status</label>
+<select id="status">
+<option value="">Selecione</option>
+<option>Ativo</option>
+<option>Inativo</option>
 </select>
 </div>
 
@@ -249,13 +338,16 @@ gap:10px;
 </div>
 </div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-let cpfAtual=null
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
+
+let cpfAtual=null;
 
 const campos=[
 "nome_completo","nome_profissional","cpf","rg","nascimento","email",
@@ -263,30 +355,50 @@ const campos=[
 "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
 "cargo","tem_folga","dia_folga",
 "hora_entrada","hora_saida","data_inicio","status"
-]
+];
 
 function getPayload(){
-let obj={}
+const obj={};
 campos.forEach(c=>{
-let el=document.getElementById(c)
-if(el && el.value!=="") obj[c]=el.value
-})
-return obj
+const el=document.getElementById(c);
+if(el && el.value!=="") obj[c]=el.value;
+});
+return obj;
 }
 
 function setForm(data){
 campos.forEach(c=>{
-let el=document.getElementById(c)
-if(el) el.value=data[c]||""
-})
+const el=document.getElementById(c);
+if(el){
+if(c==="hora_entrada" || c==="hora_saida"){
+el.value=data[c]?data[c].substring(0,5):"";
+}else{
+el.value=data[c]||"";
+}
+}
+});
 }
 
 async function carregar(){
-const {data}=await client.from("terapeutas").select("*")
 
-let html=""
+const statusFiltro = document.getElementById("filtroStatus").value;
+
+let query = supabaseClient
+.from("terapeutas")
+.select("cpf,nome_profissional,status,cargo")
+.order("nome_profissional");
+
+if(statusFiltro) query = query.eq("status", statusFiltro);
+
+const {data,error}=await query;
+
+if(error){ console.error(error); return; }
+
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
+
 data.forEach(t=>{
-html+=`
+tbody.innerHTML+=`
 <tr>
 <td>${t.nome_profissional||""}</td>
 <td>${t.cargo||""}</td>
@@ -296,62 +408,119 @@ html+=`
 <button onclick="editar('${t.cpf}')">Editar</button>
 <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
-</tr>`
-})
+</tr>`;
+});
 
-document.getElementById("lista").innerHTML=html
-}
-
-function abrirNovo(){
-cpfAtual=null
-campos.forEach(c=>{
-let el=document.getElementById(c)
-if(el) el.value=""
-})
-document.getElementById("modal").style.display="flex"
-}
-
-async function editar(cpf){
-cpfAtual=cpf
-const {data}=await client.from("terapeutas").select("*").eq("cpf",cpf).single()
-setForm(data)
-document.getElementById("modal").style.display="flex"
-}
-
-async function salvar(){
-let payload=getPayload()
-
-if(cpfAtual){
-delete payload.cpf
-await client.from("terapeutas").update(payload).eq("cpf",cpfAtual)
-}else{
-await client.from("terapeutas").insert(payload)
-}
-
-fecharModal()
-carregar()
-}
-
-async function excluir(cpf){
-if(!confirm("Excluir?")) return
-await client.from("terapeutas").delete().eq("cpf",cpf)
-carregar()
-}
-
-function fecharModal(){
-document.getElementById("modal").style.display="none"
+filtrarTabela();
 }
 
 function filtrarTabela(){
-let filtro=document.getElementById("pesquisaNome").value.toLowerCase()
-document.querySelectorAll("#lista tr").forEach(tr=>{
-tr.style.display = tr.innerText.toLowerCase().includes(filtro) ? "" : "none"
-})
+
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
+
+linhas.forEach(linha=>{
+const nome = linha.children[0].innerText.toLowerCase();
+
+if(nome.includes(filtro)){
+linha.style.display="";
+}else{
+linha.style.display="none";
+}
+});
 }
 
-document.getElementById("filtroStatus").addEventListener("change",carregar)
+function abrirNovo(){
+cpfAtual=null;
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
+document.getElementById("hora_entrada").value="09:00";
+document.getElementById("hora_saida").value="18:00";
 
-carregar()
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = false;
+
+document.getElementById("modal").style.display="flex";
+}
+
+async function editar(cpf){
+
+cpfAtual=cpf;
+
+const {data,error}=await supabaseClient
+.from("terapeutas")
+.select("*")
+.eq("cpf",cpf)
+.single();
+
+if(error){console.error(error);return;}
+
+setForm(data);
+
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = true;
+
+document.getElementById("modal").style.display="flex";
+}
+
+async function salvar(){
+
+const payload=getPayload();
+
+if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
+alert("Preencha os campos obrigatórios");
+return;
+}
+
+let error;
+
+if(cpfAtual){
+
+delete payload.cpf;
+
+({error}=await supabaseClient
+.from("terapeutas")
+.update(payload)
+.eq("cpf",cpfAtual));
+
+}else{
+
+({error}=await supabaseClient
+.from("terapeutas")
+.insert(payload));
+
+}
+
+if(error){
+console.error(error);
+alert("Erro ao salvar");
+return;
+}
+
+fecharModal();
+carregar();
+}
+
+async function excluir(cpf){
+if(!confirm("Excluir registro?"))return;
+
+await supabaseClient
+.from("terapeutas")
+.delete()
+.eq("cpf",cpf);
+
+carregar();
+}
+
+function fecharModal(){
+document.getElementById("modal").style.display="none";
+}
+
+document.getElementById("filtroStatus").addEventListener("change", carregar);
+
+carregar();
 
 </script>
 

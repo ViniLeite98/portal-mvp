@@ -32,9 +32,6 @@ button{
 background:#2563eb;color:#fff;border:none;padding:10px 15px;border-radius:6px;cursor:pointer;
 }
 
-button.editar{background:#f59e0b}
-button.excluir{background:#dc2626}
-
 table{
 width:100%;background:#fff;border-collapse:collapse;border-radius:10px;
 overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);
@@ -55,63 +52,16 @@ th,td{padding:10px;border-bottom:1px solid #eee;}
 
 <div class="form-box">
 
-<div class="field">
-<label>Data</label>
 <input type="date" id="data">
-</div>
 
-<div class="field">
-<label>Cliente</label>
 <select id="cliente"></select>
-</div>
-
-<div class="field">
-<label>Serviço</label>
 <select id="servico"></select>
-</div>
 
-<div class="field">
-<label>Origem</label>
-<select id="origem">
-<option value="">Selecione</option>
-<option>Instagram</option>
-<option>Google</option>
-<option>Indicação</option>
-<option>Cliente antigo</option>
-<option>WhatsApp</option>
-<option>Outro</option>
-</select>
-</div>
-
-<div class="field">
-<label>Valor</label>
-<input type="number" id="valor">
-</div>
-
-<div class="field">
-<label>Desconto</label>
-<input type="number" id="desconto">
-</div>
-
-<div class="field">
-<label>Final</label>
-<input type="number" id="final" disabled>
-</div>
+<input type="number" id="valor" placeholder="Valor">
+<input type="number" id="desconto" placeholder="Desconto">
+<input type="number" id="final" disabled placeholder="Final">
 
 <button onclick="salvar()">Adicionar</button>
-
-</div>
-
-<div class="form-box">
-
-<input type="date" id="filtroInicio">
-<input type="date" id="filtroFim">
-<select id="filtroCliente"></select>
-<select id="filtroServico"></select>
-
-<button onclick="filtrar()">Filtrar</button>
-<button onclick="limparFiltro()">Limpar</button>
-<button onclick="exportarExcel()">Excel</button>
 
 </div>
 
@@ -136,6 +86,7 @@ th,td{padding:10px;border-bottom:1px solid #eee;}
 
 <script>
 
+// 🔥 COLE SUA ANON KEY AQUI
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
 "SUA_ANON_KEY_AQUI"
@@ -158,34 +109,28 @@ valor.oninput=calc
 desconto.oninput=calc
 
 function calc(){
-final.value=(parseFloat(valor.value||0)-parseFloat(desconto.value||0))
+final.value=(valor.value||0)-(desconto.value||0)
 }
 
 async function carregarSelects(){
 
 const {data:clientes}=await supabaseClient.from("clientes").select("*")
 cliente.innerHTML="<option></option>"
-filtroCliente.innerHTML="<option></option>"
 
 clientes.forEach(c=>{
 cliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
-filtroCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 })
 
 const {data:servicos}=await supabaseClient.from("servicos").select("*")
 servico.innerHTML="<option></option>"
-filtroServico.innerHTML="<option></option>"
 
 servicos.forEach(s=>{
 servicosMap[s.id]=s
 servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
-filtroServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 })
 
 $('#cliente').select2()
 $('#servico').select2()
-$('#filtroCliente').select2()
-$('#filtroServico').select2()
 
 $('#servico').on('select2:select', function (e) {
 const s=servicosMap[e.params.data.id]
@@ -226,7 +171,6 @@ tbody.innerHTML+=`
 })
 }
 
-/* 🔥 SALVAR CORRIGIDO */
 async function salvar(){
 
 if(!data.value || !cliente.value || !servico.value){
@@ -240,18 +184,14 @@ cliente_id:Number(cliente.value),
 servico_id:Number(servico.value),
 valor:Number(valor.value||0),
 desconto:Number(desconto.value||0),
-valor_final:Number(valor.value||0)-Number(desconto.value||0),
-origem_lead:origem.value||null
+valor_final:Number(valor.value||0)-Number(desconto.value||0)
 }
-
-console.log("ENVIANDO:",payload)
 
 const {error}=await supabaseClient
 .from("fluxo_caixa")
 .insert(payload)
 
 if(error){
-console.error(error)
 alert(error.message)
 return
 }
@@ -262,32 +202,6 @@ carregarLista()
 async function excluir(id){
 await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
 carregarLista()
-}
-
-function filtrar(){
-let lista=[...dados]
-
-if(filtroInicio.value) lista=lista.filter(d=>d.data>=filtroInicio.value)
-if(filtroFim.value) lista=lista.filter(d=>d.data<=filtroFim.value)
-if(filtroCliente.value) lista=lista.filter(d=>d.cliente_id==filtroCliente.value)
-if(filtroServico.value) lista=lista.filter(d=>d.servico_id==filtroServico.value)
-
-render(lista)
-}
-
-function limparFiltro(){
-filtroInicio.value=""
-filtroFim.value=""
-filtroCliente.value=""
-filtroServico.value=""
-render(dados)
-}
-
-function exportarExcel(){
-const ws=XLSX.utils.json_to_sheet(dados)
-const wb=XLSX.utils.book_new()
-XLSX.utils.book_append_sheet(wb,ws,"Fluxo")
-XLSX.writeFile(wb,"fluxo.xlsx")
 }
 
 carregarSelects()

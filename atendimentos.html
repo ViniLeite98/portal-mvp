@@ -3,64 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <title>Documentos</title>
+
+  <!-- SUPABASE -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
   <style>
-    body { font-family: Arial; background:#f5f5f5; margin:0; }
-    .container { padding:20px; }
+    body { font-family: Arial; background:#f5f5f5; margin:0; display:flex; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width:220px;
+      background:#111;
+      color:#fff;
+      height:100vh;
+      padding:20px;
+    }
+
+    .sidebar a {
+      display:block;
+      color:#ccc;
+      text-decoration:none;
+      margin:10px 0;
+    }
+
+    .sidebar a:hover { color:#fff; }
+
+    /* CONTENT */
+    .content { flex:1; padding:20px; }
+
     .header { display:flex; justify-content:space-between; align-items:center; }
+
     .btn { background:#007bff; color:#fff; border:none; padding:10px 15px; cursor:pointer; border-radius:6px; }
-    .btn:hover { background:#0056b3; }
-    .card { background:#fff; padding:15px; border-radius:10px; margin-top:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-    .doc-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee; }
-    .doc-item:last-child { border-bottom:none; }
-    .actions button { margin-left:5px; }
+
+    .card { background:#fff; padding:15px; border-radius:10px; margin-top:15px; }
+
+    .doc-item { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee; }
+
     input, select { padding:8px; margin-right:10px; }
-    .tag { font-size:12px; background:#eee; padding:3px 8px; border-radius:5px; margin-top:5px; display:inline-block; }
+
+    .tag { font-size:12px; background:#eee; padding:3px 8px; border-radius:5px; }
   </style>
 </head>
 <body>
 
-<div class="container">
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <h3>Hara Spa</h3>
+  <a href="index.html">Dashboard</a>
+  <a href="clientes.html">Clientes</a>
+  <a href="documentos.html">Documentos</a>
+</div>
+
+<!-- CONTEÚDO -->
+<div class="content">
 
   <div class="header">
-    <h2>📄 Documentos do Cliente</h2>
-    <button class="btn" onclick="abrirUpload()">+ Novo Documento</button>
+    <h2>📄 Documentos</h2>
+    <button class="btn" onclick="abrirModal()">+ Documento</button>
   </div>
 
   <div class="card">
-    <input type="text" id="search" placeholder="Buscar documento..." onkeyup="filtrar()">
+    <input type="text" id="search" placeholder="Buscar..." onkeyup="filtrar()">
   </div>
 
   <div id="lista" class="card"></div>
 
 </div>
 
-<!-- Modal -->
+<!-- MODAL -->
 <div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
   <div style="background:#fff; padding:20px; margin:100px auto; width:320px; border-radius:10px;">
+
     <h3>Novo Documento</h3>
 
-    <input type="text" id="nomeDoc" placeholder="Nome do documento"><br><br>
+    <input type="text" id="nome" placeholder="Nome"><br><br>
 
-    <select id="tipoDoc">
-      <option value="">Tipo do documento</option>
-      <option value="RG">RG</option>
-      <option value="CPF">CPF</option>
-      <option value="Comprovante de Residência">Comprovante de Residência</option>
-      <option value="Contrato">Contrato</option>
-      <option value="Outro">Outro</option>
+    <select id="tipo">
+      <option value="">Tipo</option>
+      <option>RG</option>
+      <option>CPF</option>
+      <option>Comprovante</option>
+      <option>Contrato</option>
     </select><br><br>
 
-    <input type="file" id="arquivo"><br><br>
+    <input type="file" id="file"><br><br>
 
-    <button class="btn" onclick="salvarDoc()">Salvar</button>
+    <button class="btn" onclick="salvar()">Salvar</button>
     <button onclick="fecharModal()">Cancelar</button>
+
   </div>
 </div>
 
 <script>
+
+// 🔑 CONFIG SUPABASE
+const supabase = supabase.createClient(
+  "SUA_URL",
+  "SUA_ANON_KEY"
+);
+
 let documentos = [];
 
-function abrirUpload(){
+function abrirModal(){
   document.getElementById('modal').style.display = 'block';
 }
 
@@ -68,37 +112,46 @@ function fecharModal(){
   document.getElementById('modal').style.display = 'none';
 }
 
-function salvarDoc(){
-  const nome = document.getElementById('nomeDoc').value;
-  const tipo = document.getElementById('tipoDoc').value;
-  const arquivo = document.getElementById('arquivo').files[0];
+// 🚀 SALVAR
+async function salvar(){
+  const nome = document.getElementById('nome').value;
+  const tipo = document.getElementById('tipo').value;
+  const file = document.getElementById('file').files[0];
 
-  if(!nome || !tipo || !arquivo){
-    alert('Preencha todos os campos');
+  if(!nome || !tipo || !file){
+    alert('Preencha tudo');
     return;
   }
 
-  const novo = {
-    id: Date.now(),
-    nome: nome,
-    tipo: tipo,
-    arquivo: arquivo.name
-  };
+  const fileName = Date.now() + '-' + file.name;
 
-  documentos.push(novo);
+  // upload storage
+  const { error: uploadError } = await supabase.storage
+    .from('documentos')
+    .upload(fileName, file);
+
+  if(uploadError){
+    alert('Erro upload');
+    return;
+  }
+
+  const url = supabase.storage
+    .from('documentos')
+    .getPublicUrl(fileName).data.publicUrl;
+
+  // salvar banco
+  await supabase.from('documentos').insert([
+    { nome, tipo, url }
+  ]);
+
   fecharModal();
-  limparCampos();
-  render();
+  carregar();
 }
 
-function limparCampos(){
-  document.getElementById('nomeDoc').value = '';
-  document.getElementById('tipoDoc').value = '';
-  document.getElementById('arquivo').value = '';
-}
-
-function deletar(id){
-  documentos = documentos.filter(d => d.id !== id);
+// 📥 CARREGAR
+async function carregar(){
+  const { data } = await supabase.from('documentos').select('*');
+  documentos = data || [];
   render();
 }
 
@@ -111,11 +164,10 @@ function render(){
       <div class="doc-item">
         <div>
           <strong>${doc.nome}</strong><br>
-          <small>${doc.arquivo}</small><br>
           <span class="tag">${doc.tipo}</span>
         </div>
-        <div class="actions">
-          <button onclick="deletar(${doc.id})">🗑️</button>
+        <div>
+          <a href="${doc.url}" target="_blank">📂</a>
         </div>
       </div>
     `;
@@ -124,6 +176,7 @@ function render(){
 
 function filtrar(){
   const termo = document.getElementById('search').value.toLowerCase();
+
   const filtrados = documentos.filter(d =>
     d.nome.toLowerCase().includes(termo) ||
     d.tipo.toLowerCase().includes(termo)
@@ -137,14 +190,18 @@ function filtrar(){
       <div class="doc-item">
         <div>
           <strong>${doc.nome}</strong><br>
-          <small>${doc.arquivo}</small><br>
           <span class="tag">${doc.tipo}</span>
         </div>
       </div>
     `;
   });
 }
+
+carregar();
+
 </script>
 
 </body>
 </html>
+
+

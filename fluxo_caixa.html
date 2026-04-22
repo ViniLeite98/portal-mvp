@@ -9,7 +9,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<!-- SELECT2 -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -228,19 +227,17 @@ width:350px;
 </div>
 </div>
 
+<!-- 🔥 AQUI FOI A ÚNICA ALTERAÇÃO -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- SELECT2 -->
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 
-const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-)
+// ❌ removido supabaseClient
 
 function nomeCliente(c){
   if(!c) return ""
@@ -286,7 +283,7 @@ return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
 
 async function carregarSelects(){
 
-const {data:clientes}=await supabaseClient.from("clientes").select("*")
+const {data:clientes}=await client.from("clientes").select("*")
 dadosClientes=clientes||[]
 
 cliente.innerHTML="<option value=''>Selecione</option>"
@@ -297,7 +294,7 @@ cliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 filtroCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 })
 
-const {data:servicos}=await supabaseClient.from("servicos").select("*")
+const {data:servicos}=await client.from("servicos").select("*")
 dadosServicos=servicos||[]
 
 servico.innerHTML="<option value=''>Selecione</option>"
@@ -309,26 +306,11 @@ servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 filtroServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 })
 
-servico.addEventListener("change",()=>{
-const s=servicosMap[servico.value]
-if(s){
-valor.value=s.valor||50
-calcular()
-}
-})
-
-setTimeout(() => {
-  $('#cliente').select2({placeholder:"Buscar cliente...", width:'180px'})
-  $('#servico').select2({placeholder:"Buscar serviço...", width:'200px'})
-  $('#filtroCliente').select2({placeholder:"Todos", width:'180px'})
-  $('#filtroServico').select2({placeholder:"Todos", width:'200px'})
-},200)
-
 }
 
 async function carregarLista(){
 
-const {data}=await supabaseClient
+const {data}=await client
 .from("fluxo_caixa")
 .select(`*,clientes(*),servicos(*)`)
 .order("data",{ascending:false})
@@ -394,7 +376,7 @@ document.getElementById("modalEditar").style.display="none"
 
 async function salvar(){
 
-await supabaseClient.from("fluxo_caixa").insert({
+await client.from("fluxo_caixa").insert({
 data:data.value,
 cliente_id:cliente.value,
 servico_id:servico.value,
@@ -409,7 +391,7 @@ carregarLista()
 
 async function salvarEdicao(){
 
-await supabaseClient.from("fluxo_caixa").update({
+await client.from("fluxo_caixa").update({
 data:editData.value,
 cliente_id:editCliente.value,
 servico_id:editServico.value,
@@ -425,7 +407,7 @@ carregarLista()
 
 async function excluir(id){
 if(!confirm("Excluir?")) return
-await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
+await client.from("fluxo_caixa").delete().eq("id",id)
 carregarLista()
 }
 

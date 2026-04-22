@@ -10,7 +10,6 @@
   <style>
     body { font-family: Arial; background:#f5f5f5; margin:0; display:flex; }
 
-    /* SIDEBAR */
     .sidebar {
       width:220px;
       background:#111;
@@ -28,20 +27,41 @@
 
     .sidebar a:hover { color:#fff; }
 
-    /* CONTENT */
     .content { flex:1; padding:20px; }
 
     .header { display:flex; justify-content:space-between; align-items:center; }
 
-    .btn { background:#007bff; color:#fff; border:none; padding:10px 15px; cursor:pointer; border-radius:6px; }
+    .btn {
+      background:#007bff;
+      color:#fff;
+      border:none;
+      padding:10px 15px;
+      cursor:pointer;
+      border-radius:6px;
+    }
 
-    .card { background:#fff; padding:15px; border-radius:10px; margin-top:15px; }
+    .card {
+      background:#fff;
+      padding:15px;
+      border-radius:10px;
+      margin-top:15px;
+    }
 
-    .doc-item { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee; }
+    .doc-item {
+      display:flex;
+      justify-content:space-between;
+      padding:10px 0;
+      border-bottom:1px solid #eee;
+    }
 
     input, select { padding:8px; margin-right:10px; }
 
-    .tag { font-size:12px; background:#eee; padding:3px 8px; border-radius:5px; }
+    .tag {
+      font-size:12px;
+      background:#eee;
+      padding:3px 8px;
+      border-radius:5px;
+    }
   </style>
 </head>
 <body>
@@ -96,10 +116,9 @@
 
 <script>
 
-// 🔑 CONFIG SUPABASE
-// ⚠️ EVITA DUPLICAR VARIÁVEL
+// 🔑 COLOQUE SUAS CREDENCIAIS AQUI
 const supabaseClient = supabase.createClient(
-  "SUA_URL",
+  "https://SEU-PROJETO.supabase.co",
   "SUA_ANON_KEY"
 );
 
@@ -126,13 +145,14 @@ async function salvar(){
 
   const fileName = Date.now() + '-' + file.name;
 
-  // upload storage
-  const { error: uploadError } = await supabaseClient.storage
+  // upload
+  const { error } = await supabaseClient.storage
     .from('documentos')
     .upload(fileName, file);
 
-  if(uploadError){
-    alert('Erro upload');
+  if(error){
+    alert('Erro no upload');
+    console.log(error);
     return;
   }
 
@@ -140,7 +160,6 @@ async function salvar(){
     .from('documentos')
     .getPublicUrl(fileName).data.publicUrl;
 
-  // salvar banco
   await supabaseClient.from('documentos').insert([
     { nome, tipo, url }
   ]);
@@ -151,7 +170,11 @@ async function salvar(){
 
 // 📥 CARREGAR
 async function carregar(){
-  const { data } = await supabaseClient.from('documentos').select('*');
+  const { data } = await supabaseClient
+    .from('documentos')
+    .select('*')
+    .order('created_at', { ascending: false });
+
   documentos = data || [];
   render();
 }
@@ -168,7 +191,8 @@ function render(){
           <span class="tag">${doc.tipo}</span>
         </div>
         <div>
-          <a href="${doc.url}" target="_blank">📂</a>
+          <a href="${doc.url}" target="_blank">👁️</a>
+          <a href="${doc.url}" download>⬇️</a>
         </div>
       </div>
     `;
@@ -204,5 +228,3 @@ carregar();
 
 </body>
 </html>
-
-

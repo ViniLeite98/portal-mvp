@@ -8,12 +8,10 @@
  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
-<!-- 🔥 1. SUPABASE PRIMEIRO -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
-/* SEU CSS ORIGINAL */
+/* (SEU CSS INTACTO — NÃO ALTEREI NADA) */
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
@@ -28,33 +26,61 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 <aside id="sidebar"></aside>
 
 <main class="content">
+
 <h1>Gestão da Equipe</h1>
+
+<div class="top-actions">
+
+<input 
+type="text"
+id="pesquisaNome"
+placeholder="Pesquisar profissional..."
+onkeyup="filtrarTabela()"
+>
+
+<select id="filtroStatus">
+<option value="">Todos</option>
+<option value="Ativo">Ativo</option>
+<option value="Inativo">Inativo</option>
+</select>
+
+<button onclick="abrirNovo()">+ Novo Cadastro</button>
+
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Nome Profissional</th>
+<th>Cargo</th>
+<th>CPF</th>
+<th>Status</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
 </main>
 </div>
 
 <div class="modal" id="modal">
 <div class="modal-content">
-<!-- SEU FORM CONTINUA IGUAL -->
+
+<!-- 🔥 SEU FORM COMPLETO CONTINUA IGUAL (NÃO ALTEREI NADA) -->
+
 </div>
 </div>
 
-<!-- 🔥 2. AQUI CRIA O CLIENT (SUBSTITUI SUA ANON KEY) -->
-<script>
-const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
+<!-- 🔥 AQUI ESTÁ A MUDANÇA -->
 
-const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
-
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY
-);
-</script>
-
-<!-- 🔥 3. SIDEBAR DEPOIS -->
+<script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
-<!-- 🔥 4. SEU SCRIPT ORIGINAL (INALTERADO) -->
 <script>
+
+// 🔥 TROCA DA ANON KEY (SEM QUEBRAR NADA)
+const supabaseClient = window.client;
 
 let cpfAtual=null;
 
@@ -90,7 +116,7 @@ el.value=data[c]||"";
 
 async function carregar(){
 
-const statusFiltro = document.getElementById("filtroStatus")?.value;
+const statusFiltro = document.getElementById("filtroStatus").value;
 
 let query = supabaseClient
 .from("terapeutas")
@@ -104,8 +130,6 @@ const {data,error}=await query;
 if(error){ console.error(error); return; }
 
 const tbody=document.getElementById("lista");
-if(!tbody) return;
-
 tbody.innerHTML="";
 
 data.forEach(t=>{
@@ -121,6 +145,39 @@ tbody.innerHTML+=`
 </td>
 </tr>`;
 });
+
+filtrarTabela();
+}
+
+function filtrarTabela(){
+
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
+
+linhas.forEach(linha=>{
+const nome = linha.children[0].innerText.toLowerCase();
+
+if(nome.includes(filtro)){
+linha.style.display="";
+}else{
+linha.style.display="none";
+}
+});
+}
+
+function abrirNovo(){
+cpfAtual=null;
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
+document.getElementById("hora_entrada").value="09:00";
+document.getElementById("hora_saida").value="18:00";
+
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = false;
+
+document.getElementById("modal").style.display="flex";
 }
 
 async function editar(cpf){
@@ -136,6 +193,9 @@ const {data,error}=await supabaseClient
 if(error){console.error(error);return;}
 
 setForm(data);
+
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = true;
 
 document.getElementById("modal").style.display="flex";
 }
@@ -192,6 +252,8 @@ carregar();
 function fecharModal(){
 document.getElementById("modal").style.display="none";
 }
+
+document.getElementById("filtroStatus").addEventListener("change", carregar);
 
 carregar();
 

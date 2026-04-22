@@ -13,49 +13,129 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f4f6fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
+
+body{
+margin:0;
+font-family:'Segoe UI',sans-serif;
+background:#f4f6fb;
+}
+
+.app{
+display:flex;
+min-height:100vh;
+}
+
+#sidebar{
+width:260px;
+flex-shrink:0;
+}
+
+.content{
+flex:1;
+padding:40px;
+}
+
 h1{margin-top:0}
 
 .form-box{
-background:#fff;padding:20px;border-radius:10px;
-display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px;
+background:#fff;
+padding:20px;
+border-radius:10px;
+display:flex;
+gap:20px;
+flex-wrap:wrap;
+margin-bottom:20px;
 box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
-.form-box div{display:flex;flex-direction:column;}
+.form-box div{
+display:flex;
+flex-direction:column;
+}
 
 select,input{
-padding:8px;border-radius:6px;border:1px solid #d1d5db;min-width:200px;
+padding:8px;
+border-radius:6px;
+border:1px solid #d1d5db;
+min-width:200px;
 }
 
+/* BOTÕES */
 button{
-background:#000;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;
+background:#000;
+color:#fff;
+border:none;
+padding:7px 14px;
+border-radius:6px;
+cursor:pointer;
+transition:0.2s;
 }
-button.excluir{background:#dc2626;}
-button.editar{background:#000;}
 
+button:hover{
+opacity:0.85;
+}
+
+button.excluir{
+background:#dc2626;
+}
+
+button.editar{
+background:#000;
+}
+
+/* TABELA */
 table{
-width:100%;border-collapse:collapse;background:#fff;border-radius:10px;
-overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);
+width:100%;
+border-collapse:collapse;
+background:#fff;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
-th,td{padding:12px;border-bottom:1px solid #eee;}
-th{background:#f9fafb;}
+th,td{
+padding:12px;
+border-bottom:1px solid #eee;
+}
 
-.servico{display:flex;align-items:center;gap:8px;}
-.servico i{margin-left:6px;}
+th{
+background:#f9fafb;
+text-align:left;
+}
 
+/* ÍCONES */
+.servico{
+display:flex;
+align-items:center;
+gap:8px;
+}
+
+.servico i{
+margin-left:6px;
+}
+
+/* CORES DOS ÍCONES */
+.icone-fa-person-dress { color:#ec4899; }
+.icone-fa-user-group { color:#3b82f6; }
+.icone-fa-droplet { color:#06b6d4; }
+.icone-fa-spa { color:#10b981; }
+.icone-fa-shoe-prints { color:#f59e0b; }
+
+/* MODAL */
 .modal{
-display:none;position:fixed;inset:0;
+display:none;
+position:fixed;
+inset:0;
 background:rgba(0,0,0,0.4);
-align-items:center;justify-content:center;
+align-items:center;
+justify-content:center;
 }
 
 .modal-box{
-background:#fff;padding:20px;border-radius:10px;width:420px;
+background:#fff;
+padding:20px;
+border-radius:10px;
+width:420px;
 }
 </style>
 </head>
@@ -63,6 +143,7 @@ background:#fff;padding:20px;border-radius:10px;width:420px;
 <body>
 
 <div class="app">
+
 <aside id="sidebar"></aside>
 
 <main class="content">
@@ -90,7 +171,20 @@ background:#fff;padding:20px;border-radius:10px;width:420px;
 
 </div>
 
-<input id="buscaTerapeuta" placeholder="Buscar..." oninput="filtrarTabela()">
+<div style="margin-bottom:10px;font-size:13px;color:#555;">
+<strong>Legenda:</strong>
+<i class="fa-solid fa-person-dress icone-fa-person-dress"></i> Feminina |
+<i class="fa-solid fa-user-group icone-fa-user-group"></i> Casais |
+<i class="fa-solid fa-droplet icone-fa-droplet"></i> Nuru |
+<i class="fa-solid fa-spa icone-fa-spa"></i> Vivência |
+<i class="fa-solid fa-shoe-prints icone-fa-shoe-prints"></i> Podologia
+</div>
+
+<input 
+id="buscaTerapeuta" 
+placeholder="Buscar profissional ou certificação..."
+oninput="filtrarTabela()"
+>
 
 <button onclick="exportarExcel()">Exportar Excel</button>
 
@@ -122,17 +216,16 @@ background:#fff;padding:20px;border-radius:10px;width:420px;
 <div class="modal-box">
 <h3>Editar Data</h3>
 
-<input type="date" id="novaDataInput">
+<input type="date" id="novaDataInput" style="width:100%;margin-bottom:15px;">
 
-<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:10px">
+<div style="display:flex;gap:10px;justify-content:flex-end">
 <button onclick="salvarNovaData()">Salvar</button>
 <button class="excluir" onclick="fecharModalData()">Cancelar</button>
 </div>
-
 </div>
 </div>
 
-<!-- 🔥 ORDEM CORRETA -->
+<!-- 🔥 SOMENTE ISSO ALTERADO -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
@@ -143,25 +236,41 @@ let dados=[]
 let listaFiltrada=[]
 let editandoId=null
 
+function iconeCertificacao(nome){
+if(!nome) return "fa-certificate"
+nome = nome.toLowerCase()
+
+if(nome.includes("massagem feminina")) return "fa-person-dress"
+if(nome.includes("massagem casais")) return "fa-user-group"
+if(nome.includes("massagem nuru")) return "fa-droplet"
+if(nome.includes("massagem vivência")) return "fa-spa"
+if(nome.includes("podologia") || nome.includes("podolatria")) return "fa-shoe-prints"
+
+return "fa-certificate"
+}
+
 async function carregarSelects(){
+
+const selTer=document.getElementById("cpf_terapeuta")
+const selCert=document.getElementById("certificacao_id")
 
 const {data:terapeutas}=await client
 .from("terapeutas")
 .select("cpf,nome_profissional")
 .eq("status","Ativo")
 
-cpf_terapeuta.innerHTML="<option value=''>Selecione</option>"
+selTer.innerHTML="<option value=''>Selecione</option>"
 ;(terapeutas||[]).forEach(t=>{
-cpf_terapeuta.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
+selTer.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`
 })
 
 const {data:cert}=await client
 .from("certificacoes")
 .select("id,nome")
 
-certificacao_id.innerHTML="<option value=''>Selecione</option>"
+selCert.innerHTML="<option value=''>Selecione</option>"
 ;(cert||[]).forEach(c=>{
-certificacao_id.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
+selCert.innerHTML+=`<option value="${c.id}">${c.nome}</option>`
 })
 
 }
@@ -181,9 +290,18 @@ dados = data || []
 listaFiltrada = [...dados]
 
 render(listaFiltrada)
+
 }
 
 function render(lista){
+
+const ordem = [
+"fa-person-dress",
+"fa-user-group",
+"fa-droplet",
+"fa-spa",
+"fa-shoe-prints"
+]
 
 const agrupado={}
 
@@ -201,11 +319,35 @@ const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
 Object.values(agrupado).forEach(t=>{
+
+let iconesLista = []
+
+t.certs.forEach(c=>{
+const icone = iconeCertificacao(c.certificacoes?.nome)
+if(!iconesLista.includes(icone)){
+iconesLista.push(icone)
+}
+})
+
+iconesLista.sort((a,b)=>{
+return ordem.indexOf(a) - ordem.indexOf(b)
+})
+
+let icones = iconesLista.map(i =>
+`<i class="fa-solid ${i} icone-${i}"></i>`
+).join("")
+
 tbody.innerHTML+=`
 <tr>
-<td><strong>${t.nome}</strong></td>
 <td>
-<button onclick="abrirModal('${t.nome}')">Editar</button>
+<div class="servico">
+<strong>${t.nome}</strong>
+${icones}
+</div>
+</td>
+
+<td>
+<button class="editar" onclick="abrirModal('${t.nome}')">Editar</button>
 </td>
 </tr>
 `
@@ -213,16 +355,29 @@ tbody.innerHTML+=`
 }
 
 function filtrarTabela(){
-const termo = buscaTerapeuta.value.toLowerCase()
+
+const termo = document
+.getElementById("buscaTerapeuta")
+.value
+.toLowerCase()
 
 if(!termo){
-render(dados)
+listaFiltrada = [...dados]
+render(listaFiltrada)
 return
 }
 
-render(dados.filter(d =>
-(d.terapeutas?.nome_profissional||"").toLowerCase().includes(termo)
-))
+listaFiltrada = dados.filter(d => {
+
+const nome = (d.terapeutas?.nome_profissional || "").toLowerCase()
+const cert = (d.certificacoes?.nome || "").toLowerCase()
+
+return nome.includes(termo) || cert.includes(termo)
+
+})
+
+render(listaFiltrada)
+
 }
 
 function abrirModal(nome){
@@ -231,7 +386,7 @@ const registros = dados.filter(d =>
 d.terapeutas?.nome_profissional === nome
 )
 
-tituloModal.innerText = nome
+document.getElementById("tituloModal").innerText = nome
 
 let html=""
 
@@ -247,27 +402,36 @@ html+=`
 `
 })
 
-listaCerts.innerHTML=html
-modalCerts.style.display="flex"
+document.getElementById("listaCerts").innerHTML=html
+document.getElementById("modalCerts").style.display="flex"
 }
 
 function fecharModal(){
-modalCerts.style.display="none"
+document.getElementById("modalCerts").style.display="none"
 }
 
 function editarCert(id,dataAtual){
+
 editandoId=id
-novaDataInput.value=dataAtual||""
-modalEditarData.style.display="flex"
+
+const input=document.getElementById("novaDataInput")
+input.value=dataAtual||""
+
+document.getElementById("modalEditarData").style.display="flex"
 }
 
 function fecharModalData(){
-modalEditarData.style.display="none"
+document.getElementById("modalEditarData").style.display="none"
 }
 
 async function salvarNovaData(){
 
-const novaData=novaDataInput.value
+const novaData=document.getElementById("novaDataInput").value
+
+if(!novaData){
+alert("Selecione uma data")
+return
+}
 
 await client
 .from("terapeuta_certificacoes")
@@ -280,9 +444,14 @@ carregarLista()
 
 async function vincular(){
 
-const cpf=cpf_terapeuta.value
-const cert=certificacao_id.value
-const data=data_obtencao.value
+const cpf=document.getElementById("cpf_terapeuta").value
+const cert=document.getElementById("certificacao_id").value
+const data=document.getElementById("data_obtencao").value
+
+if(!cpf||!cert){
+alert("Selecione terapeuta e certificação")
+return
+}
 
 await client
 .from("terapeuta_certificacoes")
@@ -293,9 +462,12 @@ data_obtencao:data||null
 })
 
 carregarLista()
+
 }
 
 async function excluir(id){
+
+if(!confirm("Excluir vínculo?")) return
 
 await client
 .from("terapeuta_certificacoes")
@@ -307,16 +479,23 @@ carregarLista()
 
 function exportarExcel(){
 
-const ws = XLSX.utils.json_to_sheet(dados)
+const exportData = dados.map(r => ({
+Terapeuta: r.terapeutas?.nome_profissional,
+Certificacao: r.certificacoes?.nome,
+Data: r.data_obtencao
+}))
+
+const ws = XLSX.utils.json_to_sheet(exportData)
 const wb = XLSX.utils.book_new()
 
 XLSX.utils.book_append_sheet(wb, ws, "Certificacoes")
+
 XLSX.writeFile(wb, "certificacoes.xlsx")
 }
 
 carregarSelects()
 carregarLista()
-
+ 
 </script>
 
 </body>

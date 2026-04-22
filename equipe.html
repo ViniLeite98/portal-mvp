@@ -1,176 +1,14 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Gestão da Equipe | Hara Spa</title>
-
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-<style>
-/* TODO SEU CSS ORIGINAL — NÃO ALTEREI NADA */
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-}
-
-th,td{
-  padding:14px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
-}
-
-th{background:#f9fafb;font-weight:600;}
-
-button{
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
-}
-
-button.excluir{background:#dc2626}
-
-.top-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:12px;
-  margin-bottom:16px;
-}
-
-.top-actions input{
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-}
-
-.modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.4);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
-}
-
-.modal-content{
-  background:#fff;
-  width:1000px;
-  max-height:90vh;
-  overflow:auto;
-  border-radius:18px;
-  padding:28px;
-}
-
-.section{margin-bottom:28px}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-}
-
-.field label{
-  font-size:13px;
-  font-weight:600;
-  margin-bottom:6px;
-  color:#374151;
-}
-
-input,select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:14px;
-}
-
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:20px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="app">
-<aside id="sidebar"></aside>
-
-<main class="content">
-
-<h1>Gestão da Equipe</h1>
-
-<div class="top-actions">
-
-<input 
-type="text"
-id="pesquisaNome"
-placeholder="Pesquisar profissional..."
-onkeyup="filtrarTabela()"
->
-
-<select id="filtroStatus">
-<option value="">Todos</option>
-<option value="Ativo">Ativo</option>
-<option value="Inativo">Inativo</option>
-</select>
-
-<button onclick="abrirNovo()">+ Novo Cadastro</button>
-
-</div>
-
-<table>
-<thead>
-<tr>
-<th>Nome Profissional</th>
-<th>Cargo</th>
-<th>CPF</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
-
-</main>
-</div>
-
-<div class="modal" id="modal">
-<div class="modal-content">
-
-<!-- 🔥 SEU FORM COMPLETO CONTINUA IGUAL AQUI (NÃO ALTEREI NADA) -->
-
-</div>
-</div>
-
-<!-- 🔥 ADICIONADO -->
+<!-- 🔥 ADICIONA ISSO AQUI (antes do sidebar.js) -->
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
+
+// ❌ REMOVE ISSO
+// const supabaseClient = supabase.createClient(...)
+
+// ✅ USA O CLIENT GLOBAL
+const supabaseClient = client;
 
 let cpfAtual=null;
 
@@ -208,7 +46,7 @@ async function carregar(){
 
 const statusFiltro = document.getElementById("filtroStatus").value;
 
-let query = client
+let query = supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional,status,cargo")
 .order("nome_profissional");
@@ -268,7 +106,7 @@ async function editar(cpf){
 
 cpfAtual=cpf;
 
-const {data,error}=await client
+const {data,error}=await supabaseClient
 .from("terapeutas")
 .select("*")
 .eq("cpf",cpf)
@@ -299,14 +137,14 @@ if(cpfAtual){
 
 delete payload.cpf;
 
-({error}=await client
+({error}=await supabaseClient
 .from("terapeutas")
 .update(payload)
 .eq("cpf",cpfAtual));
 
 }else{
 
-({error}=await client
+({error}=await supabaseClient
 .from("terapeutas")
 .insert(payload));
 
@@ -325,7 +163,7 @@ carregar();
 async function excluir(cpf){
 if(!confirm("Excluir registro?"))return;
 
-await client
+await supabaseClient
 .from("terapeutas")
 .delete()
 .eq("cpf",cpf);
@@ -342,6 +180,3 @@ document.getElementById("filtroStatus").addEventListener("change", carregar);
 carregar();
 
 </script>
-
-</body>
-</html>

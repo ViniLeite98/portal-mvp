@@ -9,6 +9,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<!-- SELECT2 -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -17,31 +18,68 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 body{margin:0;font-family:Segoe UI;background:#f4f6fb}
 .app{display:flex}
 .content{flex:1;padding:40px}
+
 .form-box{
-background:#fff;padding:20px;border-radius:10px;
-display:flex;gap:15px;flex-wrap:wrap;margin-bottom:20px;
-align-items:flex-end;box-shadow:0 2px 8px rgba(0,0,0,0.05);
+background:#fff;
+padding:20px;
+border-radius:10px;
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+margin-bottom:20px;
+align-items:flex-end;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
+
 .field{display:flex;flex-direction:column;font-size:13px;}
+
 input,select{
-padding:8px;border-radius:6px;border:1px solid #ccc;min-width:160px;
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
+min-width:160px;
 }
+
 button{
-background:#2563eb;color:#fff;border:none;padding:10px 15px;border-radius:6px;cursor:pointer;
+background:#2563eb;
+color:#fff;
+border:none;
+padding:10px 15px;
+border-radius:6px;
+cursor:pointer;
 }
+
 button.editar{background:#f59e0b}
 button.excluir{background:#dc2626}
+
 table{
-width:100%;background:#fff;border-collapse:collapse;border-radius:10px;
-overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);
+width:100%;
+background:#fff;
+border-collapse:collapse;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
-th,td{padding:10px;border-bottom:1px solid #eee;}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
+}
+
 .modal{
-display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);
-align-items:center;justify-content:center;
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.4);
+align-items:center;
+justify-content:center;
 }
+
 .modal-box{
-background:#fff;padding:20px;border-radius:10px;width:350px;
+background:#fff;
+padding:20px;
+border-radius:10px;
+width:350px;
 }
 </style>
 </head>
@@ -56,6 +94,7 @@ background:#fff;padding:20px;border-radius:10px;width:350px;
 <h1>Fluxo de Caixa</h1>
 
 <div class="form-box">
+
 <div class="field">
 <label>Data</label>
 <input type="date" id="data">
@@ -100,9 +139,11 @@ background:#fff;padding:20px;border-radius:10px;width:350px;
 </div>
 
 <button onclick="salvar()">Adicionar</button>
+
 </div>
 
 <div class="form-box">
+
 <div class="field">
 <label>Data Inicial</label>
 <input type="date" id="filtroInicio">
@@ -126,6 +167,7 @@ background:#fff;padding:20px;border-radius:10px;width:350px;
 <button onclick="filtrar()">Filtrar</button>
 <button onclick="limparFiltro()">Limpar</button>
 <button onclick="exportarExcel()">Exportar Excel</button>
+
 </div>
 
 <table>
@@ -186,17 +228,19 @@ background:#fff;padding:20px;border-radius:10px;width:350px;
 </div>
 </div>
 
-<!-- 🔥 AQUI A TROCA -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
+<!-- SELECT2 -->
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 
-// 👇 NÃO TEM MAIS createClient AQUI
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+)
 
 function nomeCliente(c){
   if(!c) return ""
@@ -242,7 +286,7 @@ return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
 
 async function carregarSelects(){
 
-const {data:clientes}=await client.from("clientes").select("*")
+const {data:clientes}=await supabaseClient.from("clientes").select("*")
 dadosClientes=clientes||[]
 
 cliente.innerHTML="<option value=''>Selecione</option>"
@@ -253,7 +297,7 @@ cliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 filtroCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 })
 
-const {data:servicos}=await client.from("servicos").select("*")
+const {data:servicos}=await supabaseClient.from("servicos").select("*")
 dadosServicos=servicos||[]
 
 servico.innerHTML="<option value=''>Selecione</option>"
@@ -265,11 +309,26 @@ servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 filtroServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 })
 
+servico.addEventListener("change",()=>{
+const s=servicosMap[servico.value]
+if(s){
+valor.value=s.valor||50
+calcular()
+}
+})
+
+setTimeout(() => {
+  $('#cliente').select2({placeholder:"Buscar cliente...", width:'180px'})
+  $('#servico').select2({placeholder:"Buscar serviço...", width:'200px'})
+  $('#filtroCliente').select2({placeholder:"Todos", width:'180px'})
+  $('#filtroServico').select2({placeholder:"Todos", width:'200px'})
+},200)
+
 }
 
 async function carregarLista(){
 
-const {data}=await client
+const {data}=await supabaseClient
 .from("fluxo_caixa")
 .select(`*,clientes(*),servicos(*)`)
 .order("data",{ascending:false})
@@ -305,8 +364,19 @@ tbody.innerHTML+=`
 }
 
 function abrirEditar(id){
+
 editandoId=id
 const r=dados.find(d=>d.id==id)
+
+editCliente.innerHTML="<option value=''>Selecione</option>"
+dadosClientes.forEach(c=>{
+editCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
+})
+
+editServico.innerHTML="<option value=''>Selecione</option>"
+dadosServicos.forEach(s=>{
+editServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
+})
 
 editData.value=r.data
 editCliente.value=r.cliente_id
@@ -315,15 +385,16 @@ editValor.value=r.valor
 editDesconto.value=r.desconto
 editOrigem.value=r.origem_lead || ""
 
-modalEditar.style.display="flex"
+document.getElementById("modalEditar").style.display="flex"
 }
 
 function fecharModal(){
-modalEditar.style.display="none"
+document.getElementById("modalEditar").style.display="none"
 }
 
 async function salvar(){
-await client.from("fluxo_caixa").insert({
+
+await supabaseClient.from("fluxo_caixa").insert({
 data:data.value,
 cliente_id:cliente.value,
 servico_id:servico.value,
@@ -332,11 +403,13 @@ desconto:parseFloat(desconto.value||0),
 valor_final:parseFloat(valor.value||0)-parseFloat(desconto.value||0),
 origem_lead: origem.value || null
 })
+
 carregarLista()
 }
 
 async function salvarEdicao(){
-await client.from("fluxo_caixa").update({
+
+await supabaseClient.from("fluxo_caixa").update({
 data:editData.value,
 cliente_id:editCliente.value,
 servico_id:editServico.value,
@@ -352,7 +425,7 @@ carregarLista()
 
 async function excluir(id){
 if(!confirm("Excluir?")) return
-await client.from("fluxo_caixa").delete().eq("id",id)
+await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
 carregarLista()
 }
 
@@ -376,6 +449,7 @@ render(dados)
 }
 
 function exportarExcel(){
+
 if(!listaAtual.length){
 alert("Nada para exportar")
 return

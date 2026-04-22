@@ -1,79 +1,150 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-<meta charset="UTF-8">
-<title>Despesas | Hara Spa</title>
-
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
-<style>
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
-}
-
-.app{
-  display:flex;
-  min-height:100vh;
-}
-
-#sidebar{
-  width:260px;
-  flex-shrink:0;
-}
-
-.content{
-  flex:1;
-  padding:30px;
-  font-size:14px;
-}
-
-.card{
-  background:#fff;
-  border-radius:18px;
-  padding:40px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
-  margin-top:20px;
-  text-align:center;
-}
-
-h1{
-  margin-bottom:20px;
-}
-</style>
+  <meta charset="UTF-8">
+  <title>Documentos</title>
+  <style>
+    body { font-family: Arial; background:#f5f5f5; margin:0; }
+    .container { padding:20px; }
+    .header { display:flex; justify-content:space-between; align-items:center; }
+    .btn { background:#007bff; color:#fff; border:none; padding:10px 15px; cursor:pointer; border-radius:6px; }
+    .btn:hover { background:#0056b3; }
+    .card { background:#fff; padding:15px; border-radius:10px; margin-top:15px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+    .doc-item { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee; }
+    .doc-item:last-child { border-bottom:none; }
+    .actions button { margin-left:5px; }
+    input, select { padding:8px; margin-right:10px; }
+    .tag { font-size:12px; background:#eee; padding:3px 8px; border-radius:5px; margin-top:5px; display:inline-block; }
+  </style>
 </head>
-
 <body>
 
-<div class="app">
+<div class="container">
 
-  <!-- SIDEBAR (igual Escalas) -->
-  <aside id="sidebar"></aside>
+  <div class="header">
+    <h2>📄 Documentos do Cliente</h2>
+    <button class="btn" onclick="abrirUpload()">+ Novo Documento</button>
+  </div>
 
-  <!-- CONTEÚDO -->
-  <main class="content">
+  <div class="card">
+    <input type="text" id="search" placeholder="Buscar documento..." onkeyup="filtrar()">
+  </div>
 
-    <h1>Despesas</h1>
-
-    <div class="card">
-      <h2>🚧 Página em construção</h2>
-      <p>O módulo financeiro está sendo desenvolvido.</p>
-    </div>
-
-  </main>
+  <div id="lista" class="card"></div>
 
 </div>
 
-<!-- Sidebar JS (igual Escalas) -->
-<script src="assets/sidebar/sidebar.js"></script>
+<!-- Modal -->
+<div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+  <div style="background:#fff; padding:20px; margin:100px auto; width:320px; border-radius:10px;">
+    <h3>Novo Documento</h3>
+
+    <input type="text" id="nomeDoc" placeholder="Nome do documento"><br><br>
+
+    <select id="tipoDoc">
+      <option value="">Tipo do documento</option>
+      <option value="RG">RG</option>
+      <option value="CPF">CPF</option>
+      <option value="Comprovante de Residência">Comprovante de Residência</option>
+      <option value="Contrato">Contrato</option>
+      <option value="Outro">Outro</option>
+    </select><br><br>
+
+    <input type="file" id="arquivo"><br><br>
+
+    <button class="btn" onclick="salvarDoc()">Salvar</button>
+    <button onclick="fecharModal()">Cancelar</button>
+  </div>
+</div>
+
+<script>
+let documentos = [];
+
+function abrirUpload(){
+  document.getElementById('modal').style.display = 'block';
+}
+
+function fecharModal(){
+  document.getElementById('modal').style.display = 'none';
+}
+
+function salvarDoc(){
+  const nome = document.getElementById('nomeDoc').value;
+  const tipo = document.getElementById('tipoDoc').value;
+  const arquivo = document.getElementById('arquivo').files[0];
+
+  if(!nome || !tipo || !arquivo){
+    alert('Preencha todos os campos');
+    return;
+  }
+
+  const novo = {
+    id: Date.now(),
+    nome: nome,
+    tipo: tipo,
+    arquivo: arquivo.name
+  };
+
+  documentos.push(novo);
+  fecharModal();
+  limparCampos();
+  render();
+}
+
+function limparCampos(){
+  document.getElementById('nomeDoc').value = '';
+  document.getElementById('tipoDoc').value = '';
+  document.getElementById('arquivo').value = '';
+}
+
+function deletar(id){
+  documentos = documentos.filter(d => d.id !== id);
+  render();
+}
+
+function render(){
+  const lista = document.getElementById('lista');
+  lista.innerHTML = '';
+
+  documentos.forEach(doc => {
+    lista.innerHTML += `
+      <div class="doc-item">
+        <div>
+          <strong>${doc.nome}</strong><br>
+          <small>${doc.arquivo}</small><br>
+          <span class="tag">${doc.tipo}</span>
+        </div>
+        <div class="actions">
+          <button onclick="deletar(${doc.id})">🗑️</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function filtrar(){
+  const termo = document.getElementById('search').value.toLowerCase();
+  const filtrados = documentos.filter(d =>
+    d.nome.toLowerCase().includes(termo) ||
+    d.tipo.toLowerCase().includes(termo)
+  );
+
+  const lista = document.getElementById('lista');
+  lista.innerHTML = '';
+
+  filtrados.forEach(doc => {
+    lista.innerHTML += `
+      <div class="doc-item">
+        <div>
+          <strong>${doc.nome}</strong><br>
+          <small>${doc.arquivo}</small><br>
+          <span class="tag">${doc.tipo}</span>
+        </div>
+      </div>
+    `;
+  });
+}
+</script>
 
 </body>
 </html>

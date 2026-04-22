@@ -12,17 +12,22 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;}
 .content{flex:1;padding:40px;}
 
 table{
 width:100%;
 background:#fff;
-border-radius:12px;
+border-radius:14px;
 border-collapse:collapse;
+overflow:hidden;
 }
 
-th,td{padding:12px;border-bottom:1px solid #eee;}
+th,td{
+padding:14px;
+border-bottom:1px solid #eee;
+}
 
 button{
 background:#1f2937;
@@ -34,6 +39,13 @@ cursor:pointer;
 }
 
 button.excluir{background:#dc2626}
+
+.top-actions{
+display:flex;
+gap:10px;
+justify-content:flex-end;
+margin-bottom:20px;
+}
 
 .modal{
 position:fixed;
@@ -49,14 +61,14 @@ background:#fff;
 width:1000px;
 max-height:90vh;
 overflow:auto;
-padding:20px;
-border-radius:12px;
+border-radius:16px;
+padding:25px;
 }
 
 .grid{
 display:grid;
 grid-template-columns:repeat(3,1fr);
-gap:12px;
+gap:15px;
 }
 
 .field{
@@ -72,16 +84,21 @@ margin-bottom:4px;
 
 input,select{
 padding:10px;
-border-radius:6px;
+border-radius:8px;
 border:1px solid #ccc;
+}
+
+.section{margin-bottom:25px}
+
+.modal-actions{
+display:flex;
+justify-content:flex-end;
+gap:10px;
 }
 
 .input-error{
 border:2px solid #dc2626 !important;
 }
-
-.section{margin-bottom:20px}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px}
 </style>
 </head>
 
@@ -92,9 +109,19 @@ border:2px solid #dc2626 !important;
 
 <main class="content">
 
-<h1>Equipe</h1>
+<h1>Gestão da Equipe</h1>
+
+<div class="top-actions">
+<input id="pesquisaNome" placeholder="Buscar..." onkeyup="filtrarTabela()">
+
+<select id="filtroStatus">
+<option value="">Todos</option>
+<option>Ativo</option>
+<option>Inativo</option>
+</select>
 
 <button onclick="abrirNovo()">+ Novo</button>
+</div>
 
 <table>
 <thead>
@@ -102,6 +129,7 @@ border:2px solid #dc2626 !important;
 <th>Nome</th>
 <th>Cargo</th>
 <th>CPF</th>
+<th>Status</th>
 <th>Ações</th>
 </tr>
 </thead>
@@ -111,25 +139,106 @@ border:2px solid #dc2626 !important;
 </main>
 </div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
 <div class="section">
-<h3>Dados</h3>
+<h3>Dados Pessoais</h3>
 <div class="grid">
 
 <div class="field"><label>Nome Completo</label><input id="nome_completo"></div>
 <div class="field"><label>Nome Profissional</label><input id="nome_profissional"></div>
 <div class="field"><label>CPF</label><input id="cpf"></div>
 
+<div class="field"><label>RG</label><input id="rg"></div>
+<div class="field"><label>Nascimento</label><input type="date" id="nascimento"></div>
 <div class="field"><label>Email</label><input id="email"></div>
+
+<div class="field"><label>Tipo Sanguíneo</label><input id="tipo_sanguineo"></div>
 <div class="field"><label>Telefone</label><input id="telefone"></div>
+<div class="field"><label>Telefone Emergência</label><input id="telefone_emer"></div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Endereço</h3>
+<div class="grid">
+
+<div class="field"><label>CEP</label><input id="cep"></div>
+<div class="field"><label>Rua</label><input id="rua"></div>
+<div class="field"><label>Número</label><input id="numero"></div>
+
+<div class="field"><label>Complemento</label><input id="complemento"></div>
+<div class="field"><label>Bairro</label><input id="bairro"></div>
+<div class="field"><label>Cidade</label><input id="cidade"></div>
+
+<div class="field"><label>UF</label><input id="uf"></div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Pagamento</h3>
+<div class="grid">
+
+<div class="field">
+<label>Tipo PIX</label>
+<select id="pix_tipo">
+<option value="">Selecione</option>
+<option>CPF</option>
+<option>Email</option>
+<option>Telefone</option>
+</select>
+</div>
+
+<div class="field">
+<label>Chave PIX</label>
+<input id="pix_chave">
+</div>
+
+</div>
+</div>
+
+<div class="section">
+<h3>Profissional</h3>
+<div class="grid">
+
 <div class="field"><label>Cargo</label><input id="cargo"></div>
 
-<div class="field"><label>Status</label>
+<div class="field">
+<label>Status</label>
 <select id="status">
 <option>Ativo</option>
 <option>Inativo</option>
+</select>
+</div>
+
+<div class="field"><label>Data Início</label><input type="date" id="data_inicio"></div>
+
+<div class="field"><label>Entrada</label><input type="time" id="hora_entrada"></div>
+<div class="field"><label>Saída</label><input type="time" id="hora_saida"></div>
+
+<div class="field">
+<label>Tem Folga</label>
+<select id="tem_folga">
+<option value="">Não</option>
+<option>Sim</option>
+</select>
+</div>
+
+<div class="field">
+<label>Dia da Folga</label>
+<select id="dia_folga">
+<option value="">Selecione</option>
+<option>Segunda</option>
+<option>Terça</option>
+<option>Quarta</option>
+<option>Quinta</option>
+<option>Sexta</option>
+<option>Sábado</option>
+<option>Domingo</option>
 </select>
 </div>
 
@@ -146,10 +255,19 @@ border:2px solid #dc2626 !important;
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
 let cpfAtual=null
+
+const campos=[
+"nome_completo","nome_profissional","cpf","rg","nascimento","email",
+"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
+"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
+"cargo","tem_folga","dia_folga",
+"hora_entrada","hora_saida","data_inicio","status"
+]
 
 // ================= VALIDAÇÕES =================
 
@@ -159,7 +277,6 @@ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
 function validarCPF(cpf){
 cpf=cpf.replace(/\D/g,'')
-
 if(cpf.length!==11 || /^(\d)\1+$/.test(cpf)) return false
 
 let soma=0,resto
@@ -185,27 +302,38 @@ function validarFormulario(){
 
 let valido=true
 
-document.querySelectorAll(".input-error")
-.forEach(e=>e.classList.remove("input-error"))
+document.querySelectorAll("input, select").forEach(el=>{
+el.classList.remove("input-error")
+})
 
-const nome=document.getElementById("nome_completo")
-const nomeProf=document.getElementById("nome_profissional")
-const cpf=document.getElementById("cpf")
+const obrigatorios=[
+"nome_completo",
+"nome_profissional",
+"cpf",
+"email"
+]
+
+obrigatorios.forEach(id=>{
+const el=document.getElementById(id)
+if(!el.value.trim()){
+el.classList.add("input-error")
+if(valido) el.focus()
+valido=false
+}
+})
+
 const email=document.getElementById("email")
-
-if(!nome.value){nome.classList.add("input-error");valido=false}
-if(!nomeProf.value){nomeProf.classList.add("input-error");valido=false}
-if(!cpf.value){cpf.classList.add("input-error");valido=false}
-if(!email.value){email.classList.add("input-error");valido=false}
-
 if(email.value && !validarEmail(email.value)){
 email.classList.add("input-error")
+email.focus()
 alert("Email inválido")
 return false
 }
 
+const cpf=document.getElementById("cpf")
 if(cpf.value && !validarCPF(cpf.value)){
 cpf.classList.add("input-error")
+cpf.focus()
 alert("CPF inválido")
 return false
 }
@@ -221,15 +349,19 @@ return true
 // ================= CRUD =================
 
 function getPayload(){
-return {
-nome_completo:nome_completo.value,
-nome_profissional:nome_profissional.value,
-cpf:cpf.value,
-email:email.value,
-telefone:telefone.value,
-cargo:cargo.value,
-status:status.value
+let obj={}
+campos.forEach(c=>{
+let el=document.getElementById(c)
+if(el && el.value!=="") obj[c]=el.value
+})
+return obj
 }
+
+function setForm(data){
+campos.forEach(c=>{
+let el=document.getElementById(c)
+if(el) el.value=data[c]||""
+})
 }
 
 async function carregar(){
@@ -239,38 +371,34 @@ let html=""
 data.forEach(t=>{
 html+=`
 <tr>
-<td>${t.nome_profissional}</td>
+<td>${t.nome_profissional||""}</td>
 <td>${t.cargo||""}</td>
-<td>${t.cpf}</td>
+<td>${t.cpf||""}</td>
+<td>${t.status||""}</td>
 <td>
 <button onclick="editar('${t.cpf}')">Editar</button>
-<button onclick="excluir('${t.cpf}')">Excluir</button>
+<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
 </tr>`
 })
 
-lista.innerHTML=html
+document.getElementById("lista").innerHTML=html
 }
 
 function abrirNovo(){
 cpfAtual=null
-document.querySelectorAll("input").forEach(i=>i.value="")
-modal.style.display="flex"
+campos.forEach(c=>{
+let el=document.getElementById(c)
+if(el) el.value=""
+})
+document.getElementById("modal").style.display="flex"
 }
 
 async function editar(cpf){
 cpfAtual=cpf
 const {data}=await client.from("terapeutas").select("*").eq("cpf",cpf).single()
-
-nome_completo.value=data.nome_completo
-nome_profissional.value=data.nome_profissional
-cpf.value=data.cpf
-email.value=data.email
-telefone.value=data.telefone
-cargo.value=data.cargo
-status.value=data.status
-
-modal.style.display="flex"
+setForm(data)
+document.getElementById("modal").style.display="flex"
 }
 
 async function salvar(){
@@ -297,8 +425,17 @@ carregar()
 }
 
 function fecharModal(){
-modal.style.display="none"
+document.getElementById("modal").style.display="none"
 }
+
+function filtrarTabela(){
+let filtro=document.getElementById("pesquisaNome").value.toLowerCase()
+document.querySelectorAll("#lista tr").forEach(tr=>{
+tr.style.display = tr.innerText.toLowerCase().includes(filtro) ? "" : "none"
+})
+}
+
+document.getElementById("filtroStatus").addEventListener("change",carregar)
 
 carregar()
 

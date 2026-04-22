@@ -4,11 +4,14 @@
 <meta charset="UTF-8">
 <title>Fluxo de Caixa | Hara Spa</title>
 
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<!-- SELECT2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -17,27 +20,67 @@ body{margin:0;font-family:Segoe UI;background:#f4f6fb}
 .content{flex:1;padding:40px}
 
 .form-box{
-background:#fff;padding:20px;border-radius:10px;
-display:flex;gap:15px;flex-wrap:wrap;margin-bottom:20px;
+background:#fff;
+padding:20px;
+border-radius:10px;
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+margin-bottom:20px;
+align-items:flex-end;
 box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
 .field{display:flex;flex-direction:column;font-size:13px;}
 
 input,select{
-padding:8px;border-radius:6px;border:1px solid #ccc;min-width:160px;
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
+min-width:160px;
 }
 
 button{
-background:#2563eb;color:#fff;border:none;padding:10px 15px;border-radius:6px;cursor:pointer;
+background:#2563eb;
+color:#fff;
+border:none;
+padding:10px 15px;
+border-radius:6px;
+cursor:pointer;
 }
+
+button.editar{background:#f59e0b}
+button.excluir{background:#dc2626}
 
 table{
-width:100%;background:#fff;border-collapse:collapse;border-radius:10px;
-overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);
+width:100%;
+background:#fff;
+border-collapse:collapse;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
 }
 
-th,td{padding:10px;border-bottom:1px solid #eee;}
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
+}
+
+.modal{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,0.4);
+align-items:center;
+justify-content:center;
+}
+
+.modal-box{
+background:#fff;
+padding:20px;
+border-radius:10px;
+width:350px;
+}
 </style>
 </head>
 
@@ -52,16 +95,78 @@ th,td{padding:10px;border-bottom:1px solid #eee;}
 
 <div class="form-box">
 
+<div class="field">
+<label>Data</label>
 <input type="date" id="data">
+</div>
 
+<div class="field">
+<label>Cliente</label>
 <select id="cliente"></select>
-<select id="servico"></select>
+</div>
 
-<input type="number" id="valor" placeholder="Valor">
-<input type="number" id="desconto" placeholder="Desconto">
-<input type="number" id="final" disabled placeholder="Final">
+<div class="field">
+<label>Serviço</label>
+<select id="servico"></select>
+</div>
+
+<div class="field">
+<label>Origem</label>
+<select id="origem">
+<option value="">Selecione</option>
+<option>Instagram</option>
+<option>Google</option>
+<option>Indicação</option>
+<option>Cliente antigo</option>
+<option>WhatsApp</option>
+<option>Outro</option>
+</select>
+</div>
+
+<div class="field">
+<label>Valor</label>
+<input type="number" id="valor" value="50">
+</div>
+
+<div class="field">
+<label>Desconto</label>
+<input type="number" id="desconto" value="0">
+</div>
+
+<div class="field">
+<label>Final</label>
+<input type="number" id="final" disabled>
+</div>
 
 <button onclick="salvar()">Adicionar</button>
+
+</div>
+
+<div class="form-box">
+
+<div class="field">
+<label>Data Inicial</label>
+<input type="date" id="filtroInicio">
+</div>
+
+<div class="field">
+<label>Data Final</label>
+<input type="date" id="filtroFim">
+</div>
+
+<div class="field">
+<label>Cliente</label>
+<select id="filtroCliente"></select>
+</div>
+
+<div class="field">
+<label>Serviço</label>
+<select id="filtroServico"></select>
+</div>
+
+<button onclick="filtrar()">Filtrar</button>
+<button onclick="limparFiltro()">Limpar</button>
+<button onclick="exportarExcel()">Exportar Excel</button>
 
 </div>
 
@@ -70,8 +175,10 @@ th,td{padding:10px;border-bottom:1px solid #eee;}
 <tr>
 <th>Data</th>
 <th>Cliente</th>
+<th>Origem</th>
 <th>Serviço</th>
 <th>Valor</th>
+<th>Desconto</th>
 <th>Final</th>
 <th>Ações</th>
 </tr>
@@ -82,67 +189,145 @@ th,td{padding:10px;border-bottom:1px solid #eee;}
 </main>
 </div>
 
+<div id="modalEditar" class="modal">
+<div class="modal-box">
+
+<h3>Editar</h3>
+
+<label>Data</label>
+<input type="date" id="editData">
+
+<label>Cliente</label>
+<select id="editCliente"></select>
+
+<label>Serviço</label>
+<select id="editServico"></select>
+
+<label>Origem</label>
+<select id="editOrigem">
+<option value="">Selecione</option>
+<option>Instagram</option>
+<option>Google</option>
+<option>Indicação</option>
+<option>Cliente antigo</option>
+<option>WhatsApp</option>
+<option>Outro</option>
+</select>
+
+<label>Valor</label>
+<input type="number" id="editValor">
+
+<label>Desconto</label>
+<input type="number" id="editDesconto">
+
+<br><br>
+
+<button onclick="salvarEdicao()">Salvar</button>
+<button class="excluir" onclick="fecharModal()">Cancelar</button>
+
+</div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+
+<!-- SELECT2 -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 
-// 🔥 COLE SUA ANON KEY AQUI
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"SUA_ANON_KEY_AQUI"
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
-let dados=[],servicosMap={}
-
 function nomeCliente(c){
-let tel=(c.telefone_1||"").replace(/\D/g,"")
-return `${c.nome} ${tel.slice(-4)}`
+  if(!c) return ""
+  const nome = c.nome || c.nome_cliente || ""
+  let telefone = (c.telefone_1 || "").replace(/\D/g,"")
+  const final = telefone.length >= 4 ? telefone.slice(-4) : ""
+  return final ? `${nome} ${final}` : nome
 }
 
 function nomeServico(s){
 if(!s) return ""
-if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} min`
+if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} minutos`
+if(s.subgrupo) return `${s.grupo} ${s.subgrupo}`
+if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
 return s.grupo
 }
 
-valor.oninput=calc
-desconto.oninput=calc
+let dados=[]
+let listaAtual=[]
+let dadosClientes=[]
+let dadosServicos=[]
+let servicosMap={}
+let editandoId=null
 
-function calc(){
-final.value=(valor.value||0)-(desconto.value||0)
+function hoje(){
+const d=new Date()
+const offset=d.getTimezoneOffset()
+return new Date(d.getTime()-offset*60000).toISOString().split("T")[0]
+}
+
+data.value=hoje()
+
+valor.oninput=calcular
+desconto.oninput=calcular
+
+function calcular(){
+final.value=(parseFloat(valor.value||0)-parseFloat(desconto.value||0))
+}
+
+function formatar(v){
+return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
 }
 
 async function carregarSelects(){
 
 const {data:clientes}=await supabaseClient.from("clientes").select("*")
-cliente.innerHTML="<option></option>"
+dadosClientes=clientes||[]
 
-clientes.forEach(c=>{
+cliente.innerHTML="<option value=''>Selecione</option>"
+filtroCliente.innerHTML="<option value=''>Todos</option>"
+
+dadosClientes.forEach(c=>{
 cliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
+filtroCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
 })
 
 const {data:servicos}=await supabaseClient.from("servicos").select("*")
-servico.innerHTML="<option></option>"
+dadosServicos=servicos||[]
 
-servicos.forEach(s=>{
+servico.innerHTML="<option value=''>Selecione</option>"
+filtroServico.innerHTML="<option value=''>Todos</option>"
+
+dadosServicos.forEach(s=>{
 servicosMap[s.id]=s
 servico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
+filtroServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 })
 
-$('#cliente').select2()
-$('#servico').select2()
-
-$('#servico').on('select2:select', function (e) {
-const s=servicosMap[e.params.data.id]
+servico.addEventListener("change",()=>{
+const s=servicosMap[servico.value]
 if(s){
-valor.value=s.valor||0
-calc()
+valor.value=s.valor||50
+calcular()
 }
 })
+
+setTimeout(() => {
+  $('#cliente').select2({placeholder:"Buscar cliente...", width:'180px'})
+  $('#servico').select2({placeholder:"Buscar serviço...", width:'200px'})
+  $('#filtroCliente').select2({placeholder:"Todos", width:'180px'})
+  $('#filtroServico').select2({placeholder:"Todos", width:'200px'})
+},200)
 
 }
 
 async function carregarLista(){
+
 const {data}=await supabaseClient
 .from("fluxo_caixa")
 .select(`*,clientes(*),servicos(*)`)
@@ -153,6 +338,9 @@ render(dados)
 }
 
 function render(lista){
+
+listaAtual=lista
+
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
@@ -161,51 +349,132 @@ tbody.innerHTML+=`
 <tr>
 <td>${r.data}</td>
 <td>${nomeCliente(r.clientes)}</td>
+<td>${r.origem_lead || "-"}</td>
 <td>${nomeServico(r.servicos)}</td>
-<td>${r.valor}</td>
-<td>${r.valor_final}</td>
+<td>${formatar(r.valor)}</td>
+<td>${formatar(r.desconto)}</td>
+<td><strong>${formatar(r.valor_final)}</strong></td>
 <td>
-<button onclick="excluir('${r.id}')">Excluir</button>
+<button class="editar" onclick="abrirEditar('${r.id}')">Editar</button>
+<button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
 </td>
-</tr>`
+</tr>
+`
 })
+}
+
+function abrirEditar(id){
+
+editandoId=id
+const r=dados.find(d=>d.id==id)
+
+editCliente.innerHTML="<option value=''>Selecione</option>"
+dadosClientes.forEach(c=>{
+editCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
+})
+
+editServico.innerHTML="<option value=''>Selecione</option>"
+dadosServicos.forEach(s=>{
+editServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
+})
+
+editData.value=r.data
+editCliente.value=r.cliente_id
+editServico.value=r.servico_id
+editValor.value=r.valor
+editDesconto.value=r.desconto
+editOrigem.value=r.origem_lead || ""
+
+document.getElementById("modalEditar").style.display="flex"
+}
+
+function fecharModal(){
+document.getElementById("modalEditar").style.display="none"
 }
 
 async function salvar(){
 
-if(!data.value || !cliente.value || !servico.value){
-alert("Preencha os campos")
-return
-}
-
-const payload={
+await supabaseClient.from("fluxo_caixa").insert({
 data:data.value,
-cliente_id:Number(cliente.value),
-servico_id:Number(servico.value),
-valor:Number(valor.value||0),
-desconto:Number(desconto.value||0),
-valor_final:Number(valor.value||0)-Number(desconto.value||0)
+cliente_id:cliente.value,
+servico_id:servico.value,
+valor:parseFloat(valor.value||0),
+desconto:parseFloat(desconto.value||0),
+valor_final:parseFloat(valor.value||0)-parseFloat(desconto.value||0),
+origem_lead: origem.value || null
+})
+
+carregarLista()
 }
 
-const {error}=await supabaseClient
-.from("fluxo_caixa")
-.insert(payload)
+async function salvarEdicao(){
 
-if(error){
-alert(error.message)
-return
-}
+await supabaseClient.from("fluxo_caixa").update({
+data:editData.value,
+cliente_id:editCliente.value,
+servico_id:editServico.value,
+valor:parseFloat(editValor.value||0),
+desconto:parseFloat(editDesconto.value||0),
+valor_final:parseFloat(editValor.value||0)-parseFloat(editDesconto.value||0),
+origem_lead: editOrigem.value || null
+}).eq("id",editandoId)
 
+fecharModal()
 carregarLista()
 }
 
 async function excluir(id){
+if(!confirm("Excluir?")) return
 await supabaseClient.from("fluxo_caixa").delete().eq("id",id)
 carregarLista()
 }
 
+function filtrar(){
+let lista=[...dados]
+
+if(filtroInicio.value) lista=lista.filter(d=>d.data>=filtroInicio.value)
+if(filtroFim.value) lista=lista.filter(d=>d.data<=filtroFim.value)
+if(filtroCliente.value) lista=lista.filter(d=>d.cliente_id==filtroCliente.value)
+if(filtroServico.value) lista=lista.filter(d=>d.servico_id==filtroServico.value)
+
+render(lista)
+}
+
+function limparFiltro(){
+filtroInicio.value=""
+filtroFim.value=""
+filtroCliente.value=""
+filtroServico.value=""
+render(dados)
+}
+
+function exportarExcel(){
+
+if(!listaAtual.length){
+alert("Nada para exportar")
+return
+}
+
+const exportData=listaAtual.map(r=>({
+Data:r.data,
+Cliente:nomeCliente(r.clientes),
+Origem:r.origem_lead,
+Servico:nomeServico(r.servicos),
+Valor:r.valor,
+Desconto:r.desconto,
+Final:r.valor_final
+}))
+
+const ws=XLSX.utils.json_to_sheet(exportData)
+const wb=XLSX.utils.book_new()
+
+XLSX.utils.book_append_sheet(wb,ws,"Fluxo de Caixa")
+XLSX.writeFile(wb,"fluxo_caixa.xlsx")
+}
+
 carregarSelects()
 carregarLista()
+calcular()
 
 </script>
 

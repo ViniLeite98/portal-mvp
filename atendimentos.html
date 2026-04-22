@@ -97,7 +97,8 @@
 <script>
 
 // 🔑 CONFIG SUPABASE
-const supabase = supabase.createClient(
+// ⚠️ EVITA DUPLICAR VARIÁVEL
+const supabaseClient = supabase.createClient(
   "SUA_URL",
   "SUA_ANON_KEY"
 );
@@ -126,7 +127,7 @@ async function salvar(){
   const fileName = Date.now() + '-' + file.name;
 
   // upload storage
-  const { error: uploadError } = await supabase.storage
+  const { error: uploadError } = await supabaseClient.storage
     .from('documentos')
     .upload(fileName, file);
 
@@ -135,12 +136,12 @@ async function salvar(){
     return;
   }
 
-  const url = supabase.storage
+  const url = supabaseClient.storage
     .from('documentos')
     .getPublicUrl(fileName).data.publicUrl;
 
   // salvar banco
-  await supabase.from('documentos').insert([
+  await supabaseClient.from('documentos').insert([
     { nome, tipo, url }
   ]);
 
@@ -150,7 +151,7 @@ async function salvar(){
 
 // 📥 CARREGAR
 async function carregar(){
-  const { data } = await supabase.from('documentos').select('*');
+  const { data } = await supabaseClient.from('documentos').select('*');
   documentos = data || [];
   render();
 }

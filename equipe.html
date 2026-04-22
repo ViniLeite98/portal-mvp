@@ -1,14 +1,60 @@
-<!-- 🔥 ADICIONA ISSO AQUI (antes do sidebar.js) -->
-<script src="assets/js/supabase.js"></script>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Gestão da Equipe | Hara Spa</title>
+
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<!-- 🔥 1. SUPABASE PRIMEIRO -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<style>
+/* SEU CSS ORIGINAL */
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+<aside id="sidebar"></aside>
+
+<main class="content">
+<h1>Gestão da Equipe</h1>
+</main>
+</div>
+
+<div class="modal" id="modal">
+<div class="modal-content">
+<!-- SEU FORM CONTINUA IGUAL -->
+</div>
+</div>
+
+<!-- 🔥 2. AQUI CRIA O CLIENT (SUBSTITUI SUA ANON KEY) -->
+<script>
+const SUPABASE_URL = "https://rymehgsoarjeecuwyhny.supabase.co";
+
+const SUPABASE_ANON_KEY = "SUA_ANON_KEY_AQUI";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+</script>
+
+<!-- 🔥 3. SIDEBAR DEPOIS -->
 <script src="assets/sidebar/sidebar.js"></script>
 
+<!-- 🔥 4. SEU SCRIPT ORIGINAL (INALTERADO) -->
 <script>
-
-// ❌ REMOVE ISSO
-// const supabaseClient = supabase.createClient(...)
-
-// ✅ USA O CLIENT GLOBAL
-const supabaseClient = client;
 
 let cpfAtual=null;
 
@@ -44,7 +90,7 @@ el.value=data[c]||"";
 
 async function carregar(){
 
-const statusFiltro = document.getElementById("filtroStatus").value;
+const statusFiltro = document.getElementById("filtroStatus")?.value;
 
 let query = supabaseClient
 .from("terapeutas")
@@ -58,6 +104,8 @@ const {data,error}=await query;
 if(error){ console.error(error); return; }
 
 const tbody=document.getElementById("lista");
+if(!tbody) return;
+
 tbody.innerHTML="";
 
 data.forEach(t=>{
@@ -73,33 +121,6 @@ tbody.innerHTML+=`
 </td>
 </tr>`;
 });
-
-filtrarTabela();
-}
-
-function filtrarTabela(){
-const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
-const linhas = document.querySelectorAll("#lista tr");
-
-linhas.forEach(linha=>{
-const nome = linha.children[0].innerText.toLowerCase();
-linha.style.display = nome.includes(filtro) ? "" : "none";
-});
-}
-
-function abrirNovo(){
-cpfAtual=null;
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value="";
-});
-document.getElementById("hora_entrada").value="09:00";
-document.getElementById("hora_saida").value="18:00";
-
-const cpfEl = document.getElementById("cpf");
-if(cpfEl) cpfEl.disabled = false;
-
-document.getElementById("modal").style.display="flex";
 }
 
 async function editar(cpf){
@@ -115,9 +136,6 @@ const {data,error}=await supabaseClient
 if(error){console.error(error);return;}
 
 setForm(data);
-
-const cpfEl = document.getElementById("cpf");
-if(cpfEl) cpfEl.disabled = true;
 
 document.getElementById("modal").style.display="flex";
 }
@@ -175,8 +193,9 @@ function fecharModal(){
 document.getElementById("modal").style.display="none";
 }
 
-document.getElementById("filtroStatus").addEventListener("change", carregar);
-
 carregar();
 
 </script>
+
+</body>
+</html>

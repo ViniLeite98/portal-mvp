@@ -2,29 +2,21 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Materiais | Hara Spa</title>
+<title>Estoque | Hara Spa</title>
 
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
-<!-- 🔥 IMPORTANTE: só uma vez -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
 <style>
-body{
-margin:0;
-font-family:'Segoe UI';
-background:#f4f6fb;
-}
-
+body{margin:0;font-family:'Segoe UI';background:#f4f6fb;}
 .app{display:flex}
 .content{flex:1;padding:40px}
 
 .grid{
 display:grid;
-grid-template-columns: 320px 1fr;
+grid-template-columns:320px 1fr;
 gap:30px;
 }
 
@@ -61,13 +53,7 @@ margin-bottom:12px;
 }
 
 .nome{white-space:nowrap;}
-
-.pontos{
-flex:1;
-border-bottom:1px dashed #999;
-margin:0 10px;
-}
-
+.pontos{flex:1;border-bottom:1px dashed #999;margin:0 10px;}
 .valor{white-space:nowrap;}
 
 .acoes{
@@ -101,7 +87,7 @@ width:350px;
 
 <main class="content">
 
-<h1>Materiais</h1>
+<h1>Estoque</h1>
 
 <div class="grid">
 
@@ -122,7 +108,7 @@ width:350px;
 <input id="qtd" type="number">
 
 <button onclick="entrada()">Entrada</button>
-<button class="btn-danger" onclick="saida()">Saida</button>
+<button class="btn-danger" onclick="saida()">Saída</button>
 
 </div>
 
@@ -141,7 +127,7 @@ width:350px;
 </main>
 </div>
 
-<!-- MODAL EDITAR -->
+<!-- MODAL -->
 <div id="modalEditar" class="modal">
 <div class="modal-box">
 
@@ -158,118 +144,127 @@ width:350px;
 </div>
 </div>
 
-<!-- SIDEBAR -->
+<!-- 🔥 PADRÃO GLOBAL -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-<!-- 🔥 UMA ÚNICA INSTÂNCIA -->
-const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-)
-
-let listaOriginal = []
-let produtoEditando = null
+let listaOriginal=[]
+let produtoEditando=null
 
 async function carregar(){
 
-const {data} = await supabaseClient
+const {data,error}=await client
 .from("estoque_atual")
 .select("*")
 .order("nome")
 
-listaOriginal = data || []
+if(error){
+console.error(error)
+return
+}
+
+listaOriginal=data||[]
 renderizarLista(listaOriginal)
 }
 
 function renderizarLista(data){
 
-const lista = document.getElementById("lista")
 lista.innerHTML=""
-
-const sel=document.getElementById("produtoMov")
-sel.innerHTML=""
+produtoMov.innerHTML=""
 
 data.forEach(p=>{
 
-const total = (p.valor || 0) * (p.saldo || 0)
+const total=(p.valor||0)*(p.saldo||0)
 
-const div = document.createElement("div")
-div.className = "lista-linha"
+const div=document.createElement("div")
+div.className="lista-linha"
 
-div.innerHTML = `
+div.innerHTML=`
 <span class="nome">${p.nome}</span>
 <span class="pontos"></span>
 <span class="valor">${p.saldo} | R$ ${total.toFixed(2)}</span>
 
 <div class="acoes">
-<button class="btn-edit">Editar</button>
-<button class="btn-danger">Excluir</button>
+<button onclick="abrirEditar('${p.id}','${p.nome}',${p.valor||0})">Editar</button>
+<button class="btn-danger" onclick="excluirProduto('${p.id}')">Excluir</button>
 </div>
 `
 
-div.querySelector(".btn-edit").onclick = () => abrirEditar(p.id, p.nome, p.valor || 0)
-div.querySelector(".btn-danger").onclick = () => excluirProduto(p.id)
-
 lista.appendChild(div)
 
-sel.innerHTML += `<option value="${p.id}">${p.nome}</option>`
-
+produtoMov.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
 })
 }
 
 function filtrarLista(){
 
-const termo = document.getElementById("buscarMaterial").value.toLowerCase()
+const termo=buscarMaterial.value.toLowerCase()
 
 if(!termo){
 renderizarLista(listaOriginal)
 return
 }
 
-const filtrados = listaOriginal.filter(p =>
-p.nome.toLowerCase().includes(termo)
+renderizarLista(
+listaOriginal.filter(p=>p.nome.toLowerCase().includes(termo))
 )
-
-renderizarLista(filtrados)
 }
 
 async function criarProduto(){
 
-const nome=document.getElementById("nome").value
-const valor=parseFloat(document.getElementById("valor").value)
+const nomeInput=nome.value
+const valorInput=parseFloat(valor.value)
 
-await supabaseClient.from("produtos").insert({nome, valor})
+if(!nomeInput){
+alert("Nome obrigatório")
+return
+}
+
+await client.from("produtos").insert({
+nome:nomeInput,
+valor:valorInput
+})
+
+nome.value=""
+valor.value=""
 
 carregar()
 }
 
 async function entrada(){
 
-const id=document.getElementById("produtoMov").value
-const qtd=parseFloat(document.getElementById("qtd").value)
+const id=produtoMov.value
+const qtdValor=parseFloat(qtd.value)
 
-await supabaseClient.from("movimentacoes_estoque").insert({
+if(!qtdValor) return alert("Informe quantidade")
+
+await client.from("movimentacoes_estoque").insert({
 produto_id:id,
 tipo:"entrada",
-quantidade:qtd
+quantidade:qtdValor
 })
 
+qtd.value=""
 carregar()
 }
 
 async function saida(){
 
-const id=document.getElementById("produtoMov").value
-const qtd=parseFloat(document.getElementById("qtd").value)
+const id=produtoMov.value
+const qtdValor=parseFloat(qtd.value)
 
-await supabaseClient.from("movimentacoes_estoque").insert({
+if(!qtdValor) return alert("Informe quantidade")
+
+await client.from("movimentacoes_estoque").insert({
 produto_id:id,
 tipo:"saida",
-quantidade:qtd
+quantidade:qtdValor
 })
 
+qtd.value=""
 carregar()
 }
 
@@ -277,39 +272,32 @@ async function excluirProduto(id){
 
 if(!confirm("Excluir material?")) return
 
-await supabaseClient
-.from("movimentacoes_estoque")
-.delete()
-.eq("produto_id", id)
-
-await supabaseClient
-.from("produtos")
-.delete()
-.eq("id", id)
+await client.from("movimentacoes_estoque").delete().eq("produto_id",id)
+await client.from("produtos").delete().eq("id",id)
 
 carregar()
 }
 
-function abrirEditar(id, nome, valor){
+function abrirEditar(id,nome,valor){
 produtoEditando=id
-document.getElementById("editNome").value=nome
-document.getElementById("editValor").value=valor
-document.getElementById("modalEditar").style.display="flex"
+editNome.value=nome
+editValor.value=valor
+modalEditar.style.display="flex"
 }
 
 function fecharEditar(){
-document.getElementById("modalEditar").style.display="none"
+modalEditar.style.display="none"
 }
 
 async function salvarEdicao(){
 
-const nome=document.getElementById("editNome").value
-const valor=parseFloat(document.getElementById("editValor").value)
-
-await supabaseClient
+await client
 .from("produtos")
-.update({nome, valor})
-.eq("id", produtoEditando)
+.update({
+nome:editNome.value,
+valor:parseFloat(editValor.value)
+})
+.eq("id",produtoEditando)
 
 fecharEditar()
 carregar()

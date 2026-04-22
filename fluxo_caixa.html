@@ -9,6 +9,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<!-- SELECT2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
@@ -228,6 +231,10 @@ width:350px;
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
+<!-- SELECT2 -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
 
 const supabaseClient = supabase.createClient(
@@ -235,7 +242,6 @@ const supabaseClient = supabase.createClient(
 "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 )
 
-// 🔥 CLIENTE AJUSTADO
 function nomeCliente(c){
   if(!c) return ""
   const nome = c.nome || c.nome_cliente || ""
@@ -244,13 +250,6 @@ function nomeCliente(c){
   return final ? `${nome} ${final}` : nome
 }
 
-let dados=[]
-let listaAtual=[]
-let dadosClientes=[]
-let dadosServicos=[]
-let servicosMap={}
-let editandoId=null
-
 function nomeServico(s){
 if(!s) return ""
 if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} minutos`
@@ -258,6 +257,13 @@ if(s.subgrupo) return `${s.grupo} ${s.subgrupo}`
 if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
 return s.grupo
 }
+
+let dados=[]
+let listaAtual=[]
+let dadosClientes=[]
+let dadosServicos=[]
+let servicosMap={}
+let editandoId=null
 
 function hoje(){
 const d=new Date()
@@ -311,6 +317,13 @@ calcular()
 }
 })
 
+setTimeout(() => {
+  $('#cliente').select2({placeholder:"Buscar cliente...", width:'180px'})
+  $('#servico').select2({placeholder:"Buscar serviço...", width:'200px'})
+  $('#filtroCliente').select2({placeholder:"Todos", width:'180px'})
+  $('#filtroServico').select2({placeholder:"Todos", width:'200px'})
+},200)
+
 }
 
 async function carregarLista(){
@@ -350,13 +363,11 @@ tbody.innerHTML+=`
 })
 }
 
-// 🔥 EDITAR FUNCIONANDO
 function abrirEditar(id){
 
 editandoId=id
 const r=dados.find(d=>d.id==id)
 
-// monta selects
 editCliente.innerHTML="<option value=''>Selecione</option>"
 dadosClientes.forEach(c=>{
 editCliente.innerHTML+=`<option value="${c.id}">${nomeCliente(c)}</option>`
@@ -367,7 +378,6 @@ dadosServicos.forEach(s=>{
 editServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
 })
 
-// preenche dados
 editData.value=r.data
 editCliente.value=r.cliente_id
 editServico.value=r.servico_id
@@ -375,7 +385,6 @@ editValor.value=r.valor
 editDesconto.value=r.desconto
 editOrigem.value=r.origem_lead || ""
 
-// abre modal
 document.getElementById("modalEditar").style.display="flex"
 }
 

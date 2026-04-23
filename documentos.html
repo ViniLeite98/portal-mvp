@@ -114,33 +114,40 @@ text-decoration:none;
 </main>
 </div>
 
+<!-- SCRIPTS -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-let equipeMap = {}
+console.log("🔥 script carregado")
 
 async function carregarEquipe(){
-  const { data, error } = await client
-    .from("equipe")
-    .select("id, nome")
-    .order("nome")
+  console.log("🚀 carregando equipe...")
 
-  if(error){
-    console.error(error)
-    alert("Erro ao carregar funcionários")
-    return
+  try{
+    const { data, error } = await client
+      .from("equipe")
+      .select("id, nome")
+
+    console.log("📦 retorno equipe:", data, error)
+
+    if(error){
+      alert("Erro ao carregar funcionários")
+      return
+    }
+
+    const select = document.getElementById("equipe")
+    select.innerHTML = "<option value=''>Selecione</option>"
+
+    data.forEach(e=>{
+      select.innerHTML += `<option value="${e.id}">${e.nome}</option>`
+    })
+
+  } catch(err){
+    console.error("💥 erro geral:", err)
   }
-
-  const select = document.getElementById("equipe")
-  select.innerHTML = "<option value=''>Selecione</option>"
-
-  data.forEach(e=>{
-    equipeMap[e.id] = e.nome
-    select.innerHTML += `<option value="${e.id}">${e.nome}</option>`
-  })
 }
 
 async function upload(){
@@ -154,7 +161,6 @@ async function upload(){
 
   const fileName = Date.now() + "_" + file.name
 
-  // Upload no storage
   const { error: uploadError } = await client.storage
     .from("documentos")
     .upload(fileName, file)
@@ -164,31 +170,20 @@ async function upload(){
     return
   }
 
-  // URL pública
   const { data: urlData } = client.storage
     .from("documentos")
     .getPublicUrl(fileName)
 
-  // Salvar no banco
-  const { error } = await client.from("documentos").insert({
+  await client.from("documentos").insert({
     equipe_id: equipeId,
     tipo: tipo,
     nome_arquivo: file.name,
     url: urlData.publicUrl
   })
 
-  if(error){
-    alert(error.message)
-    return
-  }
-
-  // Atualiza lista
   carregarLista()
 
-  // 🧹 Limpar formulário
   document.getElementById("arquivo").value = ""
-  document.getElementById("tipo").value = "RG"
-  document.getElementById("equipe").value = ""
 }
 
 async function carregarLista(){
@@ -212,8 +207,12 @@ async function carregarLista(){
   })
 }
 
-carregarEquipe()
-carregarLista()
+/* 🚀 GARANTE EXECUÇÃO */
+window.onload = () => {
+  console.log("✅ página carregada")
+  carregarEquipe()
+  carregarLista()
+}
 
 </script>
 

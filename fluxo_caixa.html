@@ -355,7 +355,7 @@ function normalizar(str) {
 }
 
 function clienteSearchKey(c) {
-  const nome = normalizar(c.nome || c.nome_cliente || "")
+  const nome = normalizar(c.nome || "")
   const tel  = (c.telefone_1 || "").replace(/\D/g, "")
   return nome + " " + tel
 }
@@ -372,7 +372,7 @@ function clienteSearchKey(c) {
  */
 function scoreCliente(c, queryTokens) {
   const key  = clienteSearchKey(c)
-  const nome = normalizar(c.nome || c.nome_cliente || "")
+  const nome = normalizar(c.nome || "")
   let score  = 0
   for (const tok of queryTokens) {
     if (!key.includes(tok)) return -1
@@ -421,7 +421,7 @@ function createSmartSearch({ searchInput, hiddenInput, dropdown, clearBtn, onSel
     const tokens = getTokens()
 
     results.forEach((c, i) => {
-      const nome  = c.nome || c.nome_cliente || ""
+      const nome  = c.nome || ""
       const tel   = (c.telefone_1 || "").replace(/\D/g, "")
       const last4 = tel.length >= 4 ? tel.slice(-4) : tel
       const full  = tel.length > 4  ? `(${tel.slice(0,-4)}) ${last4}` : tel
@@ -450,7 +450,7 @@ function createSmartSearch({ searchInput, hiddenInput, dropdown, clearBtn, onSel
   }
 
   function selectCliente(c) {
-    const nome  = c.nome || c.nome_cliente || ""
+    const nome  = c.nome || ""
     const tel   = (c.telefone_1 || "").replace(/\D/g, "")
     const last4 = tel.length >= 4 ? tel.slice(-4) : tel
     searchInput.value = last4 ? `${nome}  ${last4}` : nome
@@ -475,20 +475,18 @@ function createSmartSearch({ searchInput, hiddenInput, dropdown, clearBtn, onSel
 
   async function buscarNoServidor(query) {
     const tokens  = query.trim().split(/\s+/).filter(Boolean)
-    const tokNome = tokens.filter(t => /\D/.test(t))    // tem letra → nome
-    const tokTel  = tokens.filter(t => /^\d+$/.test(t)) // só dígitos → telefone
+    const tokNome = tokens.filter(t => /\D/.test(t))     // tem letra → nome
+    const tokTel  = tokens.filter(t => /^\d+$/.test(t))  // só dígitos → telefone
 
-    let q = client.from("clientes").select("id, nome, nome_cliente, telefone_1")
+    let q = client.from("clientes").select("id, nome, telefone_1")
 
-    // Cada token de nome: filtra AND entre tokens, OR entre colunas nome/nome_cliente
-    // Supabase .or() aceita: "nome.ilike.*vin*,nome_cliente.ilike.*vin*"
+    // .ilike() no SDK usa % como wildcard
     for (const t of tokNome) {
-      q = q.or(`nome.ilike.*${t}*,nome_cliente.ilike.*${t}*`)
+      q = q.ilike("nome", `%${t}%`)
     }
 
-    // Token numérico: busca no telefone
     for (const t of tokTel) {
-      q = q.ilike("telefone_1", `*${t}*`)
+      q = q.ilike("telefone_1", `%${t}%`)
     }
 
     q = q.order("nome", { ascending: true }).limit(50)
@@ -558,7 +556,7 @@ function createSmartSearch({ searchInput, hiddenInput, dropdown, clearBtn, onSel
 
 function nomeCliente(c){
   if(!c) return ""
-  const nome = c.nome || c.nome_cliente || ""
+  const nome = c.nome || ""
   let telefone = (c.telefone_1 || "").replace(/\D/g,"")
   const final = telefone.length >= 4 ? telefone.slice(-4) : ""
   return final ? `${nome} ${final}` : nome
@@ -696,7 +694,7 @@ async function abrirEditar(id){
   // Buscar cliente no servidor para preencher o modal
   const { data: clienteArr } = await client
     .from("clientes")
-    .select("id, nome, nome_cliente, telefone_1")
+    .select("id, nome, telefone_1")
     .eq("id", r.cliente_id)
     .limit(1)
   ssEditCliente.setValue(clienteArr?.[0] || null)

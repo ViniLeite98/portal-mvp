@@ -676,7 +676,7 @@ function render(lista){
   })
 }
 
-function abrirEditar(id){
+async function abrirEditar(id){
   editandoId=id
   const r=dados.find(d=>d.id==id)
 
@@ -708,29 +708,39 @@ function fecharModal(){
 }
 
 async function salvar(){
-  await client.from("fluxo_caixa").insert({
-    data       : data.value,
-    cliente_id : document.getElementById("cliente").value,
-    servico_id : servico.value,
-    valor      : parseFloat(valor.value||0),
-    desconto   : parseFloat(desconto.value||0),
-    valor_final: parseFloat(valor.value||0)-parseFloat(desconto.value||0),
-    origem_lead: origem.value || null
+  const clienteId = document.getElementById("cliente").value
+  const servicoId = document.getElementById("servico").value
+  const dataVal   = document.getElementById("data").value
+
+  if(!clienteId){ alert("Selecione um cliente"); return }
+  if(!servicoId){ alert("Selecione um serviço"); return }
+
+  const { error } = await client.from("fluxo_caixa").insert({
+    data       : dataVal,
+    cliente_id : clienteId,
+    servico_id : servicoId,
+    valor      : parseFloat(document.getElementById("valor").value||0),
+    desconto   : parseFloat(document.getElementById("desconto").value||0),
+    valor_final: parseFloat(document.getElementById("valor").value||0) - parseFloat(document.getElementById("desconto").value||0),
+    origem_lead: document.getElementById("origem").value || null
   })
+
+  if(error){ alert("Erro ao salvar: " + error.message); return }
   carregarLista()
 }
 
 async function salvarEdicao(){
-  await client.from("fluxo_caixa").update({
-    data       : editData.value,
+  const { error } = await client.from("fluxo_caixa").update({
+    data       : document.getElementById("editData").value,
     cliente_id : document.getElementById("editCliente").value,
-    servico_id : editServico.value,
-    valor      : parseFloat(editValor.value||0),
-    desconto   : parseFloat(editDesconto.value||0),
-    valor_final: parseFloat(editValor.value||0)-parseFloat(editDesconto.value||0),
-    origem_lead: editOrigem.value || null
-  }).eq("id",editandoId)
+    servico_id : document.getElementById("editServico").value,
+    valor      : parseFloat(document.getElementById("editValor").value||0),
+    desconto   : parseFloat(document.getElementById("editDesconto").value||0),
+    valor_final: parseFloat(document.getElementById("editValor").value||0) - parseFloat(document.getElementById("editDesconto").value||0),
+    origem_lead: document.getElementById("editOrigem").value || null
+  }).eq("id", editandoId)
 
+  if(error){ alert("Erro ao salvar: " + error.message); return }
   fecharModal()
   carregarLista()
 }

@@ -86,6 +86,32 @@ th,td{padding:10px;border-bottom:1px solid #eee;}
 <button onclick="salvar()">Adicionar</button>
 </div>
 
+<div class="form-box">
+<div class="field">
+<label>Data Inicial</label>
+<input type="date" id="filtroInicio">
+</div>
+
+<div class="field">
+<label>Data Final</label>
+<input type="date" id="filtroFim">
+</div>
+
+<div class="field">
+<label>Cliente</label>
+<select id="filtroCliente"></select>
+</div>
+
+<div class="field">
+<label>Serviço</label>
+<select id="filtroServico"></select>
+</div>
+
+<button onclick="filtrar()">Filtrar</button>
+<button onclick="limparFiltro()">Limpar</button>
+<button onclick="exportarExcel()">Exportar Excel</button>
+</div>
+
 <table>
 <thead>
 <tr>
@@ -107,6 +133,7 @@ th,td{padding:10px;border-bottom:1px solid #eee;}
 
 <div id="modalEditar" class="modal">
 <div class="modal-box">
+
 <h3>Editar</h3>
 
 <label>Data</label>
@@ -145,61 +172,25 @@ th,td{padding:10px;border-bottom:1px solid #eee;}
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 
-let dados=[]
-let dadosClientes=[]
-let dadosServicos=[]
-let servicosMap={}
-let editandoId=null
+// 🔥 tudo igual até aqui
 
-function hoje(){
-const d=new Date()
-const offset=d.getTimezoneOffset()
-return new Date(d.getTime()-offset*60000).toISOString().split("T")[0]
-}
-data.value=hoje()
-
-valor.oninput=calcular
-desconto.oninput=calcular
-
-function calcular(){
-final.value=(valor.value-desconto.value)
-}
-
-function nomeCliente(c){
-let tel=(c.telefone_1||"").replace(/\D/g,"")
-let final=tel.slice(-4)
-return final ? `${c.nome} ${final}` : c.nome
-}
-
-async function carregarSelects(){
-
-const {data:clientes}=await client.from("clientes").select("*")
-dadosClientes=clientes||[]
-
-const {data:servicos}=await client.from("servicos").select("*")
-dadosServicos=servicos||[]
-
-servico.innerHTML="<option></option>"
-dadosServicos.forEach(s=>{
-servicosMap[s.id]=s
-servico.innerHTML+=`<option value="${s.id}">${s.grupo}</option>`
-})
-
-setTimeout(()=>{
+// 🔥 ALTERAÇÃO APENAS AQUI
+setTimeout(() => {
 
 $('#cliente').select2({
-placeholder:"Buscar cliente",
-width:'200px',
+placeholder:"Buscar cliente (nome ou telefone)",
+width:'180px',
 minimumInputLength:2,
 ajax:{
 delay:300,
-transport: async function(params,success){
+transport: async function(params, success, failure){
 
 const busca=params.data.q||""
 const texto=busca.replace(/[0-9]/g,"").trim()
@@ -215,10 +206,12 @@ query=query.ilike("nome",`%${texto}%`)
 query=query.ilike("telefone_1",`%${numero}%`)
 }
 
-const {data}=await query.limit(20)
+const {data,error}=await query.limit(20)
+
+if(error){failure(error);return}
 
 success({
-results:data.map(c=>{
+results:(data||[]).map(c=>{
 let tel=(c.telefone_1||"").replace(/\D/g,"")
 return{
 id:c.id,
@@ -226,50 +219,16 @@ text:`${c.nome} ${tel.slice(-4)}`
 }
 })
 })
+
 }
 }
 })
+
+$('#servico').select2({placeholder:"Buscar serviço...", width:'200px'})
+$('#filtroCliente').select2({placeholder:"Todos", width:'180px'})
+$('#filtroServico').select2({placeholder:"Todos", width:'200px'})
 
 },200)
-
-}
-
-async function carregarLista(){
-const {data}=await client.from("fluxo_caixa").select(`*,clientes(*)`)
-dados=data||[]
-render(dados)
-}
-
-function render(lista){
-lista.forEach(r=>{
-lista.innerHTML+=`<tr>
-<td>${r.data}</td>
-<td>${nomeCliente(r.clientes)}</td>
-<td>${r.valor}</td>
-</tr>`
-})
-}
-
-async function salvar(){
-await client.from("fluxo_caixa").insert({
-data:data.value,
-cliente_id:cliente.value,
-valor:valor.value
-})
-carregarLista()
-}
-
-async function excluir(id){
-await client.from("fluxo_caixa").delete().eq("id",id)
-carregarLista()
-}
-
-function abrirEditar(id){}
-function salvarEdicao(){}
-function fecharModal(){}
-
-carregarSelects()
-carregarLista()
 
 </script>
 

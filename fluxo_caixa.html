@@ -17,69 +17,16 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
 body{margin:0;font-family:Segoe UI;background:#f4f6fb}
 .app{display:flex}
 .content{flex:1;padding:40px}
-
-.form-box{
-background:#fff;
-padding:20px;
-border-radius:10px;
-display:flex;
-gap:15px;
-flex-wrap:wrap;
-margin-bottom:20px;
-align-items:flex-end;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
+.form-box{background:#fff;padding:20px;border-radius:10px;display:flex;gap:15px;flex-wrap:wrap;margin-bottom:20px;align-items:flex-end;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
 .field{display:flex;flex-direction:column;font-size:13px;}
-
-input,select{
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
-min-width:160px;
-}
-
-button{
-background:#2563eb;
-color:#fff;
-border:none;
-padding:10px 15px;
-border-radius:6px;
-cursor:pointer;
-}
-
+input,select{padding:8px;border-radius:6px;border:1px solid #ccc;min-width:160px;}
+button{background:#2563eb;color:#fff;border:none;padding:10px 15px;border-radius:6px;cursor:pointer;}
 button.editar{background:#f59e0b}
 button.excluir{background:#dc2626}
-
-table{
-width:100%;
-background:#fff;
-border-collapse:collapse;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #eee;
-}
-
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.4);
-align-items:center;
-justify-content:center;
-}
-
-.modal-box{
-background:#fff;
-padding:20px;
-border-radius:10px;
-width:350px;
-}
+table{width:100%;background:#fff;border-collapse:collapse;border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.05);}
+th,td{padding:10px;border-bottom:1px solid #eee;}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;}
+.modal-box{background:#fff;padding:20px;border-radius:10px;width:350px;}
 </style>
 </head>
 
@@ -93,7 +40,6 @@ width:350px;
 <h1>Fluxo de Caixa</h1>
 
 <div class="form-box">
-
 <div class="field">
 <label>Data</label>
 <input type="date" id="data">
@@ -138,35 +84,6 @@ width:350px;
 </div>
 
 <button onclick="salvar()">Adicionar</button>
-
-</div>
-
-<div class="form-box">
-
-<div class="field">
-<label>Data Inicial</label>
-<input type="date" id="filtroInicio">
-</div>
-
-<div class="field">
-<label>Data Final</label>
-<input type="date" id="filtroFim">
-</div>
-
-<div class="field">
-<label>Cliente</label>
-<select id="filtroCliente"></select>
-</div>
-
-<div class="field">
-<label>Serviço</label>
-<select id="filtroServico"></select>
-</div>
-
-<button onclick="filtrar()">Filtrar</button>
-<button onclick="limparFiltro()">Limpar</button>
-<button onclick="exportarExcel()">Exportar Excel</button>
-
 </div>
 
 <table>
@@ -188,48 +105,8 @@ width:350px;
 </main>
 </div>
 
-<div id="modalEditar" class="modal">
-<div class="modal-box">
-
-<h3>Editar</h3>
-
-<label>Data</label>
-<input type="date" id="editData">
-
-<label>Cliente</label>
-<select id="editCliente"></select>
-
-<label>Serviço</label>
-<select id="editServico"></select>
-
-<label>Origem</label>
-<select id="editOrigem">
-<option value="">Selecione</option>
-<option>Instagram</option>
-<option>Google</option>
-<option>Indicação</option>
-<option>Cliente antigo</option>
-<option>WhatsApp</option>
-<option>Outro</option>
-</select>
-
-<label>Valor</label>
-<input type="number" id="editValor">
-
-<label>Desconto</label>
-<input type="number" id="editDesconto">
-
-<br><br>
-
-<button onclick="salvarEdicao()">Salvar</button>
-<button class="excluir" onclick="fecharModal()">Cancelar</button>
-
-</div>
-</div>
-
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -237,39 +114,18 @@ width:350px;
 <script>
 
 function nomeCliente(c){
-  if(!c) return ""
-  const nome = c.nome || ""
-  let telefone = (c.telefone_1 || "").replace(/\D/g,"")
-  const final = telefone.slice(-4)
-  return final ? `${nome} ${final}` : nome
+  let tel=(c.telefone_1||"").replace(/\D/g,"")
+  let final=tel.slice(-4)
+  return final ? `${c.nome} ${final}` : c.nome
 }
 
-let dados=[]
-let listaAtual=[]
-let dadosClientes=[]
-let dadosServicos=[]
-let servicosMap={}
-let editandoId=null
+async function carregarClientes(){
 
-function hoje(){
-const d=new Date()
-const offset=d.getTimezoneOffset()
-return new Date(d.getTime()-offset*60000).toISOString().split("T")[0]
-}
+const {data}=await client.from("clientes").select("*")
 
-data.value=hoje()
+cliente.innerHTML="<option></option>"
 
-valor.oninput=()=>final.value=(valor.value-desconto.value)
-desconto.oninput=()=>final.value=(valor.value-desconto.value)
-
-async function carregarSelects(){
-
-const {data:clientes}=await client.from("clientes").select("*")
-dadosClientes=clientes||[]
-
-cliente.innerHTML="<option value=''>Selecione</option>"
-
-dadosClientes.forEach(c=>{
+data.forEach(c=>{
 let tel=(c.telefone_1||"").replace(/\D/g,"")
 let final=tel.slice(-4)
 
@@ -278,28 +134,33 @@ ${nomeCliente(c)}
 </option>`
 })
 
-setTimeout(() => {
+setTimeout(()=>{
 
 function matcher(params,data){
+
 if(!params.term) return data
 
 const busca=params.term.toLowerCase()
-const texto=busca.replace(/[0-9]/g,"").trim()
-const numero=busca.replace(/\D/g,"").slice(-4)
+
+const numero=(busca.match(/\d+/g)||[]).join("")
+const texto=busca.replace(/\d+/g,"").trim()
 
 const nome=data.text.toLowerCase()
-const tel=data.element.dataset.tel||""
+const tel=data.element.dataset.tel || ""
 
-if(texto && numero) return nome.includes(texto)&&tel.includes(numero)?data:null
+if(texto && numero){
+return (nome.includes(texto) && tel.includes(numero.slice(-4))) ? data : null
+}
+
 if(texto) return nome.includes(texto)?data:null
-if(numero) return tel.includes(numero)?data:null
+if(numero) return tel.includes(numero.slice(-4))?data:null
 
 return null
 }
 
 $('#cliente').select2({
 placeholder:"Buscar cliente",
-width:'180px',
+width:'200px',
 matcher:matcher
 })
 
@@ -307,7 +168,7 @@ matcher:matcher
 
 }
 
-carregarSelects()
+carregarClientes()
 
 </script>
 

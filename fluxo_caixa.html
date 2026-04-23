@@ -366,13 +366,14 @@ function clienteSearchKey(c) {
  *  - Bonus if token matches start of a word (prefix match)
  */
 function scoreCliente(c, queryTokens) {
-  const key = clienteSearchKey(c)
-  let score = 0
+  const key  = clienteSearchKey(c)
+  const nome = (c.nome || c.nome_cliente || "").toLowerCase()
+  let score  = 0
   for (const tok of queryTokens) {
-    if (!key.includes(tok)) return -1   // all tokens required
-    // bonus: token is a word-prefix
-    if (new RegExp(`(^|\\s)${tok}`).test(key)) score += 2
-    else score += 1
+    if (!key.includes(tok)) return -1
+    if (nome.startsWith(tok))                        score += 4  // prefixo do 1 nome
+    else if (new RegExp(`(^|\\s)${tok}`).test(key)) score += 2  // prefixo de palavra
+    else                                             score += 1  // substring
   }
   return score
 }
@@ -484,8 +485,15 @@ function createSmartSearch({ searchInput, hiddenInput, dropdown, clearBtn, getCl
     const scored = getClients()
       .map(c => ({ c, s: scoreCliente(c, tokens) }))
       .filter(x => x.s > -1)
-      .sort((a, b) => b.s - a.s)
-      .slice(0, 30)
+      .sort((a, b) => {
+        // 1º critério: score maior primeiro
+        if (b.s !== a.s) return b.s - a.s
+        // 2º critério: empate → alfabético pelo nome
+        const nA = (a.c.nome || a.c.nome_cliente || "").toLowerCase()
+        const nB = (b.c.nome || b.c.nome_cliente || "").toLowerCase()
+        return nA.localeCompare(nB, "pt-BR")
+      })
+      .slice(0, 50)
       .map(x => x.c)
 
     openDropdown(scored)

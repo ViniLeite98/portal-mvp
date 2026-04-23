@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Documentos | Hara Spa</title>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+
+<style>
+body{margin:0;font-family:Segoe UI;background:#f4f6fb}
+.app{display:flex}
+.content{flex:1;padding:40px}
+
+.form-box{
+background:#fff;
+padding:20px;
+border-radius:10px;
+display:flex;
+gap:15px;
+flex-wrap:wrap;
+margin-bottom:20px;
+box-shadow:0 2px 8px rgba(0,0,0,0.05);
+}
+
+.field{display:flex;flex-direction:column;font-size:13px}
+
+input,select{
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
+min-width:180px;
+}
+
+button{
+background:#2563eb;
+color:#fff;
+border:none;
+padding:10px 15px;
+border-radius:6px;
+cursor:pointer;
+}
+
+table{
+width:100%;
+background:#fff;
+border-collapse:collapse;
+border-radius:10px;
+overflow:hidden;
+}
+
+th,td{
+padding:10px;
+border-bottom:1px solid #eee;
+font-size:13px;
+}
+
+a.link{
+color:#2563eb;
+text-decoration:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+<aside id="sidebar"></aside>
+
+<main class="content">
+
+<h1>Documentos</h1>
+
+<div class="form-box">
+
+  <div class="field">
+    <label>Terapeuta</label>
+    <select id="equipe"></select>
+  </div>
+
+  <div class="field">
+    <label>Tipo</label>
+    <select id="tipo">
+      <option>RG</option>
+      <option>CPF</option>
+      <option>Comprovante de Residência</option>
+      <option>Contrato</option>
+      <option>Outro</option>
+    </select>
+  </div>
+
+  <div class="field">
+    <label>Arquivo</label>
+    <input type="file" id="arquivo">
+  </div>
+
+  <button onclick="upload()">Salvar</button>
+
+</div>
+
+<table>
+<thead>
+<tr>
+  <th>Terapeuta</th>
+  <th>Tipo</th>
+  <th>Arquivo</th>
+  <th>Data</th>
+</tr>
+</thead>
+<tbody id="lista"></tbody>
+</table>
+
+</main>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+
+<script>
+
+let equipeMap = {}
+
+async function carregarEquipe(){
+  const { data } = await client.from("equipe").select("*").order("nome")
+
+  const select = document.getElementById("equipe")
+  select.innerHTML = "<option value=''>Selecione</option>"
+
+  data.forEach(e=>{
+    equipeMap[e.id] = e.nome
+    select.innerHTML += `<option value="${e.id}">${e.nome}</option>`
+  })
+}
+
+async function upload(){
+
+  const equipeId = document.getElementById("equipe").value
+  const tipo = document.getElementById("tipo").value
+  const file = document.getElementById("arquivo").files[0]
+
+  if(!equipeId){ alert("Selecione terapeuta"); return }
+  if(!file){ alert("Selecione arquivo"); return }
+
+  const fileName = Date.now() + "_" + file.name
+
+  // upload no storage
+  const { error: uploadError } = await client.storage
+    .from("documentos")
+    .upload(fileName, file)
+
+  if(uploadError){
+    alert(uploadError.message)
+    return
+  }
+
+  // pegar url
+  const { data: urlData } = client.storage
+    .from("documentos")
+    .getPublicUrl(fileName)
+
+  // salvar no banco
+  await client.from("documentos").insert({
+    equipe_id: equipeId,
+    tipo: tipo,
+    nome_arquivo: file.name,
+    url: urlData.publicUrl
+  })
+
+  carregarLista()
+
+  // limpar
+  document.getElementById("arquivo").value = ""
+}
+
+async function carregarLista(){
+
+  const { data } = await client
+    .from("documentos")
+    .select("*, equipe(*)")
+    .order("created_at", { ascending: false })
+
+  const tbody = document.getElementById("lista")
+  tbody.innerHTML = ""
+
+  data.forEach(d=>{
+    tbody.innerHTML += `
+    <tr>
+      <td>${d.equipe?.nome || "-"}</td>
+      <td>${d.tipo}</td>
+      <td><a class="link" href="${d.url}" target="_blank">Abrir</a></td>
+      <td>${new Date(d.created_at).toLocaleDateString()}</td>
+    </tr>`
+  })
+}
+
+carregarEquipe()
+carregarLista()
+
+</script>
+
+</body>
+</html>

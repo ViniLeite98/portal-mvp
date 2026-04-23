@@ -34,6 +34,12 @@ document.getElementById("sidebar").innerHTML = `
     <span>Certificações</span>
   </a>
 
+  <!-- 🔥 NOVO MENU -->
+  <a href="documentos.html" class="menu-item ${paginaAtual === 'documentos.html' ? 'active' : ''}">
+    <i class="fa-solid fa-folder-open"></i>
+    <span>Documentos</span>
+  </a>
+
   <hr style="border-color:#374151; margin:18px 0;">
 
   <div class="menu-title">OPERACIONAL</div>
@@ -67,10 +73,10 @@ document.getElementById("sidebar").innerHTML = `
     <span>Fluxo de Caixa</span>
   </a>
 
-</div>
+  <a href="estoque.html" class="menu-item ${paginaAtual === 'estoque.html' ? 'active' : ''}">
+    <i class="fa-solid fa-boxes-stacked"></i>
+    <span>Estoque</span>
+  </a>
 
-<a href="estoque.html" class="menu-item ${paginaAtual === 'estoque.html' ? 'active' : ''}">
-  <i class="fa-solid fa-boxes-stacked"></i>
-  <span>Estoque</span>
-</a>
+</div>
 `;

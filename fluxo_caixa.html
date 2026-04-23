@@ -205,6 +205,16 @@ gap:8px;
     <select id="servico"></select>
   </div>
 
+  <div class="field" id="wrapTerapeuta1field">
+    <label>Terapeuta</label>
+    <select id="terapeuta1"><option value="">Selecione</option></select>
+  </div>
+
+  <div class="field" id="wrapTerapeuta2field" style="display:none">
+    <label>Terapeuta 2</label>
+    <select id="terapeuta2"><option value="">Selecione</option></select>
+  </div>
+
   <div class="field">
     <label>Origem</label>
     <select id="origem">
@@ -278,6 +288,7 @@ gap:8px;
       <th>Cliente</th>
       <th>Origem</th>
       <th>Serviço</th>
+      <th>Terapeuta(s)</th>
       <th>Valor</th>
       <th>Desconto</th>
       <th>Final</th>
@@ -308,6 +319,14 @@ gap:8px;
 
     <label>Serviço</label>
     <select id="editServico"></select>
+
+    <label>Terapeuta</label>
+    <select id="editTerapeuta1"><option value="">Selecione</option></select>
+
+    <div id="wrapEditTerapeuta2" style="display:none">
+      <label>Terapeuta 2</label>
+      <select id="editTerapeuta2"><option value="">Selecione</option></select>
+    </div>
 
     <label>Origem</label>
     <select id="editOrigem">
@@ -662,6 +681,13 @@ function nomeCliente(c){
   return final ? `${nome} ${final}` : nome
 }
 
+function nomeTerapeutas(r){
+  const t1 = r.terapeuta1?.nome_profissional || ''
+  const t2 = r.terapeuta2?.nome_profissional || ''
+  if(t1 && t2) return t1 + ' + ' + t2
+  return t1 || '-'
+}
+
 function nomeServico(s){
   if(!s) return ""
   if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} minutos`
@@ -675,6 +701,7 @@ let listaAtual=[]
 let dadosClientes=[]
 let dadosClientesFiltro=[]
 let dadosServicos=[]
+let dadosTerapeutas=[]
 let servicosMap={}
 let editandoId=null
 
@@ -700,6 +727,30 @@ function formatar(v){
   return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
 }
 
+function popularSelectTerapeutas(sel, lista){
+  const val = sel.value
+  sel.innerHTML = "<option value=''>Selecione</option>"
+  lista.forEach(t => {
+    sel.innerHTML += `<option value="${t.id}">${t.nome_profissional}</option>`
+  })
+  sel.value = val
+}
+
+function isFourHands(servicoId){
+  const s = servicosMap[servicoId]
+  return s && (s.grupo||'').toLowerCase().includes('four hand')
+}
+
+function atualizarTerapeutas(){
+  const id = document.getElementById('servico').value
+  document.getElementById('wrapTerapeuta2field').style.display = isFourHands(id) ? '' : 'none'
+}
+
+function atualizarTerapeutasEdit(){
+  const id = document.getElementById('editServico').value
+  document.getElementById('wrapEditTerapeuta2').style.display = isFourHands(id) ? '' : 'none'
+}
+
 async function carregarSelects(){
 
   // Smart search: busca no servidor, sem carregar todos os clientes
@@ -716,6 +767,21 @@ async function carregarSelects(){
     dropdown    : document.getElementById("editClienteDropdown"),
     clearBtn    : document.getElementById("editClienteClear"),
   })
+
+  // Terapeutas ativas
+  const {data:terapeutas}=await client
+    .from('terapeutas')
+    .select('id, nome_profissional, cargo')
+    .eq('status','Ativo')
+    .in('cargo',['Terapeuta Feminina','Terapeuta Masculino'])
+    .order('nome_profissional',{ascending:true})
+  dadosTerapeutas = terapeutas || []
+  popularSelectTerapeutas(document.getElementById('terapeuta1'), dadosTerapeutas)
+  popularSelectTerapeutas(document.getElementById('terapeuta2'), dadosTerapeutas)
+  popularSelectTerapeutas(document.getElementById('editTerapeuta1'), dadosTerapeutas)
+  popularSelectTerapeutas(document.getElementById('editTerapeuta2'), dadosTerapeutas)
+  document.getElementById('servico').addEventListener('change', atualizarTerapeutas)
+  document.getElementById('editServico').addEventListener('change', atualizarTerapeutasEdit)
 
   // Services (todos, para o formulário de adicionar)
   const {data:servicos}=await client.from("servicos").select("*")
@@ -778,7 +844,7 @@ async function carregarFiltrosFluxo(){
 async function carregarLista(){
   const {data}=await client
     .from("fluxo_caixa")
-    .select(`*,clientes(*),servicos(*)`)
+    .select(`*,clientes(*),servicos(*),terapeuta1:terapeutas!terapeuta_1(id,nome_profissional),terapeuta2:terapeutas!terapeuta_2(id,nome_profissional)`)
     .order("data",{ascending:false})
 
   dados=data||[]
@@ -797,6 +863,7 @@ function render(lista){
       <td>${nomeCliente(r.clientes)}</td>
       <td>${r.origem_lead || "-"}</td>
       <td>${nomeServico(r.servicos)}</td>
+      <td>${nomeTerapeutas(r)}</td>
       <td>${formatar(r.valor)}</td>
       <td>${formatar(r.desconto)}</td>
       <td><strong>${formatar(r.valor_final)}</strong></td>
@@ -819,10 +886,13 @@ async function abrirEditar(id){
   })
 
   editData.value=r.data
-  editServico.value=r.servico_id
-  editValor.value=r.valor
-  editDesconto.value=r.desconto
-  editOrigem.value=r.origem_lead || ""
+  document.getElementById('editServico').value=r.servico_id
+  document.getElementById('editValor').value=r.valor
+  document.getElementById('editDesconto').value=r.desconto
+  document.getElementById('editOrigem').value=r.origem_lead || ''
+  document.getElementById('editTerapeuta1').value = r.terapeuta_1 || ''
+  document.getElementById('editTerapeuta2').value = r.terapeuta_2 || ''
+  atualizarTerapeutasEdit()
 
   // Buscar cliente no servidor para preencher o modal
   const { data: clienteArr } = await client
@@ -847,14 +917,19 @@ async function salvar(){
   if(!clienteId){ alert("Selecione um cliente"); return }
   if(!servicoId){ alert("Selecione um serviço"); return }
 
+  const t1val = document.getElementById('terapeuta1').value || null
+  const t2val = isFourHands(servicoId) ? (document.getElementById('terapeuta2').value || null) : null
+
   const { error } = await client.from("fluxo_caixa").insert({
-    data       : dataVal,
-    cliente_id : clienteId,
-    servico_id : servicoId,
-    valor      : parseFloat(document.getElementById("valor").value||0),
-    desconto   : parseFloat(document.getElementById("desconto").value||0),
-    valor_final: parseFloat(document.getElementById("valor").value||0) - parseFloat(document.getElementById("desconto").value||0),
-    origem_lead: document.getElementById("origem").value || null
+    data        : dataVal,
+    cliente_id  : clienteId,
+    servico_id  : servicoId,
+    terapeuta_1 : t1val ? parseInt(t1val) : null,
+    terapeuta_2 : t2val ? parseInt(t2val) : null,
+    valor       : parseFloat(document.getElementById("valor").value||0),
+    desconto    : parseFloat(document.getElementById("desconto").value||0),
+    valor_final : parseFloat(document.getElementById("valor").value||0) - parseFloat(document.getElementById("desconto").value||0),
+    origem_lead : document.getElementById("origem").value || null
   })
 
   if(error){ alert("Erro ao salvar: " + error.message); return }
@@ -862,12 +937,18 @@ async function salvar(){
 }
 
 async function salvarEdicao(){
+  const editSvcId = document.getElementById('editServico').value
+  const et1 = document.getElementById('editTerapeuta1').value || null
+  const et2 = isFourHands(editSvcId) ? (document.getElementById('editTerapeuta2').value || null) : null
+
   const { error } = await client.from("fluxo_caixa").update({
-    data       : document.getElementById("editData").value,
-    cliente_id : document.getElementById("editCliente").value,
-    servico_id : document.getElementById("editServico").value,
-    valor      : parseFloat(document.getElementById("editValor").value||0),
-    desconto   : parseFloat(document.getElementById("editDesconto").value||0),
+    data        : document.getElementById("editData").value,
+    cliente_id  : document.getElementById("editCliente").value,
+    servico_id  : editSvcId,
+    terapeuta_1 : et1 ? parseInt(et1) : null,
+    terapeuta_2 : et2 ? parseInt(et2) : null,
+    valor       : parseFloat(document.getElementById("editValor").value||0),
+    desconto    : parseFloat(document.getElementById("editDesconto").value||0),
     valor_final: parseFloat(document.getElementById("editValor").value||0) - parseFloat(document.getElementById("editDesconto").value||0),
     origem_lead: document.getElementById("editOrigem").value || null
   }).eq("id", editandoId)
@@ -908,7 +989,8 @@ function exportarExcel(){
     Data    : r.data,
     Cliente : nomeCliente(r.clientes),
     Origem  : r.origem_lead,
-    Servico : nomeServico(r.servicos),
+    Servico    : nomeServico(r.servicos),
+    Terapeuta  : nomeTerapeutas(r),
     Valor   : r.valor,
     Desconto: r.desconto,
     Final   : r.valor_final

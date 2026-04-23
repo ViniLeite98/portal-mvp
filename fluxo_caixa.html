@@ -474,26 +474,27 @@ function createSmartSearch({ searchInput, hiddenInput, dropdown, clearBtn, onSel
   }
 
   async function buscarNoServidor(query) {
-    // Separa tokens: palavras (nome) e números (telefone)
     const tokens  = query.trim().split(/\s+/).filter(Boolean)
-    const tokNome = tokens.filter(t => /\D/.test(t))   // tem letra → busca no nome
-    const tokTel  = tokens.filter(t => /^\d+$/.test(t)) // só dígitos → busca no tel
+    const tokNome = tokens.filter(t => /\D/.test(t))    // tem letra → nome
+    const tokTel  = tokens.filter(t => /^\d+$/.test(t)) // só dígitos → telefone
 
     let q = client.from("clientes").select("id, nome, nome_cliente, telefone_1")
 
-    // Para cada token de nome: ilike no campo nome ou nome_cliente
+    // Cada token de nome: filtra AND entre tokens, OR entre colunas nome/nome_cliente
+    // Supabase .or() aceita: "nome.ilike.*vin*,nome_cliente.ilike.*vin*"
     for (const t of tokNome) {
-      q = q.or(`nome.ilike.%${t}%,nome_cliente.ilike.%${t}%`)
+      q = q.or(`nome.ilike.*${t}*,nome_cliente.ilike.*${t}*`)
     }
 
-    // Para token numérico: busca no telefone
+    // Token numérico: busca no telefone
     for (const t of tokTel) {
-      q = q.ilike("telefone_1", `%${t}%`)
+      q = q.ilike("telefone_1", `*${t}*`)
     }
 
     q = q.order("nome", { ascending: true }).limit(50)
 
     const { data, error } = await q
+    if (error) console.error("Supabase search error:", error.message)
     return data || []
   }
 

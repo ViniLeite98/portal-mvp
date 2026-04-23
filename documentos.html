@@ -114,40 +114,35 @@ text-decoration:none;
 </main>
 </div>
 
-<!-- SCRIPTS -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-console.log("🔥 script carregado")
+console.log("🔥 documentos carregado")
 
 async function carregarEquipe(){
-  console.log("🚀 carregando equipe...")
+  console.log("🚀 carregando terapeutas...")
 
-  try{
-    const { data, error } = await client
-      .from("equipe")
-      .select("id, nome")
+  const { data, error } = await client
+    .from("terapeutas")
+    .select("id, nome_profissional")
+    .order("nome_profissional")
 
-    console.log("📦 retorno equipe:", data, error)
+  console.log("📦 retorno:", data, error)
 
-    if(error){
-      alert("Erro ao carregar funcionários")
-      return
-    }
-
-    const select = document.getElementById("equipe")
-    select.innerHTML = "<option value=''>Selecione</option>"
-
-    data.forEach(e=>{
-      select.innerHTML += `<option value="${e.id}">${e.nome}</option>`
-    })
-
-  } catch(err){
-    console.error("💥 erro geral:", err)
+  if(error){
+    alert("Erro ao carregar funcionários")
+    return
   }
+
+  const select = document.getElementById("equipe")
+  select.innerHTML = "<option value=''>Selecione</option>"
+
+  data.forEach(e=>{
+    select.innerHTML += `<option value="${e.id}">${e.nome_profissional}</option>`
+  })
 }
 
 async function upload(){
@@ -161,6 +156,7 @@ async function upload(){
 
   const fileName = Date.now() + "_" + file.name
 
+  // upload storage
   const { error: uploadError } = await client.storage
     .from("documentos")
     .upload(fileName, file)
@@ -170,46 +166,67 @@ async function upload(){
     return
   }
 
+  // url pública
   const { data: urlData } = client.storage
     .from("documentos")
     .getPublicUrl(fileName)
 
-  await client.from("documentos").insert({
+  // salvar banco
+  const { error } = await client.from("documentos").insert({
     equipe_id: equipeId,
     tipo: tipo,
     nome_arquivo: file.name,
     url: urlData.publicUrl
   })
 
+  if(error){
+    alert(error.message)
+    return
+  }
+
   carregarLista()
 
+  // limpar
   document.getElementById("arquivo").value = ""
+  document.getElementById("equipe").value = ""
+  document.getElementById("tipo").value = "RG"
 }
 
 async function carregarLista(){
 
-  const { data } = await client
+  const { data, error } = await client
     .from("documentos")
-    .select("*, equipe(nome)")
+    .select("*")
     .order("created_at", { ascending: false })
+
+  if(error){
+    console.error(error)
+    return
+  }
 
   const tbody = document.getElementById("lista")
   tbody.innerHTML = ""
 
-  data.forEach(d=>{
+  for (const d of data){
+
+    // busca nome do terapeuta
+    const { data: func } = await client
+      .from("terapeutas")
+      .select("nome_profissional")
+      .eq("id", d.equipe_id)
+      .single()
+
     tbody.innerHTML += `
     <tr>
-      <td>${d.equipe?.nome || "-"}</td>
+      <td>${func?.nome_profissional || "-"}</td>
       <td>${d.tipo}</td>
       <td><a class="link" href="${d.url}" target="_blank">Abrir</a></td>
       <td>${new Date(d.created_at).toLocaleDateString()}</td>
     </tr>`
-  })
+  }
 }
 
-/* 🚀 GARANTE EXECUÇÃO */
 window.onload = () => {
-  console.log("✅ página carregada")
   carregarEquipe()
   carregarLista()
 }

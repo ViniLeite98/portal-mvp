@@ -154,11 +154,6 @@ width:350px;
 </div>
 
 <div class="field">
-<label>Cliente</label>
-<select id="filtroCliente"></select>
-</div>
-
-<div class="field">
 <label>Serviço</label>
 <select id="filtroServico"></select>
 </div>
@@ -313,14 +308,27 @@ ajax:{
 delay:300,
 transport: async function(params, success, failure){
 
-const busca=params.data.q||""
+const busca = params.data.q || ""
 
-const {data,error}=await client
-.from("clientes")
-.select("id,nome,telefone_1")
-.or(`nome.ilike.%${busca}%,telefone_1.ilike.%${busca}%`)
-.order("nome")
-.limit(20)
+// separa texto e número
+const texto = busca.replace(/[0-9]/g, "").trim()
+const numero = busca.replace(/\D/g, "")
+
+let query = client
+  .from("clientes")
+  .select("id,nome,telefone_1")
+
+if (texto && numero) {
+  query = query.or(`nome.ilike.%${texto}%,telefone_1.ilike.%${numero}%`)
+} else if (texto) {
+  query = query.ilike("nome", `%${texto}%`)
+} else if (numero) {
+  query = query.ilike("telefone_1", `%${numero}%`)
+}
+
+const { data, error } = await query
+  .order("nome")
+  .limit(20)
 
 if(error){failure(error);return}
 

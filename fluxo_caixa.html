@@ -92,7 +92,6 @@ width:350px;
 
 <h1>Fluxo de Caixa</h1>
 
-<!-- CADASTRO -->
 <div class="form-box">
 
 <div class="field">
@@ -142,7 +141,6 @@ width:350px;
 
 </div>
 
-<!-- FILTROS -->
 <div class="form-box">
 
 <div class="field">
@@ -171,7 +169,6 @@ width:350px;
 
 </div>
 
-<!-- TABELA -->
 <table>
 <thead>
 <tr>
@@ -191,7 +188,6 @@ width:350px;
 </main>
 </div>
 
-<!-- MODAL -->
 <div id="modalEditar" class="modal">
 <div class="modal-box">
 
@@ -279,9 +275,8 @@ if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
 return s.grupo
 }
 
-// 🔥 SELECT2 COM BUSCA FUNCIONANDO
+// SELECT2 SOMENTE NO CLIENTE (leve)
 function ativarSelect2(){
-
 $('#cliente').select2({
   placeholder:"Buscar cliente...",
   width:'180px',
@@ -292,16 +287,14 @@ $('#cliente').select2({
     return texto.includes(termo) ? data : null
   }
 })
-
-$('#servico').select2({placeholder:"Buscar serviço...", width:'200px'})
-$('#filtroCliente').select2({placeholder:"Todos", width:'180px'})
-$('#filtroServico').select2({placeholder:"Todos", width:'200px'})
-
 }
 
 async function carregarSelects(){
 
-const {data:clientes}=await client.from("clientes").select("*")
+const {data:clientes}=await client
+.from("clientes")
+.select("id,nome,telefone_1")
+
 dadosClientes=clientes||[]
 
 cliente.innerHTML="<option value=''>Selecione</option>"
@@ -321,7 +314,10 @@ ${nomeCliente(c)} ${tel ? '('+tel+')' : ''}
 </option>`
 })
 
-const {data:servicos}=await client.from("servicos").select("*")
+const {data:servicos}=await client
+.from("servicos")
+.select("id,grupo,subgrupo,tempo,valor")
+
 dadosServicos=servicos||[]
 
 servico.innerHTML="<option value=''>Selecione</option>"
@@ -348,15 +344,19 @@ async function carregarLista(){
 
 const {data}=await client
 .from("fluxo_caixa")
-.select(`*,clientes(nome,telefone_1),servicos(grupo,subgrupo,tempo,valor)`)
+.select(`
+id,data,valor,desconto,valor_final,origem_lead,
+cliente_id,servico_id,
+clientes(nome,telefone_1),
+servicos(grupo,subgrupo,tempo)
+`)
 .order("data",{ascending:false})
-.limit(300)
+.limit(200)
 
 dados=data||[]
 render(dados)
 }
 
-// 🔥 PERFORMANCE FIX
 function render(lista){
 
 listaAtual=lista

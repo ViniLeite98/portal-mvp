@@ -275,16 +275,26 @@ if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
 return s.grupo
 }
 
-// SELECT2 SOMENTE NO CLIENTE (leve)
+// 🔥 SELECT2 CORRIGIDO (BUSCA INTELIGENTE)
 function ativarSelect2(){
 $('#cliente').select2({
   placeholder:"Buscar cliente...",
   width:'180px',
+  minimumInputLength: 1,
   matcher: function(params, data) {
+
     if ($.trim(params.term) === '') return data
-    const termo = params.term.toLowerCase()
-    const texto = (data.text || "").toLowerCase()
-    return texto.includes(termo) ? data : null
+
+    function normalize(text){
+      return text.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+    }
+
+    const termo = normalize(params.term)
+    const texto = normalize(data.text || "")
+
+    return texto.indexOf(termo) > -1 ? data : null
   }
 })
 }
@@ -347,7 +357,7 @@ const {data}=await client
 .select(`
 id,data,valor,desconto,valor_final,origem_lead,
 cliente_id,servico_id,
-clientes(nome,telefone_1),
+clientes(nome),
 servicos(grupo,subgrupo,tempo)
 `)
 .order("data",{ascending:false})

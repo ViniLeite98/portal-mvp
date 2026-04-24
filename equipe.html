@@ -533,9 +533,9 @@ function setForm(data){
 }
 
 /* ── TABELA PRINCIPAL ── */
-const POR_PAGINA = 8;
-let todosRegistros = [];
-let paginaAtual = 1;
+const EQUIPE_EQUIPE_POR_PAGINA = 8;
+let equipeRegistros = [];
+let equipePagina = 1;
 
 function fmtCPFDisplay(v){
   v = (v||"").replace(/\D/g,"");
@@ -550,8 +550,8 @@ async function carregar(){
   if(statusFiltro) query = query.eq("status", statusFiltro);
   const {data, error} = await query;
   if(error){ console.error(error); return; }
-  todosRegistros = data || [];
-  paginaAtual = 1;
+  equipeRegistros = data || [];
+  equipePagina = 1;
   aplicarFiltros();
 }
 
@@ -559,7 +559,7 @@ function aplicarFiltros(){
   const nomeFiltro  = (document.getElementById("pesquisaNome").value||"").toLowerCase();
   const cargoFiltro = (document.getElementById("filtroCargo").value||"");
 
-  const filtrados = todosRegistros.filter(t => {
+  const filtrados = equipeRegistros.filter(t => {
     const nomeOk  = (t.nome_profissional||"").toLowerCase().includes(nomeFiltro);
     const cargoOk = !cargoFiltro || t.cargo === cargoFiltro;
     return nomeOk && cargoOk;
@@ -570,9 +570,9 @@ function aplicarFiltros(){
 
 function renderTabela(lista){
   const total   = lista.length;
-  const inicio  = (paginaAtual - 1) * POR_PAGINA;
-  const pagina  = lista.slice(inicio, inicio + POR_PAGINA);
-  const totalPag = Math.ceil(total / POR_PAGINA);
+  const inicio  = (equipePagina - 1) * EQUIPE_POR_PAGINA;
+  const pagina  = lista.slice(inicio, inicio + EQUIPE_POR_PAGINA);
+  const totalPag = Math.ceil(total / EQUIPE_POR_PAGINA);
 
   document.getElementById("listaCount").textContent =
     total === 0 ? "Nenhum resultado" : `${total} profissional${total > 1 ? "is" : ""}`;
@@ -609,22 +609,22 @@ function renderTabela(lista){
 
   const btnPrev = document.createElement("button");
   btnPrev.innerHTML = '<i class="fa fa-chevron-left"></i>';
-  btnPrev.disabled = paginaAtual === 1;
-  btnPrev.onclick = () => { paginaAtual--; aplicarFiltros(); };
+  btnPrev.disabled = equipePagina === 1;
+  btnPrev.onclick = () => { equipePagina--; aplicarFiltros(); };
   pag.appendChild(btnPrev);
 
   for(let i=1; i<=totalPag; i++){
     const btn = document.createElement("button");
     btn.textContent = i;
-    if(i === paginaAtual) btn.classList.add("active");
-    btn.onclick = () => { paginaAtual = i; aplicarFiltros(); };
+    if(i === equipePagina) btn.classList.add("active");
+    btn.onclick = () => { equipePagina = i; aplicarFiltros(); };
     pag.appendChild(btn);
   }
 
   const btnNext = document.createElement("button");
   btnNext.innerHTML = '<i class="fa fa-chevron-right"></i>';
-  btnNext.disabled = paginaAtual === totalPag;
-  btnNext.onclick = () => { paginaAtual++; aplicarFiltros(); };
+  btnNext.disabled = equipePagina === totalPag;
+  btnNext.onclick = () => { equipePagina++; aplicarFiltros(); };
   pag.appendChild(btnNext);
 }
 

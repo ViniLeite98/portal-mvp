@@ -510,6 +510,9 @@ async function excluir(cpf){
     await supabaseClient.from("documentos").delete().eq("equipe_id", cpf);
   }
 
+  // remover vínculos em solicitacoes
+  await supabaseClient.from("solicitacoes").delete().eq("terapeuta_cpf", cpf);
+
   const {error} = await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
 

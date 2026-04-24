@@ -2,12 +2,11 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Clientes | Hara Spa</title>
+<title>Gestão da Equipe | Hara Spa</title>
 
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -15,255 +14,682 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.left-tools input{padding:8px;border:1px solid #d1d5db;border-radius:6px;width:260px;}
+
+/* ── TABELA PRINCIPAL ── */
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
 th{background:#f9fafb;font-weight:600;}
 button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
-button.excluir{background:#dc2626;}
-.top-actions{display:flex;gap:10px;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;z-index:10;}
-.modal-content{background:#fff;width:900px;max-height:90vh;overflow:auto;border-radius:16px;padding:24px;}
-.section{margin-bottom:20px;}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-label{font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;display:block;}
-input,textarea{padding:8px;border-radius:6px;border:1px solid #d1d5db;width:100%;}
-.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;}
+button.excluir{background:#dc2626}
+.top-actions{display:flex;justify-content:flex-end;gap:12px;margin-bottom:16px;}
+.top-actions input,.top-actions select{padding:8px;border-radius:6px;border:1px solid #d1d5db;font-size:14px;}
+
+/* ── MODAL ── */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:flex-start;justify-content:center;
+  z-index:10;padding:30px 20px;overflow-y:auto;
+}
+.modal-content{
+  background:#fff;width:860px;max-width:100%;
+  border-radius:18px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+
+/* ── HEADER ── */
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 28px 0;
+}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{
+  background:none;color:#6b7280;font-size:20px;
+  border:none;cursor:pointer;padding:4px 8px;border-radius:6px;
+}
+.btn-fechar:hover{background:#f3f4f6;color:#111827;}
+
+/* ── BODY: sidenav + panels ── */
+.modal-body{display:flex;min-height:480px;}
+
+.side-nav{
+  width:190px;flex-shrink:0;
+  background:#f9fafb;border-right:1px solid #e5e7eb;
+  padding:16px 0;display:flex;flex-direction:column;gap:2px;
+}
+.side-btn{
+  display:flex;align-items:center;gap:10px;
+  background:none;color:#6b7280;border:none;border-radius:0;
+  padding:11px 20px;font-size:13px;font-weight:500;
+  cursor:pointer;text-align:left;width:100%;
+  border-left:3px solid transparent;transition:all .15s;
+}
+.side-btn i{width:16px;text-align:center;font-size:13px;}
+.side-btn:hover{background:#f3f4f6;color:#111827;}
+.side-btn.active{background:#eff6ff;color:#1d4ed8;border-left-color:#2563eb;font-weight:600;}
+.tab-badge{
+  margin-left:auto;background:#2563eb;color:#fff;
+  font-size:10px;border-radius:99px;padding:1px 6px;font-weight:700;
+}
+
+.tab-panels{flex:1;overflow-y:auto;}
+.tab-panel{display:none;padding:24px 28px;}
+.tab-panel.active{display:block;}
+
+/* ── FORM ── */
+.section-title{
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:#9ca3af;margin:0 0 18px;
+  display:flex;align-items:center;gap:7px;
+}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px;}
+.field{display:flex;flex-direction:column;}
+.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
+input,select{
+  padding:9px 11px;border-radius:8px;
+  border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
+}
+input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.span2{grid-column:span 2;}
+.span3{grid-column:span 3;}
+
+/* ── FOOTER ── */
+.modal-footer{
+  display:flex;justify-content:flex-end;gap:10px;
+  padding:14px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;
+}
+.modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.btn-cancel:hover{background:#f3f4f6;}
+.btn-save{background:#1f2937;}
+.btn-save:hover{background:#111827;}
+
+/* ── DOCUMENTOS ── */
+.doc-upload-box{
+  background:#f9fafb;border:2px dashed #d1d5db;
+  border-radius:12px;padding:18px;margin-bottom:20px;
+}
+.doc-upload-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
+.doc-upload-row .field{flex:1;min-width:140px;}
+.btn-upload{
+  height:38px;padding:0 16px;white-space:nowrap;
+  background:#2563eb;font-size:13px;align-self:flex-end;border-radius:6px;
+}
+.upload-status{font-size:13px;color:#2563eb;margin-top:8px;display:none;}
+.doc-list{display:flex;flex-direction:column;gap:8px;}
+.doc-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px 14px;
+}
+.doc-item-left{display:flex;align-items:center;gap:11px;}
+.doc-icon{
+  width:36px;height:36px;background:#eff6ff;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:#2563eb;font-size:15px;flex-shrink:0;
+}
+.doc-name{font-size:13px;font-weight:600;color:#1f2937;}
+.doc-tipo{font-size:11px;color:#6b7280;margin-top:2px;}
+.doc-item-right{display:flex;gap:8px;align-items:center;}
+.doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
+.btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
+.doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
 </style>
 </head>
 
 <body>
-
 <div class="app">
 <aside id="sidebar"></aside>
 
 <main class="content">
-
-<h1>Clientes</h1>
-<p>Clientes cadastrados</p>
-
-<div class="topbar">
-<div class="left-tools">
-<input id="buscaCliente" placeholder="Buscar cliente..." oninput="filtrarTabela()">
-</div>
+<h1>Gestão da Equipe</h1>
 
 <div class="top-actions">
-<button onclick="abrirNovo()">+ Novo Cliente</button>
-</div>
+  <input type="text" id="pesquisaNome" placeholder="Pesquisar profissional..." onkeyup="filtrarTabela()">
+  <select id="filtroStatus">
+    <option value="">Todos</option>
+    <option value="Ativo">Ativo</option>
+    <option value="Inativo">Inativo</option>
+  </select>
+  <button onclick="abrirNovo()">+ Novo Cadastro</button>
 </div>
 
 <table>
-<thead>
-<tr>
-<th>Nome</th>
-<th>Telefone</th>
-<th>Email</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
+  <thead>
+    <tr><th>Nome Profissional</th><th>Cargo</th><th>CPF</th><th>Status</th><th>Ações</th></tr>
+  </thead>
+  <tbody id="lista"></tbody>
 </table>
-
 </main>
 </div>
 
-<!-- MODAL -->
+<!-- ══════════════════════════ MODAL ══════════════════════════ -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<div class="section">
-<h3>Dados do Cliente</h3>
+  <div class="modal-header">
+    <h2 id="modalTitulo">Novo Cadastro</h2>
+    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+  </div>
 
-<div class="grid">
-<div><label>Nome *</label><input id="nome"></div>
-<div><label>CPF/CNPJ</label><input id="cpf_cnpj"></div>
-<div><label>Telefone 1 *</label><input id="telefone_1"></div>
-<div><label>Telefone 2</label><input id="telefone_2"></div>
-<div><label>Data de Nascimento</label><input type="date" id="dt_nasc"></div>
-<div><label>Email</label><input id="email"></div>
-<div><label>Nacionalidade</label><input id="nacionalidade"></div>
-<div><label>Endereço</label><input id="endereco"></div>
+  <div class="modal-body">
+
+    <!-- Sidenav -->
+    <nav class="side-nav">
+      <button class="side-btn active" onclick="mudarTab('pessoais',this)">
+        <i class="fa fa-id-card"></i> Dados Pessoais
+      </button>
+      <button class="side-btn" onclick="mudarTab('contatos',this)">
+        <i class="fa fa-phone"></i> Contatos
+      </button>
+      <button class="side-btn" onclick="mudarTab('endereco',this)">
+        <i class="fa fa-map-marker-alt"></i> Endereço
+      </button>
+      <button class="side-btn" onclick="mudarTab('pagamento',this)">
+        <i class="fa fa-dollar-sign"></i> Pagamento
+      </button>
+      <button class="side-btn" onclick="mudarTab('funcional',this)">
+        <i class="fa fa-briefcase"></i> Dados Funcionais
+      </button>
+      <button class="side-btn" id="tabDocsBtn" style="display:none" onclick="mudarTab('docs',this)">
+        <i class="fa fa-file-alt"></i> Documentos
+        <span class="tab-badge" id="docBadge" style="display:none">0</span>
+      </button>
+    </nav>
+
+    <!-- Panels -->
+    <div class="tab-panels">
+
+      <!-- Dados Pessoais -->
+      <div class="tab-panel active" id="tab-pessoais">
+        <p class="section-title"><i class="fa fa-id-card"></i> Dados Pessoais</p>
+        <div class="grid">
+          <div class="field span2"><label>Nome Completo *</label><input id="nome_completo"></div>
+          <div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
+          <div class="field"><label>CPF *</label><input id="cpf" placeholder="000.000.000-00"></div>
+          <div class="field"><label>RG</label><input id="rg"></div>
+          <div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
+          <div class="field"><label>Email *</label><input id="email" type="email"></div>
+          <div class="field">
+            <label>Tipo Sanguíneo</label>
+            <select id="tipo_sanguineo">
+              <option value="">Selecione</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+              <option>O+</option><option>O-</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contatos -->
+      <div class="tab-panel" id="tab-contatos">
+        <p class="section-title"><i class="fa fa-phone"></i> Contatos</p>
+        <div class="grid-2">
+          <div class="field"><label>Telefone *</label><input id="telefone" placeholder="(11) 99999-9999"></div>
+          <div class="field"><label>Contato de Emergência</label><input id="telefone_emergencia" placeholder="(11) 99999-9999"></div>
+        </div>
+      </div>
+
+      <!-- Endereço -->
+      <div class="tab-panel" id="tab-endereco">
+        <p class="section-title"><i class="fa fa-map-marker-alt"></i> Endereço</p>
+        <div class="grid">
+          <div class="field"><label>CEP</label><input id="cep" placeholder="00000-000"></div>
+          <div class="field span2"><label>Rua</label><input id="rua"></div>
+          <div class="field"><label>Número</label><input id="numero"></div>
+          <div class="field"><label>Complemento</label><input id="complemento"></div>
+          <div class="field"><label>Bairro</label><input id="bairro"></div>
+          <div class="field span2"><label>Cidade</label><input id="cidade"></div>
+          <div class="field"><label>UF</label><input id="uf" maxlength="2" style="text-transform:uppercase"></div>
+        </div>
+      </div>
+
+      <!-- Pagamento -->
+      <div class="tab-panel" id="tab-pagamento">
+        <p class="section-title"><i class="fa fa-dollar-sign"></i> Pagamento via PIX</p>
+        <div class="grid-2">
+          <div class="field">
+            <label>Tipo de Chave PIX</label>
+            <select id="pix_tipo">
+              <option value="">Selecione</option>
+              <option>CPF</option><option>Email</option>
+              <option>Telefone</option><option>Aleatória</option>
+            </select>
+          </div>
+          <div class="field"><label>Chave PIX</label><input id="pix_chave"></div>
+        </div>
+      </div>
+
+      <!-- Dados Funcionais -->
+      <div class="tab-panel" id="tab-funcional">
+        <p class="section-title"><i class="fa fa-briefcase"></i> Dados Funcionais</p>
+        <div class="grid">
+          <div class="field">
+            <label>Cargo</label>
+            <select id="cargo">
+              <option value="">Selecione</option>
+              <option>Terapeuta Feminina</option><option>Terapeuta Masculino</option>
+              <option>Gerente</option><option>Atendente</option>
+              <option>Recepcionista</option><option>Faxineira</option><option>Analista</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="status" onchange="aoMudarStatus(this)">
+              <option value="">Selecione</option>
+              <option>Ativo</option><option>Inativo</option>
+            </select>
+          </div>
+          <div class="field" id="campo_data_inativacao" style="display:none">
+            <label>Data de Inativação</label>
+            <input type="date" id="data_inativacao">
+          </div>
+          <div class="field"><label>Data de Início no Hara</label><input type="date" id="data_inicio"></div>
+          <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
+          <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
+          <div class="field">
+            <label>Tem folga semanal?</label>
+            <select id="tem_folga">
+              <option value="">Selecione</option><option>Sim</option><option>Não</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Dia da Folga</label>
+            <select id="dia_folga">
+              <option value="">Selecione</option>
+              <option>Segunda</option><option>Terça</option><option>Quarta</option>
+              <option>Quinta</option><option>Sexta</option><option>Sábado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documentos -->
+      <div class="tab-panel" id="tab-docs">
+        <p class="section-title"><i class="fa fa-file-alt"></i> Documentos Anexados</p>
+        <div class="doc-upload-box">
+          <div class="doc-upload-row">
+            <div class="field">
+              <label>Tipo</label>
+              <select id="doc_tipo">
+                <option>RG</option><option>CPF</option>
+                <option>Comprovante de Residência</option><option>Contrato</option>
+                <option>Certidão de Nascimento</option><option>Diploma / Certificado</option>
+                <option>Outro</option>
+              </select>
+            </div>
+            <div class="field" style="flex:2">
+              <label>Arquivo</label>
+              <input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx">
+            </div>
+            <button class="btn-upload" onclick="uploadDoc()">
+              <i class="fa fa-upload"></i> Enviar
+            </button>
+          </div>
+          <div class="upload-status" id="uploadStatus">
+            <i class="fa fa-spinner fa-spin"></i> Enviando...
+          </div>
+        </div>
+        <div id="docLista" class="doc-list">
+          <div class="doc-empty">Nenhum documento anexado.</div>
+        </div>
+      </div>
+
+    </div><!-- /tab-panels -->
+  </div><!-- /modal-body -->
+
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+    <button class="btn-save" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
+
 </div>
 </div>
 
-<div class="section">
-<label>Observação</label>
-<textarea id="observacao"></textarea>
-</div>
-
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
-<button onclick="salvar()">Salvar</button>
-</div>
-
-</div>
-</div>
-
-<!-- 🔥 ORDEM CORRETA -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
-
 <script>
 
-const modal = document.getElementById("modal");
-let idAtual=null;
+const supabaseClient = supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
 
-/* LOAD */
+let cpfAtual = null;
+
+const campos = [
+  "nome_completo","nome_profissional","cpf","rg","nascimento","email",
+  "tipo_sanguineo","telefone","telefone_emergencia","cep","rua","numero",
+  "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
+  "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
+];
+
+/* ── MÁSCARAS ── */
+function mascara(id, fn){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', function(){
+    const pos = this.selectionStart;
+    const prev = this.value;
+    this.value = fn(this.value);
+    if(this.value.length === prev.length) this.setSelectionRange(pos, pos);
+  });
+}
+
+function fmtCPF(v){
+  v = v.replace(/\D/g,'').substring(0,11);
+  if(v.length <= 3) return v;
+  if(v.length <= 6) return v.slice(0,3)+'.'+v.slice(3);
+  if(v.length <= 9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
+  return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
+}
+
+function fmtRG(v){
+  v = v.replace(/\D/g,'').substring(0,9);
+  if(v.length <= 2) return v;
+  if(v.length <= 5) return v.slice(0,2)+'.'+v.slice(2);
+  if(v.length <= 8) return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);
+  return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8);
+}
+
+function fmtTel(v){
+  v = v.replace(/\D/g,'').substring(0,11);
+  if(v.length <= 2) return v.length ? '('+v : v;
+  if(v.length <= 6) return '('+v.slice(0,2)+') '+v.slice(2);
+  if(v.length <= 10) return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);
+  return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
+}
+
+function fmtCEP(v){
+  v = v.replace(/\D/g,'').substring(0,8);
+  if(v.length <= 5) return v;
+  return v.slice(0,5)+'-'+v.slice(5);
+}
+
+function fmtCPFDisplay(v){
+  v = (v||"").replace(/\D/g,"");
+  if(v.length !== 11) return v;
+  return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);
+}
+
+function aplicarMascaras(){
+  mascara('cpf', fmtCPF);
+  mascara('rg',  fmtRG);
+  mascara('telefone', fmtTel);
+  mascara('telefone_emergencia', fmtTel);
+  mascara('cep', fmtCEP);
+  const uf = document.getElementById('uf');
+  if(uf) uf.addEventListener('input', function(){
+    this.value = this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2);
+  });
+}
+
+/* ── TABS ── */
+function mudarTab(tab, btn){
+  document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".side-btn").forEach(el => el.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+  btn.classList.add("active");
+}
+
+/* ── FORM HELPERS ── */
+function getPayload(){
+  const obj = {};
+  campos.forEach(c => {
+    const el = document.getElementById(c);
+    if(el && el.value !== "") obj[c] = el.value;
+  });
+  return obj;
+}
+
+function setForm(data){
+  campos.forEach(c => {
+    const el = document.getElementById(c);
+    if(!el) return;
+    if(c === "hora_entrada" || c === "hora_saida"){
+      el.value = data[c] ? data[c].substring(0,5) : "";
+    } else {
+      el.value = data[c] || "";
+    }
+  });
+  const campo = document.getElementById("campo_data_inativacao");
+  if(campo) campo.style.display = data.status === "Inativo" ? "" : "none";
+
+  ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el && el.value) el.dispatchEvent(new Event('input'));
+  });
+}
+
+/* ── TABELA PRINCIPAL ── */
 async function carregar(){
-const {data,error}=await client
-.from("clientes")
-.select("*")
-.order("nome")
-.limit(50);
+  const statusFiltro = document.getElementById("filtroStatus").value;
+  let query = supabaseClient.from("terapeutas")
+    .select("cpf,nome_profissional,status,cargo").order("nome_profissional");
+  if(statusFiltro) query = query.eq("status", statusFiltro);
+  const {data, error} = await query;
+  if(error){ console.error(error); return; }
 
-if(error){
-console.error(error);
-return;
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+  data.forEach(t => {
+    tbody.innerHTML += `
+    <tr>
+      <td>${t.nome_profissional||""}</td>
+      <td>${t.cargo||""}</td>
+      <td>${fmtCPFDisplay(t.cpf)}</td>
+      <td>${t.status||""}</td>
+      <td>
+        <button onclick="editar('${t.cpf}')">Editar</button>
+        <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+      </td>
+    </tr>`;
+  });
+  filtrarTabela();
 }
 
-render(data);
+function filtrarTabela(){
+  const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+  document.querySelectorAll("#lista tr").forEach(linha => {
+    linha.style.display = linha.children[0].innerText.toLowerCase().includes(filtro) ? "" : "none";
+  });
 }
 
-/* RENDER */
-function render(lista){
-const tbody=document.getElementById("lista");
-tbody.innerHTML="";
-
-lista.forEach(c=>{
-
-let telefone = (c.telefone_1 || "").replace(/\D/g,'');
-let finalTelefone = telefone.slice(-4);
-
-let nomeFormatado = c.nome;
-if(finalTelefone){
-nomeFormatado = `${c.nome}${finalTelefone}`;
+/* ── MODAL ── */
+function resetModal(){
+  campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
+  document.getElementById("hora_entrada").value = "09:00";
+  document.getElementById("hora_saida").value   = "18:00";
+  mudarTab("pessoais", document.querySelector(".side-btn"));
 }
-
-tbody.innerHTML+=`
-<tr>
-<td>${nomeFormatado}</td>
-<td>${c.telefone_1||""}</td>
-<td>${c.email||""}</td>
-<td>
-<button onclick="editar('${c.id}')">Editar</button>
-<button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
-</td>
-</tr>
-`;
-});
-}
-
-/* BUSCA */
-async function filtrarTabela(){
-
-const termo = document.getElementById("buscaCliente").value.trim();
-
-if(!termo){
-carregar();
-return;
-}
-
-const partes = termo.split(" ");
-let nomeBusca = partes.filter(p => isNaN(p)).join(" ");
-let numeroBusca = partes.join("").replace(/\D/g,'');
-
-let query = client.from("clientes").select("*");
-
-if(nomeBusca){
-query = query.ilike("nome", `%${nomeBusca}%`);
-}
-
-if(numeroBusca.length >= 3){
-query = query.ilike("telefone_1", `%${numeroBusca}%`);
-}
-
-const { data } = await query.limit(50);
-render(data);
-}
-
-/* CRUD */
 
 function abrirNovo(){
-idAtual=null;
-document.querySelectorAll("input, textarea").forEach(i=>i.value="");
-modal.style.display="flex";
+  cpfAtual = null;
+  resetModal();
+  document.getElementById("modalTitulo").textContent = "Novo Cadastro";
+  document.getElementById("tabDocsBtn").style.display = "none";
+  document.getElementById("modal").style.display = "flex";
 }
 
-async function editar(id){
-idAtual=id;
-const {data}=await client.from("clientes").select("*").eq("id",id).single();
+async function editar(cpf){
+  cpfAtual = cpf;
+  const {data, error} = await supabaseClient.from("terapeutas").select("*").eq("cpf", cpf).single();
+  if(error){ console.error(error); return; }
 
-Object.keys(data).forEach(k=>{
-const el=document.getElementById(k);
-if(el) el.value=data[k];
-});
-
-modal.style.display="flex";
-}
-
-async function salvar(){
-
-let payload={};
-
-document.querySelectorAll("input, textarea").forEach(i=>{
-if(i.id && i.value) payload[i.id]=i.value;
-});
-
-if(!payload.nome){
-alert("Nome obrigatório");
-return;
-}
-
-if(!payload.telefone_1){
-alert("Telefone obrigatório");
-return;
-}
-
-payload.telefone_1 = payload.telefone_1.replace(/\D/g,'');
-
-let query = client
-.from("clientes")
-.select("id")
-.eq("nome", payload.nome)
-.eq("telefone_1", payload.telefone_1);
-
-if(idAtual){
-query = query.neq("id", idAtual);
-}
-
-const { data: existente } = await query;
-
-if(existente && existente.length > 0){
-alert("⚠️ Cliente já cadastrado!");
-return;
-}
-
-if(idAtual){
-await client.from("clientes").update(payload).eq("id",idAtual);
-}else{
-await client.from("clientes").insert(payload);
-}
-
-fecharModal();
-carregar();
-}
-
-async function excluir(id){
-if(!confirm("Excluir cliente?")) return;
-
-await client.from("clientes").delete().eq("id",id);
-carregar();
+  resetModal();
+  setForm(data);
+  document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
+  document.getElementById("tabDocsBtn").style.display = "";
+  carregarDocs(cpf);
+  document.getElementById("modal").style.display = "flex";
 }
 
 function fecharModal(){
-modal.style.display="none";
+  document.getElementById("modal").style.display = "none";
 }
 
-carregar();
+/* ── SALVAR ── */
+async function salvar(){
+  const payload = getPayload();
 
+  if(!payload.nome_completo || !payload.nome_profissional || !payload.email){
+    alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");
+    return;
+  }
+
+  let error;
+
+  if(cpfAtual){
+    const novoCpf = payload.cpf;
+    if(novoCpf && novoCpf !== cpfAtual){
+      await supabaseClient.from("terapeutas").delete().eq("cpf", cpfAtual);
+      ({error} = await supabaseClient.from("terapeutas").insert(payload));
+      if(!error) cpfAtual = novoCpf;
+    } else {
+      const updatePayload = {...payload};
+      delete updatePayload.cpf;
+      ({error} = await supabaseClient.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
+    }
+  } else {
+    ({error} = await supabaseClient.from("terapeutas").insert(payload));
+    if(!error){
+      cpfAtual = payload.cpf;
+      document.getElementById("tabDocsBtn").style.display = "";
+      carregarDocs(cpfAtual);
+    }
+  }
+
+  if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
+  carregar();
+  fecharModal();
+}
+
+async function excluir(cpf){
+  if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
+
+  const {data: docs} = await supabaseClient
+    .from("documentos").select("id, url").eq("equipe_id", cpf);
+
+  if(docs && docs.length > 0){
+    const paths = docs
+      .map(d => d.url.split("/storage/v1/object/public/documentos/")[1])
+      .filter(Boolean)
+      .map(p => decodeURIComponent(p));
+    if(paths.length > 0)
+      await supabaseClient.storage.from("documentos").remove(paths);
+    await supabaseClient.from("documentos").delete().eq("equipe_id", cpf);
+  }
+
+  await supabaseClient.from("solicitacoes").delete().eq("terapeuta_cpf", cpf);
+
+  const {error} = await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+
+  carregar();
+}
+
+/* ── DOCUMENTOS ── */
+function limparNome(nome){
+  return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
+}
+
+function iconeDoc(nome){
+  const ext = (nome||"").split(".").pop().toLowerCase();
+  if(["jpg","jpeg","png","gif","webp"].includes(ext)) return "fa-image";
+  if(ext === "pdf") return "fa-file-pdf";
+  if(["doc","docx"].includes(ext)) return "fa-file-word";
+  return "fa-file-alt";
+}
+
+async function carregarDocs(cpf){
+  const {data, error} = await supabaseClient
+    .from("documentos").select("*").eq("equipe_id", cpf).order("created_at",{ascending:false});
+
+  const lista = document.getElementById("docLista");
+  const badge = document.getElementById("docBadge");
+
+  if(error || !data || data.length === 0){
+    lista.innerHTML = `<div class="doc-empty">Nenhum documento anexado.</div>`;
+    badge.style.display = "none";
+    return;
+  }
+
+  badge.textContent = data.length;
+  badge.style.display = "";
+
+  lista.innerHTML = data.map(d => `
+    <div class="doc-item" id="doc-${d.id}">
+      <div class="doc-item-left">
+        <div class="doc-icon"><i class="fa ${iconeDoc(d.nome_arquivo)}"></i></div>
+        <div>
+          <div class="doc-name">${d.nome_arquivo}</div>
+          <div class="doc-tipo">${d.tipo} · ${new Date(d.created_at).toLocaleDateString('pt-BR')}</div>
+        </div>
+      </div>
+      <div class="doc-item-right">
+        <a href="${d.url}" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a>
+        <button class="btn-del" onclick="excluirDoc('${d.id}','${d.url}')" title="Excluir">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function uploadDoc(){
+  if(!cpfAtual){ alert("Salve o cadastro antes de anexar documentos."); return; }
+  const tipo = document.getElementById("doc_tipo").value;
+  const file = document.getElementById("doc_arquivo").files[0];
+  if(!file){ alert("Selecione um arquivo."); return; }
+
+  const statusEl = document.getElementById("uploadStatus");
+  statusEl.style.display = "block";
+
+  const fileName = `${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
+  const {error: uploadError} = await supabaseClient.storage.from("documentos").upload(fileName, file);
+
+  if(uploadError){ statusEl.style.display = "none"; alert("Erro no upload: " + uploadError.message); return; }
+
+  const {data: urlData} = supabaseClient.storage.from("documentos").getPublicUrl(fileName);
+  const {error} = await supabaseClient.from("documentos").insert({
+    equipe_id: cpfAtual, tipo, nome_arquivo: file.name, url: urlData.publicUrl
+  });
+
+  statusEl.style.display = "none";
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
+  document.getElementById("doc_arquivo").value = "";
+  carregarDocs(cpfAtual);
+}
+
+async function excluirDoc(id, url){
+  if(!confirm("Excluir este documento?")) return;
+  const path = url.split("/storage/v1/object/public/documentos/")[1];
+  if(path) await supabaseClient.storage.from("documentos").remove([decodeURIComponent(path)]);
+  await supabaseClient.from("documentos").delete().eq("id", id);
+  const el = document.getElementById("doc-" + id);
+  if(el) el.remove();
+  carregarDocs(cpfAtual);
+}
+
+/* ── STATUS / INATIVACAO ── */
+function aoMudarStatus(select){
+  const campo = document.getElementById("campo_data_inativacao");
+  const input = document.getElementById("data_inativacao");
+  if(select.value === "Inativo"){
+    campo.style.display = "";
+    if(!input.value) input.value = new Date().toISOString().split("T")[0];
+  } else {
+    campo.style.display = "none";
+    input.value = "";
+  }
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  aplicarMascaras();
+  document.getElementById("filtroStatus").addEventListener("change", carregar);
+  carregar();
+});
 </script>
-
 </body>
 </html>

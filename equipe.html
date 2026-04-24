@@ -364,7 +364,6 @@ const campos = [
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
 ];
 
-
 /* ── MÁSCARAS ── */
 function mascara(id, fn){
   const el = document.getElementById(id);
@@ -373,7 +372,6 @@ function mascara(id, fn){
     const pos = this.selectionStart;
     const prev = this.value;
     this.value = fn(this.value);
-    // reposicionar cursor se o tamanho não mudou
     if(this.value.length === prev.length) this.setSelectionRange(pos, pos);
   });
 }
@@ -408,18 +406,23 @@ function fmtCEP(v){
   return v.slice(0,5)+'-'+v.slice(5);
 }
 
-function aplicarMascaras(){
-  mascara('cpf',    fmtCPF);
-  mascara('rg',     fmtRG);
-  mascara('telefone',    fmtTel);
-  mascara('telefone_emergencia', fmtTel);
-  mascara('cep',    fmtCEP);
-  // UF: só letras maiúsculas
-  const uf = document.getElementById('uf');
-  if(uf) uf.addEventListener('input', function(){ this.value = this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2); });
+function fmtCPFDisplay(v){
+  v = (v||"").replace(/\D/g,"");
+  if(v.length !== 11) return v;
+  return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);
 }
 
-aplicarMascaras();
+function aplicarMascaras(){
+  mascara('cpf', fmtCPF);
+  mascara('rg',  fmtRG);
+  mascara('telefone', fmtTel);
+  mascara('telefone_emergencia', fmtTel);
+  mascara('cep', fmtCEP);
+  const uf = document.getElementById('uf');
+  if(uf) uf.addEventListener('input', function(){
+    this.value = this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2);
+  });
+}
 
 /* ── TABS ── */
 function mudarTab(tab, btn){
@@ -449,11 +452,9 @@ function setForm(data){
       el.value = data[c] || "";
     }
   });
-  // mostrar/ocultar campo de inativacao conforme status
   const campo = document.getElementById("campo_data_inativacao");
   if(campo) campo.style.display = data.status === "Inativo" ? "" : "none";
 
-  // re-aplicar mascaras nos dados carregados
   ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id => {
     const el = document.getElementById(id);
     if(el && el.value) el.dispatchEvent(new Event('input'));
@@ -476,7 +477,7 @@ async function carregar(){
     <tr>
       <td>${t.nome_profissional||""}</td>
       <td>${t.cargo||""}</td>
-      <td>${t.cpf||""}</td>
+      <td>${fmtCPFDisplay(t.cpf)}</td>
       <td>${t.status||""}</td>
       <td>
         <button onclick="editar('${t.cpf}')">Editar</button>
@@ -541,7 +542,6 @@ async function salvar(){
   if(cpfAtual){
     const novoCpf = payload.cpf;
     if(novoCpf && novoCpf !== cpfAtual){
-      // CPF alterado: exclui o antigo e insere novo
       await supabaseClient.from("terapeutas").delete().eq("cpf", cpfAtual);
       ({error} = await supabaseClient.from("terapeutas").insert(payload));
       if(!error) cpfAtual = novoCpf;
@@ -580,7 +580,6 @@ async function excluir(cpf){
     await supabaseClient.from("documentos").delete().eq("equipe_id", cpf);
   }
 
-  // remover vínculos em solicitacoes
   await supabaseClient.from("solicitacoes").delete().eq("terapeuta_cpf", cpf);
 
   const {error} = await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
@@ -678,7 +677,6 @@ function aoMudarStatus(select){
   const input = document.getElementById("data_inativacao");
   if(select.value === "Inativo"){
     campo.style.display = "";
-    // preenche com hoje se estiver vazio
     if(!input.value) input.value = new Date().toISOString().split("T")[0];
   } else {
     campo.style.display = "none";
@@ -687,8 +685,11 @@ function aoMudarStatus(select){
 }
 
 /* ── INIT ── */
-document.getElementById("filtroStatus").addEventListener("change", carregar);
-carregar();
+document.addEventListener('DOMContentLoaded', () => {
+  aplicarMascaras();
+  document.getElementById("filtroStatus").addEventListener("change", carregar);
+  carregar();
+});
 </script>
 </body>
 </html>

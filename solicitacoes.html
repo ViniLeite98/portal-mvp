@@ -403,6 +403,27 @@ window.salvar = async function(){
   if(!dataInicio || !dataFim){ alert("Preencha as datas."); return; }
   if(dataFim < dataInicio){ alert("Data fim não pode ser menor que data início."); return; }
 
+  // verificar sobreposição de período
+  let query = supabaseClient
+    .from("solicitacoes")
+    .select("id, tipo, data_inicio, data_fim, status")
+    .eq("terapeuta_cpf", terapeuta)
+    .neq("status", "Reprovado")
+    .lte("data_inicio", dataFim)
+    .gte("data_fim",    dataInicio);
+
+  if(idEdicao) query = query.neq("id", idEdicao);
+
+  const {data: conflitos} = await query;
+
+  if(conflitos && conflitos.length > 0){
+    const c = conflitos[0];
+    const de = fmtData(c.data_inicio);
+    const ate = fmtData(c.data_fim);
+    alert(`⚠️ Já existe uma solicitação de "${c.tipo}" para este profissional no período ${de} → ${ate} (${c.status}).\nRevise as datas antes de continuar.`);
+    return;
+  }
+
   const payload = {
     terapeuta_cpf: terapeuta,
     tipo, status,

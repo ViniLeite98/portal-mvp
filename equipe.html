@@ -7,6 +7,7 @@ const supabaseClient = supabase.createClient(
 
 let cpfAtual=null;
 
+// ⚠️ pode manter essa lista (não interfere mais no insert)
 const campos=[
 "nome_completo","nome_profissional","cpf","rg","nascimento","email",
 "tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
@@ -15,14 +16,32 @@ const campos=[
 "hora_entrada","hora_saida","data_inicio","status"
 ];
 
+
+// 🔥 AQUI ESTÁ O AJUSTE QUE VOCÊ PEDIU
 function getPayload(){
+
+const camposPermitidos = [
+"nome_completo",
+"nome_profissional",
+"cpf",
+"telefone",
+"email",
+"cargo",
+"status"
+];
+
 const obj={};
-campos.forEach(c=>{
+
+camposPermitidos.forEach(c=>{
 const el=document.getElementById(c);
-if(el && el.value!=="") obj[c]=el.value;
+if(el && el.value!==""){
+obj[c]=el.value;
+}
 });
+
 return obj;
 }
+
 
 function setForm(data){
 campos.forEach(c=>{
@@ -37,68 +56,21 @@ el.value=data[c]||"";
 });
 }
 
-// 🚀 UPLOAD
-async function uploadDocumento(file, cpf){
 
-if(!file || !cpf) return null;
-
-const nome = `${cpf}_${Date.now()}_${file.name}`;
-
-const { error } = await supabaseClient
-.storage
-.from("documentos")
-.upload(nome, file);
-
-if(error){
-console.error(error);
-alert("Erro ao enviar documento");
-return null;
-}
-
-const { data } = supabaseClient
-.storage
-.from("documentos")
-.getPublicUrl(nome);
-
-return data.publicUrl;
-}
-
-// 📄 LISTAR DOCS
-async function carregarDocumentos(cpf){
-
-const { data, error } = await supabaseClient
-.from("documentos")
-.select("*")
-.eq("cpf", cpf);
-
-const div=document.getElementById("listaDocumentos");
-
-if(error || !data || data.length===0){
-div.innerHTML="Nenhum documento anexado";
-return;
-}
-
-div.innerHTML=data.map(d=>`
-<div style="margin-bottom:5px;">
-📄 ${d.tipo || "Doc"} -
-<a href="${d.url}" target="_blank">Ver</a>
-</div>
-`).join("");
-}
-
-// 🔄 CARREGAR TABELA (COM PROTEÇÃO DE ERRO)
 async function carregar(){
 
-const {data,error}=await supabaseClient
+const statusFiltro = document.getElementById("filtroStatus").value;
+
+let query = supabaseClient
 .from("terapeutas")
 .select("cpf,nome_profissional,status,cargo")
 .order("nome_profissional");
 
-if(error){
-console.error("ERRO:",error);
-alert("Erro ao carregar dados (provável problema na key ou RLS)");
-return;
-}
+if(statusFiltro) query = query.eq("status", statusFiltro);
+
+const {data,error}=await query;
+
+if(error){ console.error(error); return; }
 
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -116,7 +88,23 @@ tbody.innerHTML+=`
 </td>
 </tr>`;
 });
+
+filtrarTabela();
 }
+
+
+function filtrarTabela(){
+
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
+
+linhas.forEach(linha=>{
+const nome = linha.children[0].innerText.toLowerCase();
+
+linha.style.display = nome.includes(filtro) ? "" : "none";
+});
+}
+
 
 function abrirNovo(){
 cpfAtual=null;
@@ -126,12 +114,15 @@ const el=document.getElementById(c);
 if(el) el.value="";
 });
 
-document.getElementById("listaDocumentos").innerHTML="Nenhum documento anexado";
+document.getElementById("hora_entrada").value="09:00";
+document.getElementById("hora_saida").value="18:00";
 
-document.getElementById("cpf").disabled=false;
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = false;
 
 document.getElementById("modal").style.display="flex";
 }
+
 
 async function editar(cpf){
 
@@ -143,20 +134,17 @@ const {data,error}=await supabaseClient
 .eq("cpf",cpf)
 .single();
 
-if(error){
-console.error(error);
-return;
-}
+if(error){console.error(error);return;}
 
 setForm(data);
 
-await carregarDocumentos(cpf);
+const cpfEl = document.getElementById("cpf");
+if(cpfEl) cpfEl.disabled = true;
 
-document.getElementById("cpf").disabled=true;
 document.getElementById("modal").style.display="flex";
 }
 
-// 💾 SALVAR (COM DOCUMENTO)
+
 async function salvar(){
 
 const payload=getPayload();
@@ -169,6 +157,7 @@ return;
 let error;
 
 if(cpfAtual){
+
 delete payload.cpf;
 
 ({error}=await supabaseClient
@@ -190,33 +179,10 @@ alert("Erro ao salvar");
 return;
 }
 
-// 📎 upload documento
-const file=document.getElementById("documento_file").files[0];
-const tipo=document.getElementById("documento_tipo").value;
-
-if(file){
-
-const cpfRef = payload.cpf || cpfAtual;
-
-const url = await uploadDocumento(file, cpfRef);
-
-if(url){
-
-await supabaseClient
-.from("documentos")
-.insert({
-cpf: cpfRef,
-tipo: tipo,
-url: url
-});
-
-}
-
-}
-
 fecharModal();
 carregar();
 }
+
 
 async function excluir(cpf){
 if(!confirm("Excluir registro?"))return;
@@ -229,9 +195,11 @@ await supabaseClient
 carregar();
 }
 
+
 function fecharModal(){
 document.getElementById("modal").style.display="none";
 }
+
 
 document.getElementById("filtroStatus").addEventListener("change", carregar);
 

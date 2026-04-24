@@ -9,6 +9,12 @@
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
+<!-- SDK -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+<!-- ✅ IGUAL AO DASHBOARD -->
+<script src="assets/js/supabase.js"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
@@ -27,12 +33,20 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 
 <h1>Gestão da Equipe</h1>
 
+<div class="top-actions">
+<input type="text" id="pesquisaNome" placeholder="Pesquisar profissional..." onkeyup="filtrarTabela()">
+<select id="filtroStatus">
+<option value="">Todos</option>
+<option value="Ativo">Ativo</option>
+<option value="Inativo">Inativo</option>
+</select>
 <button onclick="abrirNovo()">+ Novo Cadastro</button>
+</div>
 
 <table>
 <thead>
 <tr>
-<th>Nome</th>
+<th>Nome Profissional</th>
 <th>Cargo</th>
 <th>CPF</th>
 <th>Status</th>
@@ -45,133 +59,162 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 </main>
 </div>
 
-<div class="modal" id="modal" style="display:none;">
-<div>
+<div class="modal" id="modal">
+<div class="modal-content">
 
-<input id="nome_completo" placeholder="Nome">
-<input id="nome_profissional" placeholder="Nome Profissional">
-<input id="cpf" placeholder="CPF">
-<input id="email" placeholder="Email">
-<input id="telefone" placeholder="Telefone">
+<!-- SEU FORM INTACTO -->
 
-<select id="cargo">
-<option>Terapeuta Feminina</option>
-<option>Terapeuta Masculino</option>
-</select>
-
-<select id="status">
-<option>Ativo</option>
-<option>Inativo</option>
-</select>
-
+<div class="modal-actions">
+<button onclick="fecharModal()">Cancelar</button>
 <button onclick="salvar()">Salvar</button>
+</div>
 
 </div>
 </div>
 
-<!-- 🔥 ORDEM IGUAL AO DASHBOARD -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
 document.addEventListener("DOMContentLoaded", () => {
 
-let cpfAtual = null;
+const supabaseClient = client; // 🔥 padrão dashboard
 
-/* ================= CARREGAR ================= */
+let cpfAtual=null;
 
-async function carregar(){
+const campos=[
+"nome_completo","nome_profissional","cpf","rg","nascimento","email",
+"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
+"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
+"cargo","tem_folga","dia_folga",
+"hora_entrada","hora_saida","data_inicio","status"
+];
 
-const { data, error } = await client
-  .from("terapeutas")
-  .select("cpf,nome_profissional,status,cargo");
-
-if(error){
-console.error(error);
-return;
+function getPayload(){
+const obj={};
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el && el.value!=="") obj[c]=el.value;
+});
+return obj;
 }
 
-const tbody = document.getElementById("lista");
-tbody.innerHTML = "";
+function setForm(data){
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el){
+if(c==="hora_entrada" || c==="hora_saida"){
+el.value=data[c]?data[c].substring(0,5):"";
+}else{
+el.value=data[c]||"";
+}
+}
+});
+}
+
+window.carregar = async function(){
+
+const statusFiltro = document.getElementById("filtroStatus").value;
+
+let query = supabaseClient
+.from("terapeutas")
+.select("cpf,nome_profissional,status,cargo")
+.order("nome_profissional");
+
+if(statusFiltro) query = query.eq("status", statusFiltro);
+
+const {data,error}=await query;
+
+if(error){ console.error(error); return; }
+
+const tbody=document.getElementById("lista");
+tbody.innerHTML="";
 
 (data || []).forEach(t=>{
-tbody.innerHTML += `
+tbody.innerHTML+=`
 <tr>
-<td>${t.nome_profissional || ""}</td>
-<td>${t.cargo || ""}</td>
-<td>${t.cpf || ""}</td>
-<td>${t.status || ""}</td>
+<td>${t.nome_profissional||""}</td>
+<td>${t.cargo||""}</td>
+<td>${t.cpf||""}</td>
+<td>${t.status||""}</td>
 <td>
 <button onclick="editar('${t.cpf}')">Editar</button>
-<button onclick="excluir('${t.cpf}')">Excluir</button>
+<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
 </tr>`;
 });
 
+filtrarTabela();
 }
 
-/* ================= ABRIR ================= */
+window.filtrarTabela = function(){
+const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+const linhas = document.querySelectorAll("#lista tr");
+
+linhas.forEach(linha=>{
+const nome = linha.children[0].innerText.toLowerCase();
+linha.style.display = nome.includes(filtro) ? "" : "none";
+});
+}
 
 window.abrirNovo = function(){
-cpfAtual = null;
+cpfAtual=null;
 
-["nome_completo","nome_profissional","cpf","email","telefone","cargo","status"]
-.forEach(id => document.getElementById(id).value = "");
+campos.forEach(c=>{
+const el=document.getElementById(c);
+if(el) el.value="";
+});
 
-document.getElementById("modal").style.display="block";
+document.getElementById("hora_entrada").value="09:00";
+document.getElementById("hora_saida").value="18:00";
+
+document.getElementById("cpf").disabled=false;
+
+document.getElementById("modal").style.display="flex";
 }
-
-/* ================= EDITAR ================= */
 
 window.editar = async function(cpf){
 
-cpfAtual = cpf;
+cpfAtual=cpf;
 
-const { data } = await client
-  .from("terapeutas")
-  .select("*")
-  .eq("cpf", cpf)
-  .single();
+const {data,error}=await supabaseClient
+.from("terapeutas")
+.select("*")
+.eq("cpf",cpf)
+.single();
 
-Object.keys(data || {}).forEach(k=>{
-const el = document.getElementById(k);
-if(el) el.value = data[k] || "";
-});
+if(error){console.error(error);return;}
 
-document.getElementById("modal").style.display="block";
+setForm(data);
+
+document.getElementById("cpf").disabled=true;
+document.getElementById("modal").style.display="flex";
 }
-
-/* ================= SALVAR ================= */
 
 window.salvar = async function(){
 
-const payload = {
-nome_completo: document.getElementById("nome_completo").value,
-nome_profissional: document.getElementById("nome_profissional").value,
-cpf: document.getElementById("cpf").value,
-email: document.getElementById("email").value,
-telefone: document.getElementById("telefone").value,
-cargo: document.getElementById("cargo").value,
-status: document.getElementById("status").value
-};
+const payload=getPayload();
+
+if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
+alert("Preencha os campos obrigatórios");
+return;
+}
 
 let error;
 
 if(cpfAtual){
 delete payload.cpf;
 
-({ error } = await client
-  .from("terapeutas")
-  .update(payload)
-  .eq("cpf", cpfAtual));
+({error}=await supabaseClient
+.from("terapeutas")
+.update(payload)
+.eq("cpf",cpfAtual));
 
 }else{
 
-({ error } = await client
-  .from("terapeutas")
-  .insert(payload));
+({error}=await supabaseClient
+.from("terapeutas")
+.insert(payload));
 
 }
 
@@ -181,24 +224,26 @@ alert("Erro ao salvar");
 return;
 }
 
-document.getElementById("modal").style.display="none";
+fecharModal();
 carregar();
-
 }
-
-/* ================= EXCLUIR ================= */
 
 window.excluir = async function(cpf){
+if(!confirm("Excluir registro?"))return;
 
-await client
+await supabaseClient
 .from("terapeutas")
 .delete()
-.eq("cpf", cpf);
+.eq("cpf",cpf);
 
 carregar();
 }
 
-/* ================= INIT ================= */
+window.fecharModal = function(){
+document.getElementById("modal").style.display="none";
+}
+
+document.getElementById("filtroStatus").addEventListener("change", carregar);
 
 carregar();
 

@@ -35,7 +35,7 @@ document.getElementById("sidebar").innerHTML = `
   </a>
 
   <!-- 🔥 NOVO MENU -->
-  <a href="documentos.html" class="menu-item ${paginaAtual === 'documentos.html' ? 'active' : ''}">
+  <a href="documentos.html" class="menu-item ${paginaAtual === 'parametros.html' ? 'active' : ''}">
     <i class="fa-solid fa-folder-open"></i>
     <span>Documentos</span>
   </a>

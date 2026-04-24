@@ -378,16 +378,27 @@ async function excluir(id){
 /* ── EXPORTAR ── */
 function exportarExcel(){
   const exportData = dados.map(s => ({
-    "Serviço":   nomeServico(s),
-    "Grupo":     s.grupo    || "",
-    "Subgrupo":  s.subgrupo || "",
-    "Tempo (min)": s.tempo  || "",
-    "Valor (R$)":  Number(s.valor    || 0),
+    "Serviço":       nomeServico(s),
+    "Grupo":         s.grupo    || "",
+    "Subgrupo":      s.subgrupo || "",
+    "Tempo (min)":   s.tempo    ? Number(s.tempo) : "",
+    "Valor (R$)":    Number(s.valor    || 0),
     "Comissão (R$)": Number(s.comissao || 0),
-    "Status":    s.status   || ""
+    "Status":        s.status   || ""
   }));
 
   const ws = XLSX.utils.json_to_sheet(exportData);
+
+  // ajustar largura das colunas automaticamente
+  const colunas = ["Serviço","Grupo","Subgrupo","Tempo (min)","Valor (R$)","Comissão (R$)","Status"];
+  ws["!cols"] = colunas.map(col => {
+    const maxLen = Math.max(
+      col.length,
+      ...exportData.map(row => String(row[col] ?? "").length)
+    );
+    return { wch: maxLen + 2 };
+  });
+
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Serviços");
   XLSX.writeFile(wb, "servicos.xlsx");

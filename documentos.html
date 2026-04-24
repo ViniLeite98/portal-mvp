@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -164,45 +165,55 @@ onkeyup="filtrarTabela()"
 <h3>Dados Pessoais</h3>
 <div class="grid">
 
-<div class="field"><label>Nome Completo *</label><input id="nome_completo"></div>
-<div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
-<div class="field"><label>CPF *</label><input id="cpf"></div>
-<div class="field"><label>RG</label><input id="rg"></div>
-<div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
-<div class="field"><label>Email *</label><input id="email"></div>
+<div class="field">
+<label>Nome Completo *</label>
+<input id="nome_completo">
+</div>
+
+<div class="field">
+<label>Nome Profissional *</label>
+<input id="nome_profissional">
+</div>
+
+<div class="field">
+<label>CPF *</label>
+<input id="cpf">
+</div>
+
+<div class="field">
+<label>RG</label>
+<input id="rg">
+</div>
+
+<div class="field">
+<label>Data de Nascimento</label>
+<input type="date" id="nascimento">
+</div>
+
+<div class="field">
+<label>Email *</label>
+<input id="email">
+</div>
 
 </div>
 </div>
 
-<!-- 🔥 NOVA SEÇÃO -->
+<!-- 🔽 NOVA SEÇÃO -->
 <div class="section">
 <h3>Documentos</h3>
-
 <div class="grid">
+
 <div class="field">
 <label>RG (arquivo)</label>
-<input type="file" id="doc_rg">
+<input type="file" id="rg_file">
 </div>
 
 <div class="field">
 <label>Comprovante de Residência</label>
-<input type="file" id="doc_residencia">
+<input type="file" id="comprovante_file">
 </div>
+
 </div>
-
-<br>
-
-<table>
-<thead>
-<tr>
-<th>Tipo</th>
-<th>Arquivo</th>
-<th>Data</th>
-</tr>
-</thead>
-<tbody id="listaDocs"></tbody>
-</table>
-
 </div>
 
 <div class="modal-actions">
@@ -213,80 +224,93 @@ onkeyup="filtrarTabela()"
 </div>
 </div>
 
-<script src="assets/sidebar/sidebar.js"></script>
-
 <script>
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"SEU_TOKEN_AQUI"
+"SEU_ANON_KEY"
 );
 
 let cpfAtual=null;
 
-const campos=["nome_completo","nome_profissional","cpf","rg","nascimento","email"];
-
 function getPayload(){
-const obj={};
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el && el.value!=="") obj[c]=el.value;
-});
-return obj;
+return {
+nome_completo: nome_completo.value,
+nome_profissional: nome_profissional.value,
+cpf: cpf.value,
+rg: rg.value,
+email: email.value
+};
 }
 
-function setForm(data){
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value=data[c]||"";
-});
+async function uploadArquivo(file, pasta) {
+  const fileName = `${Date.now()}_${file.name}`;
+
+  const { error } = await supabaseClient.storage
+    .from('documentos')
+    .upload(`${pasta}/${fileName}`, file);
+
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
+  const { data } = supabaseClient
+    .storage
+    .from('documentos')
+    .getPublicUrl(`${pasta}/${fileName}`);
+
+  return data.publicUrl;
 }
 
-function limparNome(nome){
-return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_")
+async function salvar(){
+
+const payload=getPayload();
+
+const rgFile = document.getElementById("rg_file").files[0];
+const compFile = document.getElementById("comprovante_file").files[0];
+
+if(rgFile){
+payload.rg_url = await uploadArquivo(rgFile,"rg");
 }
 
-async function uploadDocumento(cpf,file,tipo){
-if(!file) return;
-
-const fileName = `${cpf}/${Date.now()}_${limparNome(file.name)}`
-
-await supabaseClient.storage.from("documentos").upload(fileName,file)
-
-const { data:urlData } = supabaseClient.storage.from("documentos").getPublicUrl(fileName)
-
-await supabaseClient.from("documentos").insert({
-equipe_id:cpf,
-tipo:tipo,
-nome_arquivo:file.name,
-url:urlData.publicUrl
-})
+if(compFile){
+payload.comprovante_url = await uploadArquivo(compFile,"comprovantes");
 }
 
-async function carregarDocumentos(cpf){
+let error;
 
-const { data } = await supabaseClient
-.from("documentos")
-.select("*")
-.eq("equipe_id",cpf)
-.order("created_at",{ascending:false})
+if(cpfAtual){
 
-const tbody=document.getElementById("listaDocs")
-tbody.innerHTML=""
+delete payload.cpf;
 
-data.forEach(d=>{
-tbody.innerHTML+=`
-<tr>
-<td>${d.tipo}</td>
-<td><a href="${d.url}" target="_blank">Abrir</a></td>
-<td>${new Date(d.created_at).toLocaleDateString()}</td>
-</tr>`
-})
+({error}=await supabaseClient
+.from("terapeutas")
+.update(payload)
+.eq("cpf",cpfAtual));
+
+}else{
+
+({error}=await supabaseClient
+.from("terapeutas")
+.insert(payload));
+
+}
+
+if(error){
+alert("Erro ao salvar");
+return;
+}
+
+fecharModal();
+carregar();
 }
 
 async function carregar(){
 
-const {data}=await supabaseClient.from("terapeutas").select("*");
+const {data}=await supabaseClient
+.from("terapeutas")
+.select("*");
 
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -300,63 +324,21 @@ tbody.innerHTML+=`
 <td>${t.status||""}</td>
 <td>
 <button onclick="editar('${t.cpf}')">Editar</button>
-<button onclick="excluir('${t.cpf}')">Excluir</button>
+<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
 </tr>`;
 });
+
 }
 
 function abrirNovo(){
 cpfAtual=null;
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value="";
-});
-document.getElementById("modal").style.display="flex";
-}
-
-async function editar(cpf){
-cpfAtual=cpf;
-
-const {data}=await supabaseClient.from("terapeutas").select("*").eq("cpf",cpf).single();
-
-setForm(data);
-document.getElementById("modal").style.display="flex";
-
-carregarDocumentos(cpf);
-}
-
-async function salvar(){
-
-const payload=getPayload();
-
-let error;
-
-if(cpfAtual){
-delete payload.cpf;
-({error}=await supabaseClient.from("terapeutas").update(payload).eq("cpf",cpfAtual));
-}else{
-({error}=await supabaseClient.from("terapeutas").insert(payload));
-}
-
-if(error){alert("Erro");return;}
-
-const cpfRef = cpfAtual || payload.cpf
-
-await uploadDocumento(cpfRef,document.getElementById("doc_rg").files[0],"RG")
-await uploadDocumento(cpfRef,document.getElementById("doc_residencia").files[0],"Comprovante")
-
-fecharModal();
-carregar();
-}
-
-async function excluir(cpf){
-await supabaseClient.from("terapeutas").delete().eq("cpf",cpf);
-carregar();
+document.querySelectorAll("input").forEach(i=>i.value="");
+modal.style.display="flex";
 }
 
 function fecharModal(){
-document.getElementById("modal").style.display="none";
+modal.style.display="none";
 }
 
 carregar();
@@ -365,3 +347,4 @@ carregar();
 
 </body>
 </html>
+```

@@ -276,10 +276,14 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
           </div>
           <div class="field">
             <label>Status</label>
-            <select id="status">
+            <select id="status" onchange="aoMudarStatus(this)">
               <option value="">Selecione</option>
               <option>Ativo</option><option>Inativo</option>
             </select>
+          </div>
+          <div class="field" id="campo_data_inativacao" style="display:none">
+            <label>Data de Inativação</label>
+            <input type="date" id="data_inativacao">
           </div>
           <div class="field"><label>Data de Início no Hara</label><input type="date" id="data_inicio"></div>
           <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
@@ -357,7 +361,7 @@ const campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
   "tipo_sanguineo","telefone","telefone_emergencia","cep","rua","numero",
   "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-  "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status"
+  "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
 ];
 
 /* ── TABS ── */
@@ -388,6 +392,9 @@ function setForm(data){
       el.value = data[c] || "";
     }
   });
+  // mostrar/ocultar campo de inativacao conforme status
+  const campo = document.getElementById("campo_data_inativacao");
+  if(campo) campo.style.display = data.status === "Inativo" ? "" : "none";
 }
 
 /* ── TABELA PRINCIPAL ── */
@@ -600,6 +607,20 @@ async function excluirDoc(id, url){
   const el = document.getElementById("doc-" + id);
   if(el) el.remove();
   carregarDocs(cpfAtual);
+}
+
+/* ── STATUS / INATIVACAO ── */
+function aoMudarStatus(select){
+  const campo = document.getElementById("campo_data_inativacao");
+  const input = document.getElementById("data_inativacao");
+  if(select.value === "Inativo"){
+    campo.style.display = "";
+    // preenche com hoje se estiver vazio
+    if(!input.value) input.value = new Date().toISOString().split("T")[0];
+  } else {
+    campo.style.display = "none";
+    input.value = "";
+  }
 }
 
 /* ── INIT ── */

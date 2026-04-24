@@ -495,8 +495,24 @@ async function salvar(){
 }
 
 async function excluir(cpf){
-  if(!confirm("Excluir este registro?")) return;
-  await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
+  if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
+
+  const {data: docs} = await supabaseClient
+    .from("documentos").select("id, url").eq("equipe_id", cpf);
+
+  if(docs && docs.length > 0){
+    const paths = docs
+      .map(d => d.url.split("/storage/v1/object/public/documentos/")[1])
+      .filter(Boolean)
+      .map(p => decodeURIComponent(p));
+    if(paths.length > 0)
+      await supabaseClient.storage.from("documentos").remove(paths);
+    await supabaseClient.from("documentos").delete().eq("equipe_id", cpf);
+  }
+
+  const {error} = await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+
   carregar();
 }
 

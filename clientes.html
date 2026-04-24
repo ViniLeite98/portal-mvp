@@ -313,13 +313,13 @@ function limparTel(v){
 /* ── CARREGAR ── */
 async function carregar(){
   const {data, error} = await client
-    .from("clientes").select("*").order("nome").limit(100);
+    .from("clientes").select("*").order("nome").limit(10);
   if(error){ console.error(error); return; }
-  render(data);
+  render(data, true);
 }
 
 /* ── RENDER ── */
-function render(lista){
+function render(lista, limitado){
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
@@ -340,6 +340,15 @@ function render(lista){
       </td>
     </tr>`;
   });
+
+  if(limitado){
+    tbody.innerHTML += `
+    <tr class="empty-row">
+      <td colspan="4" style="font-size:12px;color:#9ca3af;padding:12px 14px">
+        <i class="fa fa-search"></i> Mostrando os 10 primeiros. Use a busca para encontrar outros clientes.
+      </td>
+    </tr>`;
+  }
 }
 
 /* ── BUSCA (OR: nome ou telefone) ── */

@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -8,6 +9,7 @@
  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -163,87 +165,54 @@ onkeyup="filtrarTabela()"
 <h3>Dados Pessoais</h3>
 <div class="grid">
 
-<div class="field"><label>Nome Completo *</label><input id="nome_completo"></div>
-<div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
-<div class="field"><label>CPF *</label><input id="cpf"></div>
-<div class="field"><label>RG</label><input id="rg"></div>
-<div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
-<div class="field"><label>Email *</label><input id="email"></div>
+<div class="field">
+<label>Nome Completo *</label>
+<input id="nome_completo">
+</div>
 
 <div class="field">
-<label>Tipo Sanguíneo</label>
-<select id="tipo_sanguineo">
-<option value="">Selecione</option>
-<option>A+</option><option>A-</option>
-<option>B+</option><option>B-</option>
-<option>AB+</option><option>AB-</option>
-<option>O+</option><option>O-</option>
-</select>
+<label>Nome Profissional *</label>
+<input id="nome_profissional">
+</div>
+
+<div class="field">
+<label>CPF *</label>
+<input id="cpf">
+</div>
+
+<div class="field">
+<label>RG</label>
+<input id="rg">
+</div>
+
+<div class="field">
+<label>Data de Nascimento</label>
+<input type="date" id="nascimento">
+</div>
+
+<div class="field">
+<label>Email *</label>
+<input id="email">
 </div>
 
 </div>
 </div>
 
+<!-- 🔽 NOVA SEÇÃO -->
 <div class="section">
-<h3>Contatos</h3>
+<h3>Documentos</h3>
 <div class="grid">
-<div class="field"><label>Telefone *</label><input id="telefone"></div>
-<div class="field"><label>Contato de Emergência</label><input id="telefone_emer"></div>
-</div>
+
+<div class="field">
+<label>RG (arquivo)</label>
+<input type="file" id="rg_file">
 </div>
 
-<div class="section">
-<h3>Endereço</h3>
-<div class="grid">
-<div class="field"><label>CEP</label><input id="cep"></div>
-<div class="field"><label>Rua</label><input id="rua"></div>
-<div class="field"><label>Número</label><input id="numero"></div>
-<div class="field"><label>Complemento</label><input id="complemento"></div>
-<div class="field"><label>Bairro</label><input id="bairro"></div>
-<div class="field"><label>Cidade</label><input id="cidade"></div>
-<div class="field"><label>UF</label><input id="uf"></div>
-</div>
+<div class="field">
+<label>Comprovante de Residência</label>
+<input type="file" id="comprovante_file">
 </div>
 
-<div class="section">
-<h3>Pagamento</h3>
-<div class="grid">
-<div class="field"><label>Tipo Chave PIX</label>
-<select id="pix_tipo">
-<option value="">Selecione</option>
-<option>CPF</option>
-<option>Email</option>
-<option>Telefone</option>
-<option>Aleatória</option>
-</select>
-</div>
-<div class="field"><label>Chave PIX</label><input id="pix_chave"></div>
-</div>
-</div>
-
-<div class="section">
-<h3>Dados Funcionais</h3>
-<div class="grid">
-<div class="field"><label>Cargo</label>
-<select id="cargo">
-<option value="">Selecione</option>
-<option>Terapeuta Feminina</option>
-<option>Terapeuta Masculino</option>
-<option>Gerente</option>
-<option>Atendente</option>
-<option>Recepcionista</option>
-<option>Faxineira</option>
-<option>Analista</option>
-</select>
-</div>
-
-<div class="field"><label>Status</label>
-<select id="status">
-<option value="">Selecione</option>
-<option>Ativo</option>
-<option>Inativo</option>
-</select>
-</div>
 </div>
 </div>
 
@@ -255,46 +224,93 @@ onkeyup="filtrarTabela()"
 </div>
 </div>
 
-<script src="assets/sidebar/sidebar.js"></script>
+<script>
 
-<!-- 🔥 AQUI ESTÁ A MUDANÇA -->
-<script type="module">
-
-import { supabase } from './supabase.js'
+const supabaseClient = supabase.createClient(
+"https://rymehgsoarjeecuwyhny.supabase.co",
+"SEU_ANON_KEY"
+);
 
 let cpfAtual=null;
 
-const campos=[
-"nome_completo","nome_profissional","cpf","rg","nascimento","email",
-"tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
-"complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-"cargo","status"
-];
-
 function getPayload(){
-const obj={};
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el && el.value!=="") obj[c]=el.value;
-});
-return obj;
+return {
+nome_completo: nome_completo.value,
+nome_profissional: nome_profissional.value,
+cpf: cpf.value,
+rg: rg.value,
+email: email.value
+};
 }
 
-function setForm(data){
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value=data[c]||"";
-});
+async function uploadArquivo(file, pasta) {
+  const fileName = `${Date.now()}_${file.name}`;
+
+  const { error } = await supabaseClient.storage
+    .from('documentos')
+    .upload(`${pasta}/${fileName}`, file);
+
+  if (error) {
+    console.error(error);
+    return null;
+  }
+
+  const { data } = supabaseClient
+    .storage
+    .from('documentos')
+    .getPublicUrl(`${pasta}/${fileName}`);
+
+  return data.publicUrl;
+}
+
+async function salvar(){
+
+const payload=getPayload();
+
+const rgFile = document.getElementById("rg_file").files[0];
+const compFile = document.getElementById("comprovante_file").files[0];
+
+if(rgFile){
+payload.rg_url = await uploadArquivo(rgFile,"rg");
+}
+
+if(compFile){
+payload.comprovante_url = await uploadArquivo(compFile,"comprovantes");
+}
+
+let error;
+
+if(cpfAtual){
+
+delete payload.cpf;
+
+({error}=await supabaseClient
+.from("terapeutas")
+.update(payload)
+.eq("cpf",cpfAtual));
+
+}else{
+
+({error}=await supabaseClient
+.from("terapeutas")
+.insert(payload));
+
+}
+
+if(error){
+alert("Erro ao salvar");
+return;
+}
+
+fecharModal();
+carregar();
 }
 
 async function carregar(){
 
-const {data,error}=await supabase
+const {data}=await supabaseClient
 .from("terapeutas")
-.select("*")
-.order("nome_profissional");
-
-if(error){console.error(error);return;}
+.select("*");
 
 const tbody=document.getElementById("lista");
 tbody.innerHTML="";
@@ -312,70 +328,17 @@ tbody.innerHTML+=`
 </td>
 </tr>`;
 });
+
 }
 
 function abrirNovo(){
 cpfAtual=null;
-campos.forEach(c=>{
-const el=document.getElementById(c);
-if(el) el.value="";
-});
-document.getElementById("modal").style.display="flex";
-}
-
-window.editar = async function(cpf){
-
-cpfAtual=cpf;
-
-const {data,error}=await supabase
-.from("terapeutas")
-.select("*")
-.eq("cpf",cpf)
-.single();
-
-if(error){console.error(error);return;}
-
-setForm(data);
-document.getElementById("modal").style.display="flex";
-}
-
-async function salvar(){
-
-const payload=getPayload();
-
-let error;
-
-if(cpfAtual){
-delete payload.cpf;
-
-({error}=await supabase
-.from("terapeutas")
-.update(payload)
-.eq("cpf",cpfAtual));
-
-}else{
-({error}=await supabase
-.from("terapeutas")
-.insert(payload));
-}
-
-if(error){
-console.error(error);
-alert("Erro ao salvar");
-return;
-}
-
-fecharModal();
-carregar();
-}
-
-window.excluir = async function(cpf){
-await supabase.from("terapeutas").delete().eq("cpf",cpf);
-carregar();
+document.querySelectorAll("input").forEach(i=>i.value="");
+modal.style.display="flex";
 }
 
 function fecharModal(){
-document.getElementById("modal").style.display="none";
+modal.style.display="none";
 }
 
 carregar();
@@ -384,3 +347,4 @@ carregar();
 
 </body>
 </html>
+```

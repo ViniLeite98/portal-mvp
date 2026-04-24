@@ -125,6 +125,20 @@ button.btn-ghost:hover{background:#f9fafb;color:#111827;}
 .field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
 input,select{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
 input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+/* ── SELETOR DE ÍCONE ── */
+.icone-grid{
+  display:grid;grid-template-columns:repeat(6,1fr);gap:8px;
+  max-height:220px;overflow-y:auto;padding:4px;
+}
+.icone-opt{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;
+  cursor:pointer;font-size:11px;color:#6b7280;transition:all .15s;
+}
+.icone-opt:hover{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
+.icone-opt.selected{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
+.icone-opt i{font-size:18px;}
+.icone-preview{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:#374151;}
 </style>
 </head>
 
@@ -201,6 +215,12 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
       <label>Descrição <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
       <input id="editDesc" placeholder="Descrição ou detalhe">
     </div>
+    <div class="field" id="campoIcone" style="display:none">
+      <label>Ícone</label>
+      <div class="icone-preview" id="iconePreview"><i class="fa fa-certificate" id="iconePreviewIcon"></i> <span id="iconePreviewNome">fa-certificate</span></div>
+      <input type="hidden" id="editIcone" value="fa-certificate">
+      <div class="icone-grid" style="margin-top:10px" id="iconeGrid"></div>
+    </div>
   </div>
   <div class="modal-footer">
     <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
@@ -226,6 +246,30 @@ const SECOES = {
   motivos_movimentacao: { label: "Motivos de Movimentação", desc: "Motivos disponíveis nas entradas e saídas do estoque.",           icon: "fa-exchange-alt" },
 };
 
+const ICONES_DISPONIVEIS = [
+  {icone:"fa-certificate",   label:"Certificado"},
+  {icone:"fa-person-dress",  label:"Feminina"},
+  {icone:"fa-user-group",    label:"Casais"},
+  {icone:"fa-droplet",       label:"Nuru"},
+  {icone:"fa-spa",           label:"Vivência"},
+  {icone:"fa-shoe-prints",   label:"Podologia"},
+  {icone:"fa-star",          label:"Estrela"},
+  {icone:"fa-heart",         label:"Coração"},
+  {icone:"fa-hands",         label:"Mãos"},
+  {icone:"fa-leaf",          label:"Folha"},
+  {icone:"fa-fire",          label:"Fogo"},
+  {icone:"fa-snowflake",     label:"Neve"},
+  {icone:"fa-sun",           label:"Sol"},
+  {icone:"fa-moon",          label:"Lua"},
+  {icone:"fa-bolt",          label:"Raio"},
+  {icone:"fa-gem",           label:"Gema"},
+  {icone:"fa-ribbon",        label:"Fita"},
+  {icone:"fa-award",         label:"Prêmio"},
+];
+
+// seções que usam ícone (tabela certificacoes)
+const SECOES_COM_ICONE = ["certificacoes"];
+
 let secaoAtual = "certificacoes";
 let itens      = [];
 let editandoId = null;
@@ -243,19 +287,23 @@ function mudarSecao(secao, el){
 
 /* ── CARREGAR ── */
 async function carregar(){
-  console.log("Carregando seção:", secaoAtual);
-
-  const {data, error} = await client
-    .from("parametros")
-    .select("*")
-    .eq("tipo", secaoAtual)
-    .order("ordem")
-    .order("valor");
-
-  console.log("Resultado:", data, "Erro:", error);
-
-  if(error){ console.error("Erro na query:", error); return; }
-  itens = data || [];
+  if(SECOES_COM_ICONE.includes(secaoAtual)){
+    // busca da tabela certificacoes
+    const {data, error} = await client
+      .from("certificacoes").select("id,nome,icone").order("nome");
+    if(error){ console.error(error); return; }
+    // mapear para o formato padrão
+    itens = (data||[]).map(c => ({
+      id: c.id, valor: c.nome, icone: c.icone,
+      ativo: true, descricao: null
+    }));
+  } else {
+    const {data, error} = await client
+      .from("parametros").select("*")
+      .eq("tipo", secaoAtual).order("ordem").order("valor");
+    if(error){ console.error(error); return; }
+    itens = data || [];
+  }
   render();
 }
 
@@ -273,15 +321,18 @@ function render(){
     return;
   }
 
+  const temIcone = SECOES_COM_ICONE.includes(secaoAtual);
+
   lista.innerHTML = itens.map(item => `
     <div class="param-item" id="item-${item.id}">
       <span class="param-item-drag"><i class="fa fa-grip-vertical"></i></span>
+      ${temIcone ? `<i class="fa-solid ${item.icone||'fa-certificate'}" style="font-size:16px;width:20px;text-align:center;color:#6b7280"></i>` : ""}
       <span class="param-item-nome">${item.valor}</span>
       ${item.descricao ? `<span class="param-item-badge">${item.descricao}</span>` : ""}
       <div class="param-item-actions">
-        <button class="btn-toggle toggle-ativo ${item.ativo ? 'on' : ''}"
+        ${!temIcone ? `<button class="btn-toggle toggle-ativo ${item.ativo ? 'on' : ''}"
           onclick="toggleAtivo('${item.id}', ${item.ativo})"
-          title="${item.ativo ? 'Desativar' : 'Ativar'}"></button>
+          title="${item.ativo ? 'Desativar' : 'Ativar'}"></button>` : ""}
         <button class="btn-ghost" onclick="abrirEditar('${item.id}')">
           <i class="fa fa-pencil"></i>
         </button>
@@ -326,13 +377,14 @@ async function confirmarAdicionar(){
 
   const desc = (document.getElementById("addDescricao")?.value||"").trim();
 
-  const {error} = await client.from("parametros").insert({
-    tipo:      secaoAtual,
-    valor:     nome,
-    descricao: desc || null,
-    ativo:     true,
-    ordem:     itens.length
-  });
+  let error;
+  if(SECOES_COM_ICONE.includes(secaoAtual)){
+    ({error} = await client.from("certificacoes").insert({nome, icone:"fa-certificate"}));
+  } else {
+    ({error} = await client.from("parametros").insert({
+      tipo: secaoAtual, valor: nome, descricao: desc||null, ativo:true, ordem: itens.length
+    }));
+  }
 
   if(error){ alert("Erro: " + error.message); return; }
   adicionando = false;
@@ -340,12 +392,45 @@ async function confirmarAdicionar(){
 }
 
 /* ── EDITAR ── */
+function renderIconeGrid(selecionado){
+  const grid = document.getElementById("iconeGrid");
+  if(!grid) return;
+  grid.innerHTML = ICONES_DISPONIVEIS.map(i => `
+    <div class="icone-opt ${i.icone === selecionado ? 'selected' : ''}"
+      onclick="selecionarIcone('${i.icone}')">
+      <i class="fa-solid ${i.icone}"></i>
+      <span>${i.label}</span>
+    </div>
+  `).join("");
+}
+
+function selecionarIcone(icone){
+  document.getElementById("editIcone").value = icone;
+  document.getElementById("iconePreviewIcon").className = `fa-solid ${icone}`;
+  document.getElementById("iconePreviewNome").textContent = icone;
+  document.querySelectorAll(".icone-opt").forEach(el => {
+    el.classList.toggle("selected", el.querySelector("i").className.includes(icone));
+  });
+}
+
 function abrirEditar(id){
   const item = itens.find(i => i.id === id);
   if(!item) return;
   editandoId = id;
   document.getElementById("editNome").value = item.valor     || "";
   document.getElementById("editDesc").value = item.descricao || "";
+
+  // mostrar/ocultar campo de ícone
+  const temIcone = SECOES_COM_ICONE.includes(secaoAtual);
+  document.getElementById("campoIcone").style.display = temIcone ? "" : "none";
+  if(temIcone){
+    const iconeAtual = item.icone || "fa-certificate";
+    document.getElementById("editIcone").value = iconeAtual;
+    document.getElementById("iconePreviewIcon").className = `fa-solid ${iconeAtual}`;
+    document.getElementById("iconePreviewNome").textContent = iconeAtual;
+    renderIconeGrid(iconeAtual);
+  }
+
   document.getElementById("modalTitulo").textContent = `Editar — ${SECOES[secaoAtual].label}`;
   document.getElementById("modalEditar").style.display = "flex";
 }
@@ -358,12 +443,24 @@ async function salvarEdicao(){
   const nome = document.getElementById("editNome").value.trim();
   if(!nome){ alert("Nome obrigatório."); return; }
 
-  const {error} = await client.from("parametros").update({
-    valor:     nome,
-    descricao: document.getElementById("editDesc").value.trim() || null
-  }).eq("id", editandoId);
+  const temIcone = SECOES_COM_ICONE.includes(secaoAtual);
 
-  if(error){ alert("Erro: " + error.message); return; }
+  if(temIcone){
+    // atualiza na tabela certificacoes
+    const icone = document.getElementById("editIcone").value || "fa-certificate";
+    const {error} = await client.from("certificacoes").update({
+      nome:  nome,
+      icone: icone
+    }).eq("id", editandoId);
+    if(error){ alert("Erro: " + error.message); return; }
+  } else {
+    const {error} = await client.from("parametros").update({
+      valor:     nome,
+      descricao: document.getElementById("editDesc").value.trim() || null
+    }).eq("id", editandoId);
+    if(error){ alert("Erro: " + error.message); return; }
+  }
+
   fecharModal();
   carregar();
 }
@@ -377,7 +474,12 @@ async function toggleAtivo(id, ativoAtual){
 /* ── EXCLUIR ── */
 async function excluir(id){
   if(!confirm("Excluir este item?")) return;
-  const {error} = await client.from("parametros").delete().eq("id", id);
+  let error;
+  if(SECOES_COM_ICONE.includes(secaoAtual)){
+    ({error} = await client.from("certificacoes").delete().eq("id", id));
+  } else {
+    ({error} = await client.from("parametros").delete().eq("id", id));
+  }
   if(error){ alert("Erro: " + error.message); return; }
   carregar();
 }

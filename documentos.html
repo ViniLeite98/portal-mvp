@@ -124,7 +124,12 @@ input,select{
 
 <div class="top-actions">
 
-<input type="text" id="pesquisaNome" placeholder="Pesquisar profissional..." onkeyup="filtrarTabela()">
+<input 
+type="text"
+id="pesquisaNome"
+placeholder="Pesquisar profissional..."
+onkeyup="filtrarTabela()"
+>
 
 <select id="filtroStatus">
 <option value="">Todos</option>
@@ -155,30 +160,21 @@ input,select{
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<!-- ===== SEU FORM ORIGINAL ===== -->
-
 <div class="section">
 <h3>Dados Pessoais</h3>
 <div class="grid">
+
 <div class="field"><label>Nome Completo *</label><input id="nome_completo"></div>
 <div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
 <div class="field"><label>CPF *</label><input id="cpf"></div>
 <div class="field"><label>RG</label><input id="rg"></div>
 <div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
 <div class="field"><label>Email *</label><input id="email"></div>
+
 </div>
 </div>
 
-<div class="section">
-<h3>Dados Funcionais</h3>
-<div class="grid">
-<div class="field"><label>Cargo</label><input id="cargo"></div>
-<div class="field"><label>Status</label><input id="status"></div>
-</div>
-</div>
-
-<!-- ===== NOVA PARTE ===== -->
-
+<!-- 🔥 NOVA SEÇÃO -->
 <div class="section">
 <h3>Documentos</h3>
 
@@ -223,12 +219,12 @@ input,select{
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"SUA_ANON_KEY"
+"SEU_TOKEN_AQUI"
 );
 
 let cpfAtual=null;
 
-const campos=["nome_completo","nome_profissional","cpf","rg","email","cargo","status"];
+const campos=["nome_completo","nome_profissional","cpf","rg","nascimento","email"];
 
 function getPayload(){
 const obj={};
@@ -244,6 +240,48 @@ campos.forEach(c=>{
 const el=document.getElementById(c);
 if(el) el.value=data[c]||"";
 });
+}
+
+function limparNome(nome){
+return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_")
+}
+
+async function uploadDocumento(cpf,file,tipo){
+if(!file) return;
+
+const fileName = `${cpf}/${Date.now()}_${limparNome(file.name)}`
+
+await supabaseClient.storage.from("documentos").upload(fileName,file)
+
+const { data:urlData } = supabaseClient.storage.from("documentos").getPublicUrl(fileName)
+
+await supabaseClient.from("documentos").insert({
+equipe_id:cpf,
+tipo:tipo,
+nome_arquivo:file.name,
+url:urlData.publicUrl
+})
+}
+
+async function carregarDocumentos(cpf){
+
+const { data } = await supabaseClient
+.from("documentos")
+.select("*")
+.eq("equipe_id",cpf)
+.order("created_at",{ascending:false})
+
+const tbody=document.getElementById("listaDocs")
+tbody.innerHTML=""
+
+data.forEach(d=>{
+tbody.innerHTML+=`
+<tr>
+<td>${d.tipo}</td>
+<td><a href="${d.url}" target="_blank">Abrir</a></td>
+<td>${new Date(d.created_at).toLocaleDateString()}</td>
+</tr>`
+})
 }
 
 async function carregar(){
@@ -262,7 +300,7 @@ tbody.innerHTML+=`
 <td>${t.status||""}</td>
 <td>
 <button onclick="editar('${t.cpf}')">Editar</button>
-<button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+<button onclick="excluir('${t.cpf}')">Excluir</button>
 </td>
 </tr>`;
 });
@@ -288,27 +326,6 @@ document.getElementById("modal").style.display="flex";
 carregarDocumentos(cpf);
 }
 
-function limparNome(nome){
-return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_")
-}
-
-async function uploadDocumento(cpf,file,tipo){
-if(!file) return;
-
-const fileName = `${cpf}/${Date.now()}_${limparNome(file.name)}`
-
-await supabaseClient.storage.from("documentos").upload(fileName,file)
-
-const { data:urlData } = supabaseClient.storage.from("documentos").getPublicUrl(fileName)
-
-await supabaseClient.from("documentos").insert({
-equipe_id:cpf,
-tipo:tipo,
-nome_arquivo:file.name,
-url:urlData.publicUrl
-})
-}
-
 async function salvar(){
 
 const payload=getPayload();
@@ -331,27 +348,6 @@ await uploadDocumento(cpfRef,document.getElementById("doc_residencia").files[0],
 
 fecharModal();
 carregar();
-}
-
-async function carregarDocumentos(cpf){
-
-const { data } = await supabaseClient
-.from("documentos")
-.select("*")
-.eq("equipe_id",cpf)
-.order("created_at",{ascending:false})
-
-const tbody=document.getElementById("listaDocs")
-tbody.innerHTML=""
-
-data.forEach(d=>{
-tbody.innerHTML+=`
-<tr>
-<td>${d.tipo}</td>
-<td><a href="${d.url}" target="_blank">Abrir</a></td>
-<td>${new Date(d.created_at).toLocaleDateString()}</td>
-</tr>`
-})
 }
 
 async function excluir(cpf){

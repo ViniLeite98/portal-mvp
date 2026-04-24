@@ -2,116 +2,211 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Documentos | Hara Spa</title>
+<title>Parâmetros | Hara Spa</title>
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-body{margin:0;font-family:Segoe UI;background:#f4f6fb}
-.app{display:flex}
-.content{flex:1;padding:40px}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
-.form-box{
-background:#fff;
-padding:20px;
-border-radius:10px;
-display:flex;
-gap:15px;
-flex-wrap:wrap;
-margin-bottom:20px;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
+/* ── TOPBAR ── */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.topbar h1{margin:0;}
+
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:220px 1fr;gap:24px;}
+
+/* ── MENU LATERAL ── */
+.param-menu{
+  background:#fff;border-radius:14px;
+  padding:12px 0;box-shadow:0 1px 4px rgba(0,0,0,.06);
+  height:fit-content;position:sticky;top:20px;
+}
+.param-menu-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 18px;cursor:pointer;
+  font-size:13px;font-weight:500;color:#6b7280;
+  border-left:3px solid transparent;transition:all .15s;
+}
+.param-menu-item i{width:16px;text-align:center;font-size:13px;}
+.param-menu-item:hover{background:#f9fafb;color:#111827;}
+.param-menu-item.active{
+  background:#eff6ff;color:#1d4ed8;
+  border-left-color:#2563eb;font-weight:600;
+}
+.param-menu-sep{
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;color:#d1d5db;padding:12px 18px 4px;
 }
 
-.field{display:flex;flex-direction:column;font-size:13px}
+/* ── PAINEL ── */
+.param-panel{background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.panel-header h2{margin:0;font-size:18px;color:#111827;}
+.panel-desc{font-size:13px;color:#6b7280;margin-bottom:20px;margin-top:-12px;}
 
-input,select{
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
-min-width:180px;
-}
+button{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px;}
+button:hover{opacity:.9;}
+button.btn-red{background:#dc2626;}
+button.btn-blue{background:#2563eb;}
+button.btn-ghost{background:none;color:#6b7280;border:1px solid #e5e7eb;}
+button.btn-ghost:hover{background:#f9fafb;color:#111827;}
 
-button{
-background:#2563eb;
-color:#fff;
-border:none;
-padding:10px 15px;
-border-radius:6px;
-cursor:pointer;
+/* ── LISTA DE ITENS ── */
+.param-list{display:flex;flex-direction:column;gap:8px;}
+.param-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border:1px solid #e5e7eb;
+  border-radius:10px;background:#fff;transition:all .15s;
 }
+.param-item:hover{border-color:#d1d5db;background:#fafafa;}
+.param-item-drag{cursor:grab;color:#d1d5db;font-size:14px;}
+.param-item-nome{flex:1;font-size:14px;font-weight:500;color:#111827;}
+.param-item-badge{font-size:11px;color:#9ca3af;background:#f3f4f6;border-radius:6px;padding:2px 8px;}
+.param-item-actions{display:flex;gap:6px;}
+.param-item-actions button{padding:5px 10px;font-size:12px;}
 
-table{
-width:100%;
-background:#fff;
-border-collapse:collapse;
-border-radius:10px;
-overflow:hidden;
+.toggle-ativo{
+  width:36px;height:20px;border-radius:99px;
+  background:#d1d5db;border:none;cursor:pointer;
+  position:relative;transition:background .2s;padding:0;
 }
+.toggle-ativo.on{background:#22c55e;}
+.toggle-ativo::after{
+  content:"";position:absolute;
+  width:14px;height:14px;border-radius:50%;
+  background:#fff;top:3px;left:3px;transition:left .2s;
+}
+.toggle-ativo.on::after{left:19px;}
 
-th,td{
-padding:10px;
-border-bottom:1px solid #eee;
-font-size:13px;
+.empty-state{
+  text-align:center;color:#9ca3af;padding:40px;font-size:13px;
 }
+.empty-state i{font-size:28px;display:block;margin-bottom:10px;color:#e5e7eb;}
 
-a.link{
-color:#2563eb;
-text-decoration:none;
+/* ── ADD INLINE ── */
+.add-row{
+  display:flex;gap:10px;align-items:center;
+  padding:12px 16px;border:2px dashed #e5e7eb;
+  border-radius:10px;margin-top:8px;
 }
+.add-row input{
+  flex:1;padding:8px 12px;border:1px solid #d1d5db;
+  border-radius:8px;font-size:13px;
+}
+.add-row input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+
+/* ── MODAL ── */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:flex-start;justify-content:center;
+  z-index:10;padding:30px 20px;
+}
+.modal-content{
+  background:#fff;width:400px;max-width:100%;
+  border-radius:18px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.btn-fechar:hover{background:#f3f4f6;}
+.modal-body{padding:24px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;}
+.modal-footer button{padding:9px 20px;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.field{display:flex;flex-direction:column;margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
+input,select{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
+input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 </style>
 </head>
 
 <body>
-
 <div class="app">
 <aside id="sidebar"></aside>
 
 <main class="content">
-
-<h1>Documentos</h1>
-
-<div class="form-box">
-
-  <div class="field">
-    <label>Funcionário</label>
-    <select id="equipe"></select>
+  <div class="topbar">
+    <h1>Parâmetros</h1>
   </div>
 
-  <div class="field">
-    <label>Tipo</label>
-    <select id="tipo">
-      <option>RG</option>
-      <option>CPF</option>
-      <option>Comprovante de Residência</option>
-      <option>Contrato</option>
-      <option>Outro</option>
-    </select>
+  <div class="layout">
+
+    <!-- Menu lateral -->
+    <nav class="param-menu">
+      <div class="param-menu-sep">Cadastros</div>
+      <div class="param-menu-item active" onclick="mudarSecao('certificacoes',this)">
+        <i class="fa fa-certificate"></i> Certificações
+      </div>
+      <div class="param-menu-item" onclick="mudarSecao('categorias_produto',this)">
+        <i class="fa fa-box"></i> Categorias de Produto
+      </div>
+      <div class="param-menu-item" onclick="mudarSecao('cargos',this)">
+        <i class="fa fa-briefcase"></i> Cargos
+      </div>
+      <div class="param-menu-item" onclick="mudarSecao('grupos_servico',this)">
+        <i class="fa fa-spa"></i> Grupos de Serviço
+      </div>
+
+      <div class="param-menu-sep">Operacional</div>
+      <div class="param-menu-item" onclick="mudarSecao('tipos_solicitacao',this)">
+        <i class="fa fa-file-alt"></i> Tipos de Solicitação
+      </div>
+      <div class="param-menu-item" onclick="mudarSecao('origens_lead',this)">
+        <i class="fa fa-bullhorn"></i> Origens de Lead
+      </div>
+      <div class="param-menu-item" onclick="mudarSecao('formas_pagamento',this)">
+        <i class="fa fa-credit-card"></i> Formas de Pagamento
+      </div>
+      <div class="param-menu-item" onclick="mudarSecao('motivos_movimentacao',this)">
+        <i class="fa fa-exchange-alt"></i> Motivos de Movimentação
+      </div>
+    </nav>
+
+    <!-- Painel -->
+    <div class="param-panel">
+      <div class="panel-header">
+        <h2 id="panelTitulo">Certificações</h2>
+        <button class="btn-blue" onclick="abrirAdicionar()"><i class="fa fa-plus"></i> Adicionar</button>
+      </div>
+      <p class="panel-desc" id="panelDesc">Certificações disponíveis para vincular aos profissionais.</p>
+
+      <div class="param-list" id="paramLista"></div>
+    </div>
+
   </div>
-
-  <div class="field">
-    <label>Arquivo</label>
-    <input type="file" id="arquivo">
-  </div>
-
-  <button onclick="upload()">Salvar</button>
-
+</main>
 </div>
 
-<table>
-<thead>
-<tr>
-  <th>Funcionário</th>
-  <th>Tipo</th>
-  <th>Arquivo</th>
-  <th>Data</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
-</table>
-
-</main>
+<!-- MODAL EDITAR -->
+<div class="modal" id="modalEditar">
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 id="modalTitulo">Editar</h2>
+    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="field">
+      <label>Nome *</label>
+      <input id="editNome" placeholder="Nome do parâmetro">
+    </div>
+    <div class="field">
+      <label>Descrição <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
+      <input id="editDesc" placeholder="Descrição ou detalhe">
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+    <button onclick="salvarEdicao()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
+</div>
 </div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -120,109 +215,173 @@ text-decoration:none;
 
 <script>
 
-function limparNome(nome){
-  return nome
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9.\-_]/g, "_")
+const SECOES = {
+  certificacoes:        { label: "Certificações",           desc: "Certificações disponíveis para vincular aos profissionais.",       icon: "fa-certificate" },
+  categorias_produto:   { label: "Categorias de Produto",   desc: "Categorias para organizar os produtos do estoque.",                icon: "fa-box" },
+  cargos:               { label: "Cargos",                  desc: "Cargos disponíveis para os profissionais da equipe.",              icon: "fa-briefcase" },
+  grupos_servico:       { label: "Grupos de Serviço",       desc: "Grupos para organizar os serviços oferecidos.",                    icon: "fa-spa" },
+  tipos_solicitacao:    { label: "Tipos de Solicitação",    desc: "Tipos disponíveis ao criar solicitações de ausência.",             icon: "fa-file-alt" },
+  origens_lead:         { label: "Origens de Lead",         desc: "De onde os clientes chegam (Instagram, Google, etc).",            icon: "fa-bullhorn" },
+  formas_pagamento:     { label: "Formas de Pagamento",     desc: "Formas de pagamento aceitas nos atendimentos.",                   icon: "fa-credit-card" },
+  motivos_movimentacao: { label: "Motivos de Movimentação", desc: "Motivos disponíveis nas entradas e saídas do estoque.",           icon: "fa-exchange-alt" },
+};
+
+let secaoAtual = "certificacoes";
+let itens      = [];
+let editandoId = null;
+let adicionando = false;
+
+/* ── SEÇÃO ── */
+function mudarSecao(secao, el){
+  secaoAtual = secao;
+  document.querySelectorAll(".param-menu-item").forEach(i => i.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("panelTitulo").textContent = SECOES[secao].label;
+  document.getElementById("panelDesc").textContent   = SECOES[secao].desc;
+  carregar();
 }
 
-async function carregarEquipe(){
-  const { data, error } = await client
-    .from("terapeutas")
-    .select("cpf, nome_profissional")
-    .order("nome_profissional")
-
-  if(error){
-    alert("Erro ao carregar funcionários")
-    return
-  }
-
-  const select = document.getElementById("equipe")
-  select.innerHTML = "<option value=''>Selecione</option>"
-
-  data.forEach(e=>{
-    select.innerHTML += `<option value="${e.cpf}">${e.nome_profissional}</option>`
-  })
-}
-
-async function upload(){
-
-  const equipeId = document.getElementById("equipe").value
-  const tipo = document.getElementById("tipo").value
-  const file = document.getElementById("arquivo").files[0]
-
-  if(!equipeId){ alert("Selecione funcionário"); return }
-  if(!file){ alert("Selecione arquivo"); return }
-
-  const fileName = `${equipeId}/${Date.now()}_${limparNome(file.name)}`
-
-  const { error: uploadError } = await client.storage
-    .from("documentos")
-    .upload(fileName, file)
-
-  if(uploadError){
-    alert(uploadError.message)
-    return
-  }
-
-  const { data: urlData } = client.storage
-    .from("documentos")
-    .getPublicUrl(fileName)
-
-  const { error } = await client.from("documentos").insert({
-    equipe_id: equipeId,
-    tipo: tipo,
-    nome_arquivo: file.name,
-    url: urlData.publicUrl
-  })
-
-  if(error){
-    alert(error.message)
-    return
-  }
-
-  carregarLista()
-
-  document.getElementById("arquivo").value = ""
-  document.getElementById("equipe").value = ""
-  document.getElementById("tipo").value = "RG"
-}
-
-async function carregarLista(){
-
-  const { data } = await client
-    .from("documentos")
+/* ── CARREGAR ── */
+async function carregar(){
+  const {data, error} = await client
+    .from("parametros")
     .select("*")
-    .order("created_at", { ascending: false })
+    .eq("tipo", secaoAtual)
+    .order("ordem")
+    .order("valor");
 
-  const tbody = document.getElementById("lista")
-  tbody.innerHTML = ""
+  if(error){ console.error(error); return; }
+  itens = data || [];
+  render();
+}
 
-  for (const d of data){
+/* ── RENDER ── */
+function render(){
+  const lista = document.getElementById("paramLista");
 
-    const { data: func } = await client
-      .from("terapeutas")
-      .select("nome_profissional")
-      .eq("cpf", d.equipe_id)
-      .single()
+  if(!itens.length && !adicionando){
+    lista.innerHTML = `
+    <div class="empty-state">
+      <i class="fa ${SECOES[secaoAtual].icon}"></i>
+      Nenhum item cadastrado ainda.<br>
+      Clique em <strong>Adicionar</strong> para começar.
+    </div>`;
+    return;
+  }
 
-    tbody.innerHTML += `
-    <tr>
-      <td>${func?.nome_profissional || "-"}</td>
-      <td>${d.tipo}</td>
-      <td><a class="link" href="${d.url}" target="_blank">Abrir</a></td>
-      <td>${new Date(d.created_at).toLocaleDateString()}</td>
-    </tr>`
+  lista.innerHTML = itens.map(item => `
+    <div class="param-item" id="item-${item.id}">
+      <span class="param-item-drag"><i class="fa fa-grip-vertical"></i></span>
+      <span class="param-item-nome">${item.valor}</span>
+      ${item.descricao ? `<span class="param-item-badge">${item.descricao}</span>` : ""}
+      <div class="param-item-actions">
+        <button class="btn-toggle toggle-ativo ${item.ativo ? 'on' : ''}"
+          onclick="toggleAtivo('${item.id}', ${item.ativo})"
+          title="${item.ativo ? 'Desativar' : 'Ativar'}"></button>
+        <button class="btn-ghost" onclick="abrirEditar('${item.id}')">
+          <i class="fa fa-pencil"></i>
+        </button>
+        <button class="btn-red" onclick="excluir('${item.id}')">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  `).join("");
+
+  // linha de adicionar inline
+  if(adicionando){
+    lista.innerHTML += `
+    <div class="add-row" id="addRow">
+      <input id="addNome" placeholder="Nome do item..." autofocus>
+      <input id="addDescricao" placeholder="Descrição (opcional)" style="max-width:200px">
+      <button class="btn-blue" onclick="confirmarAdicionar()"><i class="fa fa-check"></i></button>
+      <button class="btn-ghost" onclick="cancelarAdicionar()"><i class="fa fa-times"></i></button>
+    </div>`;
+    setTimeout(() => document.getElementById("addNome")?.focus(), 50);
+    document.getElementById("addNome")?.addEventListener("keydown", e => {
+      if(e.key === "Enter") confirmarAdicionar();
+      if(e.key === "Escape") cancelarAdicionar();
+    });
   }
 }
 
-window.onload = () => {
-  carregarEquipe()
-  carregarLista()
+/* ── ADICIONAR INLINE ── */
+function abrirAdicionar(){
+  adicionando = true;
+  render();
 }
 
-</script>
+function cancelarAdicionar(){
+  adicionando = false;
+  render();
+}
 
+async function confirmarAdicionar(){
+  const nome = (document.getElementById("addNome")?.value||"").trim();
+  if(!nome){ alert("Digite o nome do item."); return; }
+
+  const desc = (document.getElementById("addDescricao")?.value||"").trim();
+
+  const {error} = await client.from("parametros").insert({
+    tipo:      secaoAtual,
+    valor:     nome,
+    descricao: desc || null,
+    ativo:     true,
+    ordem:     itens.length
+  });
+
+  if(error){ alert("Erro: " + error.message); return; }
+  adicionando = false;
+  carregar();
+}
+
+/* ── EDITAR ── */
+function abrirEditar(id){
+  const item = itens.find(i => i.id === id);
+  if(!item) return;
+  editandoId = id;
+  document.getElementById("editNome").value = item.valor     || "";
+  document.getElementById("editDesc").value = item.descricao || "";
+  document.getElementById("modalTitulo").textContent = `Editar — ${SECOES[secaoAtual].label}`;
+  document.getElementById("modalEditar").style.display = "flex";
+}
+
+function fecharModal(){
+  document.getElementById("modalEditar").style.display = "none";
+}
+
+async function salvarEdicao(){
+  const nome = document.getElementById("editNome").value.trim();
+  if(!nome){ alert("Nome obrigatório."); return; }
+
+  const {error} = await client.from("parametros").update({
+    valor:     nome,
+    descricao: document.getElementById("editDesc").value.trim() || null
+  }).eq("id", editandoId);
+
+  if(error){ alert("Erro: " + error.message); return; }
+  fecharModal();
+  carregar();
+}
+
+/* ── TOGGLE ATIVO ── */
+async function toggleAtivo(id, ativoAtual){
+  await client.from("parametros").update({ativo: !ativoAtual}).eq("id", id);
+  carregar();
+}
+
+/* ── EXCLUIR ── */
+async function excluir(id){
+  if(!confirm("Excluir este item?")) return;
+  const {error} = await client.from("parametros").delete().eq("id", id);
+  if(error){ alert("Erro: " + error.message); return; }
+  carregar();
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  carregar();
+});
+</script>
 </body>
 </html>

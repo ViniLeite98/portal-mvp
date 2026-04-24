@@ -4,249 +4,197 @@
 <meta charset="UTF-8">
 <title>Serviços | Hara Spa</title>
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
-#sidebar{width:260px;}
+#sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
 
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:16px;
-}
-
+/* ── TOPBAR ── */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.left-tools{display:flex;gap:10px;align-items:center;}
 .left-tools input{
-padding:8px;
-border:1px solid #d1d5db;
-border-radius:6px;
-width:240px;
+  padding:9px 12px;border:1px solid #d1d5db;
+  border-radius:8px;width:260px;font-size:14px;
 }
+.left-tools input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.left-tools select{padding:9px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;}
+.right-tools{display:flex;gap:10px;align-items:center;}
 
-.right-tools{
-display:flex;
-gap:10px;
-align-items:center;
-}
+/* ── TABELA ── */
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
+th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
+th{background:#f9fafb;font-weight:600;cursor:pointer;user-select:none;}
+th:hover{background:#f3f4f6;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f9fafb;}
+td:nth-child(2),td:nth-child(3),td:nth-child(4),td:nth-child(5){text-align:center;}
 
-/* BOTÕES TOPO (mantém padrão) */
-.right-tools button{
-background:#1f2937;
-color:#fff;
-border:none;
-border-radius:6px;
-padding:7px 12px;
-cursor:pointer;
-}
+button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;}
+button.excluir{background:#dc2626;}
+button.exportar{background:#16a34a;}
 
-/* 🔥 BOTÕES DA TABELA */
-td button{
-background:#1f2937;
-color:#fff;
-border:none;
-border-radius:6px;
-padding:6px 12px;
-cursor:pointer;
-}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
+.badge-ativo{background:#dcfce7;color:#16a34a;}
+.badge-inativo{background:#fee2e2;color:#dc2626;}
 
-/* 🔥 EXCLUIR */
-td button.excluir{
-background:#dc2626;
-}
-
-table{
-width:100%;
-border-collapse:collapse;
-background:#fff;
-border-radius:14px;
-overflow:hidden;
-}
-
-th, td{
-padding:14px;
-border-bottom:1px solid #e5e7eb;
-vertical-align:middle;
-}
-
-th{
-background:#f9fafb;
-cursor:pointer;
-font-weight:600;
-}
-
-td:nth-child(2),
-td:nth-child(3),
-td:nth-child(4),
-td:nth-child(5),
-td:nth-child(6){
-text-align:center;
-}
-
-tr:hover{
-background:#f9fafb;
-}
-
+/* ── MODAL ── */
 .modal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.4);
-display:none;
-align-items:center;
-justify-content:center;
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:flex-start;justify-content:center;
+  z-index:10;padding:30px 20px;overflow-y:auto;
 }
-
 .modal-content{
-background:#fff;
-width:600px;
-border-radius:16px;
-padding:24px;
+  background:#fff;width:560px;max-width:100%;
+  border-radius:18px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
 }
-
-.grid{
-display:grid;
-grid-template-columns:repeat(2,1fr);
-gap:12px;
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 24px 0;
 }
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.btn-fechar:hover{background:#f3f4f6;color:#111827;}
 
+.modal-body{padding:24px;}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.field{display:flex;flex-direction:column;}
+.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
 input,select{
-padding:8px;
-border-radius:6px;
-border:1px solid #d1d5db;
-width:100%;
+  padding:9px 11px;border-radius:8px;
+  border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
 }
+input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.span2{grid-column:span 2;}
 
-label{
-font-size:12px;
-color:#6b7280;
-margin-bottom:4px;
-display:block;
+.modal-footer{
+  display:flex;justify-content:flex-end;gap:10px;
+  padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;
 }
+.modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.btn-cancel:hover{background:#f3f4f6;}
+.btn-save{background:#1f2937;}
+.btn-save:hover{background:#111827;}
 
-.modal-actions{
-display:flex;
-justify-content:flex-end;
-gap:10px;
-margin-top:20px;
-}
+.empty-row td{text-align:center;color:#9ca3af;padding:32px;}
 </style>
 </head>
 
 <body>
-
 <div class="app">
 <aside id="sidebar"></aside>
 
 <main class="content">
-
 <h1>Serviços</h1>
 
 <div class="topbar">
-<div class="left-tools">
-<input id="buscaServico" placeholder="Buscar..." oninput="filtrarTabela()">
-</div>
-
-<div class="right-tools">
-<button onclick="exportarExcel()">
-<i class="fa-solid fa-file-excel"></i> Exportar
-</button>
-
-<button onclick="abrirNovo()">
-+ Novo Serviço
-</button>
-
-<select id="porPaginaSelect" onchange="mudarPorPagina()">
-<option value="5">5</option>
-<option value="10" selected>10</option>
-<option value="20">20</option>
-<option value="todos">Todos</option>
-</select>
-</div>
+  <div class="left-tools">
+    <input id="buscaServico" placeholder="🔍  Buscar serviço...">
+    <select id="filtroStatus">
+      <option value="">Todos os status</option>
+      <option value="ativo">Ativo</option>
+      <option value="inativo">Inativo</option>
+    </select>
+    <select id="porPaginaSelect">
+      <option value="10" selected>10 por página</option>
+      <option value="20">20 por página</option>
+      <option value="50">50 por página</option>
+      <option value="todos">Todos</option>
+    </select>
+  </div>
+  <div class="right-tools">
+    <button class="exportar" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+    <button onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Serviço</button>
+  </div>
 </div>
 
 <table>
-<thead>
-<tr>
-<th onclick="ordenar('servico')">Serviço</th>
-<th onclick="ordenar('tempo')">Tempo</th>
-<th onclick="ordenar('valor')">Valor</th>
-<th onclick="ordenar('comissao')">Comissão</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
+  <thead>
+    <tr>
+      <th onclick="ordenar('servico')">Serviço <span id="ord_servico"></span></th>
+      <th onclick="ordenar('tempo')">Tempo <span id="ord_tempo"></span></th>
+      <th onclick="ordenar('valor')">Valor <span id="ord_valor"></span></th>
+      <th onclick="ordenar('comissao')">Comissão <span id="ord_comissao"></span></th>
+      <th>Status</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody id="lista"></tbody>
 </table>
-
 </main>
 </div>
 
+<!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
-<h3>Cadastro Serviço</h3>
+  <div class="modal-header">
+    <h2 id="modalTitulo">Novo Serviço</h2>
+    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+  </div>
 
-<div class="grid">
+  <div class="modal-body">
+    <div class="grid">
 
-<div>
-<label>Grupo</label>
-<select id="grupo">
-<option value="">Selecione</option>
-<option>Nuru</option>
-<option>Vivencia</option>
-<option>Four Hands</option>
-<option>Podolatria</option>
-</select>
-</div>
+      <div class="field">
+        <label>Grupo</label>
+        <select id="grupo">
+          <option value="">Selecione</option>
+          <option>Nuru</option>
+          <option>Vivencia</option>
+          <option>Four Hands</option>
+          <option>Podolatria</option>
+        </select>
+      </div>
 
-<div>
-<label>Subgrupo</label>
-<input id="subgrupo" placeholder="Ex: Nay">
-</div>
+      <div class="field">
+        <label>Subgrupo</label>
+        <input id="subgrupo" placeholder="Ex: Nay">
+      </div>
 
-<div>
-<label>Tempo</label>
-<select id="tempo">
-<option value="">Sem tempo</option>
-<option value="30">30</option>
-<option value="60">60</option>
-<option value="90">90</option>
-<option value="120">120</option>
-</select>
-</div>
+      <div class="field">
+        <label>Tempo (minutos)</label>
+        <select id="tempo">
+          <option value="">Sem tempo</option>
+          <option value="30">30 min</option>
+          <option value="60">60 min</option>
+          <option value="90">90 min</option>
+          <option value="120">120 min</option>
+        </select>
+      </div>
 
-<div>
-<label>Valor</label>
-<input id="valor" type="number">
-</div>
+      <div class="field">
+        <label>Status</label>
+        <select id="status">
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+        </select>
+      </div>
 
-<div>
-<label>Comissão</label>
-<input id="comissao" type="number">
-</div>
+      <div class="field">
+        <label>Valor (R$)</label>
+        <input id="valor" placeholder="0,00">
+      </div>
 
-<div>
-<label>Status</label>
-<select id="status">
-<option value="ativo">Ativo</option>
-<option value="inativo">Inativo</option>
-</select>
-</div>
+      <div class="field">
+        <label>Comissão (R$)</label>
+        <input id="comissao" placeholder="0,00">
+      </div>
 
-</div>
+    </div>
+  </div>
 
-<div class="modal-actions">
-<button onclick="fecharModal()">Cancelar</button>
-<button onclick="salvar()">Salvar</button>
-</div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+    <button class="btn-save" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
 
 </div>
 </div>
@@ -257,108 +205,201 @@ margin-top:20px;
 <script>
 
 const supabaseClient = supabase.createClient(
-"https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
 );
 
-let dados=[]
-let idAtual=null
-let porPagina=10
+let dados = [];
+let idAtual = null;
+let ordemColuna = null;
+let ordemAsc = true;
 
-async function carregar(){
-const {data}=await supabaseClient.from("servicos").select("*")
-dados=data||[]
-render()
-}
-
+/* ── HELPERS ── */
 function nomeServico(s){
-return `${s.grupo} ${s.subgrupo||""} ${s.tempo? s.tempo+" minutos":""}`
+  const partes = [s.grupo, s.subgrupo, s.tempo ? s.tempo + " min" : ""];
+  return partes.filter(Boolean).join(" ");
 }
 
 function moeda(v){
-return Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2})
+  return Number(v||0).toLocaleString("pt-BR", {minimumFractionDigits:2});
 }
 
-function render(lista=dados){
-const tbody=document.getElementById("lista")
-tbody.innerHTML=""
-
-lista.slice(0,porPagina).forEach(s=>{
-tbody.innerHTML+=`
-<tr>
-<td>${nomeServico(s)}</td>
-<td>${s.tempo||"-"}</td>
-<td>R$ ${moeda(s.valor)}</td>
-<td>R$ ${moeda(s.comissao)}</td>
-<td>${s.status}</td>
-<td>
-<button onclick="editar('${s.id}')">Editar</button>
-<button class="excluir" onclick="excluir('${s.id}')">Excluir</button>
-</td>
-</tr>`
-})
+function parseMoeda(v){
+  return parseFloat((v||"0").replace(/\./g,"").replace(",",".")) || 0;
 }
 
-window.filtrarTabela=function(){
-const termo=document.getElementById("buscaServico").value.toLowerCase()
-render(dados.filter(s=>nomeServico(s).toLowerCase().includes(termo)))
+/* ── CARREGAR ── */
+async function carregar(){
+  const {data, error} = await supabaseClient.from("servicos").select("*");
+  if(error){ console.error(error); return; }
+  dados = data || [];
+  render();
 }
 
-window.mudarPorPagina=function(){
-const v=document.getElementById("porPaginaSelect").value
-porPagina=v==="todos"?dados.length:parseInt(v)
-render()
+/* ── RENDER ── */
+function render(){
+  const termo       = (document.getElementById("buscaServico").value||"").toLowerCase();
+  const statusFiltro = document.getElementById("filtroStatus").value;
+  const porPaginaVal = document.getElementById("porPaginaSelect").value;
+  const porPagina    = porPaginaVal === "todos" ? Infinity : parseInt(porPaginaVal);
+
+  let lista = dados.filter(s => {
+    const nomeOk   = nomeServico(s).toLowerCase().includes(termo);
+    const statusOk = !statusFiltro || s.status === statusFiltro;
+    return nomeOk && statusOk;
+  });
+
+  // ordenação
+  if(ordemColuna){
+    lista.sort((a,b) => {
+      let va, vb;
+      if(ordemColuna === "servico")  { va = nomeServico(a); vb = nomeServico(b); }
+      if(ordemColuna === "tempo")    { va = Number(a.tempo||0); vb = Number(b.tempo||0); }
+      if(ordemColuna === "valor")    { va = Number(a.valor||0); vb = Number(b.valor||0); }
+      if(ordemColuna === "comissao") { va = Number(a.comissao||0); vb = Number(b.comissao||0); }
+      return ordemAsc ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+  }
+
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  if(lista.length === 0){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Nenhum serviço encontrado.</td></tr>`;
+    return;
+  }
+
+  lista.slice(0, porPagina).forEach(s => {
+    const badge = s.status === "ativo"
+      ? `<span class="badge badge-ativo">Ativo</span>`
+      : `<span class="badge badge-inativo">Inativo</span>`;
+
+    tbody.innerHTML += `
+    <tr>
+      <td>${nomeServico(s)}</td>
+      <td>${s.tempo ? s.tempo + " min" : "-"}</td>
+      <td>R$ ${moeda(s.valor)}</td>
+      <td>R$ ${moeda(s.comissao)}</td>
+      <td>${badge}</td>
+      <td>
+        <button onclick="editar('${s.id}')">Editar</button>
+        <button class="excluir" onclick="excluir('${s.id}')">Excluir</button>
+      </td>
+    </tr>`;
+  });
 }
 
-window.salvar=async function(){
-const payload={
-grupo:grupo.value,
-subgrupo:subgrupo.value||null,
-tempo:tempo.value||null,
-valor:valor.value,
-comissao:comissao.value,
-status:status.value
+/* ── ORDENAÇÃO ── */
+function ordenar(col){
+  if(ordemColuna === col){
+    ordemAsc = !ordemAsc;
+  } else {
+    ordemColuna = col;
+    ordemAsc = true;
+  }
+  ["servico","tempo","valor","comissao"].forEach(c => {
+    document.getElementById("ord_"+c).textContent = "";
+  });
+  document.getElementById("ord_"+col).textContent = ordemAsc ? " ↑" : " ↓";
+  render();
 }
 
-if(idAtual){
-await supabaseClient.from("servicos").update(payload).eq("id",idAtual)
-}else{
-await supabaseClient.from("servicos").insert(payload)
+/* ── MODAL ── */
+function resetModal(){
+  ["grupo","subgrupo","tempo","valor","comissao","status"].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = id === "status" ? "ativo" : "";
+  });
 }
 
-fecharModal()
-carregar()
+function abrirNovo(){
+  idAtual = null;
+  resetModal();
+  document.getElementById("modalTitulo").textContent = "Novo Serviço";
+  document.getElementById("modal").style.display = "flex";
 }
 
-window.abrirNovo=function(){
-idAtual=null
-modal.style.display="flex"
+async function editar(id){
+  idAtual = id;
+  const s = dados.find(d => d.id === id);
+  if(!s) return;
+
+  document.getElementById("grupo").value    = s.grupo    || "";
+  document.getElementById("subgrupo").value = s.subgrupo || "";
+  document.getElementById("tempo").value    = s.tempo    || "";
+  document.getElementById("valor").value    = s.valor    ? moeda(s.valor)    : "";
+  document.getElementById("comissao").value = s.comissao ? moeda(s.comissao) : "";
+  document.getElementById("status").value   = s.status   || "ativo";
+
+  document.getElementById("modalTitulo").textContent = nomeServico(s) || "Editar Serviço";
+  document.getElementById("modal").style.display = "flex";
 }
 
-window.fecharModal=function(){
-modal.style.display="none"
+function fecharModal(){
+  document.getElementById("modal").style.display = "none";
 }
 
-window.editar=function(id){
-idAtual=id
-modal.style.display="flex"
+/* ── SALVAR ── */
+async function salvar(){
+  const payload = {
+    grupo:    document.getElementById("grupo").value,
+    subgrupo: document.getElementById("subgrupo").value || null,
+    tempo:    document.getElementById("tempo").value    || null,
+    valor:    parseMoeda(document.getElementById("valor").value),
+    comissao: parseMoeda(document.getElementById("comissao").value),
+    status:   document.getElementById("status").value
+  };
+
+  if(!payload.grupo){
+    alert("Selecione o grupo do serviço.");
+    return;
+  }
+
+  let error;
+  if(idAtual){
+    ({error} = await supabaseClient.from("servicos").update(payload).eq("id", idAtual));
+  } else {
+    ({error} = await supabaseClient.from("servicos").insert(payload));
+  }
+
+  if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
+  fecharModal();
+  carregar();
 }
 
-window.excluir=async function(id){
-await supabaseClient.from("servicos").delete().eq("id",id)
-carregar()
+/* ── EXCLUIR ── */
+async function excluir(id){
+  if(!confirm("Excluir este serviço?")) return;
+  const {error} = await supabaseClient.from("servicos").delete().eq("id", id);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  carregar();
 }
 
-window.exportarExcel=function(){
-const ws=XLSX.utils.json_to_sheet(dados)
-const wb=XLSX.utils.book_new()
-XLSX.utils.book_append_sheet(wb,ws,"Serviços")
-XLSX.writeFile(wb,"servicos.xlsx")
+/* ── EXPORTAR ── */
+function exportarExcel(){
+  const exportData = dados.map(s => ({
+    "Serviço":   nomeServico(s),
+    "Grupo":     s.grupo    || "",
+    "Subgrupo":  s.subgrupo || "",
+    "Tempo (min)": s.tempo  || "",
+    "Valor (R$)":  Number(s.valor    || 0),
+    "Comissão (R$)": Number(s.comissao || 0),
+    "Status":    s.status   || ""
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Serviços");
+  XLSX.writeFile(wb, "servicos.xlsx");
 }
 
-carregar()
-
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById("buscaServico").addEventListener("input", render);
+  document.getElementById("filtroStatus").addEventListener("change", render);
+  document.getElementById("porPaginaSelect").addEventListener("change", render);
+  carregar();
+});
 </script>
-
 </body>
 </html>

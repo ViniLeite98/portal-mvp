@@ -98,8 +98,8 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 
 /* lista de certs no modal */
 .cert-row{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 0;border-bottom:1px solid #f3f4f6;
+  display:flex;flex-direction:column;gap:8px;
+  padding:12px 0;border-bottom:1px solid #f3f4f6;
 }
 .cert-row:last-child{border-bottom:none;}
 .cert-row-left{display:flex;align-items:center;gap:10px;}
@@ -409,24 +409,48 @@ function abrirModal(nome){
   document.getElementById("tituloModal").textContent = nome;
 
   const html = registros.map(r => {
-    const icone = iconeCertificacao(r.certificacoes?.nome);
+    const icone   = iconeCertificacao(r.certificacoes?.nome);
     const dataFmt = r.data_obtencao
       ? new Date(r.data_obtencao + "T00:00:00").toLocaleDateString("pt-BR")
       : "Sem data";
 
+    const nomeEsc = nome.replace(/'/g,"\'");
+
+    const arquivoHtml = r.arquivo_url
+      ? `<div class="cert-arquivo">
+           <i class="fa fa-paperclip"></i>
+           <a class="btn-ver-cert" href="${r.arquivo_url}" target="_blank">
+             <i class="fa fa-eye"></i> ${r.arquivo_nome || "Ver certificado"}
+           </a>
+           <button class="excluir" style="padding:2px 8px;font-size:11px"
+             onclick="excluirArquivo('${r.id}','${(r.arquivo_url||"").replace(/'/g,"\'")}','${nome.replace(/'/g,"\'")}')">
+             <i class="fa fa-times"></i> Remover
+           </button>
+         </div>`
+      : `<div class="cert-upload">
+           <input type="file" id="file_${r.id}" accept="image/*,.pdf,.doc,.docx">
+           <button class="btn-upload-cert" onclick="uploadCert('${r.id}','${nome.replace(/'/g,"\'")}')">
+             <i class="fa fa-upload"></i> Anexar certificado
+           </button>
+           <span class="upload-ing" id="uploading_${r.id}"><i class="fa fa-spinner fa-spin"></i></span>
+         </div>`;
+
     return `
-    <div class="cert-row">
-      <div class="cert-row-left">
-        <i class="fa-solid ${icone} icone-${icone}"></i>
-        <div class="cert-info">
-          <span class="cert-nome">${r.certificacoes?.nome||""}</span>
-          <span class="cert-data"><i class="fa fa-calendar-alt"></i> ${dataFmt}</span>
+    <div class="cert-row" id="cert-row-${r.id}">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+        <div class="cert-row-left">
+          <i class="fa-solid ${icone} icone-${icone}"></i>
+          <div class="cert-info">
+            <span class="cert-nome">${r.certificacoes?.nome||""}</span>
+            <span class="cert-data"><i class="fa fa-calendar-alt"></i> ${dataFmt}</span>
+          </div>
+        </div>
+        <div class="cert-row-right">
+          <button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>
+          <button class="excluir" onclick="excluir('${r.id}','${nome.replace(/'/g,"\'")}')"><i class="fa fa-trash"></i></button>
         </div>
       </div>
-      <div class="cert-row-right">
-        <button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>
-        <button class="excluir" onclick="excluir('${r.id}','${nome.replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>
-      </div>
+      ${arquivoHtml}
     </div>`;
   }).join("");
 

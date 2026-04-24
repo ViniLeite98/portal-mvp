@@ -107,7 +107,27 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .cert-info{display:flex;flex-direction:column;}
 .cert-nome{font-size:13px;font-weight:600;color:#111827;}
 .cert-data{font-size:11px;color:#9ca3af;margin-top:2px;}
-.cert-row-right{display:flex;gap:6px;}
+.cert-row-right{display:flex;gap:6px;align-items:center;}
+.cert-upload{margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.cert-upload input[type=file]{
+  border:1px dashed #d1d5db;border-radius:6px;
+  padding:5px 8px;font-size:12px;background:#f9fafb;
+  cursor:pointer;flex:1;min-width:0;
+}
+.btn-upload-cert{
+  background:#2563eb;color:#fff;border:none;
+  border-radius:6px;padding:5px 10px;font-size:12px;
+  cursor:pointer;white-space:nowrap;
+}
+.btn-ver-cert{
+  font-size:12px;color:#2563eb;text-decoration:none;font-weight:500;
+}
+.cert-arquivo{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;color:#6b7280;margin-top:4px;
+}
+.cert-arquivo i{color:#2563eb;}
+.upload-ing{font-size:11px;color:#2563eb;display:none;}
 
 /* legenda */
 .legenda{
@@ -461,6 +481,59 @@ function exportarExcel(){
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Certificações");
   XLSX.writeFile(wb, "certificacoes.xlsx");
+}
+
+/* ── UPLOAD CERTIFICADO ── */
+function limparNome(nome){
+  return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
+}
+
+async function uploadCert(id, nomeTerapeuta){
+  const fileInput = document.getElementById("file_" + id);
+  const file = fileInput?.files[0];
+  if(!file){ alert("Selecione um arquivo."); return; }
+
+  const statusEl = document.getElementById("uploading_" + id);
+  if(statusEl) statusEl.style.display = "inline";
+
+  const fileName = `certificados/${id}/${Date.now()}_${limparNome(file.name)}`;
+
+  const {error: uploadError} = await client.storage
+    .from("documentos").upload(fileName, file);
+
+  if(uploadError){
+    if(statusEl) statusEl.style.display = "none";
+    alert("Erro no upload: " + uploadError.message);
+    return;
+  }
+
+  const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
+
+  const {error} = await client.from("terapeuta_certificacoes").update({
+    arquivo_url:  urlData.publicUrl,
+    arquivo_nome: file.name
+  }).eq("id", id);
+
+  if(statusEl) statusEl.style.display = "none";
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
+
+  await carregarLista();
+  abrirModal(nomeTerapeuta);
+}
+
+async function excluirArquivo(id, url, nomeTerapeuta){
+  if(!confirm("Remover o arquivo anexado?")) return;
+
+  const path = url.split("/storage/v1/object/public/documentos/")[1];
+  if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
+
+  await client.from("terapeuta_certificacoes").update({
+    arquivo_url:  null,
+    arquivo_nome: null
+  }).eq("id", id);
+
+  await carregarLista();
+  abrirModal(nomeTerapeuta);
 }
 
 /* ── INIT ── */

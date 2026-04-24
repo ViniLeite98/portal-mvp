@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -38,7 +39,6 @@ gap:10px;
 align-items:center;
 }
 
-/* BOTÕES TOPO (mantém padrão) */
 .right-tools button{
 background:#1f2937;
 color:#fff;
@@ -48,7 +48,6 @@ padding:7px 12px;
 cursor:pointer;
 }
 
-/* 🔥 BOTÕES DA TABELA */
 td button{
 background:#1f2937;
 color:#fff;
@@ -58,7 +57,6 @@ padding:6px 12px;
 cursor:pointer;
 }
 
-/* 🔥 EXCLUIR */
 td button.excluir{
 background:#dc2626;
 }
@@ -86,13 +84,8 @@ font-weight:600;
 td:nth-child(2),
 td:nth-child(3),
 td:nth-child(4),
-td:nth-child(5),
-td:nth-child(6){
+td:nth-child(5){
 text-align:center;
-}
-
-tr:hover{
-background:#f9fafb;
 }
 
 .modal{
@@ -162,23 +155,16 @@ margin-top:20px;
 <button onclick="abrirNovo()">
 + Novo Serviço
 </button>
-
-<select id="porPaginaSelect" onchange="mudarPorPagina()">
-<option value="5">5</option>
-<option value="10" selected>10</option>
-<option value="20">20</option>
-<option value="todos">Todos</option>
-</select>
 </div>
 </div>
 
 <table>
 <thead>
 <tr>
-<th onclick="ordenar('servico')">Serviço</th>
-<th onclick="ordenar('tempo')">Tempo</th>
-<th onclick="ordenar('valor')">Valor</th>
-<th onclick="ordenar('comissao')">Comissão</th>
+<th>Serviço</th>
+<th>Tempo</th>
+<th>Valor</th>
+<th>Comissão</th>
 <th>Status</th>
 <th>Ações</th>
 </tr>
@@ -197,25 +183,14 @@ margin-top:20px;
 <div class="grid">
 
 <div>
-<label>Grupo</label>
-<select id="grupo">
-<option value="">Selecione</option>
-<option>Nuru</option>
-<option>Vivencia</option>
-<option>Four Hands</option>
-<option>Podolatria</option>
-</select>
+<label>Serviço</label>
+<input id="servico_nome" placeholder="Ex: Nuru Premium">
 </div>
 
 <div>
-<label>Subgrupo</label>
-<input id="subgrupo" placeholder="Ex: Nay">
-</div>
-
-<div>
-<label>Tempo</label>
+<label>Tempo (min)</label>
 <select id="tempo">
-<option value="">Sem tempo</option>
+<option value="">Selecione</option>
 <option value="30">30</option>
 <option value="60">60</option>
 <option value="90">90</option>
@@ -258,21 +233,16 @@ margin-top:20px;
 
 const supabaseClient = supabase.createClient(
 "https://rymehgsoarjeecuwyhny.supabase.co",
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+"SEU_ANON_KEY"
 );
 
 let dados=[]
 let idAtual=null
-let porPagina=10
 
 async function carregar(){
 const {data}=await supabaseClient.from("servicos").select("*")
 dados=data||[]
 render()
-}
-
-function nomeServico(s){
-return `${s.grupo} ${s.subgrupo||""} ${s.tempo? s.tempo+" minutos":""}`
 }
 
 function moeda(v){
@@ -283,11 +253,11 @@ function render(lista=dados){
 const tbody=document.getElementById("lista")
 tbody.innerHTML=""
 
-lista.slice(0,porPagina).forEach(s=>{
+lista.forEach(s=>{
 tbody.innerHTML+=`
 <tr>
-<td>${nomeServico(s)}</td>
-<td>${s.tempo||"-"}</td>
+<td>${s.servico_nome}</td>
+<td>${s.tempo||"-"} min</td>
 <td>R$ ${moeda(s.valor)}</td>
 <td>R$ ${moeda(s.comissao)}</td>
 <td>${s.status}</td>
@@ -301,20 +271,14 @@ tbody.innerHTML+=`
 
 window.filtrarTabela=function(){
 const termo=document.getElementById("buscaServico").value.toLowerCase()
-render(dados.filter(s=>nomeServico(s).toLowerCase().includes(termo)))
-}
-
-window.mudarPorPagina=function(){
-const v=document.getElementById("porPaginaSelect").value
-porPagina=v==="todos"?dados.length:parseInt(v)
-render()
+render(dados.filter(s=>s.servico_nome.toLowerCase().includes(termo)))
 }
 
 window.salvar=async function(){
+
 const payload={
-grupo:grupo.value,
-subgrupo:subgrupo.value||null,
-tempo:tempo.value||null,
+servico_nome:servico_nome.value,
+tempo:tempo.value,
 valor:valor.value,
 comissao:comissao.value,
 status:status.value
@@ -330,18 +294,27 @@ fecharModal()
 carregar()
 }
 
+window.editar=function(id){
+const s=dados.find(x=>x.id==id)
+
+servico_nome.value=s.servico_nome
+tempo.value=s.tempo
+valor.value=s.valor
+comissao.value=s.comissao
+status.value=s.status
+
+idAtual=id
+modal.style.display="flex"
+}
+
 window.abrirNovo=function(){
 idAtual=null
+document.querySelectorAll("input").forEach(i=>i.value="")
 modal.style.display="flex"
 }
 
 window.fecharModal=function(){
 modal.style.display="none"
-}
-
-window.editar=function(id){
-idAtual=id
-modal.style.display="flex"
 }
 
 window.excluir=async function(id){
@@ -362,3 +335,4 @@ carregar()
 
 </body>
 </html>
+```

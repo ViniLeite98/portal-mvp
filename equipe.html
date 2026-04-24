@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <title>Gestão da Equipe | Hara Spa</title>
 
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
@@ -17,553 +15,335 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
 
-table{
-  width:100%;
-  border-collapse:collapse;
-  background:#fff;
-  border-radius:14px;
-  overflow:hidden;
-}
-
-th,td{
-  padding:14px;
-  border-bottom:1px solid #e5e7eb;
-  font-size:14px;
-  text-align:left;
-}
-
+/* ── TABELA PRINCIPAL ── */
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
+th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
 th{background:#f9fafb;font-weight:600;}
-
-button{
-  background:#1f2937;
-  color:#fff;
-  border:none;
-  border-radius:6px;
-  padding:6px 12px;
-  cursor:pointer;
-}
-
+button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
 button.excluir{background:#dc2626}
-
-.top-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:12px;
-  margin-bottom:16px;
-}
-
-.top-actions input{
-  padding:8px;
-  border-radius:6px;
-  border:1px solid #d1d5db;
-}
+.top-actions{display:flex;justify-content:flex-end;gap:12px;margin-bottom:16px;}
+.top-actions input,.top-actions select{padding:8px;border-radius:6px;border:1px solid #d1d5db;font-size:14px;}
 
 /* ── MODAL ── */
 .modal{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.45);
-  display:none;
-  align-items:flex-start;
-  justify-content:center;
-  z-index:10;
-  padding:40px 20px;
-  overflow-y:auto;
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:flex-start;justify-content:center;
+  z-index:10;padding:30px 20px;overflow-y:auto;
 }
-
 .modal-content{
-  background:#fff;
-  width:1000px;
-  max-width:100%;
-  border-radius:18px;
-  padding:0;
-  overflow:hidden;
+  background:#fff;width:860px;max-width:100%;
+  border-radius:18px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
 }
 
-/* ── TABS ── */
-.tabs{
-  display:flex;
-  border-bottom:2px solid #e5e7eb;
-  background:#f9fafb;
+/* ── HEADER ── */
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 28px 0;
+}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{
+  background:none;color:#6b7280;font-size:20px;
+  border:none;cursor:pointer;padding:4px 8px;border-radius:6px;
+}
+.btn-fechar:hover{background:#f3f4f6;color:#111827;}
+
+/* ── BODY: sidenav + panels ── */
+.modal-body{display:flex;min-height:480px;}
+
+.side-nav{
+  width:190px;flex-shrink:0;
+  background:#f9fafb;border-right:1px solid #e5e7eb;
+  padding:16px 0;display:flex;flex-direction:column;gap:2px;
+}
+.side-btn{
+  display:flex;align-items:center;gap:10px;
+  background:none;color:#6b7280;border:none;border-radius:0;
+  padding:11px 20px;font-size:13px;font-weight:500;
+  cursor:pointer;text-align:left;width:100%;
+  border-left:3px solid transparent;transition:all .15s;
+}
+.side-btn i{width:16px;text-align:center;font-size:13px;}
+.side-btn:hover{background:#f3f4f6;color:#111827;}
+.side-btn.active{background:#eff6ff;color:#1d4ed8;border-left-color:#2563eb;font-weight:600;}
+.tab-badge{
+  margin-left:auto;background:#2563eb;color:#fff;
+  font-size:10px;border-radius:99px;padding:1px 6px;font-weight:700;
 }
 
-.tab-btn{
-  background:none;
-  color:#6b7280;
-  border:none;
-  border-bottom:3px solid transparent;
-  padding:14px 24px;
-  font-size:14px;
-  font-weight:600;
-  cursor:pointer;
-  border-radius:0;
-  margin-bottom:-2px;
-  transition:color .2s, border-color .2s;
+.tab-panels{flex:1;overflow-y:auto;}
+.tab-panel{display:none;padding:24px 28px;}
+.tab-panel.active{display:block;}
+
+/* ── FORM ── */
+.section-title{
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:#9ca3af;margin:0 0 18px;
+  display:flex;align-items:center;gap:7px;
 }
-
-.tab-btn.active{
-  color:#1f2937;
-  border-bottom-color:#1f2937;
-}
-
-.tab-content{
-  display:none;
-  padding:28px;
-}
-
-.tab-content.active{
-  display:block;
-}
-
-/* ── FORM SECTIONS ── */
-.section{margin-bottom:28px}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:16px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-}
-
-.field label{
-  font-size:13px;
-  font-weight:600;
-  margin-bottom:6px;
-  color:#374151;
-}
-
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px;}
+.field{display:flex;flex-direction:column;}
+.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
 input,select{
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:14px;
+  padding:9px 11px;border-radius:8px;
+  border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
 }
+input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.span2{grid-column:span 2;}
+.span3{grid-column:span 3;}
 
-.modal-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:20px;
+/* ── FOOTER ── */
+.modal-footer{
+  display:flex;justify-content:flex-end;gap:10px;
+  padding:14px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;
 }
+.modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.btn-cancel:hover{background:#f3f4f6;}
+.btn-save{background:#1f2937;}
+.btn-save:hover{background:#111827;}
 
 /* ── DOCUMENTOS ── */
 .doc-upload-box{
-  background:#f9fafb;
-  border:2px dashed #d1d5db;
-  border-radius:12px;
-  padding:20px;
-  margin-bottom:24px;
+  background:#f9fafb;border:2px dashed #d1d5db;
+  border-radius:12px;padding:18px;margin-bottom:20px;
 }
-
-.doc-upload-row{
-  display:flex;
-  gap:12px;
-  align-items:flex-end;
-  flex-wrap:wrap;
+.doc-upload-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
+.doc-upload-row .field{flex:1;min-width:140px;}
+.btn-upload{
+  height:38px;padding:0 16px;white-space:nowrap;
+  background:#2563eb;font-size:13px;align-self:flex-end;border-radius:6px;
 }
-
-.doc-upload-row .field{flex:1;min-width:160px;}
-
-.doc-upload-row button{
-  height:42px;
-  padding:0 18px;
-  white-space:nowrap;
-  background:#2563eb;
-  align-self:flex-end;
-}
-
-.doc-list{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
+.upload-status{font-size:13px;color:#2563eb;margin-top:8px;display:none;}
+.doc-list{display:flex;flex-direction:column;gap:8px;}
 .doc-item{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  background:#fff;
-  border:1px solid #e5e7eb;
-  border-radius:10px;
-  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px 14px;
 }
-
-.doc-item-left{
-  display:flex;
-  align-items:center;
-  gap:12px;
-}
-
+.doc-item-left{display:flex;align-items:center;gap:11px;}
 .doc-icon{
-  width:38px;height:38px;
-  background:#eff6ff;
-  border-radius:8px;
+  width:36px;height:36px;background:#eff6ff;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
-  color:#2563eb;
-  font-size:16px;
+  color:#2563eb;font-size:15px;flex-shrink:0;
 }
-
-.doc-name{
-  font-size:13px;
-  font-weight:600;
-  color:#1f2937;
-}
-
-.doc-tipo{
-  font-size:12px;
-  color:#6b7280;
-  margin-top:2px;
-}
-
-.doc-item-right{
-  display:flex;
-  gap:8px;
-  align-items:center;
-}
-
-.doc-item-right a{
-  font-size:13px;
-  color:#2563eb;
-  text-decoration:none;
-  font-weight:500;
-}
-
-.doc-item-right button{
-  background:none;
-  color:#dc2626;
-  border:none;
-  cursor:pointer;
-  font-size:14px;
-  padding:4px 6px;
-}
-
-.doc-empty{
-  text-align:center;
-  color:#9ca3af;
-  font-size:13px;
-  padding:30px 0;
-}
-
-.upload-status{
-  font-size:13px;
-  color:#2563eb;
-  margin-top:8px;
-  display:none;
-}
-
-/* badge de contagem de docs na aba */
-.tab-badge{
-  background:#2563eb;
-  color:#fff;
-  font-size:11px;
-  border-radius:99px;
-  padding:1px 7px;
-  margin-left:6px;
-  font-weight:700;
-}
+.doc-name{font-size:13px;font-weight:600;color:#1f2937;}
+.doc-tipo{font-size:11px;color:#6b7280;margin-top:2px;}
+.doc-item-right{display:flex;gap:8px;align-items:center;}
+.doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
+.btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
+.doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
 </style>
 </head>
 
 <body>
-
 <div class="app">
 <aside id="sidebar"></aside>
 
 <main class="content">
-
 <h1>Gestão da Equipe</h1>
 
 <div class="top-actions">
-
-<input 
-type="text"
-id="pesquisaNome"
-placeholder="Pesquisar profissional..."
-onkeyup="filtrarTabela()"
->
-
-<select id="filtroStatus">
-<option value="">Todos</option>
-<option value="Ativo">Ativo</option>
-<option value="Inativo">Inativo</option>
-</select>
-
-<button onclick="abrirNovo()">+ Novo Cadastro</button>
-
+  <input type="text" id="pesquisaNome" placeholder="Pesquisar profissional..." onkeyup="filtrarTabela()">
+  <select id="filtroStatus">
+    <option value="">Todos</option>
+    <option value="Ativo">Ativo</option>
+    <option value="Inativo">Inativo</option>
+  </select>
+  <button onclick="abrirNovo()">+ Novo Cadastro</button>
 </div>
 
 <table>
-<thead>
-<tr>
-<th>Nome Profissional</th>
-<th>Cargo</th>
-<th>CPF</th>
-<th>Status</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody id="lista"></tbody>
+  <thead>
+    <tr><th>Nome Profissional</th><th>Cargo</th><th>CPF</th><th>Status</th><th>Ações</th></tr>
+  </thead>
+  <tbody id="lista"></tbody>
 </table>
-
 </main>
 </div>
 
-<!-- ══════════════════════════════════════ MODAL ══════════════════════════════════════ -->
+<!-- ══════════════════════════ MODAL ══════════════════════════ -->
 <div class="modal" id="modal">
 <div class="modal-content">
 
-  <!-- TABS -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="mudarTab('dados', this)">
-      <i class="fa fa-user"></i> Dados Cadastrais
-    </button>
-    <button class="tab-btn" onclick="mudarTab('docs', this)" id="tabDocsBtn">
-      <i class="fa fa-file-alt"></i> Documentos
-      <span class="tab-badge" id="docBadge" style="display:none">0</span>
-    </button>
+  <div class="modal-header">
+    <h2 id="modalTitulo">Novo Cadastro</h2>
+    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
   </div>
 
-  <!-- ── TAB: DADOS ── -->
-  <div class="tab-content active" id="tab-dados">
+  <div class="modal-body">
 
-    <div class="section">
-    <h3>Dados Pessoais</h3>
-    <div class="grid">
+    <!-- Sidenav -->
+    <nav class="side-nav">
+      <button class="side-btn active" onclick="mudarTab('pessoais',this)">
+        <i class="fa fa-id-card"></i> Dados Pessoais
+      </button>
+      <button class="side-btn" onclick="mudarTab('contatos',this)">
+        <i class="fa fa-phone"></i> Contatos
+      </button>
+      <button class="side-btn" onclick="mudarTab('endereco',this)">
+        <i class="fa fa-map-marker-alt"></i> Endereço
+      </button>
+      <button class="side-btn" onclick="mudarTab('pagamento',this)">
+        <i class="fa fa-dollar-sign"></i> Pagamento
+      </button>
+      <button class="side-btn" onclick="mudarTab('funcional',this)">
+        <i class="fa fa-briefcase"></i> Dados Funcionais
+      </button>
+      <button class="side-btn" id="tabDocsBtn" style="display:none" onclick="mudarTab('docs',this)">
+        <i class="fa fa-file-alt"></i> Documentos
+        <span class="tab-badge" id="docBadge" style="display:none">0</span>
+      </button>
+    </nav>
 
-    <div class="field">
-    <label>Nome Completo *</label>
-    <input id="nome_completo">
-    </div>
+    <!-- Panels -->
+    <div class="tab-panels">
 
-    <div class="field">
-    <label>Nome Profissional *</label>
-    <input id="nome_profissional">
-    </div>
-
-    <div class="field">
-    <label>CPF *</label>
-    <input id="cpf">
-    </div>
-
-    <div class="field">
-    <label>RG</label>
-    <input id="rg">
-    </div>
-
-    <div class="field">
-    <label>Data de Nascimento</label>
-    <input type="date" id="nascimento">
-    </div>
-
-    <div class="field">
-    <label>Email *</label>
-    <input id="email">
-    </div>
-
-    <div class="field">
-    <label>Tipo Sanguíneo</label>
-    <select id="tipo_sanguineo">
-    <option value="">Selecione</option>
-    <option>A+</option><option>A-</option>
-    <option>B+</option><option>B-</option>
-    <option>AB+</option><option>AB-</option>
-    <option>O+</option><option>O-</option>
-    </select>
-    </div>
-
-    </div>
-    </div>
-
-    <div class="section">
-    <h3>Contatos</h3>
-    <div class="grid">
-
-    <div class="field">
-    <label>Telefone *</label>
-    <input id="telefone">
-    </div>
-
-    <div class="field">
-    <label>Contato de Emergência</label>
-    <input id="telefone_emer">
-    </div>
-
-    </div>
-    </div>
-
-    <div class="section">
-    <h3>Endereço</h3>
-    <div class="grid">
-
-    <div class="field"><label>CEP</label><input id="cep"></div>
-    <div class="field"><label>Rua</label><input id="rua"></div>
-    <div class="field"><label>Número</label><input id="numero"></div>
-    <div class="field"><label>Complemento</label><input id="complemento"></div>
-    <div class="field"><label>Bairro</label><input id="bairro"></div>
-    <div class="field"><label>Cidade</label><input id="cidade"></div>
-    <div class="field"><label>UF</label><input id="uf"></div>
-
-    </div>
-    </div>
-
-    <div class="section">
-    <h3>Pagamento</h3>
-    <div class="grid">
-
-    <div class="field">
-    <label>Tipo Chave PIX</label>
-    <select id="pix_tipo">
-    <option value="">Selecione</option>
-    <option>CPF</option>
-    <option>Email</option>
-    <option>Telefone</option>
-    <option>Aleatória</option>
-    </select>
-    </div>
-
-    <div class="field">
-    <label>Chave PIX</label>
-    <input id="pix_chave">
-    </div>
-
-    </div>
-    </div>
-
-    <div class="section">
-    <h3>Dados Funcionais</h3>
-    <div class="grid">
-
-    <div class="field">
-    <label>Cargo</label>
-    <select id="cargo">
-    <option value="">Selecione</option>
-    <option>Terapeuta Feminina</option>
-    <option>Terapeuta Masculino</option>
-    <option>Gerente</option>
-    <option>Atendente</option>
-    <option>Recepcionista</option>
-    <option>Faxineira</option>
-    <option>Analista</option>
-    </select>
-    </div>
-
-    <div class="field">
-    <label>Tem folga semanal?</label>
-    <select id="tem_folga">
-    <option value="">Selecione</option>
-    <option>Sim</option>
-    <option>Não</option>
-    </select>
-    </div>
-
-    <div class="field">
-    <label>Dia da Folga</label>
-    <select id="dia_folga">
-    <option value="">Selecione</option>
-    <option>Segunda</option>
-    <option>Terça</option>
-    <option>Quarta</option>
-    <option>Quinta</option>
-    <option>Sexta</option>
-    <option>Sábado</option>
-    </select>
-    </div>
-
-    <div class="field">
-    <label>Hora de Entrada</label>
-    <input type="time" id="hora_entrada" value="09:00">
-    </div>
-
-    <div class="field">
-    <label>Hora de Saída</label>
-    <input type="time" id="hora_saida" value="18:00">
-    </div>
-
-    <div class="field">
-    <label>Data de Início no Hara</label>
-    <input type="date" id="data_inicio">
-    </div>
-
-    <div class="field">
-    <label>Status</label>
-    <select id="status">
-    <option value="">Selecione</option>
-    <option>Ativo</option>
-    <option>Inativo</option>
-    </select>
-    </div>
-
-    </div>
-    </div>
-
-    <div class="modal-actions">
-    <button onclick="fecharModal()">Cancelar</button>
-    <button onclick="salvar()">Salvar</button>
-    </div>
-
-  </div><!-- /tab-dados -->
-
-  <!-- ── TAB: DOCUMENTOS ── -->
-  <div class="tab-content" id="tab-docs">
-
-    <!-- Upload -->
-    <div class="doc-upload-box">
-      <p style="margin:0 0 14px;font-weight:600;font-size:14px;color:#374151">
-        <i class="fa fa-upload" style="margin-right:6px;color:#2563eb"></i>
-        Anexar novo documento
-      </p>
-
-      <div class="doc-upload-row">
-
-        <div class="field">
-          <label>Tipo</label>
-          <select id="doc_tipo">
-            <option>RG</option>
-            <option>CPF</option>
-            <option>Comprovante de Residência</option>
-            <option>Contrato</option>
-            <option>Certidão de Nascimento</option>
-            <option>Diploma / Certificado</option>
-            <option>Outro</option>
-          </select>
+      <!-- Dados Pessoais -->
+      <div class="tab-panel active" id="tab-pessoais">
+        <p class="section-title"><i class="fa fa-id-card"></i> Dados Pessoais</p>
+        <div class="grid">
+          <div class="field span2"><label>Nome Completo *</label><input id="nome_completo"></div>
+          <div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
+          <div class="field"><label>CPF *</label><input id="cpf" placeholder="000.000.000-00"></div>
+          <div class="field"><label>RG</label><input id="rg"></div>
+          <div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
+          <div class="field"><label>Email *</label><input id="email" type="email"></div>
+          <div class="field">
+            <label>Tipo Sanguíneo</label>
+            <select id="tipo_sanguineo">
+              <option value="">Selecione</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+              <option>O+</option><option>O-</option>
+            </select>
+          </div>
         </div>
-
-        <div class="field" style="flex:2">
-          <label>Arquivo</label>
-          <input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx">
-        </div>
-
-        <button onclick="uploadDoc()">
-          <i class="fa fa-upload"></i> Enviar
-        </button>
-
       </div>
 
-      <div class="upload-status" id="uploadStatus">
-        <i class="fa fa-spinner fa-spin"></i> Enviando...
+      <!-- Contatos -->
+      <div class="tab-panel" id="tab-contatos">
+        <p class="section-title"><i class="fa fa-phone"></i> Contatos</p>
+        <div class="grid-2">
+          <div class="field"><label>Telefone *</label><input id="telefone" placeholder="(11) 99999-9999"></div>
+          <div class="field"><label>Contato de Emergência</label><input id="telefone_emer" placeholder="(11) 99999-9999"></div>
+        </div>
       </div>
-    </div>
 
-    <!-- Lista de docs -->
-    <div id="docLista" class="doc-list">
-      <div class="doc-empty">Nenhum documento anexado.</div>
-    </div>
+      <!-- Endereço -->
+      <div class="tab-panel" id="tab-endereco">
+        <p class="section-title"><i class="fa fa-map-marker-alt"></i> Endereço</p>
+        <div class="grid">
+          <div class="field"><label>CEP</label><input id="cep" placeholder="00000-000"></div>
+          <div class="field span2"><label>Rua</label><input id="rua"></div>
+          <div class="field"><label>Número</label><input id="numero"></div>
+          <div class="field"><label>Complemento</label><input id="complemento"></div>
+          <div class="field"><label>Bairro</label><input id="bairro"></div>
+          <div class="field span2"><label>Cidade</label><input id="cidade"></div>
+          <div class="field"><label>UF</label><input id="uf" maxlength="2" style="text-transform:uppercase"></div>
+        </div>
+      </div>
 
-    <div class="modal-actions">
-      <button onclick="fecharModal()">Fechar</button>
-    </div>
+      <!-- Pagamento -->
+      <div class="tab-panel" id="tab-pagamento">
+        <p class="section-title"><i class="fa fa-dollar-sign"></i> Pagamento via PIX</p>
+        <div class="grid-2">
+          <div class="field">
+            <label>Tipo de Chave PIX</label>
+            <select id="pix_tipo">
+              <option value="">Selecione</option>
+              <option>CPF</option><option>Email</option>
+              <option>Telefone</option><option>Aleatória</option>
+            </select>
+          </div>
+          <div class="field"><label>Chave PIX</label><input id="pix_chave"></div>
+        </div>
+      </div>
 
-  </div><!-- /tab-docs -->
+      <!-- Dados Funcionais -->
+      <div class="tab-panel" id="tab-funcional">
+        <p class="section-title"><i class="fa fa-briefcase"></i> Dados Funcionais</p>
+        <div class="grid">
+          <div class="field">
+            <label>Cargo</label>
+            <select id="cargo">
+              <option value="">Selecione</option>
+              <option>Terapeuta Feminina</option><option>Terapeuta Masculino</option>
+              <option>Gerente</option><option>Atendente</option>
+              <option>Recepcionista</option><option>Faxineira</option><option>Analista</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="status">
+              <option value="">Selecione</option>
+              <option>Ativo</option><option>Inativo</option>
+            </select>
+          </div>
+          <div class="field"><label>Data de Início no Hara</label><input type="date" id="data_inicio"></div>
+          <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
+          <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
+          <div class="field">
+            <label>Tem folga semanal?</label>
+            <select id="tem_folga">
+              <option value="">Selecione</option><option>Sim</option><option>Não</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Dia da Folga</label>
+            <select id="dia_folga">
+              <option value="">Selecione</option>
+              <option>Segunda</option><option>Terça</option><option>Quarta</option>
+              <option>Quinta</option><option>Sexta</option><option>Sábado</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
-</div><!-- /modal-content -->
-</div><!-- /modal -->
+      <!-- Documentos -->
+      <div class="tab-panel" id="tab-docs">
+        <p class="section-title"><i class="fa fa-file-alt"></i> Documentos Anexados</p>
+        <div class="doc-upload-box">
+          <div class="doc-upload-row">
+            <div class="field">
+              <label>Tipo</label>
+              <select id="doc_tipo">
+                <option>RG</option><option>CPF</option>
+                <option>Comprovante de Residência</option><option>Contrato</option>
+                <option>Certidão de Nascimento</option><option>Diploma / Certificado</option>
+                <option>Outro</option>
+              </select>
+            </div>
+            <div class="field" style="flex:2">
+              <label>Arquivo</label>
+              <input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx">
+            </div>
+            <button class="btn-upload" onclick="uploadDoc()">
+              <i class="fa fa-upload"></i> Enviar
+            </button>
+          </div>
+          <div class="upload-status" id="uploadStatus">
+            <i class="fa fa-spinner fa-spin"></i> Enviando...
+          </div>
+        </div>
+        <div id="docLista" class="doc-list">
+          <div class="doc-empty">Nenhum documento anexado.</div>
+        </div>
+      </div>
+
+    </div><!-- /tab-panels -->
+  </div><!-- /modal-body -->
+
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+    <button class="btn-save" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
+
+</div>
+</div>
 
 <script src="assets/sidebar/sidebar.js"></script>
-
 <script>
 
 const supabaseClient = supabase.createClient(
@@ -577,59 +357,51 @@ const campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
   "tipo_sanguineo","telefone","telefone_emer","cep","rua","numero",
   "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-  "cargo","tem_folga","dia_folga",
-  "hora_entrada","hora_saida","data_inicio","status"
+  "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status"
 ];
 
-/* ──────────────── TABS ──────────────── */
+/* ── TABS ── */
 function mudarTab(tab, btn){
-  document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
-  document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".side-btn").forEach(el => el.classList.remove("active"));
   document.getElementById("tab-" + tab).classList.add("active");
   btn.classList.add("active");
 }
 
-/* ──────────────── HELPERS FORM ──────────────── */
+/* ── FORM HELPERS ── */
 function getPayload(){
-  const obj={};
-  campos.forEach(c=>{
-    const el=document.getElementById(c);
-    if(el && el.value!=="") obj[c]=el.value;
+  const obj = {};
+  campos.forEach(c => {
+    const el = document.getElementById(c);
+    if(el && el.value !== "") obj[c] = el.value;
   });
   return obj;
 }
 
 function setForm(data){
-  campos.forEach(c=>{
-    const el=document.getElementById(c);
-    if(el){
-      if(c==="hora_entrada"||c==="hora_saida"){
-        el.value=data[c]?data[c].substring(0,5):"";
-      }else{
-        el.value=data[c]||"";
-      }
+  campos.forEach(c => {
+    const el = document.getElementById(c);
+    if(!el) return;
+    if(c === "hora_entrada" || c === "hora_saida"){
+      el.value = data[c] ? data[c].substring(0,5) : "";
+    } else {
+      el.value = data[c] || "";
     }
   });
 }
 
-/* ──────────────── TABELA PRINCIPAL ──────────────── */
+/* ── TABELA PRINCIPAL ── */
 async function carregar(){
   const statusFiltro = document.getElementById("filtroStatus").value;
-
-  let query = supabaseClient
-    .from("terapeutas")
-    .select("cpf,nome_profissional,status,cargo")
-    .order("nome_profissional");
-
+  let query = supabaseClient.from("terapeutas")
+    .select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro) query = query.eq("status", statusFiltro);
-
-  const {data,error} = await query;
+  const {data, error} = await query;
   if(error){ console.error(error); return; }
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
-
-  data.forEach(t=>{
+  data.forEach(t => {
     tbody.innerHTML += `
     <tr>
       <td>${t.nome_profissional||""}</td>
@@ -642,58 +414,42 @@ async function carregar(){
       </td>
     </tr>`;
   });
-
   filtrarTabela();
 }
 
 function filtrarTabela(){
   const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
-  document.querySelectorAll("#lista tr").forEach(linha=>{
-    const nome = linha.children[0].innerText.toLowerCase();
-    linha.style.display = nome.includes(filtro) ? "" : "none";
+  document.querySelectorAll("#lista tr").forEach(linha => {
+    linha.style.display = linha.children[0].innerText.toLowerCase().includes(filtro) ? "" : "none";
   });
 }
 
-/* ──────────────── MODAL ABRIR / FECHAR ──────────────── */
-function abrirNovo(){
-  cpfAtual = null;
-  campos.forEach(c=>{ const el=document.getElementById(c); if(el) el.value=""; });
+/* ── MODAL ── */
+function resetModal(){
+  campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
   document.getElementById("hora_entrada").value = "09:00";
   document.getElementById("hora_saida").value   = "18:00";
-  document.getElementById("cpf").disabled = false;
+  mudarTab("pessoais", document.querySelector(".side-btn"));
+}
 
-  // reset tabs
-  mudarTab("dados", document.querySelector(".tab-btn"));
-  document.getElementById("tab-docs").style.display = "none";
+function abrirNovo(){
+  cpfAtual = null;
+  resetModal();
+  document.getElementById("modalTitulo").textContent = "Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display = "none";
-
   document.getElementById("modal").style.display = "flex";
 }
 
 async function editar(cpf){
   cpfAtual = cpf;
-
-  const {data,error} = await supabaseClient
-    .from("terapeutas")
-    .select("*")
-    .eq("cpf", cpf)
-    .single();
-
+  const {data, error} = await supabaseClient.from("terapeutas").select("*").eq("cpf", cpf).single();
   if(error){ console.error(error); return; }
 
+  resetModal();
   setForm(data);
-  document.getElementById("cpf").disabled = true;
-
-  // mostrar aba docs
-  document.getElementById("tab-docs").style.display = "";
+  document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display = "";
-
-  // reset para aba dados
-  mudarTab("dados", document.querySelector(".tab-btn"));
-
-  // carregar docs em background
   carregarDocs(cpf);
-
   document.getElementById("modal").style.display = "flex";
 }
 
@@ -701,66 +457,65 @@ function fecharModal(){
   document.getElementById("modal").style.display = "none";
 }
 
-/* ──────────────── SALVAR CADASTRO ──────────────── */
+/* ── SALVAR ── */
 async function salvar(){
   const payload = getPayload();
 
-  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
-    alert("Preencha os campos obrigatórios");
+  if(!payload.nome_completo || !payload.nome_profissional || !payload.email){
+    alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");
     return;
   }
 
   let error;
 
   if(cpfAtual){
-    delete payload.cpf;
-    ({error} = await supabaseClient.from("terapeutas").update(payload).eq("cpf", cpfAtual));
-  }else{
+    const novoCpf = payload.cpf;
+    if(novoCpf && novoCpf !== cpfAtual){
+      // CPF alterado: exclui o antigo e insere novo
+      await supabaseClient.from("terapeutas").delete().eq("cpf", cpfAtual);
+      ({error} = await supabaseClient.from("terapeutas").insert(payload));
+      if(!error) cpfAtual = novoCpf;
+    } else {
+      const updatePayload = {...payload};
+      delete updatePayload.cpf;
+      ({error} = await supabaseClient.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
+    }
+  } else {
     ({error} = await supabaseClient.from("terapeutas").insert(payload));
-    // após criar, habilitar aba docs
     if(!error){
       cpfAtual = payload.cpf;
-      document.getElementById("cpf").disabled = true;
-      document.getElementById("tab-docs").style.display = "";
       document.getElementById("tabDocsBtn").style.display = "";
       carregarDocs(cpfAtual);
     }
   }
 
-  if(error){ console.error(error); alert("Erro ao salvar"); return; }
-
+  if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
   carregar();
   alert("Salvo com sucesso!");
 }
 
 async function excluir(cpf){
-  if(!confirm("Excluir registro?")) return;
+  if(!confirm("Excluir este registro?")) return;
   await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
   carregar();
 }
 
-/* ──────────────── DOCUMENTOS ──────────────── */
+/* ── DOCUMENTOS ── */
 function limparNome(nome){
-  return nome
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
 }
 
 function iconeDoc(nome){
   const ext = (nome||"").split(".").pop().toLowerCase();
   if(["jpg","jpeg","png","gif","webp"].includes(ext)) return "fa-image";
-  if(ext==="pdf") return "fa-file-pdf";
+  if(ext === "pdf") return "fa-file-pdf";
   if(["doc","docx"].includes(ext)) return "fa-file-word";
   return "fa-file-alt";
 }
 
 async function carregarDocs(cpf){
   const {data, error} = await supabaseClient
-    .from("documentos")
-    .select("*")
-    .eq("equipe_id", cpf)
-    .order("created_at", {ascending: false});
+    .from("documentos").select("*").eq("equipe_id", cpf).order("created_at",{ascending:false});
 
   const lista = document.getElementById("docLista");
   const badge = document.getElementById("docBadge");
@@ -785,7 +540,7 @@ async function carregarDocs(cpf){
       </div>
       <div class="doc-item-right">
         <a href="${d.url}" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a>
-        <button onclick="excluirDoc('${d.id}', '${d.url}')" title="Excluir">
+        <button class="btn-del" onclick="excluirDoc('${d.id}','${d.url}')" title="Excluir">
           <i class="fa fa-trash"></i>
         </button>
       </div>
@@ -795,72 +550,42 @@ async function carregarDocs(cpf){
 
 async function uploadDoc(){
   if(!cpfAtual){ alert("Salve o cadastro antes de anexar documentos."); return; }
-
-  const tipo  = document.getElementById("doc_tipo").value;
-  const file  = document.getElementById("doc_arquivo").files[0];
-
+  const tipo = document.getElementById("doc_tipo").value;
+  const file = document.getElementById("doc_arquivo").files[0];
   if(!file){ alert("Selecione um arquivo."); return; }
 
-  // mostrar status
-  const status = document.getElementById("uploadStatus");
-  status.style.display = "block";
+  const statusEl = document.getElementById("uploadStatus");
+  statusEl.style.display = "block";
 
   const fileName = `${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
+  const {error: uploadError} = await supabaseClient.storage.from("documentos").upload(fileName, file);
 
-  const { error: uploadError } = await supabaseClient.storage
-    .from("documentos")
-    .upload(fileName, file);
+  if(uploadError){ statusEl.style.display = "none"; alert("Erro no upload: " + uploadError.message); return; }
 
-  if(uploadError){
-    status.style.display = "none";
-    alert("Erro no upload: " + uploadError.message);
-    return;
-  }
-
-  const { data: urlData } = supabaseClient.storage
-    .from("documentos")
-    .getPublicUrl(fileName);
-
-  const { error } = await supabaseClient.from("documentos").insert({
-    equipe_id: cpfAtual,
-    tipo: tipo,
-    nome_arquivo: file.name,
-    url: urlData.publicUrl
+  const {data: urlData} = supabaseClient.storage.from("documentos").getPublicUrl(fileName);
+  const {error} = await supabaseClient.from("documentos").insert({
+    equipe_id: cpfAtual, tipo, nome_arquivo: file.name, url: urlData.publicUrl
   });
 
-  status.style.display = "none";
-
+  statusEl.style.display = "none";
   if(error){ alert("Erro ao salvar: " + error.message); return; }
-
   document.getElementById("doc_arquivo").value = "";
   carregarDocs(cpfAtual);
 }
 
 async function excluirDoc(id, url){
   if(!confirm("Excluir este documento?")) return;
-
-  // extrair caminho do storage a partir da URL pública
   const path = url.split("/storage/v1/object/public/documentos/")[1];
-
-  if(path){
-    await supabaseClient.storage.from("documentos").remove([decodeURIComponent(path)]);
-  }
-
+  if(path) await supabaseClient.storage.from("documentos").remove([decodeURIComponent(path)]);
   await supabaseClient.from("documentos").delete().eq("id", id);
-
-  // remover item da tela sem recarregar tudo
   const el = document.getElementById("doc-" + id);
   if(el) el.remove();
-
-  // atualizar badge
   carregarDocs(cpfAtual);
 }
 
-/* ──────────────── INIT ──────────────── */
+/* ── INIT ── */
 document.getElementById("filtroStatus").addEventListener("change", carregar);
 carregar();
-
 </script>
-
 </body>
 </html>

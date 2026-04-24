@@ -15,14 +15,51 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
 
-/* ── TABELA PRINCIPAL ── */
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
-th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
-th{background:#f9fafb;font-weight:600;}
-button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
+/* ── LAYOUT LISTAGEM ── */
+.page-layout{display:flex;gap:24px;align-items:flex-start;}
+.filtros-aside{
+  width:220px;flex-shrink:0;
+  background:#fff;border-radius:14px;
+  padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.filtros-aside h3{margin:0 0 16px;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;}
+.filtros-aside label{font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:5px;margin-top:12px;}
+.filtros-aside input,
+.filtros-aside select{width:100%;padding:9px 10px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;}
+.filtros-aside input:focus,
+.filtros-aside select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.08);}
+.btn-novo{
+  display:block;width:100%;margin-top:16px;
+  background:#1f2937;color:#fff;border:none;
+  border-radius:8px;padding:10px;font-size:13px;
+  font-weight:600;cursor:pointer;text-align:center;
+}
+.btn-novo:hover{background:#111827;}
+
+.lista-wrap{flex:1;}
+.lista-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.lista-header h1{margin:0;font-size:20px;}
+.lista-count{font-size:13px;color:#6b7280;}
+
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+th,td{padding:13px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left;}
+th{background:#f9fafb;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;}
+td{color:#111827;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f9fafb;}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
+.badge-ativo{background:#dcfce7;color:#16a34a;}
+.badge-inativo{background:#fee2e2;color:#dc2626;}
+
+button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:12px;}
 button.excluir{background:#dc2626}
-.top-actions{display:flex;justify-content:flex-end;gap:12px;margin-bottom:16px;}
-.top-actions input,.top-actions select{padding:8px;border-radius:6px;border:1px solid #d1d5db;font-size:14px;}
+
+/* paginação */
+.paginacao{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;}
+.paginacao button{background:#fff;color:#374151;border:1px solid #d1d5db;padding:6px 12px;border-radius:6px;font-size:13px;}
+.paginacao button.active{background:#1f2937;color:#fff;border-color:#1f2937;}
+.paginacao button:disabled{opacity:.4;cursor:default;}
 
 /* ── MODAL ── */
 .modal{
@@ -141,24 +178,61 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <aside id="sidebar"></aside>
 
 <main class="content">
-<h1>Gestão da Equipe</h1>
+<div class="page-layout">
 
-<div class="top-actions">
-  <input type="text" id="pesquisaNome" placeholder="Pesquisar profissional..." onkeyup="filtrarTabela()">
-  <select id="filtroStatus">
-    <option value="">Todos</option>
-    <option value="Ativo">Ativo</option>
-    <option value="Inativo">Inativo</option>
-  </select>
-  <button onclick="abrirNovo()">+ Novo Cadastro</button>
+  <!-- Filtros -->
+  <aside class="filtros-aside">
+    <h3><i class="fa fa-filter"></i> Filtros</h3>
+
+    <label>Pesquisar</label>
+    <input type="text" id="pesquisaNome" placeholder="Nome do profissional..." oninput="aplicarFiltros()">
+
+    <label>Status</label>
+    <select id="filtroStatus" onchange="carregar()">
+      <option value="">Todos</option>
+      <option value="Ativo">Ativo</option>
+      <option value="Inativo">Inativo</option>
+    </select>
+
+    <label>Cargo</label>
+    <select id="filtroCargo" onchange="aplicarFiltros()">
+      <option value="">Todos</option>
+      <option>Terapeuta Feminina</option>
+      <option>Terapeuta Masculino</option>
+      <option>Gerente</option>
+      <option>Atendente</option>
+      <option>Recepcionista</option>
+      <option>Faxineira</option>
+      <option>Analista</option>
+    </select>
+
+    <button class="btn-novo" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Cadastro</button>
+  </aside>
+
+  <!-- Listagem -->
+  <div class="lista-wrap">
+    <div class="lista-header">
+      <h1>Gestão da Equipe</h1>
+      <span class="lista-count" id="listaCount"></span>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nome Profissional</th>
+          <th>Cargo</th>
+          <th>CPF</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
+
+    <div class="paginacao" id="paginacao"></div>
+  </div>
+
 </div>
-
-<table>
-  <thead>
-    <tr><th>Nome Profissional</th><th>Cargo</th><th>CPF</th><th>Status</th><th>Ações</th></tr>
-  </thead>
-  <tbody id="lista"></tbody>
-</table>
 </main>
 </div>
 
@@ -461,6 +535,16 @@ function setForm(data){
 }
 
 /* ── TABELA PRINCIPAL ── */
+const POR_PAGINA = 8;
+let todosRegistros = [];
+let paginaAtual = 1;
+
+function fmtCPFDisplay(v){
+  v = (v||"").replace(/\D/g,"");
+  if(v.length !== 11) return v;
+  return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);
+}
+
 async function carregar(){
   const statusFiltro = document.getElementById("filtroStatus").value;
   let query = supabaseClient.from("terapeutas")
@@ -468,30 +552,82 @@ async function carregar(){
   if(statusFiltro) query = query.eq("status", statusFiltro);
   const {data, error} = await query;
   if(error){ console.error(error); return; }
+  todosRegistros = data || [];
+  paginaAtual = 1;
+  aplicarFiltros();
+}
+
+function aplicarFiltros(){
+  const nomeFiltro  = (document.getElementById("pesquisaNome").value||"").toLowerCase();
+  const cargoFiltro = (document.getElementById("filtroCargo").value||"");
+
+  const filtrados = todosRegistros.filter(t => {
+    const nomeOk  = (t.nome_profissional||"").toLowerCase().includes(nomeFiltro);
+    const cargoOk = !cargoFiltro || t.cargo === cargoFiltro;
+    return nomeOk && cargoOk;
+  });
+
+  renderTabela(filtrados);
+}
+
+function renderTabela(lista){
+  const total   = lista.length;
+  const inicio  = (paginaAtual - 1) * POR_PAGINA;
+  const pagina  = lista.slice(inicio, inicio + POR_PAGINA);
+  const totalPag = Math.ceil(total / POR_PAGINA);
+
+  document.getElementById("listaCount").textContent =
+    total === 0 ? "Nenhum resultado" : `${total} profissional${total > 1 ? "is" : ""}`;
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
-  data.forEach(t => {
-    tbody.innerHTML += `
-    <tr>
-      <td>${t.nome_profissional||""}</td>
-      <td>${t.cargo||""}</td>
-      <td>${t.cpf||""}</td>
-      <td>${t.status||""}</td>
-      <td>
-        <button onclick="editar('${t.cpf}')">Editar</button>
-        <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
-      </td>
-    </tr>`;
-  });
-  filtrarTabela();
-}
 
-function filtrarTabela(){
-  const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
-  document.querySelectorAll("#lista tr").forEach(linha => {
-    linha.style.display = linha.children[0].innerText.toLowerCase().includes(filtro) ? "" : "none";
-  });
+  if(total === 0){
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:32px">Nenhum profissional encontrado.</td></tr>`;
+  } else {
+    pagina.forEach(t => {
+      const badge = t.status === "Ativo"
+        ? `<span class="badge badge-ativo">Ativo</span>`
+        : `<span class="badge badge-inativo">Inativo</span>`;
+      tbody.innerHTML += `
+      <tr>
+        <td>${t.nome_profissional||""}</td>
+        <td>${t.cargo||""}</td>
+        <td>${fmtCPFDisplay(t.cpf)}</td>
+        <td>${badge}</td>
+        <td>
+          <button onclick="editar('${t.cpf}')">Editar</button>
+          <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+        </td>
+      </tr>`;
+    });
+  }
+
+  // paginação
+  const pag = document.getElementById("paginacao");
+  pag.innerHTML = "";
+  if(totalPag <= 1){ pag.style.display="none"; return; }
+  pag.style.display="flex";
+
+  const btnPrev = document.createElement("button");
+  btnPrev.innerHTML = '<i class="fa fa-chevron-left"></i>';
+  btnPrev.disabled = paginaAtual === 1;
+  btnPrev.onclick = () => { paginaAtual--; aplicarFiltros(); };
+  pag.appendChild(btnPrev);
+
+  for(let i=1; i<=totalPag; i++){
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    if(i === paginaAtual) btn.classList.add("active");
+    btn.onclick = () => { paginaAtual = i; aplicarFiltros(); };
+    pag.appendChild(btn);
+  }
+
+  const btnNext = document.createElement("button");
+  btnNext.innerHTML = '<i class="fa fa-chevron-right"></i>';
+  btnNext.disabled = paginaAtual === totalPag;
+  btnNext.onclick = () => { paginaAtual++; aplicarFiltros(); };
+  pag.appendChild(btnNext);
 }
 
 /* ── MODAL ── */
@@ -687,7 +823,7 @@ function aoMudarStatus(select){
 }
 
 /* ── INIT ── */
-document.getElementById("filtroStatus").addEventListener("change", carregar);
+// filtroStatus handled inline via onchange
 carregar();
 </script>
 </body>

@@ -403,6 +403,68 @@ window.salvar = async function(){
   if(!dataInicio || !dataFim){ alert("Preencha as datas."); return; }
   if(dataFim < dataInicio){ alert("Data fim não pode ser menor que data início."); return; }
 
+  // verificar impacto na escala (mesma lógica do escalas.html)
+  if(status === "Aprovado"){
+    const {data: todasAprovadas} = await supabaseClient
+      .from("solicitacoes")
+      .select("terapeuta_cpf, data_inicio, data_fim")
+      .eq("status", "Aprovado")
+      .neq("terapeuta_cpf", terapeuta); // excluir o próprio terapeuta
+
+    const {data: todosTerapeutas} = await supabaseClient
+      .from("terapeutas")
+      .select("cpf, tem_folga, dia_folga")
+      .eq("status", "Ativo")
+      .in("cargo", ["Terapeuta Feminina", "Terapeuta Masculino"]);
+
+    const totalTerapeutas = (todosTerapeutas||[]).length;
+    const DIAS_SEMANA = ["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
+
+    // iterar cada dia do período solicitado
+    let diaMaisCritico = null;
+    let maxAusentes = 0;
+
+    const inicio = new Date(dataInicio + "T00:00:00");
+    const fim    = new Date(dataFim    + "T00:00:00");
+
+    for(let d = new Date(inicio); d <= fim; d.setDate(d.getDate()+1)){
+      if(d.getDay() === 0) continue; // pula domingo
+
+      const dStr = d.toISOString().split("T")[0];
+      const diaSem = DIAS_SEMANA[d.getDay()];
+
+      let ausentes = 0;
+
+      // contar folgas semanais
+      (todosTerapeutas||[]).forEach(t => {
+        if(t.tem_folga === "Sim" && (t.dia_folga||"").toLowerCase() === diaSem) ausentes++;
+      });
+
+      // contar aprovados no dia (excluindo o terapeuta atual)
+      (todasAprovadas||[]).forEach(s => {
+        if(dStr >= s.data_inicio && dStr <= s.data_fim) ausentes++;
+      });
+
+      // incluir o terapeuta desta solicitação
+      ausentes++;
+
+      if(ausentes > maxAusentes){
+        maxAusentes = ausentes;
+        diaMaisCritico = new Date(d);
+      }
+    }
+
+    if(diaMaisCritico && maxAusentes >= 4){
+      const dFmt = diaMaisCritico.toLocaleDateString("pt-BR");
+      const confirm1 = confirm(`🔴 ATENÇÃO: No dia ${dFmt}, ${maxAusentes} terapeutas estarão ausentes (escala crítica).\n\nDeseja aprovar mesmo assim?`);
+      if(!confirm1) return;
+    } else if(diaMaisCritico && maxAusentes >= 2){
+      const dFmt = diaMaisCritico.toLocaleDateString("pt-BR");
+      const confirm2 = confirm(`🟡 Atenção: No dia ${dFmt}, ${maxAusentes} terapeutas estarão ausentes.\n\nDeseja aprovar mesmo assim?`);
+      if(!confirm2) return;
+    }
+  }
+
   // verificar sobreposição de período
   let query = supabaseClient
     .from("solicitacoes")

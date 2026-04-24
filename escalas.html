@@ -4,347 +4,520 @@
 <meta charset="UTF-8">
 <title>Escalas | Hara Spa</title>
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
-#sidebar{width:260px;}
-.content{flex:1;padding:30px;font-size:14px;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
-.header{display:flex;justify-content:space-between;align-items:center;}
-
-.bloqueio{
-margin-top:10px;
-display:flex;
-gap:10px;
+/* ── TOPBAR ── */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.topbar h1{margin:0;}
+.topbar button{
+  background:#1f2937;color:#fff;border:none;
+  border-radius:8px;padding:9px 16px;font-size:13px;
+  font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;
 }
+.topbar button:hover{background:#111827;}
 
-.card{
-background:#fff;
-border-radius:18px;
-padding:20px;
-box-shadow:0 4px 12px rgba(0,0,0,.05);
+/* ── LAYOUT ── */
+.layout{display:grid;grid-template-columns:1.6fr 1fr;gap:20px;}
+
+/* ── CARD ── */
+.card{background:#fff;border-radius:18px;padding:24px;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+
+/* ── NAV MÊS ── */
+.mes-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
 }
-
-.layout{
-display:grid;
-grid-template-columns:2.2fr 1.4fr;
-gap:20px;
-margin-top:20px;
+.mes-nav h3{margin:0;font-size:16px;font-weight:700;color:#111827;}
+.mes-nav button{
+  background:#f3f4f6;color:#374151;border:none;
+  border-radius:8px;padding:6px 12px;cursor:pointer;font-size:14px;
 }
+.mes-nav button:hover{background:#e5e7eb;}
 
-.calendar{
-display:grid;
-grid-template-columns:repeat(7,1fr);
-gap:10px;
-}
-
+/* ── CALENDÁRIO ── */
 .weekdays{
-margin-top:16px;
+  display:grid;grid-template-columns:repeat(7,1fr);
+  gap:6px;margin-bottom:6px;
 }
-
 .weekdays div{
-text-align:center;
-font-weight:600;
-font-size:13px;
+  text-align:center;font-size:11px;font-weight:700;
+  color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;padding:4px 0;
 }
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
 
 .day{
-border:1px solid #e5e7eb;
-border-radius:10px;
-padding:10px;
-cursor:pointer;
-min-height:90px;
+  border:2px solid #e5e7eb;border-radius:10px;
+  padding:8px 6px;cursor:pointer;min-height:72px;
+  transition:all .15s;position:relative;
+}
+.day:hover{border-color:#6b7280;transform:translateY(-1px);}
+.day.selected{border-color:#2563eb!important;box-shadow:0 0 0 3px rgba(37,99,235,.15);}
+.day-number{font-weight:700;font-size:13px;color:#111827;}
+.day small{font-size:10px;color:#6b7280;display:block;margin-top:4px;}
+
+.day-fechado{background:#f9fafb;border-color:#e5e7eb!important;cursor:default;opacity:.6;}
+.day-fechado:hover{transform:none;}
+.day-fechado .day-number{color:#9ca3af;}
+
+.day-verde{background:#f0fdf4;border-color:#22c55e;}
+.day-amarelo{background:#fefce8;border-color:#eab308;}
+.day-vermelho{background:#fef2f2;border-color:#ef4444;}
+.day-bloqueado{background:#f3f4f6;border-color:#d1d5db!important;cursor:default;}
+.day-bloqueado:hover{transform:none;}
+
+.day-hoje .day-number::after{
+  content:"";display:block;width:5px;height:5px;
+  background:#2563eb;border-radius:50%;margin:2px auto 0;
 }
 
-.day-number{font-weight:700;}
+/* ── LEGENDA ── */
+.legenda{
+  display:flex;gap:12px;flex-wrap:wrap;
+  margin-top:14px;font-size:11px;color:#6b7280;
+}
+.legenda span{display:flex;align-items:center;gap:5px;}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
 
-.day-fechado{
-background:#f3f4f6;
-color:#9ca3af;
-cursor:default;
+/* ── PAINEL LATERAL ── */
+.dia-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.dia-header h3{margin:0;font-size:16px;font-weight:700;}
+.dia-badge{
+  font-size:11px;font-weight:700;border-radius:99px;
+  padding:3px 10px;
 }
 
-.day-verde{
-background:#dcfce7;
-border-color:#22c55e;
+.section-label{
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.06em;color:#9ca3af;margin:16px 0 8px;
 }
 
-.day-amarelo{
-background:#fef9c3;
-border-color:#eab308;
+.terapeuta-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 0;border-bottom:1px solid #f3f4f6;
+}
+.terapeuta-item:last-child{border-bottom:none;}
+.t-avatar{
+  width:32px;height:32px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;
+}
+.t-avatar.fem{background:#fce7f3;color:#db2777;}
+.t-avatar.masc{background:#dbeafe;color:#2563eb;}
+.t-info{flex:1;}
+.t-nome{font-size:13px;font-weight:600;color:#111827;}
+.t-detalhe{font-size:11px;color:#6b7280;margin-top:1px;}
+.badge-motivo{
+  font-size:10px;font-weight:700;border-radius:6px;
+  padding:2px 7px;background:#fee2e2;color:#991b1b;
 }
 
-.day-vermelho{
-background:#fee2e2;
-border-color:#ef4444;
+.empty-state{
+  text-align:center;color:#9ca3af;
+  padding:40px 0;font-size:13px;
 }
 
-.section-title{
-margin-top:20px;
-font-weight:700;
+/* ── MODAL BLOQUEAR ── */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:flex-start;justify-content:center;
+  z-index:10;padding:30px 20px;
 }
+.modal-content{
+  background:#fff;width:440px;max-width:100%;
+  border-radius:18px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 24px 0;
+}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.btn-fechar:hover{background:#f3f4f6;}
+.modal-body{padding:24px;}
+.field{display:flex;flex-direction:column;margin-bottom:14px;}
+.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
+input,select,textarea{
+  padding:9px 11px;border-radius:8px;
+  border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.modal-footer{
+  display:flex;justify-content:flex-end;gap:10px;
+  padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;
+}
+.modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;border:none;border-radius:8px;cursor:pointer;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db!important;}
+.btn-save{background:#1f2937;color:#fff;}
+.btn-desbloq{background:#dc2626;color:#fff;}
 
-.detail-item{
-padding:8px 0;
-border-bottom:1px solid #e5e7eb;
+/* bloqueado tag no painel */
+.bloqueado-info{
+  background:#f3f4f6;border-radius:10px;padding:14px;
+  text-align:center;color:#6b7280;font-size:13px;
 }
-
-.badge-red{
-background:#fee2e2;
-color:#991b1b;
-padding:2px 6px;
-border-radius:6px;
-font-size:11px;
-margin-left:6px;
-}
+.bloqueado-info i{font-size:24px;color:#d1d5db;display:block;margin-bottom:8px;}
 </style>
 </head>
 
 <body>
-
 <div class="app">
 <aside id="sidebar"></aside>
 
 <main class="content">
 
-<div class="header">
-<h1>Escalas</h1>
-<input type="date" id="dataSelecionada">
-</div>
+  <div class="topbar">
+    <h1>Escalas</h1>
+    <button onclick="abrirBloquear()"><i class="fa fa-lock"></i> Bloquear / Desbloquear Dia</button>
+  </div>
 
-<div class="bloqueio">
-<input type="date" id="bloquearData">
-<button onclick="bloquearDia()">Bloquear</button>
-<button onclick="desbloquearDia()">Desbloquear</button>
-</div>
+  <div class="layout">
 
-<div class="layout">
+    <!-- Calendário -->
+    <div class="card">
+      <div class="mes-nav">
+        <button onclick="mudarMes(-1)"><i class="fa fa-chevron-left"></i></button>
+        <h3 id="tituloMes"></h3>
+        <button onclick="mudarMes(1)"><i class="fa fa-chevron-right"></i></button>
+      </div>
 
-<div class="card">
-<h3>Calendário</h3>
+      <div class="weekdays">
+        <div>Dom</div><div>Seg</div><div>Ter</div>
+        <div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+      </div>
+      <div class="calendar" id="calendar"></div>
 
-<div class="calendar weekdays">
-<div>Dom</div><div>Seg</div><div>Ter</div>
-<div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
-</div>
+      <div class="legenda">
+        <span><span class="leg-dot" style="background:#22c55e"></span> Todos disponíveis</span>
+        <span><span class="leg-dot" style="background:#eab308"></span> Alguns ausentes</span>
+        <span><span class="leg-dot" style="background:#ef4444"></span> Muitos ausentes</span>
+        <span><span class="leg-dot" style="background:#d1d5db"></span> Fechado / Bloqueado</span>
+      </div>
+    </div>
 
-<div class="calendar" id="calendar"></div>
-</div>
+    <!-- Painel do dia -->
+    <div class="card">
+      <div id="painelDia">
+        <div class="empty-state">
+          <i class="fa fa-calendar" style="font-size:32px;display:block;margin-bottom:12px;color:#d1d5db"></i>
+          Selecione um dia no calendário
+        </div>
+      </div>
+    </div>
 
-<div class="card">
-<h3 id="tituloDia">Selecione um dia</h3>
-<div id="detalhesDia">—</div>
-</div>
-
-</div>
-
+  </div>
 </main>
 </div>
 
-<!-- 🔥 ORDEM CORRETA -->
+<!-- MODAL BLOQUEAR -->
+<div class="modal" id="modalBloquear">
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 id="modalBloquearTitulo">Bloquear Dia</h2>
+    <button class="btn-fechar" onclick="fecharBloquear()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="field">
+      <label>Data</label>
+      <input type="date" id="inputDataBloquear">
+    </div>
+    <div class="field">
+      <label>Motivo <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
+      <input id="inputMotivo" placeholder="Ex: Feriado local, Reforma...">
+    </div>
+    <div id="infoJaBloqueado" style="display:none;background:#fef2f2;border-radius:8px;padding:10px;font-size:13px;color:#991b1b;margin-top:4px;">
+      <i class="fa fa-lock"></i> Este dia já está bloqueado.
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharBloquear()">Cancelar</button>
+    <button class="btn-desbloq" id="btnDesbloquear" style="display:none" onclick="desbloquear()"><i class="fa fa-lock-open"></i> Desbloquear</button>
+    <button class="btn-save" id="btnBloquear" onclick="bloquear()"><i class="fa fa-lock"></i> Bloquear</button>
+  </div>
+</div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-let terapeutas=[]
-let solicitacoes=[]
-let diasBloqueados = JSON.parse(localStorage.getItem("diasBloqueados") || "[]")
+let terapeutas     = [];
+let solicitacoes   = [];
+let diasBloqueados = []; // [{data, motivo}]
 
-const feriados = [
-"01-01","04-21","05-01","09-07",
-"10-12","11-02","11-15","12-25"
-]
+let hoje  = new Date();
+let ano   = hoje.getFullYear();
+let mes   = hoje.getMonth();
+let diaSelecionado = null;
 
-let hoje=new Date()
-let ano=hoje.getFullYear()
-let mes=hoje.getMonth()
+const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+               "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-dataSelecionada.valueAsDate=hoje
+const FERIADOS = [
+  "01-01","04-21","05-01","09-07",
+  "10-12","11-02","11-15","12-25"
+];
 
-dataSelecionada.addEventListener("change",e=>{
-const d=new Date(e.target.value)
-ano=d.getFullYear()
-mes=d.getMonth()
-renderCalendar()
-})
-
-function bloquearDia(){
-const data=bloquearData.value
-if(!data) return alert("Escolha uma data")
-
-if(!diasBloqueados.includes(data)){
-diasBloqueados.push(data)
-localStorage.setItem("diasBloqueados", JSON.stringify(diasBloqueados))
-renderCalendar()
-}
-}
-
-function desbloquearDia(){
-const data=bloquearData.value
-if(!data) return alert("Escolha uma data")
-
-diasBloqueados = diasBloqueados.filter(d => d !== data)
-localStorage.setItem("diasBloqueados", JSON.stringify(diasBloqueados))
-renderCalendar()
-}
+/* ── HELPERS ── */
+function isoDate(d){ return d.toISOString().split("T")[0]; }
 
 function ehFeriado(data){
-const md = String(data.getMonth()+1).padStart(2,"0")+"-"+String(data.getDate()).padStart(2,"0")
-return feriados.includes(md)
+  const md = String(data.getMonth()+1).padStart(2,"0") + "-" + String(data.getDate()).padStart(2,"0");
+  return FERIADOS.includes(md);
 }
 
-function diaBloqueado(data){
-return diasBloqueados.includes(data.toISOString().split("T")[0])
+function getBloqueado(data){
+  return diasBloqueados.find(d => d.data === isoDate(data));
 }
 
 function diaSemana(date){
-return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][date.getDay()]
+  return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][date.getDay()];
 }
 
-function folgaSemanal(t,data){
-return t.tem_folga==="Sim" && diaSemana(data)===t.dia_folga?.toLowerCase()
+function folgaSemanal(t, data){
+  return t.tem_folga === "Sim" && diaSemana(data) === (t.dia_folga||"").toLowerCase();
 }
 
-function folgaAprovada(t,data){
-return solicitacoes.some(s=>
-s.terapeuta_cpf===t.cpf &&
-data>=new Date(s.data_inicio) &&
-data<=new Date(s.data_fim)
-)
+function folgaAprovada(t, data){
+  return solicitacoes.some(s =>
+    s.terapeuta_cpf === t.cpf &&
+    data >= new Date(s.data_inicio) &&
+    data <= new Date(s.data_fim)
+  );
 }
 
+function ehFeminina(t){ return t.cargo === "Terapeuta Feminina"; }
+
+/* ── CARREGAR ── */
 async function carregarDados(){
+  const [{data: ter}, {data: sol}, {data: bloq}] = await Promise.all([
+    client.from("terapeutas").select("*").eq("status","Ativo")
+      .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]),
+    client.from("solicitacoes").select("*").eq("status","Aprovado"),
+    client.from("dias_bloqueados").select("data,motivo")
+  ]);
 
-const {data:dadosTerapeutas,error:e1}=await client
-.from("terapeutas")
-.select("*")
-.eq("status","Ativo")
-.in("cargo", ["Terapeuta Feminina","Terapeuta Masculino"])
+  terapeutas     = ter  || [];
+  solicitacoes   = sol  || [];
+  diasBloqueados = bloq || [];
 
-const {data:dadosSolicitacoes,error:e2}=await client
-.from("solicitacoes")
-.select("*")
-.eq("status","Aprovado")
-
-if(e1 || e2){
-console.log(e1,e2)
-alert("Erro ao carregar dados")
-return
+  renderCalendar();
 }
 
-terapeutas=dadosTerapeutas||[]
-solicitacoes=dadosSolicitacoes||[]
-
-renderCalendar()
+/* ── CALENDÁRIO ── */
+function mudarMes(delta){
+  mes += delta;
+  if(mes < 0){ mes = 11; ano--; }
+  if(mes > 11){ mes = 0;  ano++; }
+  renderCalendar();
 }
 
 function renderCalendar(){
+  document.getElementById("tituloMes").textContent = `${MESES[mes]} ${ano}`;
 
-calendar.innerHTML=""
+  const cal         = document.getElementById("calendar");
+  cal.innerHTML     = "";
+  const primeiroDia = new Date(ano, mes, 1).getDay();
+  const totalDias   = new Date(ano, mes+1, 0).getDate();
 
-const primeiroDia=new Date(ano,mes,1).getDay()
-const totalDias=new Date(ano,mes+1,0).getDate()
+  for(let i = 0; i < primeiroDia; i++){
+    cal.appendChild(document.createElement("div"));
+  }
 
-for(let i=0;i<primeiroDia;i++){
-calendar.appendChild(document.createElement("div"))
+  for(let d = 1; d <= totalDias; d++){
+    const data   = new Date(ano, mes, d);
+    const div    = document.createElement("div");
+    const isHoje = isoDate(data) === isoDate(hoje);
+    div.className = "day" + (isHoje ? " day-hoje" : "");
+
+    const bloqueado = getBloqueado(data);
+    const domingo   = data.getDay() === 0;
+    const feriado   = ehFeriado(data);
+
+    if(bloqueado || domingo || feriado){
+      div.classList.add(bloqueado ? "day-bloqueado" : "day-fechado");
+      div.innerHTML = `<div class="day-number">${d}</div>
+        <small>${bloqueado ? (bloqueado.motivo || "Bloqueado") : "Fechado"}</small>`;
+      if(bloqueado){
+        div.style.cursor = "pointer";
+        div.onclick = () => mostrarDia(d);
+      }
+      cal.appendChild(div);
+      continue;
+    }
+
+    const disponiveis = terapeutas.filter(t =>
+      !folgaSemanal(t, data) && !folgaAprovada(t, data)
+    );
+    const ausentes = terapeutas.length - disponiveis.length;
+
+    if(ausentes === 0)       div.classList.add("day-verde");
+    else if(ausentes < 4)    div.classList.add("day-amarelo");
+    else                     div.classList.add("day-vermelho");
+
+    if(diaSelecionado === d && mes === new Date(ano, mes, d).getMonth())
+      div.classList.add("selected");
+
+    div.innerHTML = `<div class="day-number">${d}</div>
+      <small>${disponiveis.length} disponíveis</small>`;
+    div.onclick = () => mostrarDia(d);
+    cal.appendChild(div);
+  }
 }
 
-for(let d=1;d<=totalDias;d++){
-
-const dataDia=new Date(ano,mes,d)
-const div=document.createElement("div")
-div.className="day"
-
-if(dataDia.getDay()===0 || ehFeriado(dataDia) || diaBloqueado(dataDia)){
-div.classList.add("day-fechado")
-div.innerHTML=`<div class="day-number">${d}</div><small>Fechado</small>`
-calendar.appendChild(div)
-continue
-}
-
-const disponiveis=terapeutas.filter(t=>
-t.hora_entrada && t.hora_saida &&
-!folgaSemanal(t,dataDia) &&
-!folgaAprovada(t,dataDia)
-)
-
-const ausentes=terapeutas.length-disponiveis.length
-
-if(ausentes>=4)div.classList.add("day-vermelho")
-else if(ausentes>=2)div.classList.add("day-amarelo")
-else if(ausentes===0)div.classList.add("day-verde")
-
-div.innerHTML=`<div class="day-number">${d}</div>
-<small>${disponiveis.length} terapeutas</small>`
-
-div.onclick=()=>mostrarDia(d)
-calendar.appendChild(div)
-}
-}
-
+/* ── PAINEL DO DIA ── */
 function mostrarDia(dia){
+  diaSelecionado = dia;
+  renderCalendar();
 
-const data=new Date(ano,mes,dia)
+  const data    = new Date(ano, mes, dia);
+  const painel  = document.getElementById("painelDia");
+  const dataStr = `${String(dia).padStart(2,"0")}/${String(mes+1).padStart(2,"0")}/${ano}`;
+  const bloq    = getBloqueado(data);
+  const domingo = data.getDay() === 0;
+  const feriado = ehFeriado(data);
 
-if(ehFeriado(data) || diaBloqueado(data) || data.getDay()===0){
-tituloDia.innerText="Clínica fechada"
-detalhesDia.innerHTML="Sem atendimento"
-return
+  if(domingo || feriado){
+    painel.innerHTML = `
+    <div class="dia-header">
+      <h3>${dataStr}</h3>
+      <span class="dia-badge" style="background:#f3f4f6;color:#6b7280">Fechado</span>
+    </div>
+    <div class="bloqueado-info">
+      <i class="fa fa-store-slash"></i>
+      ${domingo ? "Domingo — clínica fechada" : "Feriado nacional"}
+    </div>`;
+    return;
+  }
+
+  if(bloq){
+    painel.innerHTML = `
+    <div class="dia-header">
+      <h3>${dataStr}</h3>
+      <span class="dia-badge" style="background:#fee2e2;color:#991b1b">Bloqueado</span>
+    </div>
+    <div class="bloqueado-info">
+      <i class="fa fa-lock"></i>
+      ${bloq.motivo || "Dia bloqueado"}
+      <br><br>
+      <button onclick="abrirBloquear('${isoDate(data)}')"
+        style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px">
+        <i class="fa fa-lock-open"></i> Desbloquear
+      </button>
+    </div>`;
+    return;
+  }
+
+  const disponiveis   = terapeutas.filter(t => !folgaSemanal(t,data) && !folgaAprovada(t,data));
+  const indisponiveis = terapeutas.filter(t =>  folgaSemanal(t,data) ||  folgaAprovada(t,data));
+  const fem = disponiveis.filter(t =>  ehFeminina(t)).length;
+  const masc = disponiveis.filter(t => !ehFeminina(t)).length;
+
+  painel.innerHTML = `
+  <div class="dia-header">
+    <h3>${dataStr}</h3>
+    <span class="dia-badge" style="background:#dcfce7;color:#16a34a">${disponiveis.length} disponíveis</span>
+  </div>
+  <div style="display:flex;gap:8px;font-size:12px;color:#6b7280;margin-bottom:4px">
+    <span><i class="fa fa-person-dress" style="color:#db2777"></i> ${fem} femininas</span>
+    <span><i class="fa fa-person" style="color:#2563eb"></i> ${masc} masculinos</span>
+  </div>
+
+  <div class="section-label">Disponíveis (${disponiveis.length})</div>
+  ${disponiveis.map(t => `
+    <div class="terapeuta-item">
+      <div class="t-avatar ${ehFeminina(t) ? "fem" : "masc"}">
+        <i class="fa ${ehFeminina(t) ? "fa-person-dress" : "fa-person"}"></i>
+      </div>
+      <div class="t-info">
+        <div class="t-nome">${t.nome_profissional}</div>
+        <div class="t-detalhe">${t.hora_entrada||""} – ${t.hora_saida||""}</div>
+      </div>
+    </div>`).join("") || '<div style="color:#9ca3af;font-size:13px">Nenhum disponível</div>'}
+
+  ${indisponiveis.length ? `
+  <div class="section-label">Indisponíveis (${indisponiveis.length})</div>
+  ${indisponiveis.map(t => {
+    const motivo = folgaSemanal(t,data) ? `Folga (${t.dia_folga})` : "Ausência aprovada";
+    return `
+    <div class="terapeuta-item">
+      <div class="t-avatar ${ehFeminina(t) ? "fem" : "masc"}">
+        <i class="fa ${ehFeminina(t) ? "fa-person-dress" : "fa-person"}"></i>
+      </div>
+      <div class="t-info">
+        <div class="t-nome">${t.nome_profissional}</div>
+        <div class="t-detalhe"><span class="badge-motivo">${motivo}</span></div>
+      </div>
+    </div>`;
+  }).join("")}` : ""}`;
 }
 
-tituloDia.innerText=`Dia ${dia}/${mes+1}/${ano}`
-detalhesDia.innerHTML=""
-
-const disponiveis=terapeutas.filter(t=>
-t.hora_entrada && t.hora_saida &&
-!folgaSemanal(t,data) &&
-!folgaAprovada(t,data)
-)
-
-const indisponiveis=terapeutas.filter(t=>
-folgaSemanal(t,data)||folgaAprovada(t,data)
-)
-
-detalhesDia.innerHTML+=`<div class="section-title">
-Disponíveis (${disponiveis.length})
-</div>`
-
-disponiveis.forEach(t=>{
-detalhesDia.innerHTML+=`
-<div class="detail-item">
-<b>${t.nome_profissional}</b><br>
-${t.hora_entrada} – ${t.hora_saida}
-</div>`
-})
-
-detalhesDia.innerHTML+=`<div class="section-title">
-Indisponíveis (${indisponiveis.length})
-</div>`
-
-indisponiveis.forEach(t=>{
-let motivo=""
-if(folgaSemanal(t,data)) motivo=`Folga (${t.dia_folga})`
-else if(folgaAprovada(t,data)) motivo="Ausência"
-
-detalhesDia.innerHTML+=`
-<div class="detail-item">
-<b>${t.nome_profissional}</b>
-<span class="badge-red">${motivo}</span>
-</div>`
-})
+/* ── MODAL BLOQUEAR ── */
+function abrirBloquear(dataPreenchida){
+  const input = document.getElementById("inputDataBloquear");
+  input.value = dataPreenchida || isoDate(hoje);
+  document.getElementById("inputMotivo").value = "";
+  verificarBloqueio();
+  document.getElementById("modalBloquear").style.display = "flex";
 }
 
-carregarDados()
+function fecharBloquear(){
+  document.getElementById("modalBloquear").style.display = "none";
+}
 
+function verificarBloqueio(){
+  const val  = document.getElementById("inputDataBloquear").value;
+  const bloq = diasBloqueados.find(d => d.data === val);
+  document.getElementById("infoJaBloqueado").style.display = bloq ? "block" : "none";
+  document.getElementById("btnBloquear").style.display    = bloq ? "none"  : "inline-flex";
+  document.getElementById("btnDesbloquear").style.display = bloq ? "inline-flex" : "none";
+  if(bloq) document.getElementById("inputMotivo").value = bloq.motivo || "";
+}
+
+async function bloquear(){
+  const data   = document.getElementById("inputDataBloquear").value;
+  const motivo = document.getElementById("inputMotivo").value.trim();
+  if(!data){ alert("Selecione uma data."); return; }
+
+  const {error} = await client.from("dias_bloqueados").upsert({data, motivo: motivo || null});
+  if(error){ alert("Erro: " + error.message); return; }
+
+  fecharBloquear();
+  await carregarDados();
+  if(diaSelecionado) mostrarDia(diaSelecionado);
+}
+
+async function desbloquear(){
+  const data = document.getElementById("inputDataBloquear").value;
+  if(!data) return;
+
+  const {error} = await client.from("dias_bloqueados").delete().eq("data", data);
+  if(error){ alert("Erro: " + error.message); return; }
+
+  fecharBloquear();
+  await carregarDados();
+  if(diaSelecionado) mostrarDia(diaSelecionado);
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById("inputDataBloquear")
+    .addEventListener("change", verificarBloqueio);
+  carregarDados();
+});
 </script>
-
 </body>
 </html>

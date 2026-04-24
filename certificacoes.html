@@ -199,6 +199,13 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
         <label>Data de Obtenção</label>
         <input type="date" id="data_obtencao">
       </div>
+      <div class="field span2">
+        <label>Certificado (arquivo) <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
+        <input type="file" id="arquivo_vincular" accept="image/*,.pdf,.doc,.docx">
+      </div>
+    </div>
+    <div class="upload-ing" id="uploading_vincular" style="margin-top:8px">
+      <i class="fa fa-spinner fa-spin"></i> Enviando arquivo...
     </div>
   </div>
   <div class="modal-footer">
@@ -356,19 +363,40 @@ async function vincular(){
   const cpf  = document.getElementById("cpf_terapeuta").value;
   const cert = document.getElementById("certificacao_id").value;
   const data = document.getElementById("data_obtencao").value;
+  const file = document.getElementById("arquivo_vincular").files[0];
 
   if(!cpf || !cert){
     alert("Selecione o profissional e a certificação.");
     return;
   }
 
-  const {error} = await client.from("terapeuta_certificacoes").insert({
-    cpf_terapeuta:    cpf,
-    certificacao_id:  cert,
-    data_obtencao:    data || null
-  });
+  // 1. inserir o vínculo primeiro
+  const {data: inserted, error} = await client
+    .from("terapeuta_certificacoes")
+    .insert({cpf_terapeuta: cpf, certificacao_id: cert, data_obtencao: data || null})
+    .select()
+    .single();
 
   if(error){ alert("Erro ao vincular: " + error.message); return; }
+
+  // 2. se tiver arquivo, fazer upload e atualizar o registro
+  if(file && inserted?.id){
+    const statusEl = document.getElementById("uploading_vincular");
+    statusEl.style.display = "block";
+
+    const fileName = `certificados/${inserted.id}/${Date.now()}_${limparNome(file.name)}`;
+    const {error: uploadError} = await client.storage.from("documentos").upload(fileName, file);
+
+    if(!uploadError){
+      const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
+      await client.from("terapeuta_certificacoes").update({
+        arquivo_url:  urlData.publicUrl,
+        arquivo_nome: file.name
+      }).eq("id", inserted.id);
+    }
+
+    statusEl.style.display = "none";
+  }
 
   fecharVincular();
   carregarLista();

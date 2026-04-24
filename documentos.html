@@ -120,17 +120,18 @@ text-decoration:none;
 
 <script>
 
-console.log("🔥 documentos carregado")
+function limparNome(nome){
+  return nome
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9.\-_]/g, "_")
+}
 
 async function carregarEquipe(){
-  console.log("🚀 carregando terapeutas...")
-
   const { data, error } = await client
     .from("terapeutas")
     .select("cpf, nome_profissional")
     .order("nome_profissional")
-
-  console.log("📦 retorno:", data, error)
 
   if(error){
     alert("Erro ao carregar funcionários")
@@ -147,14 +148,14 @@ async function carregarEquipe(){
 
 async function upload(){
 
-  const equipeId = document.getElementById("equipe").value // CPF
+  const equipeId = document.getElementById("equipe").value
   const tipo = document.getElementById("tipo").value
   const file = document.getElementById("arquivo").files[0]
 
   if(!equipeId){ alert("Selecione funcionário"); return }
   if(!file){ alert("Selecione arquivo"); return }
 
-  const fileName = Date.now() + "_" + file.name
+  const fileName = `${equipeId}/${Date.now()}_${limparNome(file.name)}`
 
   const { error: uploadError } = await client.storage
     .from("documentos")
@@ -170,7 +171,7 @@ async function upload(){
     .getPublicUrl(fileName)
 
   const { error } = await client.from("documentos").insert({
-    equipe_id: equipeId, // CPF
+    equipe_id: equipeId,
     tipo: tipo,
     nome_arquivo: file.name,
     url: urlData.publicUrl
@@ -190,15 +191,10 @@ async function upload(){
 
 async function carregarLista(){
 
-  const { data, error } = await client
+  const { data } = await client
     .from("documentos")
     .select("*")
     .order("created_at", { ascending: false })
-
-  if(error){
-    console.error(error)
-    return
-  }
 
   const tbody = document.getElementById("lista")
   tbody.innerHTML = ""

@@ -4,308 +4,676 @@
 <meta charset="UTF-8">
 <title>Estoque | Hara Spa</title>
 
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 
 <style>
-body{margin:0;font-family:'Segoe UI';background:#f4f6fb;}
-.app{display:flex}
-.content{flex:1;padding:40px}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
-.grid{
-display:grid;
-grid-template-columns:320px 1fr;
-gap:30px;
+/* ── TOPBAR ── */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
+.topbar h1{margin:0;}
+.topbar-btns{display:flex;gap:10px;}
+button{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+button:hover{opacity:.9;}
+button.btn-green{background:#16a34a;}
+button.btn-red{background:#dc2626;}
+button.btn-blue{background:#2563eb;}
+button.btn-yellow{background:#d97706;}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:2px;margin-bottom:20px;background:#e5e7eb;border-radius:10px;padding:4px;}
+.tab-btn{
+  flex:1;background:none;color:#6b7280;border:none;
+  border-radius:8px;padding:9px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .15s;
 }
+.tab-btn.active{background:#fff;color:#111827;box-shadow:0 1px 4px rgba(0,0,0,.1);}
 
-.card{
-background:#fff;
-padding:20px;
-border-radius:16px;
-box-shadow:0 5px 15px rgba(0,0,0,0.05);
+/* ── CARDS RESUMO ── */
+.resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
+.resumo-card{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.resumo-card .r-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:6px;}
+.resumo-card .r-valor{font-size:22px;font-weight:800;color:#111827;}
+.resumo-card .r-sub{font-size:11px;color:#6b7280;margin-top:3px;}
+
+/* ── TABELA ── */
+.table-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:13px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left;}
+th{background:#f9fafb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f9fafb;}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700;}
+.badge-ok{background:#dcfce7;color:#16a34a;}
+.badge-low{background:#fef3c7;color:#d97706;}
+.badge-out{background:#fee2e2;color:#dc2626;}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;}
+.toolbar input,.toolbar select{
+  padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;
 }
+.toolbar input{width:260px;}
+.toolbar input:focus,.toolbar select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 
-input,select{
-width:100%;
-padding:10px;
-border-radius:10px;
-border:1px solid #ccc;
-margin-bottom:10px;
-}
-
-button{
-padding:8px 10px;
-border:none;
-border-radius:8px;
-cursor:pointer;
-background:#334155;
-color:#fff;
-}
-
-.btn-danger{background:#dc2626;}
-
-.lista-linha{
-display:flex;
-align-items:center;
-margin-bottom:12px;
-}
-
-.nome{white-space:nowrap;}
-.pontos{flex:1;border-bottom:1px dashed #999;margin:0 10px;}
-.valor{white-space:nowrap;}
-
-.acoes{
-display:flex;
-gap:5px;
-margin-left:10px;
-}
-
+/* ── MODAL ── */
 .modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.4);
-align-items:center;
-justify-content:center;
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:flex-start;justify-content:center;
+  z-index:10;padding:30px 20px;overflow-y:auto;
 }
+.modal-content{
+  background:#fff;width:500px;max-width:100%;
+  border-radius:18px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+.modal-content.sm{width:420px;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.btn-fechar:hover{background:#f3f4f6;color:#111827;}
+.modal-body{padding:24px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;}
+.modal-footer button{padding:9px 20px;font-size:13px;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.btn-cancel:hover{background:#f3f4f6;}
+.btn-save{background:#1f2937;color:#fff;}
 
-.modal-box{
-background:#fff;
-padding:20px;
-border-radius:12px;
-width:350px;
-}
+.field{display:flex;flex-direction:column;margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
+input,select{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
+input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.span2{grid-column:span 2;}
+
+/* ── HISTÓRICO ── */
+.hist-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;}
+.hist-item:last-child{border-bottom:none;}
+.hist-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.hist-icon.entrada{background:#dcfce7;color:#16a34a;}
+.hist-icon.saida{background:#fee2e2;color:#dc2626;}
+.hist-info{flex:1;}
+.hist-nome{font-size:13px;font-weight:600;color:#111827;}
+.hist-meta{font-size:11px;color:#6b7280;margin-top:2px;}
+.hist-qtd{font-size:13px;font-weight:700;}
+.hist-qtd.entrada{color:#16a34a;}
+.hist-qtd.saida{color:#dc2626;}
+
+.empty-state{text-align:center;color:#9ca3af;padding:40px;font-size:13px;}
+.alerta-low{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:16px;display:none;}
 </style>
 </head>
 
 <body>
-
 <div class="app">
 <aside id="sidebar"></aside>
 
 <main class="content">
 
-<h1>Estoque</h1>
+  <div class="topbar">
+    <h1>Estoque</h1>
+    <div class="topbar-btns">
+      <button class="btn-green" onclick="abrirMovimentar('entrada')"><i class="fa fa-arrow-down"></i> Entrada</button>
+      <button class="btn-red"   onclick="abrirMovimentar('saida')"><i class="fa fa-arrow-up"></i> Saída</button>
+      <button onclick="abrirNovoProduto()"><i class="fa fa-plus"></i> Novo Produto</button>
+    </div>
+  </div>
 
-<div class="grid">
+  <!-- Resumo -->
+  <div class="resumo">
+    <div class="resumo-card">
+      <div class="r-label"><i class="fa fa-box"></i> Total de Produtos</div>
+      <div class="r-valor" id="totalProdutos">—</div>
+    </div>
+    <div class="resumo-card">
+      <div class="r-label"><i class="fa fa-cubes"></i> Total em Estoque</div>
+      <div class="r-valor" id="totalUnidades">—</div>
+      <div class="r-sub">unidades</div>
+    </div>
+    <div class="resumo-card">
+      <div class="r-label"><i class="fa fa-dollar-sign"></i> Valor Total</div>
+      <div class="r-valor" id="totalValor">—</div>
+    </div>
+    <div class="resumo-card" style="border-left:3px solid #f59e0b">
+      <div class="r-label" style="color:#d97706"><i class="fa fa-exclamation-triangle"></i> Estoque Baixo</div>
+      <div class="r-valor" id="totalBaixo" style="color:#d97706">—</div>
+      <div class="r-sub">produtos abaixo do mínimo</div>
+    </div>
+  </div>
 
-<div class="card">
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="mudarTab('estoque',this)"><i class="fa fa-boxes"></i> Estoque</button>
+    <button class="tab-btn" onclick="mudarTab('historico',this)"><i class="fa fa-history"></i> Histórico</button>
+  </div>
 
-<h3>Novo Material</h3>
+  <!-- Tab Estoque -->
+  <div id="tab-estoque">
+    <div id="alertaBaixo" class="alerta-low">
+      <i class="fa fa-exclamation-triangle"></i> <strong>Atenção:</strong> <span id="alertaBaixoTexto"></span>
+    </div>
+    <div class="toolbar">
+      <div style="display:flex;gap:10px;">
+        <input type="text" id="buscaProduto" placeholder="🔍  Buscar produto...">
+        <select id="filtroCategoria">
+          <option value="">Todas as categorias</option>
+        </select>
+        <select id="filtroSaldo">
+          <option value="">Todos</option>
+          <option value="ok">Normal</option>
+          <option value="low">Estoque baixo</option>
+          <option value="out">Sem estoque</option>
+        </select>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Categoria</th>
+            <th>Saldo</th>
+            <th>Mín.</th>
+            <th>Valor Unit.</th>
+            <th>Valor Total</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="listaProdutos"></tbody>
+      </table>
+    </div>
+  </div>
 
-<input id="nome" placeholder="Nome">
-<input id="valor" type="number" step="0.01" placeholder="Valor">
-
-<button onclick="criarProduto()">Cadastrar</button>
-
-<hr>
-
-<h3>Movimentar</h3>
-
-<select id="produtoMov"></select>
-<input id="qtd" type="number">
-
-<button onclick="entrada()">Entrada</button>
-<button class="btn-danger" onclick="saida()">Saída</button>
-
-</div>
-
-<div class="card">
-
-<h3>Estoque</h3>
-
-<input id="buscarMaterial" placeholder="Buscar..." oninput="filtrarLista()">
-
-<div id="lista"></div>
-
-</div>
-
-</div>
+  <!-- Tab Histórico -->
+  <div id="tab-historico" style="display:none">
+    <div class="toolbar">
+      <div style="display:flex;gap:10px;">
+        <input type="text" id="buscaHist" placeholder="🔍  Buscar produto...">
+        <select id="filtroTipoHist">
+          <option value="">Entradas e Saídas</option>
+          <option value="entrada">Entradas</option>
+          <option value="saida">Saídas</option>
+        </select>
+        <input type="date" id="filtroDataHist">
+      </div>
+    </div>
+    <div class="table-wrap" style="padding:8px 0;">
+      <div id="listaHistorico"></div>
+    </div>
+  </div>
 
 </main>
 </div>
 
-<!-- MODAL -->
-<div id="modalEditar" class="modal">
-<div class="modal-box">
-
-<h3>Editar Material</h3>
-
-<input id="editNome">
-<input id="editValor" type="number">
-
-<div style="display:flex;gap:10px;margin-top:10px;">
-<button onclick="salvarEdicao()">Salvar</button>
-<button class="btn-danger" onclick="fecharEditar()">Cancelar</button>
+<!-- MODAL NOVO PRODUTO -->
+<div class="modal" id="modalProduto">
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 id="modalProdutoTitulo">Novo Produto</h2>
+    <button class="btn-fechar" onclick="fecharModalProduto()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="grid-2">
+      <div class="field span2">
+        <label>Nome *</label>
+        <input id="prodNome" placeholder="Ex: Óleo de massagem">
+      </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="prodCategoria">
+          <option value="">Sem categoria</option>
+          <option>Óleos</option>
+          <option>Toalhas</option>
+          <option>Higiene</option>
+          <option>Limpeza</option>
+          <option>Consumíveis</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Valor Unitário (R$)</label>
+        <input type="number" id="prodValor" placeholder="0,00" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label>Quantidade Inicial</label>
+        <input type="number" id="prodQtdInicial" placeholder="0" min="0" value="0">
+      </div>
+      <div class="field">
+        <label>Estoque Mínimo</label>
+        <input type="number" id="prodMinimo" placeholder="0" min="0" value="0">
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModalProduto()">Cancelar</button>
+    <button class="btn-save" onclick="salvarProduto()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
+</div>
 </div>
 
+<!-- MODAL MOVIMENTAR -->
+<div class="modal" id="modalMovimentar">
+<div class="modal-content sm">
+  <div class="modal-header">
+    <h2 id="modalMovTitulo">Entrada de Estoque</h2>
+    <button class="btn-fechar" onclick="fecharModalMov()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="field">
+      <label>Produto *</label>
+      <select id="movProduto"></select>
+    </div>
+    <div class="field">
+      <label>Quantidade *</label>
+      <input type="number" id="movQtd" placeholder="0" min="1" value="1">
+    </div>
+    <div class="field">
+      <label>Motivo</label>
+      <select id="movMotivo">
+        <option value="">Selecione</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Observação</label>
+      <input id="movObs" placeholder="Opcional...">
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModalMov()">Cancelar</button>
+    <button id="btnConfirmarMov" class="btn-save" onclick="confirmarMov()"><i class="fa fa-check"></i> Confirmar</button>
+  </div>
 </div>
 </div>
 
-<!-- 🔥 PADRÃO GLOBAL -->
+<!-- MODAL EDITAR PRODUTO -->
+<div class="modal" id="modalEditar">
+<div class="modal-content sm">
+  <div class="modal-header">
+    <h2>Editar Produto</h2>
+    <button class="btn-fechar" onclick="fecharModalEditar()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="grid-2">
+      <div class="field span2">
+        <label>Nome *</label>
+        <input id="editNome">
+      </div>
+      <div class="field">
+        <label>Categoria</label>
+        <select id="editCategoria">
+          <option value="">Sem categoria</option>
+          <option>Óleos</option>
+          <option>Toalhas</option>
+          <option>Higiene</option>
+          <option>Limpeza</option>
+          <option>Consumíveis</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Valor Unitário (R$)</label>
+        <input type="number" id="editValor" step="0.01" min="0">
+      </div>
+      <div class="field">
+        <label>Estoque Mínimo</label>
+        <input type="number" id="editMinimo" min="0">
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModalEditar()">Cancelar</button>
+    <button class="btn-save" onclick="salvarEdicao()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
+</div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 
 <script>
 
-let listaOriginal=[]
-let produtoEditando=null
+let produtos     = [];
+let historico    = [];
+let produtoEditId = null;
+let tipoMovAtual  = "entrada";
 
+const MOTIVOS = {
+  entrada: ["Compra","Devolução","Ajuste de inventário","Outro"],
+  saida:   ["Uso em atendimento","Vencimento/Perda","Descarte","Ajuste de inventário","Outro"]
+};
+
+/* ── HELPERS ── */
+function fmtMoeda(v){
+  return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+}
+function fmtData(v){
+  if(!v) return "—";
+  const d = new Date(v);
+  return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+
+/* ── TABS ── */
+function mudarTab(tab, btn){
+  document.getElementById("tab-estoque").style.display   = tab === "estoque"   ? "" : "none";
+  document.getElementById("tab-historico").style.display = tab === "historico" ? "" : "none";
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  if(tab === "historico") renderHistorico();
+}
+
+/* ── CARREGAR ── */
 async function carregar(){
+  const [{data: p}, {data: h}] = await Promise.all([
+    client.from("estoque_atual").select("*").order("nome"),
+    client.from("movimentacoes_estoque")
+      .select("*, produtos(nome, categoria)")
+      .order("created_at",{ascending:false})
+      .limit(200)
+  ]);
 
-const {data,error}=await client
-.from("estoque_atual")
-.select("*")
-.order("nome")
+  produtos  = p || [];
+  historico = h || [];
 
-if(error){
-console.error(error)
-return
+  renderResumo();
+  renderProdutos();
+  renderFiltroCategoria();
+  popularSelectProdutos();
 }
 
-listaOriginal=data||[]
-renderizarLista(listaOriginal)
+/* ── RESUMO ── */
+function renderResumo(){
+  const total    = produtos.length;
+  const unidades = produtos.reduce((s,p) => s + (p.saldo||0), 0);
+  const valor    = produtos.reduce((s,p) => s + (p.valor||0)*(p.saldo||0), 0);
+  const baixo    = produtos.filter(p => (p.saldo||0) <= (p.minimo||0) && (p.minimo||0) > 0).length;
+
+  document.getElementById("totalProdutos").textContent = total;
+  document.getElementById("totalUnidades").textContent = unidades;
+  document.getElementById("totalValor").textContent    = fmtMoeda(valor);
+  document.getElementById("totalBaixo").textContent    = baixo;
+
+  // alerta
+  const baixos = produtos.filter(p => (p.saldo||0) <= (p.minimo||0) && (p.minimo||0) > 0);
+  const alertaEl = document.getElementById("alertaBaixo");
+  if(baixos.length){
+    alertaEl.style.display = "block";
+    document.getElementById("alertaBaixoTexto").textContent =
+      `${baixos.map(p=>p.nome).join(", ")} ${baixos.length > 1 ? "estão" : "está"} abaixo do estoque mínimo.`;
+  } else {
+    alertaEl.style.display = "none";
+  }
 }
 
-function renderizarLista(data){
-
-lista.innerHTML=""
-produtoMov.innerHTML=""
-
-data.forEach(p=>{
-
-const total=(p.valor||0)*(p.saldo||0)
-
-const div=document.createElement("div")
-div.className="lista-linha"
-
-div.innerHTML=`
-<span class="nome">${p.nome}</span>
-<span class="pontos"></span>
-<span class="valor">${p.saldo} | R$ ${total.toFixed(2)}</span>
-
-<div class="acoes">
-<button onclick="abrirEditar('${p.id}','${p.nome}',${p.valor||0})">Editar</button>
-<button class="btn-danger" onclick="excluirProduto('${p.id}')">Excluir</button>
-</div>
-`
-
-lista.appendChild(div)
-
-produtoMov.innerHTML+=`<option value="${p.id}">${p.nome}</option>`
-})
+/* ── FILTRO CATEGORIA ── */
+function renderFiltroCategoria(){
+  const cats = [...new Set(produtos.map(p=>p.categoria).filter(Boolean))].sort();
+  const sel  = document.getElementById("filtroCategoria");
+  sel.innerHTML = "<option value=''>Todas as categorias</option>";
+  cats.forEach(c => sel.innerHTML += `<option>${c}</option>`);
 }
 
-function filtrarLista(){
+/* ── RENDER PRODUTOS ── */
+function renderProdutos(){
+  const busca    = (document.getElementById("buscaProduto").value||"").toLowerCase();
+  const catFiltro= document.getElementById("filtroCategoria").value;
+  const saldoF   = document.getElementById("filtroSaldo").value;
 
-const termo=buscarMaterial.value.toLowerCase()
+  const lista = produtos.filter(p => {
+    const nomeOk = (p.nome||"").toLowerCase().includes(busca);
+    const catOk  = !catFiltro || p.categoria === catFiltro;
+    let saldoOk  = true;
+    if(saldoF === "ok")  saldoOk = (p.saldo||0) > (p.minimo||0);
+    if(saldoF === "low") saldoOk = (p.saldo||0) <= (p.minimo||0) && (p.saldo||0) > 0 && (p.minimo||0) > 0;
+    if(saldoF === "out") saldoOk = (p.saldo||0) === 0;
+    return nomeOk && catOk && saldoOk;
+  });
 
-if(!termo){
-renderizarLista(listaOriginal)
-return
+  const tbody = document.getElementById("listaProdutos");
+  tbody.innerHTML = "";
+
+  if(!lista.length){
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">Nenhum produto encontrado.</td></tr>`;
+    return;
+  }
+
+  lista.forEach(p => {
+    const saldo = p.saldo || 0;
+    const min   = p.minimo || 0;
+    let badgeClass = "badge-ok", badgeText = "Normal";
+    if(saldo === 0)              { badgeClass = "badge-out"; badgeText = "Sem estoque"; }
+    else if(min > 0 && saldo <= min){ badgeClass = "badge-low"; badgeText = "Estoque baixo"; }
+
+    tbody.innerHTML += `
+    <tr>
+      <td><strong>${p.nome}</strong></td>
+      <td>${p.categoria||"—"}</td>
+      <td><strong>${saldo}</strong></td>
+      <td style="color:#9ca3af">${min||"—"}</td>
+      <td>${fmtMoeda(p.valor)}</td>
+      <td>${fmtMoeda((p.valor||0)*saldo)}</td>
+      <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+      <td style="display:flex;gap:6px">
+        <button class="btn-green" onclick="abrirMovimentar('entrada','${p.id}')" title="Entrada"><i class="fa fa-plus"></i></button>
+        <button class="btn-red"   onclick="abrirMovimentar('saida','${p.id}')"   title="Saída"><i class="fa fa-minus"></i></button>
+        <button class="btn-yellow" onclick="abrirEditar('${p.id}')"><i class="fa fa-pencil"></i></button>
+        <button class="btn-red"   onclick="excluirProduto('${p.id}')"><i class="fa fa-trash"></i></button>
+      </td>
+    </tr>`;
+  });
 }
 
-renderizarLista(
-listaOriginal.filter(p=>p.nome.toLowerCase().includes(termo))
-)
+/* ── RENDER HISTÓRICO ── */
+function renderHistorico(){
+  const busca     = (document.getElementById("buscaHist").value||"").toLowerCase();
+  const tipoFilt  = document.getElementById("filtroTipoHist").value;
+  const dataFilt  = document.getElementById("filtroDataHist").value;
+
+  const lista = historico.filter(h => {
+    const nomeOk = (h.produtos?.nome||"").toLowerCase().includes(busca);
+    const tipoOk = !tipoFilt || h.tipo === tipoFilt;
+    const dataOk = !dataFilt || h.created_at?.startsWith(dataFilt);
+    return nomeOk && tipoOk && dataOk;
+  });
+
+  const div = document.getElementById("listaHistorico");
+
+  if(!lista.length){
+    div.innerHTML = `<div class="empty-state"><i class="fa fa-history" style="font-size:28px;display:block;margin-bottom:10px;color:#d1d5db"></i>Nenhuma movimentação encontrada.</div>`;
+    return;
+  }
+
+  div.innerHTML = lista.map(h => `
+    <div class="hist-item" style="padding:10px 16px">
+      <div class="hist-icon ${h.tipo}">
+        <i class="fa ${h.tipo === 'entrada' ? 'fa-arrow-down' : 'fa-arrow-up'}"></i>
+      </div>
+      <div class="hist-info">
+        <div class="hist-nome">${h.produtos?.nome||"—"}</div>
+        <div class="hist-meta">
+          ${h.motivo ? `<span>${h.motivo}</span> · ` : ""}
+          ${h.observacao ? `<span>${h.observacao}</span> · ` : ""}
+          <span>${fmtData(h.created_at)}</span>
+          ${h.produtos?.categoria ? ` · <span>${h.produtos.categoria}</span>` : ""}
+        </div>
+      </div>
+      <div class="hist-qtd ${h.tipo}">
+        ${h.tipo === "entrada" ? "+" : "-"}${h.quantidade}
+      </div>
+    </div>
+  `).join("");
 }
 
-async function criarProduto(){
-
-const nomeInput=nome.value
-const valorInput=parseFloat(valor.value)
-
-if(!nomeInput){
-alert("Nome obrigatório")
-return
+/* ── POPULAR SELECT PRODUTOS ── */
+function popularSelectProdutos(){
+  const sel = document.getElementById("movProduto");
+  sel.innerHTML = "<option value=''>Selecione o produto</option>";
+  produtos.forEach(p => {
+    sel.innerHTML += `<option value="${p.id}">${p.nome} (saldo: ${p.saldo||0})</option>`;
+  });
 }
 
-await client.from("produtos").insert({
-nome:nomeInput,
-valor:valorInput
-})
-
-nome.value=""
-valor.value=""
-
-carregar()
+/* ── MODAL PRODUTO ── */
+function abrirNovoProduto(){
+  produtoEditId = null;
+  ["prodNome","prodValor","prodQtdInicial","prodMinimo"].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = id === "prodQtdInicial" || id === "prodMinimo" ? "0" : "";
+  });
+  document.getElementById("prodCategoria").value = "";
+  document.getElementById("modalProdutoTitulo").textContent = "Novo Produto";
+  document.getElementById("modalProduto").style.display = "flex";
 }
 
-async function entrada(){
-
-const id=produtoMov.value
-const qtdValor=parseFloat(qtd.value)
-
-if(!qtdValor) return alert("Informe quantidade")
-
-await client.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"entrada",
-quantidade:qtdValor
-})
-
-qtd.value=""
-carregar()
+function fecharModalProduto(){
+  document.getElementById("modalProduto").style.display = "none";
 }
 
-async function saida(){
+async function salvarProduto(){
+  const nome  = document.getElementById("prodNome").value.trim();
+  if(!nome){ alert("Nome obrigatório."); return; }
 
-const id=produtoMov.value
-const qtdValor=parseFloat(qtd.value)
+  const payload = {
+    nome,
+    categoria: document.getElementById("prodCategoria").value || null,
+    valor:     parseFloat(document.getElementById("prodValor").value||0),
+    minimo:    parseInt(document.getElementById("prodMinimo").value||0)
+  };
 
-if(!qtdValor) return alert("Informe quantidade")
+  const {data: novo, error} = await client.from("produtos").insert(payload).select().single();
+  if(error){ alert("Erro: " + error.message); return; }
 
-await client.from("movimentacoes_estoque").insert({
-produto_id:id,
-tipo:"saida",
-quantidade:qtdValor
-})
+  // inserir qtd inicial como movimentação de entrada
+  const qtdInicial = parseInt(document.getElementById("prodQtdInicial").value||0);
+  if(qtdInicial > 0){
+    await client.from("movimentacoes_estoque").insert({
+      produto_id: novo.id,
+      tipo:       "entrada",
+      quantidade: qtdInicial,
+      motivo:     "Estoque inicial"
+    });
+  }
 
-qtd.value=""
-carregar()
+  fecharModalProduto();
+  carregar();
 }
 
-async function excluirProduto(id){
-
-if(!confirm("Excluir material?")) return
-
-await client.from("movimentacoes_estoque").delete().eq("produto_id",id)
-await client.from("produtos").delete().eq("id",id)
-
-carregar()
+/* ── MODAL EDITAR PRODUTO ── */
+function abrirEditar(id){
+  const p = produtos.find(x => x.id === id);
+  if(!p) return;
+  produtoEditId = id;
+  document.getElementById("editNome").value      = p.nome     || "";
+  document.getElementById("editCategoria").value = p.categoria|| "";
+  document.getElementById("editValor").value     = p.valor    || 0;
+  document.getElementById("editMinimo").value    = p.minimo   || 0;
+  document.getElementById("modalEditar").style.display = "flex";
 }
 
-function abrirEditar(id,nome,valor){
-produtoEditando=id
-editNome.value=nome
-editValor.value=valor
-modalEditar.style.display="flex"
-}
-
-function fecharEditar(){
-modalEditar.style.display="none"
+function fecharModalEditar(){
+  document.getElementById("modalEditar").style.display = "none";
 }
 
 async function salvarEdicao(){
+  const nome = document.getElementById("editNome").value.trim();
+  if(!nome){ alert("Nome obrigatório."); return; }
 
-await client
-.from("produtos")
-.update({
-nome:editNome.value,
-valor:parseFloat(editValor.value)
-})
-.eq("id",produtoEditando)
+  const {error} = await client.from("produtos").update({
+    nome,
+    categoria: document.getElementById("editCategoria").value || null,
+    valor:     parseFloat(document.getElementById("editValor").value||0),
+    minimo:    parseInt(document.getElementById("editMinimo").value||0)
+  }).eq("id", produtoEditId);
 
-fecharEditar()
-carregar()
+  if(error){ alert("Erro: " + error.message); return; }
+  fecharModalEditar();
+  carregar();
 }
 
-carregar()
+/* ── MODAL MOVIMENTAR ── */
+function abrirMovimentar(tipo, produtoId){
+  tipoMovAtual = tipo;
 
+  const titulo = tipo === "entrada" ? "Entrada de Estoque" : "Saída de Estoque";
+  const btnColor = tipo === "entrada" ? "#16a34a" : "#dc2626";
+
+  document.getElementById("modalMovTitulo").textContent = titulo;
+  document.getElementById("btnConfirmarMov").style.background = btnColor;
+  document.getElementById("movQtd").value = "1";
+  document.getElementById("movObs").value = "";
+
+  // motivos
+  const selMotivo = document.getElementById("movMotivo");
+  selMotivo.innerHTML = "<option value=''>Selecione</option>";
+  MOTIVOS[tipo].forEach(m => selMotivo.innerHTML += `<option>${m}</option>`);
+
+  // pré-selecionar produto se veio da linha
+  popularSelectProdutos();
+  if(produtoId) document.getElementById("movProduto").value = produtoId;
+
+  document.getElementById("modalMovimentar").style.display = "flex";
+}
+
+function fecharModalMov(){
+  document.getElementById("modalMovimentar").style.display = "none";
+}
+
+async function confirmarMov(){
+  const prodId = document.getElementById("movProduto").value;
+  const qtd    = parseInt(document.getElementById("movQtd").value||0);
+  const motivo = document.getElementById("movMotivo").value;
+  const obs    = document.getElementById("movObs").value.trim();
+
+  if(!prodId){ alert("Selecione o produto."); return; }
+  if(!qtd || qtd <= 0){ alert("Informe uma quantidade válida."); return; }
+
+  // verificar saldo para saída
+  if(tipoMovAtual === "saida"){
+    const p = produtos.find(x => x.id === prodId);
+    if(p && (p.saldo||0) < qtd){
+      alert(`Saldo insuficiente. Disponível: ${p.saldo||0}`);
+      return;
+    }
+  }
+
+  const {error} = await client.from("movimentacoes_estoque").insert({
+    produto_id: prodId,
+    tipo:       tipoMovAtual,
+    quantidade: qtd,
+    motivo:     motivo || null,
+    observacao: obs    || null
+  });
+
+  if(error){ alert("Erro: " + error.message); return; }
+  fecharModalMov();
+  carregar();
+}
+
+/* ── EXCLUIR PRODUTO ── */
+async function excluirProduto(id){
+  if(!confirm("Excluir este produto e todo seu histórico?")) return;
+  await client.from("movimentacoes_estoque").delete().eq("produto_id", id);
+  await client.from("produtos").delete().eq("id", id);
+  carregar();
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById("buscaProduto").addEventListener("input", renderProdutos);
+  document.getElementById("filtroCategoria").addEventListener("change", renderProdutos);
+  document.getElementById("filtroSaldo").addEventListener("change", renderProdutos);
+  document.getElementById("buscaHist").addEventListener("input", renderHistorico);
+  document.getElementById("filtroTipoHist").addEventListener("change", renderHistorico);
+  document.getElementById("filtroDataHist").addEventListener("change", renderHistorico);
+  carregar();
+});
 </script>
-
 </body>
 </html>

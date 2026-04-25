@@ -285,17 +285,31 @@ function getFiltro(){
   return{mes,ano};
 }
 
+function ultimoDia(ano,mes){
+  return new Date(parseInt(ano), parseInt(mes), 0).getDate();
+}
+
 function buildFiltroAtend(q){
   const {mes,ano}=getFiltro();
-  if(ano) q=q.gte("data",`${ano}-01-01`).lte("data",`${ano}-12-31`);
-  if(mes) q=q.gte("data",`${ano||new Date().getFullYear()}-${mes}-01`).lte("data",`${ano||new Date().getFullYear()}-${mes}-31`);
+  const y=ano||new Date().getFullYear();
+  if(mes){
+    const ult=ultimoDia(y,mes);
+    q=q.gte("data",`${y}-${mes}-01`).lte("data",`${y}-${mes}-${String(ult).padStart(2,"0")}`);
+  } else if(ano){
+    q=q.gte("data",`${ano}-01-01`).lte("data",`${ano}-12-31`);
+  }
   return q;
 }
 
 function buildFiltroDespesas(q){
   const {mes,ano}=getFiltro();
-  if(ano) q=q.gte("data_vencimento",`${ano}-01-01`).lte("data_vencimento",`${ano}-12-31`);
-  if(mes) q=q.gte("data_vencimento",`${ano||new Date().getFullYear()}-${mes}-01`).lte("data_vencimento",`${ano||new Date().getFullYear()}-${mes}-31`);
+  const y=ano||new Date().getFullYear();
+  if(mes){
+    const ult=ultimoDia(y,mes);
+    q=q.gte("data_vencimento",`${y}-${mes}-01`).lte("data_vencimento",`${y}-${mes}-${String(ult).padStart(2,"0")}`);
+  } else if(ano){
+    q=q.gte("data_vencimento",`${ano}-01-01`).lte("data_vencimento",`${ano}-12-31`);
+  }
   return q;
 }
 
@@ -406,7 +420,8 @@ async function chartRecDesp(){
 
   for(const m of meses){
     const y=m.getFullYear(),mo=String(m.getMonth()+1).padStart(2,"0");
-    const ini=`${y}-${mo}-01`,fim=`${y}-${mo}-31`;
+    const ult=new Date(y,m.getMonth()+1,0).getDate();
+    const ini=`${y}-${mo}-01`,fim=`${y}-${mo}-${String(ult).padStart(2,"0")}`;
     const [{data:atDs},{data:despDs}]=await Promise.all([
       client.from("atendimentos").select("valor_final").eq("status","Confirmado").gte("data",ini).lte("data",fim),
       client.from("despesas").select("valor").gte("data_vencimento",ini).lte("data_vencimento",fim)

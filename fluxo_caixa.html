@@ -102,6 +102,12 @@ tr:hover td{background:#f9fafb;}
 .rl.total{border-top:1px solid #e5e7eb;margin-top:6px;padding-top:8px;font-weight:700;font-size:15px;}
 .rl.troco{color:#16a34a;font-weight:700;}
 .rl.troco.neg{color:#dc2626;}
+.repo-hist{max-height:180px;overflow-y:auto;margin-top:10px;}
+.repo-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.repo-item:last-child{border-bottom:none;}
+.repo-item .ri-val{font-weight:700;}
+.repo-item .ri-val.pos{color:#16a34a;}
+.repo-item .ri-val.neg{color:#dc2626;}
 
 /* fechamento caixa */
 .fech-header{text-align:center;padding:16px 0 8px;}
@@ -183,6 +189,20 @@ tr:hover td{background:#f9fafb;}
       <div class="t-label"><i class="fa fa-check-circle"></i> Total Final (R$)</div>
       <div class="t-valor green" id="totFinal">—</div>
       <div class="t-sub">receita líquida</div>
+    </div>
+  </div>
+
+  <!-- Card Caixa -->
+  <div style="display:flex;gap:16px;margin-bottom:20px;align-items:stretch">
+    <div class="total-card c-green" style="flex:1;display:flex;justify-content:space-between;align-items:center;padding:20px 24px">
+      <div>
+        <div class="t-label" style="color:#16a34a"><i class="fa fa-cash-register"></i> Caixa (Dinheiro)</div>
+        <div class="t-valor green" id="caixaAtual">R$ 0,00</div>
+        <div class="t-sub" id="caixaSub">Atualize via fechamento de caixa</div>
+      </div>
+      <button class="btn-ghost" onclick="abrirReposicao()" style="flex-shrink:0">
+        <i class="fa fa-plus"></i> Repor / Ajustar
+      </button>
     </div>
   </div>
 
@@ -403,6 +423,45 @@ tr:hover td{background:#f9fafb;}
       <button onclick="salvarFechamento()"><i class="fa fa-save"></i> Salvar</button>
       <button class="btn-blue" onclick="window.print()"><i class="fa fa-print"></i> Imprimir / Print</button>
     </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL REPOSIÇÃO DE CAIXA -->
+<div class="modal" id="modalRepo">
+<div class="modal-content sm">
+  <div class="modal-header">
+    <h2><i class="fa fa-cash-register"></i> Caixa — Ajuste</h2>
+    <button class="btn-fechar" onclick="fecharRepo()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:#16a34a;font-weight:600">Saldo atual em caixa</span>
+      <span style="font-size:22px;font-weight:900;color:#16a34a" id="repoSaldoAtual">R$ 0,00</span>
+    </div>
+    <div class="grid-2">
+      <div class="mfield">
+        <label>Tipo</label>
+        <select id="repoTipo">
+          <option value="entrada">+ Entrada (reposição)</option>
+          <option value="saida">- Saída (retirada)</option>
+          <option value="ajuste">= Ajuste manual (definir valor)</option>
+        </select>
+      </div>
+      <div class="mfield">
+        <label>Valor (R$)</label>
+        <input type="number" id="repoValor" step="0.01" placeholder="0,00">
+      </div>
+      <div class="mfield span2">
+        <label>Motivo</label>
+        <input id="repoMotivo" placeholder="Ex: Reposição de troco, Retirada para banco...">
+      </div>
+    </div>
+    <div class="repo-hist" id="repoHist"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharRepo()">Cancelar</button>
+    <button class="btn-green" onclick="salvarRepo()"><i class="fa fa-check"></i> Confirmar</button>
   </div>
 </div>
 </div>
@@ -919,12 +978,85 @@ async function salvarFechamento(){
   });
   if(error){alert("Erro ao salvar: "+error.message);return;}
   alert("Fechamento salvo com sucesso!");
+  carregarCaixa();
+}
+
+/* ── CAIXA ── */
+let saldoCaixa = 0;
+
+async function carregarCaixa(){
+  // busca o último fechamento para saldo base
+  const {data:fechs} = await client.from("fechamentos_caixa")
+    .select("troco_caixa,created_at").order("created_at",{ascending:false}).limit(1);
+  const baseFechar = fechs?.[0]?.troco_caixa || 0;
+
+  // busca movimentações manuais
+  const {data:movs} = await client.from("caixa_movimentacoes")
+    .select("*").order("created_at",{ascending:false});
+
+  // calcula saldo: base do último fechamento + movimentações posteriores
+  let saldo = baseFechar;
+  const dataBase = fechs?.[0]?.created_at || "2000-01-01";
+  (movs||[]).filter(m => m.created_at >= dataBase).forEach(m => {
+    if(m.tipo === "entrada") saldo += m.valor;
+    else if(m.tipo === "saida") saldo -= m.valor;
+    else if(m.tipo === "ajuste") saldo = m.valor;
+  });
+
+  saldoCaixa = saldo;
+  document.getElementById("caixaAtual").textContent = fmtM(saldo);
+  document.getElementById("caixaAtual").style.color = saldo >= 0 ? "#16a34a" : "#dc2626";
+  document.getElementById("caixaSub").textContent = fechs?.[0] ?
+    `Último fechamento: ${new Date(fechs[0].created_at).toLocaleString("pt-BR")}` :
+    "Nenhum fechamento registrado";
+}
+
+function abrirReposicao(){
+  document.getElementById("repoSaldoAtual").textContent = fmtM(saldoCaixa);
+  document.getElementById("repoTipo").value = "entrada";
+  document.getElementById("repoValor").value = "";
+  document.getElementById("repoMotivo").value = "";
+  carregarHistRepo();
+  document.getElementById("modalRepo").style.display = "flex";
+}
+
+function fecharRepo(){ document.getElementById("modalRepo").style.display = "none"; }
+
+async function carregarHistRepo(){
+  const {data} = await client.from("caixa_movimentacoes")
+    .select("*").order("created_at",{ascending:false}).limit(10);
+  const hist = document.getElementById("repoHist");
+  if(!data || !data.length){ hist.innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:12px;padding:10px">Nenhuma movimentação</p>'; return; }
+  hist.innerHTML = '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;padding:8px 0 4px">Histórico recente</div>'
+    + data.map(m => {
+      const sinal = m.tipo === "saida" ? "-" : m.tipo === "ajuste" ? "=" : "+";
+      const cls = m.tipo === "saida" ? "neg" : "pos";
+      const dt = new Date(m.created_at).toLocaleString("pt-BR");
+      return `<div class="repo-item">
+        <span style="color:#374151">${m.motivo||m.tipo} <span style="color:#9ca3af;font-size:11px">${dt}</span></span>
+        <span class="ri-val ${cls}">${sinal} ${fmtM(m.valor)}</span>
+      </div>`;
+    }).join("");
+}
+
+async function salvarRepo(){
+  const tipo = document.getElementById("repoTipo").value;
+  const valor = parseFloat(document.getElementById("repoValor").value||0);
+  const motivo = document.getElementById("repoMotivo").value.trim();
+  if(!valor || valor <= 0){ alert("Informe um valor."); return; }
+
+  const {error} = await client.from("caixa_movimentacoes").insert({tipo, valor, motivo: motivo||tipo});
+  if(error){ alert("Erro: "+error.message); return; }
+
+  fecharRepo();
+  carregarCaixa();
 }
 
 /* ── INIT ── */
 document.addEventListener("DOMContentLoaded",async()=>{
   await carregarDados();
   await carregar();
+  await carregarCaixa();
 });
 </script>
 </body>

@@ -28,10 +28,21 @@ button.btn-ghost:hover{background:#f9fafb;}
 .field label{font-size:12px;font-weight:600;color:#374151;}
 .field input,.field select{padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#111827;background:#fff;}
 .field input:focus,.field select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.totais{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;}
-.total-card{background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-.t-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:4px;}
-.t-valor{font-size:18px;font-weight:800;color:#111827;}
+.totais{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;}
+.total-card{background:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 2px 8px rgba(0,0,0,.07);position:relative;overflow:hidden;}
+.total-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;}
+.total-card.c-gray::before{background:#9ca3af;}
+.total-card.c-blue::before{background:#2563eb;}
+.total-card.c-red::before{background:#dc2626;}
+.total-card.c-purple::before{background:#7c3aed;}
+.total-card.c-green::before{background:#16a34a;}
+.t-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.t-valor{font-size:32px;font-weight:900;color:#111827;line-height:1;letter-spacing:-1px;}
+.t-valor.green{color:#16a34a;}
+.t-valor.blue{color:#2563eb;}
+.t-valor.purple{color:#7c3aed;}
+.t-valor.red{color:#dc2626;}
+.t-sub{font-size:11px;color:#9ca3af;margin-top:8px;}
 .table-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left;}
@@ -127,11 +138,31 @@ tr:hover td{background:#f9fafb;}
   </div>
 
   <div class="totais">
-    <div class="total-card"><div class="t-label">Lançamentos</div><div class="t-valor" id="totCount">—</div></div>
-    <div class="total-card" style="border-left:3px solid #2563eb"><div class="t-label" style="color:#2563eb">Valor Bruto</div><div class="t-valor" id="totBruto">—</div></div>
-    <div class="total-card" style="border-left:3px solid #d97706"><div class="t-label" style="color:#d97706">Descontos</div><div class="t-valor" id="totDesc">—</div></div>
-    <div class="total-card" style="border-left:3px solid #7c3aed"><div class="t-label" style="color:#7c3aed">Comissões</div><div class="t-valor" id="totCom">—</div></div>
-    <div class="total-card" style="border-left:3px solid #16a34a"><div class="t-label" style="color:#16a34a">Total Final (R$)</div><div class="t-valor" id="totFinal">—</div></div>
+    <div class="total-card c-gray">
+      <div class="t-label"><i class="fa fa-list"></i> Lançamentos</div>
+      <div class="t-valor" id="totCount">—</div>
+      <div class="t-sub">no período</div>
+    </div>
+    <div class="total-card c-blue">
+      <div class="t-label"><i class="fa fa-dollar-sign"></i> Valor Bruto</div>
+      <div class="t-valor blue" id="totBruto">—</div>
+      <div class="t-sub">soma dos serviços</div>
+    </div>
+    <div class="total-card c-red">
+      <div class="t-label"><i class="fa fa-tag"></i> Descontos</div>
+      <div class="t-valor red" id="totDesc">—</div>
+      <div class="t-sub">total descontado</div>
+    </div>
+    <div class="total-card c-purple">
+      <div class="t-label"><i class="fa fa-handshake"></i> Comissões</div>
+      <div class="t-valor purple" id="totCom">—</div>
+      <div class="t-sub">total de comissões</div>
+    </div>
+    <div class="total-card c-green">
+      <div class="t-label"><i class="fa fa-check-circle"></i> Total Final (R$)</div>
+      <div class="t-valor green" id="totFinal">—</div>
+      <div class="t-sub">receita líquida</div>
+    </div>
   </div>
 
   <div class="table-wrap">
@@ -176,24 +207,7 @@ tr:hover td{background:#f9fafb;}
       <button class="btn-add-serv" onclick="addServ()"><i class="fa fa-plus"></i> Adicionar serviço</button>
     </div>
 
-    <!-- Moeda -->
-    <div class="sep">
-      <h4><i class="fa fa-coins"></i> Moeda</h4>
-      <div style="display:flex;gap:10px;align-items:flex-end">
-        <div class="mfield" style="flex:1;margin-bottom:0">
-          <label>Moeda</label>
-          <select id="lancMoeda" onchange="onMoeda()">
-            <option value="BRL">🇧🇷 Real (R$)</option>
-            <option value="USD">🇺🇸 Dólar ($)</option>
-            <option value="EUR">🇪🇺 Euro (€)</option>
-          </select>
-        </div>
-        <div class="mfield" id="cotWrap" style="flex:1;margin-bottom:0;display:none">
-          <label>Cotação (1 unidade = R$)</label>
-          <input type="number" id="lancCot" step="0.01" placeholder="ex: 5.80" oninput="calcRes()">
-        </div>
-      </div>
-    </div>
+
 
     <!-- Resumo -->
     <div class="sep">
@@ -215,14 +229,34 @@ tr:hover td{background:#f9fafb;}
     <!-- Pagamento -->
     <div class="sep">
       <h4><i class="fa fa-money-bill-wave"></i> Pagamento</h4>
+
+      <!-- Pgto 1 -->
       <div class="pgto-row">
-        <select id="p1Forma"><option value="">Forma de Pgto 1</option></select>
-        <input type="number" id="p1Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()">
+        <select id="p1Forma" onchange="onPgtoMoeda(1)"><option value="">Forma de Pgto 1</option></select>
+        <select id="p1Moeda" onchange="onPgtoMoeda(1)" style="width:90px;padding:8px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px">
+          <option value="BRL">R$</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+        <input type="number" id="p1ValEstr" step="0.01" placeholder="Valor" oninput="onPgtoMoeda(1)" style="display:none;width:100px;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right">
+        <input type="number" id="p1Cot" step="0.01" placeholder="Cotação" oninput="onPgtoMoeda(1)" style="display:none;width:90px;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right">
+        <input type="number" id="p1Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()" style="width:120px">
       </div>
+      <div style="font-size:11px;color:#9ca3af;margin:-4px 0 8px 4px" id="p1Info"></div>
+
+      <!-- Pgto 2 -->
       <div class="pgto-row">
-        <select id="p2Forma"><option value="">Forma de Pgto 2 (opcional)</option></select>
-        <input type="number" id="p2Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()">
+        <select id="p2Forma" onchange="onPgtoMoeda(2)"><option value="">Forma de Pgto 2 (opcional)</option></select>
+        <select id="p2Moeda" onchange="onPgtoMoeda(2)" style="width:90px;padding:8px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px">
+          <option value="BRL">R$</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+        <input type="number" id="p2ValEstr" step="0.01" placeholder="Valor" oninput="onPgtoMoeda(2)" style="display:none;width:100px;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right">
+        <input type="number" id="p2Cot" step="0.01" placeholder="Cotação" oninput="onPgtoMoeda(2)" style="display:none;width:90px;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right">
+        <input type="number" id="p2Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()" style="width:120px">
       </div>
+      <div style="font-size:11px;color:#9ca3af;margin:-4px 0 8px 4px" id="p2Info"></div>
       <div class="resumo-box" style="margin-top:10px">
         <div class="rl"><span>Total a pagar</span><span id="tAPagar">R$ 0,00</span></div>
         <div class="rl"><span>Total pago</span><span id="tPago">R$ 0,00</span></div>
@@ -367,16 +401,32 @@ function getServicos(){
 }
 
 /* ── CÁLCULOS ── */
-function onMoeda(){
-  const m=document.getElementById("lancMoeda").value;
-  document.getElementById("cotWrap").style.display=m!=="BRL"?"":"none";
-  calcRes();
-}
+function onMoeda(){ calcRes(); }
 
-function getFator(){
-  const m=document.getElementById("lancMoeda").value;
-  if(m==="BRL")return 1;
-  return parseFloat(document.getElementById("lancCot")?.value||1)||1;
+function getFator(){ return 1; } // serviços sempre em BRL
+
+function onPgtoMoeda(n){
+  const moeda=document.getElementById(`p${n}Moeda`).value;
+  const isEstr=moeda!=="BRL";
+  document.getElementById(`p${n}ValEstr`).style.display=isEstr?"":"none";
+  document.getElementById(`p${n}Cot`).style.display=isEstr?"":"none";
+
+  if(isEstr){
+    const valEstr=parseFloat(document.getElementById(`p${n}ValEstr`).value||0);
+    const cot=parseFloat(document.getElementById(`p${n}Cot`).value||0);
+    const sym=moeda==="USD"?"$":"€";
+    if(valEstr&&cot){
+      const brl=valEstr*cot;
+      document.getElementById(`p${n}Val`).value=brl.toFixed(2);
+      document.getElementById(`p${n}Info`).textContent=`${sym} ${valEstr.toLocaleString("pt-BR",{minimumFractionDigits:2})} × R$ ${cot.toFixed(2)} = ${fmtM(brl)}`;
+    } else {
+      document.getElementById(`p${n}Val`).value="";
+      document.getElementById(`p${n}Info`).textContent=moeda==="USD"?"Informe o valor em dólar e a cotação":"Informe o valor em euro e a cotação";
+    }
+  } else {
+    document.getElementById(`p${n}Info`).textContent="";
+  }
+  calcTroco();
 }
 
 function calcRes(){
@@ -389,10 +439,7 @@ function calcRes(){
   const com=servs.reduce((s,x)=>s+x.comissao,0)*f;
   const final=bruto-descServs-descExtra+acrescimo;
 
-  const moeda=document.getElementById("lancMoeda").value;
-  const sym=moeda==="USD"?"$":moeda==="EUR"?"€":"R$";
-  const brutoOrig=servs.reduce((s,x)=>s+x.valor,0);
-  document.getElementById("rBruto").textContent=moeda!=="BRL"?`${sym} ${brutoOrig.toLocaleString("pt-BR",{minimumFractionDigits:2})} = ${fmtM(bruto)}`:fmtM(bruto);
+  document.getElementById("rBruto").textContent=fmtM(bruto);
   document.getElementById("rDesc").textContent=`- ${fmtM(descServs)}`;
   document.getElementById("rDescExtra").textContent=`- ${fmtM(descExtra)}`;
   document.getElementById("rAcres").textContent=`+ ${fmtM(acrescimo)}`;
@@ -419,13 +466,11 @@ function calcTroco(){
 function resetModal(){
   document.getElementById("lancData").value=hoje();
   document.getElementById("lancOp").value="";
-  document.getElementById("lancMoeda").value="BRL";
   document.getElementById("lancDescExtra").value="0";
   document.getElementById("lancAcres").value="0";
   document.getElementById("lancObs").value="";
-  document.getElementById("p1Forma").value="";document.getElementById("p1Val").value="";
-  document.getElementById("p2Forma").value="";document.getElementById("p2Val").value="";
-  document.getElementById("cotWrap").style.display="none";
+  document.getElementById("p1Forma").value="";document.getElementById("p1Val").value="";document.getElementById("p1Moeda").value="BRL";document.getElementById("p1ValEstr").value="";document.getElementById("p1Cot").value="";document.getElementById("p1ValEstr").style.display="none";document.getElementById("p1Cot").style.display="none";document.getElementById("p1Info").textContent="";
+  document.getElementById("p2Forma").value="";document.getElementById("p2Val").value="";document.getElementById("p2Moeda").value="BRL";document.getElementById("p2ValEstr").value="";document.getElementById("p2Cot").value="";document.getElementById("p2ValEstr").style.display="none";document.getElementById("p2Cot").style.display="none";document.getElementById("p2Info").textContent="";
   document.getElementById("servItens").innerHTML="";
   ssCliente?.clearSelection();
   calcRes();
@@ -472,14 +517,11 @@ async function salvar(){
   if(!dataV){alert("Informe a data.");return;}
   if(!servs.length){alert("Adicione ao menos um serviço.");return;}
 
-  const moeda=document.getElementById("lancMoeda").value;
-  const cotacao=parseFloat(document.getElementById("lancCot")?.value||1)||1;
-  const fator=moeda!=="BRL"?cotacao:1;
-  const bruto=servs.reduce((s,x)=>s+x.valor,0)*fator;
-  const descServs=servs.reduce((s,x)=>s+x.desconto,0)*fator;
+  const bruto=servs.reduce((s,x)=>s+x.valor,0);
+  const descServs=servs.reduce((s,x)=>s+x.desconto,0);
   const descExtra=parseFloat(document.getElementById("lancDescExtra").value||0);
   const acrescimo=parseFloat(document.getElementById("lancAcres").value||0);
-  const com=servs.reduce((s,x)=>s+x.comissao,0)*fator;
+  const com=servs.reduce((s,x)=>s+x.comissao,0);
   const valorFinal=bruto-descServs-descExtra+acrescimo;
   const p1=parseFloat(document.getElementById("p1Val").value||0);
   const p2=parseFloat(document.getElementById("p2Val").value||0);
@@ -495,7 +537,7 @@ async function salvar(){
   const payload={
     data:dataV,operador_cpf:document.getElementById("lancOp").value||null,
     cliente_id:cliId,cliente_nome:clienteNome,
-    moeda,cotacao:moeda!=="BRL"?cotacao:1,
+    moeda:"BRL",cotacao:1,
     valor_bruto:bruto,desconto:descServs+descExtra,
     acrescimo,valor_final:valorFinal,
     valor_pago:valorPago,troco,comissao_total:com,
@@ -516,7 +558,7 @@ async function salvar(){
 
   if(servs.length&&lancId){
     await client.from("fluxo_caixa_servicos").insert(
-      servs.map(s=>({fluxo_id:lancId,servico_id:s.servico_id,valor:s.valor*fator,desconto:s.desconto*fator,comissao:s.comissao*fator}))
+      servs.map(s=>({fluxo_id:lancId,servico_id:s.servico_id,valor:s.valor,desconto:s.desconto,comissao:s.comissao}))
     );
   }
   fecharModal();carregar();

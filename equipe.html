@@ -345,14 +345,14 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
           <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
           <div class="field">
             <label>Tem folga semanal?</label>
-            <select id="tem_folga">
+            <select id="tem_folga" onchange="toggleDiaFolga(this)">
               <option value="">Selecione</option><option>Sim</option><option>Não</option>
             </select>
           </div>
-          <div class="field">
-            <label>Dia da Folga</label>
+          <div class="field" id="campo_dia_folga">
+            <label>Dia da Folga *</label>
             <select id="dia_folga">
-              <option value="">Selecione</option>
+              <option value="">Selecione o dia</option>
               <option>Segunda</option><option>Terça</option><option>Quarta</option>
               <option>Quinta</option><option>Sexta</option><option>Sábado</option>
             </select>
@@ -512,6 +512,9 @@ function setForm(data){
   const campo = document.getElementById("campo_data_inativacao");
   if(campo) campo.style.display = data.status === "Inativo" ? "" : "none";
 
+  const campoDia = document.getElementById("campo_dia_folga");
+  if(campoDia) campoDia.style.display = data.tem_folga === "Sim" ? "" : "none";
+
   ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id => {
     const el = document.getElementById(id);
     if(el && el.value) el.dispatchEvent(new Event('input'));
@@ -557,6 +560,8 @@ function resetModal(){
   campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
   document.getElementById("hora_entrada").value = "09:00";
   document.getElementById("hora_saida").value   = "18:00";
+  const campoDia = document.getElementById("campo_dia_folga");
+  if(campoDia) campoDia.style.display = "none";
   mudarTab("pessoais", document.querySelector(".side-btn"));
 }
 
@@ -599,6 +604,7 @@ async function salvar(){
     alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");
     return;
   }
+  if(!validarFolga()) return;
 
   let error;
 
@@ -732,6 +738,35 @@ async function excluirDoc(id, url){
   const el = document.getElementById("doc-" + id);
   if(el) el.remove();
   carregarDocs(cpfAtual);
+}
+
+/* ── FOLGA ── */
+function toggleDiaFolga(select){
+  const campo = document.getElementById("campo_dia_folga");
+  const dia   = document.getElementById("dia_folga");
+  if(select.value === "Sim"){
+    campo.style.display = "";
+    campo.style.border  = "none";
+    if(!dia.value) dia.style.border = "1px solid #f59e0b"; // destaque amarelo
+  } else {
+    campo.style.display = "none";
+    dia.value = "";
+    dia.style.border = "";
+  }
+}
+
+// validar dia obrigatório ao salvar
+function validarFolga(){
+  const temFolga = document.getElementById("tem_folga").value;
+  const diaFolga = document.getElementById("dia_folga").value;
+  if(temFolga === "Sim" && !diaFolga){
+    document.getElementById("dia_folga").style.border = "2px solid #ef4444";
+    document.getElementById("dia_folga").focus();
+    alert("Selecione o dia da folga.");
+    return false;
+  }
+  document.getElementById("dia_folga").style.border = "";
+  return true;
 }
 
 /* ── STATUS / INATIVACAO ── */

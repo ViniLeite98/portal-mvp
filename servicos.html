@@ -3,30 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <title>Serviços | Hara Spa</title>
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
-
-/* ── TOPBAR ── */
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .left-tools{display:flex;gap:10px;align-items:center;}
-.left-tools input{
-  padding:9px 12px;border:1px solid #d1d5db;
-  border-radius:8px;width:260px;font-size:14px;
-}
+.left-tools input{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;width:260px;font-size:14px;}
 .left-tools input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 .left-tools select{padding:9px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;}
 .right-tools{display:flex;gap:10px;align-items:center;}
-
-/* ── TABELA ── */
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
 th{background:#f9fafb;font-weight:600;cursor:pointer;user-select:none;}
@@ -34,63 +25,37 @@ th:hover{background:#f3f4f6;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#f9fafb;}
 td:nth-child(2),td:nth-child(3),td:nth-child(4),td:nth-child(5){text-align:center;}
-
 button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;}
 button.excluir{background:#dc2626;}
 button.exportar{background:#16a34a;}
-
 .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
 .badge-ativo{background:#dcfce7;color:#16a34a;}
 .badge-inativo{background:#fee2e2;color:#dc2626;}
-
-/* ── MODAL ── */
-.modal{
-  position:fixed;inset:0;background:rgba(0,0,0,.45);
-  display:none;align-items:flex-start;justify-content:center;
-  z-index:10;padding:30px 20px;overflow-y:auto;
-}
-.modal-content{
-  background:#fff;width:560px;max-width:100%;
-  border-radius:18px;overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,.2);
-}
-.modal-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:20px 24px 0;
-}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
+.modal-content{background:#fff;width:560px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
 .modal-header h2{margin:0;font-size:18px;color:#111827;}
 .btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
 .btn-fechar:hover{background:#f3f4f6;color:#111827;}
-
 .modal-body{padding:24px;}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
 .field{display:flex;flex-direction:column;}
 .field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
-input,select{
-  padding:9px 11px;border-radius:8px;
-  border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
-}
+input,select{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
 input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 .span2{grid-column:span 2;}
-
-.modal-footer{
-  display:flex;justify-content:flex-end;gap:10px;
-  padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;
-}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;}
 .modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;}
 .btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
 .btn-cancel:hover{background:#f3f4f6;}
 .btn-save{background:#1f2937;}
 .btn-save:hover{background:#111827;}
-
 .empty-row td{text-align:center;color:#9ca3af;padding:32px;}
 </style>
 </head>
-
 <body>
 <div class="app">
 <aside id="sidebar"></aside>
-
 <main class="content">
 <h1>Serviços</h1>
 
@@ -102,6 +67,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
       <option value="ativo">Ativo</option>
       <option value="inativo">Inativo</option>
     </select>
+    <select id="filtroGrupo"><option value="">Todos os grupos</option></select>
     <select id="porPaginaSelect">
       <option value="10" selected>10 por página</option>
       <option value="20">20 por página</option>
@@ -134,31 +100,20 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <!-- MODAL -->
 <div class="modal" id="modal">
 <div class="modal-content">
-
   <div class="modal-header">
     <h2 id="modalTitulo">Novo Serviço</h2>
     <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
   </div>
-
   <div class="modal-body">
     <div class="grid">
-
       <div class="field">
-        <label>Grupo</label>
-        <select id="grupo">
-          <option value="">Selecione</option>
-          <option>Nuru</option>
-          <option>Vivencia</option>
-          <option>Four Hands</option>
-          <option>Podolatria</option>
-        </select>
+        <label>Grupo *</label>
+        <select id="grupo"><option value="">Selecione</option></select>
       </div>
-
       <div class="field">
         <label>Subgrupo</label>
         <input id="subgrupo" placeholder="Ex: Nay">
       </div>
-
       <div class="field">
         <label>Tempo (minutos)</label>
         <select id="tempo">
@@ -169,7 +124,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
           <option value="120">120 min</option>
         </select>
       </div>
-
       <div class="field">
         <label>Status</label>
         <select id="status">
@@ -177,31 +131,25 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
           <option value="inativo">Inativo</option>
         </select>
       </div>
-
       <div class="field">
         <label>Valor (R$)</label>
         <input id="valor" placeholder="0,00">
       </div>
-
       <div class="field">
         <label>Comissão (R$)</label>
         <input id="comissao" placeholder="0,00">
       </div>
-
     </div>
   </div>
-
   <div class="modal-footer">
     <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
     <button class="btn-save" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
   </div>
-
 </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/sidebar/sidebar.js"></script>
-
 <script>
 
 const supabaseClient = supabase.createClient(
@@ -214,16 +162,33 @@ let idAtual = null;
 let ordemColuna = null;
 let ordemAsc = true;
 
+const GRUPOS_DEFAULT = ["Nuru","Vivencia","Four Hands","Podolatria"];
+
+/* ── PARÂMETROS ── */
+async function carregarParametros(){
+  const {data} = await supabaseClient.from("parametros").select("valor")
+    .eq("tipo","grupos_servico").eq("ativo",true).order("valor");
+  const lista = data?.length ? data.map(p => p.valor) : GRUPOS_DEFAULT;
+
+  // popula select do modal
+  const selGrupo = document.getElementById("grupo");
+  selGrupo.innerHTML = "<option value=''>Selecione</option>";
+  lista.forEach(g => selGrupo.innerHTML += `<option>${g}</option>`);
+
+  // popula filtro da tabela
+  const selFiltro = document.getElementById("filtroGrupo");
+  selFiltro.innerHTML = "<option value=''>Todos os grupos</option>";
+  lista.forEach(g => selFiltro.innerHTML += `<option value="${g}">${g}</option>`);
+}
+
 /* ── HELPERS ── */
 function nomeServico(s){
   const partes = [s.grupo, s.subgrupo, s.tempo ? s.tempo + " min" : ""];
   return partes.filter(Boolean).join(" ");
 }
-
 function moeda(v){
   return Number(v||0).toLocaleString("pt-BR", {minimumFractionDigits:2});
 }
-
 function parseMoeda(v){
   return parseFloat((v||"0").replace(/\./g,"").replace(",",".")) || 0;
 }
@@ -238,18 +203,19 @@ async function carregar(){
 
 /* ── RENDER ── */
 function render(){
-  const termo       = (document.getElementById("buscaServico").value||"").toLowerCase();
+  const termo        = (document.getElementById("buscaServico").value||"").toLowerCase();
   const statusFiltro = document.getElementById("filtroStatus").value;
+  const grupoFiltro  = document.getElementById("filtroGrupo").value;
   const porPaginaVal = document.getElementById("porPaginaSelect").value;
   const porPagina    = porPaginaVal === "todos" ? Infinity : parseInt(porPaginaVal);
 
   let lista = dados.filter(s => {
     const nomeOk   = nomeServico(s).toLowerCase().includes(termo);
     const statusOk = !statusFiltro || s.status === statusFiltro;
-    return nomeOk && statusOk;
+    const grupoOk  = !grupoFiltro  || s.grupo  === grupoFiltro;
+    return nomeOk && statusOk && grupoOk;
   });
 
-  // ordenação
   if(ordemColuna){
     lista.sort((a,b) => {
       let va, vb;
@@ -264,7 +230,7 @@ function render(){
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
 
-  if(lista.length === 0){
+  if(!lista.length){
     tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Nenhum serviço encontrado.</td></tr>`;
     return;
   }
@@ -273,7 +239,6 @@ function render(){
     const badge = s.status === "ativo"
       ? `<span class="badge badge-ativo">Ativo</span>`
       : `<span class="badge badge-inativo">Inativo</span>`;
-
     tbody.innerHTML += `
     <tr>
       <td>${nomeServico(s)}</td>
@@ -291,25 +256,22 @@ function render(){
 
 /* ── ORDENAÇÃO ── */
 function ordenar(col){
-  if(ordemColuna === col){
-    ordemAsc = !ordemAsc;
-  } else {
-    ordemColuna = col;
-    ordemAsc = true;
-  }
-  ["servico","tempo","valor","comissao"].forEach(c => {
-    document.getElementById("ord_"+c).textContent = "";
-  });
+  ordemColuna === col ? ordemAsc = !ordemAsc : (ordemColuna = col, ordemAsc = true);
+  ["servico","tempo","valor","comissao"].forEach(c =>
+    document.getElementById("ord_"+c).textContent = ""
+  );
   document.getElementById("ord_"+col).textContent = ordemAsc ? " ↑" : " ↓";
   render();
 }
 
 /* ── MODAL ── */
 function resetModal(){
-  ["grupo","subgrupo","tempo","valor","comissao","status"].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = id === "status" ? "ativo" : "";
-  });
+  document.getElementById("grupo").value    = "";
+  document.getElementById("subgrupo").value = "";
+  document.getElementById("tempo").value    = "";
+  document.getElementById("valor").value    = "";
+  document.getElementById("comissao").value = "";
+  document.getElementById("status").value   = "ativo";
 }
 
 function abrirNovo(){
@@ -323,14 +285,12 @@ async function editar(id){
   idAtual = id;
   const s = dados.find(d => d.id === id);
   if(!s) return;
-
   document.getElementById("grupo").value    = s.grupo    || "";
   document.getElementById("subgrupo").value = s.subgrupo || "";
   document.getElementById("tempo").value    = s.tempo    || "";
   document.getElementById("valor").value    = s.valor    ? moeda(s.valor)    : "";
   document.getElementById("comissao").value = s.comissao ? moeda(s.comissao) : "";
   document.getElementById("status").value   = s.status   || "ativo";
-
   document.getElementById("modalTitulo").textContent = nomeServico(s) || "Editar Serviço";
   document.getElementById("modal").style.display = "flex";
 }
@@ -349,19 +309,13 @@ async function salvar(){
     comissao: parseMoeda(document.getElementById("comissao").value),
     status:   document.getElementById("status").value
   };
-
-  if(!payload.grupo){
-    alert("Selecione o grupo do serviço.");
-    return;
-  }
-
+  if(!payload.grupo){ alert("Selecione o grupo do serviço."); return; }
   let error;
   if(idAtual){
     ({error} = await supabaseClient.from("servicos").update(payload).eq("id", idAtual));
   } else {
     ({error} = await supabaseClient.from("servicos").insert(payload));
   }
-
   if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
   fecharModal();
   carregar();
@@ -386,28 +340,22 @@ function exportarExcel(){
     "Comissão (R$)": Number(s.comissao || 0),
     "Status":        s.status   || ""
   }));
-
   const ws = XLSX.utils.json_to_sheet(exportData);
-
-  // ajustar largura das colunas automaticamente
   const colunas = ["Serviço","Grupo","Subgrupo","Tempo (min)","Valor (R$)","Comissão (R$)","Status"];
-  ws["!cols"] = colunas.map(col => {
-    const maxLen = Math.max(
-      col.length,
-      ...exportData.map(row => String(row[col] ?? "").length)
-    );
-    return { wch: maxLen + 2 };
-  });
-
+  ws["!cols"] = colunas.map(col => ({
+    wch: Math.max(col.length, ...exportData.map(row => String(row[col]??"").length)) + 2
+  }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Serviços");
   XLSX.writeFile(wb, "servicos.xlsx");
 }
 
 /* ── INIT ── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
+  carregarParametros();
   document.getElementById("buscaServico").addEventListener("input", render);
   document.getElementById("filtroStatus").addEventListener("change", render);
+  document.getElementById("filtroGrupo").addEventListener("change", render);
   document.getElementById("porPaginaSelect").addEventListener("change", render);
   carregar();
 });

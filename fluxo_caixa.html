@@ -987,28 +987,42 @@ let saldoCaixa = 0;
 async function carregarCaixa(){
   // busca o último fechamento para saldo base
   const {data:fechs} = await client.from("fechamentos_caixa")
-    .select("troco_caixa,created_at").order("created_at",{ascending:false}).limit(1);
-  const baseFechar = fechs?.[0]?.troco_caixa || 0;
+    .select("troco_caixa,created_at,data").order("created_at",{ascending:false}).limit(1);
+  const ultimoFech = fechs?.[0];
+  const baseFechar = ultimoFech?.troco_caixa || 0;
+  const dataBase   = ultimoFech?.data || "2000-01-01";
 
-  // busca movimentações manuais
+  // lançamentos com dinheiro APÓS o último fechamento
+  // troco que SOBROU no caixa = valor_pago em dinheiro - troco dado
+  let saldoDinheiro = 0;
+  const lancPosFech = dados.filter(r => r.data >= dataBase);
+  lancPosFech.forEach(r => {
+    const p1Dinheiro = classifPgto(r.forma_pgto_1) === "dinheiro" ? (r.valor_pgto_1||0) : 0;
+    const p2Dinheiro = classifPgto(r.forma_pgto_2) === "dinheiro" ? (r.valor_pgto_2||0) : 0;
+    const trocoDado  = r.troco > 0 ? r.troco : 0;
+    saldoDinheiro += p1Dinheiro + p2Dinheiro - trocoDado;
+  });
+
+  // movimentações manuais após o último fechamento
   const {data:movs} = await client.from("caixa_movimentacoes")
     .select("*").order("created_at",{ascending:false});
 
-  // calcula saldo: base do último fechamento + movimentações posteriores
-  let saldo = baseFechar;
-  const dataBase = fechs?.[0]?.created_at || "2000-01-01";
-  (movs||[]).filter(m => m.created_at >= dataBase).forEach(m => {
-    if(m.tipo === "entrada") saldo += m.valor;
-    else if(m.tipo === "saida") saldo -= m.valor;
-    else if(m.tipo === "ajuste") saldo = m.valor;
+  let saldo = baseFechar + saldoDinheiro;
+  const tsBase = ultimoFech?.created_at || "2000-01-01";
+  (movs||[]).filter(m => m.created_at >= tsBase).forEach(m => {
+    if(m.tipo === "entrada")     saldo += m.valor;
+    else if(m.tipo === "saida")  saldo -= m.valor;
+    else if(m.tipo === "ajuste") saldo  = m.valor;
   });
 
   saldoCaixa = saldo;
   document.getElementById("caixaAtual").textContent = fmtM(saldo);
   document.getElementById("caixaAtual").style.color = saldo >= 0 ? "#16a34a" : "#dc2626";
-  document.getElementById("caixaSub").textContent = fechs?.[0] ?
-    `Último fechamento: ${new Date(fechs[0].created_at).toLocaleString("pt-BR")}` :
-    "Nenhum fechamento registrado";
+
+  const lancCount = lancPosFech.length;
+  document.getElementById("caixaSub").textContent = ultimoFech
+    ? `Base: ${fmtM(baseFechar)} (fechamento ${fmtD(ultimoFech.data)}) + ${lancCount} lançamento${lancCount!==1?"s":""}`
+    : `${lancCount} lançamento${lancCount!==1?"s":""} sem fechamento anterior`;
 }
 
 function abrirReposicao(){

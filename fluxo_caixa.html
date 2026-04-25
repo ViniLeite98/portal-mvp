@@ -214,6 +214,7 @@ tr:hover td{background:#f9fafb;}
       </tr></thead>
       <tbody id="lista"></tbody>
     </table>
+    <div id="paginacao"></div>
   </div>
 
 </main>
@@ -473,6 +474,9 @@ tr:hover td{background:#f9fafb;}
 
 let dados=[], listaFilt=[], dadosServicos=[], servicosMap={}, formasPgto=[];
 let editandoId=null, ssCliente, opsMap={};
+const PAGE_SIZE = 50;
+let paginaAtual = 1;
+let totalRegistros = 0;
 
 const fmtM=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const fmtD=v=>{if(!v)return"—";const[y,m,d]=v.split("-");return`${d}/${m}/${y}`;};
@@ -743,13 +747,33 @@ async function salvar(){
 
 /* ── CARREGAR LISTA ── */
 async function carregar(){
-  const {data,error}=await client.from("fluxo_caixa").select("*").order("data",{ascending:false}).order("created_at",{ascending:false});
-  if(error){console.error(error);return;}
+  const ini=document.getElementById("filtroIni").value;
+  const fim=document.getElementById("filtroFim").value;
+  const op=document.getElementById("filtroOp").value;
+  const moeda=document.getElementById("filtroMoeda").value;
 
+  // query com filtros e paginação server-side
+  let q=client.from("fluxo_caixa")
+    .select("*",{count:"exact"})
+    .order("data",{ascending:false})
+    .order("created_at",{ascending:false})
+    .range((paginaAtual-1)*PAGE_SIZE, paginaAtual*PAGE_SIZE-1);
+
+  if(ini)   q=q.gte("data",ini);
+  if(fim)   q=q.lte("data",fim);
+  if(op)    q=q.eq("operador_cpf",op);
+  if(moeda) q=q.eq("moeda",moeda);
+
+  const {data,error,count}=await q;
+  if(error){console.error(error);return;}
+  totalRegistros=count||0;
+
+  // buscar serviços só dos IDs desta página
   const ids=(data||[]).map(d=>d.id);
   let servNomes={};
   if(ids.length){
-    const {data:ss}=await client.from("fluxo_caixa_servicos").select("fluxo_id,servicos(grupo,subgrupo)").in("fluxo_id",ids);
+    const {data:ss}=await client.from("fluxo_caixa_servicos")
+      .select("fluxo_id,servicos(grupo,subgrupo)").in("fluxo_id",ids);
     (ss||[]).forEach(s=>{
       if(!servNomes[s.fluxo_id])servNomes[s.fluxo_id]=[];
       const n=[s.servicos?.grupo,s.servicos?.subgrupo].filter(Boolean).join(" ");
@@ -758,8 +782,52 @@ async function carregar(){
   }
 
   dados=(data||[]).map(d=>({...d,_servNomes:(servNomes[d.id]||[]).join(", "),_opNome:opsMap[d.operador_cpf]||""}));
-  listaFilt=[...dados];render();
+  listaFilt=[...dados];
+  render();
+  renderPaginacao();
+  atualizarTotaisServidor();
 }
+
+async function atualizarTotaisServidor(){
+  const ini=document.getElementById("filtroIni").value;
+  const fim=document.getElementById("filtroFim").value;
+  const op=document.getElementById("filtroOp").value;
+  const moeda=document.getElementById("filtroMoeda").value;
+
+  let q=client.from("fluxo_caixa").select("valor_bruto,desconto,comissao_total,valor_final");
+  if(ini)   q=q.gte("data",ini);
+  if(fim)   q=q.lte("data",fim);
+  if(op)    q=q.eq("operador_cpf",op);
+  if(moeda) q=q.eq("moeda",moeda);
+
+  const {data}=await q;
+  document.getElementById("totCount").textContent=totalRegistros;
+  document.getElementById("totBruto").textContent=fmtM((data||[]).reduce((s,r)=>s+(r.valor_bruto||0),0));
+  document.getElementById("totDesc").textContent=fmtM((data||[]).reduce((s,r)=>s+(r.desconto||0),0));
+  document.getElementById("totCom").textContent=fmtM((data||[]).reduce((s,r)=>s+(r.comissao_total||0),0));
+  document.getElementById("totFinal").textContent=fmtM((data||[]).reduce((s,r)=>s+(r.valor_final||0),0));
+}
+
+function renderPaginacao(){
+  const el=document.getElementById("paginacao");
+  if(!el)return;
+  const totalPags=Math.ceil(totalRegistros/PAGE_SIZE);
+  if(totalPags<=1){el.innerHTML="";return;}
+
+  let html=`<div style="display:flex;align-items:center;gap:6px;padding:12px 16px;border-top:1px solid #e5e7eb;font-size:13px;color:#6b7280">`;
+  html+=`<span>${totalRegistros} registros · página ${paginaAtual} de ${totalPags}</span>`;
+  html+=`<div style="margin-left:auto;display:flex;gap:4px">`;
+  html+=`<button class="btn-ghost" style="padding:5px 10px;font-size:12px" ${paginaAtual===1?'disabled style="opacity:.4"':''} onclick="mudarPag(${paginaAtual-1})">‹ Anterior</button>`;
+  const ini2=Math.max(1,paginaAtual-2),fim2=Math.min(totalPags,paginaAtual+2);
+  for(let p=ini2;p<=fim2;p++){
+    html+=`<button class="${p===paginaAtual?'btn-blue':'btn-ghost'}" style="padding:5px 10px;font-size:12px" onclick="mudarPag(${p})">${p}</button>`;
+  }
+  html+=`<button class="btn-ghost" style="padding:5px 10px;font-size:12px" ${paginaAtual===totalPags?'disabled style="opacity:.4"':''} onclick="mudarPag(${paginaAtual+1})">Próxima ›</button>`;
+  html+=`</div></div>`;
+  el.innerHTML=html;
+}
+
+function mudarPag(p){paginaAtual=p;carregar();window.scrollTo(0,0);}
 
 /* ── RENDER ── */
 function render(){
@@ -788,34 +856,17 @@ function render(){
       </td>
     </tr>`;
   });
-  totais(listaFilt);
-}
-
-function totais(lista){
-  document.getElementById("totCount").textContent=lista.length;
-  document.getElementById("totBruto").textContent=fmtM(lista.reduce((s,r)=>s+(r.valor_bruto||0),0));
-  document.getElementById("totDesc").textContent=fmtM(lista.reduce((s,r)=>s+(r.desconto||0),0));
-  document.getElementById("totCom").textContent=fmtM(lista.reduce((s,r)=>s+(r.comissao_total||0),0));
-  document.getElementById("totFinal").textContent=fmtM(lista.reduce((s,r)=>s+(r.valor_final||0),0));
 }
 
 /* ── FILTRO ── */
 function aplicarFiltro(){
-  const ini=document.getElementById("filtroIni").value;
-  const fim=document.getElementById("filtroFim").value;
-  const op=document.getElementById("filtroOp").value;
-  const moeda=document.getElementById("filtroMoeda").value;
-  listaFilt=dados.filter(r=>{
-    if(ini&&r.data<ini)return false;
-    if(fim&&r.data>fim)return false;
-    if(op&&r.operador_cpf!==op)return false;
-    if(moeda&&r.moeda!==moeda)return false;
-    return true;
-  });render();
+  paginaAtual=1;
+  carregar();
 }
 function limparFiltro(){
   ["filtroIni","filtroFim","filtroOp","filtroMoeda"].forEach(id=>document.getElementById(id).value="");
-  listaFilt=[...dados];render();
+  paginaAtual=1;
+  carregar();
 }
 
 /* ── EXCLUIR ── */

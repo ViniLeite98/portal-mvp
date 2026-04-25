@@ -609,21 +609,18 @@ async function salvar(){
   let error;
 
   if(cpfAtual){
-    const novoCpf = payload.cpf;
-    if(novoCpf && novoCpf !== cpfAtual){
-      await supabaseClient.from("terapeutas").delete().eq("cpf", cpfAtual);
-      ({error} = await supabaseClient.from("terapeutas").insert(payload));
-      if(!error) cpfAtual = novoCpf;
-    } else {
-      const updatePayload = {...payload};
-      delete updatePayload.cpf;
-      ({error} = await supabaseClient.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
-    }
+    // sempre faz update sem mexer no CPF (chave primária)
+    const updatePayload = {...payload};
+    delete updatePayload.cpf;
+    ({error} = await supabaseClient.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
   } else {
+    // novo cadastro — CPF é obrigatório
+    if(!payload.cpf){ alert("CPF é obrigatório."); return; }
     ({error} = await supabaseClient.from("terapeutas").insert(payload));
     if(!error){
       cpfAtual = payload.cpf;
       document.getElementById("tabDocsBtn").style.display = "";
+      document.getElementById("tab-docs").style.display   = "";
       carregarDocs(cpfAtual);
     }
   }

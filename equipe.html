@@ -616,6 +616,16 @@ async function salvar(){
   } else {
     // novo cadastro — CPF é obrigatório
     if(!payload.cpf){ alert("CPF é obrigatório."); return; }
+
+    // verificar se CPF já existe
+    const {data: existente} = await supabaseClient
+      .from("terapeutas").select("cpf").eq("cpf", payload.cpf.replace(/\D/g,"")).limit(1);
+    if(existente && existente.length > 0){
+      alert("CPF já cadastrado. Verifique o número informado.");
+      document.getElementById("cpf").focus();
+      return;
+    }
+
     ({error} = await supabaseClient.from("terapeutas").insert(payload));
     if(!error){
       cpfAtual = payload.cpf;

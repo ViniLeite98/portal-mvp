@@ -561,15 +561,24 @@ function abrirNovo(){
 
 async function abrirEditar(id){
   editandoId = id;
-  const r = dados.find(d => d.id === id);
-  if(!r) return;
+  const r = dados.find(d => String(d.id) === String(id));
+  if(!r){ console.error("Lançamento não encontrado:", id); return; }
 
+  // abre o modal primeiro para garantir que os selects estão visíveis
+  document.getElementById("modalLancTitulo").textContent = "Editar Lançamento";
+  document.getElementById("modalLancamento").style.display = "flex";
+
+  // preencher campos
   document.getElementById("lancData").value     = r.data || "";
-  document.getElementById("lancServico").value  = r.servico_id || "";
-  document.getElementById("lancOrigem").value   = r.origem_lead || "";
   document.getElementById("lancValor").value    = r.valor || 0;
   document.getElementById("lancDesconto").value = r.desconto || 0;
   calcularLanc();
+
+  // serviço — aguarda um tick para o select estar pronto
+  setTimeout(() => {
+    document.getElementById("lancServico").value = r.servico_id || "";
+    document.getElementById("lancOrigem").value  = r.origem_lead || "";
+  }, 50);
 
   // carregar cliente
   if(r.cliente_id){
@@ -578,9 +587,6 @@ async function abrirEditar(id){
   } else {
     ssCliente.clearSelection();
   }
-
-  document.getElementById("modalLancTitulo").textContent = "Editar Lançamento";
-  document.getElementById("modalLancamento").style.display = "flex";
 }
 
 function fecharModalLanc(){

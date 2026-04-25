@@ -3,826 +3,685 @@
 <head>
 <meta charset="UTF-8">
 <title>Fluxo de Caixa | Hara Spa</title>
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-body{margin:0;font-family:Segoe UI;background:#f4f6fb}
-.app{display:flex}
-.content{flex:1;padding:40px}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
-.form-box{
-background:#fff;
-padding:20px;
-border-radius:10px;
-display:flex;
-gap:15px;
-flex-wrap:wrap;
-margin-bottom:20px;
-align-items:flex-end;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
+/* ── TOPBAR ── */
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.topbar h1{margin:0;}
+.topbar-btns{display:flex;gap:10px;}
+button{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+button:hover{opacity:.9;}
+button.btn-green{background:#16a34a;}
+button.btn-red{background:#dc2626;}
+button.btn-blue{background:#2563eb;}
+button.btn-yellow{background:#d97706;}
+button.btn-ghost{background:#fff;color:#374151;border:1px solid #d1d5db;}
+button.btn-ghost:hover{background:#f9fafb;}
+
+/* ── FILTROS ── */
+.filtros-card{
+  background:#fff;border-radius:14px;padding:20px 24px;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:20px;
+  display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;
 }
-
-.field{display:flex;flex-direction:column;font-size:13px;gap:4px;}
-
-input,select{
-padding:8px;
-border-radius:6px;
-border:1px solid #ccc;
-min-width:160px;
-font-size:13px;
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;font-weight:600;color:#374151;}
+.field input,.field select{
+  padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;
+  font-size:13px;color:#111827;background:#fff;
 }
+.field input:focus,.field select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 
-button{
-background:#2563eb;
-color:#fff;
-border:none;
-padding:10px 15px;
-border-radius:6px;
-cursor:pointer;
-font-size:13px;
+/* ── SMART SEARCH ── */
+.smart-search-wrap{position:relative;min-width:200px;}
+.smart-search-wrap input[type="text"]{width:100%;padding:8px 28px 8px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;}
+.smart-search-wrap input[type="text"]:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.ss-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:14px;padding:0;display:none;line-height:1;}
+.ss-clear.visible{display:block;}
+.ss-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:9999;display:none;}
+.ss-dropdown.open{display:block;}
+.ss-option{padding:9px 12px;cursor:pointer;font-size:13px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid #f3f4f6;transition:background .1s;}
+.ss-option:last-child{border-bottom:none;}
+.ss-option:hover,.ss-option.focused{background:#eff6ff;}
+.ss-name{font-weight:600;color:#111827;}
+.ss-meta{font-size:11px;color:#6b7280;}
+.ss-highlight{background:#fef9c3;border-radius:2px;padding:0 1px;}
+.ss-empty{padding:12px;color:#9ca3af;font-size:13px;text-align:center;}
+.ss-novo{padding:10px 12px;cursor:pointer;font-size:13px;color:#2563eb;font-weight:600;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:6px;}
+.ss-novo:hover{background:#eff6ff;}
+
+/* ── TOTALIZADOR ── */
+.totais{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;
 }
+.total-card{background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.total-card .t-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:4px;}
+.total-card .t-valor{font-size:20px;font-weight:800;color:#111827;}
 
-button.editar{background:#f59e0b}
-button.excluir{background:#dc2626}
+/* ── TABELA ── */
+.table-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:13px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left;}
+th{background:#f9fafb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f9fafb;}
 
-table{
-width:100%;
-background:#fff;
-border-collapse:collapse;
-border-radius:10px;
-overflow:hidden;
-box-shadow:0 2px 8px rgba(0,0,0,0.05);
-}
-
-th,td{
-padding:10px;
-border-bottom:1px solid #eee;
-font-size:13px;
-}
-
-.modal{
-display:none;
-position:fixed;
-inset:0;
-background:rgba(0,0,0,0.4);
-align-items:center;
-justify-content:center;
-z-index:1000;
-}
-
-.modal-box{
-background:#fff;
-padding:24px;
-border-radius:10px;
-width:380px;
-display:flex;
-flex-direction:column;
-gap:8px;
-}
-
-/* ───────────────────────────────────────────
-   SMART CLIENT SEARCH WIDGET
-─────────────────────────────────────────── */
-.smart-search-wrap {
-  position: relative;
-  min-width: 220px;
-}
-
-.smart-search-wrap input[type="text"] {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 8px 32px 8px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 13px;
-  transition: border-color .2s;
-}
-
-.smart-search-wrap input[type="text"]:focus {
-  border-color: #2563eb;
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(37,99,235,.12);
-}
-
-/* clear button */
-.smart-search-wrap .ss-clear {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #9ca3af;
-  font-size: 14px;
-  padding: 0;
-  display: none;
-  line-height:1;
-}
-
-.smart-search-wrap .ss-clear.visible { display: block; }
-
-/* hidden input that holds selected id */
-
-/* dropdown */
-.ss-dropdown {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: #fff;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  max-height: 240px;
-  overflow-y: auto;
-  z-index: 9999;
-  display: none;
-}
-
-.ss-dropdown.open { display: block; }
-
-.ss-option {
-  padding: 9px 12px;
-  cursor: pointer;
-  font-size: 13px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border-bottom: 1px solid #f3f4f6;
-  transition: background .1s;
-}
-
-.ss-option:last-child { border-bottom: none; }
-.ss-option:hover, .ss-option.focused { background: #eff6ff; }
-
-.ss-option .ss-name { font-weight: 600; color: #111827; }
-.ss-option .ss-meta { font-size: 11px; color: #6b7280; }
-.ss-option .ss-highlight { background: #fef9c3; border-radius: 2px; padding: 0 1px; }
-
-.ss-empty {
-  padding: 12px;
-  color: #9ca3af;
-  font-size: 13px;
-  text-align: center;
-}
+/* ── MODAL ── */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
+.modal-content{background:#fff;width:520px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-content.sm{width:420px;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.btn-fechar:hover{background:#f3f4f6;}
+.modal-body{padding:24px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;}
+.modal-footer button{padding:9px 20px;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.span2{grid-column:span 2;}
+.modal-body .field{margin-bottom:12px;}
+.modal-body .field:last-child{margin-bottom:0;}
+.modal-body input,.modal-body select{width:100%;padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;}
+.modal-body input:focus,.modal-body select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 </style>
 </head>
 
 <body>
-
 <div class="app">
 <aside id="sidebar"></aside>
-
 <main class="content">
 
-<h1>Fluxo de Caixa</h1>
-
-<div class="form-box">
-
-  <div class="field">
-    <label>Data</label>
-    <input type="date" id="data">
-  </div>
-
-  <div class="field">
-    <label>Cliente</label>
-    <!-- Smart search replaces old <select id="cliente"> -->
-    <div class="smart-search-wrap" id="wrapCliente">
-      <input type="text" id="clienteSearch" placeholder="Buscar por nome ou nº…" autocomplete="off">
-      <button class="ss-clear" id="clienteClear" title="Limpar">✕</button>
-      <input type="hidden" id="cliente">
-      <div class="ss-dropdown" id="clienteDropdown"></div>
+  <div class="topbar">
+    <h1>Fluxo de Caixa</h1>
+    <div class="topbar-btns">
+      <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Lançamento</button>
+      <button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
     </div>
   </div>
 
-  <div class="field">
-    <label>Serviço</label>
-    <select id="servico"></select>
+  <!-- Filtros -->
+  <div class="filtros-card">
+    <div class="field">
+      <label>Data Inicial</label>
+      <input type="date" id="filtroInicio">
+    </div>
+    <div class="field">
+      <label>Data Final</label>
+      <input type="date" id="filtroFim">
+    </div>
+    <div class="field">
+      <label>Cliente</label>
+      <div class="smart-search-wrap">
+        <input type="text" id="filtroClienteSearch" placeholder="Todos os clientes…" autocomplete="off">
+        <button class="ss-clear" id="filtroClienteClear">✕</button>
+        <input type="hidden" id="filtroCliente">
+        <div class="ss-dropdown" id="filtroClienteDropdown"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Serviço</label>
+      <select id="filtroServico"><option value="">Todos</option></select>
+    </div>
+    <div class="field">
+      <label>Origem</label>
+      <select id="filtroOrigem"><option value="">Todas</option></select>
+    </div>
+    <button class="btn-blue" onclick="aplicarFiltro()"><i class="fa fa-filter"></i> Filtrar</button>
+    <button class="btn-ghost" onclick="limparFiltro()"><i class="fa fa-times"></i> Limpar</button>
   </div>
 
-  <div class="field">
-    <label>Origem</label>
-    <select id="origem">
-      <option value="">Selecione</option>
-      <option>Instagram</option>
-      <option>Google</option>
-      <option>Indicação</option>
-      <option>Cliente antigo</option>
-      <option>WhatsApp</option>
-      <option>Outro</option>
-    </select>
-  </div>
-
-  <div class="field">
-    <label>Valor</label>
-    <input type="number" id="valor" value="50">
-  </div>
-
-  <div class="field">
-    <label>Desconto</label>
-    <input type="number" id="desconto" value="0">
-  </div>
-
-  <div class="field">
-    <label>Final</label>
-    <input type="number" id="final" disabled>
-  </div>
-
-  <button onclick="salvar()">Adicionar</button>
-
-</div>
-
-<div class="form-box">
-
-  <div class="field">
-    <label>Data Inicial</label>
-    <input type="date" id="filtroInicio">
-  </div>
-
-  <div class="field">
-    <label>Data Final</label>
-    <input type="date" id="filtroFim">
-  </div>
-
-  <div class="field">
-    <label>Cliente</label>
-    <!-- Smart search for filter -->
-    <div class="smart-search-wrap" id="wrapFiltroCliente">
-      <input type="text" id="filtroClienteSearch" placeholder="Todos…" autocomplete="off">
-      <button class="ss-clear" id="filtroClienteClear" title="Limpar">✕</button>
-      <input type="hidden" id="filtroCliente">
-      <div class="ss-dropdown" id="filtroClienteDropdown"></div>
+  <!-- Totalizadores -->
+  <div class="totais">
+    <div class="total-card">
+      <div class="t-label"><i class="fa fa-list"></i> Lançamentos</div>
+      <div class="t-valor" id="totalCount">—</div>
+    </div>
+    <div class="total-card">
+      <div class="t-label"><i class="fa fa-dollar-sign"></i> Total Bruto</div>
+      <div class="t-valor" id="totalBruto">—</div>
+    </div>
+    <div class="total-card">
+      <div class="t-label"><i class="fa fa-tag"></i> Total Descontos</div>
+      <div class="t-valor" id="totalDescontos" style="color:#dc2626">—</div>
+    </div>
+    <div class="total-card" style="border-left:3px solid #16a34a">
+      <div class="t-label" style="color:#16a34a"><i class="fa fa-check-circle"></i> Total Final</div>
+      <div class="t-valor" id="totalFinal" style="color:#16a34a">—</div>
     </div>
   </div>
 
-  <div class="field">
-    <label>Serviço</label>
-    <select id="filtroServico"></select>
+  <!-- Tabela -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Cliente</th>
+          <th>Origem</th>
+          <th>Serviço</th>
+          <th>Valor</th>
+          <th>Desconto</th>
+          <th>Final</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
   </div>
-
-  <button onclick="filtrar()">Filtrar</button>
-  <button onclick="limparFiltro()">Limpar</button>
-  <button onclick="exportarExcel()">Exportar Excel</button>
-
-</div>
-
-<table>
-  <thead>
-    <tr>
-      <th>Data</th>
-      <th>Cliente</th>
-      <th>Origem</th>
-      <th>Serviço</th>
-      <th>Valor</th>
-      <th>Desconto</th>
-      <th>Final</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody id="lista"></tbody>
-</table>
 
 </main>
 </div>
 
-<!-- MODAL EDITAR -->
-<div id="modalEditar" class="modal">
-  <div class="modal-box">
-    <h3 style="margin:0 0 8px">Editar</h3>
-
-    <label>Data</label>
-    <input type="date" id="editData">
-
-    <label>Cliente</label>
-    <div class="smart-search-wrap" id="wrapEditCliente">
-      <input type="text" id="editClienteSearch" placeholder="Buscar por nome ou nº…" autocomplete="off">
-      <button class="ss-clear" id="editClienteClear" title="Limpar">✕</button>
-      <input type="hidden" id="editCliente">
-      <div class="ss-dropdown" id="editClienteDropdown"></div>
-    </div>
-
-    <label>Serviço</label>
-    <select id="editServico"></select>
-
-    <label>Origem</label>
-    <select id="editOrigem">
-      <option value="">Selecione</option>
-      <option>Instagram</option>
-      <option>Google</option>
-      <option>Indicação</option>
-      <option>Cliente antigo</option>
-      <option>WhatsApp</option>
-      <option>Outro</option>
-    </select>
-
-    <label>Valor</label>
-    <input type="number" id="editValor">
-
-    <label>Desconto</label>
-    <input type="number" id="editDesconto">
-
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button onclick="salvarEdicao()">Salvar</button>
-      <button class="excluir" onclick="fecharModal()">Cancelar</button>
+<!-- MODAL NOVO / EDITAR LANÇAMENTO -->
+<div class="modal" id="modalLancamento">
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 id="modalLancTitulo">Novo Lançamento</h2>
+    <button class="btn-fechar" onclick="fecharModalLanc()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="grid-2">
+      <div class="field">
+        <label>Data *</label>
+        <input type="date" id="lancData">
+      </div>
+      <div class="field">
+        <label>Origem</label>
+        <select id="lancOrigem"><option value="">Selecione</option></select>
+      </div>
+      <div class="field span2">
+        <label>Cliente *</label>
+        <div class="smart-search-wrap" style="min-width:unset">
+          <input type="text" id="clienteSearch" placeholder="Buscar por nome ou telefone…" autocomplete="off">
+          <button class="ss-clear" id="clienteClear">✕</button>
+          <input type="hidden" id="cliente">
+          <div class="ss-dropdown" id="clienteDropdown"></div>
+        </div>
+      </div>
+      <div class="field span2">
+        <label>Serviço *</label>
+        <select id="lancServico"><option value="">Selecione</option></select>
+      </div>
+      <div class="field">
+        <label>Valor (R$)</label>
+        <input type="number" id="lancValor" value="0" step="0.01" oninput="calcularLanc()">
+      </div>
+      <div class="field">
+        <label>Desconto (R$)</label>
+        <input type="number" id="lancDesconto" value="0" step="0.01" oninput="calcularLanc()">
+      </div>
+      <div class="field span2">
+        <label>Valor Final</label>
+        <input type="number" id="lancFinal" disabled style="background:#f9fafb;font-weight:700;color:#16a34a">
+      </div>
     </div>
   </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModalLanc()">Cancelar</button>
+    <button class="btn-green" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
+</div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- MODAL NOVO CLIENTE RÁPIDO -->
+<div class="modal" id="modalNovoCliente">
+<div class="modal-content sm">
+  <div class="modal-header">
+    <h2>Novo Cliente</h2>
+    <button class="btn-fechar" onclick="fecharModalCliente()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="field">
+      <label>Nome *</label>
+      <input id="ncNome" placeholder="Nome completo">
+    </div>
+    <div class="field">
+      <label>Telefone *</label>
+      <input id="ncTelefone" placeholder="(11) 99999-9999">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input id="ncEmail" type="email" placeholder="opcional">
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModalCliente()">Cancelar</button>
+    <button class="btn-blue" onclick="salvarNovoCliente()"><i class="fa fa-user-plus"></i> Cadastrar</button>
+  </div>
+</div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
-
 <script>
-/* ═══════════════════════════════════════════════════
-   SMART CLIENT SEARCH
-   Matches queries like "gabriel 7002" against
-   client name + last 4 digits of phone.
-   ═══════════════════════════════════════════════════ */
 
-/**
- * Build a searchable "key" from a client object.
- * Returns lowercase: "gabriel silva 7002"
- */
-function normalizar(str) {
-  // Remove accents: "Gabão" -> "gabao", so "gab" matches both
-  return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+let dados        = [];
+let listaFiltrada = [];
+let dadosServicos = [];
+let servicosMap   = {};
+let editandoId    = null;
+let ssCliente, ssFiltroCliente;
+
+/* ── HELPERS ── */
+function fmtMoeda(v){ return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+function fmtData(v){
+  if(!v) return "—";
+  const [y,m,d] = v.split("-");
+  return `${d}/${m}/${y}`;
 }
-
-function clienteSearchKey(c) {
-  const nome = normalizar(c.nome || "")
-  const tel  = (c.telefone_1 || "").replace(/\D/g, "")
-  return nome + " " + tel
+function normalizar(str){
+  return (str||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
 }
-
-/**
- * Score how well a client matches a query string.
- * Query tokens must ALL appear somewhere in the key.
- * Returns -1 if no match, else a score (higher = better).
- *
- * Strategy:
- *  - Split query into tokens
- *  - Each token must match (substring) in the key
- *  - Bonus if token matches start of a word (prefix match)
- */
-function scoreCliente(c, queryTokens) {
-  const key  = clienteSearchKey(c)
-  const nome = normalizar(c.nome || "")
-  let score  = 0
-  for (const tok of queryTokens) {
-    if (!key.includes(tok)) return -1
-    if (nome.startsWith(tok))                        score += 4  // prefixo do 1 nome
-    else if (new RegExp(`(^|\\s)${tok}`).test(key)) score += 2  // prefixo de palavra
-    else                                             score += 1  // substring
-  }
-  return score
-}
-
-/**
- * Highlight matched tokens inside a display string.
- */
-function highlight(str, tokens) {
-  let out = str
-  for (const tok of tokens) {
-    const re = new RegExp(`(${tok.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")})`, "gi")
-    out = out.replace(re, '<span class="ss-highlight">$1</span>')
-  }
-  return out
-}
-
-/**
- * Create a SmartSearch widget — busca direto no Supabase com debounce.
- * Não carrega clientes na memória. Cada keystroke dispara query no banco.
- */
-function createSmartSearch({ searchInput, hiddenInput, dropdown, clearBtn, onSelect }) {
-
-  let focusedIndex = -1
-  let debounceTimer = null
-
-  function getTokens() {
-    return normalizar(searchInput.value.trim()).split(/\s+/).filter(Boolean)
-  }
-
-  function openDropdown(results) {
-    focusedIndex = -1
-    dropdown.innerHTML = ""
-
-    if (!results.length) {
-      dropdown.innerHTML = '<div class="ss-empty">Nenhum cliente encontrado</div>'
-      dropdown.classList.add("open")
-      return
-    }
-
-    const tokens = getTokens()
-
-    results.forEach((c, i) => {
-      const nome  = c.nome || ""
-      const tel   = (c.telefone_1 || "").replace(/\D/g, "")
-      const last4 = tel.length >= 4 ? tel.slice(-4) : tel
-      const full  = tel.length > 4  ? `(${tel.slice(0,-4)}) ${last4}` : tel
-
-      const el = document.createElement("div")
-      el.className = "ss-option"
-      el.innerHTML = `
-        <span class="ss-name">${highlight(nome, tokens)}</span>
-        ${full ? `<span class="ss-meta"><i class="fa fa-phone" style="font-size:10px"></i> ${highlight(full, tokens)}</span>` : ""}
-      `
-      el.addEventListener("mousedown", (e) => { e.preventDefault(); selectCliente(c) })
-      dropdown.appendChild(el)
-    })
-
-    dropdown.classList.add("open")
-  }
-
-  function showLoading() {
-    dropdown.innerHTML = '<div class="ss-empty">Buscando…</div>'
-    dropdown.classList.add("open")
-  }
-
-  function closeDropdown() {
-    dropdown.classList.remove("open")
-    focusedIndex = -1
-  }
-
-  function selectCliente(c) {
-    const nome  = c.nome || ""
-    const tel   = (c.telefone_1 || "").replace(/\D/g, "")
-    const last4 = tel.length >= 4 ? tel.slice(-4) : tel
-    searchInput.value = last4 ? `${nome}  ${last4}` : nome
-    hiddenInput.value = c.id
-    clearBtn.classList.add("visible")
-    closeDropdown()
-    if (onSelect) onSelect(c)
-  }
-
-  function clearSelection() {
-    searchInput.value = ""
-    hiddenInput.value = ""
-    clearBtn.classList.remove("visible")
-    closeDropdown()
-    if (onSelect) onSelect(null)
-  }
-
-  function setValue(clientObj) {
-    if (!clientObj) { clearSelection(); return }
-    selectCliente(clientObj)
-  }
-
-  async function buscarNoServidor(query) {
-    const tokens  = query.trim().split(/\s+/).filter(Boolean)
-    const tokNome = tokens.filter(t => /\D/.test(t))     // tem letra → nome
-    const tokTel  = tokens.filter(t => /^\d+$/.test(t))  // só dígitos → telefone
-
-    let q = client.from("clientes").select("id, nome, telefone_1")
-
-    // .ilike() no SDK usa % como wildcard
-    for (const t of tokNome) {
-      q = q.ilike("nome", `%${t}%`)
-    }
-
-    for (const t of tokTel) {
-      q = q.ilike("telefone_1", `%${t}%`)
-    }
-
-    q = q.order("nome", { ascending: true }).limit(50)
-
-    const { data, error } = await q
-    if (error) console.error("Supabase search error:", error.message)
-    return data || []
-  }
-
-  // ── Events ──
-  searchInput.addEventListener("input", () => {
-    const val = searchInput.value.trim()
-    clearBtn.classList.toggle("visible", val.length > 0)
-    hiddenInput.value = ""
-
-    clearTimeout(debounceTimer)
-
-    if (!val) { closeDropdown(); return }
-    if (val.length < 2) return  // espera ao menos 2 chars
-
-    showLoading()
-
-    debounceTimer = setTimeout(async () => {
-      const results = await buscarNoServidor(normalizar(val))
-      openDropdown(results)
-    }, 300)  // 300ms debounce
-  })
-
-  searchInput.addEventListener("keydown", (e) => {
-    const items = dropdown.querySelectorAll(".ss-option")
-    if (!dropdown.classList.contains("open") || !items.length) return
-
-    if (e.key === "ArrowDown") {
-      e.preventDefault()
-      focusedIndex = Math.min(focusedIndex + 1, items.length - 1)
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault()
-      focusedIndex = Math.max(focusedIndex - 1, 0)
-    } else if (e.key === "Enter" && focusedIndex >= 0) {
-      e.preventDefault()
-      items[focusedIndex].dispatchEvent(new Event("mousedown"))
-      return
-    } else if (e.key === "Escape") {
-      closeDropdown(); return
-    }
-
-    items.forEach((el, i) => el.classList.toggle("focused", i === focusedIndex))
-    if (focusedIndex >= 0) items[focusedIndex].scrollIntoView({ block: "nearest" })
-  })
-
-  searchInput.addEventListener("blur", () => {
-    setTimeout(closeDropdown, 150)
-  })
-
-  clearBtn.addEventListener("click", clearSelection)
-
-  document.addEventListener("click", (e) => {
-    if (!searchInput.closest(".smart-search-wrap").contains(e.target)) closeDropdown()
-  })
-
-  return { setValue, clearSelection }
-}
-
-/* ═══════════════════════════════════════
-   APP CODE (unchanged logic, new wiring)
-   ═══════════════════════════════════════ */
-
 function nomeCliente(c){
-  if(!c) return ""
-  const nome = c.nome || ""
-  let telefone = (c.telefone_1 || "").replace(/\D/g,"")
-  const final = telefone.length >= 4 ? telefone.slice(-4) : ""
-  return final ? `${nome} ${final}` : nome
+  if(!c) return "—";
+  const tel = (c.telefone_1||"").replace(/\D/g,"");
+  const last4 = tel.length >= 4 ? tel.slice(-4) : "";
+  return last4 ? `${c.nome} ${last4}` : c.nome;
 }
-
 function nomeServico(s){
-  if(!s) return ""
-  if(s.subgrupo && s.tempo) return `${s.grupo} ${s.subgrupo} ${s.tempo} minutos`
-  if(s.subgrupo) return `${s.grupo} ${s.subgrupo}`
-  if(s.tempo) return `${s.grupo} ${s.tempo} minutos`
-  return s.grupo
+  if(!s) return "—";
+  const partes = [s.grupo, s.subgrupo, s.tempo ? s.tempo+" min" : ""];
+  return partes.filter(Boolean).join(" ");
 }
-
-let dados=[]
-let listaAtual=[]
-let dadosClientes=[]
-let dadosServicos=[]
-let servicosMap={}
-let editandoId=null
-
-// Smart search instances (set after DOM ready)
-let ssCliente, ssFiltroCliente, ssEditCliente
-
 function hoje(){
-  const d=new Date()
-  const offset=d.getTimezoneOffset()
-  return new Date(d.getTime()-offset*60000).toISOString().split("T")[0]
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split("T")[0];
+}
+function calcularLanc(){
+  const v = parseFloat(document.getElementById("lancValor").value||0);
+  const d = parseFloat(document.getElementById("lancDesconto").value||0);
+  document.getElementById("lancFinal").value = (v - d).toFixed(2);
 }
 
-data.value=hoje()
+/* ── SMART SEARCH ── */
+function createSmartSearch({searchInput, hiddenInput, dropdown, clearBtn, onNovoCliente}){
+  let focusedIndex = -1, debounceTimer = null;
 
-valor.oninput=calcular
-desconto.oninput=calcular
+  function getTokens(){ return normalizar(searchInput.value.trim()).split(/\s+/).filter(Boolean); }
 
-function calcular(){
-  final.value=(parseFloat(valor.value||0)-parseFloat(desconto.value||0))
+  function openDropdown(results){
+    focusedIndex = -1;
+    dropdown.innerHTML = "";
+    if(!results.length){
+      dropdown.innerHTML = '<div class="ss-empty">Nenhum cliente encontrado</div>';
+    } else {
+      const tokens = getTokens();
+      results.forEach(c => {
+        const tel   = (c.telefone_1||"").replace(/\D/g,"");
+        const last4 = tel.length >= 4 ? tel.slice(-4) : tel;
+        const full  = tel.length > 4 ? `(${tel.slice(0,-4)}) ${last4}` : tel;
+        const el    = document.createElement("div");
+        el.className = "ss-option";
+        el.innerHTML = `<span class="ss-name">${highlight(c.nome||"", tokens)}</span>${full?`<span class="ss-meta"><i class="fa fa-phone" style="font-size:10px"></i> ${full}</span>`:""}`;
+        el.addEventListener("mousedown", e => { e.preventDefault(); select(c); });
+        dropdown.appendChild(el);
+      });
+    }
+    // botão novo cliente
+    if(onNovoCliente){
+      const novoEl = document.createElement("div");
+      novoEl.className = "ss-novo";
+      novoEl.innerHTML = `<i class="fa fa-user-plus"></i> Cadastrar novo cliente`;
+      novoEl.addEventListener("mousedown", e => { e.preventDefault(); onNovoCliente(searchInput.value); });
+      dropdown.appendChild(novoEl);
+    }
+    dropdown.classList.add("open");
+  }
+
+  function highlight(str, tokens){
+    let out = str;
+    tokens.forEach(tok => {
+      const re = new RegExp(`(${tok.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")})`, "gi");
+      out = out.replace(re, '<span class="ss-highlight">$1</span>');
+    });
+    return out;
+  }
+
+  function closeDropdown(){ dropdown.classList.remove("open"); focusedIndex = -1; }
+
+  function select(c){
+    const tel   = (c.telefone_1||"").replace(/\D/g,"");
+    const last4 = tel.length >= 4 ? tel.slice(-4) : "";
+    searchInput.value = last4 ? `${c.nome}  ${last4}` : c.nome;
+    hiddenInput.value = c.id;
+    clearBtn.classList.add("visible");
+    closeDropdown();
+  }
+
+  function clearSelection(){
+    searchInput.value = "";
+    hiddenInput.value = "";
+    clearBtn.classList.remove("visible");
+    closeDropdown();
+  }
+
+  function setValue(c){
+    if(!c){ clearSelection(); return; }
+    select(c);
+  }
+
+  async function buscar(query){
+    const tokens  = query.trim().split(/\s+/).filter(Boolean);
+    const tokNome = tokens.filter(t => /\D/.test(t));
+    const tokTel  = tokens.filter(t => /^\d+$/.test(t));
+    let q = client.from("clientes").select("id,nome,telefone_1");
+    tokNome.forEach(t => q = q.ilike("nome", `%${t}%`));
+    tokTel.forEach(t  => q = q.ilike("telefone_1", `%${t}%`));
+    const {data} = await q.order("nome").limit(30);
+    return data || [];
+  }
+
+  searchInput.addEventListener("input", () => {
+    const val = searchInput.value.trim();
+    clearBtn.classList.toggle("visible", val.length > 0);
+    hiddenInput.value = "";
+    clearTimeout(debounceTimer);
+    if(!val){ closeDropdown(); return; }
+    dropdown.innerHTML = '<div class="ss-empty">Buscando…</div>';
+    dropdown.classList.add("open");
+    debounceTimer = setTimeout(async () => {
+      openDropdown(await buscar(normalizar(val)));
+    }, 280);
+  });
+
+  searchInput.addEventListener("keydown", e => {
+    const items = dropdown.querySelectorAll(".ss-option");
+    if(!dropdown.classList.contains("open") || !items.length) return;
+    if(e.key === "ArrowDown"){ e.preventDefault(); focusedIndex = Math.min(focusedIndex+1, items.length-1); }
+    else if(e.key === "ArrowUp"){ e.preventDefault(); focusedIndex = Math.max(focusedIndex-1, 0); }
+    else if(e.key === "Enter" && focusedIndex >= 0){ e.preventDefault(); items[focusedIndex].dispatchEvent(new Event("mousedown")); return; }
+    else if(e.key === "Escape"){ closeDropdown(); return; }
+    items.forEach((el,i) => el.classList.toggle("focused", i === focusedIndex));
+    if(focusedIndex >= 0) items[focusedIndex].scrollIntoView({block:"nearest"});
+  });
+
+  searchInput.addEventListener("blur", () => setTimeout(closeDropdown, 150));
+  clearBtn.addEventListener("click", clearSelection);
+  document.addEventListener("click", e => {
+    if(!searchInput.closest(".smart-search-wrap").contains(e.target)) closeDropdown();
+  });
+
+  return {setValue, clearSelection};
 }
 
-function formatar(v){
-  return Number(v).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})
-}
-
+/* ── CARREGAR SELECTS ── */
 async function carregarSelects(){
+  // serviços
+  const {data: servs} = await client.from("servicos").select("*").eq("status","ativo");
+  dadosServicos = servs || [];
+  const selLanc = document.getElementById("lancServico");
+  dadosServicos.forEach(s => {
+    servicosMap[s.id] = s;
+    selLanc.innerHTML += `<option value="${s.id}">${nomeServico(s)}</option>`;
+    document.getElementById("filtroServico").innerHTML += `<option value="${s.id}">${nomeServico(s)}</option>`;
+  });
 
-  // Smart search: busca no servidor, sem carregar todos os clientes
+  // origens do parametros
+  const {data: origens} = await client.from("parametros").select("valor")
+    .eq("tipo","origens_lead").eq("ativo",true).order("valor");
+  const origensLista = origens?.length
+    ? origens.map(o => o.valor)
+    : ["Instagram","Google","Indicação","Cliente antigo","WhatsApp","Outro"];
+
+  [document.getElementById("lancOrigem"), document.getElementById("filtroOrigem")].forEach((sel, i) => {
+    if(i === 1) sel.innerHTML = "<option value=''>Todas</option>";
+    origensLista.forEach(o => sel.innerHTML += `<option value="${o}">${o}</option>`);
+  });
+
+  // smart search lançamento (com botão novo cliente)
   ssCliente = createSmartSearch({
-    searchInput : document.getElementById("clienteSearch"),
-    hiddenInput : document.getElementById("cliente"),
-    dropdown    : document.getElementById("clienteDropdown"),
-    clearBtn    : document.getElementById("clienteClear"),
-  })
+    searchInput:  document.getElementById("clienteSearch"),
+    hiddenInput:  document.getElementById("cliente"),
+    dropdown:     document.getElementById("clienteDropdown"),
+    clearBtn:     document.getElementById("clienteClear"),
+    onNovoCliente: (nome) => abrirModalCliente(nome)
+  });
 
-  ssEditCliente = createSmartSearch({
-    searchInput : document.getElementById("editClienteSearch"),
-    hiddenInput : document.getElementById("editCliente"),
-    dropdown    : document.getElementById("editClienteDropdown"),
-    clearBtn    : document.getElementById("editClienteClear"),
-  })
+  // smart search filtro (sem botão novo cliente)
+  ssFiltroCliente = createSmartSearch({
+    searchInput: document.getElementById("filtroClienteSearch"),
+    hiddenInput: document.getElementById("filtroCliente"),
+    dropdown:    document.getElementById("filtroClienteDropdown"),
+    clearBtn:    document.getElementById("filtroClienteClear"),
+  });
 
-  // Services (todos, para o formulário de adicionar)
-  const {data:servicos}=await client.from("servicos").select("*")
-  dadosServicos=servicos||[]
-
-  document.getElementById("servico").innerHTML="<option value=''>Selecione</option>"
-  dadosServicos.forEach(s=>{
-    servicosMap[s.id]=s
-    document.getElementById("servico").innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
-  })
-
-  document.getElementById("servico").addEventListener("change",()=>{
-    const s=servicosMap[document.getElementById("servico").value]
-    if(s){ document.getElementById("valor").value=s.valor||50; calcular() }
-  })
-
-  // Filtros: carrega só clientes e serviços que existem no fluxo_caixa
-  await carregarFiltrosFluxo()
+  // listener serviço → preenche valor
+  document.getElementById("lancServico").addEventListener("change", () => {
+    const s = servicosMap[document.getElementById("lancServico").value];
+    if(s){ document.getElementById("lancValor").value = s.valor || 0; calcularLanc(); }
+  });
 }
 
-async function carregarFiltrosFluxo(){
-  // Busca cliente_id e servico_id distintos do fluxo_caixa
-  const { data: fluxoIds } = await client
+/* ── CARREGAR LISTA ── */
+async function carregar(){
+  const {data, error} = await client
     .from("fluxo_caixa")
-    .select("cliente_id, servico_id")
-
-  if (!fluxoIds) return
-
-  const clienteIds = [...new Set(fluxoIds.map(r => r.cliente_id).filter(Boolean))]
-  const servicoIds = [...new Set(fluxoIds.map(r => r.servico_id).filter(Boolean))]
-
-  // Clientes do filtro — busca só os que aparecem no fluxo
-  const { data: clientesFiltro } = await client
-    .from("clientes")
-    .select("id, nome, telefone_1")
-    .in("id", clienteIds)
-    .order("nome", { ascending: true })
-
-  // Guarda para o smart search do filtro usar localmente (são poucos)
-  dadosClientesFiltro = clientesFiltro || []
-
-  ssFiltroCliente = createSmartSearchLocal({
-    searchInput : document.getElementById("filtroClienteSearch"),
-    hiddenInput : document.getElementById("filtroCliente"),
-    dropdown    : document.getElementById("filtroClienteDropdown"),
-    clearBtn    : document.getElementById("filtroClienteClear"),
-    getClients  : () => dadosClientesFiltro,
-  })
-
-  // Serviços do filtro — só os que aparecem no fluxo
-  const servicosFiltro = dadosServicos.filter(s => servicoIds.includes(s.id))
-
-  const filtroServico = document.getElementById("filtroServico")
-  filtroServico.innerHTML="<option value=''>Todos</option>"
-  servicosFiltro.forEach(s=>{
-    filtroServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
-  })
+    .select("*,clientes(*),servicos(*)")
+    .order("data",{ascending:false});
+  if(error){ console.error(error); return; }
+  dados = data || [];
+  listaFiltrada = [...dados];
+  render();
 }
 
-async function carregarLista(){
-  const {data}=await client
-    .from("fluxo_caixa")
-    .select(`*,clientes(*),servicos(*)`)
-    .order("data",{ascending:false})
+/* ── RENDER ── */
+function render(){
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
 
-  dados=data||[]
-  render(dados)
-}
+  if(!listaFiltrada.length){
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:32px">Nenhum lançamento encontrado.</td></tr>`;
+    atualizarTotais([]);
+    return;
+  }
 
-function render(lista){
-  listaAtual=lista
-  const tbody=document.getElementById("lista")
-  tbody.innerHTML=""
-
-  lista.forEach(r=>{
-    tbody.innerHTML+=`
+  listaFiltrada.forEach(r => {
+    tbody.innerHTML += `
     <tr>
-      <td>${r.data}</td>
+      <td>${fmtData(r.data)}</td>
       <td>${nomeCliente(r.clientes)}</td>
-      <td>${r.origem_lead || "-"}</td>
+      <td>${r.origem_lead||"—"}</td>
       <td>${nomeServico(r.servicos)}</td>
-      <td>${formatar(r.valor)}</td>
-      <td>${formatar(r.desconto)}</td>
-      <td><strong>${formatar(r.valor_final)}</strong></td>
-      <td>
-        <button class="editar" onclick="abrirEditar('${r.id}')">Editar</button>
-        <button class="excluir" onclick="excluir('${r.id}')">Excluir</button>
+      <td>${fmtMoeda(r.valor)}</td>
+      <td>${fmtMoeda(r.desconto)}</td>
+      <td><strong>${fmtMoeda(r.valor_final)}</strong></td>
+      <td style="display:flex;gap:6px">
+        <button class="btn-yellow" onclick="abrirEditar('${r.id}')"><i class="fa fa-pencil"></i></button>
+        <button class="btn-red"    onclick="excluir('${r.id}')"><i class="fa fa-trash"></i></button>
       </td>
-    </tr>`
-  })
+    </tr>`;
+  });
+
+  atualizarTotais(listaFiltrada);
 }
 
-async function abrirEditar(id){
-  editandoId=id
-  const r=dados.find(d=>d.id==id)
-
-  // Populate services in edit modal
-  editServico.innerHTML="<option value=''>Selecione</option>"
-  dadosServicos.forEach(s=>{
-    editServico.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`
-  })
-
-  editData.value=r.data
-  editServico.value=r.servico_id
-  editValor.value=r.valor
-  editDesconto.value=r.desconto
-  editOrigem.value=r.origem_lead || ""
-
-  // Buscar cliente no servidor para preencher o modal
-  const { data: clienteArr } = await client
-    .from("clientes")
-    .select("id, nome, telefone_1")
-    .eq("id", r.cliente_id)
-    .limit(1)
-  ssEditCliente.setValue(clienteArr?.[0] || null)
-
-  document.getElementById("modalEditar").style.display="flex"
+function atualizarTotais(lista){
+  const count    = lista.length;
+  const bruto    = lista.reduce((s,r) => s + (r.valor||0), 0);
+  const descontos= lista.reduce((s,r) => s + (r.desconto||0), 0);
+  const final    = lista.reduce((s,r) => s + (r.valor_final||0), 0);
+  document.getElementById("totalCount").textContent    = count;
+  document.getElementById("totalBruto").textContent    = fmtMoeda(bruto);
+  document.getElementById("totalDescontos").textContent= fmtMoeda(descontos);
+  document.getElementById("totalFinal").textContent    = fmtMoeda(final);
 }
 
-function fecharModal(){
-  document.getElementById("modalEditar").style.display="none"
-}
+/* ── FILTRO ── */
+function aplicarFiltro(){
+  const ini    = document.getElementById("filtroInicio").value;
+  const fim    = document.getElementById("filtroFim").value;
+  const cliId  = document.getElementById("filtroCliente").value;
+  const servId = document.getElementById("filtroServico").value;
+  const orig   = document.getElementById("filtroOrigem").value;
 
-async function salvar(){
-  const clienteId = document.getElementById("cliente").value
-  const servicoId = document.getElementById("servico").value
-  const dataVal   = document.getElementById("data").value
-
-  if(!clienteId){ alert("Selecione um cliente"); return }
-  if(!servicoId){ alert("Selecione um serviço"); return }
-
-  const { error } = await client.from("fluxo_caixa").insert({
-    data       : dataVal,
-    cliente_id : clienteId,
-    servico_id : servicoId,
-    valor      : parseFloat(document.getElementById("valor").value||0),
-    desconto   : parseFloat(document.getElementById("desconto").value||0),
-    valor_final: parseFloat(document.getElementById("valor").value||0) - parseFloat(document.getElementById("desconto").value||0),
-    origem_lead: document.getElementById("origem").value || null
-  })
-
-  if(error){ alert("Erro ao salvar: " + error.message); return }
-  carregarLista()
-}
-
-async function salvarEdicao(){
-  const { error } = await client.from("fluxo_caixa").update({
-    data       : document.getElementById("editData").value,
-    cliente_id : document.getElementById("editCliente").value,
-    servico_id : document.getElementById("editServico").value,
-    valor      : parseFloat(document.getElementById("editValor").value||0),
-    desconto   : parseFloat(document.getElementById("editDesconto").value||0),
-    valor_final: parseFloat(document.getElementById("editValor").value||0) - parseFloat(document.getElementById("editDesconto").value||0),
-    origem_lead: document.getElementById("editOrigem").value || null
-  }).eq("id", editandoId)
-
-  if(error){ alert("Erro ao salvar: " + error.message); return }
-  fecharModal()
-  carregarLista()
-}
-
-async function excluir(id){
-  if(!confirm("Excluir?")) return
-  await client.from("fluxo_caixa").delete().eq("id",id)
-  carregarLista()
-}
-
-function filtrar(){
-  let lista=[...dados]
-  if(filtroInicio.value) lista=lista.filter(d=>d.data>=filtroInicio.value)
-  if(filtroFim.value)    lista=lista.filter(d=>d.data<=filtroFim.value)
-  const fcId = document.getElementById("filtroCliente").value
-  if(fcId)               lista=lista.filter(d=>d.cliente_id==fcId)
-  if(filtroServico.value)lista=lista.filter(d=>d.servico_id==filtroServico.value)
-  render(lista)
+  listaFiltrada = dados.filter(r => {
+    if(ini    && r.data < ini)              return false;
+    if(fim    && r.data > fim)              return false;
+    if(cliId  && r.cliente_id !== cliId)    return false;
+    if(servId && r.servico_id !== servId)   return false;
+    if(orig   && r.origem_lead !== orig)    return false;
+    return true;
+  });
+  render();
 }
 
 function limparFiltro(){
-  filtroInicio.value=""
-  filtroFim.value=""
-  ssFiltroCliente.clearSelection()
-  filtroServico.value=""
-  render(dados)
+  document.getElementById("filtroInicio").value = "";
+  document.getElementById("filtroFim").value    = "";
+  document.getElementById("filtroServico").value = "";
+  document.getElementById("filtroOrigem").value  = "";
+  ssFiltroCliente.clearSelection();
+  listaFiltrada = [...dados];
+  render();
 }
 
+/* ── MODAL LANÇAMENTO ── */
+function abrirNovo(){
+  editandoId = null;
+  document.getElementById("lancData").value     = hoje();
+  document.getElementById("lancServico").value  = "";
+  document.getElementById("lancOrigem").value   = "";
+  document.getElementById("lancValor").value    = "0";
+  document.getElementById("lancDesconto").value = "0";
+  document.getElementById("lancFinal").value    = "0";
+  ssCliente.clearSelection();
+  document.getElementById("modalLancTitulo").textContent = "Novo Lançamento";
+  document.getElementById("modalLancamento").style.display = "flex";
+}
+
+async function abrirEditar(id){
+  editandoId = id;
+  const r = dados.find(d => d.id === id);
+  if(!r) return;
+
+  document.getElementById("lancData").value     = r.data || "";
+  document.getElementById("lancServico").value  = r.servico_id || "";
+  document.getElementById("lancOrigem").value   = r.origem_lead || "";
+  document.getElementById("lancValor").value    = r.valor || 0;
+  document.getElementById("lancDesconto").value = r.desconto || 0;
+  calcularLanc();
+
+  // carregar cliente
+  if(r.cliente_id){
+    const {data: cArr} = await client.from("clientes").select("id,nome,telefone_1").eq("id",r.cliente_id).limit(1);
+    ssCliente.setValue(cArr?.[0] || null);
+  } else {
+    ssCliente.clearSelection();
+  }
+
+  document.getElementById("modalLancTitulo").textContent = "Editar Lançamento";
+  document.getElementById("modalLancamento").style.display = "flex";
+}
+
+function fecharModalLanc(){
+  document.getElementById("modalLancamento").style.display = "none";
+}
+
+async function salvar(){
+  const clienteId = document.getElementById("cliente").value;
+  const servicoId = document.getElementById("lancServico").value;
+  const dataVal   = document.getElementById("lancData").value;
+
+  if(!clienteId){ alert("Selecione um cliente."); return; }
+  if(!servicoId){ alert("Selecione um serviço."); return; }
+  if(!dataVal)  { alert("Informe a data."); return; }
+
+  const valor      = parseFloat(document.getElementById("lancValor").value||0);
+  const desconto   = parseFloat(document.getElementById("lancDesconto").value||0);
+  const valor_final= valor - desconto;
+  const origem_lead= document.getElementById("lancOrigem").value || null;
+
+  let error;
+  if(editandoId){
+    ({error} = await client.from("fluxo_caixa").update({
+      data: dataVal, cliente_id: clienteId, servico_id: servicoId,
+      valor, desconto, valor_final, origem_lead
+    }).eq("id", editandoId));
+  } else {
+    ({error} = await client.from("fluxo_caixa").insert({
+      data: dataVal, cliente_id: clienteId, servico_id: servicoId,
+      valor, desconto, valor_final, origem_lead
+    }));
+  }
+
+  if(error){ alert("Erro ao salvar: "+error.message); return; }
+  fecharModalLanc();
+  carregar();
+}
+
+async function excluir(id){
+  if(!confirm("Excluir este lançamento?")) return;
+  await client.from("fluxo_caixa").delete().eq("id",id);
+  carregar();
+}
+
+/* ── MODAL NOVO CLIENTE ── */
+let _nomePreenchido = "";
+function abrirModalCliente(nome){
+  _nomePreenchido = nome || "";
+  document.getElementById("ncNome").value     = nome || "";
+  document.getElementById("ncTelefone").value = "";
+  document.getElementById("ncEmail").value    = "";
+  document.getElementById("modalNovoCliente").style.display = "flex";
+}
+function fecharModalCliente(){
+  document.getElementById("modalNovoCliente").style.display = "none";
+}
+
+async function salvarNovoCliente(){
+  const nome = document.getElementById("ncNome").value.trim();
+  const tel  = document.getElementById("ncTelefone").value.trim().replace(/\D/g,"");
+  if(!nome){ alert("Nome obrigatório."); return; }
+  if(!tel) { alert("Telefone obrigatório."); return; }
+
+  const {data: novo, error} = await client.from("clientes")
+    .insert({nome, telefone_1: tel, email: document.getElementById("ncEmail").value.trim()||null})
+    .select().single();
+
+  if(error){ alert("Erro: "+error.message); return; }
+
+  fecharModalCliente();
+  // seleciona automaticamente no campo de lançamento
+  ssCliente.setValue(novo);
+}
+
+/* ── EXPORTAR ── */
 function exportarExcel(){
-  if(!listaAtual.length){ alert("Nada para exportar"); return }
-
-  const exportData=listaAtual.map(r=>({
-    Data    : r.data,
-    Cliente : nomeCliente(r.clientes),
-    Origem  : r.origem_lead,
-    Servico : nomeServico(r.servicos),
-    Valor   : r.valor,
-    Desconto: r.desconto,
-    Final   : r.valor_final
-  }))
-
-  const ws=XLSX.utils.json_to_sheet(exportData)
-  const wb=XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(wb,ws,"Fluxo de Caixa")
-  XLSX.writeFile(wb,"fluxo_caixa.xlsx")
+  if(!listaFiltrada.length){ alert("Nada para exportar."); return; }
+  const exportData = listaFiltrada.map(r => ({
+    "Data":     fmtData(r.data),
+    "Cliente":  nomeCliente(r.clientes),
+    "Origem":   r.origem_lead || "",
+    "Serviço":  nomeServico(r.servicos),
+    "Valor":    Number(r.valor||0),
+    "Desconto": Number(r.desconto||0),
+    "Final":    Number(r.valor_final||0)
+  }));
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const colunas = ["Data","Cliente","Origem","Serviço","Valor","Desconto","Final"];
+  ws["!cols"] = colunas.map(col => ({
+    wch: Math.max(col.length, ...exportData.map(r => String(r[col]||"").length)) + 2
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Fluxo de Caixa");
+  XLSX.writeFile(wb, "fluxo_caixa.xlsx");
 }
 
-carregarSelects()
-carregarLista()
-calcular()
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  carregarSelects();
+  carregar();
+});
 </script>
-
 </body>
 </html>

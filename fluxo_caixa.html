@@ -773,7 +773,10 @@ function render(){
     tbody.innerHTML+=`<tr>
       <td>${fmtD(r.data)}</td>
       <td>${r._opNome||"—"}</td>
-      <td><strong>${r.cliente_nome||"—"}</strong></td>
+      <td>
+        <strong>${r.cliente_nome||"—"}</strong>
+        ${r.fechamento_id?'<span style="display:inline-block;margin-left:6px;background:#f3f4f6;color:#9ca3af;border-radius:99px;padding:1px 7px;font-size:10px;font-weight:700">✓ fechado</span>':""}
+      </td>
       <td style="font-size:12px;color:#6b7280;max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r._servNomes||"—"}</td>
       <td>${mb}</td>
       <td><strong>${fmtM(r.valor_final)}</strong></td>
@@ -893,13 +896,10 @@ function calcFechamento(){
   const horaFim=document.getElementById("fechHoraFim").value;
   const fundo=parseFloat(document.getElementById("fechFundo").value||0);
 
-  // filtrar lançamentos
-  let lancamentos=[...dados];
-  if(opFiltro) lancamentos=lancamentos.filter(r=>r.operador_cpf===opFiltro);
+  // filtrar lançamentos — apenas os NÃO contabilizados
+  let lancamentos=dados.filter(r=>!r.fechamento_id);
+  if(opFiltro)   lancamentos=lancamentos.filter(r=>r.operador_cpf===opFiltro);
   if(dataFiltro) lancamentos=lancamentos.filter(r=>r.data===dataFiltro);
-
-  // filtrar por hora se informado (usa created_at aproximado)
-  // por enquanto filtra apenas por data/operador
 
   // agrupar por forma de pagamento
   let dinheiro=0,debito=0,credito=0,pix=0,outros=0,trocos=0;
@@ -977,7 +977,25 @@ async function salvarFechamento(){
     total_trocos:trc,troco_caixa:caixa,total_geral:tot,
   });
   if(error){alert("Erro ao salvar: "+error.message);return;}
-  alert("Fechamento salvo com sucesso!");
+
+  // buscar ID do fechamento recém criado
+  const {data:fechNovo} = await client.from("fechamentos_caixa")
+    .select("id").order("created_at",{ascending:false}).limit(1);
+  const fechId = fechNovo?.[0]?.id;
+
+  if(fechId){
+    // marcar lançamentos não contabilizados do período/operador como fechados
+    let qUpd = client.from("fluxo_caixa")
+      .update({fechamento_id: fechId})
+      .is("fechamento_id", null);
+    if(dataFiltro) qUpd = qUpd.eq("data", dataFiltro);
+    if(opFiltro)   qUpd = qUpd.eq("operador_cpf", opFiltro);
+    await qUpd;
+  }
+
+  alert(`Fechamento salvo! ${fechId ? "Lançamentos marcados como contabilizados." : ""}`);
+  fecharFechamento();
+  carregar();
   carregarCaixa();
 }
 
@@ -995,7 +1013,8 @@ async function carregarCaixa(){
   // lançamentos com dinheiro APÓS o último fechamento
   // troco que SOBROU no caixa = valor_pago em dinheiro - troco dado
   let saldoDinheiro = 0;
-  const lancPosFech = dados.filter(r => r.data >= dataBase);
+  // só lançamentos NÃO contabilizados em fechamento
+  const lancPosFech = dados.filter(r => !r.fechamento_id);
   lancPosFech.forEach(r => {
     const p1Dinheiro = classifPgto(r.forma_pgto_1) === "dinheiro" ? (r.valor_pgto_1||0) : 0;
     const p2Dinheiro = classifPgto(r.forma_pgto_2) === "dinheiro" ? (r.valor_pgto_2||0) : 0;
@@ -1021,7 +1040,7 @@ async function carregarCaixa(){
 
   const lancCount = lancPosFech.length;
   document.getElementById("caixaSub").textContent = ultimoFech
-    ? `Base: ${fmtM(baseFechar)} (fechamento ${fmtD(ultimoFech.data)}) + ${lancCount} lançamento${lancCount!==1?"s":""}`
+    ? `Base: ${fmtM(baseFechar)} (últ. fechamento) + ${lancCount} lançamento${lancCount!==1?"s":""} pendente${lancCount!==1?"s":""}`
     : `${lancCount} lançamento${lancCount!==1?"s":""} sem fechamento anterior`;
 }
 

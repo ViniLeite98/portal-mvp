@@ -3,77 +3,596 @@
 <head>
 <meta charset="UTF-8">
 <title>Despesas | Hara Spa</title>
-
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
-}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.topbar h1{margin:0;}
+.topbar-btns{display:flex;gap:10px;}
+button{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+button:hover{opacity:.9;}
+button.btn-green{background:#16a34a;}
+button.btn-red{background:#dc2626;}
+button.btn-blue{background:#2563eb;}
+button.btn-yellow{background:#d97706;}
+button.btn-ghost{background:#fff;color:#374151;border:1px solid #d1d5db;}
+button.btn-ghost:hover{background:#f9fafb;}
 
-.app{
-  display:flex;
-  min-height:100vh;
-}
+/* filtros */
+.filtros-card{background:#fff;border-radius:14px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:20px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;font-weight:600;color:#374151;}
+.field input,.field select,.field textarea{padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#111827;background:#fff;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 
-#sidebar{
-  width:260px;
-  flex-shrink:0;
-}
+/* totais */
+.totais{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.total-card{background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.t-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:4px;}
+.t-valor{font-size:20px;font-weight:800;color:#111827;}
 
-.content{
-  flex:1;
-  padding:30px;
-  font-size:14px;
-}
+/* tabela */
+.table-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:13px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left;}
+th{background:#f9fafb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f9fafb;}
 
-.card{
-  background:#fff;
-  border-radius:18px;
-  padding:40px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
-  margin-top:20px;
-  text-align:center;
-}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
+.badge-pago{background:#dcfce7;color:#16a34a;}
+.badge-apagar{background:#fef3c7;color:#d97706;}
+.badge-vencido{background:#fee2e2;color:#dc2626;}
+.badge-recorrente{background:#ede9fe;color:#7c3aed;font-size:10px;padding:2px 7px;}
 
-h1{
-  margin-bottom:20px;
-}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
+.modal-content{background:#fff;width:580px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.btn-fechar:hover{background:#f3f4f6;}
+.modal-body{padding:24px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;}
+.modal-footer button{padding:9px 20px;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.span2{grid-column:span 2;}
+.modal-body .field{margin-bottom:12px;}
+.modal-body .field:last-child{margin-bottom:0;}
+.modal-body input,.modal-body select,.modal-body textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;}
+.modal-body input:focus,.modal-body select:focus,.modal-body textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.modal-body textarea{resize:vertical;min-height:70px;}
+
+/* pagar modal */
+.pagar-info{background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.7;}
+.pagar-info strong{color:#111827;}
 </style>
 </head>
 
 <body>
-
 <div class="app">
+<aside id="sidebar"></aside>
+<main class="content">
 
-  <!-- SIDEBAR (igual Escalas) -->
-  <aside id="sidebar"></aside>
-
-  <!-- CONTEÚDO -->
-  <main class="content">
-
+  <div class="topbar">
     <h1>Despesas</h1>
-
-    <div class="card">
-      <h2>🚧 Página em construção</h2>
-      <p>O módulo financeiro está sendo desenvolvido.</p>
+    <div class="topbar-btns">
+      <button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+      <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Nova Despesa</button>
     </div>
+  </div>
 
-  </main>
+  <!-- Filtros -->
+  <div class="filtros-card">
+    <div class="field">
+      <label>Vencimento de</label>
+      <input type="date" id="filtroInicio">
+    </div>
+    <div class="field">
+      <label>Vencimento até</label>
+      <input type="date" id="filtroFim">
+    </div>
+    <div class="field">
+      <label>Status</label>
+      <select id="filtroStatus">
+        <option value="">Todos</option>
+        <option value="A pagar">A pagar</option>
+        <option value="Pago">Pago</option>
+        <option value="Vencido">Vencido</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Categoria</label>
+      <select id="filtroCategoria"><option value="">Todas</option></select>
+    </div>
+    <div class="field">
+      <label>Centro de Custo</label>
+      <select id="filtroCentro"><option value="">Todos</option></select>
+    </div>
+    <button class="btn-blue" onclick="aplicarFiltro()"><i class="fa fa-filter"></i> Filtrar</button>
+    <button class="btn-ghost" onclick="limparFiltro()"><i class="fa fa-times"></i> Limpar</button>
+  </div>
 
+  <!-- Totais -->
+  <div class="totais">
+    <div class="total-card">
+      <div class="t-label"><i class="fa fa-list"></i> Total</div>
+      <div class="t-valor" id="totalCount">—</div>
+    </div>
+    <div class="total-card" style="border-left:3px solid #d97706">
+      <div class="t-label" style="color:#d97706"><i class="fa fa-clock"></i> A Pagar</div>
+      <div class="t-valor" id="totalAPagar" style="color:#d97706">—</div>
+    </div>
+    <div class="total-card" style="border-left:3px solid #dc2626">
+      <div class="t-label" style="color:#dc2626"><i class="fa fa-exclamation-circle"></i> Vencido</div>
+      <div class="t-valor" id="totalVencido" style="color:#dc2626">—</div>
+    </div>
+    <div class="total-card" style="border-left:3px solid #16a34a">
+      <div class="t-label" style="color:#16a34a"><i class="fa fa-check-circle"></i> Pago</div>
+      <div class="t-valor" id="totalPago" style="color:#16a34a">—</div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th>Categoria</th>
+          <th>Centro de Custo</th>
+          <th>Vencimento</th>
+          <th>Valor</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
+  </div>
+
+</main>
 </div>
 
-<!-- Sidebar JS (igual Escalas) -->
-<script src="assets/sidebar/sidebar.js"></script>
+<!-- MODAL NOVA/EDITAR DESPESA -->
+<div class="modal" id="modalDespesa">
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 id="modalTitulo">Nova Despesa</h2>
+    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="grid-2">
 
+      <div class="field span2">
+        <label>Descrição *</label>
+        <input id="descricao" placeholder="Ex: Aluguel de maio">
+      </div>
+
+      <div class="field">
+        <label>Categoria</label>
+        <select id="categoria"><option value="">Selecione</option></select>
+      </div>
+
+      <div class="field">
+        <label>Centro de Custo</label>
+        <select id="centro_custo"><option value="">Selecione</option></select>
+      </div>
+
+      <div class="field">
+        <label>Valor (R$) *</label>
+        <input type="number" id="valor" step="0.01" min="0" placeholder="0,00">
+      </div>
+
+      <div class="field">
+        <label>Data de Vencimento *</label>
+        <input type="date" id="data_vencimento">
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <select id="status" onchange="toggleDataPagamento()">
+          <option value="A pagar">A pagar</option>
+          <option value="Pago">Pago</option>
+          <option value="Vencido">Vencido</option>
+        </select>
+      </div>
+
+      <div class="field" id="campoPagamento" style="display:none">
+        <label>Data de Pagamento</label>
+        <input type="date" id="data_pagamento">
+      </div>
+
+      <div class="field">
+        <label>Recorrente?</label>
+        <select id="recorrente" onchange="toggleRecorrencia()">
+          <option value="false">Não</option>
+          <option value="true">Sim</option>
+        </select>
+      </div>
+
+      <div class="field" id="campoRecorrencia" style="display:none">
+        <label>Frequência</label>
+        <select id="recorrencia">
+          <option value="mensal">Mensal</option>
+          <option value="semanal">Semanal</option>
+          <option value="anual">Anual</option>
+        </select>
+      </div>
+
+      <div class="field span2">
+        <label>Observação</label>
+        <textarea id="observacao" placeholder="Informações adicionais..."></textarea>
+      </div>
+
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+    <button class="btn-green" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL REGISTRAR PAGAMENTO -->
+<div class="modal" id="modalPagar">
+<div class="modal-content" style="width:420px">
+  <div class="modal-header">
+    <h2>Registrar Pagamento</h2>
+    <button class="btn-fechar" onclick="fecharModalPagar()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="pagar-info" id="pagarInfo"></div>
+    <div class="field">
+      <label>Data de Pagamento *</label>
+      <input type="date" id="pagarData">
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModalPagar()">Cancelar</button>
+    <button class="btn-green" onclick="confirmarPagamento()"><i class="fa fa-check"></i> Confirmar Pagamento</button>
+  </div>
+</div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+<script>
+
+let dados = [];
+let listaFiltrada = [];
+let editandoId = null;
+let pagarId = null;
+
+const CATEGORIAS_DEFAULT = ["Aluguel","Água","Luz","Internet","Telefone","Material de Limpeza","Material de Escritório","Manutenção","Publicidade","Outros"];
+const CENTROS_DEFAULT    = ["Operacional","Estrutura","Marketing","Pessoal","Outros"];
+
+/* ── HELPERS ── */
+function fmtMoeda(v){ return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+function fmtData(v){
+  if(!v) return "—";
+  const [y,m,d] = v.split("-");
+  return `${d}/${m}/${y}`;
+}
+function hoje(){
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split("T")[0];
+}
+function isVencido(vencimento, status){
+  if(status === "Pago") return false;
+  return vencimento < hoje();
+}
+
+/* ── CARREGAR PARÂMETROS ── */
+async function carregarParametros(){
+  const {data} = await client.from("parametros").select("tipo,valor")
+    .in("tipo",["categorias_despesa","centros_custo"]).eq("ativo",true).order("valor");
+
+  const cats   = data?.filter(p => p.tipo === "categorias_despesa").map(p => p.valor) || [];
+  const centros = data?.filter(p => p.tipo === "centros_custo").map(p => p.valor) || [];
+
+  const listaC = cats.length    ? cats    : CATEGORIAS_DEFAULT;
+  const listaCC= centros.length ? centros : CENTROS_DEFAULT;
+
+  ["categoria","filtroCategoria"].forEach(id => {
+    const sel = document.getElementById(id);
+    const pfx = id.startsWith("filtro") ? "<option value=''>Todas</option>" : "<option value=''>Selecione</option>";
+    sel.innerHTML = pfx;
+    listaC.forEach(c => sel.innerHTML += `<option>${c}</option>`);
+  });
+
+  ["centro_custo","filtroCentro"].forEach(id => {
+    const sel = document.getElementById(id);
+    const pfx = id.startsWith("filtro") ? "<option value=''>Todos</option>" : "<option value=''>Selecione</option>";
+    sel.innerHTML = pfx;
+    listaCC.forEach(c => sel.innerHTML += `<option>${c}</option>`);
+  });
+}
+
+/* ── CARREGAR ── */
+async function carregar(){
+  const {data, error} = await client
+    .from("despesas").select("*").order("data_vencimento");
+  if(error){ console.error(error); return; }
+
+  // atualizar status de vencidos automaticamente
+  dados = (data||[]).map(d => ({
+    ...d,
+    status: isVencido(d.data_vencimento, d.status) ? "Vencido" : d.status
+  }));
+
+  listaFiltrada = [...dados];
+  render();
+}
+
+/* ── RENDER ── */
+function render(){
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+
+  if(!listaFiltrada.length){
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:32px">Nenhuma despesa encontrada.</td></tr>`;
+    atualizarTotais([]);
+    return;
+  }
+
+  listaFiltrada.forEach(d => {
+    const badgeClass = d.status === "Pago"    ? "badge-pago"
+                     : d.status === "Vencido" ? "badge-vencido"
+                     : "badge-apagar";
+    const iconeStatus = d.status === "Pago"    ? "fa-check"
+                      : d.status === "Vencido" ? "fa-exclamation-circle"
+                      : "fa-clock";
+
+    const recBadge = d.recorrente
+      ? `<span class="badge badge-recorrente"><i class="fa fa-rotate"></i> ${d.recorrencia||"mensal"}</span>`
+      : "";
+
+    const btnPagar = d.status !== "Pago"
+      ? `<button class="btn-green" style="padding:5px 10px;font-size:12px" onclick="abrirPagar('${d.id}')"><i class="fa fa-check"></i> Pagar</button>`
+      : "";
+
+    tbody.innerHTML += `
+    <tr>
+      <td>
+        <div style="font-weight:600;color:#111827">${d.descricao}</div>
+        ${d.observacao ? `<div style="font-size:11px;color:#9ca3af;margin-top:2px">${d.observacao}</div>` : ""}
+        ${recBadge}
+      </td>
+      <td>${d.categoria||"—"}</td>
+      <td>${d.centro_custo||"—"}</td>
+      <td style="${d.status==='Vencido'?'color:#dc2626;font-weight:600':''}">
+        ${fmtData(d.data_vencimento)}
+        ${d.data_pagamento ? `<div style="font-size:11px;color:#16a34a">Pago em ${fmtData(d.data_pagamento)}</div>` : ""}
+      </td>
+      <td><strong>${fmtMoeda(d.valor)}</strong></td>
+      <td><span class="badge ${badgeClass}"><i class="fa ${iconeStatus}"></i> ${d.status}</span></td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap">
+        ${btnPagar}
+        <button class="btn-yellow" style="padding:5px 10px;font-size:12px" onclick="abrirEditar('${d.id}')"><i class="fa fa-pencil"></i></button>
+        <button class="btn-red"    style="padding:5px 10px;font-size:12px" onclick="excluir('${d.id}')"><i class="fa fa-trash"></i></button>
+      </td>
+    </tr>`;
+  });
+
+  atualizarTotais(listaFiltrada);
+}
+
+function atualizarTotais(lista){
+  const aPagar  = lista.filter(d => d.status === "A pagar");
+  const vencido = lista.filter(d => d.status === "Vencido");
+  const pago    = lista.filter(d => d.status === "Pago");
+  const soma    = arr => arr.reduce((s,d) => s+(d.valor||0), 0);
+
+  document.getElementById("totalCount").textContent   = lista.length;
+  document.getElementById("totalAPagar").textContent  = fmtMoeda(soma(aPagar));
+  document.getElementById("totalVencido").textContent = fmtMoeda(soma(vencido));
+  document.getElementById("totalPago").textContent    = fmtMoeda(soma(pago));
+}
+
+/* ── FILTRO ── */
+function aplicarFiltro(){
+  const ini     = document.getElementById("filtroInicio").value;
+  const fim     = document.getElementById("filtroFim").value;
+  const status  = document.getElementById("filtroStatus").value;
+  const cat     = document.getElementById("filtroCategoria").value;
+  const centro  = document.getElementById("filtroCentro").value;
+
+  listaFiltrada = dados.filter(d => {
+    if(ini    && d.data_vencimento < ini)   return false;
+    if(fim    && d.data_vencimento > fim)   return false;
+    if(status && d.status !== status)       return false;
+    if(cat    && d.categoria !== cat)       return false;
+    if(centro && d.centro_custo !== centro) return false;
+    return true;
+  });
+  render();
+}
+
+function limparFiltro(){
+  ["filtroInicio","filtroFim"].forEach(id => document.getElementById(id).value = "");
+  ["filtroStatus","filtroCategoria","filtroCentro"].forEach(id => document.getElementById(id).value = "");
+  listaFiltrada = [...dados];
+  render();
+}
+
+/* ── MODAL DESPESA ── */
+function toggleDataPagamento(){
+  const status = document.getElementById("status").value;
+  const campo  = document.getElementById("campoPagamento");
+  campo.style.display = status === "Pago" ? "" : "none";
+  if(status === "Pago" && !document.getElementById("data_pagamento").value)
+    document.getElementById("data_pagamento").value = hoje();
+}
+
+function toggleRecorrencia(){
+  const rec = document.getElementById("recorrente").value;
+  document.getElementById("campoRecorrencia").style.display = rec === "true" ? "" : "none";
+}
+
+function resetModal(){
+  document.getElementById("descricao").value      = "";
+  document.getElementById("categoria").value      = "";
+  document.getElementById("centro_custo").value   = "";
+  document.getElementById("valor").value          = "";
+  document.getElementById("data_vencimento").value= hoje();
+  document.getElementById("status").value         = "A pagar";
+  document.getElementById("data_pagamento").value = "";
+  document.getElementById("recorrente").value     = "false";
+  document.getElementById("recorrencia").value    = "mensal";
+  document.getElementById("observacao").value     = "";
+  document.getElementById("campoPagamento").style.display  = "none";
+  document.getElementById("campoRecorrencia").style.display= "none";
+}
+
+function abrirNovo(){
+  editandoId = null;
+  resetModal();
+  document.getElementById("modalTitulo").textContent = "Nova Despesa";
+  document.getElementById("modalDespesa").style.display = "flex";
+}
+
+function abrirEditar(id){
+  editandoId = id;
+  const d = dados.find(x => String(x.id) === String(id));
+  if(!d) return;
+
+  document.getElementById("modalTitulo").textContent = "Editar Despesa";
+  document.getElementById("modalDespesa").style.display = "flex";
+
+  setTimeout(() => {
+    document.getElementById("descricao").value       = d.descricao || "";
+    document.getElementById("categoria").value       = d.categoria || "";
+    document.getElementById("centro_custo").value    = d.centro_custo || "";
+    document.getElementById("valor").value           = d.valor || "";
+    document.getElementById("data_vencimento").value = d.data_vencimento || "";
+    document.getElementById("status").value          = d.status || "A pagar";
+    document.getElementById("data_pagamento").value  = d.data_pagamento || "";
+    document.getElementById("recorrente").value      = d.recorrente ? "true" : "false";
+    document.getElementById("recorrencia").value     = d.recorrencia || "mensal";
+    document.getElementById("observacao").value      = d.observacao || "";
+    toggleDataPagamento();
+    toggleRecorrencia();
+  }, 30);
+}
+
+function fecharModal(){
+  document.getElementById("modalDespesa").style.display = "none";
+}
+
+async function salvar(){
+  const descricao      = document.getElementById("descricao").value.trim();
+  const valor          = parseFloat(document.getElementById("valor").value||0);
+  const data_vencimento= document.getElementById("data_vencimento").value;
+
+  if(!descricao)     { alert("Descrição obrigatória."); return; }
+  if(!valor || valor <= 0){ alert("Informe um valor válido."); return; }
+  if(!data_vencimento){ alert("Informe a data de vencimento."); return; }
+
+  const status = document.getElementById("status").value;
+  const payload = {
+    descricao,
+    categoria:      document.getElementById("categoria").value      || null,
+    centro_custo:   document.getElementById("centro_custo").value   || null,
+    valor,
+    data_vencimento,
+    status,
+    data_pagamento: status === "Pago" ? (document.getElementById("data_pagamento").value || hoje()) : null,
+    recorrente:     document.getElementById("recorrente").value === "true",
+    recorrencia:    document.getElementById("recorrente").value === "true" ? document.getElementById("recorrencia").value : null,
+    observacao:     document.getElementById("observacao").value.trim() || null
+  };
+
+  let error;
+  if(editandoId){
+    ({error} = await client.from("despesas").update(payload).eq("id", editandoId));
+  } else {
+    ({error} = await client.from("despesas").insert(payload));
+  }
+
+  if(error){ alert("Erro ao salvar: "+error.message); return; }
+  fecharModal();
+  carregar();
+}
+
+async function excluir(id){
+  if(!confirm("Excluir esta despesa?")) return;
+  await client.from("despesas").delete().eq("id", id);
+  carregar();
+}
+
+/* ── MODAL PAGAR ── */
+function abrirPagar(id){
+  pagarId = id;
+  const d = dados.find(x => String(x.id) === String(id));
+  if(!d) return;
+  document.getElementById("pagarInfo").innerHTML = `
+    <strong>${d.descricao}</strong><br>
+    Vencimento: ${fmtData(d.data_vencimento)}<br>
+    Valor: <strong style="color:#111827">${fmtMoeda(d.valor)}</strong><br>
+    ${d.categoria ? `Categoria: ${d.categoria}` : ""}
+  `;
+  document.getElementById("pagarData").value = hoje();
+  document.getElementById("modalPagar").style.display = "flex";
+}
+
+function fecharModalPagar(){
+  document.getElementById("modalPagar").style.display = "none";
+}
+
+async function confirmarPagamento(){
+  const data = document.getElementById("pagarData").value;
+  if(!data){ alert("Informe a data de pagamento."); return; }
+
+  const {error} = await client.from("despesas").update({
+    status: "Pago",
+    data_pagamento: data
+  }).eq("id", pagarId);
+
+  if(error){ alert("Erro: "+error.message); return; }
+  fecharModalPagar();
+  carregar();
+}
+
+/* ── EXPORTAR ── */
+function exportarExcel(){
+  if(!listaFiltrada.length){ alert("Nada para exportar."); return; }
+  const exportData = listaFiltrada.map(d => ({
+    "Descrição":       d.descricao,
+    "Categoria":       d.categoria || "",
+    "Centro de Custo": d.centro_custo || "",
+    "Vencimento":      fmtData(d.data_vencimento),
+    "Pagamento":       fmtData(d.data_pagamento),
+    "Valor":           Number(d.valor||0),
+    "Status":          d.status,
+    "Recorrente":      d.recorrente ? `Sim (${d.recorrencia})` : "Não",
+    "Observação":      d.observacao || ""
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const cols = Object.keys(exportData[0]);
+  ws["!cols"] = cols.map(col => ({
+    wch: Math.max(col.length, ...exportData.map(r => String(r[col]||"").length)) + 2
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Despesas");
+  XLSX.writeFile(wb, "despesas.xlsx");
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  carregarParametros();
+  carregar();
+});
+</script>
 </body>
 </html>

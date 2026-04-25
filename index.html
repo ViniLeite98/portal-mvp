@@ -3,339 +3,641 @@
 <head>
 <meta charset="UTF-8">
 <title>Dashboard | Hara Spa</title>
-
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
+.content{flex:1;padding:28px;display:flex;flex-direction:column;gap:20px;}
 
-.card{
-  background:#fff;
-  border-radius:25px;
-  padding:30px;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
+/* ── TOPBAR ── */
+.dash-topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.dash-topbar h1{font-size:22px;color:#111827;}
+.dash-topbar-right{display:flex;gap:10px;align-items:center;}
+.mes-sel{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;background:#fff;}
 
-.top-cards{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:30px;
-  margin-bottom:40px;
-}
+/* ── SUB-NAV ── */
+.sub-nav{display:flex;gap:4px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 1px 4px rgba(0,0,0,.06);width:fit-content;}
+.sub-btn{padding:8px 20px;border:none;border-radius:8px;background:none;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;transition:all .15s;}
+.sub-btn:hover{background:#f3f4f6;color:#111827;}
+.sub-btn.active{background:#1f2937;color:#fff;}
 
-.big-number{
-  font-size:60px;
-  font-weight:bold;
-  margin-top:10px;
-}
+/* ── PÁGINAS ── */
+.page{display:none;flex-direction:column;gap:20px;}
+.page.active{display:flex;}
 
-.label-small{color:#666;font-size:14px;}
+/* ── KPI CARDS ── */
+.kpi-row{display:grid;gap:16px;}
+.kpi-row.cols-6{grid-template-columns:repeat(6,1fr);}
+.kpi-row.cols-5{grid-template-columns:repeat(5,1fr);}
+.kpi-row.cols-4{grid-template-columns:repeat(4,1fr);}
+.kpi-row.cols-3{grid-template-columns:repeat(3,1fr);}
+.kpi-row.cols-2{grid-template-columns:repeat(2,1fr);}
+.kpi{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-top:3px solid #e5e7eb;}
+.kpi.blue{border-top-color:#2563eb;}
+.kpi.green{border-top-color:#16a34a;}
+.kpi.purple{border-top-color:#7c3aed;}
+.kpi.red{border-top-color:#dc2626;}
+.kpi.yellow{border-top-color:#d97706;}
+.kpi.gray{border-top-color:#6b7280;}
+.kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:6px;}
+.kpi-value{font-size:26px;font-weight:800;color:#111827;line-height:1;}
+.kpi-sub{font-size:11px;color:#9ca3af;margin-top:6px;}
+.kpi-sub.up{color:#16a34a;} .kpi-sub.down{color:#dc2626;}
 
-.workforce{
-  background:#fff;
-  border-radius:25px;
-  padding:30px;
-  display:flex;
-  gap:40px;
-  margin-bottom:40px;
-}
+/* ── CARDS GENÉRICOS ── */
+.card{background:#fff;border-radius:14px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.card h3{font-size:14px;font-weight:700;color:#374151;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
 
-.chart{flex:2;}
+/* ── TABELAS ── */
+.dash-table{width:100%;border-collapse:collapse;font-size:13px;}
+.dash-table th{background:#f9fafb;padding:10px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;border-bottom:1px solid #e5e7eb;}
+.dash-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6;color:#374151;}
+.dash-table tr:last-child td{border-bottom:none;font-weight:700;color:#111827;}
+.dash-table tr:hover td{background:#f9fafb;}
+.dash-table .num{text-align:right;}
+.dash-table .bar-td{width:120px;}
+.mini-bar{height:6px;border-radius:3px;background:#e5e7eb;overflow:hidden;margin-top:3px;}
+.mini-bar-fill{height:100%;border-radius:3px;background:#2563eb;}
 
-.chart-wrapper{
-  display:flex;
-  align-items:flex-end;
-  gap:16px;
-  height:260px;
-  margin-top:30px;
-}
+/* folgas */
+.folga-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.folga-row:last-child{border-bottom:none;}
+.folga-num{font-weight:700;color:#dc2626;}
 
-.bar-container{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  width:40px;
-}
+/* heatmap horario */
+.heatmap{display:grid;grid-template-columns:50px repeat(7,1fr);gap:2px;font-size:11px;}
+.hm-header{text-align:center;font-weight:600;color:#6b7280;padding:3px;}
+.hm-cell{height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;}
+.hm-label{font-size:11px;color:#9ca3af;display:flex;align-items:center;}
 
-.bar{
-  width:100%;
-  background:linear-gradient(180deg,#6a8fd6,#4f6fb3);
-  border-radius:8px 8px 0 0;
-}
+/* bar chart equipe */
+.bar-chart-wrap{display:flex;align-items:flex-end;gap:10px;height:180px;padding-top:20px;}
+.bar-item{display:flex;flex-direction:column;align-items:center;flex:1;}
+.bar-item .bval{font-size:11px;font-weight:700;color:#374151;margin-bottom:4px;}
+.bar-item .bbar{width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,#60a5fa,#2563eb);min-height:4px;}
+.bar-item .bhour{font-size:10px;color:#9ca3af;margin-top:4px;}
 
-.bar-value{font-size:12px;margin-bottom:6px;}
-.bar-hour{margin-top:6px;font-size:12px;color:#555;}
-
-.rank{
-  flex:1;
-  border-left:1px solid #eee;
-  padding-left:30px;
-}
-
-.rank-item{
-  padding:6px 0;
-  border-bottom:1px solid #eee;
-  font-size:14px;
-}
-
-.folgas{
-  background:#fff;
-  border-radius:25px;
-  padding:30px;
-  box-shadow:0 4px 12px rgba(0,0,0,.08);
-}
-
-.folga-item{
-  padding:8px 0;
-  border-bottom:1px solid #eee;
-  font-size:14px;
-}
-
-.folga-dia{
-  color:#dc2626;
-  font-weight:bold;
-}
+/* loading */
+.loading{text-align:center;padding:40px;color:#9ca3af;font-size:13px;}
+.loading i{font-size:24px;display:block;margin-bottom:8px;}
 </style>
 </head>
-
 <body>
-
 <div class="app">
 <aside id="sidebar"></aside>
-
 <main class="content">
 
-<div class="top-cards">
-
-  <div class="card">
-    <h3>Equipe</h3>
-    <div class="big-number" id="totalEquipe">0</div>
-    <div class="label-small">Terapeutas ativas</div>
+  <!-- Top -->
+  <div class="dash-topbar">
+    <h1><i class="fa fa-chart-line" style="color:#2563eb;margin-right:8px"></i>Dashboard</h1>
+    <div class="dash-topbar-right">
+      <select class="mes-sel" id="mesFiltro" onchange="carregarTudo()">
+        <option value="">Todos os meses</option>
+      </select>
+      <select class="mes-sel" id="anoFiltro" onchange="carregarTudo()">
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+      </select>
+    </div>
   </div>
 
-  <div class="card">
-    <h3>Clientes</h3>
-    <div class="big-number" id="totalClientes">0</div>
-    <div class="label-small">Clientes cadastrados</div>
+  <!-- Sub-nav -->
+  <div class="sub-nav">
+    <button class="sub-btn active" onclick="mudarPagina('geral',this)"><i class="fa fa-home"></i> Visão Geral</button>
+    <button class="sub-btn" onclick="mudarPagina('atendimentos',this)"><i class="fa fa-calendar-check"></i> Atendimentos</button>
+    <button class="sub-btn" onclick="mudarPagina('financeiro',this)"><i class="fa fa-dollar-sign"></i> Financeiro</button>
+    <button class="sub-btn" onclick="mudarPagina('equipe',this)"><i class="fa fa-users"></i> Equipe</button>
   </div>
 
-  <div class="card">
-    <h3>Serviços</h3>
-    <div class="big-number" id="totalServicos">0</div>
-    <div class="label-small">Serviços ativos</div>
+  <!-- ══════════ PÁGINA: VISÃO GERAL ══════════ -->
+  <div class="page active" id="page-geral">
+
+    <div class="kpi-row cols-6" id="kpiGeral">
+      <div class="loading"><i class="fa fa-spinner fa-spin"></i>Carregando...</div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3><i class="fa fa-calendar-check" style="color:#2563eb"></i> Atendimentos por Status</h3>
+        <canvas id="chartStatus" height="200"></canvas>
+      </div>
+      <div class="card">
+        <h3><i class="fa fa-chart-bar" style="color:#16a34a"></i> Receita vs Despesas (últimos 6 meses)</h3>
+        <canvas id="chartRecDesp" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3><i class="fa fa-trophy" style="color:#d97706"></i> Top Terapeutas — Atendimentos</h3>
+        <table class="dash-table" id="tblTopTer"></table>
+      </div>
+      <div class="card">
+        <h3><i class="fa fa-spa" style="color:#7c3aed"></i> Top Serviços</h3>
+        <table class="dash-table" id="tblTopServ"></table>
+      </div>
+    </div>
+
   </div>
 
-</div>
+  <!-- ══════════ PÁGINA: ATENDIMENTOS ══════════ -->
+  <div class="page" id="page-atendimentos">
 
-<div class="workforce">
+    <div class="kpi-row cols-5" id="kpiAtend">
+      <div class="loading"><i class="fa fa-spinner fa-spin"></i>Carregando...</div>
+    </div>
 
-  <div class="chart">
-    <h3>Força de Trabalho (por hora)</h3>
-    <div class="chart-wrapper" id="bars"></div>
+    <div class="card">
+      <h3><i class="fa fa-chart-line" style="color:#2563eb"></i> Atendimentos por Dia</h3>
+      <canvas id="chartDia" height="100"></canvas>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3><i class="fa fa-user-tie" style="color:#7c3aed"></i> Ranking por Terapeuta</h3>
+        <table class="dash-table" id="tblRankTer">
+          <thead><tr><th>Terapeuta</th><th class="num">Atendimentos</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket Médio</th><th class="num">Retornos</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3><i class="fa fa-spa" style="color:#16a34a"></i> Ranking por Serviço</h3>
+        <table class="dash-table" id="tblRankServ">
+          <thead><tr><th>Serviço</th><th class="num">Atendimentos</th><th class="num">%</th><th class="bar-td"></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
-  <div class="rank">
-    <h3>Carga horária (Ranking)</h3>
-    <div id="ranking"></div>
+  <!-- ══════════ PÁGINA: FINANCEIRO ══════════ -->
+  <div class="page" id="page-financeiro">
+
+    <div class="kpi-row cols-5" id="kpiFinanceiro">
+      <div class="loading"><i class="fa fa-spinner fa-spin"></i>Carregando...</div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3><i class="fa fa-chart-bar" style="color:#2563eb"></i> Receita vs Despesas por Mês</h3>
+        <canvas id="chartFinMes" height="220"></canvas>
+      </div>
+      <div class="card">
+        <h3><i class="fa fa-tags" style="color:#dc2626"></i> Despesas por Categoria</h3>
+        <table class="dash-table" id="tblDesp">
+          <thead><tr><th>Categoria</th><th class="num">Valor</th><th class="num">%</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fa fa-table" style="color:#7c3aed"></i> Receita por Terapeuta</h3>
+      <table class="dash-table" id="tblFinTer">
+        <thead><tr><th>Terapeuta</th><th class="num">Atendimentos</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">% Comissão</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
   </div>
 
-</div>
+  <!-- ══════════ PÁGINA: EQUIPE ══════════ -->
+  <div class="page" id="page-equipe">
 
-<div class="folgas">
-  <h3>Folgas em 2026</h3>
-  <div id="listaFolgas"></div>
-</div>
+    <div class="kpi-row cols-4" id="kpiEquipe">
+      <div class="loading"><i class="fa fa-spinner fa-spin"></i>Carregando...</div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3><i class="fa fa-clock" style="color:#2563eb"></i> Força de Trabalho por Hora</h3>
+        <div class="bar-chart-wrap" id="barForca"></div>
+      </div>
+      <div class="card">
+        <h3><i class="fa fa-ranking-star" style="color:#d97706"></i> Ranking Carga Horária</h3>
+        <table class="dash-table" id="tblCargaHora">
+          <thead><tr><th>Terapeuta</th><th class="num">Entrada</th><th class="num">Saída</th><th class="num">Carga</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <h3><i class="fa fa-umbrella-beach" style="color:#16a34a"></i> Folgas em 2026</h3>
+        <div id="listaFolgas"></div>
+      </div>
+      <div class="card">
+        <h3><i class="fa fa-file-medical" style="color:#dc2626"></i> Solicitações Pendentes</h3>
+        <table class="dash-table" id="tblSolicPend">
+          <thead><tr><th>Terapeuta</th><th>Tipo</th><th>Período</th><th class="num">Dias</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
 
 </main>
 </div>
 
-<!-- 🔥 ORDEM CORRETA DOS SCRIPTS -->
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
-
 <script>
-document.addEventListener("DOMContentLoaded", async function(){
 
-/* ================= TERAPEUTAS ================= */
+const MESES_PT=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+let chartInstances={};
 
-const { data: terapeutas } = await client
-  .from("terapeutas")
-  .select("*")
-  .eq("status", "Ativo")
-  .in("cargo", ["Terapeuta Feminina", "Terapeuta Masculino"]);
+/* ── HELPERS ── */
+const fmtM=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const fmtN=v=>Number(v||0).toLocaleString("pt-BR");
+const fmtD=v=>{if(!v)return"—";const[y,m,d]=v.split("-");return`${d}/${m}/${y}`;};
 
-/* ================= CLIENTES ================= */
+function destroyChart(id){if(chartInstances[id]){chartInstances[id].destroy();delete chartInstances[id];}}
 
-const clientesPromise = client
-  .from("clientes")
-  .select("*", { count: "exact", head: true });
-
-/* ================= SERVIÇOS ================= */
-
-const { data: servicos } = await client
-  .from("servicos")
-  .select("*")
-  .ilike("status","ativo");
-
-const { count: totalClientes } = await clientesPromise;
-
-document.getElementById("totalEquipe").innerText = terapeutas?.length || 0;
-document.getElementById("totalClientes").innerText = totalClientes || 0;
-document.getElementById("totalServicos").innerText = servicos?.length || 0;
-
-/* ================= FORÇA DE TRABALHO ================= */
-
-let ranking = [];
-let menorHora = 23;
-let maiorHora = 0;
-
-(terapeutas||[]).forEach(t=>{
-  if(!t.hora_entrada || !t.hora_saida) return;
-
-  const hEntrada = parseInt(t.hora_entrada.substring(0,2));
-  const hSaida = parseInt(t.hora_saida.substring(0,2));
-
-  if(hEntrada < menorHora) menorHora = hEntrada;
-  if(hSaida > maiorHora) maiorHora = hSaida;
-});
-
-if(menorHora > maiorHora){
-  menorHora = 9;
-  maiorHora = 18;
+function mkChart(id,config){
+  destroyChart(id);
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  chartInstances[id]=new Chart(ctx,config);
 }
 
-let contagem = {};
-for(let h=menorHora; h<=maiorHora; h++) contagem[h]=0;
+/* ── SUB-NAV ── */
+function mudarPagina(p,btn){
+  document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".sub-btn").forEach(b=>b.classList.remove("active"));
+  document.getElementById("page-"+p).classList.add("active");
+  btn.classList.add("active");
+}
 
-(terapeutas||[]).forEach(t=>{
-  if(!t.hora_entrada || !t.hora_saida) return;
+/* ── FILTROS ── */
+function getFiltro(){
+  const mes=document.getElementById("mesFiltro").value;
+  const ano=document.getElementById("anoFiltro").value;
+  return{mes,ano};
+}
 
-  const [h1,m1]=t.hora_entrada.substring(0,5).split(":").map(Number);
-  const [h2,m2]=t.hora_saida.substring(0,5).split(":").map(Number);
+function buildFiltroAtend(q){
+  const {mes,ano}=getFiltro();
+  if(ano) q=q.gte("data",`${ano}-01-01`).lte("data",`${ano}-12-31`);
+  if(mes) q=q.gte("data",`${ano||new Date().getFullYear()}-${mes}-01`).lte("data",`${ano||new Date().getFullYear()}-${mes}-31`);
+  return q;
+}
 
-  const inicioMin = h1*60+m1;
-  const fimMin = h2*60+m2;
+function buildFiltroDespesas(q){
+  const {mes,ano}=getFiltro();
+  if(ano) q=q.gte("data_vencimento",`${ano}-01-01`).lte("data_vencimento",`${ano}-12-31`);
+  if(mes) q=q.gte("data_vencimento",`${ano||new Date().getFullYear()}-${mes}-01`).lte("data_vencimento",`${ano||new Date().getFullYear()}-${mes}-31`);
+  return q;
+}
 
-  const totalMin=fimMin-inicioMin;
-  ranking.push({nome:t.nome_profissional,minutos:totalMin});
+/* ── INICIALIZAR MESES ── */
+function initMeses(){
+  const sel=document.getElementById("mesFiltro");
+  MESES_PT.forEach((m,i)=>{
+    const val=String(i+1).padStart(2,"0");
+    sel.innerHTML+=`<option value="${val}">${m}</option>`;
+  });
+  // selecionar mês atual
+  const mesAtual=String(new Date().getMonth()+1).padStart(2,"0");
+  sel.value=mesAtual;
+}
 
-  for(let h=menorHora; h<=maiorHora; h++){
-    const horaInicio = h * 60;
-    const horaFim = (h+1) * 60;
+/* ════════════════════════════════════════
+   CARREGAR TUDO
+════════════════════════════════════════ */
+async function carregarTudo(){
+  await Promise.all([
+    carregarGeral(),
+    carregarAtendimentos(),
+    carregarFinanceiro(),
+    carregarEquipe()
+  ]);
+}
 
-    if(inicioMin <= horaFim && fimMin >= horaInicio){
-      contagem[h]++;
-    }
-  }
-});
+/* ════════════════════════════════════════
+   VISÃO GERAL
+════════════════════════════════════════ */
+async function carregarGeral(){
+  const [
+    {data:atends},
+    {count:totalClientes},
+    {data:terapeutas},
+    {data:despesas}
+  ] = await Promise.all([
+    buildFiltroAtend(client.from("atendimentos").select(`*,servicos(valor,comissao),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`)),
+    client.from("clientes").select("*",{count:"exact",head:true}),
+    client.from("terapeutas").select("*").eq("status","Ativo"),
+    buildFiltroDespesas(client.from("despesas").select("valor,status,categoria"))
+  ]);
 
-const barsDiv=document.getElementById("bars");
-barsDiv.innerHTML="";
+  const confirmados=(atends||[]).filter(a=>a.status==="Confirmado");
+  const receita=confirmados.reduce((s,a)=>s+(a.valor_final||0),0);
+  const comissao=confirmados.reduce((s,a)=>s+(a.comissao_total||0),0);
+  const ticketMedio=confirmados.length?receita/confirmados.length:0;
+  const despTotal=(despesas||[]).reduce((s,d)=>s+(d.valor||0),0);
+  const resultado=receita-despTotal;
 
-const maxValor=Math.max(...Object.values(contagem));
+  // retornos = clientes que aparecem mais de 1x
+  const clienteCount={};
+  confirmados.forEach(a=>{if(a.cliente_id)clienteCount[a.cliente_id]=(clienteCount[a.cliente_id]||0)+1;});
+  const retornos=Object.values(clienteCount).filter(v=>v>1).length;
 
-for(let h=menorHora;h<=maiorHora;h++){
-  const valor=contagem[h];
-  if(valor === 0) continue;
+  document.getElementById("kpiGeral").innerHTML=`
+    <div class="kpi blue"><div class="kpi-label">Atendimentos</div><div class="kpi-value">${fmtN(confirmados.length)}</div><div class="kpi-sub">${fmtN((atends||[]).length)} total (incl. agendados)</div></div>
+    <div class="kpi green"><div class="kpi-label">Receita</div><div class="kpi-value" style="font-size:18px">${fmtM(receita)}</div><div class="kpi-sub">Confirmados</div></div>
+    <div class="kpi purple"><div class="kpi-label">Comissão</div><div class="kpi-value" style="font-size:18px">${fmtM(comissao)}</div><div class="kpi-sub">Total pago</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" style="font-size:18px">${fmtM(ticketMedio)}</div><div class="kpi-sub">Por atendimento</div></div>
+    <div class="kpi gray"><div class="kpi-label">Clientes</div><div class="kpi-value">${fmtN(totalClientes)}</div><div class="kpi-sub">${retornos} retornos no período</div></div>
+    <div class="kpi red"><div class="kpi-label">Resultado</div><div class="kpi-value" style="font-size:18px;color:${resultado>=0?'#16a34a':'#dc2626'}">${fmtM(resultado)}</div><div class="kpi-sub">Receita − Despesas</div></div>
+  `;
 
-  const altura=maxValor? (valor/maxValor)*200 : 0;
+  // chart status
+  const ag=(atends||[]).filter(a=>a.status==="Agendado").length;
+  const conf=confirmados.length;
+  const canc=(atends||[]).filter(a=>a.status==="Cancelado").length;
+  mkChart("chartStatus",{type:"doughnut",data:{labels:["Agendado","Confirmado","Cancelado"],datasets:[{data:[ag,conf,canc],backgroundColor:["#bfdbfe","#bbf7d0","#fecaca"],borderWidth:2}]},options:{plugins:{legend:{position:"bottom"}},cutout:"65%"}});
 
-  barsDiv.innerHTML+=`
-    <div class="bar-container">
-      <div class="bar-value">${valor}</div>
-      <div class="bar" style="height:${altura}px"></div>
-      <div class="bar-hour">${h}:00</div>
-    </div>
+  // chart rec vs desp (últimos 6 meses)
+  await chartRecDesp();
+
+  // top terapeutas
+  const terMap={};
+  confirmados.forEach(a=>{
+    [a.ter1,a.ter2].filter(Boolean).forEach(t=>{
+      if(!terMap[t.cpf]) terMap[t.cpf]={nome:t.nome_profissional,count:0,receita:0,comissao:0};
+      terMap[t.cpf].count++;
+      terMap[t.cpf].receita+=a.valor_final||0;
+      terMap[t.cpf].comissao+=a.comissao_total||0;
+    });
+  });
+  const topTer=Object.values(terMap).sort((a,b)=>b.count-a.count).slice(0,8);
+  document.getElementById("tblTopTer").innerHTML=`
+    <thead><tr><th>Terapeuta</th><th class="num">Atend.</th><th class="num">Receita</th></tr></thead>
+    <tbody>${topTer.map((t,i)=>`<tr><td>${i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':''}${t.nome}</td><td class="num">${t.count}</td><td class="num">${fmtM(t.receita)}</td></tr>`).join("")}</tbody>
+  `;
+
+  // top serviços
+  const servMap={};
+  confirmados.forEach(a=>{const nome=a.servicos?[a.servicos.grupo,a.servicos.subgrupo].filter(Boolean).join(" "):"—";if(!servMap[nome])servMap[nome]=0;servMap[nome]++;});
+  const topServ=Object.entries(servMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxServ=topServ[0]?.[1]||1;
+  document.getElementById("tblTopServ").innerHTML=`
+    <thead><tr><th>Serviço</th><th class="num">Qtd</th><th class="bar-td"></th></tr></thead>
+    <tbody>${topServ.map(([nome,qtd])=>`<tr><td>${nome}</td><td class="num">${qtd}</td><td><div class="mini-bar"><div class="mini-bar-fill" style="width:${(qtd/maxServ*100).toFixed(0)}%;background:#7c3aed"></div></div></td></tr>`).join("")}</tbody>
   `;
 }
 
-/* ================= RANKING ================= */
+async function chartRecDesp(){
+  const ano=getFiltro().ano||new Date().getFullYear();
+  const meses=Array.from({length:6},(_,i)=>{const m=new Date();m.setMonth(m.getMonth()-5+i);return m;});
 
-ranking.sort((a,b)=>b.minutos-a.minutos);
+  const labels=meses.map(m=>MESES_PT[m.getMonth()].slice(0,3));
+  const receitas=[];
+  const despesas=[];
 
-const rankDiv=document.getElementById("ranking");
-
-ranking.forEach(r=>{
-  const horas=Math.floor(r.minutos/60);
-  const minutos=r.minutos%60;
-
-  rankDiv.innerHTML+=`
-    <div class="rank-item">
-      ${r.nome} — ${horas}h ${minutos}m
-    </div>
-  `;
-});
-
-/* ================= FOLGAS ================= */
-
-const hoje=new Date();
-const inicioAno=new Date(2026,0,1);
-
-const mapaDia={
-  "domingo":0,"segunda":1,"terça":2,"terca":2,
-  "quarta":3,"quinta":4,"sexta":5,
-  "sábado":6,"sabado":6
-};
-
-const folgaDiv=document.getElementById("listaFolgas");
-folgaDiv.innerHTML="";
-
-for(const t of (terapeutas||[])){
-
-  let contadorSemanal=0;
-
-  if(t.tem_folga && String(t.tem_folga).trim().toLowerCase()==="sim" && t.dia_folga){
-    const diaNumero=mapaDia[t.dia_folga.toLowerCase()];
-    if(diaNumero!==undefined){
-      const admissao=new Date(t.data_inicio);
-      const dataBase=admissao>inicioAno?admissao:inicioAno;
-      let dataLoop=new Date(dataBase);
-
-      while(dataLoop<=hoje){
-        if(dataLoop.getDay()===diaNumero) contadorSemanal++;
-        dataLoop.setDate(dataLoop.getDate()+1);
-      }
-    }
+  for(const m of meses){
+    const y=m.getFullYear(),mo=String(m.getMonth()+1).padStart(2,"0");
+    const ini=`${y}-${mo}-01`,fim=`${y}-${mo}-31`;
+    const [{data:atDs},{data:despDs}]=await Promise.all([
+      client.from("atendimentos").select("valor_final").eq("status","Confirmado").gte("data",ini).lte("data",fim),
+      client.from("despesas").select("valor").gte("data_vencimento",ini).lte("data_vencimento",fim)
+    ]);
+    receitas.push((atDs||[]).reduce((s,a)=>s+(a.valor_final||0),0));
+    despesas.push((despDs||[]).reduce((s,d)=>s+(d.valor||0),0));
   }
 
-  const { data: solicitacoes } = await client
-    .from("solicitacoes")
-    .select("data_inicio,data_fim,status")
-    .eq("terapeuta_cpf",t.cpf);
+  mkChart("chartRecDesp",{type:"bar",data:{labels,datasets:[
+    {label:"Receita",data:receitas,backgroundColor:"#bbf7d0",borderColor:"#16a34a",borderWidth:2},
+    {label:"Despesas",data:despesas,backgroundColor:"#fecaca",borderColor:"#dc2626",borderWidth:2}
+  ]},options:{plugins:{legend:{position:"bottom"}},scales:{y:{ticks:{callback:v=>fmtM(v)}}}}});
+}
 
-  let diasAprovados=0;
+/* ════════════════════════════════════════
+   ATENDIMENTOS
+════════════════════════════════════════ */
+async function carregarAtendimentos(){
+  const {data:atends}=await buildFiltroAtend(
+    client.from("atendimentos").select(`*,servicos(id,grupo,subgrupo,tempo),clientes(id,nome),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`)
+  );
+  const confirmados=(atends||[]).filter(a=>a.status==="Confirmado");
+  const receita=confirmados.reduce((s,a)=>s+(a.valor_final||0),0);
+  const comissao=confirmados.reduce((s,a)=>s+(a.comissao_total||0),0);
+  const ticketMedio=confirmados.length?receita/confirmados.length:0;
 
-  (solicitacoes||[]).forEach(s=>{
-    if(String(s.status).trim().toLowerCase()!=="aprovado") return;
+  // retornos
+  const cliCount={};
+  confirmados.forEach(a=>{if(a.cliente_id)cliCount[a.cliente_id]=(cliCount[a.cliente_id]||0)+1;});
+  const retornos=Object.values(cliCount).filter(v=>v>1).length;
 
-    const inicio=new Date(s.data_inicio);
-    const fim=new Date(s.data_fim);
-    const inicioConsiderado=inicio<inicioAno?inicioAno:inicio;
-    const diff=Math.floor((fim-inicioConsiderado)/(1000*60*60*24))+1;
+  document.getElementById("kpiAtend").innerHTML=`
+    <div class="kpi blue"><div class="kpi-label">Confirmados</div><div class="kpi-value">${confirmados.length}</div></div>
+    <div class="kpi green"><div class="kpi-label">Receita</div><div class="kpi-value" style="font-size:18px">${fmtM(receita)}</div></div>
+    <div class="kpi purple"><div class="kpi-label">Comissão</div><div class="kpi-value" style="font-size:18px">${fmtM(comissao)}</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Ticket Médio</div><div class="kpi-value" style="font-size:18px">${fmtM(ticketMedio)}</div></div>
+    <div class="kpi gray"><div class="kpi-label">Retornos</div><div class="kpi-value">${retornos}</div></div>
+  `;
 
-    if(diff>0) diasAprovados+=diff;
+  // gráfico por dia
+  const porDia={};
+  confirmados.forEach(a=>{porDia[a.data]=(porDia[a.data]||0)+1;});
+  const dias=Object.keys(porDia).sort();
+  mkChart("chartDia",{type:"line",data:{labels:dias.map(d=>{const[,m,dd]=d.split("-");return`${dd}/${m}`;}),datasets:[{label:"Atendimentos",data:dias.map(d=>porDia[d]),fill:true,backgroundColor:"rgba(37,99,235,.1)",borderColor:"#2563eb",tension:.4,pointRadius:3}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+
+  // ranking terapeutas
+  const terMap={};
+  confirmados.forEach(a=>{
+    [a.ter1,a.ter2].filter(Boolean).forEach(t=>{
+      if(!terMap[t.cpf]) terMap[t.cpf]={nome:t.nome_profissional,count:0,receita:0,comissao:0,clientes:new Set()};
+      terMap[t.cpf].count++;
+      terMap[t.cpf].receita+=a.valor_final||0;
+      terMap[t.cpf].comissao+=a.comissao_total||0;
+      if(a.cliente_id) terMap[t.cpf].clientes.add(a.cliente_id);
+    });
+  });
+  const rankTer=Object.values(terMap).sort((a,b)=>b.count-a.count);
+  const totalAtend=rankTer.reduce((s,t)=>s+t.count,0)||1;
+  document.querySelector("#tblRankTer tbody").innerHTML=
+    rankTer.map(t=>`<tr><td>${t.nome}</td><td class="num">${t.count}</td><td class="num">${fmtM(t.receita)}</td><td class="num">${fmtM(t.comissao)}</td><td class="num">${fmtM(t.count?t.receita/t.count:0)}</td><td class="num">${[...t.clientes].length}</td></tr>`).join("")
+    +`<tr style="font-weight:700"><td>Total</td><td class="num">${totalAtend}</td><td class="num">${fmtM(confirmados.reduce((s,a)=>s+(a.valor_final||0),0))}</td><td class="num">${fmtM(comissao)}</td><td class="num">${fmtM(ticketMedio)}</td><td class="num">${retornos}</td></tr>`;
+
+  // ranking serviços
+  const servMap={};
+  confirmados.forEach(a=>{
+    const s=a.servicos;
+    const nome=s?[s.grupo,s.subgrupo].filter(Boolean).join(" "):"—";
+    if(!servMap[nome])servMap[nome]=0;servMap[nome]++;
+  });
+  const rankServ=Object.entries(servMap).sort((a,b)=>b[1]-a[1]);
+  const maxServ=rankServ[0]?.[1]||1;
+  const totalServ=rankServ.reduce((s,[,v])=>s+v,0)||1;
+  document.querySelector("#tblRankServ tbody").innerHTML=
+    rankServ.map(([nome,qtd])=>`<tr><td>${nome}</td><td class="num">${qtd}</td><td class="num">${(qtd/totalServ*100).toFixed(1)}%</td><td class="bar-td"><div class="mini-bar"><div class="mini-bar-fill" style="width:${(qtd/maxServ*100).toFixed(0)}%"></div></div></td></tr>`).join("")
+    +`<tr style="font-weight:700"><td>Total</td><td class="num">${totalServ}</td><td class="num">100%</td><td></td></tr>`;
+}
+
+/* ════════════════════════════════════════
+   FINANCEIRO
+════════════════════════════════════════ */
+async function carregarFinanceiro(){
+  const [{data:atends},{data:despesas},{count:totalClientes}]=await Promise.all([
+    buildFiltroAtend(client.from("atendimentos").select(`valor_final,comissao_total,status,ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`)),
+    buildFiltroDespesas(client.from("despesas").select("valor,status,categoria,data_vencimento")),
+    client.from("clientes").select("*",{count:"exact",head:true})
+  ]);
+
+  const confirmados=(atends||[]).filter(a=>a.status==="Confirmado");
+  const receita=confirmados.reduce((s,a)=>s+(a.valor_final||0),0);
+  const comissao=confirmados.reduce((s,a)=>s+(a.comissao_total||0),0);
+  const despTotal=(despesas||[]).reduce((s,d)=>s+(d.valor||0),0);
+  const resultado=receita-despTotal;
+  const despPago=(despesas||[]).filter(d=>d.status==="Pago").reduce((s,d)=>s+(d.valor||0),0);
+
+  document.getElementById("kpiFinanceiro").innerHTML=`
+    <div class="kpi blue"><div class="kpi-label">Clientes</div><div class="kpi-value">${fmtN(totalClientes)}</div></div>
+    <div class="kpi green"><div class="kpi-label">Receita</div><div class="kpi-value" style="font-size:18px">${fmtM(receita)}</div></div>
+    <div class="kpi purple"><div class="kpi-label">Comissão</div><div class="kpi-value" style="font-size:18px">${fmtM(comissao)}</div></div>
+    <div class="kpi red"><div class="kpi-label">Despesas</div><div class="kpi-value" style="font-size:18px">${fmtM(despTotal)}</div><div class="kpi-sub">${fmtM(despPago)} pago</div></div>
+    <div class="kpi ${resultado>=0?'green':'red'}"><div class="kpi-label">Receita Líquida</div><div class="kpi-value" style="font-size:18px;color:${resultado>=0?'#16a34a':'#dc2626'}">${fmtM(resultado)}</div></div>
+  `;
+
+  // gráfico mensal
+  const ano=getFiltro().ano||new Date().getFullYear();
+  const labels=MESES_PT.map(m=>m.slice(0,3));
+  const recMes=Array(12).fill(0),despMes=Array(12).fill(0);
+  confirmados.forEach(a=>{
+    if(a.data){const m=parseInt(a.data.split("-")[1])-1;recMes[m]+=a.valor_final||0;}
+  });
+  (despesas||[]).forEach(d=>{
+    if(d.data_vencimento){const m=parseInt(d.data_vencimento.split("-")[1])-1;despMes[m]+=d.valor||0;}
+  });
+  mkChart("chartFinMes",{type:"bar",data:{labels,datasets:[
+    {label:"Receita",data:recMes,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1},
+    {label:"Despesas",data:despMes,backgroundColor:"rgba(220,38,38,.7)",borderColor:"#dc2626",borderWidth:1}
+  ]},options:{plugins:{legend:{position:"bottom"}},scales:{y:{ticks:{callback:v=>fmtM(v)}}}}});
+
+  // despesas por categoria
+  const catMap={};
+  (despesas||[]).forEach(d=>{const c=d.categoria||"Outros";catMap[c]=(catMap[c]||0)+(d.valor||0);});
+  const cats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+  const maxCat=cats[0]?.[1]||1;
+  document.querySelector("#tblDesp tbody").innerHTML=
+    cats.map(([c,v])=>`<tr><td>${c}</td><td class="num">${fmtM(v)}</td><td class="num">${(v/despTotal*100).toFixed(1)}%</td></tr>`).join("")
+    +`<tr style="font-weight:700"><td>Total</td><td class="num">${fmtM(despTotal)}</td><td class="num">100%</td></tr>`;
+
+  // receita por terapeuta
+  const terMap={};
+  confirmados.forEach(a=>{
+    [a.ter1,a.ter2].filter(Boolean).forEach(t=>{
+      if(!terMap[t.cpf])terMap[t.cpf]={nome:t.nome_profissional,count:0,receita:0,comissao:0};
+      terMap[t.cpf].count++;terMap[t.cpf].receita+=a.valor_final||0;terMap[t.cpf].comissao+=a.comissao_total||0;
+    });
+  });
+  const rankTer=Object.values(terMap).sort((a,b)=>b.receita-a.receita);
+  document.querySelector("#tblFinTer tbody").innerHTML=
+    rankTer.map(t=>`<tr><td>${t.nome}</td><td class="num">${t.count}</td><td class="num">${fmtM(t.receita)}</td><td class="num">${fmtM(t.comissao)}</td><td class="num">${t.receita?((t.comissao/t.receita)*100).toFixed(1)+"%":"—"}</td></tr>`).join("")
+    +`<tr style="font-weight:700"><td>Total</td><td class="num">${confirmados.length}</td><td class="num">${fmtM(receita)}</td><td class="num">${fmtM(comissao)}</td><td class="num">${receita?((comissao/receita)*100).toFixed(1)+"%":"—"}</td></tr>`;
+}
+
+/* ════════════════════════════════════════
+   EQUIPE
+════════════════════════════════════════ */
+async function carregarEquipe(){
+  const [{data:terapeutas},{data:solics}]=await Promise.all([
+    client.from("terapeutas").select("*").eq("status","Ativo"),
+    client.from("solicitacoes").select("*,terapeutas(nome_profissional)").eq("status","Pendente")
+  ]);
+
+  const ativas=(terapeutas||[]).filter(t=>["Terapeuta Feminina","Terapeuta Masculino"].includes(t.cargo));
+  const pendentes=(solics||[]).length;
+
+  document.getElementById("kpiEquipe").innerHTML=`
+    <div class="kpi blue"><div class="kpi-label">Terapeutas Ativas</div><div class="kpi-value">${ativas.length}</div></div>
+    <div class="kpi gray"><div class="kpi-label">Total Equipe</div><div class="kpi-value">${(terapeutas||[]).length}</div></div>
+    <div class="kpi yellow"><div class="kpi-label">Solicit. Pendentes</div><div class="kpi-value">${pendentes}</div><div class="kpi-sub">Aguardando aprovação</div></div>
+    <div class="kpi green"><div class="kpi-label">Com Folga Semanal</div><div class="kpi-value">${ativas.filter(t=>t.tem_folga==="Sim").length}</div></div>
+  `;
+
+  // força de trabalho
+  let menorH=23,maiorH=9;
+  ativas.forEach(t=>{
+    if(!t.hora_entrada||!t.hora_saida)return;
+    const hE=parseInt(t.hora_entrada);const hS=parseInt(t.hora_saida);
+    if(hE<menorH)menorH=hE;if(hS>maiorH)maiorH=hS;
+  });
+  const contH={};
+  for(let h=menorH;h<=maiorH;h++)contH[h]=0;
+  const rankCarga=[];
+  ativas.forEach(t=>{
+    if(!t.hora_entrada||!t.hora_saida)return;
+    const[h1,m1]=t.hora_entrada.substring(0,5).split(":").map(Number);
+    const[h2,m2]=t.hora_saida.substring(0,5).split(":").map(Number);
+    const minutos=(h2*60+m2)-(h1*60+m1);
+    rankCarga.push({nome:t.nome_profissional,entrada:t.hora_entrada.substring(0,5),saida:t.hora_saida.substring(0,5),minutos});
+    for(let h=menorH;h<=maiorH;h++){if(h1*60+m1<=h*60+60&&h2*60+m2>=h*60)contH[h]++;}
   });
 
-  const total=contadorSemanal+diasAprovados;
+  const maxV=Math.max(...Object.values(contH),1);
+  document.getElementById("barForca").innerHTML=Object.entries(contH).map(([h,v])=>{
+    const pct=v/maxV*100;
+    return`<div class="bar-item"><div class="bval">${v}</div><div class="bbar" style="height:${Math.max(pct*1.6,4)}px"></div><div class="bhour">${h}:00</div></div>`;
+  }).join("");
 
-  folgaDiv.innerHTML+=`
-    <div class="folga-item">
-      ${t.nome_profissional} —
-      <span class="folga-dia">${total} folgas</span>
-    </div>
-  `;
+  // ranking carga horária
+  rankCarga.sort((a,b)=>b.minutos-a.minutos);
+  document.querySelector("#tblCargaHora tbody").innerHTML=
+    rankCarga.map(t=>`<tr><td>${t.nome}</td><td class="num">${t.entrada}</td><td class="num">${t.saida}</td><td class="num">${Math.floor(t.minutos/60)}h${t.minutos%60?t.minutos%60+"m":""}</td></tr>`).join("");
+
+  // folgas
+  const mapaDia={domingo:0,segunda:1,"terça":2,terca:2,quarta:3,quinta:4,sexta:5,"sábado":6,sabado:6};
+  const hoje=new Date(),ini2026=new Date(2026,0,1);
+  const folgaDiv=document.getElementById("listaFolgas");
+  folgaDiv.innerHTML="";
+  for(const t of ativas){
+    let folgas=0;
+    if(t.tem_folga==="Sim"&&t.dia_folga){
+      const dNum=mapaDia[t.dia_folga.toLowerCase()];
+      if(dNum!==undefined){
+        const admissao=new Date(t.data_inicio||"2026-01-01");
+        const base=admissao>ini2026?admissao:ini2026;
+        let dl=new Date(base);
+        while(dl<=hoje){if(dl.getDay()===dNum)folgas++;dl.setDate(dl.getDate()+1);}
+      }
+    }
+    if(t.cpf){
+      const {data:sol}=await client.from("solicitacoes").select("data_inicio,data_fim,status").eq("terapeuta_cpf",t.cpf).eq("status","Aprovado");
+      (sol||[]).forEach(s=>{
+        const ini=new Date(s.data_inicio),fim=new Date(s.data_fim);
+        const ic=ini<ini2026?ini2026:ini;
+        const diff=Math.floor((fim-ic)/(86400000))+1;
+        if(diff>0)folgas+=diff;
+      });
+    }
+    folgaDiv.innerHTML+=`<div class="folga-row"><span>${t.nome_profissional}</span><span class="folga-num">${folgas} folga${folgas!==1?"s":""}</span></div>`;
+  }
+
+  // solicitações pendentes
+  document.querySelector("#tblSolicPend tbody").innerHTML=
+    (solics||[]).map(s=>{
+      const ini=s.data_inicio?fmtD(s.data_inicio):"—",fim=s.data_fim?fmtD(s.data_fim):"—";
+      const dias=s.data_inicio&&s.data_fim?Math.floor((new Date(s.data_fim)-new Date(s.data_inicio))/(86400000))+1:0;
+      return`<tr><td>${s.terapeutas?.nome_profissional||"—"}</td><td>${s.tipo_solicitacao||"—"}</td><td>${ini} – ${fim}</td><td class="num">${dias}d</td></tr>`;
+    }).join("")||(pendentes===0?`<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:20px">Nenhuma pendente</td></tr>`:"");
 }
 
+/* ── INIT ── */
+document.addEventListener("DOMContentLoaded",()=>{
+  initMeses();
+  carregarTudo();
 });
 </script>
-
 </body>
 </html>

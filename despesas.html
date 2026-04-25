@@ -76,16 +76,18 @@ tr:hover td{background:#f9fafb;}
 .pagar-info strong{color:#111827;}
 
 /* quinzena */
-.quinzena-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;width:100%;}
-.quinzena-row:last-child{border-bottom:none;}
-.q-avatar{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.q-table{width:100%;border-collapse:collapse;}
+.q-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;padding:8px 12px;background:#f9fafb;text-align:left;border-bottom:1px solid #e5e7eb;}
+.q-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6;font-size:13px;vertical-align:middle;}
+.q-table tr:last-child td{border-bottom:none;}
+.q-table tr:hover td{background:#fafafa;}
+.q-check{width:16px;height:16px;cursor:pointer;accent-color:#2563eb;}
+.q-nome{font-weight:600;color:#111827;font-size:13px;}
+.q-valor{width:110px;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right;}
+.q-valor:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.q-avatar{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-size:12px;flex-shrink:0;}
 .q-avatar.fem{background:#fce7f3;color:#db2777;}
 .q-avatar.masc{background:#dbeafe;color:#2563eb;}
-.q-nome{font-size:13px;font-weight:600;color:#111827;}
-.q-info{flex:1;min-width:0;}
-.q-valor{width:130px;flex-shrink:0;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right;}
-.q-valor:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.q-check{width:18px;height:18px;cursor:pointer;accent-color:#2563eb;flex-shrink:0;}
 .quinzena-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .quinzena-periodo{display:flex;gap:10px;margin-bottom:16px;background:#f9fafb;border-radius:10px;padding:12px;}
 .quinzena-periodo .field{flex:1;}
@@ -316,12 +318,20 @@ tr:hover td{background:#f9fafb;}
     <!-- Lista de terapeutas -->
     <div class="quinzena-header">
       <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af">Profissionais</span>
-      <label style="font-size:12px;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:6px">
-        <input type="checkbox" id="qCheckAll" onchange="toggleTodos(this)" style="accent-color:#2563eb"> Selecionar todos
-      </label>
     </div>
 
-    <div id="qLista" style="max-height:320px;overflow-y:auto"></div>
+    <div style="max-height:340px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">
+      <table class="q-table">
+        <thead>
+          <tr>
+            <th style="width:32px"><input type="checkbox" id="qCheckAll" onchange="toggleTodos(this)" class="q-check"></th>
+            <th>Profissional</th>
+            <th style="width:130px;text-align:right">Valor (R$)</th>
+          </tr>
+        </thead>
+        <tbody id="qLista"></tbody>
+      </table>
+    </div>
 
   </div>
   <div class="modal-footer" style="justify-content:space-between">
@@ -714,69 +724,53 @@ function fecharQuinzena(){
 }
 
 function renderQlista(){
-  const lista = document.getElementById("qLista");
-  lista.innerHTML = "";
+  const tbody = document.getElementById("qLista");
+  tbody.innerHTML = "";
 
   terapeutasQ.forEach(t => {
-    const fem  = t.cargo === "Terapeuta Feminina";
-    const row  = document.createElement("div");
-    row.className = "quinzena-row";
+    const fem = t.cargo === "Terapeuta Feminina";
+    const tr  = document.createElement("tr");
 
-    // checkbox
-    const chk = document.createElement("input");
-    chk.type = "checkbox";
-    chk.className = "q-check";
-    chk.id = "qCheck_"+t.cpf;
-    chk.value = t.cpf;
-    chk.checked = true;
+    // checkbox cell
+    const tdChk = document.createElement("td");
+    const chk   = document.createElement("input");
+    chk.type = "checkbox"; chk.className = "q-check";
+    chk.id = "qCheck_"+t.cpf; chk.value = t.cpf; chk.checked = true;
     chk.addEventListener("change", atualizarResumo);
+    tdChk.appendChild(chk);
 
-    // avatar
-    const av = document.createElement("div");
-    av.className = "q-avatar "+(fem?"fem":"masc");
-    av.innerHTML = '<i class="fa '+(fem?"fa-person-dress":"fa-person")+'"></i>';
+    // nome cell
+    const tdNome = document.createElement("td");
+    const avatar = document.createElement("span");
+    avatar.className = "q-avatar "+(fem?"fem":"masc");
+    avatar.innerHTML = '<i class="fa '+(fem?"fa-person-dress":"fa-person")+'"></i>';
+    const nomeSpan = document.createElement("span");
+    nomeSpan.className = "q-nome";
+    nomeSpan.style.marginLeft = "8px";
+    nomeSpan.textContent = t.nome_profissional;
+    tdNome.appendChild(avatar);
+    tdNome.appendChild(nomeSpan);
 
-    // info
-    const info = document.createElement("div");
-    info.className = "q-info";
+    // valor cell
+    const tdVal = document.createElement("td");
+    tdVal.style.textAlign = "right";
+    const inp = document.createElement("input");
+    inp.type = "number"; inp.className = "q-valor";
+    inp.id = "qValor_"+t.cpf;
+    inp.placeholder = "0,00"; inp.step = "0.01"; inp.min = "0";
+    inp.addEventListener("input", atualizarResumo);
+    tdVal.appendChild(inp);
 
-    const nome = document.createElement("div");
-    nome.className = "q-nome";
-    nome.textContent = t.nome_profissional;
-
-    const pix = document.createElement("div");
-    pix.style.cssText = "font-size:11px;margin-top:2px";
-    if(t.pix_chave){
-      pix.style.color = "#6b7280";
-      pix.innerHTML = '<i class="fa fa-key" style="color:#2563eb;font-size:10px"></i> '+(t.pix_tipo||"PIX")+": <strong>"+t.pix_chave+"</strong>";
-    } else {
-      pix.style.color = "#dc2626";
-      pix.innerHTML = '<i class="fa fa-exclamation-triangle"></i> Sem PIX cadastrado';
-    }
-
-    info.appendChild(nome);
-    info.appendChild(pix);
-
-    // valor
-    const val = document.createElement("input");
-    val.type = "number";
-    val.className = "q-valor";
-    val.id = "qValor_"+t.cpf;
-    val.placeholder = "0,00";
-    val.step = "0.01";
-    val.min = "0";
-    val.addEventListener("input", atualizarResumo);
-
-    row.appendChild(chk);
-    row.appendChild(av);
-    row.appendChild(info);
-    row.appendChild(val);
-    lista.appendChild(row);
+    tr.appendChild(tdChk);
+    tr.appendChild(tdNome);
+    tr.appendChild(tdVal);
+    tbody.appendChild(tr);
   });
 
   document.getElementById("qCheckAll").checked = true;
   atualizarResumo();
 }
+
 
 function aplicarValorPadrao(){
   const v = document.getElementById("qValorPadrao").value;

@@ -2,78 +2,847 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Despesas | Hara Spa</title>
-
-<link rel="stylesheet"
- href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-
+<title>Atendimentos | Hara Spa</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:40px;}
 
-body{
-  margin:0;
-  font-family:'Segoe UI',sans-serif;
-  background:#f5f7fb;
-}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.topbar h1{margin:0;}
+.topbar-btns{display:flex;gap:10px;}
 
-.app{
-  display:flex;
-  min-height:100vh;
-}
+button{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+button:hover{opacity:.9;}
+button.btn-green{background:#16a34a;}
+button.btn-red{background:#dc2626;}
+button.btn-blue{background:#2563eb;}
+button.btn-yellow{background:#d97706;}
+button.btn-ghost{background:#fff;color:#374151;border:1px solid #d1d5db;}
+button.btn-ghost:hover{background:#f9fafb;}
 
-#sidebar{
-  width:260px;
-  flex-shrink:0;
-}
+/* filtros */
+.filtros-card{background:#fff;border-radius:14px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:20px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;font-weight:600;color:#374151;}
+.field input,.field select,.field textarea{padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#111827;background:#fff;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 
-.content{
-  flex:1;
-  padding:30px;
-  font-size:14px;
-}
+/* totais */
+.totais{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.total-card{background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.t-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:4px;}
+.t-valor{font-size:20px;font-weight:800;color:#111827;}
 
-.card{
-  background:#fff;
-  border-radius:18px;
-  padding:40px;
-  box-shadow:0 4px 12px rgba(0,0,0,.05);
-  margin-top:20px;
-  text-align:center;
-}
+/* tabela */
+.table-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+table{width:100%;border-collapse:collapse;}
+th,td{padding:13px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left;}
+th{background:#f9fafb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f9fafb;}
 
-h1{
-  margin-bottom:20px;
-}
+/* smart search */
+.smart-search-wrap{position:relative;min-width:200px;}
+.smart-search-wrap input[type="text"]{width:100%;padding:8px 28px 8px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;}
+.smart-search-wrap input[type="text"]:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.ss-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:14px;padding:0;display:none;line-height:1;}
+.ss-clear.visible{display:block;}
+.ss-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:9999;display:none;}
+.ss-dropdown.open{display:block;}
+.ss-option{padding:9px 12px;cursor:pointer;font-size:13px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid #f3f4f6;}
+.ss-option:last-child{border-bottom:none;}
+.ss-option:hover,.ss-option.focused{background:#eff6ff;}
+.ss-name{font-weight:600;color:#111827;}
+.ss-meta{font-size:11px;color:#6b7280;}
+.ss-novo{padding:10px 12px;cursor:pointer;font-size:13px;color:#2563eb;font-weight:600;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:6px;}
+.ss-novo:hover{background:#eff6ff;}
+
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
+.modal-content{background:#fff;width:640px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.btn-fechar:hover{background:#f3f4f6;}
+.modal-body{padding:24px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;}
+.modal-footer button{padding:9px 20px;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.span2{grid-column:span 2;}
+.modal-body .field{margin-bottom:12px;}
+.modal-body .field:last-child{margin-bottom:0;}
+.modal-body input,.modal-body select,.modal-body textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;}
+.modal-body input:focus,.modal-body select:focus,.modal-body textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+
+/* estoque */
+.estoque-section{border-top:1px solid #e5e7eb;margin-top:20px;padding-top:20px;}
+.estoque-section h3{font-size:13px;font-weight:700;color:#374151;margin:0 0 12px;text-transform:uppercase;letter-spacing:.05em;}
+.estoque-row{display:flex;gap:10px;align-items:center;margin-bottom:8px;}
+.estoque-row select{flex:1;}
+.estoque-row input[type=number]{width:70px;}
+.btn-add-item{background:none;color:#2563eb;border:1px dashed #93c5fd;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;width:100%;margin-top:4px;}
+.btn-add-item:hover{background:#eff6ff;}
+.btn-rem{background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;padding:4px;}
+
+/* comissao info */
+.comissao-info{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;font-size:12px;color:#16a34a;margin-top:8px;display:none;}
+.comissao-info.four{background:#eff6ff;border-color:#bfdbfe;color:#2563eb;}
+
+/* novo cliente modal */
+.modal-content.sm{width:420px;}
 </style>
 </head>
 
 <body>
-
 <div class="app">
+<aside id="sidebar"></aside>
+<main class="content">
 
-  <!-- SIDEBAR (igual Escalas) -->
-  <aside id="sidebar"></aside>
-
-  <!-- CONTEÚDO -->
-  <main class="content">
-
-    <h1>Despesas</h1>
-
-    <div class="card">
-      <h2>🚧 Página em construção</h2>
-      <p>O módulo financeiro está sendo desenvolvido.</p>
+  <div class="topbar">
+    <h1>Atendimentos</h1>
+    <div class="topbar-btns">
+      <button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+      <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Atendimento</button>
     </div>
+  </div>
 
-  </main>
+  <!-- Filtros -->
+  <div class="filtros-card">
+    <div class="field">
+      <label>Data de</label>
+      <input type="date" id="filtroInicio">
+    </div>
+    <div class="field">
+      <label>Data até</label>
+      <input type="date" id="filtroFim">
+    </div>
+    <div class="field">
+      <label>Terapeuta</label>
+      <select id="filtroTerapeuta"><option value="">Todas</option></select>
+    </div>
+    <div class="field">
+      <label>Serviço</label>
+      <select id="filtroServico"><option value="">Todos</option></select>
+    </div>
+    <div class="field">
+      <label>Origem</label>
+      <select id="filtroOrigem"><option value="">Todas</option></select>
+    </div>
+    <button class="btn-blue" onclick="aplicarFiltro()"><i class="fa fa-filter"></i> Filtrar</button>
+    <button class="btn-ghost" onclick="limparFiltro()"><i class="fa fa-times"></i> Limpar</button>
+  </div>
 
+  <!-- Totais -->
+  <div class="totais">
+    <div class="total-card">
+      <div class="t-label"><i class="fa fa-list"></i> Atendimentos</div>
+      <div class="t-valor" id="totalCount">—</div>
+    </div>
+    <div class="total-card" style="border-left:3px solid #2563eb">
+      <div class="t-label" style="color:#2563eb"><i class="fa fa-dollar-sign"></i> Receita Bruta</div>
+      <div class="t-valor" id="totalBruto" style="color:#2563eb">—</div>
+    </div>
+    <div class="total-card" style="border-left:3px solid #7c3aed">
+      <div class="t-label" style="color:#7c3aed"><i class="fa fa-handshake"></i> Comissões</div>
+      <div class="t-valor" id="totalComissao" style="color:#7c3aed">—</div>
+    </div>
+    <div class="total-card" style="border-left:3px solid #16a34a">
+      <div class="t-label" style="color:#16a34a"><i class="fa fa-check-circle"></i> Receita Final</div>
+      <div class="t-valor" id="totalFinal" style="color:#16a34a">—</div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Cliente</th>
+          <th>Serviço</th>
+          <th>Terapeuta(s)</th>
+          <th>Origem</th>
+          <th>Valor Final</th>
+          <th>Comissão</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista"></tbody>
+    </table>
+  </div>
+
+</main>
 </div>
 
-<!-- Sidebar JS (igual Escalas) -->
-<script src="assets/sidebar/sidebar.js"></script>
+<!-- MODAL ATENDIMENTO -->
+<div class="modal" id="modalAtend">
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 id="modalTitulo">Novo Atendimento</h2>
+    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="grid-2">
 
+      <div class="field">
+        <label>Data *</label>
+        <input type="date" id="atData">
+      </div>
+      <div class="field">
+        <label>Origem</label>
+        <select id="atOrigem"><option value="">Selecione</option></select>
+      </div>
+
+      <div class="field span2">
+        <label>Cliente *</label>
+        <div class="smart-search-wrap" style="min-width:unset">
+          <input type="text" id="clienteSearch" placeholder="Buscar por nome ou telefone…" autocomplete="off">
+          <button class="ss-clear" id="clienteClear">✕</button>
+          <input type="hidden" id="atCliente">
+          <div class="ss-dropdown" id="clienteDropdown"></div>
+        </div>
+      </div>
+
+      <div class="field span2">
+        <label>Serviço *</label>
+        <select id="atServico" onchange="aoMudarServico()"><option value="">Selecione</option></select>
+      </div>
+
+      <!-- Terapeuta 1 -->
+      <div class="field span2" id="campoTer1">
+        <label>Terapeuta *</label>
+        <select id="atTer1" onchange="calcularComissao()"><option value="">Selecione</option></select>
+      </div>
+
+      <!-- Terapeuta 2 (só Four Hands) -->
+      <div class="field span2" id="campoTer2" style="display:none">
+        <label>2ª Terapeuta (Four Hands) *</label>
+        <select id="atTer2" onchange="calcularComissao()"><option value="">Selecione</option></select>
+      </div>
+
+      <!-- Info comissão -->
+      <div class="span2" id="comissaoInfo" style="display:none">
+        <div class="comissao-info" id="comissaoBox"></div>
+      </div>
+
+      <div class="field">
+        <label>Forma de Pagamento</label>
+        <select id="atFormaPgto"><option value="">Selecione</option></select>
+      </div>
+      <div class="field">
+        <label>Valor (R$)</label>
+        <input type="number" id="atValor" step="0.01" oninput="calcularFinal()">
+      </div>
+      <div class="field">
+        <label>Desconto (R$)</label>
+        <input type="number" id="atDesconto" value="0" step="0.01" oninput="calcularFinal()">
+      </div>
+      <div class="field">
+        <label>Valor Final</label>
+        <input type="number" id="atFinal" disabled style="background:#f9fafb;font-weight:700;color:#16a34a">
+      </div>
+
+      <div class="field span2">
+        <label>Observação</label>
+        <textarea id="atObs" rows="2" placeholder="Opcional..."></textarea>
+      </div>
+
+    </div>
+
+    <!-- Estoque -->
+    <div class="estoque-section">
+      <h3><i class="fa fa-box" style="color:#6b7280"></i> Itens de Estoque Consumidos</h3>
+      <div id="estoqueItens"></div>
+      <button class="btn-add-item" onclick="addItemEstoque()">
+        <i class="fa fa-plus"></i> Adicionar item
+      </button>
+    </div>
+
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+    <button class="btn-green" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL NOVO CLIENTE -->
+<div class="modal" id="modalNovoCliente">
+<div class="modal-content sm">
+  <div class="modal-header">
+    <h2>Novo Cliente</h2>
+    <button class="btn-fechar" onclick="fecharModalCliente()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="field"><label>Nome *</label><input id="ncNome" placeholder="Nome completo"></div>
+    <div class="field"><label>Telefone *</label><input id="ncTelefone" placeholder="(11) 99999-9999"></div>
+    <div class="field"><label>Email</label><input id="ncEmail" type="email" placeholder="opcional"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModalCliente()">Cancelar</button>
+    <button class="btn-blue" onclick="salvarNovoCliente()"><i class="fa fa-user-plus"></i> Cadastrar</button>
+  </div>
+</div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+<script>
+
+let dados        = [];
+let listaFiltrada= [];
+let dadosServicos= [];
+let dadosTerapeutas = [];
+let dadosProdutos= [];
+let servicosMap  = {};
+let terapeutasMap= {};
+let editandoId   = null;
+let ssCliente;
+
+/* ── HELPERS ── */
+function fmtMoeda(v){ return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+function fmtData(v){
+  if(!v) return "—";
+  const [y,m,d] = v.split("-");
+  return `${d}/${m}/${y}`;
+}
+function normalizar(str){
+  return (str||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+}
+function hoje(){
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split("T")[0];
+}
+function nomeServico(s){
+  if(!s) return "—";
+  return [s.grupo, s.subgrupo, s.tempo ? s.tempo+" min" : ""].filter(Boolean).join(" ");
+}
+function nomeCliente(c){
+  if(!c) return "—";
+  const tel = (c.telefone_1||"").replace(/\D/g,"");
+  const last4 = tel.length >= 4 ? tel.slice(-4) : "";
+  return last4 ? `${c.nome} ${last4}` : c.nome;
+}
+function calcularFinal(){
+  const v = parseFloat(document.getElementById("atValor").value||0);
+  const d = parseFloat(document.getElementById("atDesconto").value||0);
+  document.getElementById("atFinal").value = (v-d).toFixed(2);
+}
+
+/* ── SMART SEARCH ── */
+function createSmartSearch({searchInput, hiddenInput, dropdown, clearBtn, onNovoCliente}){
+  let focusedIndex=-1, debounceTimer=null;
+
+  function normalizer(s){ return normalizar(s); }
+  function closeDropdown(){ dropdown.classList.remove("open"); focusedIndex=-1; }
+
+  function openDropdown(results){
+    focusedIndex=-1;
+    dropdown.innerHTML="";
+    if(!results.length){
+      dropdown.innerHTML='<div style="padding:12px;color:#9ca3af;font-size:13px;text-align:center">Nenhum cliente encontrado</div>';
+    } else {
+      results.forEach(c => {
+        const tel   = (c.telefone_1||"").replace(/\D/g,"");
+        const last4 = tel.length>=4 ? tel.slice(-4) : tel;
+        const el    = document.createElement("div");
+        el.className="ss-option";
+        el.innerHTML=`<span class="ss-name">${c.nome||""}</span>${last4?`<span class="ss-meta"><i class="fa fa-phone" style="font-size:10px"></i> ${last4}</span>`:""}`;
+        el.addEventListener("mousedown",e=>{e.preventDefault();select(c);});
+        dropdown.appendChild(el);
+      });
+    }
+    if(onNovoCliente){
+      const el=document.createElement("div");
+      el.className="ss-novo";
+      el.innerHTML='<i class="fa fa-user-plus"></i> Cadastrar novo cliente';
+      el.addEventListener("mousedown",e=>{e.preventDefault();onNovoCliente(searchInput.value);});
+      dropdown.appendChild(el);
+    }
+    dropdown.classList.add("open");
+  }
+
+  function select(c){
+    const tel=(c.telefone_1||"").replace(/\D/g,"");
+    const last4=tel.length>=4?tel.slice(-4):"";
+    searchInput.value=last4?`${c.nome}  ${last4}`:c.nome;
+    hiddenInput.value=c.id;
+    clearBtn.classList.add("visible");
+    closeDropdown();
+  }
+
+  function clearSelection(){
+    searchInput.value=""; hiddenInput.value="";
+    clearBtn.classList.remove("visible"); closeDropdown();
+  }
+
+  async function buscar(query){
+    const tokens=query.trim().split(/\s+/).filter(Boolean);
+    const tokNome=tokens.filter(t=>/\D/.test(t));
+    const tokTel=tokens.filter(t=>/^\d+$/.test(t));
+    let q=client.from("clientes").select("id,nome,telefone_1");
+    tokNome.forEach(t=>q=q.ilike("nome",`%${t}%`));
+    tokTel.forEach(t=>q=q.ilike("telefone_1",`%${t}%`));
+    const {data}=await q.order("nome").limit(30);
+    return data||[];
+  }
+
+  searchInput.addEventListener("input",()=>{
+    const val=searchInput.value.trim();
+    clearBtn.classList.toggle("visible",val.length>0);
+    hiddenInput.value="";
+    clearTimeout(debounceTimer);
+    if(!val){closeDropdown();return;}
+    dropdown.innerHTML='<div style="padding:12px;color:#9ca3af;font-size:13px;text-align:center">Buscando…</div>';
+    dropdown.classList.add("open");
+    debounceTimer=setTimeout(async()=>openDropdown(await buscar(normalizer(val))),280);
+  });
+
+  searchInput.addEventListener("blur",()=>setTimeout(closeDropdown,150));
+  clearBtn.addEventListener("click",clearSelection);
+  document.addEventListener("click",e=>{
+    if(!searchInput.closest(".smart-search-wrap").contains(e.target)) closeDropdown();
+  });
+
+  return {setValue(c){if(!c){clearSelection();return;}select(c);}, clearSelection};
+}
+
+/* ── CARREGAR DADOS ── */
+async function carregarDados(){
+  // serviços
+  const {data:servs}=await client.from("servicos").select("*").eq("status","ativo").order("grupo");
+  dadosServicos=servs||[];
+  dadosServicos.forEach(s=>servicosMap[s.id]=s);
+
+  const selServ=document.getElementById("atServico");
+  const selFiltServ=document.getElementById("filtroServico");
+  dadosServicos.forEach(s=>{
+    selServ.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`;
+    selFiltServ.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`;
+  });
+
+  // terapeutas ativos
+  const {data:ters}=await client.from("terapeutas").select("cpf,nome_profissional,cargo")
+    .eq("status","Ativo").order("nome_profissional");
+  dadosTerapeutas=ters||[];
+  dadosTerapeutas.forEach(t=>{
+    terapeutasMap[t.cpf]=t;
+    document.getElementById("atTer1").innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`;
+    document.getElementById("atTer2").innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`;
+    document.getElementById("filtroTerapeuta").innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`;
+  });
+
+  // produtos estoque (toalhas, lenços, etc)
+  const {data:prods}=await client.from("produtos").select("id,nome").order("nome");
+  dadosProdutos=prods||[];
+
+  // origens e formas de pagamento dos parâmetros
+  const {data:params}=await client.from("parametros").select("tipo,valor")
+    .in("tipo",["origens_lead","formas_pagamento"]).eq("ativo",true).order("valor");
+
+  const origens  = params?.filter(p=>p.tipo==="origens_lead").map(p=>p.valor)
+    || ["Instagram","Google","Indicação","WhatsApp","Outro"];
+  const formas   = params?.filter(p=>p.tipo==="formas_pagamento").map(p=>p.valor)
+    || ["Dinheiro","PIX","Cartão Débito","Cartão Crédito"];
+
+  const selOrig=document.getElementById("atOrigem");
+  const selFiltOrig=document.getElementById("filtroOrigem");
+  origens.forEach(o=>{
+    selOrig.innerHTML+=`<option>${o}</option>`;
+    selFiltOrig.innerHTML+=`<option value="${o}">${o}</option>`;
+  });
+
+  const selFPgto=document.getElementById("atFormaPgto");
+  formas.forEach(f=>selFPgto.innerHTML+=`<option>${f}</option>`);
+
+  // smart search cliente
+  ssCliente=createSmartSearch({
+    searchInput: document.getElementById("clienteSearch"),
+    hiddenInput: document.getElementById("atCliente"),
+    dropdown:    document.getElementById("clienteDropdown"),
+    clearBtn:    document.getElementById("clienteClear"),
+    onNovoCliente: (nome)=>abrirModalCliente(nome)
+  });
+}
+
+/* ── SERVIÇO → TERAPEUTAS / COMISSÃO ── */
+function aoMudarServico(){
+  const sid=document.getElementById("atServico").value;
+  const s=servicosMap[sid];
+  if(!s) return;
+
+  // preenche valor do serviço
+  document.getElementById("atValor").value=s.valor||0;
+  calcularFinal();
+
+  // four hands?
+  const isFour = (s.grupo||"").toLowerCase().includes("four");
+  document.getElementById("campoTer2").style.display = isFour?"":"none";
+  document.getElementById("atTer2").value="";
+
+  calcularComissao();
+}
+
+function calcularComissao(){
+  const sid=document.getElementById("atServico").value;
+  const s=servicosMap[sid];
+  if(!s||!s.comissao){ document.getElementById("comissaoInfo").style.display="none"; return; }
+
+  const ter1=document.getElementById("atTer1").value;
+  const isFour=(s.grupo||"").toLowerCase().includes("four");
+  const ter2=isFour?document.getElementById("atTer2").value:"";
+
+  const box=document.getElementById("comissaoBox");
+  box.className="comissao-info"+(isFour?" four":"");
+
+  if(isFour && ter1 && ter2){
+    const t1=terapeutasMap[ter1]?.nome_profissional||ter1;
+    const t2=terapeutasMap[ter2]?.nome_profissional||ter2;
+    box.innerHTML=`<i class="fa fa-handshake"></i> Comissão: <strong>${fmtMoeda(s.comissao)}</strong> para <strong>${t1}</strong> e <strong>${fmtMoeda(s.comissao)}</strong> para <strong>${t2}</strong> (${fmtMoeda(s.comissao*2)} total)`;
+  } else if(!isFour && ter1){
+    const t1=terapeutasMap[ter1]?.nome_profissional||ter1;
+    box.innerHTML=`<i class="fa fa-handshake"></i> Comissão: <strong>${fmtMoeda(s.comissao)}</strong> para <strong>${t1}</strong>`;
+  } else {
+    document.getElementById("comissaoInfo").style.display="none";
+    return;
+  }
+  document.getElementById("comissaoInfo").style.display="block";
+}
+
+/* ── ESTOQUE ── */
+function addItemEstoque(){
+  const container=document.getElementById("estoqueItens");
+  const row=document.createElement("div");
+  row.className="estoque-row";
+
+  const sel=document.createElement("select");
+  sel.innerHTML="<option value=''>Selecione o produto</option>";
+  dadosProdutos.forEach(p=>sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`);
+
+  const qty=document.createElement("input");
+  qty.type="number"; qty.min="1"; qty.value="1"; qty.placeholder="Qtd";
+
+  const btn=document.createElement("button");
+  btn.className="btn-rem"; btn.innerHTML='<i class="fa fa-times"></i>';
+  btn.onclick=()=>container.removeChild(row);
+
+  row.appendChild(sel);
+  row.appendChild(qty);
+  row.appendChild(btn);
+  container.appendChild(row);
+}
+
+function getItensEstoque(){
+  return Array.from(document.getElementById("estoqueItens").querySelectorAll(".estoque-row"))
+    .map(row=>{
+      const sel=row.querySelector("select");
+      const qty=row.querySelector("input[type=number]");
+      return sel.value ? {produto_id:sel.value, quantidade:parseInt(qty.value)||1} : null;
+    }).filter(Boolean);
+}
+
+/* ── CARREGAR LISTA ── */
+async function carregar(){
+  const {data,error}=await client
+    .from("atendimentos")
+    .select(`*,
+      clientes(id,nome,telefone_1),
+      servicos(id,grupo,subgrupo,tempo,comissao),
+      ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),
+      ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)
+    `)
+    .order("data",{ascending:false});
+
+  if(error){console.error(error);return;}
+  dados=data||[];
+  listaFiltrada=[...dados];
+  render();
+}
+
+/* ── RENDER ── */
+function render(){
+  const tbody=document.getElementById("lista");
+  tbody.innerHTML="";
+
+  if(!listaFiltrada.length){
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:32px">Nenhum atendimento encontrado.</td></tr>`;
+    atualizarTotais([]);
+    return;
+  }
+
+  listaFiltrada.forEach(r=>{
+    const terapeutas=[
+      r.ter1?.nome_profissional,
+      r.ter2?.nome_profissional
+    ].filter(Boolean).join(" + ");
+
+    tbody.innerHTML+=`
+    <tr>
+      <td>${fmtData(r.data)}</td>
+      <td>${nomeCliente(r.clientes)}</td>
+      <td>${nomeServico(r.servicos)}</td>
+      <td>${terapeutas||"—"}</td>
+      <td>${r.origem_lead||"—"}</td>
+      <td><strong>${fmtMoeda(r.valor_final)}</strong></td>
+      <td style="color:#7c3aed;font-weight:600">${fmtMoeda(r.comissao_total)}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn-yellow" onclick="abrirEditar('${r.id}')"><i class="fa fa-pencil"></i></button>
+        <button class="btn-red"    onclick="excluir('${r.id}')"><i class="fa fa-trash"></i></button>
+      </td>
+    </tr>`;
+  });
+
+  atualizarTotais(listaFiltrada);
+}
+
+function atualizarTotais(lista){
+  const count   =lista.length;
+  const bruto   =lista.reduce((s,r)=>s+(r.valor||0),0);
+  const comissao=lista.reduce((s,r)=>s+(r.comissao_total||0),0);
+  const final   =lista.reduce((s,r)=>s+(r.valor_final||0),0);
+  document.getElementById("totalCount").textContent   =count;
+  document.getElementById("totalBruto").textContent   =fmtMoeda(bruto);
+  document.getElementById("totalComissao").textContent=fmtMoeda(comissao);
+  document.getElementById("totalFinal").textContent   =fmtMoeda(final);
+}
+
+/* ── FILTRO ── */
+function aplicarFiltro(){
+  const ini  =document.getElementById("filtroInicio").value;
+  const fim  =document.getElementById("filtroFim").value;
+  const ter  =document.getElementById("filtroTerapeuta").value;
+  const serv =document.getElementById("filtroServico").value;
+  const orig =document.getElementById("filtroOrigem").value;
+
+  listaFiltrada=dados.filter(r=>{
+    if(ini  && r.data<ini)                                        return false;
+    if(fim  && r.data>fim)                                        return false;
+    if(ter  && r.terapeuta1_cpf!==ter && r.terapeuta2_cpf!==ter) return false;
+    if(serv && r.servico_id!==serv)                               return false;
+    if(orig && r.origem_lead!==orig)                              return false;
+    return true;
+  });
+  render();
+}
+
+function limparFiltro(){
+  ["filtroInicio","filtroFim","filtroTerapeuta","filtroServico","filtroOrigem"]
+    .forEach(id=>document.getElementById(id).value="");
+  listaFiltrada=[...dados];
+  render();
+}
+
+/* ── MODAL ── */
+function resetModal(){
+  document.getElementById("atData").value    =hoje();
+  document.getElementById("atServico").value ="";
+  document.getElementById("atOrigem").value  ="";
+  document.getElementById("atFormaPgto").value="";
+  document.getElementById("atValor").value   ="0";
+  document.getElementById("atDesconto").value="0";
+  document.getElementById("atFinal").value   ="0";
+  document.getElementById("atObs").value     ="";
+  document.getElementById("atTer1").value    ="";
+  document.getElementById("atTer2").value    ="";
+  document.getElementById("campoTer2").style.display="none";
+  document.getElementById("comissaoInfo").style.display="none";
+  document.getElementById("estoqueItens").innerHTML="";
+  ssCliente?.clearSelection();
+}
+
+function abrirNovo(){
+  editandoId=null;
+  resetModal();
+  document.getElementById("modalTitulo").textContent="Novo Atendimento";
+  document.getElementById("modalAtend").style.display="flex";
+}
+
+async function abrirEditar(id){
+  editandoId=id;
+  const r=dados.find(d=>d.id===id);
+  if(!r) return;
+
+  document.getElementById("modalTitulo").textContent="Editar Atendimento";
+  document.getElementById("modalAtend").style.display="flex";
+
+  setTimeout(async()=>{
+    document.getElementById("atData").value    =r.data||"";
+    document.getElementById("atServico").value =r.servico_id||"";
+    document.getElementById("atOrigem").value  =r.origem_lead||"";
+    document.getElementById("atFormaPgto").value=r.forma_pagamento||"";
+    document.getElementById("atValor").value   =r.valor||0;
+    document.getElementById("atDesconto").value=r.desconto||0;
+    document.getElementById("atObs").value     =r.observacao||"";
+    calcularFinal();
+
+    // four hands?
+    const s=servicosMap[r.servico_id];
+    const isFour=s&&(s.grupo||"").toLowerCase().includes("four");
+    document.getElementById("campoTer2").style.display=isFour?"":"none";
+    document.getElementById("atTer1").value=r.terapeuta1_cpf||"";
+    document.getElementById("atTer2").value=r.terapeuta2_cpf||"";
+    calcularComissao();
+
+    // cliente
+    if(r.cliente_id){
+      const {data:cArr}=await client.from("clientes").select("id,nome,telefone_1").eq("id",r.cliente_id).limit(1);
+      ssCliente?.setValue(cArr?.[0]||null);
+    }
+
+    // estoque
+    document.getElementById("estoqueItens").innerHTML="";
+    const {data:itens}=await client.from("atendimento_estoque")
+      .select("produto_id,quantidade").eq("atendimento_id",id);
+    (itens||[]).forEach(item=>{
+      addItemEstoque();
+      const rows=document.getElementById("estoqueItens").querySelectorAll(".estoque-row");
+      const last=rows[rows.length-1];
+      last.querySelector("select").value=item.produto_id;
+      last.querySelector("input[type=number]").value=item.quantidade;
+    });
+  },30);
+}
+
+function fecharModal(){
+  document.getElementById("modalAtend").style.display="none";
+}
+
+/* ── SALVAR ── */
+async function salvar(){
+  const clienteId=document.getElementById("atCliente").value;
+  const servicoId=document.getElementById("atServico").value;
+  const dataVal  =document.getElementById("atData").value;
+  const ter1     =document.getElementById("atTer1").value;
+
+  if(!clienteId){alert("Selecione um cliente.");return;}
+  if(!servicoId){alert("Selecione um serviço.");return;}
+  if(!dataVal)  {alert("Informe a data.");return;}
+  if(!ter1)     {alert("Selecione a terapeuta.");return;}
+
+  const s=servicosMap[servicoId];
+  const isFour=s&&(s.grupo||"").toLowerCase().includes("four");
+  const ter2=isFour?document.getElementById("atTer2").value:"";
+  if(isFour&&!ter2){alert("Selecione a 2ª terapeuta para o Four Hands.");return;}
+
+  const valor      =parseFloat(document.getElementById("atValor").value||0);
+  const desconto   =parseFloat(document.getElementById("atDesconto").value||0);
+  const valor_final=valor-desconto;
+  const comissao   =s?.comissao||0;
+  const comissao_total=isFour?comissao*2:comissao;
+
+  const payload={
+    data:dataVal,
+    cliente_id:clienteId,
+    servico_id:servicoId,
+    terapeuta1_cpf:ter1,
+    terapeuta2_cpf:ter2||null,
+    origem_lead:document.getElementById("atOrigem").value||null,
+    forma_pagamento:document.getElementById("atFormaPgto").value||null,
+    valor,desconto,valor_final,comissao_total,
+    observacao:document.getElementById("atObs").value.trim()||null
+  };
+
+  let atendimentoId=editandoId;
+  let error;
+
+  if(editandoId){
+    ({error}=await client.from("atendimentos").update(payload).eq("id",editandoId));
+    // limpar itens estoque antigos
+    if(!error) await client.from("atendimento_estoque").delete().eq("atendimento_id",editandoId);
+  } else {
+    const {data:novo,error:err}=await client.from("atendimentos").insert(payload).select().single();
+    error=err;
+    if(novo) atendimentoId=novo.id;
+  }
+
+  if(error){alert("Erro ao salvar: "+error.message);return;}
+
+  // inserir itens estoque
+  const itens=getItensEstoque();
+  if(itens.length && atendimentoId){
+    await client.from("atendimento_estoque").insert(
+      itens.map(i=>({...i,atendimento_id:atendimentoId}))
+    );
+    // dar baixa no estoque
+    for(const item of itens){
+      await client.rpc("decrementar_estoque",{p_produto_id:item.produto_id,p_qty:item.quantidade})
+        .catch(()=>{}); // ignora se rpc não existir
+    }
+  }
+
+  fecharModal();
+  carregar();
+}
+
+async function excluir(id){
+  if(!confirm("Excluir este atendimento?")) return;
+  await client.from("atendimento_estoque").delete().eq("atendimento_id",id);
+  await client.from("atendimentos").delete().eq("id",id);
+  carregar();
+}
+
+/* ── NOVO CLIENTE ── */
+function abrirModalCliente(nome){
+  document.getElementById("ncNome").value    =nome||"";
+  document.getElementById("ncTelefone").value="";
+  document.getElementById("ncEmail").value   ="";
+  document.getElementById("modalNovoCliente").style.display="flex";
+}
+function fecharModalCliente(){
+  document.getElementById("modalNovoCliente").style.display="none";
+}
+async function salvarNovoCliente(){
+  const nome=document.getElementById("ncNome").value.trim();
+  const tel =document.getElementById("ncTelefone").value.trim();
+  if(!nome){alert("Nome obrigatório.");return;}
+  if(!tel) {alert("Telefone obrigatório.");return;}
+  const {data:novo,error}=await client.from("clientes")
+    .insert({nome,telefone_1:tel,email:document.getElementById("ncEmail").value.trim()||null})
+    .select().single();
+  if(error){alert("Erro: "+error.message);return;}
+  fecharModalCliente();
+  ssCliente?.setValue(novo);
+}
+
+/* ── EXPORTAR ── */
+function exportarExcel(){
+  if(!listaFiltrada.length){alert("Nada para exportar.");return;}
+  const exportData=listaFiltrada.map(r=>({
+    "Data":         fmtData(r.data),
+    "Cliente":      nomeCliente(r.clientes),
+    "Serviço":      nomeServico(r.servicos),
+    "Terapeuta 1":  r.ter1?.nome_profissional||"",
+    "Terapeuta 2":  r.ter2?.nome_profissional||"",
+    "Origem":       r.origem_lead||"",
+    "Forma Pgto":   r.forma_pagamento||"",
+    "Valor":        Number(r.valor||0),
+    "Desconto":     Number(r.desconto||0),
+    "Final":        Number(r.valor_final||0),
+    "Comissão":     Number(r.comissao_total||0),
+  }));
+  const ws=XLSX.utils.json_to_sheet(exportData);
+  const cols=Object.keys(exportData[0]);
+  ws["!cols"]=cols.map(col=>({
+    wch:Math.max(col.length,...exportData.map(r=>String(r[col]||"").length))+2
+  }));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Atendimentos");
+  XLSX.writeFile(wb,"atendimentos.xlsx");
+}
+
+/* ── INIT ── */
+document.addEventListener("DOMContentLoaded",()=>{
+  carregarDados();
+  carregar();
+});
+</script>
 </body>
 </html>

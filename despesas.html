@@ -674,7 +674,7 @@ function nomesMes(){
 async function abrirGerarQuinzena(){
   // carregar terapeutas ativos
   const {data} = await client.from("terapeutas")
-    .select("cpf,nome_profissional,cargo")
+    .select("cpf,nome_profissional,cargo,pix_tipo,pix_chave")
     .eq("status","Ativo")
     .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"])
     .order("nome_profissional");
@@ -721,9 +721,14 @@ function renderQlista(){
     <div class="quinzena-row">
       <input type="checkbox" class="q-check" id="qCheck_${t.cpf}" value="${t.cpf}" checked onchange="atualizarResumo()">
       <div class="q-avatar ${fem?'fem':'masc'}"><i class="fa ${icon}"></i></div>
-      <span class="q-nome">${t.nome_profissional}</span>
+      <div style="flex:1">
+        <div class="q-nome">${t.nome_profissional}</div>
+        ${t.pix_chave
+          ? `<div style="font-size:11px;color:#6b7280;margin-top:2px"><i class="fa fa-key" style="color:#2563eb;font-size:10px"></i> ${t.pix_tipo||'PIX'}: <strong>${t.pix_chave}</strong></div>`
+          : `<div style="font-size:11px;color:#dc2626;margin-top:2px"><i class="fa fa-exclamation-triangle"></i> Sem PIX cadastrado</div>`}
+      </div>
       <input type="number" class="q-valor" id="qValor_${t.cpf}" placeholder="0,00" step="0.01" oninput="atualizarResumo()">
-    </div>`;
+    </div>\`;
   }).join("");
 
   // marcar todos
@@ -796,7 +801,7 @@ async function confirmarQuinzena(){
     data_vencimento: vencimento,
     status:         "A pagar",
     recorrente:     false,
-    observacao:     `CPF: ${t.cpf}`
+    observacao:     `CPF: ${t.cpf}${t.pix_chave ? ' | PIX ('+( t.pix_tipo||'PIX')+'):  '+t.pix_chave : ' | Sem PIX cadastrado'}`
   }));
 
   const {error} = await client.from("despesas").insert(despesas);

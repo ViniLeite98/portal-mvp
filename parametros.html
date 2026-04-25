@@ -509,9 +509,8 @@ function handleUpload(input){
 }
 
 /* IA */
-async function gerarIA(promptFixo){
-  const GEMINI_KEY = "AIzaSyBMoJSvV3-K2loxif_dumBA-Z_W2ldSZIM";
-  const prompt = promptFixo || document.getElementById("iaPrompt").value.trim();
+function gerarIA(promptFixo){
+  const prompt = (promptFixo || document.getElementById("iaPrompt").value || "").trim().toLowerCase();
   if(!prompt){ alert("Descreva o icone."); return; }
   if(!promptFixo) document.getElementById("iaPrompt").value = prompt;
 
@@ -519,44 +518,175 @@ async function gerarIA(promptFixo){
   document.getElementById("iaVars").style.display    = "none";
   document.getElementById("btnGerarIA").disabled     = true;
 
-  const promptText = `Crie um icone SVG simples e colorido para representar: "${prompt}". Requisitos: SVG com viewBox="0 0 64 64", design minimalista, cores vibrantes, SEM texto interno. Gere 3 variacoes. Responda APENAS JSON valido sem markdown: {"variantes":[{"svg":"<svg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'>...</svg>","desc":"desc"},{"svg":"...","desc":"..."},{"svg":"...","desc":"..."}]}`;
-
-  try{
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({contents:[{parts:[{text: promptText}]}]})
-      }
-    );
-
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const clean = text.replace(/```json|```/g,"").trim();
-    const parsed = JSON.parse(clean);
-
+  setTimeout(() => {
+    const variantes = gerarSVGLocal(prompt);
     document.getElementById("iaLoading").style.display = "none";
     const varsDiv = document.getElementById("iaVars");
     varsDiv.style.display = "flex";
-
     varsDiv.innerHTML = "";
-    parsed.variantes.forEach((v, i) => {
+    variantes.forEach((svg, i) => {
       const div = document.createElement("div");
       div.className = "ia-var" + (i===0 ? " selected" : "");
-      div.innerHTML = v.svg;
-      div.addEventListener("click", () => selecionarIASvg(div, v.svg));
+      div.innerHTML = svg;
+      div.addEventListener("click", () => selecionarIASvg(div, svg));
       varsDiv.appendChild(div);
     });
+    selecionarIASvg(varsDiv.querySelector(".ia-var"), variantes[0]);
+    document.getElementById("btnGerarIA").disabled = false;
+  }, 600);
+}
 
-    selecionarIASvg(varsDiv.querySelector(".ia-var"), parsed.variantes[0].svg);
+function gerarSVGLocal(p){
+  // detectar tema por palavras-chave
+  const match = (keys) => keys.some(k => p.includes(k));
 
-  } catch(e){
-    document.getElementById("iaLoading").style.display = "none";
-    alert("Erro ao gerar: "+e.message);
-    console.error(e);
+  let svgs;
+
+  if(match(["ingles","inglês","reino unido","uk","english","england","britanico"])){
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#012169"/><line x1="0" y1="0" x2="64" y2="64" stroke="white" stroke-width="9"/><line x1="64" y1="0" x2="0" y2="64" stroke="white" stroke-width="9"/><line x1="32" y1="0" x2="32" y2="64" stroke="white" stroke-width="12"/><line x1="0" y1="32" x2="64" y2="32" stroke="white" stroke-width="12"/><line x1="0" y1="0" x2="64" y2="64" stroke="#C8102E" stroke-width="5"/><line x1="64" y1="0" x2="0" y2="64" stroke="#C8102E" stroke-width="5"/><line x1="32" y1="0" x2="32" y2="64" stroke="#C8102E" stroke-width="8"/><line x1="0" y1="32" x2="64" y2="32" stroke="#C8102E" stroke-width="8"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#1d4ed8"/><text x="32" y="22" text-anchor="middle" fill="white" font-size="11" font-family="serif" font-weight="bold">EN</text><line x1="10" y1="32" x2="54" y2="32" stroke="white" stroke-width="2"/><text x="32" y="48" text-anchor="middle" fill="#93c5fd" font-size="9" font-family="serif">English</text></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#1e3a5f"/><circle cx="32" cy="32" r="18" fill="none" stroke="#C8102E" stroke-width="3"/><line x1="32" y1="14" x2="32" y2="50" stroke="white" stroke-width="2"/><line x1="14" y1="32" x2="50" y2="32" stroke="white" stroke-width="2"/><line x1="19" y1="19" x2="45" y2="45" stroke="#C8102E" stroke-width="1.5"/><line x1="45" y1="19" x2="19" y2="45" stroke="#C8102E" stroke-width="1.5"/></svg>`
+    ];
+  } else if(match(["portugues","português","brasil","brazil","pt-br"])){
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#009C3B"/><polygon points="32,8 56,32 32,56 8,32" fill="#FFDF00"/><circle cx="32" cy="32" r="12" fill="#002776"/><path d="M21,30 Q32,26 43,30" stroke="white" stroke-width="2" fill="none"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#065f46"/><text x="32" y="28" text-anchor="middle" fill="#FFDF00" font-size="14" font-family="serif" font-weight="bold">PT</text><line x1="10" y1="36" x2="54" y2="36" stroke="#FFDF00" stroke-width="1.5"/><text x="32" y="50" text-anchor="middle" fill="#6ee7b7" font-size="8" font-family="serif">Português</text></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#FFDF00"/><circle cx="32" cy="32" r="18" fill="#009C3B"/><circle cx="32" cy="32" r="10" fill="#002776"/><line x1="22" y1="30" x2="42" y2="30" stroke="white" stroke-width="1.5"/></svg>`
+    ];
+  } else if(match(["espanhol","espanha","spain","es","spanish"])){
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#AA151B"/><rect y="16" width="64" height="32" fill="#F1BF00"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#c2410c"/><text x="32" y="28" text-anchor="middle" fill="#F1BF00" font-size="14" font-family="serif" font-weight="bold">ES</text><line x1="10" y1="36" x2="54" y2="36" stroke="#F1BF00" stroke-width="1.5"/><text x="32" y="50" text-anchor="middle" fill="#fcd34d" font-size="8" font-family="serif">Español</text></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#F1BF00"/><rect y="0" width="64" height="16" rx="10" fill="#AA151B"/><rect y="48" width="64" height="16" rx="10" fill="#AA151B"/></svg>`
+    ];
+  } else if(match(["frances","francês","franca","france","french"])){
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ED2939"/><rect width="43" height="64" fill="#FFFFFF"/><rect width="21" height="64" rx="10" fill="#002395"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#1e3a8a"/><text x="32" y="28" text-anchor="middle" fill="white" font-size="14" font-family="serif" font-weight="bold">FR</text><line x1="10" y1="36" x2="54" y2="36" stroke="#ED2939" stroke-width="1.5"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#f8fafc"/><rect width="22" height="64" fill="#002395"/><rect x="42" width="22" height="64" fill="#ED2939"/></svg>`
+    ];
+  } else if(match(["massagem","massage","terapia","relaxa","corpo"])){
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#7c3aed"/><ellipse cx="32" cy="38" rx="18" ry="10" fill="#a78bfa"/><circle cx="32" cy="22" r="10" fill="#c4b5fd"/><ellipse cx="20" cy="42" rx="6" ry="9" fill="#ddd6fe" transform="rotate(-15,20,42)"/><ellipse cx="44" cy="42" rx="6" ry="9" fill="#ddd6fe" transform="rotate(15,44,42)"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#5b21b6"/><path d="M16,48 Q32,24 48,48" stroke="#c4b5fd" stroke-width="3" fill="none"/><circle cx="24" cy="36" r="5" fill="#a78bfa"/><circle cx="40" cy="36" r="5" fill="#a78bfa"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ede9fe"/><path d="M12,32 Q20,18 32,16 Q44,18 52,32 Q44,46 32,48 Q20,46 12,32Z" fill="#7c3aed"/><circle cx="32" cy="32" r="8" fill="#c4b5fd"/></svg>`
+    ];
+  } else if(match(["podolog","pé","pe","foot","unha"])){
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#d97706"/><ellipse cx="32" cy="42" rx="16" ry="10" fill="#fcd34d"/><ellipse cx="18" cy="28" rx="4" ry="5" fill="#fcd34d"/><ellipse cx="26" cy="24" rx="4" ry="6" fill="#fcd34d"/><ellipse cx="34" cy="24" rx="4" ry="6" fill="#fcd34d"/><ellipse cx="42" cy="26" rx="4" ry="5" fill="#fcd34d"/><ellipse cx="48" cy="30" rx="3" ry="4" fill="#fcd34d"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#92400e"/><ellipse cx="30" cy="42" rx="14" ry="10" fill="#fbbf24" transform="rotate(-10,30,42)"/><ellipse cx="16" cy="28" rx="4" ry="5" fill="#fbbf24" transform="rotate(-10,16,28)"/><ellipse cx="24" cy="23" rx="4" ry="6" fill="#fbbf24" transform="rotate(-10,24,23)"/><ellipse cx="33" cy="23" rx="4" ry="6" fill="#fbbf24" transform="rotate(-10,33,23)"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#fef3c7"/><ellipse cx="32" cy="44" rx="16" ry="10" fill="#d97706"/><ellipse cx="18" cy="30" rx="4" ry="5" fill="#d97706"/><ellipse cx="26" cy="26" rx="4" ry="6" fill="#d97706"/><ellipse cx="34" cy="26" rx="4" ry="6" fill="#d97706"/><ellipse cx="42" cy="28" rx="4" ry="5" fill="#d97706"/></svg>`
+    ];
+  } else if(match(["casal","casais","couple","dois","two"])){
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#be185d"/><circle cx="22" cy="20" r="9" fill="#fbcfe8"/><circle cx="42" cy="20" r="9" fill="#f9a8d4"/><ellipse cx="22" cy="46" rx="11" ry="10" fill="#fbcfe8"/><ellipse cx="42" cy="46" rx="11" ry="10" fill="#f9a8d4"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#831843"/><circle cx="22" cy="18" r="8" fill="#fda4af"/><circle cx="42" cy="18" r="8" fill="#fb7185"/><ellipse cx="32" cy="46" rx="20" ry="12" fill="#fda4af"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#fdf2f8"/><circle cx="22" cy="20" r="9" fill="#be185d"/><circle cx="42" cy="20" r="9" fill="#9d174d"/><ellipse cx="22" cy="46" rx="11" ry="10" fill="#be185d"/><ellipse cx="42" cy="46" rx="11" ry="10" fill="#9d174d"/></svg>`
+    ];
+  } else if(match(["oleo","óleo","oil","aroma","essencial"])){
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#0e7490"/><path d="M32,10 Q46,28 46,40 A14,14 0 0,1 18,40 Q18,28 32,10Z" fill="#67e8f9"/><ellipse cx="27" cy="37" rx="4" ry="6" fill="#a5f3fc" opacity="0.6" transform="rotate(-20,27,37)"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#164e63"/><path d="M32,12 Q44,28 44,40 A12,12 0 0,1 20,40 Q20,28 32,12Z" fill="#06b6d4"/><circle cx="32" cy="40" r="4" fill="#a5f3fc"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ecfeff"/><path d="M32,10 Q48,30 48,42 A16,16 0 0,1 16,42 Q16,30 32,10Z" fill="#0e7490"/></svg>`
+    ];
+  } else if(match(["spa","lotus","flor","flower","relax"])){
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#065f46"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(60,32,32)"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(120,32,32)"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(180,32,32)"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(240,32,32)"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(300,32,32)"/><circle cx="32" cy="32" r="8" fill="#a7f3d0"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ecfdf5"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981" transform="rotate(72,32,32)"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981" transform="rotate(144,32,32)"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981" transform="rotate(216,32,32)"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981" transform="rotate(288,32,32)"/><circle cx="32" cy="32" r="7" fill="#6ee7b7"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#10b981"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="white" opacity="0.8"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="white" opacity="0.8" transform="rotate(60,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="white" opacity="0.8" transform="rotate(120,32,32)"/><circle cx="32" cy="32" r="8" fill="#fbbf24"/></svg>`
+    ];
+  } else {
+    // genérico baseado nas iniciais
+    const iniciais = p.slice(0,2).toUpperCase();
+    const cores = [["#6366f1","#a5b4fc"],["#ec4899","#fbcfe8"],["#f59e0b","#fde68a"],["#10b981","#6ee7b7"],["#3b82f6","#93c5fd"]];
+    const idx = (p.charCodeAt(0)||0) % cores.length;
+    const [c1,c2] = cores[idx];
+    svgs = [
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="${c1}"/><circle cx="32" cy="32" r="20" fill="${c2}" opacity="0.4"/><text x="32" y="38" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif" font-weight="bold">${iniciais}</text></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="${c2}"/><rect x="12" y="12" width="40" height="40" rx="8" fill="${c1}"/><text x="32" y="38" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif" font-weight="bold">${iniciais}</text></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="white" stroke="${c1}" stroke-width="3"/><circle cx="32" cy="32" r="18" fill="${c1}"/><text x="32" y="38" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif" font-weight="bold">${iniciais}</text></svg>`
+    ];
   }
-  document.getElementById("btnGerarIA").disabled = false;
+  return svgs;
+}
+
+function gerarSVGLocal(p){
+  const temas = [
+    {k:["ingles","inglês","reino unido","uk","england","english"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#012169"/><line x1="0" y1="0" x2="64" y2="64" stroke="#fff" stroke-width="9"/><line x1="64" y1="0" x2="0" y2="64" stroke="#fff" stroke-width="9"/><line x1="32" y1="0" x2="32" y2="64" stroke="#fff" stroke-width="11"/><line x1="0" y1="32" x2="64" y2="32" stroke="#fff" stroke-width="11"/><line x1="0" y1="0" x2="64" y2="64" stroke="#C8102E" stroke-width="5"/><line x1="64" y1="0" x2="0" y2="64" stroke="#C8102E" stroke-width="5"/><line x1="32" y1="0" x2="32" y2="64" stroke="#C8102E" stroke-width="7"/><line x1="0" y1="32" x2="64" y2="32" stroke="#C8102E" stroke-width="7"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#1e3a8a"/><text x="32" y="24" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">EN</text><rect x="12" y="30" width="40" height="3" rx="2" fill="#C8102E"/><text x="32" y="48" font-size="11" fill="#93c5fd" text-anchor="middle">English</text></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#012169"/><line x1="0" y1="0" x2="64" y2="64" stroke="#fff" stroke-width="8"/><line x1="64" y1="0" x2="0" y2="64" stroke="#fff" stroke-width="8"/><line x1="32" y1="0" x2="32" y2="64" stroke="#fff" stroke-width="10"/><line x1="0" y1="32" x2="64" y2="32" stroke="#fff" stroke-width="10"/><line x1="0" y1="0" x2="64" y2="64" stroke="#C8102E" stroke-width="4"/><line x1="64" y1="0" x2="0" y2="64" stroke="#C8102E" stroke-width="4"/><line x1="32" y1="0" x2="32" y2="64" stroke="#C8102E" stroke-width="6"/><line x1="0" y1="32" x2="64" y2="32" stroke="#C8102E" stroke-width="6"/></svg>`
+    ]},
+    {k:["portugues","português","brasil","brazil","pt-br"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#009C3B"/><polygon points="32,8 56,32 32,56 8,32" fill="#FFDF00"/><circle cx="32" cy="32" r="12" fill="#002776"/><path d="M21,30 Q32,25 43,30" stroke="#fff" stroke-width="2" fill="none"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#002776"/><text x="32" y="26" font-size="16" fill="#FFDF00" text-anchor="middle" font-weight="bold">PT</text><rect x="14" y="32" width="36" height="3" rx="2" fill="#009C3B"/><text x="32" y="48" font-size="11" fill="#6ee7b7" text-anchor="middle">Português</text></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#009C3B"/><polygon points="32,10 54,32 32,54 10,32" fill="#FFDF00"/><circle cx="32" cy="32" r="11" fill="#002776"/></svg>`
+    ]},
+    {k:["espanhol","espanha","spain","español"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#AA151B"/><rect y="16" width="64" height="32" fill="#F1BF00"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#F1BF00"/><text x="32" y="26" font-size="16" fill="#AA151B" text-anchor="middle" font-weight="bold">ES</text><rect x="14" y="32" width="36" height="3" rx="2" fill="#AA151B"/><text x="32" y="48" font-size="11" fill="#AA151B" text-anchor="middle">Español</text></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#AA151B"/><rect y="16" width="64" height="32" fill="#F1BF00"/><rect width="64" height="64" rx="32" fill="none" stroke="#AA151B" stroke-width="0"/></svg>`
+    ]},
+    {k:["frances","francês","franca","france","french"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ED2939"/><rect width="43" height="64" fill="#fff"/><rect width="22" height="64" fill="#002395"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#fff"/><text x="32" y="26" font-size="16" fill="#002395" text-anchor="middle" font-weight="bold">FR</text><rect x="14" y="32" width="36" height="3" rx="2" fill="#ED2939"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#ED2939"/><rect width="43" height="64" fill="#fff"/><rect width="22" height="64" fill="#002395"/></svg>`
+    ]},
+    {k:["massagem","massage","relaxa","terapeuta"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#7c3aed"/><ellipse cx="22" cy="40" rx="8" ry="11" fill="#fff" opacity="0.9" transform="rotate(-15,22,40)"/><ellipse cx="42" cy="40" rx="8" ry="11" fill="#fff" opacity="0.9" transform="rotate(15,42,40)"/><circle cx="32" cy="24" r="9" fill="#c4b5fd"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#ede9fe"/><ellipse cx="22" cy="40" rx="8" ry="11" fill="#7c3aed" opacity="0.9" transform="rotate(-15,22,40)"/><ellipse cx="42" cy="40" rx="8" ry="11" fill="#7c3aed" opacity="0.9" transform="rotate(15,42,40)"/><circle cx="32" cy="24" r="9" fill="#7c3aed"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#7c3aed"/><ellipse cx="22" cy="40" rx="8" ry="11" fill="#fff" opacity="0.9" transform="rotate(-15,22,40)"/><ellipse cx="42" cy="40" rx="8" ry="11" fill="#fff" opacity="0.9" transform="rotate(15,42,40)"/><circle cx="32" cy="24" r="9" fill="#c4b5fd"/></svg>`
+    ]},
+    {k:["podologia","pe","pé","podolatria","foot"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#f59e0b"/><ellipse cx="32" cy="42" rx="16" ry="11" fill="#fff"/><ellipse cx="18" cy="28" rx="5" ry="6" fill="#fff"/><ellipse cx="26" cy="23" rx="5" ry="7" fill="#fff"/><ellipse cx="34" cy="23" rx="5" ry="7" fill="#fff"/><ellipse cx="42" cy="26" rx="4" ry="6" fill="#fff"/><ellipse cx="49" cy="30" rx="3.5" ry="5" fill="#fff"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#fff7ed"/><ellipse cx="32" cy="42" rx="16" ry="11" fill="#f59e0b"/><ellipse cx="18" cy="28" rx="5" ry="6" fill="#f59e0b"/><ellipse cx="26" cy="23" rx="5" ry="7" fill="#f59e0b"/><ellipse cx="34" cy="23" rx="5" ry="7" fill="#f59e0b"/><ellipse cx="42" cy="26" rx="4" ry="6" fill="#f59e0b"/><ellipse cx="49" cy="30" rx="3.5" ry="5" fill="#f59e0b"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#f59e0b"/><ellipse cx="32" cy="42" rx="16" ry="11" fill="#fff"/><ellipse cx="18" cy="28" rx="5" ry="6" fill="#fff"/><ellipse cx="26" cy="23" rx="5" ry="7" fill="#fff"/><ellipse cx="34" cy="23" rx="5" ry="7" fill="#fff"/><ellipse cx="42" cy="26" rx="4" ry="6" fill="#fff"/></svg>`
+    ]},
+    {k:["casais","casal","couple","dois","two"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#ec4899"/><circle cx="22" cy="20" r="9" fill="#fff"/><circle cx="42" cy="20" r="9" fill="#fce7f3"/><ellipse cx="22" cy="44" rx="12" ry="10" fill="#fff"/><ellipse cx="42" cy="44" rx="12" ry="10" fill="#fce7f3"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#fce7f3"/><circle cx="22" cy="20" r="9" fill="#ec4899"/><circle cx="42" cy="20" r="9" fill="#be185d"/><ellipse cx="22" cy="44" rx="12" ry="10" fill="#ec4899"/><ellipse cx="42" cy="44" rx="12" ry="10" fill="#be185d"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#ec4899"/><circle cx="22" cy="20" r="9" fill="#fff"/><circle cx="42" cy="20" r="9" fill="#fce7f3"/><ellipse cx="22" cy="44" rx="12" ry="10" fill="#fff"/><ellipse cx="42" cy="44" rx="12" ry="10" fill="#fce7f3"/></svg>`
+    ]},
+    {k:["oleo","óleo","oil","gota","aromaterapia"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#06b6d4"/><path d="M32,10 Q48,32 48,42 A16,16 0 0,1 16,42 Q16,32 32,10Z" fill="#fff"/><ellipse cx="27" cy="38" rx="4" ry="6" fill="#67e8f9" opacity="0.6" transform="rotate(-20,27,38)"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#cffafe"/><path d="M32,10 Q48,32 48,42 A16,16 0 0,1 16,42 Q16,32 32,10Z" fill="#06b6d4"/><ellipse cx="27" cy="38" rx="4" ry="6" fill="#fff" opacity="0.6" transform="rotate(-20,27,38)"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#06b6d4"/><path d="M32,10 Q48,32 48,42 A16,16 0 0,1 16,42 Q16,32 32,10Z" fill="#fff"/></svg>`
+    ]},
+    {k:["spa","lotus","flor","flower","vivencia","vivência"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#10b981"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(60,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(120,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(180,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(240,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(300,32,32)"/><circle cx="32" cy="32" r="8" fill="#6ee7b7"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#d1fae5"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(60,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(120,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(180,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(240,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(300,32,32)"/><circle cx="32" cy="32" r="8" fill="#fff"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#10b981"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(72,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(144,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(216,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(288,32,32)"/><circle cx="32" cy="32" r="7" fill="#6ee7b7"/></svg>`
+    ]},
+    {k:["nuru","agua","água","water","onda"],
+     svgs:[
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#3b82f6"/><path d="M0,38 Q16,26 32,38 Q48,50 64,38 L64,64 L0,64Z" fill="#fff" opacity="0.8"/><path d="M0,28 Q16,16 32,28 Q48,40 64,28 L64,64 L0,64Z" fill="#fff" opacity="0.4"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#dbeafe"/><path d="M0,38 Q16,26 32,38 Q48,50 64,38 L64,64 L0,64Z" fill="#3b82f6" opacity="0.8"/><path d="M0,28 Q16,16 32,28 Q48,40 64,28 L64,64 L0,64Z" fill="#3b82f6" opacity="0.4"/></svg>`,
+      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#3b82f6"/><path d="M0,38 Q16,26 32,38 Q48,50 64,38 L64,64 L0,64Z" fill="#fff" opacity="0.8"/></svg>`
+    ]},
+  ];
+
+  const tema = temas.find(t => t.k.some(k => p.includes(k)));
+  if(tema) return tema.svgs;
+
+  // fallback genérico baseado na primeira letra
+  const letra = p.charAt(0).toUpperCase();
+  const cores = ["#6366f1","#ec4899","#f59e0b","#10b981","#3b82f6","#8b5cf6","#ef4444","#06b6d4"];
+  const cor = cores[letra.charCodeAt(0) % cores.length];
+  return [
+    `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="${cor}"/><text x="32" y="40" font-size="28" fill="#fff" text-anchor="middle" font-weight="bold">${letra}</text></svg>`,
+    `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="${cor}"/><text x="32" y="40" font-size="28" fill="#fff" text-anchor="middle" font-weight="bold">${letra}</text></svg>`,
+    `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#fff" stroke="${cor}" stroke-width="3"/><text x="32" y="40" font-size="28" fill="${cor}" text-anchor="middle" font-weight="bold">${letra}</text></svg>`,
+  ];
 }
 
 /* ── INIT ── */

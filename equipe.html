@@ -274,9 +274,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
             <label>Cargo</label>
             <select id="cargo">
               <option value="">Selecione</option>
-              <option>Terapeuta Feminina</option><option>Terapeuta Masculino</option>
-              <option>Gerente</option><option>Atendente</option>
-              <option>Recepcionista</option><option>Faxineira</option><option>Analista</option>
             </select>
           </div>
           <div class="field">
@@ -513,6 +510,7 @@ function abrirNovo(){
   resetModal();
   document.getElementById("modalTitulo").textContent = "Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display = "none";
+  document.getElementById("tab-docs").style.display   = "none";
   document.getElementById("modal").style.display = "flex";
 }
 
@@ -525,6 +523,7 @@ async function editar(cpf){
   setForm(data);
   document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display = "";
+  document.getElementById("tab-docs").style.display   = "";
   carregarDocs(cpf);
   document.getElementById("modal").style.display = "flex";
 }
@@ -689,9 +688,21 @@ function aoMudarStatus(select){
   }
 }
 
+/* ── PARÂMETROS ── */
+async function carregarParametros(){
+  const CARGOS_DEFAULT = ["Terapeuta Feminina","Terapeuta Masculino","Gerente","Atendente","Recepcionista","Faxineira","Analista"];
+  const {data} = await supabaseClient.from("parametros").select("valor")
+    .eq("tipo","cargos").eq("ativo",true).order("valor");
+  const lista = data?.length ? data.map(p => p.valor) : CARGOS_DEFAULT;
+  const sel = document.getElementById("cargo");
+  sel.innerHTML = "<option value=''>Selecione</option>";
+  lista.forEach(c => sel.innerHTML += `<option>${c}</option>`);
+}
+
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
   aplicarMascaras();
+  carregarParametros();
   document.getElementById("filtroStatus").addEventListener("change", carregar);
   carregar();
 });

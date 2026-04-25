@@ -74,6 +74,20 @@ tr:hover td{background:#f9fafb;}
 /* pagar modal */
 .pagar-info{background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.7;}
 .pagar-info strong{color:#111827;}
+
+/* quinzena */
+.quinzena-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f3f4f6;}
+.quinzena-row:last-child{border-bottom:none;}
+.q-avatar{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.q-avatar.fem{background:#fce7f3;color:#db2777;}
+.q-avatar.masc{background:#dbeafe;color:#2563eb;}
+.q-nome{flex:1;font-size:13px;font-weight:600;color:#111827;}
+.q-valor{width:140px;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right;}
+.q-valor:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.q-check{width:18px;height:18px;cursor:pointer;accent-color:#2563eb;}
+.quinzena-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.quinzena-periodo{display:flex;gap:10px;margin-bottom:16px;background:#f9fafb;border-radius:10px;padding:12px;}
+.quinzena-periodo .field{flex:1;}
 </style>
 </head>
 
@@ -86,6 +100,7 @@ tr:hover td{background:#f9fafb;}
     <h1>Despesas</h1>
     <div class="topbar-btns">
       <button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+      <button class="btn-blue" onclick="abrirGerarQuinzena()"><i class="fa fa-users"></i> Gerar Quinzena</button>
       <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Nova Despesa</button>
     </div>
   </div>
@@ -259,6 +274,61 @@ tr:hover td{background:#f9fafb;}
   <div class="modal-footer">
     <button class="btn-cancel" onclick="fecharModalPagar()">Cancelar</button>
     <button class="btn-green" onclick="confirmarPagamento()"><i class="fa fa-check"></i> Confirmar Pagamento</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL GERAR QUINZENA -->
+<div class="modal" id="modalQuinzena">
+<div class="modal-content" style="width:620px">
+  <div class="modal-header">
+    <h2><i class="fa fa-users" style="color:#2563eb;margin-right:8px"></i> Gerar Pagamento Quinzenal</h2>
+    <button class="btn-fechar" onclick="fecharQuinzena()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+
+    <!-- Período e configurações -->
+    <div class="quinzena-periodo">
+      <div class="field">
+        <label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Período</label>
+        <select id="qPeriodo" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+          <option value="1">1ª Quinzena</option>
+          <option value="2">2ª Quinzena</option>
+        </select>
+      </div>
+      <div class="field">
+        <label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Mês/Ano</label>
+        <input type="month" id="qMes" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+      </div>
+      <div class="field">
+        <label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Vencimento</label>
+        <input type="date" id="qVencimento" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+      </div>
+      <div class="field" style="justify-content:flex-end">
+        <label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Valor padrão (R$)</label>
+        <input type="number" id="qValorPadrao" placeholder="0,00" step="0.01"
+          style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px"
+          oninput="aplicarValorPadrao()">
+      </div>
+    </div>
+
+    <!-- Lista de terapeutas -->
+    <div class="quinzena-header">
+      <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af">Profissionais</span>
+      <label style="font-size:12px;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:6px">
+        <input type="checkbox" id="qCheckAll" onchange="toggleTodos(this)" style="accent-color:#2563eb"> Selecionar todos
+      </label>
+    </div>
+
+    <div id="qLista" style="max-height:320px;overflow-y:auto"></div>
+
+  </div>
+  <div class="modal-footer" style="justify-content:space-between">
+    <span id="qResumo" style="font-size:13px;color:#6b7280"></span>
+    <div style="display:flex;gap:10px">
+      <button class="btn-cancel" onclick="fecharQuinzena()">Cancelar</button>
+      <button class="btn-green" onclick="confirmarQuinzena()"><i class="fa fa-check"></i> Gerar Despesas</button>
+    </div>
   </div>
 </div>
 </div>
@@ -587,6 +657,165 @@ function exportarExcel(){
   XLSX.utils.book_append_sheet(wb, ws, "Despesas");
   XLSX.writeFile(wb, "despesas.xlsx");
 }
+
+/* ── GERAR QUINZENA ── */
+let terapeutasQ = [];
+
+function mesAtualISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+}
+
+function nomesMes(){
+  return ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+          "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+}
+
+async function abrirGerarQuinzena(){
+  // carregar terapeutas ativos
+  const {data} = await client.from("terapeutas")
+    .select("cpf,nome_profissional,cargo")
+    .eq("status","Ativo")
+    .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"])
+    .order("nome_profissional");
+
+  terapeutasQ = data || [];
+
+  // definir período padrão
+  const agora = new Date();
+  const dia   = agora.getDate();
+  document.getElementById("qPeriodo").value   = dia <= 15 ? "1" : "2";
+  document.getElementById("qMes").value       = mesAtualISO();
+  document.getElementById("qValorPadrao").value = "";
+
+  // vencimento padrão: dia 15 para 1ª quinzena, último dia para 2ª
+  definirVencimentoPadrao();
+
+  renderQlista();
+  document.getElementById("modalQuinzena").style.display = "flex";
+}
+
+function definirVencimentoPadrao(){
+  const mes     = document.getElementById("qMes").value;
+  const periodo = document.getElementById("qPeriodo").value;
+  if(!mes) return;
+  const [y,m]   = mes.split("-").map(Number);
+  if(periodo === "1"){
+    document.getElementById("qVencimento").value = `${y}-${String(m).padStart(2,"0")}-15`;
+  } else {
+    const ultimo = new Date(y, m, 0).getDate();
+    document.getElementById("qVencimento").value = `${y}-${String(m).padStart(2,"0")}-${ultimo}`;
+  }
+}
+
+function fecharQuinzena(){
+  document.getElementById("modalQuinzena").style.display = "none";
+}
+
+function renderQlista(){
+  const lista = document.getElementById("qLista");
+  lista.innerHTML = terapeutasQ.map(t => {
+    const fem  = t.cargo === "Terapeuta Feminina";
+    const icon = fem ? "fa-person-dress" : "fa-person";
+    return `
+    <div class="quinzena-row">
+      <input type="checkbox" class="q-check" id="qCheck_${t.cpf}" value="${t.cpf}" checked onchange="atualizarResumo()">
+      <div class="q-avatar ${fem?'fem':'masc'}"><i class="fa ${icon}"></i></div>
+      <span class="q-nome">${t.nome_profissional}</span>
+      <input type="number" class="q-valor" id="qValor_${t.cpf}" placeholder="0,00" step="0.01" oninput="atualizarResumo()">
+    </div>`;
+  }).join("");
+
+  // marcar todos
+  document.getElementById("qCheckAll").checked = true;
+  atualizarResumo();
+}
+
+function aplicarValorPadrao(){
+  const v = document.getElementById("qValorPadrao").value;
+  terapeutasQ.forEach(t => {
+    const input = document.getElementById("qValor_"+t.cpf);
+    if(input) input.value = v;
+  });
+  atualizarResumo();
+}
+
+function toggleTodos(cb){
+  terapeutasQ.forEach(t => {
+    const chk = document.getElementById("qCheck_"+t.cpf);
+    if(chk) chk.checked = cb.checked;
+  });
+  atualizarResumo();
+}
+
+function atualizarResumo(){
+  let count = 0, total = 0;
+  terapeutasQ.forEach(t => {
+    const chk = document.getElementById("qCheck_"+t.cpf);
+    const val = parseFloat(document.getElementById("qValor_"+t.cpf)?.value||0);
+    if(chk?.checked){ count++; total += val; }
+  });
+  document.getElementById("qResumo").textContent =
+    `${count} profissional${count!==1?"is":""} · Total: ${fmtMoeda(total)}`;
+}
+
+async function confirmarQuinzena(){
+  const periodo   = document.getElementById("qPeriodo").value;
+  const mes       = document.getElementById("qMes").value;
+  const vencimento= document.getElementById("qVencimento").value;
+
+  if(!mes)       { alert("Selecione o mês."); return; }
+  if(!vencimento){ alert("Informe a data de vencimento."); return; }
+
+  const [y,m]    = mes.split("-").map(Number);
+  const nomeMes  = nomesMes()[m-1];
+  const periodoStr = periodo === "1" ? "1ª Quinzena" : "2ª Quinzena";
+
+  const selecionados = terapeutasQ.filter(t => {
+    const chk = document.getElementById("qCheck_"+t.cpf);
+    return chk?.checked;
+  });
+
+  if(!selecionados.length){ alert("Selecione ao menos um profissional."); return; }
+
+  const semValor = selecionados.filter(t => {
+    const v = parseFloat(document.getElementById("qValor_"+t.cpf)?.value||0);
+    return !v || v <= 0;
+  });
+  if(semValor.length){
+    alert(`Informe o valor para: ${semValor.map(t=>t.nome_profissional).join(", ")}`);
+    return;
+  }
+
+  // criar despesas
+  const despesas = selecionados.map(t => ({
+    descricao:      `Pagamento ${t.nome_profissional} - ${periodoStr} ${nomeMes} ${y}`,
+    categoria:      "Pessoal",
+    centro_custo:   "Pessoal",
+    valor:          parseFloat(document.getElementById("qValor_"+t.cpf).value),
+    data_vencimento: vencimento,
+    status:         "A pagar",
+    recorrente:     false,
+    observacao:     `CPF: ${t.cpf}`
+  }));
+
+  const {error} = await client.from("despesas").insert(despesas);
+  if(error){ alert("Erro ao gerar: "+error.message); return; }
+
+  fecharQuinzena();
+  carregar();
+  alert(`${despesas.length} despesa${despesas.length!==1?"s":""} gerada${despesas.length!==1?"s":""}!`);
+}
+
+// atualizar vencimento ao trocar período ou mês
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    const qPeriodo = document.getElementById("qPeriodo");
+    const qMes     = document.getElementById("qMes");
+    if(qPeriodo) qPeriodo.addEventListener("change", definirVencimentoPadrao);
+    if(qMes)     qMes.addEventListener("change", definirVencimentoPadrao);
+  }, 100);
+});
 
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {

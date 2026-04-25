@@ -136,6 +136,48 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
 .btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
+
+/* ── PROGRESS CIRCLE ── */
+.progress-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:default;}
+.progress-circle{width:42px;height:42px;transform:rotate(-90deg);}
+.progress-circle .bg{fill:none;stroke:#e5e7eb;stroke-width:4;}
+.progress-circle .fill{fill:none;stroke:#22c55e;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,stroke .3s;}
+.progress-pct{position:absolute;font-size:10px;font-weight:700;color:#111827;}
+.progress-tooltip{
+  display:none;position:absolute;top:calc(100% + 8px);right:0;
+  background:#1f2937;color:#fff;border-radius:10px;
+  padding:12px 14px;font-size:12px;width:220px;z-index:100;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);line-height:1.6;
+}
+.progress-tooltip::before{
+  content:"";position:absolute;top:-6px;right:14px;
+  border:6px solid transparent;border-bottom-color:#1f2937;border-top:none;
+}
+.progress-wrap:hover .progress-tooltip{display:block;}
+.tooltip-item{display:flex;align-items:center;gap:6px;padding:2px 0;}
+.tooltip-item.done{color:#86efac;}
+.tooltip-item.missing{color:#fca5a5;}
+
+/* ── PROGRESS CIRCLE ── */
+.progress-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:default;}
+.progress-circle{width:42px;height:42px;transform:rotate(-90deg);}
+.progress-circle .bg{fill:none;stroke:#e5e7eb;stroke-width:4;}
+.progress-circle .fill{fill:none;stroke:#22c55e;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,stroke .3s;}
+.progress-pct{position:absolute;font-size:10px;font-weight:700;color:#111827;}
+.progress-tooltip{
+  display:none;position:absolute;top:calc(100% + 8px);right:0;
+  background:#1f2937;color:#fff;border-radius:10px;
+  padding:12px 14px;font-size:12px;width:220px;z-index:100;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);line-height:1.6;
+}
+.progress-tooltip::before{
+  content:"";position:absolute;top:-6px;right:14px;
+  border:6px solid transparent;border-bottom-color:#1f2937;border-top:none;
+}
+.progress-wrap:hover .progress-tooltip{display:block;}
+.tooltip-item{display:flex;align-items:center;gap:6px;padding:2px 0;}
+.tooltip-item.done{color:#86efac;}
+.tooltip-item.missing{color:#fca5a5;}
 </style>
 </head>
 
@@ -173,7 +215,18 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 
   <div class="modal-header">
     <h2 id="modalTitulo">Novo Cadastro</h2>
-    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="progress-wrap" id="progressWrap" style="display:none">
+        <svg class="progress-circle" viewBox="0 0 42 42">
+          <circle class="bg" cx="21" cy="21" r="18"/>
+          <circle class="fill" id="progressFill" cx="21" cy="21" r="18"
+            stroke-dasharray="113" stroke-dashoffset="113"/>
+        </svg>
+        <span class="progress-pct" id="progressPct">0%</span>
+        <div class="progress-tooltip" id="progressTooltip"></div>
+      </div>
+      <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+    </div>
   </div>
 
   <div class="modal-body">
@@ -509,8 +562,10 @@ function abrirNovo(){
   cpfAtual = null;
   resetModal();
   document.getElementById("modalTitulo").textContent = "Novo Cadastro";
-  document.getElementById("tabDocsBtn").style.display = "none";
-  document.getElementById("tab-docs").style.display   = "none";
+  document.getElementById("tabDocsBtn").style.display = "";
+  document.getElementById("tab-docs").style.display   = "";
+  document.getElementById("progressWrap").style.display = "inline-flex";
+  atualizarProgresso();
   document.getElementById("modal").style.display = "flex";
 }
 
@@ -524,6 +579,7 @@ async function editar(cpf){
   document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display = "";
   document.getElementById("tab-docs").style.display   = "";
+  document.getElementById("progressWrap").style.display = "none";
   carregarDocs(cpf);
   document.getElementById("modal").style.display = "flex";
 }
@@ -688,6 +744,49 @@ function aoMudarStatus(select){
   }
 }
 
+/* ── PROGRESSO ── */
+const CAMPOS_OBRIGATORIOS = [
+  {id:"nome_completo",   label:"Nome Completo",      aba:"Dados Pessoais"},
+  {id:"nome_profissional",label:"Nome Profissional", aba:"Dados Pessoais"},
+  {id:"cpf",             label:"CPF",                aba:"Dados Pessoais"},
+  {id:"email",           label:"Email",              aba:"Dados Pessoais"},
+  {id:"telefone",        label:"Telefone",           aba:"Contatos"},
+  {id:"cargo",           label:"Cargo",              aba:"Dados Funcionais"},
+  {id:"status",          label:"Status",             aba:"Dados Funcionais"},
+];
+
+function atualizarProgresso(){
+  if(document.getElementById("progressWrap").style.display === "none") return;
+
+  const total    = CAMPOS_OBRIGATORIOS.length;
+  const feitos   = CAMPOS_OBRIGATORIOS.filter(c => {
+    const el = document.getElementById(c.id);
+    return el && el.value && el.value.trim() !== "";
+  });
+  const pct      = Math.round((feitos.length / total) * 100);
+  const circum   = 113;
+  const offset   = circum - (circum * pct / 100);
+  const cor      = pct === 100 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
+
+  document.getElementById("progressPct").textContent = pct + "%";
+  document.getElementById("progressPct").style.color = cor;
+  const fill = document.getElementById("progressFill");
+  fill.style.strokeDashoffset = offset;
+  fill.style.stroke = cor;
+
+  // tooltip
+  const feitosIds = feitos.map(c => c.id);
+  const tooltip   = document.getElementById("progressTooltip");
+  tooltip.innerHTML = "<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Campos obrigatórios</div>"
+    + CAMPOS_OBRIGATORIOS.map(c => {
+      const ok = feitosIds.includes(c.id);
+      return `<div class="tooltip-item ${ok?'done':'missing'}">
+        <i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i>
+        ${c.label} <span style="opacity:.6;font-size:10px">(${c.aba})</span>
+      </div>`;
+    }).join("");
+}
+
 /* ── PARÂMETROS ── */
 async function carregarParametros(){
   const CARGOS_DEFAULT = ["Terapeuta Feminina","Terapeuta Masculino","Gerente","Atendente","Recepcionista","Faxineira","Analista"];
@@ -704,6 +803,14 @@ document.addEventListener('DOMContentLoaded', () => {
   aplicarMascaras();
   carregarParametros();
   document.getElementById("filtroStatus").addEventListener("change", carregar);
+
+  // atualizar progresso ao digitar
+  CAMPOS_OBRIGATORIOS.forEach(c => {
+    const el = document.getElementById(c.id);
+    if(el) el.addEventListener("input",  atualizarProgresso);
+    if(el) el.addEventListener("change", atualizarProgresso);
+  });
+
   carregar();
 });
 </script>

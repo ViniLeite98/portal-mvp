@@ -715,20 +715,17 @@ function fecharQuinzena(){
 function renderQlista(){
   const lista = document.getElementById("qLista");
   lista.innerHTML = terapeutasQ.map(t => {
-    const fem  = t.cargo === "Terapeuta Feminina";
-    const icon = fem ? "fa-person-dress" : "fa-person";
-    return `
-    <div class="quinzena-row">
-      <input type="checkbox" class="q-check" id="qCheck_${t.cpf}" value="${t.cpf}" checked onchange="atualizarResumo()">
-      <div class="q-avatar ${fem?'fem':'masc'}"><i class="fa ${icon}"></i></div>
-      <div style="flex:1">
-        <div class="q-nome">${t.nome_profissional}</div>
-        ${t.pix_chave
-          ? `<div style="font-size:11px;color:#6b7280;margin-top:2px"><i class="fa fa-key" style="color:#2563eb;font-size:10px"></i> ${t.pix_tipo||'PIX'}: <strong>${t.pix_chave}</strong></div>`
-          : `<div style="font-size:11px;color:#dc2626;margin-top:2px"><i class="fa fa-exclamation-triangle"></i> Sem PIX cadastrado</div>`}
-      </div>
-      <input type="number" class="q-valor" id="qValor_${t.cpf}" placeholder="0,00" step="0.01" oninput="atualizarResumo()">
-    </div>\`;
+    const fem    = t.cargo === "Terapeuta Feminina";
+    const icon   = fem ? "fa-person-dress" : "fa-person";
+    const pixHtml = t.pix_chave
+      ? '<div style="font-size:11px;color:#6b7280;margin-top:2px"><i class="fa fa-key" style="color:#2563eb;font-size:10px"></i> '+(t.pix_tipo||'PIX')+': <strong>'+t.pix_chave+'</strong></div>'
+      : '<div style="font-size:11px;color:#dc2626;margin-top:2px"><i class="fa fa-exclamation-triangle"></i> Sem PIX cadastrado</div>';
+    return '<div class="quinzena-row">'
+      + '<input type="checkbox" class="q-check" id="qCheck_'+t.cpf+'" value="'+t.cpf+'" checked onchange="atualizarResumo()">'
+      + '<div class="q-avatar '+(fem?'fem':'masc')+'"><i class="fa '+icon+'"></i></div>'
+      + '<div style="flex:1"><div class="q-nome">'+t.nome_profissional+'</div>'+pixHtml+'</div>'
+      + '<input type="number" class="q-valor" id="qValor_'+t.cpf+'" placeholder="0,00" step="0.01" oninput="atualizarResumo()">'
+      + '</div>';
   }).join("");
 
   // marcar todos

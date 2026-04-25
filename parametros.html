@@ -502,6 +502,13 @@ async function excluir(id){
   if(!confirm("Excluir este item?")) return;
   let error;
   if(SECOES_COM_ICONE.includes(secaoAtual)){
+    // verificar se tem terapeutas vinculados
+    const {data: vinculos} = await client.from("terapeuta_certificacoes")
+      .select("id").eq("certificacao_id", id).limit(1);
+    if(vinculos && vinculos.length > 0){
+      alert("Não é possível excluir esta certificação pois ela está vinculada a um ou mais profissionais.\n\nRemova os vínculos na tela de Certificações antes de excluir.");
+      return;
+    }
     ({error} = await client.from("certificacoes").delete().eq("id",id));
   } else {
     ({error} = await client.from("parametros").delete().eq("id",id));

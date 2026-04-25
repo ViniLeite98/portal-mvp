@@ -2,692 +2,697 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Parâmetros | Hara Spa</title>
+<title>Gestão da Equipe | Hara Spa</title>
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;}
-.topbar h1{margin:0;}
-.layout{display:grid;grid-template-columns:220px 1fr;gap:24px;}
-.param-menu{background:#fff;border-radius:14px;padding:12px 0;box-shadow:0 1px 4px rgba(0,0,0,.06);height:fit-content;position:sticky;top:20px;}
-.param-menu-item{display:flex;align-items:center;gap:10px;padding:11px 18px;cursor:pointer;font-size:13px;font-weight:500;color:#6b7280;border-left:3px solid transparent;transition:all .15s;}
-.param-menu-item i{width:16px;text-align:center;font-size:13px;}
-.param-menu-item:hover{background:#f9fafb;color:#111827;}
-.param-menu-item.active{background:#eff6ff;color:#1d4ed8;border-left-color:#2563eb;font-weight:600;}
-.param-menu-sep{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#d1d5db;padding:12px 18px 4px;}
-.param-panel{background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-.panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-.panel-header h2{margin:0;font-size:18px;color:#111827;}
-.panel-desc{font-size:13px;color:#6b7280;margin-bottom:20px;margin-top:-12px;}
-button{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:7px;}
-button:hover{opacity:.9;}
-button.btn-red{background:#dc2626;}
-button.btn-blue{background:#2563eb;}
-button.btn-ghost{background:none;color:#6b7280;border:1px solid #e5e7eb;}
-button.btn-ghost:hover{background:#f9fafb;color:#111827;}
-.param-list{display:flex;flex-direction:column;gap:8px;}
-.param-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;transition:all .15s;}
-.param-item:hover{border-color:#d1d5db;background:#fafafa;}
-.param-item-drag{cursor:grab;color:#d1d5db;font-size:14px;}
-.param-item-nome{flex:1;font-size:14px;font-weight:500;color:#111827;}
-.param-item-badge{font-size:11px;color:#9ca3af;background:#f3f4f6;border-radius:6px;padding:2px 8px;}
-.param-item-actions{display:flex;gap:6px;}
-.param-item-actions button{padding:5px 10px;font-size:12px;}
-.toggle-ativo{width:36px;height:20px;border-radius:99px;background:#d1d5db;border:none;cursor:pointer;position:relative;transition:background .2s;padding:0;}
-.toggle-ativo.on{background:#22c55e;}
-.toggle-ativo::after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s;}
-.toggle-ativo.on::after{left:19px;}
-.empty-state{text-align:center;color:#9ca3af;padding:40px;font-size:13px;}
-.empty-state i{font-size:28px;display:block;margin-bottom:10px;color:#e5e7eb;}
-.add-row{display:flex;gap:10px;align-items:center;padding:12px 16px;border:2px dashed #e5e7eb;border-radius:10px;margin-top:8px;}
-.add-row input{flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;}
-.add-row input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
-.modal-content{background:#fff;width:540px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
-.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
-.modal-header h2{margin:0;font-size:18px;color:#111827;}
-.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
-.btn-fechar:hover{background:#f3f4f6;}
-.modal-body{padding:24px;}
-.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;}
-.modal-footer button{padding:9px 20px;}
-.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
-.field{display:flex;flex-direction:column;margin-bottom:14px;}
-.field:last-child{margin-bottom:0;}
-.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
-input,select{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
-input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 
-/* PICKER */
-.icone-picker-wrap{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-top:6px;}
-.icone-preview-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;cursor:pointer;}
-.icone-preview-box{width:40px;height:40px;border-radius:10px;background:#fff;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0;}
-.icone-preview-box img,.icone-preview-box svg{width:100%;height:100%;object-fit:cover;border-radius:8px;}
-.icone-preview-info{flex:1;}
-.icone-preview-label{font-size:13px;font-weight:600;color:#111827;}
-.icone-preview-sub{font-size:11px;color:#9ca3af;margin-top:2px;}
-.icone-picker-toggle{font-size:12px;color:#6b7280;}
-.picker-tabs{display:flex;gap:1px;background:#e5e7eb;}
-.picker-tab{flex:1;padding:9px;text-align:center;border:none;background:#f9fafb;font-size:12px;font-weight:600;color:#6b7280;cursor:pointer;transition:all .15s;}
-.picker-tab.active{background:#fff;color:#111827;}
-.picker-panel{display:none;padding:14px 16px;}
-.picker-panel.active{display:block;}
-.picker-search{display:flex;gap:8px;margin-bottom:10px;}
-.picker-search input{flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;}
-.picker-search input:focus{outline:none;border-color:#2563eb;}
-.fa-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;max-height:160px;overflow-y:auto;}
-.fa-opt{display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 3px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:10px;color:#6b7280;transition:all .12s;}
-.fa-opt:hover{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
-.fa-opt.selected{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
-.fa-opt i{font-size:15px;}
-.fa-manual{display:flex;gap:8px;margin-top:10px;align-items:center;}
-.fa-manual span{font-size:11px;color:#9ca3af;white-space:nowrap;}
-.fa-manual input{flex:1;padding:7px 10px;font-size:12px;}
-.fa-manual button{padding:7px 12px;font-size:12px;}
-.upload-drop{border:2px dashed #d1d5db;border-radius:10px;padding:20px;text-align:center;cursor:pointer;color:#9ca3af;font-size:12px;transition:all .15s;}
-.upload-drop:hover{border-color:#2563eb;background:#f0f9ff;color:#2563eb;}
-.upload-drop i{font-size:22px;display:block;margin-bottom:6px;}
-.upload-drop input{display:none;}
-.upload-thumb{display:none;margin-top:10px;text-align:center;}
-.upload-thumb img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #e5e7eb;}
-.upload-thumb span{display:block;font-size:11px;color:#6b7280;margin-top:4px;}
-.ia-chip{background:#f3f4f6;color:#374151;border:none;border-radius:99px;padding:4px 10px;font-size:11px;cursor:pointer;}
-.ia-chip:hover{background:#e5e7eb;}
-.ia-input-row input{flex:1;padding:8px 10px;font-size:12px;}
-.ia-input-row .btn-gerar:disabled{opacity:.6;cursor:default;}
-.ia-var:hover,.ia-var.selected{border-color:#7c3aed;}
-.ia-var svg,.ia-var img{width:100%;height:100%;}
+/* ── TABELA PRINCIPAL ── */
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
+th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
+th{background:#f9fafb;font-weight:600;}
+button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
+button.excluir{background:#dc2626}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.left-tools{display:flex;gap:10px;align-items:center;}
+.left-tools input{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;width:260px;font-size:14px;}
+.left-tools input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.left-tools select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;}
+
+/* ── MODAL ── */
+.modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);
+  display:none;align-items:flex-start;justify-content:center;
+  z-index:10;padding:30px 20px;overflow-y:auto;
+}
+.modal-content{
+  background:#fff;width:860px;max-width:100%;
+  border-radius:18px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.2);
+}
+
+/* ── HEADER ── */
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 28px 0;
+}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{
+  background:none;color:#6b7280;font-size:20px;
+  border:none;cursor:pointer;padding:4px 8px;border-radius:6px;
+}
+.btn-fechar:hover{background:#f3f4f6;color:#111827;}
+
+/* ── BODY: sidenav + panels ── */
+.modal-body{display:flex;min-height:480px;}
+
+.side-nav{
+  width:190px;flex-shrink:0;
+  background:#f9fafb;border-right:1px solid #e5e7eb;
+  padding:16px 0;display:flex;flex-direction:column;gap:2px;
+}
+.side-btn{
+  display:flex;align-items:center;gap:10px;
+  background:none;color:#6b7280;border:none;border-radius:0;
+  padding:11px 20px;font-size:13px;font-weight:500;
+  cursor:pointer;text-align:left;width:100%;
+  border-left:3px solid transparent;transition:all .15s;
+}
+.side-btn i{width:16px;text-align:center;font-size:13px;}
+.side-btn:hover{background:#f3f4f6;color:#111827;}
+.side-btn.active{background:#eff6ff;color:#1d4ed8;border-left-color:#2563eb;font-weight:600;}
+.tab-badge{
+  margin-left:auto;background:#2563eb;color:#fff;
+  font-size:10px;border-radius:99px;padding:1px 6px;font-weight:700;
+}
+
+.tab-panels{flex:1;overflow-y:auto;}
+.tab-panel{display:none;padding:24px 28px;}
+.tab-panel.active{display:block;}
+
+/* ── FORM ── */
+.section-title{
+  font-size:11px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.07em;color:#9ca3af;margin:0 0 18px;
+  display:flex;align-items:center;gap:7px;
+}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px;}
+.field{display:flex;flex-direction:column;}
+.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
+input,select{
+  padding:9px 11px;border-radius:8px;
+  border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
+}
+input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.span2{grid-column:span 2;}
+.span3{grid-column:span 3;}
+
+/* ── FOOTER ── */
+.modal-footer{
+  display:flex;justify-content:flex-end;gap:10px;
+  padding:14px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;
+}
+.modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.btn-cancel:hover{background:#f3f4f6;}
+.btn-save{background:#1f2937;}
+.btn-save:hover{background:#111827;}
+
+/* ── DOCUMENTOS ── */
+.doc-upload-box{
+  background:#f9fafb;border:2px dashed #d1d5db;
+  border-radius:12px;padding:18px;margin-bottom:20px;
+}
+.doc-upload-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
+.doc-upload-row .field{flex:1;min-width:140px;}
+.btn-upload{
+  height:38px;padding:0 16px;white-space:nowrap;
+  background:#2563eb;font-size:13px;align-self:flex-end;border-radius:6px;
+}
+.upload-status{font-size:13px;color:#2563eb;margin-top:8px;display:none;}
+.doc-list{display:flex;flex-direction:column;gap:8px;}
+.doc-item{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px 14px;
+}
+.doc-item-left{display:flex;align-items:center;gap:11px;}
+.doc-icon{
+  width:36px;height:36px;background:#eff6ff;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:#2563eb;font-size:15px;flex-shrink:0;
+}
+.doc-name{font-size:13px;font-weight:600;color:#1f2937;}
+.doc-tipo{font-size:11px;color:#6b7280;margin-top:2px;}
+.doc-item-right{display:flex;gap:8px;align-items:center;}
+.doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
+.btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
+.doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
 </style>
 </head>
+
 <body>
 <div class="app">
 <aside id="sidebar"></aside>
+
 <main class="content">
-  <div class="topbar"><h1>Parâmetros</h1></div>
-  <div class="layout">
+<h1>Gestão da Equipe</h1>
 
-    <nav class="param-menu">
-      <div class="param-menu-sep">Cadastros</div>
-      <div class="param-menu-item active" onclick="mudarSecao('certificacoes',this)"><i class="fa fa-certificate"></i> Certificações</div>
-      <div class="param-menu-item" onclick="mudarSecao('categorias_produto',this)"><i class="fa fa-box"></i> Categorias de Produto</div>
-      <div class="param-menu-item" onclick="mudarSecao('cargos',this)"><i class="fa fa-briefcase"></i> Cargos</div>
-      <div class="param-menu-item" onclick="mudarSecao('grupos_servico',this)"><i class="fa fa-spa"></i> Grupos de Serviço</div>
-      <div class="param-menu-sep">Operacional</div>
-      <div class="param-menu-item" onclick="mudarSecao('tipos_solicitacao',this)"><i class="fa fa-file-alt"></i> Tipos de Solicitação</div>
-      <div class="param-menu-item" onclick="mudarSecao('origens_lead',this)"><i class="fa fa-bullhorn"></i> Origens de Lead</div>
-      <div class="param-menu-item" onclick="mudarSecao('formas_pagamento',this)"><i class="fa fa-credit-card"></i> Formas de Pagamento</div>
-      <div class="param-menu-item" onclick="mudarSecao('motivos_movimentacao',this)"><i class="fa fa-exchange-alt"></i> Motivos de Movimentação</div>
-    </nav>
-
-    <div class="param-panel">
-      <div class="panel-header">
-        <h2 id="panelTitulo">Certificações</h2>
-        <button class="btn-blue" onclick="abrirAdicionar()"><i class="fa fa-plus"></i> Adicionar</button>
-      </div>
-      <p class="panel-desc" id="panelDesc">Certificações disponíveis para vincular aos profissionais.</p>
-      <div class="param-list" id="paramLista"></div>
-    </div>
-
+<div class="topbar">
+  <div class="left-tools">
+    <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()">
+    <select id="filtroStatus">
+      <option value="">Todos os status</option>
+      <option value="Ativo">Ativo</option>
+      <option value="Inativo">Inativo</option>
+    </select>
   </div>
+  <button onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Cadastro</button>
+</div>
+
+<table>
+  <thead>
+    <tr><th>Nome Profissional</th><th>Cargo</th><th>CPF</th><th>Status</th><th>Ações</th></tr>
+  </thead>
+  <tbody id="lista"></tbody>
+</table>
 </main>
 </div>
 
-<!-- MODAL EDITAR -->
-<div class="modal" id="modalEditar">
+<!-- ══════════════════════════ MODAL ══════════════════════════ -->
+<div class="modal" id="modal">
 <div class="modal-content">
+
   <div class="modal-header">
-    <h2 id="modalTitulo">Editar</h2>
+    <h2 id="modalTitulo">Novo Cadastro</h2>
     <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
   </div>
+
   <div class="modal-body">
 
-    <div class="field">
-      <label>Nome *</label>
-      <input id="editNome" placeholder="Nome do parâmetro">
-    </div>
-    <div class="field">
-      <label>Descrição <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
-      <input id="editDesc" placeholder="Descrição ou detalhe">
-    </div>
+    <!-- Sidenav -->
+    <nav class="side-nav">
+      <button class="side-btn active" onclick="mudarTab('pessoais',this)">
+        <i class="fa fa-id-card"></i> Dados Pessoais
+      </button>
+      <button class="side-btn" onclick="mudarTab('contatos',this)">
+        <i class="fa fa-phone"></i> Contatos
+      </button>
+      <button class="side-btn" onclick="mudarTab('endereco',this)">
+        <i class="fa fa-map-marker-alt"></i> Endereço
+      </button>
+      <button class="side-btn" onclick="mudarTab('pagamento',this)">
+        <i class="fa fa-dollar-sign"></i> Pagamento
+      </button>
+      <button class="side-btn" onclick="mudarTab('funcional',this)">
+        <i class="fa fa-briefcase"></i> Dados Funcionais
+      </button>
+      <button class="side-btn" id="tabDocsBtn" style="display:none" onclick="mudarTab('docs',this)">
+        <i class="fa fa-file-alt"></i> Documentos
+        <span class="tab-badge" id="docBadge" style="display:none">0</span>
+      </button>
+    </nav>
 
-    <!-- PICKER (só certificações) -->
-    <div class="field" id="campoIcone" style="display:none">
-      <label>Ícone</label>
-      <input type="hidden" id="editIcone" value="fa-certificate">
+    <!-- Panels -->
+    <div class="tab-panels">
 
-      <div class="icone-picker-wrap">
-        <!-- Preview / toggle -->
-        <div class="icone-preview-bar" onclick="togglePicker()">
-          <div class="icone-preview-box" id="pickerPreviewBox">
-            <i class="fa-solid fa-certificate" style="color:#7c3aed"></i>
+      <!-- Dados Pessoais -->
+      <div class="tab-panel active" id="tab-pessoais">
+        <p class="section-title"><i class="fa fa-id-card"></i> Dados Pessoais</p>
+        <div class="grid">
+          <div class="field span2"><label>Nome Completo *</label><input id="nome_completo"></div>
+          <div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
+          <div class="field"><label>CPF *</label><input id="cpf" placeholder="000.000.000-00"></div>
+          <div class="field"><label>RG</label><input id="rg"></div>
+          <div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
+          <div class="field"><label>Email *</label><input id="email" type="email"></div>
+          <div class="field">
+            <label>Tipo Sanguíneo</label>
+            <select id="tipo_sanguineo">
+              <option value="">Selecione</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+              <option>O+</option><option>O-</option>
+            </select>
           </div>
-          <div class="icone-preview-info">
-            <div class="icone-preview-label" id="pickerPreviewLabel">fa-certificate</div>
-            <div class="icone-preview-sub">Clique para alterar</div>
-          </div>
-          <i class="fa fa-chevron-down icone-picker-toggle" id="pickerChevron"></i>
-        </div>
-
-        <!-- Body colapsável -->
-        <div id="pickerBody" style="display:none">
-          <div class="picker-tabs">
-            <button class="picker-tab active" onclick="mudarPickerTab('fa',this)"><i class="fa fa-icons"></i> Font Awesome</button>
-            <button class="picker-tab" onclick="mudarPickerTab('upload',this)"><i class="fa fa-upload"></i> Upload</button>
-            
-          </div>
-
-          <!-- FA -->
-          <div class="picker-panel active" id="pickerPanel-fa">
-            <div class="picker-search"><input id="faBusca" placeholder="Buscar ícone... ex: flag, heart"></div>
-            <div class="fa-grid" id="faGrid"></div>
-            <div class="fa-manual">
-              <span>Manual:</span>
-              <input id="faManual" placeholder="fa-flag-usa">
-              <button class="btn-ghost" onclick="aplicarFaManual()">Aplicar</button>
-            </div>
-          </div>
-
-          <!-- Upload -->
-          <div class="picker-panel" id="pickerPanel-upload">
-            <div class="upload-drop" onclick="document.getElementById('uploadFile').click()">
-              <input type="file" id="uploadFile" accept="image/*" onchange="handleUpload(this)">
-              <i class="fa fa-image"></i>
-              Clique para selecionar imagem<br>
-              <span style="font-size:10px">PNG, JPG, SVG, WebP — máx. 2MB</span>
-            </div>
-            <div class="upload-thumb" id="uploadThumbWrap">
-              <img id="uploadThumbImg" src="" alt="">
-              <span id="uploadThumbNome"></span>
-            </div>
-          </div>
-
-          <!-- IA -->
-          <div class="picker-panel" id="pickerPanel-ia">
-            <div class="ia-sugest">
-              <span style="font-size:11px;color:#9ca3af;align-self:center">Sugestões:</span>
-              <button class="ia-chip" onclick="gerarIA('bandeira do Reino Unido, inglês')">🇬🇧 Inglês</button>
-              <button class="ia-chip" onclick="gerarIA('bandeira do Brasil, português')">🇧🇷 Português</button>
-              <button class="ia-chip" onclick="gerarIA('bandeira da Espanha, espanhol')">🇪🇸 Espanhol</button>
-              <button class="ia-chip" onclick="gerarIA('mãos fazendo massagem relaxante')">💆 Massagem</button>
-              <button class="ia-chip" onclick="gerarIA('pés sendo massageados, podologia')">🦶 Podologia</button>
-              <button class="ia-chip" onclick="gerarIA('casal junto, massagem a dois')">👫 Casais</button>
-              <button class="ia-chip" onclick="gerarIA('gota de óleo essencial')">💧 Óleo</button>
-              <button class="ia-chip" onclick="gerarIA('flor de lotus, spa, relaxamento')">🌸 Spa</button>
-            </div>
-            <div class="ia-input-row">
-              <input id="iaPrompt" placeholder="Descreva o ícone que deseja gerar...">
-              <button class="btn-gerar" id="btnGerarIA" onclick="gerarIA()">
-                <i class="fa fa-wand-magic-sparkles"></i> Gerar
-              </button>
-            </div>
-            <div class="ia-loading" id="iaLoading">
-              <i class="fa fa-spinner fa-spin" style="font-size:20px;display:block;margin-bottom:6px"></i>
-              Gerando com IA...
-            </div>
-            <div class="ia-vars" id="iaVars"></div>
-          </div>
-
         </div>
       </div>
-    </div>
 
-  </div>
+      <!-- Contatos -->
+      <div class="tab-panel" id="tab-contatos">
+        <p class="section-title"><i class="fa fa-phone"></i> Contatos</p>
+        <div class="grid-2">
+          <div class="field"><label>Telefone *</label><input id="telefone" placeholder="(11) 99999-9999"></div>
+          <div class="field"><label>Contato de Emergência</label><input id="telefone_emergencia" placeholder="(11) 99999-9999"></div>
+        </div>
+      </div>
+
+      <!-- Endereço -->
+      <div class="tab-panel" id="tab-endereco">
+        <p class="section-title"><i class="fa fa-map-marker-alt"></i> Endereço</p>
+        <div class="grid">
+          <div class="field"><label>CEP</label><input id="cep" placeholder="00000-000"></div>
+          <div class="field span2"><label>Rua</label><input id="rua"></div>
+          <div class="field"><label>Número</label><input id="numero"></div>
+          <div class="field"><label>Complemento</label><input id="complemento"></div>
+          <div class="field"><label>Bairro</label><input id="bairro"></div>
+          <div class="field span2"><label>Cidade</label><input id="cidade"></div>
+          <div class="field"><label>UF</label><input id="uf" maxlength="2" style="text-transform:uppercase"></div>
+        </div>
+      </div>
+
+      <!-- Pagamento -->
+      <div class="tab-panel" id="tab-pagamento">
+        <p class="section-title"><i class="fa fa-dollar-sign"></i> Pagamento via PIX</p>
+        <div class="grid-2">
+          <div class="field">
+            <label>Tipo de Chave PIX</label>
+            <select id="pix_tipo">
+              <option value="">Selecione</option>
+              <option>CPF</option><option>Email</option>
+              <option>Telefone</option><option>Aleatória</option>
+            </select>
+          </div>
+          <div class="field"><label>Chave PIX</label><input id="pix_chave"></div>
+        </div>
+      </div>
+
+      <!-- Dados Funcionais -->
+      <div class="tab-panel" id="tab-funcional">
+        <p class="section-title"><i class="fa fa-briefcase"></i> Dados Funcionais</p>
+        <div class="grid">
+          <div class="field">
+            <label>Cargo</label>
+            <select id="cargo">
+              <option value="">Selecione</option>
+              <option>Terapeuta Feminina</option><option>Terapeuta Masculino</option>
+              <option>Gerente</option><option>Atendente</option>
+              <option>Recepcionista</option><option>Faxineira</option><option>Analista</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select id="status" onchange="aoMudarStatus(this)">
+              <option value="">Selecione</option>
+              <option>Ativo</option><option>Inativo</option>
+            </select>
+          </div>
+          <div class="field" id="campo_data_inativacao" style="display:none">
+            <label>Data de Inativação</label>
+            <input type="date" id="data_inativacao">
+          </div>
+          <div class="field"><label>Data de Início no Hara</label><input type="date" id="data_inicio"></div>
+          <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
+          <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
+          <div class="field">
+            <label>Tem folga semanal?</label>
+            <select id="tem_folga">
+              <option value="">Selecione</option><option>Sim</option><option>Não</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Dia da Folga</label>
+            <select id="dia_folga">
+              <option value="">Selecione</option>
+              <option>Segunda</option><option>Terça</option><option>Quarta</option>
+              <option>Quinta</option><option>Sexta</option><option>Sábado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Documentos -->
+      <div class="tab-panel" id="tab-docs">
+        <p class="section-title"><i class="fa fa-file-alt"></i> Documentos Anexados</p>
+        <div class="doc-upload-box">
+          <div class="doc-upload-row">
+            <div class="field">
+              <label>Tipo</label>
+              <select id="doc_tipo">
+                <option>RG</option><option>CPF</option>
+                <option>Comprovante de Residência</option><option>Contrato</option>
+                <option>Certidão de Nascimento</option><option>Diploma / Certificado</option>
+                <option>Outro</option>
+              </select>
+            </div>
+            <div class="field" style="flex:2">
+              <label>Arquivo</label>
+              <input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx">
+            </div>
+            <button class="btn-upload" onclick="uploadDoc()">
+              <i class="fa fa-upload"></i> Enviar
+            </button>
+          </div>
+          <div class="upload-status" id="uploadStatus">
+            <i class="fa fa-spinner fa-spin"></i> Enviando...
+          </div>
+        </div>
+        <div id="docLista" class="doc-list">
+          <div class="doc-empty">Nenhum documento anexado.</div>
+        </div>
+      </div>
+
+    </div><!-- /tab-panels -->
+  </div><!-- /modal-body -->
+
   <div class="modal-footer">
     <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-    <button onclick="salvarEdicao()"><i class="fa fa-save"></i> Salvar</button>
+    <button class="btn-save" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
   </div>
+
 </div>
 </div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 <script>
 
-const SECOES = {
-  certificacoes:        {label:"Certificações",           desc:"Certificações disponíveis para vincular aos profissionais.", icon:"fa-certificate"},
-  categorias_produto:   {label:"Categorias de Produto",   desc:"Categorias para organizar os produtos do estoque.",          icon:"fa-box"},
-  cargos:               {label:"Cargos",                  desc:"Cargos disponíveis para os profissionais da equipe.",        icon:"fa-briefcase"},
-  grupos_servico:       {label:"Grupos de Serviço",       desc:"Grupos para organizar os serviços oferecidos.",              icon:"fa-spa"},
-  tipos_solicitacao:    {label:"Tipos de Solicitação",    desc:"Tipos disponíveis ao criar solicitações de ausência.",       icon:"fa-file-alt"},
-  origens_lead:         {label:"Origens de Lead",         desc:"De onde os clientes chegam (Instagram, Google, etc).",      icon:"fa-bullhorn"},
-  formas_pagamento:     {label:"Formas de Pagamento",     desc:"Formas de pagamento aceitas nos atendimentos.",              icon:"fa-credit-card"},
-  motivos_movimentacao: {label:"Motivos de Movimentação", desc:"Motivos disponíveis nas entradas e saídas do estoque.",      icon:"fa-exchange-alt"},
-};
+const supabaseClient = supabase.createClient(
+  "https://rymehgsoarjeecuwyhny.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
+);
 
-const SECOES_COM_ICONE = ["certificacoes"];
+let cpfAtual = null;
 
-const FA_ICONES = [
-  {i:"fa-certificate",l:"Certificado"},{i:"fa-person-dress",l:"Feminina"},
-  {i:"fa-user-group",l:"Casais"},{i:"fa-droplet",l:"Nuru"},
-  {i:"fa-spa",l:"Vivência"},{i:"fa-shoe-prints",l:"Podologia"},
-  {i:"fa-star",l:"Estrela"},{i:"fa-heart",l:"Coração"},
-  {i:"fa-hands",l:"Mãos"},{i:"fa-leaf",l:"Folha"},
-  {i:"fa-fire",l:"Fogo"},{i:"fa-snowflake",l:"Neve"},
-  {i:"fa-sun",l:"Sol"},{i:"fa-moon",l:"Lua"},
-  {i:"fa-bolt",l:"Raio"},{i:"fa-gem",l:"Gema"},
-  {i:"fa-ribbon",l:"Fita"},{i:"fa-award",l:"Prêmio"},
-  {i:"fa-flag",l:"Bandeira"},{i:"fa-globe",l:"Globo"},
-  {i:"fa-language",l:"Idioma"},{i:"fa-graduation-cap",l:"Formatura"},
-  {i:"fa-book",l:"Livro"},{i:"fa-music",l:"Música"},
-  {i:"fa-dumbbell",l:"Fitness"},{i:"fa-seedling",l:"Planta"},
-  {i:"fa-wind",l:"Vento"},{i:"fa-water",l:"Água"},
-  {i:"fa-feather",l:"Pena"},{i:"fa-infinity",l:"Infinito"},
-  {i:"fa-yin-yang",l:"Yin Yang"},{i:"fa-peace",l:"Paz"},
-  {i:"fa-hand-holding-heart",l:"Cuidado"},{i:"fa-hand-sparkles",l:"Mágica"},
-  {i:"fa-brain",l:"Mente"},{i:"fa-eye",l:"Olho"},
+const campos = [
+  "nome_completo","nome_profissional","cpf","rg","nascimento","email",
+  "tipo_sanguineo","telefone","telefone_emergencia","cep","rua","numero",
+  "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
+  "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
 ];
 
-let secaoAtual   = "certificacoes";
-let itens        = [];
-let editandoId   = null;
-let adicionando  = false;
-let pickerAberto = false;
-
-/* ── SEÇÃO ── */
-function mudarSecao(secao, el){
-  secaoAtual = secao;
-  document.querySelectorAll(".param-menu-item").forEach(i => i.classList.remove("active"));
-  el.classList.add("active");
-  document.getElementById("panelTitulo").textContent = SECOES[secao].label;
-  document.getElementById("panelDesc").textContent   = SECOES[secao].desc;
-  carregar();
+/* ── MÁSCARAS ── */
+function mascara(id, fn){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.addEventListener('input', function(){
+    const pos = this.selectionStart;
+    const prev = this.value;
+    this.value = fn(this.value);
+    if(this.value.length === prev.length) this.setSelectionRange(pos, pos);
+  });
 }
 
-/* ── CARREGAR ── */
-async function carregar(){
-  if(SECOES_COM_ICONE.includes(secaoAtual)){
-    const {data, error} = await client.from("certificacoes").select("id,nome,icone").order("nome");
-    if(error){ console.error(error); return; }
-    itens = (data||[]).map(c => ({id:c.id, valor:c.nome, icone:c.icone, ativo:true, descricao:null}));
-  } else {
-    const {data, error} = await client.from("parametros").select("*")
-      .eq("tipo", secaoAtual).order("ordem").order("valor");
-    if(error){ console.error(error); return; }
-    itens = data || [];
-  }
-  render();
+function fmtCPF(v){
+  v = v.replace(/\D/g,'').substring(0,11);
+  if(v.length <= 3) return v;
+  if(v.length <= 6) return v.slice(0,3)+'.'+v.slice(3);
+  if(v.length <= 9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
+  return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
 }
 
-/* ── RENDER ── */
-function render(){
-  const lista    = document.getElementById("paramLista");
-  const temIcone = SECOES_COM_ICONE.includes(secaoAtual);
+function fmtRG(v){
+  v = v.replace(/\D/g,'').substring(0,9);
+  if(v.length <= 2) return v;
+  if(v.length <= 5) return v.slice(0,2)+'.'+v.slice(2);
+  if(v.length <= 8) return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);
+  return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8);
+}
 
-  if(!itens.length && !adicionando){
-    lista.innerHTML = `<div class="empty-state"><i class="fa ${SECOES[secaoAtual].icon}"></i>Nenhum item cadastrado ainda.<br>Clique em <strong>Adicionar</strong> para começar.</div>`;
-    return;
-  }
+function fmtTel(v){
+  v = v.replace(/\D/g,'').substring(0,11);
+  if(v.length <= 2) return v.length ? '('+v : v;
+  if(v.length <= 6) return '('+v.slice(0,2)+') '+v.slice(2);
+  if(v.length <= 10) return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);
+  return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
+}
 
-  lista.innerHTML = itens.map(item => {
-    let iconeHtml = "";
-    if(temIcone){
-      const v = item.icone || "fa-certificate";
-      if(v.trim().startsWith("<svg")){
-        iconeHtml = `<div style="width:22px;height:22px;overflow:hidden;border-radius:4px;flex-shrink:0">${v}</div>`;
-      } else if(v.startsWith("data:") || v.startsWith("http")){
-        iconeHtml = `<img src="${v}" style="width:22px;height:22px;border-radius:4px;object-fit:cover;flex-shrink:0">`;
-      } else {
-        iconeHtml = `<i class="fa-solid ${v}" style="font-size:16px;width:20px;text-align:center;color:#6b7280;flex-shrink:0"></i>`;
-      }
+function fmtCEP(v){
+  v = v.replace(/\D/g,'').substring(0,8);
+  if(v.length <= 5) return v;
+  return v.slice(0,5)+'-'+v.slice(5);
+}
+
+function fmtCPFDisplay(v){
+  v = (v||"").replace(/\D/g,"");
+  if(v.length !== 11) return v;
+  return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);
+}
+
+function aplicarMascaras(){
+  mascara('cpf', fmtCPF);
+  mascara('rg',  fmtRG);
+  mascara('telefone', fmtTel);
+  mascara('telefone_emergencia', fmtTel);
+  mascara('cep', fmtCEP);
+  const uf = document.getElementById('uf');
+  if(uf) uf.addEventListener('input', function(){
+    this.value = this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2);
+  });
+}
+
+/* ── TABS ── */
+function mudarTab(tab, btn){
+  document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".side-btn").forEach(el => el.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+  btn.classList.add("active");
+}
+
+/* ── FORM HELPERS ── */
+function getPayload(){
+  const obj = {};
+  campos.forEach(c => {
+    const el = document.getElementById(c);
+    if(el && el.value !== "") obj[c] = el.value;
+  });
+  return obj;
+}
+
+function setForm(data){
+  campos.forEach(c => {
+    const el = document.getElementById(c);
+    if(!el) return;
+    if(c === "hora_entrada" || c === "hora_saida"){
+      el.value = data[c] ? data[c].substring(0,5) : "";
+    } else {
+      el.value = data[c] || "";
     }
-    return `
-    <div class="param-item" id="item-${item.id}">
-      <span class="param-item-drag"><i class="fa fa-grip-vertical"></i></span>
-      ${iconeHtml}
-      <span class="param-item-nome">${item.valor}</span>
-      ${item.descricao ? `<span class="param-item-badge">${item.descricao}</span>` : ""}
-      <div class="param-item-actions">
-        ${!temIcone ? `<button class="btn-toggle toggle-ativo ${item.ativo?'on':''}" onclick="toggleAtivo('${item.id}',${item.ativo})" title="${item.ativo?'Desativar':'Ativar'}"></button>` : ""}
-        <button class="btn-ghost" onclick="abrirEditar('${item.id}')"><i class="fa fa-pencil"></i></button>
-        <button class="btn-red"   onclick="excluir('${item.id}')"><i class="fa fa-trash"></i></button>
-      </div>
-    </div>`;
-  }).join("");
+  });
+  const campo = document.getElementById("campo_data_inativacao");
+  if(campo) campo.style.display = data.status === "Inativo" ? "" : "none";
 
-  if(adicionando){
-    lista.innerHTML += `
-    <div class="add-row">
-      <input id="addNome" placeholder="Nome do item...">
-      <input id="addDescricao" placeholder="Descrição (opcional)" style="max-width:200px">
-      <button class="btn-blue" onclick="confirmarAdicionar()"><i class="fa fa-check"></i></button>
-      <button class="btn-ghost" onclick="cancelarAdicionar()"><i class="fa fa-times"></i></button>
-    </div>`;
-    setTimeout(() => document.getElementById("addNome")?.focus(), 50);
-    document.getElementById("addNome")?.addEventListener("keydown", e => {
-      if(e.key === "Enter")  confirmarAdicionar();
-      if(e.key === "Escape") cancelarAdicionar();
-    });
-  }
+  ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el && el.value) el.dispatchEvent(new Event('input'));
+  });
 }
 
-/* ── ADICIONAR ── */
-function abrirAdicionar(){ adicionando = true; render(); }
-function cancelarAdicionar(){ adicionando = false; render(); }
+/* ── TABELA PRINCIPAL ── */
+async function carregar(){
+  const statusFiltro = document.getElementById("filtroStatus").value;
+  let query = supabaseClient.from("terapeutas")
+    .select("cpf,nome_profissional,status,cargo").order("nome_profissional");
+  if(statusFiltro) query = query.eq("status", statusFiltro);
+  const {data, error} = await query;
+  if(error){ console.error(error); return; }
 
-async function confirmarAdicionar(){
-  const nome = (document.getElementById("addNome")?.value||"").trim();
-  if(!nome){ alert("Digite o nome."); return; }
-  const desc = (document.getElementById("addDescricao")?.value||"").trim();
-  let error;
-  if(SECOES_COM_ICONE.includes(secaoAtual)){
-    ({error} = await client.from("certificacoes").insert({nome, icone:"fa-certificate"}));
-  } else {
-    ({error} = await client.from("parametros").insert({tipo:secaoAtual, valor:nome, descricao:desc||null, ativo:true, ordem:itens.length}));
-  }
-  if(error){ alert("Erro: "+error.message); return; }
-  adicionando = false;
-  carregar();
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+  data.forEach(t => {
+    tbody.innerHTML += `
+    <tr>
+      <td>${t.nome_profissional||""}</td>
+      <td>${t.cargo||""}</td>
+      <td>${fmtCPFDisplay(t.cpf)}</td>
+      <td>${t.status||""}</td>
+      <td>
+        <button onclick="editar('${t.cpf}')">Editar</button>
+        <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
+      </td>
+    </tr>`;
+  });
+  filtrarTabela();
 }
 
-/* ── EDITAR ── */
-function abrirEditar(id){
-  const item = itens.find(i => i.id === id);
-  if(!item) return;
-  editandoId = id;
-  document.getElementById("editNome").value = item.valor     || "";
-  document.getElementById("editDesc").value = item.descricao || "";
+function filtrarTabela(){
+  const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
+  document.querySelectorAll("#lista tr").forEach(linha => {
+    linha.style.display = linha.children[0].innerText.toLowerCase().includes(filtro) ? "" : "none";
+  });
+}
 
-  const temIcone = SECOES_COM_ICONE.includes(secaoAtual);
-  document.getElementById("campoIcone").style.display = temIcone ? "" : "none";
-  if(temIcone){
-    setPickerValor(item.icone || "fa-certificate");
-    renderFaGrid("");
-  }
-  fecharPickerBody();
-  document.getElementById("modalTitulo").textContent = `Editar — ${SECOES[secaoAtual].label}`;
-  document.getElementById("modalEditar").style.display = "flex";
+/* ── MODAL ── */
+function resetModal(){
+  campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
+  document.getElementById("hora_entrada").value = "09:00";
+  document.getElementById("hora_saida").value   = "18:00";
+  mudarTab("pessoais", document.querySelector(".side-btn"));
+}
+
+function abrirNovo(){
+  cpfAtual = null;
+  resetModal();
+  document.getElementById("modalTitulo").textContent = "Novo Cadastro";
+  document.getElementById("tabDocsBtn").style.display = "none";
+  document.getElementById("modal").style.display = "flex";
+}
+
+async function editar(cpf){
+  cpfAtual = cpf;
+  const {data, error} = await supabaseClient.from("terapeutas").select("*").eq("cpf", cpf).single();
+  if(error){ console.error(error); return; }
+
+  resetModal();
+  setForm(data);
+  document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
+  document.getElementById("tabDocsBtn").style.display = "";
+  carregarDocs(cpf);
+  document.getElementById("modal").style.display = "flex";
 }
 
 function fecharModal(){
-  document.getElementById("modalEditar").style.display = "none";
-  fecharPickerBody();
+  document.getElementById("modal").style.display = "none";
 }
 
-async function salvarEdicao(){
-  const nome = document.getElementById("editNome").value.trim();
-  if(!nome){ alert("Nome obrigatório."); return; }
-  if(SECOES_COM_ICONE.includes(secaoAtual)){
-    const icone = document.getElementById("editIcone").value || "fa-certificate";
-    const {error} = await client.from("certificacoes").update({nome, icone}).eq("id", editandoId);
-    if(error){ alert("Erro: "+error.message); return; }
-  } else {
-    const {error} = await client.from("parametros").update({
-      valor: nome,
-      descricao: document.getElementById("editDesc").value.trim() || null
-    }).eq("id", editandoId);
-    if(error){ alert("Erro: "+error.message); return; }
+/* ── SALVAR ── */
+async function salvar(){
+  const payload = getPayload();
+
+  if(!payload.nome_completo || !payload.nome_profissional || !payload.email){
+    alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");
+    return;
   }
+
+  let error;
+
+  if(cpfAtual){
+    const novoCpf = payload.cpf;
+    if(novoCpf && novoCpf !== cpfAtual){
+      await supabaseClient.from("terapeutas").delete().eq("cpf", cpfAtual);
+      ({error} = await supabaseClient.from("terapeutas").insert(payload));
+      if(!error) cpfAtual = novoCpf;
+    } else {
+      const updatePayload = {...payload};
+      delete updatePayload.cpf;
+      ({error} = await supabaseClient.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
+    }
+  } else {
+    ({error} = await supabaseClient.from("terapeutas").insert(payload));
+    if(!error){
+      cpfAtual = payload.cpf;
+      document.getElementById("tabDocsBtn").style.display = "";
+      carregarDocs(cpfAtual);
+    }
+  }
+
+  if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
+  carregar();
   fecharModal();
+}
+
+async function excluir(cpf){
+  if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
+
+  const {data: docs} = await supabaseClient
+    .from("documentos").select("id, url").eq("equipe_id", cpf);
+
+  if(docs && docs.length > 0){
+    const paths = docs
+      .map(d => d.url.split("/storage/v1/object/public/documentos/")[1])
+      .filter(Boolean)
+      .map(p => decodeURIComponent(p));
+    if(paths.length > 0)
+      await supabaseClient.storage.from("documentos").remove(paths);
+    await supabaseClient.from("documentos").delete().eq("equipe_id", cpf);
+  }
+
+  await supabaseClient.from("solicitacoes").delete().eq("terapeuta_cpf", cpf);
+
+  const {error} = await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
+  if(error){ alert("Erro ao excluir: " + error.message); return; }
+
   carregar();
 }
 
-/* ── PICKER ── */
-function togglePicker(){
-  pickerAberto = !pickerAberto;
-  document.getElementById("pickerBody").style.display    = pickerAberto ? "block" : "none";
-  document.getElementById("pickerChevron").className     = `fa fa-chevron-${pickerAberto?"up":"down"} icone-picker-toggle`;
-}
-function fecharPickerBody(){
-  pickerAberto = false;
-  const b  = document.getElementById("pickerBody");
-  const ch = document.getElementById("pickerChevron");
-  if(b)  b.style.display = "none";
-  if(ch) ch.className    = "fa fa-chevron-down icone-picker-toggle";
-}
-function mudarPickerTab(tab, btn){
-  document.querySelectorAll(".picker-tab").forEach(b  => b.classList.remove("active"));
-  document.querySelectorAll(".picker-panel").forEach(p => p.classList.remove("active"));
-  btn.classList.add("active");
-  document.getElementById("pickerPanel-"+tab).classList.add("active");
+/* ── DOCUMENTOS ── */
+function limparNome(nome){
+  return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
 }
 
-function setPickerValor(valor){
-  document.getElementById("editIcone").value = valor;
-  const box = document.getElementById("pickerPreviewBox");
-  const lbl = document.getElementById("pickerPreviewLabel");
-  if(valor.trim().startsWith("<svg")){
-    box.innerHTML = valor;
-    const s = box.querySelector("svg");
-    if(s){ s.style.width="36px"; s.style.height="36px"; }
-    lbl.textContent = "SVG — IA";
-  } else if(valor.startsWith("data:") || valor.startsWith("http")){
-    box.innerHTML = `<img src="${valor}" alt="">`;
-    lbl.textContent = "Imagem enviada";
-  } else {
-    box.innerHTML = `<i class="fa-solid ${valor}" style="font-size:22px;color:#7c3aed"></i>`;
-    lbl.textContent = valor;
+function iconeDoc(nome){
+  const ext = (nome||"").split(".").pop().toLowerCase();
+  if(["jpg","jpeg","png","gif","webp"].includes(ext)) return "fa-image";
+  if(ext === "pdf") return "fa-file-pdf";
+  if(["doc","docx"].includes(ext)) return "fa-file-word";
+  return "fa-file-alt";
+}
+
+async function carregarDocs(cpf){
+  const {data, error} = await supabaseClient
+    .from("documentos").select("*").eq("equipe_id", cpf).order("created_at",{ascending:false});
+
+  const lista = document.getElementById("docLista");
+  const badge = document.getElementById("docBadge");
+
+  if(error || !data || data.length === 0){
+    lista.innerHTML = `<div class="doc-empty">Nenhum documento anexado.</div>`;
+    badge.style.display = "none";
+    return;
   }
+
+  badge.textContent = data.length;
+  badge.style.display = "";
+
+  lista.innerHTML = data.map(d => `
+    <div class="doc-item" id="doc-${d.id}">
+      <div class="doc-item-left">
+        <div class="doc-icon"><i class="fa ${iconeDoc(d.nome_arquivo)}"></i></div>
+        <div>
+          <div class="doc-name">${d.nome_arquivo}</div>
+          <div class="doc-tipo">${d.tipo} · ${new Date(d.created_at).toLocaleDateString('pt-BR')}</div>
+        </div>
+      </div>
+      <div class="doc-item-right">
+        <a href="${d.url}" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a>
+        <button class="btn-del" onclick="excluirDoc('${d.id}','${d.url}')" title="Excluir">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+    </div>
+  `).join("");
 }
 
-/* FA */
-function renderFaGrid(filtro){
-  const lista  = filtro ? FA_ICONES.filter(x => x.l.toLowerCase().includes(filtro) || x.i.includes(filtro)) : FA_ICONES;
-  const atual  = document.getElementById("editIcone").value;
-  document.getElementById("faGrid").innerHTML = lista.map(x => `
-    <div class="fa-opt ${atual===x.i?'selected':''}" onclick="selecionarFa('${x.i}')">
-      <i class="fa-solid ${x.i}"></i><span>${x.l}</span>
-    </div>`).join("");
-}
-function selecionarFa(icone){
-  setPickerValor(icone);
-  renderFaGrid(document.getElementById("faBusca").value);
-}
-function aplicarFaManual(){
-  let v = document.getElementById("faManual").value.trim();
-  if(!v) return;
-  if(!v.startsWith("fa-")) v = "fa-"+v;
-  selecionarFa(v);
-  document.getElementById("faManual").value = "";
-}
+async function uploadDoc(){
+  if(!cpfAtual){ alert("Salve o cadastro antes de anexar documentos."); return; }
+  const tipo = document.getElementById("doc_tipo").value;
+  const file = document.getElementById("doc_arquivo").files[0];
+  if(!file){ alert("Selecione um arquivo."); return; }
 
-/* Upload */
-function handleUpload(input){
-  const file = input.files[0];
-  if(!file) return;
-  if(file.size > 2*1024*1024){ alert("Máximo 2MB."); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    const url = e.target.result;
-    setPickerValor(url);
-    document.getElementById("uploadThumbWrap").style.display = "block";
-    document.getElementById("uploadThumbImg").src   = url;
-    document.getElementById("uploadThumbNome").textContent = file.name;
-  };
-  reader.readAsDataURL(file);
+  const statusEl = document.getElementById("uploadStatus");
+  statusEl.style.display = "block";
+
+  const fileName = `${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
+  const {error: uploadError} = await supabaseClient.storage.from("documentos").upload(fileName, file);
+
+  if(uploadError){ statusEl.style.display = "none"; alert("Erro no upload: " + uploadError.message); return; }
+
+  const {data: urlData} = supabaseClient.storage.from("documentos").getPublicUrl(fileName);
+  const {error} = await supabaseClient.from("documentos").insert({
+    equipe_id: cpfAtual, tipo, nome_arquivo: file.name, url: urlData.publicUrl
+  });
+
+  statusEl.style.display = "none";
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
+  document.getElementById("doc_arquivo").value = "";
+  carregarDocs(cpfAtual);
 }
 
-/* IA */
-function gerarIA(promptFixo){
-  const prompt = (promptFixo || document.getElementById("iaPrompt").value || "").trim().toLowerCase();
-  if(!prompt){ alert("Descreva o icone."); return; }
-  if(!promptFixo) document.getElementById("iaPrompt").value = prompt;
-
-  document.getElementById("iaLoading").style.display = "block";
-  document.getElementById("iaVars").style.display    = "none";
-  document.getElementById("btnGerarIA").disabled     = true;
-
-  setTimeout(() => {
-    const variantes = gerarSVGLocal(prompt);
-    document.getElementById("iaLoading").style.display = "none";
-    const varsDiv = document.getElementById("iaVars");
-    varsDiv.style.display = "flex";
-    varsDiv.innerHTML = "";
-    variantes.forEach((svg, i) => {
-      const div = document.createElement("div");
-      div.className = "ia-var" + (i===0 ? " selected" : "");
-      div.innerHTML = svg;
-      div.addEventListener("click", () => selecionarIASvg(div, svg));
-      varsDiv.appendChild(div);
-    });
-    selecionarIASvg(varsDiv.querySelector(".ia-var"), variantes[0]);
-    document.getElementById("btnGerarIA").disabled = false;
-  }, 600);
+async function excluirDoc(id, url){
+  if(!confirm("Excluir este documento?")) return;
+  const path = url.split("/storage/v1/object/public/documentos/")[1];
+  if(path) await supabaseClient.storage.from("documentos").remove([decodeURIComponent(path)]);
+  await supabaseClient.from("documentos").delete().eq("id", id);
+  const el = document.getElementById("doc-" + id);
+  if(el) el.remove();
+  carregarDocs(cpfAtual);
 }
 
-function gerarSVGLocal(p){
-  // detectar tema por palavras-chave
-  const match = (keys) => keys.some(k => p.includes(k));
-
-  let svgs;
-
-  if(match(["ingles","inglês","reino unido","uk","english","england","britanico"])){
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#012169"/><line x1="0" y1="0" x2="64" y2="64" stroke="white" stroke-width="9"/><line x1="64" y1="0" x2="0" y2="64" stroke="white" stroke-width="9"/><line x1="32" y1="0" x2="32" y2="64" stroke="white" stroke-width="12"/><line x1="0" y1="32" x2="64" y2="32" stroke="white" stroke-width="12"/><line x1="0" y1="0" x2="64" y2="64" stroke="#C8102E" stroke-width="5"/><line x1="64" y1="0" x2="0" y2="64" stroke="#C8102E" stroke-width="5"/><line x1="32" y1="0" x2="32" y2="64" stroke="#C8102E" stroke-width="8"/><line x1="0" y1="32" x2="64" y2="32" stroke="#C8102E" stroke-width="8"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#1d4ed8"/><text x="32" y="22" text-anchor="middle" fill="white" font-size="11" font-family="serif" font-weight="bold">EN</text><line x1="10" y1="32" x2="54" y2="32" stroke="white" stroke-width="2"/><text x="32" y="48" text-anchor="middle" fill="#93c5fd" font-size="9" font-family="serif">English</text></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#1e3a5f"/><circle cx="32" cy="32" r="18" fill="none" stroke="#C8102E" stroke-width="3"/><line x1="32" y1="14" x2="32" y2="50" stroke="white" stroke-width="2"/><line x1="14" y1="32" x2="50" y2="32" stroke="white" stroke-width="2"/><line x1="19" y1="19" x2="45" y2="45" stroke="#C8102E" stroke-width="1.5"/><line x1="45" y1="19" x2="19" y2="45" stroke="#C8102E" stroke-width="1.5"/></svg>`
-    ];
-  } else if(match(["portugues","português","brasil","brazil","pt-br"])){
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#009C3B"/><polygon points="32,8 56,32 32,56 8,32" fill="#FFDF00"/><circle cx="32" cy="32" r="12" fill="#002776"/><path d="M21,30 Q32,26 43,30" stroke="white" stroke-width="2" fill="none"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#065f46"/><text x="32" y="28" text-anchor="middle" fill="#FFDF00" font-size="14" font-family="serif" font-weight="bold">PT</text><line x1="10" y1="36" x2="54" y2="36" stroke="#FFDF00" stroke-width="1.5"/><text x="32" y="50" text-anchor="middle" fill="#6ee7b7" font-size="8" font-family="serif">Português</text></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#FFDF00"/><circle cx="32" cy="32" r="18" fill="#009C3B"/><circle cx="32" cy="32" r="10" fill="#002776"/><line x1="22" y1="30" x2="42" y2="30" stroke="white" stroke-width="1.5"/></svg>`
-    ];
-  } else if(match(["espanhol","espanha","spain","es","spanish"])){
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#AA151B"/><rect y="16" width="64" height="32" fill="#F1BF00"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#c2410c"/><text x="32" y="28" text-anchor="middle" fill="#F1BF00" font-size="14" font-family="serif" font-weight="bold">ES</text><line x1="10" y1="36" x2="54" y2="36" stroke="#F1BF00" stroke-width="1.5"/><text x="32" y="50" text-anchor="middle" fill="#fcd34d" font-size="8" font-family="serif">Español</text></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#F1BF00"/><rect y="0" width="64" height="16" rx="10" fill="#AA151B"/><rect y="48" width="64" height="16" rx="10" fill="#AA151B"/></svg>`
-    ];
-  } else if(match(["frances","francês","franca","france","french"])){
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ED2939"/><rect width="43" height="64" fill="#FFFFFF"/><rect width="21" height="64" rx="10" fill="#002395"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#1e3a8a"/><text x="32" y="28" text-anchor="middle" fill="white" font-size="14" font-family="serif" font-weight="bold">FR</text><line x1="10" y1="36" x2="54" y2="36" stroke="#ED2939" stroke-width="1.5"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#f8fafc"/><rect width="22" height="64" fill="#002395"/><rect x="42" width="22" height="64" fill="#ED2939"/></svg>`
-    ];
-  } else if(match(["massagem","massage","terapia","relaxa","corpo"])){
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#7c3aed"/><ellipse cx="32" cy="38" rx="18" ry="10" fill="#a78bfa"/><circle cx="32" cy="22" r="10" fill="#c4b5fd"/><ellipse cx="20" cy="42" rx="6" ry="9" fill="#ddd6fe" transform="rotate(-15,20,42)"/><ellipse cx="44" cy="42" rx="6" ry="9" fill="#ddd6fe" transform="rotate(15,44,42)"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#5b21b6"/><path d="M16,48 Q32,24 48,48" stroke="#c4b5fd" stroke-width="3" fill="none"/><circle cx="24" cy="36" r="5" fill="#a78bfa"/><circle cx="40" cy="36" r="5" fill="#a78bfa"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ede9fe"/><path d="M12,32 Q20,18 32,16 Q44,18 52,32 Q44,46 32,48 Q20,46 12,32Z" fill="#7c3aed"/><circle cx="32" cy="32" r="8" fill="#c4b5fd"/></svg>`
-    ];
-  } else if(match(["podolog","pé","pe","foot","unha"])){
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#d97706"/><ellipse cx="32" cy="42" rx="16" ry="10" fill="#fcd34d"/><ellipse cx="18" cy="28" rx="4" ry="5" fill="#fcd34d"/><ellipse cx="26" cy="24" rx="4" ry="6" fill="#fcd34d"/><ellipse cx="34" cy="24" rx="4" ry="6" fill="#fcd34d"/><ellipse cx="42" cy="26" rx="4" ry="5" fill="#fcd34d"/><ellipse cx="48" cy="30" rx="3" ry="4" fill="#fcd34d"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#92400e"/><ellipse cx="30" cy="42" rx="14" ry="10" fill="#fbbf24" transform="rotate(-10,30,42)"/><ellipse cx="16" cy="28" rx="4" ry="5" fill="#fbbf24" transform="rotate(-10,16,28)"/><ellipse cx="24" cy="23" rx="4" ry="6" fill="#fbbf24" transform="rotate(-10,24,23)"/><ellipse cx="33" cy="23" rx="4" ry="6" fill="#fbbf24" transform="rotate(-10,33,23)"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#fef3c7"/><ellipse cx="32" cy="44" rx="16" ry="10" fill="#d97706"/><ellipse cx="18" cy="30" rx="4" ry="5" fill="#d97706"/><ellipse cx="26" cy="26" rx="4" ry="6" fill="#d97706"/><ellipse cx="34" cy="26" rx="4" ry="6" fill="#d97706"/><ellipse cx="42" cy="28" rx="4" ry="5" fill="#d97706"/></svg>`
-    ];
-  } else if(match(["casal","casais","couple","dois","two"])){
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#be185d"/><circle cx="22" cy="20" r="9" fill="#fbcfe8"/><circle cx="42" cy="20" r="9" fill="#f9a8d4"/><ellipse cx="22" cy="46" rx="11" ry="10" fill="#fbcfe8"/><ellipse cx="42" cy="46" rx="11" ry="10" fill="#f9a8d4"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#831843"/><circle cx="22" cy="18" r="8" fill="#fda4af"/><circle cx="42" cy="18" r="8" fill="#fb7185"/><ellipse cx="32" cy="46" rx="20" ry="12" fill="#fda4af"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#fdf2f8"/><circle cx="22" cy="20" r="9" fill="#be185d"/><circle cx="42" cy="20" r="9" fill="#9d174d"/><ellipse cx="22" cy="46" rx="11" ry="10" fill="#be185d"/><ellipse cx="42" cy="46" rx="11" ry="10" fill="#9d174d"/></svg>`
-    ];
-  } else if(match(["oleo","óleo","oil","aroma","essencial"])){
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#0e7490"/><path d="M32,10 Q46,28 46,40 A14,14 0 0,1 18,40 Q18,28 32,10Z" fill="#67e8f9"/><ellipse cx="27" cy="37" rx="4" ry="6" fill="#a5f3fc" opacity="0.6" transform="rotate(-20,27,37)"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#164e63"/><path d="M32,12 Q44,28 44,40 A12,12 0 0,1 20,40 Q20,28 32,12Z" fill="#06b6d4"/><circle cx="32" cy="40" r="4" fill="#a5f3fc"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ecfeff"/><path d="M32,10 Q48,30 48,42 A16,16 0 0,1 16,42 Q16,30 32,10Z" fill="#0e7490"/></svg>`
-    ];
-  } else if(match(["spa","lotus","flor","flower","relax"])){
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#065f46"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(60,32,32)"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(120,32,32)"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(180,32,32)"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(240,32,32)"/><ellipse cx="32" cy="20" rx="7" ry="12" fill="#6ee7b7" transform="rotate(300,32,32)"/><circle cx="32" cy="32" r="8" fill="#a7f3d0"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ecfdf5"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981" transform="rotate(72,32,32)"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981" transform="rotate(144,32,32)"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981" transform="rotate(216,32,32)"/><ellipse cx="32" cy="20" rx="6" ry="11" fill="#10b981" transform="rotate(288,32,32)"/><circle cx="32" cy="32" r="7" fill="#6ee7b7"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#10b981"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="white" opacity="0.8"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="white" opacity="0.8" transform="rotate(60,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="white" opacity="0.8" transform="rotate(120,32,32)"/><circle cx="32" cy="32" r="8" fill="#fbbf24"/></svg>`
-    ];
+/* ── STATUS / INATIVACAO ── */
+function aoMudarStatus(select){
+  const campo = document.getElementById("campo_data_inativacao");
+  const input = document.getElementById("data_inativacao");
+  if(select.value === "Inativo"){
+    campo.style.display = "";
+    if(!input.value) input.value = new Date().toISOString().split("T")[0];
   } else {
-    // genérico baseado nas iniciais
-    const iniciais = p.slice(0,2).toUpperCase();
-    const cores = [["#6366f1","#a5b4fc"],["#ec4899","#fbcfe8"],["#f59e0b","#fde68a"],["#10b981","#6ee7b7"],["#3b82f6","#93c5fd"]];
-    const idx = (p.charCodeAt(0)||0) % cores.length;
-    const [c1,c2] = cores[idx];
-    svgs = [
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="${c1}"/><circle cx="32" cy="32" r="20" fill="${c2}" opacity="0.4"/><text x="32" y="38" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif" font-weight="bold">${iniciais}</text></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="${c2}"/><rect x="12" y="12" width="40" height="40" rx="8" fill="${c1}"/><text x="32" y="38" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif" font-weight="bold">${iniciais}</text></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="white" stroke="${c1}" stroke-width="3"/><circle cx="32" cy="32" r="18" fill="${c1}"/><text x="32" y="38" text-anchor="middle" fill="white" font-size="18" font-family="sans-serif" font-weight="bold">${iniciais}</text></svg>`
-    ];
+    campo.style.display = "none";
+    input.value = "";
   }
-  return svgs;
-}
-
-function gerarSVGLocal(p){
-  const temas = [
-    {k:["ingles","inglês","reino unido","uk","england","english"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#012169"/><line x1="0" y1="0" x2="64" y2="64" stroke="#fff" stroke-width="9"/><line x1="64" y1="0" x2="0" y2="64" stroke="#fff" stroke-width="9"/><line x1="32" y1="0" x2="32" y2="64" stroke="#fff" stroke-width="11"/><line x1="0" y1="32" x2="64" y2="32" stroke="#fff" stroke-width="11"/><line x1="0" y1="0" x2="64" y2="64" stroke="#C8102E" stroke-width="5"/><line x1="64" y1="0" x2="0" y2="64" stroke="#C8102E" stroke-width="5"/><line x1="32" y1="0" x2="32" y2="64" stroke="#C8102E" stroke-width="7"/><line x1="0" y1="32" x2="64" y2="32" stroke="#C8102E" stroke-width="7"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#1e3a8a"/><text x="32" y="24" font-size="18" fill="#fff" text-anchor="middle" font-weight="bold">EN</text><rect x="12" y="30" width="40" height="3" rx="2" fill="#C8102E"/><text x="32" y="48" font-size="11" fill="#93c5fd" text-anchor="middle">English</text></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#012169"/><line x1="0" y1="0" x2="64" y2="64" stroke="#fff" stroke-width="8"/><line x1="64" y1="0" x2="0" y2="64" stroke="#fff" stroke-width="8"/><line x1="32" y1="0" x2="32" y2="64" stroke="#fff" stroke-width="10"/><line x1="0" y1="32" x2="64" y2="32" stroke="#fff" stroke-width="10"/><line x1="0" y1="0" x2="64" y2="64" stroke="#C8102E" stroke-width="4"/><line x1="64" y1="0" x2="0" y2="64" stroke="#C8102E" stroke-width="4"/><line x1="32" y1="0" x2="32" y2="64" stroke="#C8102E" stroke-width="6"/><line x1="0" y1="32" x2="64" y2="32" stroke="#C8102E" stroke-width="6"/></svg>`
-    ]},
-    {k:["portugues","português","brasil","brazil","pt-br"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#009C3B"/><polygon points="32,8 56,32 32,56 8,32" fill="#FFDF00"/><circle cx="32" cy="32" r="12" fill="#002776"/><path d="M21,30 Q32,25 43,30" stroke="#fff" stroke-width="2" fill="none"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#002776"/><text x="32" y="26" font-size="16" fill="#FFDF00" text-anchor="middle" font-weight="bold">PT</text><rect x="14" y="32" width="36" height="3" rx="2" fill="#009C3B"/><text x="32" y="48" font-size="11" fill="#6ee7b7" text-anchor="middle">Português</text></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#009C3B"/><polygon points="32,10 54,32 32,54 10,32" fill="#FFDF00"/><circle cx="32" cy="32" r="11" fill="#002776"/></svg>`
-    ]},
-    {k:["espanhol","espanha","spain","español"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#AA151B"/><rect y="16" width="64" height="32" fill="#F1BF00"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#F1BF00"/><text x="32" y="26" font-size="16" fill="#AA151B" text-anchor="middle" font-weight="bold">ES</text><rect x="14" y="32" width="36" height="3" rx="2" fill="#AA151B"/><text x="32" y="48" font-size="11" fill="#AA151B" text-anchor="middle">Español</text></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#AA151B"/><rect y="16" width="64" height="32" fill="#F1BF00"/><rect width="64" height="64" rx="32" fill="none" stroke="#AA151B" stroke-width="0"/></svg>`
-    ]},
-    {k:["frances","francês","franca","france","french"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#ED2939"/><rect width="43" height="64" fill="#fff"/><rect width="22" height="64" fill="#002395"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="10" fill="#fff"/><text x="32" y="26" font-size="16" fill="#002395" text-anchor="middle" font-weight="bold">FR</text><rect x="14" y="32" width="36" height="3" rx="2" fill="#ED2939"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#ED2939"/><rect width="43" height="64" fill="#fff"/><rect width="22" height="64" fill="#002395"/></svg>`
-    ]},
-    {k:["massagem","massage","relaxa","terapeuta"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#7c3aed"/><ellipse cx="22" cy="40" rx="8" ry="11" fill="#fff" opacity="0.9" transform="rotate(-15,22,40)"/><ellipse cx="42" cy="40" rx="8" ry="11" fill="#fff" opacity="0.9" transform="rotate(15,42,40)"/><circle cx="32" cy="24" r="9" fill="#c4b5fd"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#ede9fe"/><ellipse cx="22" cy="40" rx="8" ry="11" fill="#7c3aed" opacity="0.9" transform="rotate(-15,22,40)"/><ellipse cx="42" cy="40" rx="8" ry="11" fill="#7c3aed" opacity="0.9" transform="rotate(15,42,40)"/><circle cx="32" cy="24" r="9" fill="#7c3aed"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#7c3aed"/><ellipse cx="22" cy="40" rx="8" ry="11" fill="#fff" opacity="0.9" transform="rotate(-15,22,40)"/><ellipse cx="42" cy="40" rx="8" ry="11" fill="#fff" opacity="0.9" transform="rotate(15,42,40)"/><circle cx="32" cy="24" r="9" fill="#c4b5fd"/></svg>`
-    ]},
-    {k:["podologia","pe","pé","podolatria","foot"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#f59e0b"/><ellipse cx="32" cy="42" rx="16" ry="11" fill="#fff"/><ellipse cx="18" cy="28" rx="5" ry="6" fill="#fff"/><ellipse cx="26" cy="23" rx="5" ry="7" fill="#fff"/><ellipse cx="34" cy="23" rx="5" ry="7" fill="#fff"/><ellipse cx="42" cy="26" rx="4" ry="6" fill="#fff"/><ellipse cx="49" cy="30" rx="3.5" ry="5" fill="#fff"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#fff7ed"/><ellipse cx="32" cy="42" rx="16" ry="11" fill="#f59e0b"/><ellipse cx="18" cy="28" rx="5" ry="6" fill="#f59e0b"/><ellipse cx="26" cy="23" rx="5" ry="7" fill="#f59e0b"/><ellipse cx="34" cy="23" rx="5" ry="7" fill="#f59e0b"/><ellipse cx="42" cy="26" rx="4" ry="6" fill="#f59e0b"/><ellipse cx="49" cy="30" rx="3.5" ry="5" fill="#f59e0b"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#f59e0b"/><ellipse cx="32" cy="42" rx="16" ry="11" fill="#fff"/><ellipse cx="18" cy="28" rx="5" ry="6" fill="#fff"/><ellipse cx="26" cy="23" rx="5" ry="7" fill="#fff"/><ellipse cx="34" cy="23" rx="5" ry="7" fill="#fff"/><ellipse cx="42" cy="26" rx="4" ry="6" fill="#fff"/></svg>`
-    ]},
-    {k:["casais","casal","couple","dois","two"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#ec4899"/><circle cx="22" cy="20" r="9" fill="#fff"/><circle cx="42" cy="20" r="9" fill="#fce7f3"/><ellipse cx="22" cy="44" rx="12" ry="10" fill="#fff"/><ellipse cx="42" cy="44" rx="12" ry="10" fill="#fce7f3"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#fce7f3"/><circle cx="22" cy="20" r="9" fill="#ec4899"/><circle cx="42" cy="20" r="9" fill="#be185d"/><ellipse cx="22" cy="44" rx="12" ry="10" fill="#ec4899"/><ellipse cx="42" cy="44" rx="12" ry="10" fill="#be185d"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#ec4899"/><circle cx="22" cy="20" r="9" fill="#fff"/><circle cx="42" cy="20" r="9" fill="#fce7f3"/><ellipse cx="22" cy="44" rx="12" ry="10" fill="#fff"/><ellipse cx="42" cy="44" rx="12" ry="10" fill="#fce7f3"/></svg>`
-    ]},
-    {k:["oleo","óleo","oil","gota","aromaterapia"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#06b6d4"/><path d="M32,10 Q48,32 48,42 A16,16 0 0,1 16,42 Q16,32 32,10Z" fill="#fff"/><ellipse cx="27" cy="38" rx="4" ry="6" fill="#67e8f9" opacity="0.6" transform="rotate(-20,27,38)"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#cffafe"/><path d="M32,10 Q48,32 48,42 A16,16 0 0,1 16,42 Q16,32 32,10Z" fill="#06b6d4"/><ellipse cx="27" cy="38" rx="4" ry="6" fill="#fff" opacity="0.6" transform="rotate(-20,27,38)"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#06b6d4"/><path d="M32,10 Q48,32 48,42 A16,16 0 0,1 16,42 Q16,32 32,10Z" fill="#fff"/></svg>`
-    ]},
-    {k:["spa","lotus","flor","flower","vivencia","vivência"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#10b981"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(60,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(120,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(180,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(240,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(300,32,32)"/><circle cx="32" cy="32" r="8" fill="#6ee7b7"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#d1fae5"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(60,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(120,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(180,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(240,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#10b981" transform="rotate(300,32,32)"/><circle cx="32" cy="32" r="8" fill="#fff"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#10b981"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(72,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(144,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(216,32,32)"/><ellipse cx="32" cy="18" rx="7" ry="12" fill="#fff" transform="rotate(288,32,32)"/><circle cx="32" cy="32" r="7" fill="#6ee7b7"/></svg>`
-    ]},
-    {k:["nuru","agua","água","water","onda"],
-     svgs:[
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#3b82f6"/><path d="M0,38 Q16,26 32,38 Q48,50 64,38 L64,64 L0,64Z" fill="#fff" opacity="0.8"/><path d="M0,28 Q16,16 32,28 Q48,40 64,28 L64,64 L0,64Z" fill="#fff" opacity="0.4"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#dbeafe"/><path d="M0,38 Q16,26 32,38 Q48,50 64,38 L64,64 L0,64Z" fill="#3b82f6" opacity="0.8"/><path d="M0,28 Q16,16 32,28 Q48,40 64,28 L64,64 L0,64Z" fill="#3b82f6" opacity="0.4"/></svg>`,
-      `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="#3b82f6"/><path d="M0,38 Q16,26 32,38 Q48,50 64,38 L64,64 L0,64Z" fill="#fff" opacity="0.8"/></svg>`
-    ]},
-  ];
-
-  const tema = temas.find(t => t.k.some(k => p.includes(k)));
-  if(tema) return tema.svgs;
-
-  // fallback genérico baseado na primeira letra
-  const letra = p.charAt(0).toUpperCase();
-  const cores = ["#6366f1","#ec4899","#f59e0b","#10b981","#3b82f6","#8b5cf6","#ef4444","#06b6d4"];
-  const cor = cores[letra.charCodeAt(0) % cores.length];
-  return [
-    `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="${cor}"/><text x="32" y="40" font-size="28" fill="#fff" text-anchor="middle" font-weight="bold">${letra}</text></svg>`,
-    `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="32" fill="${cor}"/><text x="32" y="40" font-size="28" fill="#fff" text-anchor="middle" font-weight="bold">${letra}</text></svg>`,
-    `<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect width="64" height="64" rx="12" fill="#fff" stroke="${cor}" stroke-width="3"/><text x="32" y="40" font-size="28" fill="${cor}" text-anchor="middle" font-weight="bold">${letra}</text></svg>`,
-  ];
 }
 
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById("faBusca").addEventListener("input",  e => renderFaGrid(e.target.value));
-  document.getElementById("faManual").addEventListener("keydown", e => { if(e.key==="Enter") aplicarFaManual(); });
-  document.getElementById("iaPrompt").addEventListener("keydown", e => { if(e.key==="Enter") gerarIA(); });
+  aplicarMascaras();
+  document.getElementById("filtroStatus").addEventListener("change", carregar);
   carregar();
 });
 </script>

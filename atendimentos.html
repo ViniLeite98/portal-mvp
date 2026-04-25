@@ -424,14 +424,39 @@ function renderCal(){
       const cls=minT%60===0?"slot-line hora-cheia":"slot-line";
       html+=`<div class="${cls}" style="height:${ALT_SLOT}px" onclick="abrirNovoSlot('${dStr}','${hh}:${mm}')"></div>`;
     }
-    // cards
-    semDados.filter(r=>r.data===dStr).forEach(r=>{
-      const mI=h2m(r.hora_inicio),mF=r.hora_fim?h2m(r.hora_fim):mI+60;
-      const topPx=((mI-HORA_INI*60)/30)*ALT_SLOT;
-      const hPx=Math.max(((mF-mI)/30)*ALT_SLOT,ALT_SLOT);
+    // cards — detectar sobreposição e dividir largura
+    const cardsDia=semDados.filter(r=>r.data===dStr).map(r=>({
+      ...r,
+      mI:h2m(r.hora_inicio),
+      mF:r.hora_fim?h2m(r.hora_fim):h2m(r.hora_inicio)+60
+    }));
+
+    // para cada card, descobrir em qual "coluna" ele cabe
+    cardsDia.forEach(r=>{
+      r._col=0;
+      cardsDia.forEach(o=>{
+        if(o===r||o._col===undefined) return;
+        if(o.mI<r.mF&&o.mF>r.mI&&o._col===r._col) r._col++;
+      });
+    });
+
+    // total de colunas simultâneas em cada card
+    cardsDia.forEach(r=>{
+      r._totalCols=1;
+      cardsDia.forEach(o=>{
+        if(o===r) return;
+        if(o.mI<r.mF&&o.mF>r.mI) r._totalCols=Math.max(r._totalCols,r._col+1,o._col+1);
+      });
+    });
+
+    cardsDia.forEach(r=>{
+      const topPx=((r.mI-HORA_INI*60)/30)*ALT_SLOT;
+      const hPx=Math.max(((r.mF-r.mI)/30)*ALT_SLOT,ALT_SLOT);
       const cls=r.status==="Confirmado"?"confirmado":r.status==="Cancelado"?"cancelado":"agendado";
       const ter=[r.ter1?.nome_profissional,r.ter2?.nome_profissional].filter(Boolean).join("+");
-      html+=`<div class="ag-card ${cls}" style="top:${topPx}px;height:${hPx}px" onclick="abrirDet('${r.id}');event.stopPropagation()">
+      const pct=100/r._totalCols;
+      const left=r._col*pct;
+      html+=`<div class="ag-card ${cls}" style="top:${topPx}px;height:${hPx}px;left:calc(${left}% + 2px);width:calc(${pct}% - 4px)" onclick="abrirDet('${r.id}');event.stopPropagation()">
         <div class="ag-hora">${fmtH(r.hora_inicio)}${r.hora_fim?"–"+fmtH(r.hora_fim):""}</div>
         <div class="ag-nome">${nomeC(r.clientes)}</div>
         <div class="ag-serv">${nomeS(r.servicos)}</div>

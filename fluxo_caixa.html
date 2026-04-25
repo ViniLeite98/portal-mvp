@@ -102,6 +102,26 @@ tr:hover td{background:#f9fafb;}
 .rl.total{border-top:1px solid #e5e7eb;margin-top:6px;padding-top:8px;font-weight:700;font-size:15px;}
 .rl.troco{color:#16a34a;font-weight:700;}
 .rl.troco.neg{color:#dc2626;}
+
+/* fechamento caixa */
+.fech-header{text-align:center;padding:16px 0 8px;}
+.fech-header h2{margin:0;font-size:20px;font-weight:800;color:#111827;}
+.fech-header p{margin:4px 0 0;font-size:13px;color:#6b7280;}
+.fech-linha{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f3f4f6;font-size:15px;}
+.fech-linha:last-child{border-bottom:none;}
+.fech-linha .fl-label{display:flex;align-items:center;gap:8px;color:#374151;}
+.fech-linha .fl-valor{font-weight:700;font-size:16px;}
+.fech-total{display:flex;justify-content:space-between;align-items:center;padding:14px 0 4px;border-top:2px solid #111827;font-size:18px;font-weight:800;}
+.fech-caixa{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;}
+.fech-caixa .fc-label{font-size:13px;color:#16a34a;font-weight:600;}
+.fech-caixa .fc-valor{font-size:22px;font-weight:900;color:#16a34a;}
+
+@media print {
+  body * { visibility: hidden; }
+  #printArea, #printArea * { visibility: visible; }
+  #printArea { position: fixed; top: 0; left: 0; width: 100%; padding: 30px; background: #fff; }
+  .no-print { display: none !important; }
+}
 </style>
 </head>
 <body>
@@ -113,6 +133,7 @@ tr:hover td{background:#f9fafb;}
     <h1>Fluxo de Caixa</h1>
     <div class="topbar-btns">
       <button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+      <button class="btn-yellow" onclick="abrirFecharCaixa()"><i class="fa fa-cash-register"></i> Fechar Caixa</button>
       <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Lançamento</button>
     </div>
   </div>
@@ -285,6 +306,103 @@ tr:hover td{background:#f9fafb;}
   <div class="modal-footer">
     <button class="btn-cancel" onclick="fecharNC()">Cancelar</button>
     <button class="btn-blue" onclick="salvarNC()"><i class="fa fa-user-plus"></i> Cadastrar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL FECHAR CAIXA -->
+<div class="modal" id="modalFechamento">
+<div class="modal-content" style="width:520px">
+  <div class="modal-header no-print">
+    <h2><i class="fa fa-cash-register"></i> Fechar Caixa</h2>
+    <button class="btn-fechar" onclick="fecharFechamento()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+
+    <!-- Configuração (no-print) -->
+    <div class="no-print" style="background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:16px;">
+      <div class="grid-2">
+        <div class="mfield">
+          <label>Operador</label>
+          <select id="fechOp" onchange="calcFechamento()"><option value="">Todos</option></select>
+        </div>
+        <div class="mfield">
+          <label>Data</label>
+          <input type="date" id="fechData" onchange="calcFechamento()">
+        </div>
+        <div class="mfield">
+          <label>Hora Início</label>
+          <input type="time" id="fechHoraIni" onchange="calcFechamento()">
+        </div>
+        <div class="mfield">
+          <label>Hora Fim</label>
+          <input type="time" id="fechHoraFim" onchange="calcFechamento()">
+        </div>
+        <div class="mfield span2">
+          <label>Fundo Inicial (troco em caixa no início)</label>
+          <input type="number" id="fechFundo" value="0" step="0.01" oninput="calcFechamento()" placeholder="Ex: 500,00">
+        </div>
+      </div>
+    </div>
+
+    <!-- Área de impressão -->
+    <div id="printArea">
+      <div class="fech-header">
+        <h2 id="fechTitulo">Fechamento de Caixa</h2>
+        <p id="fechSubtitulo"></p>
+      </div>
+
+      <div style="margin:16px 0">
+        <div class="fech-linha">
+          <span class="fl-label"><i class="fa fa-money-bill-wave" style="color:#16a34a"></i> Dinheiro</span>
+          <span class="fl-valor" id="fechDinheiro">R$ 0,00</span>
+        </div>
+        <div class="fech-linha">
+          <span class="fl-label"><i class="fa fa-credit-card" style="color:#2563eb"></i> Débito</span>
+          <span class="fl-valor" id="fechDebito">R$ 0,00</span>
+        </div>
+        <div class="fech-linha">
+          <span class="fl-label"><i class="fa fa-credit-card" style="color:#7c3aed"></i> Crédito</span>
+          <span class="fl-valor" id="fechCredito">R$ 0,00</span>
+        </div>
+        <div class="fech-linha">
+          <span class="fl-label"><i class="fa fa-qrcode" style="color:#06b6d4"></i> PIX</span>
+          <span class="fl-valor" id="fechPix">R$ 0,00</span>
+        </div>
+        <div class="fech-linha" id="fechOutrosLinha" style="display:none">
+          <span class="fl-label"><i class="fa fa-ellipsis-h" style="color:#9ca3af"></i> Outros</span>
+          <span class="fl-valor" id="fechOutros">R$ 0,00</span>
+        </div>
+        <div class="fech-linha" style="color:#dc2626">
+          <span class="fl-label"><i class="fa fa-coins" style="color:#dc2626"></i> Troco</span>
+          <span class="fl-valor" id="fechTroco">- R$ 0,00</span>
+        </div>
+      </div>
+
+      <div class="fech-total">
+        <span>Total</span>
+        <span id="fechTotal">R$ 0,00</span>
+      </div>
+
+      <div class="fech-caixa">
+        <div>
+          <div class="fc-label"><i class="fa fa-box"></i> Troco restante na caixa</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Fundo inicial + Dinheiro − Trocos</div>
+        </div>
+        <div class="fc-valor" id="fechTrocoCaixa">R$ 0,00</div>
+      </div>
+
+      <div style="margin-top:12px;font-size:11px;color:#9ca3af;text-align:center" id="fechRodape"></div>
+    </div>
+
+  </div>
+  <div class="modal-footer no-print" style="justify-content:space-between">
+    <span style="font-size:12px;color:#9ca3af" id="fechContagem">0 lançamentos no período</span>
+    <div style="display:flex;gap:10px">
+      <button class="btn-ghost" onclick="fecharFechamento()">Fechar</button>
+      <button onclick="salvarFechamento()"><i class="fa fa-save"></i> Salvar</button>
+      <button class="btn-blue" onclick="window.print()"><i class="fa fa-print"></i> Imprimir / Print</button>
+    </div>
   </div>
 </div>
 </div>
@@ -672,6 +790,135 @@ function exportarExcel(){
   ws["!cols"]=Object.keys(exp[0]).map(col=>({wch:Math.max(col.length,...exp.map(r=>String(r[col]||"").length))+2}));
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Fluxo de Caixa");
   XLSX.writeFile(wb,"fluxo_caixa.xlsx");
+}
+
+/* ── FECHAR CAIXA ── */
+function abrirFecharCaixa(){
+  // popular operadores
+  const sel=document.getElementById("fechOp");
+  sel.innerHTML='<option value="">Todos</option>';
+  Object.entries(opsMap).forEach(([cpf,nome])=>sel.innerHTML+=`<option value="${cpf}">${nome}</option>`);
+
+  // filtroOp atual se tiver
+  const opAtual=document.getElementById("filtroOp").value;
+  if(opAtual) sel.value=opAtual;
+
+  // data de hoje
+  document.getElementById("fechData").value=hoje();
+  document.getElementById("fechHoraIni").value="";
+  document.getElementById("fechHoraFim").value="";
+  document.getElementById("fechFundo").value="0";
+
+  calcFechamento();
+  document.getElementById("modalFechamento").style.display="flex";
+}
+
+function fecharFechamento(){
+  document.getElementById("modalFechamento").style.display="none";
+}
+
+function classifPgto(forma){
+  if(!forma) return "outros";
+  const f=forma.toLowerCase();
+  if(f.includes("dinheiro")||f.includes("espécie")||f.includes("especie")) return "dinheiro";
+  if(f.includes("débito")||f.includes("debito")) return "debito";
+  if(f.includes("crédito")||f.includes("credito")) return "credito";
+  if(f.includes("pix")) return "pix";
+  return "outros";
+}
+
+function calcFechamento(){
+  const opFiltro=document.getElementById("fechOp").value;
+  const dataFiltro=document.getElementById("fechData").value;
+  const horaIni=document.getElementById("fechHoraIni").value;
+  const horaFim=document.getElementById("fechHoraFim").value;
+  const fundo=parseFloat(document.getElementById("fechFundo").value||0);
+
+  // filtrar lançamentos
+  let lancamentos=[...dados];
+  if(opFiltro) lancamentos=lancamentos.filter(r=>r.operador_cpf===opFiltro);
+  if(dataFiltro) lancamentos=lancamentos.filter(r=>r.data===dataFiltro);
+
+  // filtrar por hora se informado (usa created_at aproximado)
+  // por enquanto filtra apenas por data/operador
+
+  // agrupar por forma de pagamento
+  let dinheiro=0,debito=0,credito=0,pix=0,outros=0,trocos=0;
+
+  lancamentos.forEach(r=>{
+    // pgto 1
+    const t1=classifPgto(r.forma_pgto_1);
+    const v1=r.valor_pgto_1||0;
+    if(t1==="dinheiro") dinheiro+=v1;
+    else if(t1==="debito") debito+=v1;
+    else if(t1==="credito") credito+=v1;
+    else if(t1==="pix") pix+=v1;
+    else outros+=v1;
+
+    // pgto 2
+    if(r.forma_pgto_2){
+      const t2=classifPgto(r.forma_pgto_2);
+      const v2=r.valor_pgto_2||0;
+      if(t2==="dinheiro") dinheiro+=v2;
+      else if(t2==="debito") debito+=v2;
+      else if(t2==="credito") credito+=v2;
+      else if(t2==="pix") pix+=v2;
+      else outros+=v2;
+    }
+
+    // troco
+    if(r.troco>0) trocos+=r.troco;
+  });
+
+  const total=dinheiro+debito+credito+pix+outros-trocos;
+  const trocoCaixa=fundo+dinheiro-trocos;
+
+  // atualizar UI
+  document.getElementById("fechDinheiro").textContent=fmtM(dinheiro);
+  document.getElementById("fechDebito").textContent=fmtM(debito);
+  document.getElementById("fechCredito").textContent=fmtM(credito);
+  document.getElementById("fechPix").textContent=fmtM(pix);
+  document.getElementById("fechOutros").textContent=fmtM(outros);
+  document.getElementById("fechOutrosLinha").style.display=outros>0?"":"none";
+  document.getElementById("fechTroco").textContent=`- ${fmtM(trocos)}`;
+  document.getElementById("fechTotal").textContent=fmtM(total);
+  document.getElementById("fechTrocoCaixa").textContent=fmtM(trocoCaixa);
+  document.getElementById("fechContagem").textContent=`${lancamentos.length} lançamento${lancamentos.length!==1?"s":""} no período`;
+
+  // título
+  const opNome=opFiltro?opsMap[opFiltro]||"":"Todos";
+  const horaStr=horaIni&&horaFim?`${horaIni} às ${horaFim}`:horaIni?`a partir de ${horaIni}`:"";
+  document.getElementById("fechTitulo").textContent=`Fechamento${opFiltro?" "+opNome:""}`;
+  document.getElementById("fechSubtitulo").textContent=[horaStr,dataFiltro?fmtD(dataFiltro):""].filter(Boolean).join(" · ");
+  document.getElementById("fechRodape").textContent=`Gerado em ${new Date().toLocaleString("pt-BR")}`;
+}
+
+async function salvarFechamento(){
+  const opFiltro=document.getElementById("fechOp").value;
+  const dataFiltro=document.getElementById("fechData").value;
+  if(!dataFiltro){alert("Informe a data.");return;}
+
+  const fundo=parseFloat(document.getElementById("fechFundo").value||0);
+  const din=parseFloat(document.getElementById("fechDinheiro").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const deb=parseFloat(document.getElementById("fechDebito").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const cre=parseFloat(document.getElementById("fechCredito").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const px=parseFloat(document.getElementById("fechPix").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const out=parseFloat(document.getElementById("fechOutros").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const trc=parseFloat(document.getElementById("fechTroco").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const tot=parseFloat(document.getElementById("fechTotal").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const caixa=parseFloat(document.getElementById("fechTrocoCaixa").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+
+  const {error}=await client.from("fechamentos_caixa").insert({
+    data:dataFiltro,
+    operador_cpf:opFiltro||null,
+    hora_inicio:document.getElementById("fechHoraIni").value||null,
+    hora_fim:document.getElementById("fechHoraFim").value||null,
+    fundo_inicial:fundo,
+    total_dinheiro:din,total_debito:deb,total_credito:cre,total_pix:px,total_outros:out,
+    total_trocos:trc,troco_caixa:caixa,total_geral:tot,
+  });
+  if(error){alert("Erro ao salvar: "+error.message);return;}
+  alert("Fechamento salvo com sucesso!");
 }
 
 /* ── INIT ── */

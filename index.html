@@ -462,11 +462,39 @@ async function renderAtendimentos(rows){
   const tbody = document.querySelector("#tblAnoMes tbody");
   tbody.innerHTML = "";
 
+  // ano atual = ano com dados mais recentes
+  const anoAtual = anos[0]; // anos está em ordem decrescente
+  const hoje = new Date();
+  const mesAtualStr = String(hoje.getMonth()+1).padStart(2,"0");
+  const diaAtualStr = String(hoje.getDate()).padStart(2,"0");
+
   anos.forEach(a=>{
     const ly = String(parseInt(a)-1);
     const totA = anoMap[a].total;
-    const totLY = anoMap[ly]?.total||0;
+
+    const isAnoAtual = a === anoAtual;
+    let totLY = 0;
+    if(isAnoAtual && anoMap[ly]){
+      // Para o ano atual: soma LY só até os meses que já ocorreram
+      // meses anteriores ao atual: mês completo vs mês completo (justo)
+      // mês atual: proporcional pelo dia (dia atual / dias no mês * total do mês no LY)
+      Object.entries(anoMap[ly].meses).forEach(([m, mTotal])=>{
+        if(m < mesAtualStr){
+          totLY += mTotal; // mês completo
+        } else if(m === mesAtualStr){
+          // proporcional: dias passados / total dias do mês
+          const diasNoMes = new Date(parseInt(ly), parseInt(m), 0).getDate();
+          const diasPassados = hoje.getDate();
+          totLY += Math.round(mTotal * diasPassados / diasNoMes);
+        }
+        // meses futuros do LY ignorados
+      });
+    } else {
+      totLY = anoMap[ly]?.total||0;
+    }
+
     const yoy = totLY ? ((totA-totLY)/totLY*100) : null;
+    const labelYoy = isAnoAtual ? `YoY % (até ${diaAtualStr}/${mesAtualStr})` : "YoY %";
     const yoyStr = yoy!==null
       ? `<span class="${yoy>=0?'green':'red'}">${yoy>=0?'+':''}${yoy.toFixed(2)}%</span>`
       : "—";
@@ -483,7 +511,11 @@ async function renderAtendimentos(rows){
     tbody.appendChild(trAno);
 
     // Linhas dos meses (escondidas por padrão)
+    // Para ano atual: só mostra meses que já ocorreram
     Object.entries(anoMap[a].meses).sort().forEach(([m,n])=>{
+      // pular meses futuros do ano atual
+      if(isAnoAtual && m > mesAtualStr) return;
+
       const lyM = anoMap[ly]?.meses?.[m]||0;
       const yoyM = lyM ? ((n-lyM)/lyM*100) : null;
       const trMes = document.createElement("tr");

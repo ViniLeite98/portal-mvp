@@ -90,8 +90,11 @@ async function appLogout() {
 }
 
 // ── EXECUÇÃO PRINCIPAL ──
-(async function () {
+(function () {
+  // Capturar currentScript ANTES de qualquer async (some depois)
   const roleExigido = document.currentScript?.getAttribute("data-role") || null;
+
+  (async function run() {
 
   // 1. Verificar sessão
   const { data: { session } } = await client.auth.getSession();
@@ -134,4 +137,5 @@ async function appLogout() {
   } else {
     renderSidebar();
   }
+  })();
 })();

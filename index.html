@@ -86,6 +86,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 
 /* loading */
 .loading{display:flex;align-items:center;justify-content:center;height:80px;color:#9ca3af;font-size:12px;gap:8px;}
+
+/* interatividade */
+.dt tbody tr.selecionado td{background:#eff6ff!important;color:#1d4ed8;font-weight:700;}
+.dt tbody tr.clicavel{cursor:pointer;}
+.dt tbody tr.clicavel:hover td{background:#f0f9ff;}
+.filtro-ativo-badge{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:12px;cursor:pointer;}
+.filtro-ativo-badge:hover{background:#dbeafe;}
+.card-header.filtrado{border-bottom-color:#bfdbfe;background:#f8fbff;}
 </style>
 </head>
 <body>
@@ -112,7 +120,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   </div>
 
   <!-- FILTROS -->
-  <div class="filtros-bar">
+  <div class="filtros-bar" id="filtrosBar">
     <label>Ano</label>
     <select id="fAno" onchange="carregarTudo()">
       <option value="">Todos</option>
@@ -315,6 +323,66 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 <script src="assets/sidebar/sidebar.js"></script>
 <script>
 const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+// ── SELEÇÃO INTERATIVA ──
+let selecao = { tipo: null, valor: null }; // tipo: 'prof' | 'serv' | null
+
+function filtrarPor(tipo, valor, trEl){
+  // toggle: se já está selecionado, limpa
+  if(selecao.tipo===tipo && selecao.valor===valor){
+    limparSelecao();
+    return;
+  }
+  selecao = {tipo, valor};
+
+  // destacar linha clicada
+  document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
+  if(trEl) trEl.classList.add("selecionado");
+
+  // mostrar badge
+  renderBadge();
+
+  // re-renderizar tudo com filtro
+  const dadosFiltrados = filtrarDados(allData);
+  renderKPIs(dadosFiltrados);
+  renderAtendimentos(dadosFiltrados);
+  renderFinanceiro(dadosFiltrados);
+  renderEquipe(dadosFiltrados);
+  renderExecutivo(dadosFiltrados);
+}
+
+function filtrarDados(rows){
+  if(!selecao.tipo) return rows;
+  return rows.filter(r=>{
+    if(selecao.tipo==='prof') return r.profissional===selecao.valor;
+    if(selecao.tipo==='serv') return r.servico===selecao.valor;
+    return true;
+  });
+}
+
+function limparSelecao(){
+  selecao={tipo:null,valor:null};
+  document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
+  renderBadge();
+  renderKPIs(allData);
+  renderAtendimentos(allData);
+  renderFinanceiro(allData);
+  renderEquipe(allData);
+  renderExecutivo(allData);
+}
+
+function renderBadge(){
+  const existing=document.getElementById("selecaoBadge");
+  if(existing) existing.remove();
+  if(!selecao.tipo) return;
+  const label = selecao.tipo==='prof'?`👤 ${selecao.valor}`:`💆 ${selecao.valor}`;
+  const badge=document.createElement("div");
+  badge.id="selecaoBadge";
+  badge.className="filtro-ativo-badge";
+  badge.innerHTML=`${label} <span style="font-size:14px;line-height:1">×</span>`;
+  badge.onclick=limparSelecao;
+  document.getElementById("filtrosBar").appendChild(badge);
+}
 const MESES_FULL = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 let charts = {}, allData = [], allDataSemFiltro = [];
 
@@ -390,12 +458,15 @@ async function initFiltros(){
    CARREGAR TUDO
 ══════════════════════════════ */
 async function carregarTudo(){
+  selecao={tipo:null,valor:null};
+  const badge=document.getElementById("selecaoBadge");
+  if(badge)badge.remove();
   allData = await fetchTodos();
   renderKPIs(allData);
   renderAtendimentos(allData);
   renderFinanceiro(allData);
   renderEquipe(allData);
-  renderExecutivo();
+  renderExecutivo(allData);
 }
 
 /* ── KPIs ── */
@@ -427,7 +498,7 @@ async function renderAtendimentos(rows){
   rows.forEach(r=>{ if(r.profissional) profMap[r.profissional]=(profMap[r.profissional]||0)+1; });
   const rankProf = Object.entries(profMap).sort((a,b)=>b[1]-a[1]);
   document.querySelector("#tblProf tbody").innerHTML =
-    rankProf.map(([p,n])=>`<tr>
+    rankProf.map(([p,n])=>`<tr class="clicavel${selecao.tipo==='prof'&&selecao.valor===p?' selecionado':''}" onclick="filtrarPor('prof','${p.replace(/'/g,"\'")}',this)">
       <td>${p}</td>
       <td class="num">${fmtN(n)}</td>
       <td class="num">
@@ -444,7 +515,7 @@ async function renderAtendimentos(rows){
   rows.forEach(r=>{ if(r.servico) servMap[r.servico]=(servMap[r.servico]||0)+1; });
   const rankServ = Object.entries(servMap).sort((a,b)=>b[1]-a[1]);
   document.querySelector("#tblServ tbody").innerHTML =
-    rankServ.map(([s,n])=>`<tr>
+    rankServ.map(([s,n])=>`<tr class="clicavel${selecao.tipo==='serv'&&selecao.valor===s?' selecionado':''}" onclick="filtrarPor('serv','${s.replace(/'/g,"\'")}',this)">
       <td>${s}</td>
       <td class="num">${fmtN(n)}</td>
       <td class="num">
@@ -621,7 +692,7 @@ function renderFinanceiro(rows){
   rows.forEach(r=>{ if(!r.servico)return; if(!servMap[r.servico])servMap[r.servico]={n:0,rec:0}; servMap[r.servico].n++;servMap[r.servico].rec+=(r.valor||0); });
   const rankS=Object.entries(servMap).sort((a,b)=>b[1].rec-a[1].rec);
   document.querySelector("#tblRecServ tbody").innerHTML =
-    rankS.map(([s,v])=>`<tr><td>${s}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("") +
+    rankS.map(([s,v])=>`<tr class="clicavel${selecao.tipo==='serv'&&selecao.valor===s?' selecionado':''}" onclick="filtrarPor('serv','${s.replace(/'/g,"\'")}',this)"><td>${s}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("") +
     `<tr><td>Total</td><td class="num">${fmtN(rankS.reduce((s,[,v])=>s+v.n,0))}</td><td class="num">${fmtM(rankS.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num"></td></tr>`;
 
   /* Histórico por ano — busca sem filtro */
@@ -633,7 +704,7 @@ function renderFinanceiro(rows){
   rows.forEach(r=>{ if(!r.profissional)return; if(!profMap[r.profissional])profMap[r.profissional]={n:0,rec:0,com:0,cli:new Set()}; profMap[r.profissional].n++;profMap[r.profissional].rec+=(r.valor||0);profMap[r.profissional].com+=(r.comissao||0);if(r.cliente)profMap[r.profissional].cli.add(r.cliente); });
   const rankP=Object.entries(profMap).sort((a,b)=>b[1].rec-a[1].rec);
   document.querySelector("#tblRecProf tbody").innerHTML =
-    rankP.map(([p,v])=>`<tr><td>${p}</td><td class="num">${fmtN(v.cli.size)}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`).join("") +
+    rankP.map(([p,v])=>`<tr class="clicavel${selecao.tipo==='prof'&&selecao.valor===p?' selecionado':''}" onclick="filtrarPor('prof','${p.replace(/'/g,"\'")}',this)"><td>${p}</td><td class="num">${fmtN(v.cli.size)}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`).join("") +
     `<tr><td>Total</td><td class="num"></td><td class="num">${fmtN(totAt)}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num"></td><td class="num">100%</td></tr>`;
 }
 
@@ -672,7 +743,7 @@ function renderEquipe(rows){
     rank.map(([p,v])=>{
       const ret=Object.values(v.cli).filter(x=>x>1).length;
       const pctRet=Object.keys(v.cli).length?((ret/Object.keys(v.cli).length)*100).toFixed(1):0;
-      return`<tr><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${pctRet}%</td><td class="num">${fmtN(v.q1)}</td><td class="num">${fmtN(v.q2)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
+      return`<tr class="clicavel${selecao.tipo==='prof'&&selecao.valor===p?' selecionado':''}" onclick="filtrarPor('prof','${p.replace(/'/g,"\'")}',this)"><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${pctRet}%</td><td class="num">${fmtN(v.q1)}</td><td class="num">${fmtN(v.q2)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
     }).join("") +
     `<tr><td>Total</td><td class="num">${fmtN(totAt)}</td><td class="num"></td><td class="num"></td><td class="num">${fmtN(rank.reduce((s,[,v])=>s+v.q1,0))}</td><td class="num">${fmtN(rank.reduce((s,[,v])=>s+v.q2,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.com,0))}</td><td class="num"></td><td class="num">100%</td></tr>`;
 }
@@ -680,8 +751,8 @@ function renderEquipe(rows){
 /* ════════════════════════
    EXECUTIVO
 ════════════════════════ */
-async function renderExecutivo(){
-  const hist = await fetchTodos({ano:"",mes:"",prof:"",serv:""});
+async function renderExecutivo(rowsFiltradas){
+  const hist = rowsFiltradas || await fetchTodos({ano:"",mes:"",prof:"",serv:""});
   const anoMap={};
   hist.forEach(r=>{
     if(!r.data)return;
@@ -707,7 +778,7 @@ async function renderExecutivo(){
   document.querySelector("#tblExec tbody").innerHTML =
     rank.map(([p,v])=>{
       const ret=v.cli.size;
-      return`<tr><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
+      return`<tr class="clicavel${selecao.tipo==='prof'&&selecao.valor===p?' selecionado':''}" onclick="filtrarPor('prof','${p.replace(/'/g,"\'")}',this)"><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
     }).join("") +
     `<tr><td>Total</td><td class="num">${fmtN(totAt)}</td><td class="num"></td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.com,0))}</td><td class="num"></td><td class="num"></td><td class="num">100%</td></tr>`;
 }

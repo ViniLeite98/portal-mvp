@@ -147,15 +147,16 @@ async function entrar(){
     return;
   }
 
-  // buscar perfil para saber para onde redirecionar
-  const {data:perfil} = await client.from("perfis").select("role").eq("id", data.user.id).single();
+  // buscar perfil — tentar até 5x pois o trigger pode demorar
+  let perfil = null;
+  for(let i=0; i<5; i++){
+    const {data:p} = await client.from("perfis").select("role").eq("id", data.user.id).single();
+    if(p){ perfil = p; break; }
+    await new Promise(r=>setTimeout(r, 500));
+  }
   const role = perfil?.role || "operadora";
 
-  if(role === "admin"){
-    window.location.href = "dashboard.html";
-  } else {
-    window.location.href = "fluxo_caixa.html";
-  }
+  window.location.href = role === "admin" ? "dashboard.html" : "fluxo_caixa.html";
 }
 
 /* ── CADASTRAR ── */
@@ -194,9 +195,16 @@ async function cadastrar(){
 
   // auto-login se não precisar confirmar email
   if(data.session){
-    const {data:perfil} = await client.from("perfis").select("role").eq("id", data.user.id).single();
-    const role = perfil?.role || "operadora";
-    setTimeout(()=>{ window.location.href = role==="admin" ? "dashboard.html" : "fluxo_caixa.html"; }, 1000);
+    // Aguardar trigger criar o perfil
+    await new Promise(r=>setTimeout(r, 1000));
+    let perfil2 = null;
+    for(let i=0; i<5; i++){
+      const {data:p} = await client.from("perfis").select("role").eq("id", data.user.id).single();
+      if(p){ perfil2 = p; break; }
+      await new Promise(r=>setTimeout(r, 500));
+    }
+    const role = perfil2?.role || "operadora";
+    window.location.href = role === "admin" ? "dashboard.html" : "fluxo_caixa.html";
   } else {
     showMsg("Conta criada! Verifique seu email para confirmar.", "ok");
   }

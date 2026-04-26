@@ -1,65 +1,137 @@
 /**
- * auth.js — Proteção de rotas por role
- * Incluir APÓS supabase.js e ANTES de sidebar.js
- *
- * <script src="assets/js/supabase.js"></script>
- * <script src="assets/js/auth.js" data-role="admin"></script>
- * <script src="assets/sidebar/sidebar.js"></script>
+ * auth.js — autenticação + sidebar
+ * Ordem no HTML:
+ *   1. supabase.js
+ *   2. auth.js  (com data-role="admin" ou data-role="operadora")
+ *   NÃO precisa mais do sidebar.js separado
  */
 
-(async function(){
-  const scriptEl = document.currentScript;
-  const roleExigido = scriptEl?.getAttribute("data-role") || null;
+const ROTAS = {
+  admin:     "dashboard.html",
+  operadora: "equipe.html",
+};
+
+const MENU_ITEMS = [
+  { href: "dashboard.html",     icon: "fa-chart-line",         label: "Dashboard",      roles: ["admin"] },
+  { tipo: "sep" },
+  { tipo: "titulo", label: "CADASTROS" },
+  { href: "equipe.html",        icon: "fa-users",              label: "Equipe",         roles: ["admin","operadora"] },
+  { href: "clientes.html",      icon: "fa-user",               label: "Clientes",       roles: ["admin","operadora"] },
+  { href: "servicos.html",      icon: "fa-hand-holding-heart", label: "Serviços",       roles: ["admin","operadora"] },
+  { href: "certificacoes.html", icon: "fa-certificate",        label: "Certificações",  roles: ["admin","operadora"] },
+  { tipo: "sep" },
+  { tipo: "titulo", label: "OPERACIONAL" },
+  { href: "atendimentos.html",  icon: "fa-calendar-check",     label: "Atendimentos",   roles: ["admin","operadora"] },
+  { href: "escalas.html",       icon: "fa-calendar-days",      label: "Escalas",        roles: ["admin","operadora"] },
+  { href: "solicitacoes.html",  icon: "fa-file-lines",         label: "Solicitações",   roles: ["admin","operadora"] },
+  { tipo: "sep" },
+  { tipo: "titulo", label: "FINANCEIRO" },
+  { href: "despesas.html",      icon: "fa-receipt",            label: "Despesas",       roles: ["admin","operadora"] },
+  { href: "fluxo_caixa.html",   icon: "fa-cash-register",      label: "Fluxo de Caixa",roles: ["admin","operadora"] },
+  { href: "estoque.html",       icon: "fa-boxes-stacked",      label: "Estoque",        roles: ["admin","operadora"] },
+  { tipo: "sep",   roles: ["admin"] },
+  { tipo: "titulo", label: "CONFIGURAÇÕES", roles: ["admin"] },
+  { href: "parametros.html",    icon: "fa-sliders",            label: "Parâmetros",     roles: ["admin"] },
+];
+
+function buildSidebar(role, nome) {
+  const pag    = window.location.pathname.split("/").pop() || "";
+  const inicial = (nome || "?").charAt(0).toUpperCase();
+  const label   = role === "admin" ? "Administrador" : "Operadora";
+
+  let itens = "";
+  MENU_ITEMS.forEach(item => {
+    // separador
+    if (item.tipo === "sep") {
+      if (!item.roles || item.roles.includes(role))
+        itens += `<hr style="border-color:#374151;margin:12px 0">`;
+      return;
+    }
+    // título de seção
+    if (item.tipo === "titulo") {
+      if (!item.roles || item.roles.includes(role))
+        itens += `<div class="menu-title">${item.label}</div>`;
+      return;
+    }
+    // link
+    if (item.roles.includes(role)) {
+      const ativo = pag === item.href ? "active" : "";
+      itens += `<a href="${item.href}" class="menu-item ${ativo}">
+        <i class="fa-solid ${item.icon}"></i><span>${item.label}</span>
+      </a>`;
+    }
+  });
+
+  return `<div class="sidebar">
+    <div class="logo">Hara Spa</div>
+    <div style="padding:12px 16px 16px;border-bottom:1px solid #374151;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:34px;height:34px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${inicial}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:600;color:#f9fafb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nome}</div>
+          <div style="font-size:10px;color:#9ca3af">${label}</div>
+        </div>
+      </div>
+      <button onclick="appLogout()"
+        style="width:100%;padding:6px;background:rgba(255,255,255,.07);border:1px solid #374151;border-radius:7px;color:#9ca3af;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px"
+        onmouseover="this.style.background='rgba(255,255,255,.15)'"
+        onmouseout="this.style.background='rgba(255,255,255,.07)'">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+      </button>
+    </div>
+    ${itens}
+  </div>`;
+}
+
+async function appLogout() {
+  try { await client.auth.signOut(); } catch(e) {}
+  Object.keys(localStorage).forEach(k => { if (k.startsWith("sb-")) localStorage.removeItem(k); });
+  window.location.href = "login.html";
+}
+
+// ── EXECUÇÃO PRINCIPAL ──
+(async function () {
+  const roleExigido = document.currentScript?.getAttribute("data-role") || null;
 
   // 1. Verificar sessão
-  const {data:{session}} = await client.auth.getSession();
-  if(!session){
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) {
     window.location.href = "login.html";
     return;
   }
 
-  // 2. Buscar perfil — tentar até 3x se não achar (trigger pode demorar)
+  // 2. Buscar perfil (até 5 tentativas para o trigger do banco ter tempo)
   let perfil = null;
-  for(let i=0; i<3; i++){
-    const {data:p, error:e} = await client.from("perfis")
+  for (let i = 0; i < 5; i++) {
+    const { data: p } = await client.from("perfis")
       .select("role,nome,email")
       .eq("id", session.user.id)
       .single();
-    console.log("[auth] tentativa", i+1, "perfil:", p, "erro:", e?.message);
-    if(p){ perfil = p; break; }
-    await new Promise(r=>setTimeout(r,400));
+    if (p) { perfil = p; break; }
+    await new Promise(r => setTimeout(r, 400));
   }
 
-  const role  = perfil?.role  || "operadora";
-  const nome  = perfil?.nome  || perfil?.email || session.user.email;
-  const email = perfil?.email || session.user.email;
-  console.log("[auth] role final:", role, "nome:", nome);
+  const role = perfil?.role || "operadora";
+  const nome = perfil?.nome || perfil?.email || session.user.email;
 
-  // 3. Verificar permissão da página
-  if(roleExigido === "admin" && role !== "admin"){
-    window.location.href = "equipe.html";
+  // 3. Verificar permissão desta página
+  if (roleExigido === "admin" && role !== "admin") {
+    window.location.href = ROTAS[role];
     return;
   }
 
-  // 4. Expor globalmente — sidebar.js vai usar isso
-  window.usuarioLogado = {id: session.user.id, role, nome, email};
+  // 4. Expor globalmente
+  window.usuarioLogado = { id: session.user.id, role, nome };
 
-  // 5. Renderizar sidebar quando DOM estiver pronto
-  // sidebar.js carrega depois deste script, então usamos DOMContentLoaded
-  const render = () => {
-    if(typeof window.renderSidebar === "function") window.renderSidebar();
-  };
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", render);
-  } else {
-    render();
+  // 5. Renderizar sidebar assim que o DOM estiver pronto
+  function renderSidebar() {
+    const el = document.getElementById("sidebar");
+    if (el) el.innerHTML = buildSidebar(role, nome);
   }
 
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", renderSidebar);
+  } else {
+    renderSidebar();
+  }
 })();
-
-async function logout(){
-  try{ await client.auth.signOut(); }catch(e){}
-  Object.keys(localStorage).forEach(k=>{ if(k.startsWith("sb-")) localStorage.removeItem(k); });
-  window.location.href = "login.html";
-}

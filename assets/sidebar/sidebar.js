@@ -168,15 +168,11 @@ window.logout = async function(){
     el.innerHTML = renderSidebar(role, nome);
   }
 
-  // Expor para auth.js chamar
+  // Expor para auth.js chamar após buscar o perfil
   window.renderSidebar = init;
 
-  // Renderizar quando DOM estiver pronto
-  // auth.js vai chamar renderSidebar() de novo com o usuário correto
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+  // NÃO renderizar aqui — auth.js vai chamar renderSidebar()
+  // depois de setar window.usuarioLogado com o role correto do banco
+  // Isso evita o flash de "Usuário / Operadora" antes do perfil carregar
 
 })();

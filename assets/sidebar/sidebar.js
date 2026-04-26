@@ -1,85 +1,171 @@
-const paginaAtual = window.location.pathname.split("/").pop();
+// sidebar.js — menu dinâmico por role
+// Depende de window.usuarioLogado definido pelo auth.js
 
-document.getElementById("sidebar").innerHTML = `
-<div class="sidebar">
-  <div class="logo">Hara Spa</div>
+(function(){
+  const pag = window.location.pathname.split("/").pop() || "index.html";
 
-  <a href="index.html" class="menu-item ${paginaAtual === 'index.html' ? 'active' : ''}">
-    <i class="fa-solid fa-chart-line"></i>
-    <span>Dashboard</span>
-  </a>
+  // Estrutura completa do menu
+  const MENU = [
+    {
+      tipo: "link",
+      href: "dashboard.html",
+      icon: "fa-chart-line",
+      label: "Dashboard",
+      roles: ["admin"],
+    },
+    { tipo: "sep" },
+    { tipo: "titulo", label: "CADASTROS", roles: ["admin"] },
+    {
+      tipo: "link",
+      href: "equipe.html",
+      icon: "fa-users",
+      label: "Equipe",
+      roles: ["admin"],
+    },
+    {
+      tipo: "link",
+      href: "clientes.html",
+      icon: "fa-user",
+      label: "Clientes",
+      roles: ["admin"],
+    },
+    {
+      tipo: "link",
+      href: "servicos.html",
+      icon: "fa-hand-holding-heart",
+      label: "Serviços",
+      roles: ["admin"],
+    },
+    {
+      tipo: "link",
+      href: "certificacoes.html",
+      icon: "fa-certificate",
+      label: "Certificações",
+      roles: ["admin"],
+    },
+    { tipo: "sep", roles: ["admin"] },
+    { tipo: "titulo", label: "OPERACIONAL", roles: ["admin"] },
+    {
+      tipo: "link",
+      href: "atendimentos.html",
+      icon: "fa-calendar-check",
+      label: "Atendimentos",
+      roles: ["admin"],
+    },
+    {
+      tipo: "link",
+      href: "escalas.html",
+      icon: "fa-calendar-days",
+      label: "Escalas",
+      roles: ["admin"],
+    },
+    {
+      tipo: "link",
+      href: "solicitacoes.html",
+      icon: "fa-file-lines",
+      label: "Solicitações",
+      roles: ["admin"],
+    },
+    { tipo: "sep" },
+    { tipo: "titulo", label: "FINANCEIRO", roles: ["admin", "operadora"] },
+    {
+      tipo: "link",
+      href: "despesas.html",
+      icon: "fa-receipt",
+      label: "Despesas",
+      roles: ["admin"],
+    },
+    {
+      tipo: "link",
+      href: "fluxo_caixa.html",
+      icon: "fa-cash-register",
+      label: "Fluxo de Caixa",
+      roles: ["admin", "operadora"],
+    },
+    {
+      tipo: "link",
+      href: "estoque.html",
+      icon: "fa-boxes-stacked",
+      label: "Estoque",
+      roles: ["admin"],
+    },
+    { tipo: "sep", roles: ["admin"] },
+    { tipo: "titulo", label: "CONFIGURAÇÕES", roles: ["admin"] },
+    {
+      tipo: "link",
+      href: "parametros.html",
+      icon: "fa-sliders",
+      label: "Parâmetros",
+      roles: ["admin"],
+    },
+  ];
 
-  <hr style="border-color:#374151; margin:18px 0;">
+  function renderSidebar(role, nome) {
+    let html = `<div class="sidebar">`;
+    html += `<div class="logo">Hara Spa</div>`;
 
-  <div class="menu-title">CADASTROS</div>
+    // Badge do usuário
+    const inicial = (nome || "U").charAt(0).toUpperCase();
+    const roleLabel = role === "admin" ? "Administrador" : "Operadora";
+    html += `
+      <div style="padding:12px 16px 16px;border-bottom:1px solid #374151;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${inicial}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:#f9fafb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${nome || "Usuário"}</div>
+            <div style="font-size:10px;color:#9ca3af;">${roleLabel}</div>
+          </div>
+        </div>
+        <button onclick="logout()" style="width:100%;padding:6px;background:rgba(255,255,255,.07);border:1px solid #374151;border-radius:7px;color:#9ca3af;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;"
+          onmouseover="this.style.background='rgba(255,255,255,.13)'"
+          onmouseout="this.style.background='rgba(255,255,255,.07)'">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+        </button>
+      </div>`;
 
-  <a href="equipe.html" class="menu-item ${paginaAtual === 'equipe.html' ? 'active' : ''}">
-    <i class="fa-solid fa-users"></i>
-    <span>Equipe</span>
-  </a>
+    MENU.forEach(item => {
+      // Verificar se este item é visível para o role atual
+      if (item.roles && !item.roles.includes(role)) return;
 
-  <a href="clientes.html" class="menu-item ${paginaAtual === 'clientes.html' ? 'active' : ''}">
-    <i class="fa-solid fa-user"></i>
-    <span>Clientes</span>
-  </a>
+      if (item.tipo === "sep") {
+        html += `<hr style="border-color:#374151;margin:12px 0;">`;
+      } else if (item.tipo === "titulo") {
+        html += `<div class="menu-title">${item.label}</div>`;
+      } else if (item.tipo === "link") {
+        const ativo = pag === item.href ? "active" : "";
+        html += `
+          <a href="${item.href}" class="menu-item ${ativo}">
+            <i class="fa-solid ${item.icon}"></i>
+            <span>${item.label}</span>
+          </a>`;
+      }
+    });
 
-  <a href="servicos.html" class="menu-item ${paginaAtual === 'servicos.html' ? 'active' : ''}">
-    <i class="fa-solid fa-hand-holding-heart"></i>
-    <span>Serviços</span>
-  </a>
+    html += `</div>`;
+    return html;
+  }
 
-  <a href="certificacoes.html" class="menu-item ${paginaAtual === 'certificacoes.html' ? 'active' : ''}">
-    <i class="fa-solid fa-certificate"></i>
-    <span>Certificações</span>
-  </a>
+  // Aguardar DOM e usuarioLogado
+  function init() {
+    const el = document.getElementById("sidebar");
+    if (!el) return;
 
-  <!-- REMOVIDO: DOCUMENTOS -->
+    const usuario = window.usuarioLogado;
+    const role    = usuario?.role  || "operadora";
+    const nome    = usuario?.nome  || usuario?.email || "Usuário";
 
-  <hr style="border-color:#374151; margin:18px 0;">
+    el.innerHTML = renderSidebar(role, nome);
+  }
 
-  <div class="menu-title">OPERACIONAL</div>
+  // Se auth.js já rodou e definiu usuarioLogado, renderiza imediatamente
+  // Senão aguarda DOMContentLoaded (páginas sem auth.js, ex: login)
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 
-  <a href="atendimentos.html" class="menu-item ${paginaAtual === 'atendimentos.html' ? 'active' : ''}">
-    <i class="fa-solid fa-calendar-check"></i>
-    <span>Atendimentos</span>
-  </a>
+  // Expor para auth.js chamar depois de setar usuarioLogado
+  window.renderSidebar = init;
 
-  <a href="escalas.html" class="menu-item ${paginaAtual === 'escalas.html' ? 'active' : ''}">
-    <i class="fa-solid fa-calendar-days"></i>
-    <span>Escalas</span>
-  </a>
-
-  <a href="solicitacoes.html" class="menu-item ${paginaAtual === 'solicitacoes.html' ? 'active' : ''}">
-    <i class="fa-solid fa-file-lines"></i>
-    <span>Solicitações</span>
-  </a>
-
-  <hr style="border-color:#374151; margin:18px 0;">
-
-  <div class="menu-title">FINANCEIRO</div>
-
-  <a href="despesas.html" class="menu-item ${paginaAtual === 'despesas.html' ? 'active' : ''}">
-    <i class="fa-solid fa-receipt"></i>
-    <span>Despesas</span>
-  </a>
-
-  <a href="fluxo_caixa.html" class="menu-item ${paginaAtual === 'fluxo_caixa.html' ? 'active' : ''}">
-    <i class="fa-solid fa-cash-register"></i>
-    <span>Fluxo de Caixa</span>
-  </a>
-
-  <a href="estoque.html" class="menu-item ${paginaAtual === 'estoque.html' ? 'active' : ''}">
-    <i class="fa-solid fa-boxes-stacked"></i>
-    <span>Estoque</span>
-  </a>
-
-  <hr style="border-color:#374151; margin:18px 0;">
-
-  <div class="menu-title">CONFIGURAÇÕES</div>
-
-  <a href="parametros.html" class="menu-item ${paginaAtual === 'parametros.html' ? 'active' : ''}">
-    <i class="fa-solid fa-sliders"></i>
-    <span>Parâmetros</span>
-  </a>
-</div>
-`;
+})();

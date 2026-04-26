@@ -8,72 +8,84 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
+body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:28px;display:flex;flex-direction:column;gap:20px;}
+.content{flex:1;display:flex;flex-direction:column;min-height:100vh;}
 
-/* ── TOPBAR ── */
-.topbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
-.topbar h1{font-size:22px;color:#111827;display:flex;align-items:center;gap:10px;}
-.topbar-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.filtro-sel{display:flex;align-items:center;gap:6px;font-size:13px;color:#6b7280;}
-.filtro-sel select{padding:7px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;background:#fff;}
-.fonte-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-size:11px;font-weight:700;}
-.fonte-legado{background:#fef3c7;color:#92400e;}
-.fonte-novo{background:#dcfce7;color:#166534;}
+/* ── TOP KPI BAR ── */
+.kpi-bar{display:grid;grid-template-columns:repeat(6,1fr);background:#1f2937;gap:1px;}
+.kpi-cell{padding:14px 20px;background:#1f2937;text-align:center;}
+.kpi-cell-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin-bottom:6px;}
+.kpi-cell-value{font-size:28px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1;}
+.kpi-cell.highlight .kpi-cell-value{color:#34d399;}
 
 /* ── SUB-NAV ── */
-.sub-nav{display:flex;gap:4px;background:#fff;border-radius:12px;padding:6px;box-shadow:0 1px 4px rgba(0,0,0,.06);width:fit-content;}
-.sub-btn{padding:8px 18px;border:none;border-radius:8px;background:none;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;}
-.sub-btn:hover{background:#f3f4f6;color:#111827;}
-.sub-btn.active{background:#1f2937;color:#fff;}
+.sub-nav{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;padding:0 24px;}
+.sub-btn{padding:12px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.sub-btn:hover{color:#111827;border-bottom-color:#d1d5db;}
+.sub-btn.active{color:#2563eb;border-bottom-color:#2563eb;}
 
-/* ── PAGES ── */
-.page{display:none;flex-direction:column;gap:20px;}
+/* ── FILTROS ── */
+.filtros-bar{display:flex;align-items:center;gap:12px;padding:12px 24px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;}
+.filtros-bar label{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;}
+.filtros-bar select{padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;background:#fff;color:#111827;}
+.filtros-bar .sep{width:1px;height:20px;background:#e5e7eb;margin:0 4px;}
+
+/* ── MAIN AREA ── */
+.main{flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
+.page{display:none;flex-direction:column;gap:14px;}
 .page.active{display:flex;}
 
-/* ── KPI ── */
-.kpi-row{display:grid;gap:16px;}
-.kpi-row.cols-6{grid-template-columns:repeat(6,1fr);}
-.kpi-row.cols-5{grid-template-columns:repeat(5,1fr);}
-.kpi-row.cols-4{grid-template-columns:repeat(4,1fr);}
-.kpi-row.cols-3{grid-template-columns:repeat(3,1fr);}
-.kpi{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-top:4px solid #e5e7eb;position:relative;}
-.kpi.blue{border-top-color:#2563eb;} .kpi.green{border-top-color:#16a34a;}
-.kpi.purple{border-top-color:#7c3aed;} .kpi.red{border-top-color:#dc2626;}
-.kpi.yellow{border-top-color:#d97706;} .kpi.gray{border-top-color:#6b7280;}
-.kpi.cyan{border-top-color:#0891b2;}
-.kpi-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
-.kpi-value{font-size:28px;font-weight:900;color:#111827;line-height:1;letter-spacing:-1px;}
-.kpi-sub{font-size:11px;color:#9ca3af;margin-top:6px;}
+/* ── GRID LAYOUTS ── */
+.row{display:flex;gap:14px;}
+.row > *{flex:1;min-width:0;}
+.col-4{flex:1.4!important;}
+.col-3{flex:1!important;}
+.col-2{flex:.7!important;}
 
-/* ── CARDS ── */
-.card{background:#fff;border-radius:14px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-.card h3{font-size:13px;font-weight:700;color:#374151;margin-bottom:16px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.05em;}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
-.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;}
+/* ── CARD ── */
+.card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f3f4f6;}
+.card-header h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#374151;display:flex;align-items:center;gap:6px;}
+.card-body{padding:0;}
 
-/* ── TABELAS ── */
-.dt{width:100%;border-collapse:collapse;font-size:13px;}
-.dt th{background:#f9fafb;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;border-bottom:1px solid #e5e7eb;}
-.dt td{padding:9px 12px;border-bottom:1px solid #f3f4f6;color:#374151;}
-.dt tr:last-child td{border-bottom:none;font-weight:700;color:#111827;}
-.dt tr:hover td{background:#f9fafb;}
-.dt .num{text-align:right;}
-.mini-bar{height:5px;border-radius:3px;background:#e5e7eb;overflow:hidden;margin-top:3px;}
-.mini-bar-fill{height:100%;border-radius:3px;}
+/* ── TABELA DENSA ── */
+.dt{width:100%;border-collapse:collapse;font-size:12px;}
+.dt thead th{background:#f9fafb;padding:7px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;border-bottom:1px solid #e5e7eb;white-space:nowrap;}
+.dt tbody td{padding:6px 12px;border-bottom:1px solid #f3f4f6;color:#374151;}
+.dt tbody tr:last-child td{border-bottom:none;font-weight:700;color:#111827;background:#f9fafb;}
+.dt tbody tr:hover td{background:#f9fafb;}
+.dt .num{text-align:right;font-variant-numeric:tabular-nums;}
+.dt .red{color:#dc2626;}
+.dt .green{color:#16a34a;}
+.dt-scroll{max-height:280px;overflow-y:auto;}
 
-/* ── LOADING ── */
-.sk{display:inline-block;background:linear-gradient(90deg,#f3f4f6 25%,#e5e7eb 50%,#f3f4f6 75%);background-size:200% 100%;animation:sk 1.2s infinite;border-radius:6px;}
-@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* mini bar inline */
+.pct-bar{display:flex;align-items:center;gap:6px;}
+.pct-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;}
+.pct-bar-fill{height:100%;border-radius:2px;background:#2563eb;}
 
-/* rank medal */
-.medal{font-size:14px;}
+/* ── CHART ── */
+.chart-wrap{padding:12px 14px;}
 
-/* variação */
-.var-up{color:#16a34a;font-size:11px;font-weight:700;}
-.var-dn{color:#dc2626;font-size:11px;font-weight:700;}
+/* ── TABELA COMPARATIVO ANO ── */
+.ano-table td,.ano-table th{font-size:11px;padding:5px 10px;}
+.ano-table .mes-row td{color:#374151;}
+.ano-table .total-row td{font-weight:700;color:#dc2626;}
+.ano-expand{cursor:pointer;}
+.ano-expand:hover td{background:#f9fafb;}
+
+/* ── HEATMAP HORA ── */
+.hora-grid{display:grid;grid-template-columns:50px 1fr;gap:4px;padding:10px 14px;}
+.hora-label{font-size:10px;color:#9ca3af;display:flex;align-items:center;}
+.hora-bar-wrap{display:flex;align-items:center;gap:6px;}
+.hora-bar-bg{flex:1;height:12px;background:#e5e7eb;border-radius:3px;overflow:hidden;}
+.hora-bar-fill{height:100%;border-radius:3px;background:#bfdbfe;}
+.hora-count{font-size:10px;color:#6b7280;min-width:32px;text-align:right;}
+
+/* loading */
+.loading{display:flex;align-items:center;justify-content:center;height:80px;color:#9ca3af;font-size:12px;gap:8px;}
 </style>
 </head>
 <body>
@@ -81,159 +93,209 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 <aside id="sidebar"></aside>
 <main class="content">
 
-  <!-- Topbar -->
-  <div class="topbar">
-    <h1><i class="fa fa-chart-line" style="color:#2563eb"></i> Dashboard</h1>
-    <div class="topbar-right">
-      <div class="filtro-sel">
-        <label>Ano</label>
-        <select id="filtroAno" onchange="carregarTudo()">
-          <option value="">Todos</option>
-          <option value="2026">2026</option>
-          <option value="2025">2025</option>
-          <option value="2024">2024</option>
-          <option value="2023">2023</option>
-          <option value="2022">2022</option>
-          <option value="2021">2021</option>
-        </select>
-      </div>
-      <div class="filtro-sel">
-        <label>Mês</label>
-        <select id="filtroMes" onchange="carregarTudo()">
-          <option value="">Todos</option>
-          <option value="01">Janeiro</option><option value="02">Fevereiro</option>
-          <option value="03">Março</option><option value="04">Abril</option>
-          <option value="05">Maio</option><option value="06">Junho</option>
-          <option value="07">Julho</option><option value="08">Agosto</option>
-          <option value="09">Setembro</option><option value="10">Outubro</option>
-          <option value="11">Novembro</option><option value="12">Dezembro</option>
-        </select>
-      </div>
-      <span class="fonte-badge fonte-legado"><i class="fa fa-database"></i> Legado 2021–2026</span>
-    </div>
+  <!-- KPI BAR -->
+  <div class="kpi-bar" id="kpiBar">
+    <div class="kpi-cell"><div class="kpi-cell-label">Atendimentos</div><div class="kpi-cell-value" id="kAtend">—</div></div>
+    <div class="kpi-cell"><div class="kpi-cell-label">Receita</div><div class="kpi-cell-value" id="kReceita">—</div></div>
+    <div class="kpi-cell"><div class="kpi-cell-label">Comissão</div><div class="kpi-cell-value" id="kComissao">—</div></div>
+    <div class="kpi-cell"><div class="kpi-cell-label">Ticket Médio</div><div class="kpi-cell-value" id="kTicket">—</div></div>
+    <div class="kpi-cell"><div class="kpi-cell-label">Clientes</div><div class="kpi-cell-value" id="kClientes">—</div></div>
+    <div class="kpi-cell highlight"><div class="kpi-cell-label">Retornos</div><div class="kpi-cell-value" id="kRetornos">—</div></div>
   </div>
 
-  <!-- Sub-nav -->
+  <!-- SUB-NAV -->
   <div class="sub-nav">
-    <button class="sub-btn active" onclick="mudarPag('geral',this)"><i class="fa fa-home"></i> Visão Geral</button>
-    <button class="sub-btn" onclick="mudarPag('atendimentos',this)"><i class="fa fa-calendar-check"></i> Atendimentos</button>
+    <button class="sub-btn active" onclick="mudarPag('atend',this)"><i class="fa fa-calendar-check"></i> Atendimentos</button>
     <button class="sub-btn" onclick="mudarPag('financeiro',this)"><i class="fa fa-dollar-sign"></i> Financeiro</button>
     <button class="sub-btn" onclick="mudarPag('equipe',this)"><i class="fa fa-users"></i> Equipe</button>
+    <button class="sub-btn" onclick="mudarPag('executivo',this)"><i class="fa fa-chart-line"></i> Executivo</button>
   </div>
 
-  <!-- ══ VISÃO GERAL ══ -->
-  <div class="page active" id="page-geral">
-    <div class="kpi-row cols-6" id="kpiGeral"></div>
-    <div class="two-col">
-      <div class="card">
-        <h3><i class="fa fa-chart-bar" style="color:#2563eb"></i> Atendimentos por Mês</h3>
-        <canvas id="chartMes" height="200"></canvas>
-      </div>
-      <div class="card">
-        <h3><i class="fa fa-chart-pie" style="color:#7c3aed"></i> Top Serviços</h3>
-        <canvas id="chartServicos" height="200"></canvas>
-      </div>
-    </div>
-    <div class="two-col">
-      <div class="card">
-        <h3><i class="fa fa-trophy" style="color:#d97706"></i> Ranking Profissionais</h3>
-        <table class="dt" id="tblRankProf">
-          <thead><tr><th>#</th><th>Profissional</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">%</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="card">
-        <h3><i class="fa fa-users" style="color:#16a34a"></i> Clientes — Top Retornos</h3>
-        <table class="dt" id="tblTopCli">
-          <thead><tr><th>#</th><th>Cliente</th><th class="num">Visitas</th><th class="num">Receita</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
+  <!-- FILTROS -->
+  <div class="filtros-bar">
+    <label>Ano</label>
+    <select id="fAno" onchange="carregarTudo()">
+      <option value="">Todos</option>
+      <option value="2026">2026</option><option value="2025" selected>2025</option>
+      <option value="2024">2024</option><option value="2023">2023</option>
+      <option value="2022">2022</option><option value="2021">2021</option>
+    </select>
+    <div class="sep"></div>
+    <label>Mês</label>
+    <select id="fMes" onchange="carregarTudo()">
+      <option value="">Todos</option>
+      <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+      <option value="03">Março</option><option value="04">Abril</option>
+      <option value="05">Maio</option><option value="06">Junho</option>
+      <option value="07">Julho</option><option value="08">Agosto</option>
+      <option value="09">Setembro</option><option value="10">Outubro</option>
+      <option value="11">Novembro</option><option value="12">Dezembro</option>
+    </select>
+    <div class="sep"></div>
+    <label>Profissional</label>
+    <select id="fProf" onchange="carregarTudo()"><option value="">Todos</option></select>
+    <div class="sep"></div>
+    <label>Serviço</label>
+    <select id="fServ" onchange="carregarTudo()"><option value="">Todos</option></select>
   </div>
+
+  <div class="main">
 
   <!-- ══ ATENDIMENTOS ══ -->
-  <div class="page" id="page-atendimentos">
-    <div class="kpi-row cols-5" id="kpiAtend"></div>
-    <div class="card">
-      <h3><i class="fa fa-chart-line" style="color:#2563eb"></i> Evolução por Ano</h3>
-      <canvas id="chartEvolucao" height="100"></canvas>
-    </div>
-    <div class="two-col">
-      <div class="card">
-        <h3><i class="fa fa-spa" style="color:#7c3aed"></i> Ranking por Serviço</h3>
-        <table class="dt" id="tblRankServ">
-          <thead><tr><th>Serviço</th><th class="num">Qtd</th><th class="num">%</th><th style="width:100px"></th></tr></thead>
-          <tbody></tbody>
-        </table>
+  <div class="page active" id="page-atend">
+    <div class="row">
+      <!-- Profissionais -->
+      <div class="card col-3">
+        <div class="card-header"><h3><i class="fa fa-user-tie"></i> Por Profissional</h3></div>
+        <div class="dt-scroll">
+          <table class="dt" id="tblProf">
+            <thead><tr><th>Profissional</th><th class="num">Atend.</th><th class="num">% Atend.</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
-      <div class="card">
-        <h3><i class="fa fa-clock" style="color:#d97706"></i> Atendimentos por Hora</h3>
-        <canvas id="chartHora" height="220"></canvas>
+      <!-- Serviços -->
+      <div class="card col-3">
+        <div class="card-header"><h3><i class="fa fa-spa"></i> Por Serviço</h3></div>
+        <div class="dt-scroll">
+          <table class="dt" id="tblServ">
+            <thead><tr><th>Serviço</th><th class="num">Atend.</th><th class="num">% Atend.</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Por Ano/Mês -->
+      <div class="card col-4">
+        <div class="card-header"><h3><i class="fa fa-calendar"></i> Por Ano / Mês</h3></div>
+        <div class="dt-scroll">
+          <table class="dt ano-table" id="tblAnoMes">
+            <thead><tr><th>Ano</th><th class="num">Atend.</th><th class="num">Atend. LY</th><th class="num">YoY %</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
-    <div class="card">
-      <h3><i class="fa fa-table" style="color:#374151"></i> Detalhamento por Profissional</h3>
-      <table class="dt" id="tblDetProf">
-        <thead><tr><th>Profissional</th><th class="num">Atend.</th><th class="num">Retornos</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket Médio</th><th class="num">% Atend.</th></tr></thead>
-        <tbody></tbody>
-      </table>
+
+    <div class="row">
+      <!-- Top Clientes -->
+      <div class="card">
+        <div class="card-header"><h3><i class="fa fa-users"></i> Top Clientes</h3></div>
+        <div class="dt-scroll">
+          <table class="dt" id="tblCli">
+            <thead><tr><th>Cliente</th><th class="num">Atend.</th><th class="num">Retornos</th><th class="num">Comissão</th><th class="num">Ticket Médio</th><th class="num">% Atend.</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Hora -->
+      <div class="card" style="max-width:260px;flex:0 0 260px">
+        <div class="card-header"><h3><i class="fa fa-clock"></i> Por Hora</h3></div>
+        <div class="hora-grid" id="horaGrid"></div>
+      </div>
     </div>
   </div>
 
   <!-- ══ FINANCEIRO ══ -->
   <div class="page" id="page-financeiro">
-    <div class="kpi-row cols-4" id="kpiFinanceiro"></div>
-    <div class="card">
-      <h3><i class="fa fa-chart-bar" style="color:#16a34a"></i> Receita por Mês</h3>
-      <canvas id="chartReceitaMes" height="100"></canvas>
-    </div>
-    <div class="two-col">
+    <div class="row">
+      <!-- Receita por mês gráfico -->
       <div class="card">
-        <h3><i class="fa fa-calendar" style="color:#2563eb"></i> Receita por Ano</h3>
+        <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Receita vs Comissão por Mês</h3></div>
+        <div class="chart-wrap"><canvas id="chartRecMes" height="160"></canvas></div>
+      </div>
+      <!-- Receita por serviço -->
+      <div class="card col-3">
+        <div class="card-header"><h3><i class="fa fa-spa"></i> Receita por Serviço</h3></div>
+        <div class="dt-scroll">
+          <table class="dt" id="tblRecServ">
+            <thead><tr><th>Serviço</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Ticket</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <!-- Receita por ano -->
+      <div class="card col-2">
+        <div class="card-header"><h3><i class="fa fa-calendar-alt"></i> Histórico por Ano</h3></div>
         <table class="dt" id="tblRecAno">
           <thead><tr><th>Ano</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket Médio</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
+      <!-- Receita por profissional -->
       <div class="card">
-        <h3><i class="fa fa-spa" style="color:#7c3aed"></i> Receita por Serviço</h3>
-        <table class="dt" id="tblRecServ">
-          <thead><tr><th>Serviço</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Ticket</th></tr></thead>
-          <tbody></tbody>
-        </table>
+        <div class="card-header"><h3><i class="fa fa-user-tie"></i> Receita por Profissional</h3></div>
+        <div class="dt-scroll">
+          <table class="dt" id="tblRecProf">
+            <thead><tr><th>Profissional</th><th class="num">Clientes</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket</th><th class="num">% Atend.</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- ══ EQUIPE ══ -->
   <div class="page" id="page-equipe">
-    <div class="kpi-row cols-4" id="kpiEquipe"></div>
-    <div class="two-col">
+    <div class="row">
       <div class="card">
-        <h3><i class="fa fa-chart-bar" style="color:#2563eb"></i> Atendimentos por Profissional</h3>
-        <canvas id="chartEquipe" height="300"></canvas>
+        <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Atendimentos por Profissional</h3></div>
+        <div class="chart-wrap"><canvas id="chartEquipe" height="220"></canvas></div>
       </div>
-      <div class="card">
-        <h3><i class="fa fa-calendar-alt" style="color:#d97706"></i> Quinzena — 1ª vs 2ª</h3>
-        <canvas id="chartQuinzena" height="300"></canvas>
+      <div class="card col-2">
+        <div class="card-header"><h3><i class="fa fa-calendar-week"></i> 1ª vs 2ª Quinzena</h3></div>
+        <div class="chart-wrap"><canvas id="chartQuinz" height="220"></canvas></div>
       </div>
     </div>
     <div class="card">
-      <h3><i class="fa fa-table" style="color:#374151"></i> Performance Completa por Profissional</h3>
-      <table class="dt" id="tblEquipeCompleto">
-        <thead><tr>
-          <th>Profissional</th>
-          <th class="num">Total Atend.</th><th class="num">Retornos</th><th class="num">% Retorno</th>
-          <th class="num">Receita</th><th class="num">Comissão</th>
-          <th class="num">1ª Quinzena</th><th class="num">2ª Quinzena</th>
-          <th class="num">Ticket Médio</th>
-        </tr></thead>
-        <tbody></tbody>
-      </table>
+      <div class="card-header"><h3><i class="fa fa-table"></i> Performance Completa</h3></div>
+      <div class="dt-scroll" style="max-height:360px">
+        <table class="dt" id="tblEquipe">
+          <thead><tr>
+            <th>Profissional</th>
+            <th class="num">Atend.</th><th class="num">Retornos</th><th class="num">% Retorno</th>
+            <th class="num">1ª Quinzena</th><th class="num">2ª Quinzena</th>
+            <th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket</th>
+            <th class="num">% Atend.</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
+  <!-- ══ EXECUTIVO ══ -->
+  <div class="page" id="page-executivo">
+    <div class="row">
+      <div class="card">
+        <div class="card-header"><h3><i class="fa fa-chart-line"></i> Evolução Anual — Atendimentos</h3></div>
+        <div class="chart-wrap"><canvas id="chartEvolAtend" height="160"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3><i class="fa fa-dollar-sign"></i> Evolução Anual — Receita</h3></div>
+        <div class="chart-wrap"><canvas id="chartEvolRec" height="160"></canvas></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="card">
+        <div class="card-header"><h3><i class="fa fa-table"></i> Resumo Executivo por Profissional</h3></div>
+        <div class="dt-scroll">
+          <table class="dt" id="tblExec">
+            <thead><tr>
+              <th>Profissional</th>
+              <th class="num">Atend.</th><th class="num">Retornos</th>
+              <th class="num">Total Histórico</th><th class="num">Total Receita</th>
+              <th class="num">Média Atend.</th><th class="num">Média Comissão</th><th class="num">% Atend.</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /main -->
 </main>
 </div>
 
@@ -241,15 +303,13 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 <script src="assets/js/supabase.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 <script>
-
 const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const MESES_FULL = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const CORES = ["#2563eb","#7c3aed","#16a34a","#d97706","#dc2626","#0891b2","#db2777","#65a30d","#ea580c","#7c3aed"];
-let charts = {};
+let charts = {}, allData = [], allDataSemFiltro = [];
 
-/* ── HELPERS ── */
 const fmtM = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const fmtN = v => Number(v||0).toLocaleString("pt-BR");
+const fmtP = v => Number(v||0).toFixed(1)+"%";
 
 function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
 function mkChart(id, cfg){
@@ -266,364 +326,330 @@ function mudarPag(p, btn){
   btn.classList.add("active");
 }
 
-/* ── FILTROS ── */
 function getFiltro(){
   return {
-    ano: document.getElementById("filtroAno").value,
-    mes: document.getElementById("filtroMes").value,
+    ano: document.getElementById("fAno").value,
+    mes: document.getElementById("fMes").value,
+    prof: document.getElementById("fProf").value,
+    serv: document.getElementById("fServ").value,
   };
 }
 
-async function fetchTodos(filtros={}){
-  // Busca todos os registros em lotes de 1000 (limite padrão do Supabase)
-  const {ano, mes} = filtros;
-  let todos = [], from = 0;
-  const LOTE = 1000;
+/* ── FETCH EM LOTES ── */
+async function fetchTodos(overrides={}){
+  const {ano, mes, prof, serv} = {...getFiltro(), ...overrides};
+  let todos=[], from=0;
   while(true){
     let q = client.from("legado_atendimentos")
       .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
       .not("situacao","in","(\"Não comparecimento\",\"À confirmar\")")
       .gt("valor",0)
-      .range(from, from+LOTE-1);
+      .range(from, from+999);
     if(ano && mes){
       const ult = new Date(parseInt(ano), parseInt(mes), 0).getDate();
       q = q.gte("data",`${ano}-${mes}-01`).lte("data",`${ano}-${mes}-${String(ult).padStart(2,"0")}`);
     } else if(ano){
       q = q.gte("data",`${ano}-01-01`).lte("data",`${ano}-12-31`);
     }
+    if(prof) q = q.eq("profissional", prof);
+    if(serv) q = q.eq("servico", serv);
     const {data, error} = await q;
-    if(error){ console.error(error); break; }
-    if(!data || !data.length) break;
+    if(error||!data||!data.length) break;
     todos = todos.concat(data);
-    if(data.length < LOTE) break;
-    from += LOTE;
+    if(data.length < 1000) break;
+    from += 1000;
   }
   return todos;
 }
 
-/* ── CARREGAR TUDO ── */
-async function carregarTudo(){
-  await Promise.all([
-    carregarGeral(),
-    carregarAtendimentos(),
-    carregarFinanceiro(),
-    carregarEquipe(),
-  ]);
+/* ── INIT FILTROS ── */
+async function initFiltros(){
+  const {data} = await client.from("legado_atendimentos")
+    .select("profissional,servico")
+    .not("situacao","in","(\"Não comparecimento\",\"À confirmar\")")
+    .gt("valor",0)
+    .limit(5000);
+  const profs = [...new Set((data||[]).map(r=>r.profissional).filter(Boolean))].sort();
+  const servs = [...new Set((data||[]).map(r=>r.servico).filter(Boolean))].sort();
+  const selP = document.getElementById("fProf");
+  const selS = document.getElementById("fServ");
+  profs.forEach(p=>selP.innerHTML+=`<option>${p}</option>`);
+  servs.forEach(s=>selS.innerHTML+=`<option>${s}</option>`);
 }
 
-/* ════════════════════════
-   VISÃO GERAL
-════════════════════════ */
-async function carregarGeral(){
-  document.getElementById("kpiGeral").innerHTML = `<div class="kpi"><div class="sk" style="width:80%;height:32px"></div></div>`.repeat(6);
+/* ══════════════════════════════
+   CARREGAR TUDO
+══════════════════════════════ */
+async function carregarTudo(){
+  allData = await fetchTodos();
+  renderKPIs(allData);
+  renderAtendimentos(allData);
+  renderFinanceiro(allData);
+  renderEquipe(allData);
+  renderExecutivo();
+}
 
-  const rows = await fetchTodos(getFiltro());
-
-  const totalAtend = rows.length;
-  const receita    = rows.reduce((s,r)=>s+(r.valor||0),0);
-  const comissao   = rows.reduce((s,r)=>s+(r.comissao||0),0);
-  const ticket     = totalAtend ? receita/totalAtend : 0;
-
-  // clientes únicos e retornos
+/* ── KPIs ── */
+function renderKPIs(rows){
   const cliCount = {};
   rows.forEach(r=>{ if(r.cliente) cliCount[r.cliente]=(cliCount[r.cliente]||0)+1; });
   const totalCli = Object.keys(cliCount).length;
   const retornos = Object.values(cliCount).filter(v=>v>1).length;
+  const receita  = rows.reduce((s,r)=>s+(r.valor||0),0);
+  const comissao = rows.reduce((s,r)=>s+(r.comissao||0),0);
+  const ticket   = rows.length ? receita/rows.length : 0;
 
-  document.getElementById("kpiGeral").innerHTML = `
-    <div class="kpi blue"><div class="kpi-label"><i class="fa fa-calendar-check"></i> Atendimentos</div><div class="kpi-value">${fmtN(totalAtend)}</div></div>
-    <div class="kpi green"><div class="kpi-label"><i class="fa fa-dollar-sign"></i> Receita</div><div class="kpi-value" style="font-size:20px">${fmtM(receita)}</div></div>
-    <div class="kpi purple"><div class="kpi-label"><i class="fa fa-handshake"></i> Comissão</div><div class="kpi-value" style="font-size:20px">${fmtM(comissao)}</div></div>
-    <div class="kpi yellow"><div class="kpi-label"><i class="fa fa-receipt"></i> Ticket Médio</div><div class="kpi-value" style="font-size:20px">${fmtM(ticket)}</div></div>
-    <div class="kpi gray"><div class="kpi-label"><i class="fa fa-users"></i> Clientes</div><div class="kpi-value">${fmtN(totalCli)}</div></div>
-    <div class="kpi cyan"><div class="kpi-label"><i class="fa fa-repeat"></i> Retornos</div><div class="kpi-value">${fmtN(retornos)}</div></div>
-  `;
-
-  // Chart por mês
-  const {ano} = getFiltro();
-  const porMes = Array(12).fill(0);
-  rows.forEach(r=>{ if(r.data){ const m=parseInt(r.data.split("-")[1])-1; porMes[m]++; } });
-  mkChart("chartMes",{type:"bar",data:{labels:MESES,datasets:[{label:"Atendimentos",data:porMes,backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
-
-  // Top serviços (doughnut)
-  const servCount = {};
-  rows.forEach(r=>{ if(r.servico) servCount[r.servico]=(servCount[r.servico]||0)+1; });
-  const topServs = Object.entries(servCount).sort((a,b)=>b[1]-a[1]).slice(0,7);
-  mkChart("chartServicos",{type:"doughnut",data:{labels:topServs.map(([s])=>s.length>25?s.slice(0,25)+"…":s),datasets:[{data:topServs.map(([,v])=>v),backgroundColor:CORES,borderWidth:2}]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:10}}}},cutout:"55%"}});
-
-  // Ranking profissionais
-  const profMap = {};
-  rows.forEach(r=>{
-    if(!r.profissional)return;
-    if(!profMap[r.profissional]) profMap[r.profissional]={count:0,rec:0};
-    profMap[r.profissional].count++;
-    profMap[r.profissional].rec+=(r.valor||0);
-  });
-  const rankProf = Object.entries(profMap).sort((a,b)=>b[1].count-a[1].count).slice(0,10);
-  const totAtAll = rankProf.reduce((s,[,v])=>s+v.count,0)||1;
-  const medals = ["🥇","🥈","🥉"];
-  document.querySelector("#tblRankProf tbody").innerHTML =
-    rankProf.map(([p,v],i)=>`<tr>
-      <td>${medals[i]||i+1}</td>
-      <td><strong>${p}</strong></td>
-      <td class="num">${fmtN(v.count)}</td>
-      <td class="num">${fmtM(v.rec)}</td>
-      <td class="num">${(v.count/totAtAll*100).toFixed(1)}%</td>
-    </tr>`).join("");
-
-  // Top clientes retornos
-  const topCli = Object.entries(cliCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const cliRec = {};
-  rows.forEach(r=>{ if(r.cliente) cliRec[r.cliente]=(cliRec[r.cliente]||0)+(r.valor||0); });
-  document.querySelector("#tblTopCli tbody").innerHTML =
-    topCli.map(([c,n],i)=>`<tr>
-      <td>${medals[i]||i+1}</td>
-      <td>${c}</td>
-      <td class="num"><strong>${n}</strong></td>
-      <td class="num">${fmtM(cliRec[c]||0)}</td>
-    </tr>`).join("");
+  document.getElementById("kAtend").textContent    = fmtN(rows.length);
+  document.getElementById("kReceita").textContent  = fmtM(receita);
+  document.getElementById("kComissao").textContent = fmtM(comissao);
+  document.getElementById("kTicket").textContent   = fmtM(ticket);
+  document.getElementById("kClientes").textContent = fmtN(totalCli);
+  document.getElementById("kRetornos").textContent = fmtN(retornos);
 }
 
 /* ════════════════════════
    ATENDIMENTOS
 ════════════════════════ */
-async function carregarAtendimentos(){
-  const rows = await fetchTodos(getFiltro());
+function renderAtendimentos(rows){
+  const totAtend = rows.length||1;
 
-  const totalAtend = rows.length;
-  const cliCount = {};
-  rows.forEach(r=>{ if(r.cliente) cliCount[r.cliente]=(cliCount[r.cliente]||0)+1; });
-  const totalCli   = Object.keys(cliCount).length;
-  const retornos   = Object.values(cliCount).filter(v=>v>1).length;
-  const pctRetorno = totalCli ? (retornos/totalCli*100).toFixed(1) : 0;
-  const ticket     = totalAtend ? rows.reduce((s,r)=>s+(r.valor||0),0)/totalAtend : 0;
+  /* Por profissional */
+  const profMap = {};
+  rows.forEach(r=>{ if(r.profissional) profMap[r.profissional]=(profMap[r.profissional]||0)+1; });
+  const rankProf = Object.entries(profMap).sort((a,b)=>b[1]-a[1]);
+  document.querySelector("#tblProf tbody").innerHTML =
+    rankProf.map(([p,n])=>`<tr>
+      <td>${p}</td>
+      <td class="num">${fmtN(n)}</td>
+      <td class="num">
+        <div class="pct-bar">
+          <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(n/totAtend*100).toFixed(1)}%"></div></div>
+          <span style="min-width:38px">${fmtP(n/totAtend*100)}</span>
+        </div>
+      </td>
+    </tr>`).join("") +
+    `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">100%</td></tr>`;
 
-  document.getElementById("kpiAtend").innerHTML = `
-    <div class="kpi blue"><div class="kpi-label"><i class="fa fa-calendar-check"></i> Atendimentos</div><div class="kpi-value">${fmtN(totalAtend)}</div></div>
-    <div class="kpi gray"><div class="kpi-label"><i class="fa fa-users"></i> Clientes Únicos</div><div class="kpi-value">${fmtN(totalCli)}</div></div>
-    <div class="kpi cyan"><div class="kpi-label"><i class="fa fa-repeat"></i> Retornos</div><div class="kpi-value">${fmtN(retornos)}</div><div class="kpi-sub">${pctRetorno}% dos clientes</div></div>
-    <div class="kpi yellow"><div class="kpi-label"><i class="fa fa-receipt"></i> Ticket Médio</div><div class="kpi-value" style="font-size:20px">${fmtM(ticket)}</div></div>
-    <div class="kpi purple"><div class="kpi-label"><i class="fa fa-spa"></i> Serviços Distintos</div><div class="kpi-value">${fmtN(new Set(rows.map(r=>r.servico).filter(Boolean)).size)}</div></div>
-  `;
-
-  // Evolução por ano — busca tudo sem filtro de ano
-  const porAno = await fetchTodos({});
-
-  const anoMap = {};
-  porAno.forEach(r=>{
-    if(!r.data)return;
-    const a=r.data.split("-")[0];
-    if(!anoMap[a]) anoMap[a]={count:0,rec:0};
-    anoMap[a].count++;anoMap[a].rec+=(r.valor||0);
-  });
-  const anos = Object.keys(anoMap).sort();
-  mkChart("chartEvolucao",{type:"line",data:{labels:anos,datasets:[
-    {label:"Atendimentos",data:anos.map(a=>anoMap[a].count),borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.1)",fill:true,tension:.4,yAxisID:"y"},
-    {label:"Receita (R$)",data:anos.map(a=>anoMap[a].rec),borderColor:"#16a34a",backgroundColor:"rgba(22,163,74,.1)",fill:true,tension:.4,yAxisID:"y1"},
-  ]},options:{plugins:{legend:{position:"bottom"}},scales:{y:{beginAtZero:true,position:"left"},y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false},ticks:{callback:v=>fmtM(v)}}}}});
-
-  // Ranking serviços
+  /* Por serviço */
   const servMap = {};
   rows.forEach(r=>{ if(r.servico) servMap[r.servico]=(servMap[r.servico]||0)+1; });
-  const rankServ = Object.entries(servMap).sort((a,b)=>b[1]-a[1]).slice(0,15);
-  const maxServ = rankServ[0]?.[1]||1;
-  const totServ = rankServ.reduce((s,[,v])=>s+v,0)||1;
-  document.querySelector("#tblRankServ tbody").innerHTML =
+  const rankServ = Object.entries(servMap).sort((a,b)=>b[1]-a[1]);
+  document.querySelector("#tblServ tbody").innerHTML =
     rankServ.map(([s,n])=>`<tr>
       <td>${s}</td>
       <td class="num">${fmtN(n)}</td>
-      <td class="num">${(n/totServ*100).toFixed(1)}%</td>
-      <td><div class="mini-bar"><div class="mini-bar-fill" style="width:${(n/maxServ*100).toFixed(0)}%;background:#7c3aed"></div></div></td>
-    </tr>`).join("") + `<tr><td>Total</td><td class="num">${fmtN(totServ)}</td><td class="num">100%</td><td></td></tr>`;
+      <td class="num">
+        <div class="pct-bar">
+          <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(n/totAtend*100).toFixed(1)}%;background:#7c3aed"></div></div>
+          <span style="min-width:38px">${fmtP(n/totAtend*100)}</span>
+        </div>
+      </td>
+    </tr>`).join("") +
+    `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">100%</td></tr>`;
 
-  // Atendimentos por hora
+  /* Por Ano/Mês */
+  const anoMap = {};
+  rows.forEach(r=>{
+    if(!r.data)return;
+    const [y,m] = r.data.split("-");
+    if(!anoMap[y]) anoMap[y]={total:0,meses:{}};
+    anoMap[y].total++;
+    anoMap[y].meses[m]=(anoMap[y].meses[m]||0)+1;
+  });
+  const anos = Object.keys(anoMap).sort().reverse();
+  // ano anterior para YoY
+  let tblRows = "";
+  anos.forEach(a=>{
+    const ly = String(parseInt(a)-1);
+    const totA = anoMap[a].total;
+    const totLY = anoMap[ly]?.total||0;
+    const yoy = totLY ? ((totA-totLY)/totLY*100) : null;
+    const yoyStr = yoy!==null ? `<span class="${yoy>=0?'green':'red'}">${yoy>=0?'+':''}${yoy.toFixed(2)}%</span>` : "—";
+    tblRows += `<tr class="ano-expand" onclick="toggleMes('mes-${a}')">
+      <td>⊕ <strong>${a}</strong></td>
+      <td class="num">${fmtN(totA)}</td>
+      <td class="num">${totLY?fmtN(totLY):"—"}</td>
+      <td class="num">${yoyStr}</td>
+    </tr>`;
+    // meses
+    tblRows += `<tbody id="mes-${a}" style="display:none">`;
+    Object.entries(anoMap[a].meses).sort().forEach(([m,n])=>{
+      const lyM = anoMap[ly]?.meses?.[m]||0;
+      const yoyM = lyM ? ((n-lyM)/lyM*100) : null;
+      tblRows += `<tr style="background:#fafafa">
+        <td style="padding-left:24px;color:#6b7280">${MESES_FULL[parseInt(m)-1]}</td>
+        <td class="num">${fmtN(n)}</td>
+        <td class="num">${lyM?fmtN(lyM):"—"}</td>
+        <td class="num">${yoyM!==null?`<span class="${yoyM>=0?'green':'red'}">${yoyM>=0?'+':''}${yoyM.toFixed(2)}%</span>`:"—"}</td>
+      </tr>`;
+    });
+    tblRows += `</tbody>`;
+  });
+  document.querySelector("#tblAnoMes tbody").innerHTML = tblRows;
+
+  /* Top clientes */
+  const cliMap = {};
+  rows.forEach(r=>{
+    if(!r.cliente)return;
+    if(!cliMap[r.cliente]) cliMap[r.cliente]={n:0,val:0,com:0};
+    cliMap[r.cliente].n++;
+    cliMap[r.cliente].val+=(r.valor||0);
+    cliMap[r.cliente].com+=(r.comissao||0);
+  });
+  const topCli = Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
+  document.querySelector("#tblCli tbody").innerHTML =
+    topCli.map(([c,v])=>`<tr>
+      <td>${c}</td>
+      <td class="num">${fmtN(v.n)}</td>
+      <td class="num">${fmtN(v.n-1)}</td>
+      <td class="num">${fmtM(v.com)}</td>
+      <td class="num">${fmtM(v.n?v.val/v.n:0)}</td>
+      <td class="num">${fmtP(v.n/totAtend*100)}</td>
+    </tr>`).join("") +
+    `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num"></td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0)/totAtend)}</td><td class="num">100%</td></tr>`;
+
+  /* Por hora */
   const horaMap = {};
   rows.forEach(r=>{
     if(!r.hora_inicio)return;
     const h=parseInt(r.hora_inicio.split(":")[0]);
     if(h>=7&&h<=23) horaMap[h]=(horaMap[h]||0)+1;
   });
-  const horas = Array.from({length:17},(_,i)=>i+7);
-  mkChart("chartHora",{type:"bar",data:{labels:horas.map(h=>h+":00"),datasets:[{label:"Atendimentos",data:horas.map(h=>horaMap[h]||0),backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}},indexAxis:"y"}});
+  const maxH = Math.max(...Object.values(horaMap),1);
+  document.getElementById("horaGrid").innerHTML =
+    Array.from({length:17},(_,i)=>i+7).map(h=>{
+      const n=horaMap[h]||0;
+      const pct=(n/maxH*100).toFixed(0);
+      return`<div class="hora-label">${h}:00</div>
+      <div class="hora-bar-wrap">
+        <div class="hora-bar-bg"><div class="hora-bar-fill" style="width:${pct}%"></div></div>
+        <span class="hora-count">${fmtN(n)}</span>
+      </div>`;
+    }).join("");
+}
 
-  // Detalhamento profissionais
-  const profMap = {};
-  rows.forEach(r=>{
-    const p=r.profissional;if(!p)return;
-    if(!profMap[p]) profMap[p]={count:0,rec:0,com:0,cli:{}};
-    profMap[p].count++;
-    profMap[p].rec+=(r.valor||0);
-    profMap[p].com+=(r.comissao||0);
-    if(r.cliente) profMap[p].cli[r.cliente]=(profMap[p].cli[r.cliente]||0)+1;
-  });
-  const rankProfDet = Object.entries(profMap).sort((a,b)=>b[1].count-a[1].count).slice(0,15);
-  const totAll = rankProfDet.reduce((s,[,v])=>s+v.count,0)||1;
-  document.querySelector("#tblDetProf tbody").innerHTML =
-    rankProfDet.map(([p,v])=>{
-      const ret=Object.values(v.cli).filter(x=>x>1).length;
-      const tk=v.count?v.rec/v.count:0;
-      return`<tr>
-        <td><strong>${p}</strong></td>
-        <td class="num">${fmtN(v.count)}</td>
-        <td class="num">${fmtN(ret)}</td>
-        <td class="num">${fmtM(v.rec)}</td>
-        <td class="num">${fmtM(v.com)}</td>
-        <td class="num">${fmtM(tk)}</td>
-        <td class="num">${(v.count/totAll*100).toFixed(1)}%</td>
-      </tr>`;
-    }).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(totAll)}</td><td class="num"></td><td class="num">${fmtM(rankProfDet.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rankProfDet.reduce((s,[,v])=>s+v.com,0))}</td><td class="num">${fmtM(totalAtend?rows.reduce((s,r)=>s+(r.valor||0),0)/totalAtend:0)}</td><td class="num">100%</td></tr>`;
+function toggleMes(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.style.display=el.style.display==="none"?"":"none";
 }
 
 /* ════════════════════════
    FINANCEIRO
 ════════════════════════ */
-async function carregarFinanceiro(){
-  const rows = await fetchTodos(getFiltro());
-
-  const receita  = rows.reduce((s,r)=>s+(r.valor||0),0);
-  const comissao = rows.reduce((s,r)=>s+(r.comissao||0),0);
-  const ticket   = rows.length ? receita/rows.length : 0;
-  const liquido  = receita - comissao;
-
-  document.getElementById("kpiFinanceiro").innerHTML = `
-    <div class="kpi green"><div class="kpi-label"><i class="fa fa-dollar-sign"></i> Receita Bruta</div><div class="kpi-value" style="font-size:20px">${fmtM(receita)}</div></div>
-    <div class="kpi purple"><div class="kpi-label"><i class="fa fa-handshake"></i> Comissões</div><div class="kpi-value" style="font-size:20px">${fmtM(comissao)}</div><div class="kpi-sub">${receita?(comissao/receita*100).toFixed(1):0}% da receita</div></div>
-    <div class="kpi blue"><div class="kpi-label"><i class="fa fa-receipt"></i> Ticket Médio</div><div class="kpi-value" style="font-size:20px">${fmtM(ticket)}</div></div>
-    <div class="kpi ${liquido>=0?'gray':'red'}"><div class="kpi-label"><i class="fa fa-balance-scale"></i> Receita − Comissão</div><div class="kpi-value" style="font-size:20px;color:${liquido>=0?'#374151':'#dc2626'}">${fmtM(liquido)}</div></div>
-  `;
-
-  // Receita por mês
-  const recMes = Array(12).fill(0), comMes = Array(12).fill(0);
+function renderFinanceiro(rows){
+  /* Chart receita vs comissão por mês */
+  const recMes=Array(12).fill(0), comMes=Array(12).fill(0);
   rows.forEach(r=>{
     if(!r.data)return;
     const m=parseInt(r.data.split("-")[1])-1;
     recMes[m]+=(r.valor||0); comMes[m]+=(r.comissao||0);
   });
-  mkChart("chartReceitaMes",{type:"bar",data:{labels:MESES,datasets:[
+  mkChart("chartRecMes",{type:"bar",data:{labels:MESES,datasets:[
     {label:"Receita",data:recMes,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1},
     {label:"Comissão",data:comMes,backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1},
-  ]},options:{plugins:{legend:{position:"bottom"}},scales:{y:{ticks:{callback:v=>fmtM(v)}}}}});
+  ]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
 
-  // Receita por ano (sem filtro de ano para ver histórico)
-  const todoAno = await fetchTodos({});
-  const anoMap={};
-  todoAno.forEach(r=>{
-    if(!r.data)return;
-    const a=r.data.split("-")[0];
-    if(!anoMap[a])anoMap[a]={count:0,rec:0,com:0};
-    anoMap[a].count++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0);
-  });
-  document.querySelector("#tblRecAno tbody").innerHTML =
-    Object.entries(anoMap).sort().map(([a,v])=>`<tr>
-      <td><strong>${a}</strong></td>
-      <td class="num">${fmtN(v.count)}</td>
-      <td class="num">${fmtM(v.rec)}</td>
-      <td class="num">${fmtM(v.com)}</td>
-      <td class="num">${fmtM(v.count?v.rec/v.count:0)}</td>
-    </tr>`).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(Object.values(anoMap).reduce((s,v)=>s+v.count,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.rec,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.com,0))}</td><td class="num"></td></tr>`;
-
-  // Receita por serviço
+  /* Receita por serviço */
   const servMap={};
-  rows.forEach(r=>{
-    if(!r.servico)return;
-    if(!servMap[r.servico])servMap[r.servico]={count:0,rec:0};
-    servMap[r.servico].count++;servMap[r.servico].rec+=(r.valor||0);
-  });
-  const rankServ=Object.entries(servMap).sort((a,b)=>b[1].rec-a[1].rec).slice(0,12);
+  rows.forEach(r=>{ if(!r.servico)return; if(!servMap[r.servico])servMap[r.servico]={n:0,rec:0}; servMap[r.servico].n++;servMap[r.servico].rec+=(r.valor||0); });
+  const rankS=Object.entries(servMap).sort((a,b)=>b[1].rec-a[1].rec);
   document.querySelector("#tblRecServ tbody").innerHTML =
-    rankServ.map(([s,v])=>`<tr>
-      <td>${s}</td>
-      <td class="num">${fmtN(v.count)}</td>
-      <td class="num">${fmtM(v.rec)}</td>
-      <td class="num">${fmtM(v.count?v.rec/v.count:0)}</td>
-    </tr>`).join("");
+    rankS.map(([s,v])=>`<tr><td>${s}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("") +
+    `<tr><td>Total</td><td class="num">${fmtN(rankS.reduce((s,[,v])=>s+v.n,0))}</td><td class="num">${fmtM(rankS.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num"></td></tr>`;
+
+  /* Histórico por ano — busca sem filtro */
+  renderRecAno();
+
+  /* Receita por profissional */
+  const totAt=rows.length||1;
+  const profMap={};
+  rows.forEach(r=>{ if(!r.profissional)return; if(!profMap[r.profissional])profMap[r.profissional]={n:0,rec:0,com:0,cli:new Set()}; profMap[r.profissional].n++;profMap[r.profissional].rec+=(r.valor||0);profMap[r.profissional].com+=(r.comissao||0);if(r.cliente)profMap[r.profissional].cli.add(r.cliente); });
+  const rankP=Object.entries(profMap).sort((a,b)=>b[1].rec-a[1].rec);
+  document.querySelector("#tblRecProf tbody").innerHTML =
+    rankP.map(([p,v])=>`<tr><td>${p}</td><td class="num">${fmtN(v.cli.size)}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`).join("") +
+    `<tr><td>Total</td><td class="num"></td><td class="num">${fmtN(totAt)}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num"></td><td class="num">100%</td></tr>`;
+}
+
+async function renderRecAno(){
+  const hist = await fetchTodos({ano:"",mes:"",prof:"",serv:""});
+  const anoMap={};
+  hist.forEach(r=>{ if(!r.data)return; const a=r.data.split("-")[0]; if(!anoMap[a])anoMap[a]={n:0,rec:0,com:0}; anoMap[a].n++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0); });
+  document.querySelector("#tblRecAno tbody").innerHTML =
+    Object.entries(anoMap).sort().reverse().map(([a,v])=>`<tr><td><strong>${a}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("") +
+    `<tr><td>Total</td><td class="num">${fmtN(Object.values(anoMap).reduce((s,v)=>s+v.n,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.rec,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.com,0))}</td><td class="num"></td></tr>`;
 }
 
 /* ════════════════════════
    EQUIPE
 ════════════════════════ */
-async function carregarEquipe(){
-  const rows = await fetchTodos(getFiltro());
-
-  const profs = new Set(rows.map(r=>r.profissional).filter(Boolean));
-  const totalAtend = rows.length;
-
-  document.getElementById("kpiEquipe").innerHTML = `
-    <div class="kpi blue"><div class="kpi-label"><i class="fa fa-user-tie"></i> Profissionais Ativos</div><div class="kpi-value">${profs.size}</div></div>
-    <div class="kpi green"><div class="kpi-label"><i class="fa fa-calendar-check"></i> Total Atendimentos</div><div class="kpi-value">${fmtN(totalAtend)}</div></div>
-    <div class="kpi yellow"><div class="kpi-label"><i class="fa fa-receipt"></i> Média por Profissional</div><div class="kpi-value">${fmtN(profs.size?Math.round(totalAtend/profs.size):0)}</div><div class="kpi-sub">atendimentos</div></div>
-    <div class="kpi purple"><div class="kpi-label"><i class="fa fa-dollar-sign"></i> Receita Total</div><div class="kpi-value" style="font-size:18px">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</div></div>
-  `;
-
-  // Por profissional com quinzena
-  const profMap = {};
+function renderEquipe(rows){
+  const totAt=rows.length||1;
+  const profMap={};
   rows.forEach(r=>{
     const p=r.profissional;if(!p)return;
-    if(!profMap[p])profMap[p]={count:0,rec:0,com:0,cli:{},q1:0,q2:0};
-    profMap[p].count++;
-    profMap[p].rec+=(r.valor||0);
-    profMap[p].com+=(r.comissao||0);
+    if(!profMap[p])profMap[p]={n:0,rec:0,com:0,cli:{},q1:0,q2:0};
+    profMap[p].n++;profMap[p].rec+=(r.valor||0);profMap[p].com+=(r.comissao||0);
     if(r.cliente)profMap[p].cli[r.cliente]=(profMap[p].cli[r.cliente]||0)+1;
-    if(r.data){
-      const d=parseInt(r.data.split("-")[2]);
-      if(d<=15)profMap[p].q1++;else profMap[p].q2++;
-    }
+    if(r.data){const d=parseInt(r.data.split("-")[2]);if(d<=15)profMap[p].q1++;else profMap[p].q2++;}
   });
+  const rank=Object.entries(profMap).sort((a,b)=>b[1].n-a[1].n).slice(0,15);
 
-  const rankProf = Object.entries(profMap).sort((a,b)=>b[1].count-a[1].count).slice(0,15);
+  mkChart("chartEquipe",{type:"bar",data:{labels:rank.map(([p])=>p),datasets:[{label:"Atendimentos",data:rank.map(([,v])=>v.n),backgroundColor:"rgba(37,99,235,.75)",borderColor:"#2563eb",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
 
-  // Chart barras profissionais
-  mkChart("chartEquipe",{type:"bar",data:{
-    labels:rankProf.map(([p])=>p),
-    datasets:[{label:"Atendimentos",data:rankProf.map(([,v])=>v.count),backgroundColor:CORES}]
-  },options:{indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true}}}});
+  mkChart("chartQuinz",{type:"bar",data:{labels:rank.map(([p])=>p),datasets:[
+    {label:"1ª Quinzena",data:rank.map(([,v])=>v.q1),backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1},
+    {label:"2ª Quinzena",data:rank.map(([,v])=>v.q2),backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1},
+  ]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{beginAtZero:true}}}});
 
-  // Chart quinzena
-  mkChart("chartQuinzena",{type:"bar",data:{
-    labels:rankProf.map(([p])=>p),
-    datasets:[
-      {label:"1ª Quinzena",data:rankProf.map(([,v])=>v.q1),backgroundColor:"rgba(37,99,235,.7)"},
-      {label:"2ª Quinzena",data:rankProf.map(([,v])=>v.q2),backgroundColor:"rgba(124,58,237,.7)"},
-    ]
-  },options:{indexAxis:"y",plugins:{legend:{position:"bottom"}},scales:{x:{beginAtZero:true,stacked:false}}}});
-
-  // Tabela completa
-  const totAll=rankProf.reduce((s,[,v])=>s+v.count,0)||1;
-  document.querySelector("#tblEquipeCompleto tbody").innerHTML =
-    rankProf.map(([p,v])=>{
+  document.querySelector("#tblEquipe tbody").innerHTML =
+    rank.map(([p,v])=>{
       const ret=Object.values(v.cli).filter(x=>x>1).length;
       const pctRet=Object.keys(v.cli).length?((ret/Object.keys(v.cli).length)*100).toFixed(1):0;
-      return`<tr>
-        <td><strong>${p}</strong></td>
-        <td class="num">${fmtN(v.count)}</td>
-        <td class="num">${fmtN(ret)}</td>
-        <td class="num">${pctRet}%</td>
-        <td class="num">${fmtM(v.rec)}</td>
-        <td class="num">${fmtM(v.com)}</td>
-        <td class="num">${fmtN(v.q1)}</td>
-        <td class="num">${fmtN(v.q2)}</td>
-        <td class="num">${fmtM(v.count?v.rec/v.count:0)}</td>
-      </tr>`;
+      return`<tr><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${pctRet}%</td><td class="num">${fmtN(v.q1)}</td><td class="num">${fmtN(v.q2)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
     }).join("") +
-    `<tr>
-      <td>Total</td>
-      <td class="num">${fmtN(totAll)}</td>
-      <td class="num"></td><td class="num"></td>
-      <td class="num">${fmtM(rankProf.reduce((s,[,v])=>s+v.rec,0))}</td>
-      <td class="num">${fmtM(rankProf.reduce((s,[,v])=>s+v.com,0))}</td>
-      <td class="num">${fmtN(rankProf.reduce((s,[,v])=>s+v.q1,0))}</td>
-      <td class="num">${fmtN(rankProf.reduce((s,[,v])=>s+v.q2,0))}</td>
-      <td class="num"></td>
-    </tr>`;
+    `<tr><td>Total</td><td class="num">${fmtN(totAt)}</td><td class="num"></td><td class="num"></td><td class="num">${fmtN(rank.reduce((s,[,v])=>s+v.q1,0))}</td><td class="num">${fmtN(rank.reduce((s,[,v])=>s+v.q2,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.com,0))}</td><td class="num"></td><td class="num">100%</td></tr>`;
+}
+
+/* ════════════════════════
+   EXECUTIVO
+════════════════════════ */
+async function renderExecutivo(){
+  const hist = await fetchTodos({ano:"",mes:"",prof:"",serv:""});
+  const anoMap={};
+  hist.forEach(r=>{
+    if(!r.data)return;
+    const a=r.data.split("-")[0];
+    if(!anoMap[a])anoMap[a]={n:0,rec:0,com:0};
+    anoMap[a].n++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0);
+  });
+  const anos=Object.keys(anoMap).sort();
+
+  mkChart("chartEvolAtend",{type:"bar",data:{labels:anos,datasets:[{label:"Atendimentos",data:anos.map(a=>anoMap[a].n),backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  mkChart("chartEvolRec",{type:"bar",data:{labels:anos,datasets:[{label:"Receita",data:anos.map(a=>anoMap[a].rec),backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
+
+  // Tabela executiva por profissional (todos os anos)
+  const profMap={};
+  hist.forEach(r=>{
+    const p=r.profissional;if(!p)return;
+    if(!profMap[p])profMap[p]={n:0,rec:0,com:0,cli:new Set()};
+    profMap[p].n++;profMap[p].rec+=(r.valor||0);profMap[p].com+=(r.comissao||0);
+    if(r.cliente)profMap[p].cli.add(r.cliente);
+  });
+  const totAt=hist.length||1;
+  const rank=Object.entries(profMap).sort((a,b)=>b[1].n-a[1].n);
+  document.querySelector("#tblExec tbody").innerHTML =
+    rank.map(([p,v])=>{
+      const ret=v.cli.size;
+      return`<tr><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
+    }).join("") +
+    `<tr><td>Total</td><td class="num">${fmtN(totAt)}</td><td class="num"></td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.com,0))}</td><td class="num"></td><td class="num"></td><td class="num">100%</td></tr>`;
 }
 
 /* ── INIT ── */
-document.addEventListener("DOMContentLoaded",()=>{
-  // default: ano atual, todos os meses
-  document.getElementById("filtroAno").value = new Date().getFullYear().toString();
-  carregarTudo();
+document.addEventListener("DOMContentLoaded",async()=>{
+  await initFiltros();
+  await carregarTudo();
 });
 </script>
 </body>

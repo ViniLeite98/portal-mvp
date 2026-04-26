@@ -274,20 +274,31 @@ function getFiltro(){
   };
 }
 
-function buildQuery(){
-  const {ano, mes} = getFiltro();
-  // Consideramos realizados: '-', 'Confirmado', 'Nenhum'
-  // Excluímos: 'Não comparecimento', 'À confirmar'
-  let q = client.from("legado_atendimentos")
-    .select("*")
-    .not("situacao","in","(\"Não comparecimento\",\"À confirmar\")")
-    .gt("valor",0);
-  if(ano) q = q.gte("data",`${ano}-01-01`).lte("data",`${ano}-12-31`);
-  if(ano && mes){
-    const ult = new Date(parseInt(ano), parseInt(mes), 0).getDate();
-    q = q.gte("data",`${ano}-${mes}-01`).lte("data",`${ano}-${mes}-${String(ult).padStart(2,"0")}`);
+async function fetchTodos(filtros={}){
+  // Busca todos os registros em lotes de 1000 (limite padrão do Supabase)
+  const {ano, mes} = filtros;
+  let todos = [], from = 0;
+  const LOTE = 1000;
+  while(true){
+    let q = client.from("legado_atendimentos")
+      .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
+      .not("situacao","in","(\"Não comparecimento\",\"À confirmar\")")
+      .gt("valor",0)
+      .range(from, from+LOTE-1);
+    if(ano && mes){
+      const ult = new Date(parseInt(ano), parseInt(mes), 0).getDate();
+      q = q.gte("data",`${ano}-${mes}-01`).lte("data",`${ano}-${mes}-${String(ult).padStart(2,"0")}`);
+    } else if(ano){
+      q = q.gte("data",`${ano}-01-01`).lte("data",`${ano}-12-31`);
+    }
+    const {data, error} = await q;
+    if(error){ console.error(error); break; }
+    if(!data || !data.length) break;
+    todos = todos.concat(data);
+    if(data.length < LOTE) break;
+    from += LOTE;
   }
-  return q;
+  return todos;
 }
 
 /* ── CARREGAR TUDO ── */
@@ -306,8 +317,7 @@ async function carregarTudo(){
 async function carregarGeral(){
   document.getElementById("kpiGeral").innerHTML = `<div class="kpi"><div class="sk" style="width:80%;height:32px"></div></div>`.repeat(6);
 
-  const {data} = await buildQuery();
-  const rows = data||[];
+  const rows = await fetchTodos(getFiltro());
 
   const totalAtend = rows.length;
   const receita    = rows.reduce((s,r)=>s+(r.valor||0),0);
@@ -378,8 +388,7 @@ async function carregarGeral(){
    ATENDIMENTOS
 ════════════════════════ */
 async function carregarAtendimentos(){
-  const {data} = await buildQuery();
-  const rows = data||[];
+  const rows = await fetchTodos(getFiltro());
 
   const totalAtend = rows.length;
   const cliCount = {};
@@ -397,14 +406,11 @@ async function carregarAtendimentos(){
     <div class="kpi purple"><div class="kpi-label"><i class="fa fa-spa"></i> Serviços Distintos</div><div class="kpi-value">${fmtN(new Set(rows.map(r=>r.servico).filter(Boolean)).size)}</div></div>
   `;
 
-  // Evolução por ano (últimos 6 anos)
-  const {data:porAno} = await client.from("legado_atendimentos")
-    .select("data,valor")
-    .not("situacao","in","(\"Não comparecimento\",\"À confirmar\")")
-    .gt("valor",0);
+  // Evolução por ano — busca tudo sem filtro de ano
+  const porAno = await fetchTodos({});
 
   const anoMap = {};
-  (porAno||[]).forEach(r=>{
+  porAno.forEach(r=>{
     if(!r.data)return;
     const a=r.data.split("-")[0];
     if(!anoMap[a]) anoMap[a]={count:0,rec:0};
@@ -473,8 +479,7 @@ async function carregarAtendimentos(){
    FINANCEIRO
 ════════════════════════ */
 async function carregarFinanceiro(){
-  const {data} = await buildQuery();
-  const rows = data||[];
+  const rows = await fetchTodos(getFiltro());
 
   const receita  = rows.reduce((s,r)=>s+(r.valor||0),0);
   const comissao = rows.reduce((s,r)=>s+(r.comissao||0),0);
@@ -501,9 +506,9 @@ async function carregarFinanceiro(){
   ]},options:{plugins:{legend:{position:"bottom"}},scales:{y:{ticks:{callback:v=>fmtM(v)}}}}});
 
   // Receita por ano (sem filtro de ano para ver histórico)
-  const {data:todoAno}=await client.from("legado_atendimentos").select("data,valor,comissao").not("situacao","in","(\"Não comparecimento\",\"À confirmar\")").gt("valor",0);
+  const todoAno = await fetchTodos({});
   const anoMap={};
-  (todoAno||[]).forEach(r=>{
+  todoAno.forEach(r=>{
     if(!r.data)return;
     const a=r.data.split("-")[0];
     if(!anoMap[a])anoMap[a]={count:0,rec:0,com:0};
@@ -540,8 +545,7 @@ async function carregarFinanceiro(){
    EQUIPE
 ════════════════════════ */
 async function carregarEquipe(){
-  const {data} = await buildQuery();
-  const rows = data||[];
+  const rows = await fetchTodos(getFiltro());
 
   const profs = new Set(rows.map(r=>r.profissional).filter(Boolean));
   const totalAtend = rows.length;

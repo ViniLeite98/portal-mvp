@@ -45,14 +45,17 @@
   // Expor usuário globalmente para as páginas e sidebar.js usarem
   window.usuarioLogado = {id: session.user.id, role, nome, email};
 
-  // Re-renderizar sidebar agora que temos o usuário — garante que role correto é usado
+  // Re-renderizar sidebar com o usuário correto
+  // Usar requestAnimationFrame para garantir que sidebar.js já carregou e DOM está pronto
   const doRender = () => {
-    if(typeof window.renderSidebar === "function") window.renderSidebar();
+    if(typeof window.renderSidebar === "function"){
+      window.renderSidebar();
+    }
   };
   if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", doRender);
+    document.addEventListener("DOMContentLoaded", ()=>requestAnimationFrame(doRender));
   } else {
-    doRender();
+    requestAnimationFrame(doRender);
   }
 
 })();

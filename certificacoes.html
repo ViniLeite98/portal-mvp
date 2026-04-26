@@ -67,17 +67,8 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .upload-ing{font-size:11px;color:#2563eb;display:none;}
 .legenda{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px;color:#6b7280;margin-bottom:16px;}
 .legenda span{display:flex;align-items:center;gap:5px;}
-
-/* ── SELETOR DE ÍCONE ── */
-.icone-grid{
-  display:grid;grid-template-columns:repeat(6,1fr);gap:8px;
-  max-height:200px;overflow-y:auto;padding:4px;
-}
-.icone-opt{
-  display:flex;flex-direction:column;align-items:center;gap:4px;
-  padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;
-  cursor:pointer;font-size:11px;color:#6b7280;transition:all .15s;
-}
+.icone-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-height:200px;overflow-y:auto;padding:4px;}
+.icone-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;cursor:pointer;font-size:11px;color:#6b7280;transition:all .15s;}
 .icone-opt:hover{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
 .icone-opt.selected{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
 .icone-opt i{font-size:18px;}
@@ -116,7 +107,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </main>
 </div>
 
-<!-- ── MODAL VINCULAR ── -->
+<!-- MODAL VINCULAR -->
 <div class="modal" id="modalVincular">
 <div class="modal-content">
   <div class="modal-header">
@@ -144,7 +135,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </div>
 </div>
 
-<!-- ── MODAL CERTS ── -->
+<!-- MODAL CERTS -->
 <div class="modal" id="modalCerts">
 <div class="modal-content">
   <div class="modal-header">
@@ -158,7 +149,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </div>
 </div>
 
-<!-- ── MODAL EDITAR DATA ── -->
+<!-- MODAL EDITAR DATA -->
 <div class="modal" id="modalEditarData">
 <div class="modal-content sm">
   <div class="modal-header">
@@ -177,33 +168,16 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
-<script src="assets/sidebar/sidebar.js"></script>
+<script src="assets/js/auth-check.js" data-role="admin"></script>
 <script>
 
 let dados = [];
 let editandoId = null;
-let certificacoes = []; // lista completa com ícone
+let certificacoes = [];
 
-/* ── ÍCONE: usa o campo do banco, com fallback ── */
 function iconeParaCert(certId){
   const c = certificacoes.find(x => x.id === certId || x.nome === certId);
   return c?.icone || "fa-certificate";
-}
-
-function iconeCertificacao(nome){
-  const c = certificacoes.find(x => x.nome === nome);
-  return c?.icone || "fa-certificate";
-}
-
-/* ── LEGENDA DINÂMICA ── */
-function renderLegenda(){
-  const legEl = document.getElementById("legenda");
-  if(!certificacoes.length){ legEl.innerHTML = ""; return; }
-
-  legEl.innerHTML = `<strong>Legenda:</strong> ` +
-    certificacoes.map(c =>
-      `<span><i class="fa-solid ${c.icone||'fa-certificate'}" style="color:${corIcone(c.icone)}"></i> ${c.nome}</span>`
-    ).join("");
 }
 
 function corIcone(icone){
@@ -218,7 +192,15 @@ function corIcone(icone){
   return cores[icone] || "#6b7280";
 }
 
-/* ── CARREGAR SELECTS ── */
+function renderLegenda(){
+  const legEl = document.getElementById("legenda");
+  if(!certificacoes.length){ legEl.innerHTML = ""; return; }
+  legEl.innerHTML = `<strong>Legenda:</strong> ` +
+    certificacoes.map(c =>
+      `<span><i class="fa-solid ${c.icone||'fa-certificate'}" style="color:${corIcone(c.icone)}"></i> ${c.nome}</span>`
+    ).join("");
+}
+
 async function carregarSelects(){
   const {data: terapeutas} = await client
     .from("terapeutas").select("cpf,nome_profissional")
@@ -242,21 +224,17 @@ async function carregarSelects(){
   renderLegenda();
 }
 
-/* ── CARREGAR LISTA ── */
 async function carregarLista(){
   const {data} = await client
     .from("terapeuta_certificacoes")
     .select(`id, data_obtencao, arquivo_url, arquivo_nome, certificacoes(id,nome,icone), terapeutas(nome_profissional)`)
     .order("id");
-
   dados = data || [];
   render();
 }
 
-/* ── RENDER ── */
 function render(){
   const termo = (document.getElementById("buscaTerapeuta").value||"").toLowerCase();
-
   const filtrado = dados.filter(d => {
     const nome = (d.terapeutas?.nome_profissional||"").toLowerCase();
     const cert = (d.certificacoes?.nome||"").toLowerCase();
@@ -287,8 +265,7 @@ function render(){
       `<i class="fa-solid ${i.icone}" style="color:${corIcone(i.icone)}" title="${i.nome}"></i>`
     ).join("");
 
-    tbody.innerHTML += `
-    <tr>
+    tbody.innerHTML += `<tr>
       <td><strong>${t.nome}</strong></td>
       <td><div class="cert-icones">${iconesHtml}</div></td>
       <td><span class="badge-count">${t.certs.length}</span></td>
@@ -297,7 +274,6 @@ function render(){
   });
 }
 
-/* ── MODAL VINCULAR ── */
 function abrirVincular(){
   document.getElementById("cpf_terapeuta").value   = "";
   document.getElementById("certificacao_id").value = "";
@@ -311,14 +287,12 @@ async function vincular(){
   const cert = document.getElementById("certificacao_id").value;
   const data = document.getElementById("data_obtencao").value;
   const file = document.getElementById("arquivo_vincular").files[0];
-
   if(!cpf || !cert){ alert("Selecione o profissional e a certificação."); return; }
 
   const {data: inserted, error} = await client
     .from("terapeuta_certificacoes")
     .insert({cpf_terapeuta: cpf, certificacao_id: cert, data_obtencao: data || null})
     .select().single();
-
   if(error){ alert("Erro ao vincular: " + error.message); return; }
 
   if(file && inserted?.id){
@@ -339,7 +313,6 @@ async function vincular(){
   carregarLista();
 }
 
-/* ── MODAL CERTS ── */
 function abrirModal(nome){
   const registros = dados.filter(d => d.terapeutas?.nome_profissional === nome);
   document.getElementById("tituloModal").textContent = nome;
@@ -370,8 +343,7 @@ function abrirModal(nome){
            <span class="upload-ing" id="uploading_${r.id}"><i class="fa fa-spinner fa-spin"></i></span>
          </div>`;
 
-    return `
-    <div class="cert-row" id="cert-row-${r.id}">
+    return `<div class="cert-row" id="cert-row-${r.id}">
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
         <div class="cert-row-left">
           <i class="fa-solid ${icone}" style="font-size:18px;color:${cor}"></i>
@@ -395,7 +367,6 @@ function abrirModal(nome){
 
 function fecharModal(){ document.getElementById("modalCerts").style.display = "none"; }
 
-/* ── EDITAR DATA ── */
 function editarCert(id, dataAtual){
   editandoId = id;
   document.getElementById("novaDataInput").value = dataAtual || "";
@@ -415,7 +386,6 @@ async function salvarNovaData(){
   if(r) abrirModal(r.terapeutas?.nome_profissional);
 }
 
-/* ── EXCLUIR ── */
 async function excluir(id, nome){
   if(!confirm("Excluir este vínculo?")) return;
   const {error} = await client.from("terapeuta_certificacoes").delete().eq("id", id);
@@ -425,7 +395,6 @@ async function excluir(id, nome){
   if(ainda.length) abrirModal(nome); else fecharModal();
 }
 
-/* ── UPLOAD ── */
 function limparNome(nome){
   return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
 }
@@ -457,7 +426,6 @@ async function excluirArquivo(id, url, nomeTerapeuta){
   abrirModal(nomeTerapeuta);
 }
 
-/* ── EXPORTAR ── */
 function exportarExcel(){
   const exportData = dados.map(r => ({
     "Profissional": r.terapeutas?.nome_profissional||"",
@@ -475,12 +443,12 @@ function exportarExcel(){
   XLSX.writeFile(wb, "certificacoes.xlsx");
 }
 
-/* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById("buscaTerapeuta").addEventListener("input", render);
   carregarSelects();
   carregarLista();
 });
 </script>
+<script src="assets/sidebar/sidebar.js"></script>
 </body>
 </html>

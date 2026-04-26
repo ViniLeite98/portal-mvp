@@ -1,6 +1,12 @@
 // sidebar.js — menu dinâmico por role
 // Depende de window.usuarioLogado definido pelo auth.js
 
+// Função logout — definida aqui para estar disponível quando o sidebar renderiza
+window.logout = async function(){
+  await client.auth.signOut();
+  window.location.href = "login.html";
+};
+
 (function(){
   const pag = window.location.pathname.split("/").pop() || "index.html";
 

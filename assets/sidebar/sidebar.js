@@ -58,5 +58,23 @@ document.getElementById("sidebar").innerHTML = `
     <i class="fa-solid fa-sliders"></i>
     <span>Parâmetros</span>
   </a>
+  <hr style="border-color:#374151; margin:18px 0;">
+  <a href="#" class="menu-item" onclick="sairDoCaixa()" style="color:#f87171">
+    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+    <span>Sair</span>
+  </a>
 </div>
 `;
+
+function sairDoCaixa() {
+  if (typeof client !== 'undefined') {
+    client.auth.signOut().finally(function() {
+      Object.keys(localStorage).forEach(function(k) {
+        if (k.startsWith('sb-')) localStorage.removeItem(k);
+      });
+      window.location.href = 'login.html';
+    });
+  } else {
+    window.location.href = 'login.html';
+  }
+}

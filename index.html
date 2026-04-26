@@ -2,358 +2,100 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Dashboard | Hara Spa</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<title>Teste Filtros | Hara Spa</title>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;display:flex;flex-direction:column;min-height:100vh;}
-
-/* ── TOP KPI BAR ── */
-.kpi-bar{display:grid;grid-template-columns:repeat(6,1fr);background:#1f2937;gap:1px;}
-.kpi-cell{padding:14px 20px;background:#1f2937;text-align:center;}
-.kpi-cell-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin-bottom:6px;}
-.kpi-cell-value{font-size:28px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1;}
-.kpi-cell.highlight .kpi-cell-value{color:#34d399;}
-
-/* ── SUB-NAV ── */
-.sub-nav{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;padding:0 24px;}
-.sub-btn{padding:12px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:6px;}
-.sub-btn:hover{color:#111827;border-bottom-color:#d1d5db;}
-.sub-btn.active{color:#2563eb;border-bottom-color:#2563eb;}
-
-/* ── FILTROS ── */
-.filtros-bar{display:flex;align-items:center;gap:12px;padding:12px 24px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;}
-.filtros-bar label{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;}
-.filtros-bar select{padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;background:#fff;color:#111827;}
-.filtros-bar .sep{width:1px;height:20px;background:#e5e7eb;margin:0 4px;}
-
-/* ── MAIN AREA ── */
-.main{flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
-.page{display:none;flex-direction:column;gap:14px;}
-.page.active{display:flex;}
-
-/* ── GRID LAYOUTS ── */
-.row{display:flex;gap:14px;}
-.row > *{flex:1;min-width:0;}
-.col-4{flex:1.4!important;}
-.col-3{flex:1!important;}
-.col-2{flex:.7!important;}
-
-/* ── CARD ── */
-.card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;}
-.card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f3f4f6;}
-.card-header h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#374151;display:flex;align-items:center;gap:6px;}
-.card-body{padding:0;}
-
-/* ── TABELA DENSA ── */
-.dt{width:100%;border-collapse:collapse;font-size:12px;}
-.dt thead th{background:#f9fafb;padding:7px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;border-bottom:1px solid #e5e7eb;white-space:nowrap;}
-.dt tbody td{padding:6px 12px;border-bottom:1px solid #f3f4f6;color:#374151;}
-.dt tbody tr:last-child td{border-bottom:none;font-weight:700;color:#111827;background:#f9fafb;}
-.dt tbody tr:hover td{background:#f9fafb;}
-.dt .num{text-align:right;font-variant-numeric:tabular-nums;}
-.dt .red{color:#dc2626;}
-.dt .green{color:#16a34a;}
-.dt-scroll{max-height:280px;overflow-y:auto;}
-
-/* mini bar inline */
-.pct-bar{display:flex;align-items:center;gap:6px;}
-.pct-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;}
-.pct-bar-fill{height:100%;border-radius:2px;background:#2563eb;}
-
-/* ── CHART ── */
-.chart-wrap{padding:12px 14px;}
-
-/* ── TABELA COMPARATIVO ANO ── */
-.ano-table td,.ano-table th{font-size:11px;padding:5px 10px;}
-.ano-table .mes-row td{color:#374151;}
-.ano-table .total-row td{font-weight:700;color:#dc2626;}
-.ano-expand{cursor:pointer;}
-.ano-expand:hover td{background:#f9fafb;}
-
-/* ── HEATMAP HORA ── */
-.hora-grid{display:grid;grid-template-columns:50px 1fr;gap:4px;padding:10px 14px;}
-.hora-label{font-size:10px;color:#9ca3af;display:flex;align-items:center;}
-.hora-bar-wrap{display:flex;align-items:center;gap:6px;}
-.hora-bar-bg{flex:1;height:12px;background:#e5e7eb;border-radius:3px;overflow:hidden;}
-.hora-bar-fill{height:100%;border-radius:3px;background:#bfdbfe;}
-.hora-count{font-size:10px;color:#6b7280;min-width:32px;text-align:right;}
-
-/* loading */
-.loading{display:flex;align-items:center;justify-content:center;height:80px;color:#9ca3af;font-size:12px;gap:8px;}
+body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;padding:30px;}
+h1{margin-bottom:20px;font-size:20px;}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:30px;}
+.card{background:#fff;border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.card h3{font-size:12px;font-weight:700;text-transform:uppercase;color:#6b7280;margin-bottom:10px;}
+.num{font-size:26px;font-weight:900;color:#111827;}
+.sub{font-size:12px;color:#9ca3af;margin-top:4px;}
+.green{color:#16a34a;} .red{color:#dc2626;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+th,td{padding:10px 14px;border-bottom:1px solid #f3f4f6;font-size:13px;text-align:left;}
+th{background:#f9fafb;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;}
+tr:last-child td{border-bottom:none;}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
+.tag-ok{background:#dcfce7;color:#16a34a;}
+.tag-diff{background:#fef3c7;color:#92400e;}
+.tag-err{background:#fee2e2;color:#dc2626;}
+button{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:10px 20px;cursor:pointer;font-size:13px;font-weight:600;margin-bottom:20px;}
+button:hover{opacity:.9;}
+.log{background:#1f2937;color:#86efac;border-radius:8px;padding:16px;font-family:monospace;font-size:12px;white-space:pre-wrap;margin-top:20px;max-height:300px;overflow-y:auto;}
+select{padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-right:10px;}
 </style>
 </head>
 <body>
-<div class="app">
-<aside id="sidebar"></aside>
-<main class="content">
 
-  <!-- KPI BAR -->
-  <div class="kpi-bar" id="kpiBar">
-    <div class="kpi-cell"><div class="kpi-cell-label">Atendimentos</div><div class="kpi-cell-value" id="kAtend">—</div></div>
-    <div class="kpi-cell"><div class="kpi-cell-label">Receita</div><div class="kpi-cell-value" id="kReceita">—</div></div>
-    <div class="kpi-cell"><div class="kpi-cell-label">Comissão</div><div class="kpi-cell-value" id="kComissao">—</div></div>
-    <div class="kpi-cell"><div class="kpi-cell-label">Ticket Médio</div><div class="kpi-cell-value" id="kTicket">—</div></div>
-    <div class="kpi-cell"><div class="kpi-cell-label">Clientes</div><div class="kpi-cell-value" id="kClientes">—</div></div>
-    <div class="kpi-cell highlight"><div class="kpi-cell-label">Retornos</div><div class="kpi-cell-value" id="kRetornos">—</div></div>
-  </div>
+<h1>🔬 Teste de Filtros — Legado Atendimentos</h1>
 
-  <!-- SUB-NAV -->
-  <div class="sub-nav">
-    <button class="sub-btn active" onclick="mudarPag('atend',this)"><i class="fa fa-calendar-check"></i> Atendimentos</button>
-    <button class="sub-btn" onclick="mudarPag('financeiro',this)"><i class="fa fa-dollar-sign"></i> Financeiro</button>
-    <button class="sub-btn" onclick="mudarPag('equipe',this)"><i class="fa fa-users"></i> Equipe</button>
-    <button class="sub-btn" onclick="mudarPag('executivo',this)"><i class="fa fa-chart-line"></i> Executivo</button>
-  </div>
-
-  <!-- FILTROS -->
-  <div class="filtros-bar">
-    <label>Ano</label>
-    <select id="fAno" onchange="carregarTudo()">
-      <option value="">Todos</option>
-      <option value="2026">2026</option><option value="2025" selected>2025</option>
-      <option value="2024">2024</option><option value="2023">2023</option>
-      <option value="2022">2022</option><option value="2021">2021</option>
-    </select>
-    <div class="sep"></div>
-    <label>Mês</label>
-    <select id="fMes" onchange="carregarTudo()">
-      <option value="">Todos</option>
-      <option value="01">Janeiro</option><option value="02">Fevereiro</option>
-      <option value="03">Março</option><option value="04">Abril</option>
-      <option value="05">Maio</option><option value="06">Junho</option>
-      <option value="07">Julho</option><option value="08">Agosto</option>
-      <option value="09">Setembro</option><option value="10">Outubro</option>
-      <option value="11">Novembro</option><option value="12">Dezembro</option>
-    </select>
-    <div class="sep"></div>
-    <label>Profissional</label>
-    <select id="fProf" onchange="carregarTudo()"><option value="">Todos</option></select>
-    <div class="sep"></div>
-    <label>Serviço</label>
-    <select id="fServ" onchange="carregarTudo()"><option value="">Todos</option></select>
-  </div>
-
-  <div class="main">
-
-  <!-- ══ ATENDIMENTOS ══ -->
-  <div class="page active" id="page-atend">
-    <div class="row">
-      <!-- Profissionais -->
-      <div class="card col-3">
-        <div class="card-header"><h3><i class="fa fa-user-tie"></i> Por Profissional</h3></div>
-        <div class="dt-scroll">
-          <table class="dt" id="tblProf">
-            <thead><tr><th>Profissional</th><th class="num">Atend.</th><th class="num">% Atend.</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-      <!-- Serviços -->
-      <div class="card col-3">
-        <div class="card-header"><h3><i class="fa fa-spa"></i> Por Serviço</h3></div>
-        <div class="dt-scroll">
-          <table class="dt" id="tblServ">
-            <thead><tr><th>Serviço</th><th class="num">Atend.</th><th class="num">% Atend.</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-      <!-- Por Ano/Mês -->
-      <div class="card col-4">
-        <div class="card-header"><h3><i class="fa fa-calendar"></i> Por Ano / Mês</h3></div>
-        <div class="dt-scroll">
-          <table class="dt ano-table" id="tblAnoMes">
-            <thead><tr><th>Ano</th><th class="num">Atend.</th><th class="num">Atend. LY</th><th class="num">YoY %</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <!-- Top Clientes -->
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-users"></i> Top Clientes</h3></div>
-        <div class="dt-scroll">
-          <table class="dt" id="tblCli">
-            <thead><tr><th>Cliente</th><th class="num">Atend.</th><th class="num">Retornos</th><th class="num">Comissão</th><th class="num">Ticket Médio</th><th class="num">% Atend.</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-      <!-- Hora -->
-      <div class="card" style="max-width:260px;flex:0 0 260px">
-        <div class="card-header"><h3><i class="fa fa-clock"></i> Por Hora</h3></div>
-        <div class="hora-grid" id="horaGrid"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ FINANCEIRO ══ -->
-  <div class="page" id="page-financeiro">
-    <div class="row">
-      <!-- Receita por mês gráfico -->
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Receita vs Comissão por Mês</h3></div>
-        <div class="chart-wrap"><canvas id="chartRecMes" height="160"></canvas></div>
-      </div>
-      <!-- Receita por serviço -->
-      <div class="card col-3">
-        <div class="card-header"><h3><i class="fa fa-spa"></i> Receita por Serviço</h3></div>
-        <div class="dt-scroll">
-          <table class="dt" id="tblRecServ">
-            <thead><tr><th>Serviço</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Ticket</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <!-- Receita por ano -->
-      <div class="card col-2">
-        <div class="card-header"><h3><i class="fa fa-calendar-alt"></i> Histórico por Ano</h3></div>
-        <table class="dt" id="tblRecAno">
-          <thead><tr><th>Ano</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket Médio</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <!-- Receita por profissional -->
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-user-tie"></i> Receita por Profissional</h3></div>
-        <div class="dt-scroll">
-          <table class="dt" id="tblRecProf">
-            <thead><tr><th>Profissional</th><th class="num">Clientes</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket</th><th class="num">% Atend.</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ EQUIPE ══ -->
-  <div class="page" id="page-equipe">
-    <div class="row">
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Atendimentos por Profissional</h3></div>
-        <div class="chart-wrap"><canvas id="chartEquipe" height="220"></canvas></div>
-      </div>
-      <div class="card col-2">
-        <div class="card-header"><h3><i class="fa fa-calendar-week"></i> 1ª vs 2ª Quinzena</h3></div>
-        <div class="chart-wrap"><canvas id="chartQuinz" height="220"></canvas></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header"><h3><i class="fa fa-table"></i> Performance Completa</h3></div>
-      <div class="dt-scroll" style="max-height:360px">
-        <table class="dt" id="tblEquipe">
-          <thead><tr>
-            <th>Profissional</th>
-            <th class="num">Atend.</th><th class="num">Retornos</th><th class="num">% Retorno</th>
-            <th class="num">1ª Quinzena</th><th class="num">2ª Quinzena</th>
-            <th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket</th>
-            <th class="num">% Atend.</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ EXECUTIVO ══ -->
-  <div class="page" id="page-executivo">
-    <div class="row">
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-chart-line"></i> Evolução Anual — Atendimentos</h3></div>
-        <div class="chart-wrap"><canvas id="chartEvolAtend" height="160"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-dollar-sign"></i> Evolução Anual — Receita</h3></div>
-        <div class="chart-wrap"><canvas id="chartEvolRec" height="160"></canvas></div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-table"></i> Resumo Executivo por Profissional</h3></div>
-        <div class="dt-scroll">
-          <table class="dt" id="tblExec">
-            <thead><tr>
-              <th>Profissional</th>
-              <th class="num">Atend.</th><th class="num">Retornos</th>
-              <th class="num">Total Histórico</th><th class="num">Total Receita</th>
-              <th class="num">Média Atend.</th><th class="num">Média Comissão</th><th class="num">% Atend.</th>
-            </tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  </div><!-- /main -->
-</main>
+<div style="margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <select id="ano">
+    <option value="2025" selected>2025</option>
+    <option value="2024">2024</option>
+    <option value="2023">2023</option>
+    <option value="2022">2022</option>
+    <option value="2021">2021</option>
+    <option value="">Todos os anos</option>
+  </select>
+  <button onclick="rodar()">▶ Rodar Comparação</button>
+  <span id="status" style="font-size:13px;color:#6b7280"></span>
 </div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
-<script src="assets/sidebar/sidebar.js"></script>
+<div class="grid" id="cards"></div>
+
+<table id="tbl">
+  <thead>
+    <tr>
+      <th>Critério</th>
+      <th>Atendimentos</th>
+      <th>Receita</th>
+      <th>vs Power BI (10.945 / R$4.755.935)</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div class="log" id="log">Aguardando...</div>
+
 <script>
-const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-const MESES_FULL = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-let charts = {}, allData = [], allDataSemFiltro = [];
+const PBI_ATEND  = 10945;
+const PBI_RECEITA = 4755935;
 
 const fmtM = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const fmtN = v => Number(v||0).toLocaleString("pt-BR");
-const fmtP = v => Number(v||0).toFixed(1)+"%";
 
-function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
-function mkChart(id, cfg){
-  destroyChart(id);
-  const el = document.getElementById(id);
-  if(!el) return;
-  charts[id] = new Chart(el, cfg);
-}
+function log(msg){ document.getElementById("log").textContent += "\n" + msg; }
 
-function mudarPag(p, btn){
-  document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".sub-btn").forEach(b=>b.classList.remove("active"));
-  document.getElementById("page-"+p).classList.add("active");
-  btn.classList.add("active");
-}
-
-function getFiltro(){
-  return {
-    ano: document.getElementById("fAno").value,
-    mes: document.getElementById("fMes").value,
-    prof: document.getElementById("fProf").value,
-    serv: document.getElementById("fServ").value,
-  };
-}
-
-/* ── FETCH EM LOTES ── */
-async function fetchTodos(overrides={}){
-  const {ano, mes, prof, serv} = {...getFiltro(), ...overrides};
+async function fetchAll(filtros){
   let todos=[], from=0;
   while(true){
-    let q = client.from("legado_atendimentos")
-      .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
-      .not("situacao","in","(\"Não comparecimento\",\"À confirmar\")")
-      .range(from, from+999);
-    if(ano && mes){
-      const ult = new Date(parseInt(ano), parseInt(mes), 0).getDate();
-      q = q.gte("data",`${ano}-${mes}-01`).lte("data",`${ano}-${mes}-${String(ult).padStart(2,"0")}`);
-    } else if(ano){
-      q = q.gte("data",`${ano}-01-01`).lte("data",`${ano}-12-31`);
+    let q = client.from("legado_atendimentos").select("situacao,valor");
+    const {ano} = filtros;
+    if(ano) q = q.gte("data",`${ano}-01-01`).lte("data",`${ano}-12-31`);
+
+    // aplicar filtro de situação
+    if(filtros.situacao === "not_nc_ac"){
+      q = q.not("situacao","in","(\"Não comparecimento\",\"À confirmar\")");
+    } else if(filtros.situacao === "or_explicit"){
+      q = q.or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
+    } else if(filtros.situacao === "none"){
+      // sem filtro de situação
     }
-    if(prof) q = q.eq("profissional", prof);
-    if(serv) q = q.eq("servico", serv);
+
+    // aplicar filtro de valor
+    if(filtros.valor === "gt0")    q = q.gt("valor",0);
+    if(filtros.valor === "gte0")   q = q.gte("valor",0);
+    if(filtros.valor === "notnull")q = q.not("valor","is",null);
+
+    q = q.range(from, from+999);
     const {data, error} = await q;
-    if(error||!data||!data.length) break;
+    if(error){ log("ERRO: "+JSON.stringify(error)); break; }
+    if(!data||!data.length) break;
     todos = todos.concat(data);
     if(data.length < 1000) break;
     from += 1000;
@@ -361,310 +103,79 @@ async function fetchTodos(overrides={}){
   return todos;
 }
 
-/* ── INIT FILTROS ── */
-async function initFiltros(){
-  const {data} = await client.from("legado_atendimentos")
-    .select("profissional,servico")
-    .not("situacao","in","(\"Não comparecimento\",\"À confirmar\")")
-    .limit(5000);
-  const profs = [...new Set((data||[]).map(r=>r.profissional).filter(Boolean))].sort();
-  const servs = [...new Set((data||[]).map(r=>r.servico).filter(Boolean))].sort();
-  const selP = document.getElementById("fProf");
-  const selS = document.getElementById("fServ");
-  profs.forEach(p=>selP.innerHTML+=`<option>${p}</option>`);
-  servs.forEach(s=>selS.innerHTML+=`<option>${s}</option>`);
+async function testar(label, filtros){
+  log(`\n→ Testando: ${label}`);
+  const data = await fetchAll(filtros);
+  const atend = data.length;
+  const receita = data.reduce((s,r)=>s+(r.valor||0),0);
+  log(`  Atendimentos: ${atend} | Receita: ${fmtM(receita)}`);
+  return {label, atend, receita};
 }
 
-/* ══════════════════════════════
-   CARREGAR TUDO
-══════════════════════════════ */
-async function carregarTudo(){
-  allData = await fetchTodos();
-  renderKPIs(allData);
-  renderAtendimentos(allData);
-  renderFinanceiro(allData);
-  renderEquipe(allData);
-  renderExecutivo();
-}
+async function rodar(){
+  const ano = document.getElementById("ano").value;
+  document.getElementById("log").textContent = `Ano: ${ano||"Todos"}\nRodando testes...\n`;
+  document.getElementById("status").textContent = "Carregando...";
+  document.querySelector("#tbl tbody").innerHTML = "";
+  document.getElementById("cards").innerHTML = "";
 
-/* ── KPIs ── */
-function renderKPIs(rows){
-  const cliCount = {};
-  rows.forEach(r=>{ if(r.cliente) cliCount[r.cliente]=(cliCount[r.cliente]||0)+1; });
-  const totalCli = Object.keys(cliCount).length;
-  const retornos = Object.values(cliCount).filter(v=>v>1).length;
-  const receita  = rows.reduce((s,r)=>s+(r.valor||0),0);
-  const comissao = rows.reduce((s,r)=>s+(r.comissao||0),0);
-  const ticket   = rows.length ? receita/rows.length : 0;
+  const testes = [
+    {label:"1. Sem nenhum filtro",                      situacao:"none",        valor:"none"},
+    {label:"2. Situacao: NOT IN (NC, AC)",               situacao:"not_nc_ac",   valor:"none"},
+    {label:"3. Situacao: OR explícito (null,-,conf,nenhum)", situacao:"or_explicit",valor:"none"},
+    {label:"4. NOT IN (NC,AC) + valor > 0",              situacao:"not_nc_ac",   valor:"gt0"},
+    {label:"5. NOT IN (NC,AC) + valor >= 0",             situacao:"not_nc_ac",   valor:"gte0"},
+    {label:"6. NOT IN (NC,AC) + valor not null",         situacao:"not_nc_ac",   valor:"notnull"},
+    {label:"7. OR explícito + valor > 0",                situacao:"or_explicit",  valor:"gt0"},
+    {label:"8. OR explícito + valor not null",           situacao:"or_explicit",  valor:"notnull"},
+  ];
 
-  document.getElementById("kAtend").textContent    = fmtN(rows.length);
-  document.getElementById("kReceita").textContent  = fmtM(receita);
-  document.getElementById("kComissao").textContent = fmtM(comissao);
-  document.getElementById("kTicket").textContent   = fmtM(ticket);
-  document.getElementById("kClientes").textContent = fmtN(totalCli);
-  document.getElementById("kRetornos").textContent = fmtN(retornos);
-}
+  const resultados = [];
+  for(const t of testes){
+    const r = await testar(t.label, {...t, ano});
+    resultados.push(r);
+  }
 
-/* ════════════════════════
-   ATENDIMENTOS
-════════════════════════ */
-async function renderAtendimentos(rows){
-  const totAtend = rows.length||1;
-
-  /* Por profissional */
-  const profMap = {};
-  rows.forEach(r=>{ if(r.profissional) profMap[r.profissional]=(profMap[r.profissional]||0)+1; });
-  const rankProf = Object.entries(profMap).sort((a,b)=>b[1]-a[1]);
-  document.querySelector("#tblProf tbody").innerHTML =
-    rankProf.map(([p,n])=>`<tr>
-      <td>${p}</td>
-      <td class="num">${fmtN(n)}</td>
-      <td class="num">
-        <div class="pct-bar">
-          <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(n/totAtend*100).toFixed(1)}%"></div></div>
-          <span style="min-width:38px">${fmtP(n/totAtend*100)}</span>
-        </div>
-      </td>
-    </tr>`).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">100%</td></tr>`;
-
-  /* Por serviço */
-  const servMap = {};
-  rows.forEach(r=>{ if(r.servico) servMap[r.servico]=(servMap[r.servico]||0)+1; });
-  const rankServ = Object.entries(servMap).sort((a,b)=>b[1]-a[1]);
-  document.querySelector("#tblServ tbody").innerHTML =
-    rankServ.map(([s,n])=>`<tr>
-      <td>${s}</td>
-      <td class="num">${fmtN(n)}</td>
-      <td class="num">
-        <div class="pct-bar">
-          <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(n/totAtend*100).toFixed(1)}%;background:#7c3aed"></div></div>
-          <span style="min-width:38px">${fmtP(n/totAtend*100)}</span>
-        </div>
-      </td>
-    </tr>`).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">100%</td></tr>`;
-
-  /* Por Ano/Mês — busca histórico completo sem filtro de ano */
-  const anoMesData = await fetchTodos({ano:"",mes:"",prof: getFiltro().prof, serv: getFiltro().serv});
-  const anoMap = {};
-  anoMesData.forEach(r=>{
-    if(!r.data)return;
-    const [y,m] = r.data.split("-");
-    if(!anoMap[y]) anoMap[y]={total:0,meses:{}};
-    anoMap[y].total++;
-    anoMap[y].meses[m]=(anoMap[y].meses[m]||0)+1;
-  });
-  const anos = Object.keys(anoMap).sort().reverse();
-
-  // Monta tbody sem aninhar tbody dentro de tbody (HTML inválido)
-  // Usa linhas normais com classe para esconder/mostrar
-  const tbody = document.querySelector("#tblAnoMes tbody");
-  tbody.innerHTML = "";
-
-  anos.forEach(a=>{
-    const ly = String(parseInt(a)-1);
-    const totA = anoMap[a].total;
-    const totLY = anoMap[ly]?.total||0;
-    const yoy = totLY ? ((totA-totLY)/totLY*100) : null;
-    const yoyStr = yoy!==null
-      ? `<span class="${yoy>=0?'green':'red'}">${yoy>=0?'+':''}${yoy.toFixed(2)}%</span>`
-      : "—";
-
-    // Linha do ano
-    const trAno = document.createElement("tr");
-    trAno.style.cursor="pointer";
-    trAno.innerHTML = `
-      <td><span class="toggle-icon" id="ico-${a}">⊕</span> <strong>${a}</strong></td>
-      <td class="num">${fmtN(totA)}</td>
-      <td class="num">${totLY?fmtN(totLY):"—"}</td>
-      <td class="num">${yoyStr}</td>`;
-    trAno.addEventListener("click", ()=>toggleMesRows(a));
-    tbody.appendChild(trAno);
-
-    // Linhas dos meses (escondidas por padrão)
-    Object.entries(anoMap[a].meses).sort().forEach(([m,n])=>{
-      const lyM = anoMap[ly]?.meses?.[m]||0;
-      const yoyM = lyM ? ((n-lyM)/lyM*100) : null;
-      const trMes = document.createElement("tr");
-      trMes.className = `mes-row mes-${a}`;
-      trMes.style.display = "none";
-      trMes.style.background = "#fafafa";
-      trMes.innerHTML = `
-        <td style="padding-left:28px;color:#6b7280;font-weight:normal">${MESES_FULL[parseInt(m)-1]}</td>
-        <td class="num" style="font-weight:normal">${fmtN(n)}</td>
-        <td class="num" style="font-weight:normal">${lyM?fmtN(lyM):"—"}</td>
-        <td class="num">${yoyM!==null?`<span class="${yoyM>=0?'green':'red'}">${yoyM>=0?'+':''}${yoyM.toFixed(2)}%</span>`:"—"}</td>`;
-      tbody.appendChild(trMes);
-    });
+  // Renderizar tabela
+  const tbody = document.querySelector("#tbl tbody");
+  resultados.forEach(r=>{
+    const diffA = r.atend - PBI_ATEND;
+    const diffR = r.receita - PBI_RECEITA;
+    const match = diffA === 0;
+    const tag = match
+      ? `<span class="tag tag-ok">✓ Bate!</span>`
+      : `<span class="tag tag-diff">Δ ${diffA>0?'+':''}${diffA} atend</span>`;
+    tbody.innerHTML += `<tr>
+      <td>${r.label}</td>
+      <td><strong>${fmtN(r.atend)}</strong></td>
+      <td>${fmtM(r.receita)}</td>
+      <td>${tag} ${fmtM(diffR)} receita</td>
+    </tr>`;
   });
 
-  /* Top clientes */
-  const cliMap = {};
-  rows.forEach(r=>{
-    if(!r.cliente)return;
-    if(!cliMap[r.cliente]) cliMap[r.cliente]={n:0,val:0,com:0};
-    cliMap[r.cliente].n++;
-    cliMap[r.cliente].val+=(r.valor||0);
-    cliMap[r.cliente].com+=(r.comissao||0);
-  });
-  const topCli = Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
-  document.querySelector("#tblCli tbody").innerHTML =
-    topCli.map(([c,v])=>`<tr>
-      <td>${c}</td>
-      <td class="num">${fmtN(v.n)}</td>
-      <td class="num">${fmtN(v.n-1)}</td>
-      <td class="num">${fmtM(v.com)}</td>
-      <td class="num">${fmtM(v.n?v.val/v.n:0)}</td>
-      <td class="num">${fmtP(v.n/totAtend*100)}</td>
-    </tr>`).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num"></td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0)/totAtend)}</td><td class="num">100%</td></tr>`;
+  // Cards com melhor resultado
+  const melhor = resultados.find(r=>r.atend===PBI_ATEND) || resultados[0];
+  document.getElementById("cards").innerHTML = `
+    <div class="card">
+      <h3>Power BI (referência)</h3>
+      <div class="num">${fmtN(PBI_ATEND)}</div>
+      <div class="sub">${fmtM(PBI_RECEITA)}</div>
+    </div>
+    <div class="card">
+      <h3>Sem nenhum filtro</h3>
+      <div class="num">${fmtN(resultados[0].atend)}</div>
+      <div class="sub">${fmtM(resultados[0].receita)}</div>
+    </div>
+    <div class="card">
+      <h3>Melhor resultado encontrado</h3>
+      <div class="num ${melhor.atend===PBI_ATEND?'green':'red'}">${fmtN(melhor.atend)}</div>
+      <div class="sub">${melhor.label}</div>
+    </div>
+  `;
 
-  /* Por hora */
-  const horaMap = {};
-  rows.forEach(r=>{
-    if(!r.hora_inicio)return;
-    const h=parseInt(r.hora_inicio.split(":")[0]);
-    if(h>=7&&h<=23) horaMap[h]=(horaMap[h]||0)+1;
-  });
-  const maxH = Math.max(...Object.values(horaMap),1);
-  document.getElementById("horaGrid").innerHTML =
-    Array.from({length:17},(_,i)=>i+7).map(h=>{
-      const n=horaMap[h]||0;
-      const pct=(n/maxH*100).toFixed(0);
-      return`<div class="hora-label">${h}:00</div>
-      <div class="hora-bar-wrap">
-        <div class="hora-bar-bg"><div class="hora-bar-fill" style="width:${pct}%"></div></div>
-        <span class="hora-count">${fmtN(n)}</span>
-      </div>`;
-    }).join("");
+  document.getElementById("status").textContent = "Concluído!";
+  log("\nFinalizado.");
 }
-
-function toggleMesRows(ano){
-  const rows = document.querySelectorAll(`.mes-${ano}`);
-  const ico  = document.getElementById(`ico-${ano}`);
-  const hidden = rows.length && rows[0].style.display==="none";
-  rows.forEach(r=>r.style.display=hidden?"":"none");
-  if(ico) ico.textContent=hidden?"⊖":"⊕";
-}
-
-/* ════════════════════════
-   FINANCEIRO
-════════════════════════ */
-function renderFinanceiro(rows){
-  /* Chart receita vs comissão por mês */
-  const recMes=Array(12).fill(0), comMes=Array(12).fill(0);
-  rows.forEach(r=>{
-    if(!r.data)return;
-    const m=parseInt(r.data.split("-")[1])-1;
-    recMes[m]+=(r.valor||0); comMes[m]+=(r.comissao||0);
-  });
-  mkChart("chartRecMes",{type:"bar",data:{labels:MESES,datasets:[
-    {label:"Receita",data:recMes,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1},
-    {label:"Comissão",data:comMes,backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1},
-  ]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
-
-  /* Receita por serviço */
-  const servMap={};
-  rows.forEach(r=>{ if(!r.servico)return; if(!servMap[r.servico])servMap[r.servico]={n:0,rec:0}; servMap[r.servico].n++;servMap[r.servico].rec+=(r.valor||0); });
-  const rankS=Object.entries(servMap).sort((a,b)=>b[1].rec-a[1].rec);
-  document.querySelector("#tblRecServ tbody").innerHTML =
-    rankS.map(([s,v])=>`<tr><td>${s}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(rankS.reduce((s,[,v])=>s+v.n,0))}</td><td class="num">${fmtM(rankS.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num"></td></tr>`;
-
-  /* Histórico por ano — busca sem filtro */
-  renderRecAno();
-
-  /* Receita por profissional */
-  const totAt=rows.length||1;
-  const profMap={};
-  rows.forEach(r=>{ if(!r.profissional)return; if(!profMap[r.profissional])profMap[r.profissional]={n:0,rec:0,com:0,cli:new Set()}; profMap[r.profissional].n++;profMap[r.profissional].rec+=(r.valor||0);profMap[r.profissional].com+=(r.comissao||0);if(r.cliente)profMap[r.profissional].cli.add(r.cliente); });
-  const rankP=Object.entries(profMap).sort((a,b)=>b[1].rec-a[1].rec);
-  document.querySelector("#tblRecProf tbody").innerHTML =
-    rankP.map(([p,v])=>`<tr><td>${p}</td><td class="num">${fmtN(v.cli.size)}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`).join("") +
-    `<tr><td>Total</td><td class="num"></td><td class="num">${fmtN(totAt)}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num"></td><td class="num">100%</td></tr>`;
-}
-
-async function renderRecAno(){
-  const hist = await fetchTodos({ano:"",mes:"",prof:"",serv:""});
-  const anoMap={};
-  hist.forEach(r=>{ if(!r.data)return; const a=r.data.split("-")[0]; if(!anoMap[a])anoMap[a]={n:0,rec:0,com:0}; anoMap[a].n++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0); });
-  document.querySelector("#tblRecAno tbody").innerHTML =
-    Object.entries(anoMap).sort().reverse().map(([a,v])=>`<tr><td><strong>${a}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(Object.values(anoMap).reduce((s,v)=>s+v.n,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.rec,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.com,0))}</td><td class="num"></td></tr>`;
-}
-
-/* ════════════════════════
-   EQUIPE
-════════════════════════ */
-function renderEquipe(rows){
-  const totAt=rows.length||1;
-  const profMap={};
-  rows.forEach(r=>{
-    const p=r.profissional;if(!p)return;
-    if(!profMap[p])profMap[p]={n:0,rec:0,com:0,cli:{},q1:0,q2:0};
-    profMap[p].n++;profMap[p].rec+=(r.valor||0);profMap[p].com+=(r.comissao||0);
-    if(r.cliente)profMap[p].cli[r.cliente]=(profMap[p].cli[r.cliente]||0)+1;
-    if(r.data){const d=parseInt(r.data.split("-")[2]);if(d<=15)profMap[p].q1++;else profMap[p].q2++;}
-  });
-  const rank=Object.entries(profMap).sort((a,b)=>b[1].n-a[1].n).slice(0,15);
-
-  mkChart("chartEquipe",{type:"bar",data:{labels:rank.map(([p])=>p),datasets:[{label:"Atendimentos",data:rank.map(([,v])=>v.n),backgroundColor:"rgba(37,99,235,.75)",borderColor:"#2563eb",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
-
-  mkChart("chartQuinz",{type:"bar",data:{labels:rank.map(([p])=>p),datasets:[
-    {label:"1ª Quinzena",data:rank.map(([,v])=>v.q1),backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1},
-    {label:"2ª Quinzena",data:rank.map(([,v])=>v.q2),backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1},
-  ]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{beginAtZero:true}}}});
-
-  document.querySelector("#tblEquipe tbody").innerHTML =
-    rank.map(([p,v])=>{
-      const ret=Object.values(v.cli).filter(x=>x>1).length;
-      const pctRet=Object.keys(v.cli).length?((ret/Object.keys(v.cli).length)*100).toFixed(1):0;
-      return`<tr><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${pctRet}%</td><td class="num">${fmtN(v.q1)}</td><td class="num">${fmtN(v.q2)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
-    }).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(totAt)}</td><td class="num"></td><td class="num"></td><td class="num">${fmtN(rank.reduce((s,[,v])=>s+v.q1,0))}</td><td class="num">${fmtN(rank.reduce((s,[,v])=>s+v.q2,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.com,0))}</td><td class="num"></td><td class="num">100%</td></tr>`;
-}
-
-/* ════════════════════════
-   EXECUTIVO
-════════════════════════ */
-async function renderExecutivo(){
-  const hist = await fetchTodos({ano:"",mes:"",prof:"",serv:""});
-  const anoMap={};
-  hist.forEach(r=>{
-    if(!r.data)return;
-    const a=r.data.split("-")[0];
-    if(!anoMap[a])anoMap[a]={n:0,rec:0,com:0};
-    anoMap[a].n++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0);
-  });
-  const anos=Object.keys(anoMap).sort();
-
-  mkChart("chartEvolAtend",{type:"bar",data:{labels:anos,datasets:[{label:"Atendimentos",data:anos.map(a=>anoMap[a].n),backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
-  mkChart("chartEvolRec",{type:"bar",data:{labels:anos,datasets:[{label:"Receita",data:anos.map(a=>anoMap[a].rec),backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
-
-  // Tabela executiva por profissional (todos os anos)
-  const profMap={};
-  hist.forEach(r=>{
-    const p=r.profissional;if(!p)return;
-    if(!profMap[p])profMap[p]={n:0,rec:0,com:0,cli:new Set()};
-    profMap[p].n++;profMap[p].rec+=(r.valor||0);profMap[p].com+=(r.comissao||0);
-    if(r.cliente)profMap[p].cli.add(r.cliente);
-  });
-  const totAt=hist.length||1;
-  const rank=Object.entries(profMap).sort((a,b)=>b[1].n-a[1].n);
-  document.querySelector("#tblExec tbody").innerHTML =
-    rank.map(([p,v])=>{
-      const ret=v.cli.size;
-      return`<tr><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
-    }).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(totAt)}</td><td class="num"></td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.com,0))}</td><td class="num"></td><td class="num"></td><td class="num">100%</td></tr>`;
-}
-
-/* ── INIT ── */
-document.addEventListener("DOMContentLoaded",async()=>{
-  await initFiltros();
-  await carregarTudo();
-});
 </script>
 </body>
 </html>

@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
-<script src="assets/js/auth-check.js" data-role="operadora"></script>
+<script src="assets/js/auth.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -138,48 +138,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
 .btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
-
-/* ── PROGRESS CIRCLE ── */
-.progress-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:default;}
-.progress-circle{width:42px;height:42px;transform:rotate(-90deg);}
-.progress-circle .bg{fill:none;stroke:#e5e7eb;stroke-width:4;}
-.progress-circle .fill{fill:none;stroke:#22c55e;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,stroke .3s;}
-.progress-pct{position:absolute;font-size:10px;font-weight:700;color:#111827;}
-.progress-tooltip{
-  display:none;position:absolute;top:calc(100% + 8px);right:0;
-  background:#1f2937;color:#fff;border-radius:10px;
-  padding:12px 14px;font-size:12px;width:220px;z-index:100;
-  box-shadow:0 8px 24px rgba(0,0,0,.2);line-height:1.6;
-}
-.progress-tooltip::before{
-  content:"";position:absolute;top:-6px;right:14px;
-  border:6px solid transparent;border-bottom-color:#1f2937;border-top:none;
-}
-.progress-wrap:hover .progress-tooltip{display:block;}
-.tooltip-item{display:flex;align-items:center;gap:6px;padding:2px 0;}
-.tooltip-item.done{color:#86efac;}
-.tooltip-item.missing{color:#fca5a5;}
-
-/* ── PROGRESS CIRCLE ── */
-.progress-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:default;}
-.progress-circle{width:42px;height:42px;transform:rotate(-90deg);}
-.progress-circle .bg{fill:none;stroke:#e5e7eb;stroke-width:4;}
-.progress-circle .fill{fill:none;stroke:#22c55e;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,stroke .3s;}
-.progress-pct{position:absolute;font-size:10px;font-weight:700;color:#111827;}
-.progress-tooltip{
-  display:none;position:absolute;top:calc(100% + 8px);right:0;
-  background:#1f2937;color:#fff;border-radius:10px;
-  padding:12px 14px;font-size:12px;width:220px;z-index:100;
-  box-shadow:0 8px 24px rgba(0,0,0,.2);line-height:1.6;
-}
-.progress-tooltip::before{
-  content:"";position:absolute;top:-6px;right:14px;
-  border:6px solid transparent;border-bottom-color:#1f2937;border-top:none;
-}
-.progress-wrap:hover .progress-tooltip{display:block;}
-.tooltip-item{display:flex;align-items:center;gap:6px;padding:2px 0;}
-.tooltip-item.done{color:#86efac;}
-.tooltip-item.missing{color:#fca5a5;}
 </style>
 </head>
 
@@ -195,7 +153,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
     <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()">
     <select id="filtroStatus">
       <option value="">Todos os status</option>
-      <option value="Ativo" selected>Ativo</option>
+      <option value="Ativo">Ativo</option>
       <option value="Inativo">Inativo</option>
     </select>
   </div>
@@ -217,18 +175,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 
   <div class="modal-header">
     <h2 id="modalTitulo">Novo Cadastro</h2>
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div class="progress-wrap" id="progressWrap" style="display:none">
-        <svg class="progress-circle" viewBox="0 0 42 42">
-          <circle class="bg" cx="21" cy="21" r="18"/>
-          <circle class="fill" id="progressFill" cx="21" cy="21" r="18"
-            stroke-dasharray="113" stroke-dashoffset="113"/>
-        </svg>
-        <span class="progress-pct" id="progressPct">0%</span>
-        <div class="progress-tooltip" id="progressTooltip"></div>
-      </div>
-      <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
-    </div>
+    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
   </div>
 
   <div class="modal-body">
@@ -329,6 +276,9 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
             <label>Cargo</label>
             <select id="cargo">
               <option value="">Selecione</option>
+              <option>Terapeuta Feminina</option><option>Terapeuta Masculino</option>
+              <option>Gerente</option><option>Atendente</option>
+              <option>Recepcionista</option><option>Faxineira</option><option>Analista</option>
             </select>
           </div>
           <div class="field">
@@ -347,14 +297,14 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
           <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
           <div class="field">
             <label>Tem folga semanal?</label>
-            <select id="tem_folga" onchange="toggleDiaFolga(this)">
+            <select id="tem_folga">
               <option value="">Selecione</option><option>Sim</option><option>Não</option>
             </select>
           </div>
-          <div class="field" id="campo_dia_folga">
-            <label>Dia da Folga *</label>
+          <div class="field">
+            <label>Dia da Folga</label>
             <select id="dia_folga">
-              <option value="">Selecione o dia</option>
+              <option value="">Selecione</option>
               <option>Segunda</option><option>Terça</option><option>Quarta</option>
               <option>Quinta</option><option>Sexta</option><option>Sábado</option>
             </select>
@@ -403,13 +353,8 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 
 </div>
 </div>
+
 <script>
-
-const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
-
 let cpfAtual = null;
 
 const campos = [
@@ -485,8 +430,6 @@ function mudarTab(tab, btn){
   document.querySelectorAll(".side-btn").forEach(el => el.classList.remove("active"));
   document.getElementById("tab-" + tab).classList.add("active");
   btn.classList.add("active");
-  abaAtiva = tab;
-  atualizarProgresso();
 }
 
 /* ── FORM HELPERS ── */
@@ -512,9 +455,6 @@ function setForm(data){
   const campo = document.getElementById("campo_data_inativacao");
   if(campo) campo.style.display = data.status === "Inativo" ? "" : "none";
 
-  const campoDia = document.getElementById("campo_dia_folga");
-  if(campoDia) campoDia.style.display = data.tem_folga === "Sim" ? "" : "none";
-
   ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id => {
     const el = document.getElementById(id);
     if(el && el.value) el.dispatchEvent(new Event('input'));
@@ -524,7 +464,7 @@ function setForm(data){
 /* ── TABELA PRINCIPAL ── */
 async function carregar(){
   const statusFiltro = document.getElementById("filtroStatus").value;
-  let query = supabaseClient.from("terapeutas")
+  let query = client.from("terapeutas")
     .select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro) query = query.eq("status", statusFiltro);
   const {data, error} = await query;
@@ -560,8 +500,6 @@ function resetModal(){
   campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
   document.getElementById("hora_entrada").value = "09:00";
   document.getElementById("hora_saida").value   = "18:00";
-  const campoDia = document.getElementById("campo_dia_folga");
-  if(campoDia) campoDia.style.display = "none";
   mudarTab("pessoais", document.querySelector(".side-btn"));
 }
 
@@ -569,25 +507,19 @@ function abrirNovo(){
   cpfAtual = null;
   resetModal();
   document.getElementById("modalTitulo").textContent = "Novo Cadastro";
-  document.getElementById("tabDocsBtn").style.display = "";
-  document.getElementById("tab-docs").style.display   = "";
-  document.getElementById("progressWrap").style.display = "inline-flex";
-  atualizarProgresso();
+  document.getElementById("tabDocsBtn").style.display = "none";
   document.getElementById("modal").style.display = "flex";
 }
 
 async function editar(cpf){
   cpfAtual = cpf;
-  const {data, error} = await supabaseClient.from("terapeutas").select("*").eq("cpf", cpf).single();
+  const {data, error} = await client.from("terapeutas").select("*").eq("cpf", cpf).single();
   if(error){ console.error(error); return; }
 
   resetModal();
   setForm(data);
   document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display = "";
-  document.getElementById("tab-docs").style.display   = "";
-  document.getElementById("progressWrap").style.display = "inline-flex";
-  setTimeout(atualizarProgresso, 50);
   carregarDocs(cpf);
   document.getElementById("modal").style.display = "flex";
 }
@@ -604,33 +536,25 @@ async function salvar(){
     alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");
     return;
   }
-  if(!validarFolga()) return;
 
   let error;
 
   if(cpfAtual){
-    // sempre faz update sem mexer no CPF (chave primária)
-    const updatePayload = {...payload};
-    delete updatePayload.cpf;
-    ({error} = await supabaseClient.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
-  } else {
-    // novo cadastro — CPF é obrigatório
-    if(!payload.cpf){ alert("CPF é obrigatório."); return; }
-
-    // verificar se CPF já existe
-    const {data: existente} = await supabaseClient
-      .from("terapeutas").select("cpf").eq("cpf", payload.cpf.replace(/\D/g,"")).limit(1);
-    if(existente && existente.length > 0){
-      alert("CPF já cadastrado. Verifique o número informado.");
-      document.getElementById("cpf").focus();
-      return;
+    const novoCpf = payload.cpf;
+    if(novoCpf && novoCpf !== cpfAtual){
+      await client.from("terapeutas").delete().eq("cpf", cpfAtual);
+      ({error} = await client.from("terapeutas").insert(payload));
+      if(!error) cpfAtual = novoCpf;
+    } else {
+      const updatePayload = {...payload};
+      delete updatePayload.cpf;
+      ({error} = await client.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
     }
-
-    ({error} = await supabaseClient.from("terapeutas").insert(payload));
+  } else {
+    ({error} = await client.from("terapeutas").insert(payload));
     if(!error){
       cpfAtual = payload.cpf;
       document.getElementById("tabDocsBtn").style.display = "";
-      document.getElementById("tab-docs").style.display   = "";
       carregarDocs(cpfAtual);
     }
   }
@@ -643,7 +567,7 @@ async function salvar(){
 async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
 
-  const {data: docs} = await supabaseClient
+  const {data: docs} = await client
     .from("documentos").select("id, url").eq("equipe_id", cpf);
 
   if(docs && docs.length > 0){
@@ -652,13 +576,13 @@ async function excluir(cpf){
       .filter(Boolean)
       .map(p => decodeURIComponent(p));
     if(paths.length > 0)
-      await supabaseClient.storage.from("documentos").remove(paths);
-    await supabaseClient.from("documentos").delete().eq("equipe_id", cpf);
+      await client.storage.from("documentos").remove(paths);
+    await client.from("documentos").delete().eq("equipe_id", cpf);
   }
 
-  await supabaseClient.from("solicitacoes").delete().eq("terapeuta_cpf", cpf);
+  await client.from("solicitacoes").delete().eq("terapeuta_cpf", cpf);
 
-  const {error} = await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
+  const {error} = await client.from("terapeutas").delete().eq("cpf", cpf);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
 
   carregar();
@@ -678,7 +602,7 @@ function iconeDoc(nome){
 }
 
 async function carregarDocs(cpf){
-  const {data, error} = await supabaseClient
+  const {data, error} = await client
     .from("documentos").select("*").eq("equipe_id", cpf).order("created_at",{ascending:false});
 
   const lista = document.getElementById("docLista");
@@ -722,12 +646,12 @@ async function uploadDoc(){
   statusEl.style.display = "block";
 
   const fileName = `${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
-  const {error: uploadError} = await supabaseClient.storage.from("documentos").upload(fileName, file);
+  const {error: uploadError} = await client.storage.from("documentos").upload(fileName, file);
 
   if(uploadError){ statusEl.style.display = "none"; alert("Erro no upload: " + uploadError.message); return; }
 
-  const {data: urlData} = supabaseClient.storage.from("documentos").getPublicUrl(fileName);
-  const {error} = await supabaseClient.from("documentos").insert({
+  const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
+  const {error} = await client.from("documentos").insert({
     equipe_id: cpfAtual, tipo, nome_arquivo: file.name, url: urlData.publicUrl
   });
 
@@ -740,40 +664,11 @@ async function uploadDoc(){
 async function excluirDoc(id, url){
   if(!confirm("Excluir este documento?")) return;
   const path = url.split("/storage/v1/object/public/documentos/")[1];
-  if(path) await supabaseClient.storage.from("documentos").remove([decodeURIComponent(path)]);
-  await supabaseClient.from("documentos").delete().eq("id", id);
+  if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
+  await client.from("documentos").delete().eq("id", id);
   const el = document.getElementById("doc-" + id);
   if(el) el.remove();
   carregarDocs(cpfAtual);
-}
-
-/* ── FOLGA ── */
-function toggleDiaFolga(select){
-  const campo = document.getElementById("campo_dia_folga");
-  const dia   = document.getElementById("dia_folga");
-  if(select.value === "Sim"){
-    campo.style.display = "";
-    campo.style.border  = "none";
-    if(!dia.value) dia.style.border = "1px solid #f59e0b"; // destaque amarelo
-  } else {
-    campo.style.display = "none";
-    dia.value = "";
-    dia.style.border = "";
-  }
-}
-
-// validar dia obrigatório ao salvar
-function validarFolga(){
-  const temFolga = document.getElementById("tem_folga").value;
-  const diaFolga = document.getElementById("dia_folga").value;
-  if(temFolga === "Sim" && !diaFolga){
-    document.getElementById("dia_folga").style.border = "2px solid #ef4444";
-    document.getElementById("dia_folga").focus();
-    alert("Selecione o dia da folga.");
-    return false;
-  }
-  document.getElementById("dia_folga").style.border = "";
-  return true;
 }
 
 /* ── STATUS / INATIVACAO ── */
@@ -789,111 +684,12 @@ function aoMudarStatus(select){
   }
 }
 
-/* ── PROGRESSO ── */
-// Campos por aba — o progresso mostra os campos da aba ATIVA
-const CAMPOS_POR_ABA = {
-  pessoais:  [
-    {id:"nome_completo",    label:"Nome Completo"},
-    {id:"nome_profissional",label:"Nome Profissional"},
-    {id:"cpf",              label:"CPF"},
-    {id:"email",            label:"Email"},
-  ],
-  contatos:  [
-    {id:"telefone",         label:"Telefone"},
-  ],
-  endereco:  [
-    {id:"cep",              label:"CEP"},
-    {id:"rua",              label:"Rua"},
-    {id:"cidade",           label:"Cidade"},
-    {id:"uf",               label:"UF"},
-  ],
-  pagamento: [
-    {id:"pix_tipo",         label:"Tipo PIX"},
-    {id:"pix_chave",        label:"Chave PIX"},
-  ],
-  funcional: [
-    {id:"cargo",            label:"Cargo"},
-    {id:"status",           label:"Status"},
-    {id:"data_inicio",      label:"Data de Início"},
-  ],
-  docs: [],
-};
-
-// Todos os campos para o tooltip geral
-const TODOS_CAMPOS = Object.values(CAMPOS_POR_ABA).flat();
-
-let abaAtiva = "pessoais";
-
-function atualizarProgresso(){
-  if(document.getElementById("progressWrap").style.display === "none") return;
-
-  // Progresso GERAL (todos os campos)
-  const total  = TODOS_CAMPOS.length;
-  const feitos = TODOS_CAMPOS.filter(c => {
-    const el = document.getElementById(c.id);
-    return el && el.value && el.value.trim() !== "";
-  });
-  const pct    = total > 0 ? Math.round((feitos.length / total) * 100) : 0;
-  const circum = 113;
-  const offset = circum - (circum * pct / 100);
-  const cor    = pct === 100 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
-
-  document.getElementById("progressPct").textContent = pct + "%";
-  document.getElementById("progressPct").style.color = cor;
-  const fill = document.getElementById("progressFill");
-  fill.style.strokeDashoffset = offset;
-  fill.style.stroke = cor;
-
-  // Tooltip: mostra campos da aba ativa
-  const camposAba  = CAMPOS_POR_ABA[abaAtiva] || [];
-  const feitosIds  = feitos.map(c => c.id);
-  const tooltip    = document.getElementById("progressTooltip");
-
-  if(camposAba.length === 0){
-    tooltip.innerHTML = "<div style='color:#e5e7eb;font-size:12px'>Nenhum campo obrigatório nesta aba.</div>";
-  } else {
-    const abaFeitos   = camposAba.filter(c => feitosIds.includes(c.id));
-    const abaPct      = Math.round((abaFeitos.length / camposAba.length) * 100);
-    tooltip.innerHTML = `<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>
-        Esta aba: ${abaPct}% · Geral: ${pct}%
-      </div>`
-      + camposAba.map(c => {
-        const ok = feitosIds.includes(c.id);
-        return `<div class="tooltip-item ${ok?'done':'missing'}">
-          <i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i> ${c.label}
-        </div>`;
-      }).join("")
-      + "<div style='border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px'>Passe para outras abas para ver os campos delas.</div>";
-  }
-}
-
-/* ── PARÂMETROS ── */
-async function carregarParametros(){
-  const CARGOS_DEFAULT = ["Terapeuta Feminina","Terapeuta Masculino","Gerente","Atendente","Recepcionista","Faxineira","Analista"];
-  const {data} = await supabaseClient.from("parametros").select("valor")
-    .eq("tipo","cargos").eq("ativo",true).order("valor");
-  const lista = data?.length ? data.map(p => p.valor) : CARGOS_DEFAULT;
-  const sel = document.getElementById("cargo");
-  sel.innerHTML = "<option value=''>Selecione</option>";
-  lista.forEach(c => sel.innerHTML += `<option>${c}</option>`);
-}
-
 /* ── INIT ── */
 document.addEventListener('DOMContentLoaded', () => {
   aplicarMascaras();
-  carregarParametros();
   document.getElementById("filtroStatus").addEventListener("change", carregar);
-
-  // atualizar progresso ao digitar
-  TODOS_CAMPOS.forEach(c => {
-    const el = document.getElementById(c.id);
-    if(el) el.addEventListener("input",  atualizarProgresso);
-    if(el) el.addEventListener("change", atualizarProgresso);
-  });
-
   carregar();
 });
 </script>
-<script src="assets/sidebar/sidebar.js"></script>
 </body>
 </html>

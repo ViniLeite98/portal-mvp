@@ -1,9 +1,13 @@
 // sidebar.js — menu dinâmico por role
 // Depende de window.usuarioLogado definido pelo auth.js
 
-// Função logout — definida aqui para estar disponível quando o sidebar renderiza
+// Função logout — usa client se disponível, senão limpa sessão manualmente
 window.logout = async function(){
-  await client.auth.signOut();
+  try {
+    if(typeof client !== "undefined") await client.auth.signOut();
+  } catch(e){}
+  // Limpar storage do Supabase manualmente como fallback
+  Object.keys(localStorage).forEach(k=>{ if(k.startsWith("sb-")) localStorage.removeItem(k); });
   window.location.href = "login.html";
 };
 

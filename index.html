@@ -527,8 +527,16 @@ async function renderAtendimentos(rows){
     </tr>`).join("") +
     `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">100%</td></tr>`;
 
-  /* Por Ano/Mês — busca histórico completo sem filtro de ano */
-  const anoMesData = await fetchTodos({ano:"",mes:"",prof: getFiltro().prof, serv: getFiltro().serv});
+  /* Por Ano/Mês — histórico completo, aplicando seleção interativa */
+  const anoMesRaw = await fetchTodos({ano:"",mes:""});
+  const anoMesData = selecao.tipo
+    ? anoMesRaw.filter(r=>{
+        if(selecao.tipo==='prof') return r.profissional===selecao.valor;
+        if(selecao.tipo==='serv') return r.servico===selecao.valor;
+        return true;
+      })
+    : anoMesRaw;
+
   const anoMap = {};
   anoMesData.forEach(r=>{
     if(!r.data)return;
@@ -539,7 +547,7 @@ async function renderAtendimentos(rows){
     anoMap[y].meses[m]=(anoMap[y].meses[m]||0)+1;
     anoMap[y].mesRec[m]=(anoMap[y].mesRec[m]||0)+(r.valor||0);
   });
-  window._anoMapGlobal = anoMap; // guardar para toggle
+  window._anoMapGlobal = anoMap;
   window._modoAnoMes = window._modoAnoMes || 'atend';
   const anos = Object.keys(anoMap).sort().reverse();
 
@@ -709,7 +717,14 @@ function renderFinanceiro(rows){
 }
 
 async function renderRecAno(){
-  const hist = await fetchTodos({ano:"",mes:"",prof:"",serv:""});
+  const histRaw = await fetchTodos({ano:"",mes:""});
+  const hist = selecao.tipo
+    ? histRaw.filter(r=>{
+        if(selecao.tipo==='prof') return r.profissional===selecao.valor;
+        if(selecao.tipo==='serv') return r.servico===selecao.valor;
+        return true;
+      })
+    : histRaw;
   const anoMap={};
   hist.forEach(r=>{ if(!r.data)return; const a=r.data.split("-")[0]; if(!anoMap[a])anoMap[a]={n:0,rec:0,com:0}; anoMap[a].n++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0); });
   document.querySelector("#tblRecAno tbody").innerHTML =
@@ -752,7 +767,19 @@ function renderEquipe(rows){
    EXECUTIVO
 ════════════════════════ */
 async function renderExecutivo(rowsFiltradas){
-  const hist = rowsFiltradas || await fetchTodos({ano:"",mes:"",prof:"",serv:""});
+  let hist;
+  if(rowsFiltradas){
+    hist = rowsFiltradas;
+  } else {
+    const histRaw = await fetchTodos({ano:"",mes:""});
+    hist = selecao.tipo
+      ? histRaw.filter(r=>{
+          if(selecao.tipo==='prof') return r.profissional===selecao.valor;
+          if(selecao.tipo==='serv') return r.servico===selecao.valor;
+          return true;
+        })
+      : histRaw;
+  }
   const anoMap={};
   hist.forEach(r=>{
     if(!r.data)return;

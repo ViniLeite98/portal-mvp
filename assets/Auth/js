@@ -1,0 +1,63 @@
+/**
+ * auth.js — Proteção de rotas por role
+ * Incluir em todas as páginas protegidas APÓS supabase.js
+ *
+ * Uso:
+ *   <script src="assets/js/supabase.js"></script>
+ *   <script src="assets/js/auth.js" data-role="admin"></script>
+ *
+ * data-role="admin"     → só admin acessa
+ * data-role="operadora" → admin e operadora acessam
+ * (sem data-role)       → qualquer autenticado acessa
+ */
+
+(async function(){
+  // Pegar o role exigido pela página
+  const scriptEl = document.currentScript;
+  const roleExigido = scriptEl?.getAttribute("data-role") || null;
+
+  // Verificar sessão
+  const {data:{session}, error} = await client.auth.getSession();
+
+  if(!session){
+    // Não logado → vai para login
+    window.location.href = "login.html";
+    return;
+  }
+
+  // Buscar perfil do usuário
+  const {data:perfil} = await client.from("perfis")
+    .select("role,nome,email")
+    .eq("id", session.user.id)
+    .single();
+
+  const role  = perfil?.role  || "operadora";
+  const nome  = perfil?.nome  || session.user.email;
+  const email = perfil?.email || session.user.email;
+
+  // Verificar permissão
+  if(roleExigido === "admin" && role !== "admin"){
+    // Não tem permissão → vai para página permitida
+    window.location.href = "fluxo_caixa.html";
+    return;
+  }
+
+  // Expor usuário globalmente para as páginas e sidebar.js usarem
+  window.usuarioLogado = {id: session.user.id, role, nome, email};
+
+  // Re-renderizar sidebar com dados do usuário
+  if(typeof window.renderSidebar === "function"){
+    if(document.readyState === "loading"){
+      document.addEventListener("DOMContentLoaded", window.renderSidebar);
+    } else {
+      window.renderSidebar();
+    }
+  }
+
+})();
+
+/* ── LOGOUT ── */
+async function logout(){
+  await client.auth.signOut();
+  window.location.href = "login.html";
+}

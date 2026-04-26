@@ -45,13 +45,14 @@
   // Expor usuário globalmente para as páginas e sidebar.js usarem
   window.usuarioLogado = {id: session.user.id, role, nome, email};
 
-  // Re-renderizar sidebar com dados do usuário
-  if(typeof window.renderSidebar === "function"){
-    if(document.readyState === "loading"){
-      document.addEventListener("DOMContentLoaded", window.renderSidebar);
-    } else {
-      window.renderSidebar();
-    }
+  // Re-renderizar sidebar agora que temos o usuário — garante que role correto é usado
+  const doRender = () => {
+    if(typeof window.renderSidebar === "function") window.renderSidebar();
+  };
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", doRender);
+  } else {
+    doRender();
   }
 
 })();

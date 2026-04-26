@@ -18,19 +18,26 @@
     return;
   }
 
-  // 2. Buscar perfil
-  const {data:perfil} = await client.from("perfis")
-    .select("role,nome,email")
-    .eq("id", session.user.id)
-    .single();
+  // 2. Buscar perfil — tentar até 3x se não achar (trigger pode demorar)
+  let perfil = null;
+  for(let i=0; i<3; i++){
+    const {data:p, error:e} = await client.from("perfis")
+      .select("role,nome,email")
+      .eq("id", session.user.id)
+      .single();
+    console.log("[auth] tentativa", i+1, "perfil:", p, "erro:", e?.message);
+    if(p){ perfil = p; break; }
+    await new Promise(r=>setTimeout(r,400));
+  }
 
   const role  = perfil?.role  || "operadora";
   const nome  = perfil?.nome  || perfil?.email || session.user.email;
   const email = perfil?.email || session.user.email;
+  console.log("[auth] role final:", role, "nome:", nome);
 
   // 3. Verificar permissão da página
   if(roleExigido === "admin" && role !== "admin"){
-    window.location.href = "fluxo_caixa.html";
+    window.location.href = "equipe.html";
     return;
   }
 

@@ -11,98 +11,99 @@ window.logout = async function(){
   const pag = window.location.pathname.split("/").pop() || "index.html";
 
   // Estrutura completa do menu
+  const TODOS = ["admin", "operadora"];
   const MENU = [
     {
       tipo: "link",
       href: "dashboard.html",
       icon: "fa-chart-line",
       label: "Dashboard",
-      roles: ["admin"],
+      roles: ["admin"], // só admin
     },
     { tipo: "sep" },
-    { tipo: "titulo", label: "CADASTROS", roles: ["admin"] },
+    { tipo: "titulo", label: "CADASTROS", roles: TODOS },
     {
       tipo: "link",
       href: "equipe.html",
       icon: "fa-users",
       label: "Equipe",
-      roles: ["admin"],
+      roles: TODOS,
     },
     {
       tipo: "link",
       href: "clientes.html",
       icon: "fa-user",
       label: "Clientes",
-      roles: ["admin"],
+      roles: TODOS,
     },
     {
       tipo: "link",
       href: "servicos.html",
       icon: "fa-hand-holding-heart",
       label: "Serviços",
-      roles: ["admin"],
+      roles: TODOS,
     },
     {
       tipo: "link",
       href: "certificacoes.html",
       icon: "fa-certificate",
       label: "Certificações",
-      roles: ["admin"],
+      roles: TODOS,
     },
-    { tipo: "sep", roles: ["admin"] },
-    { tipo: "titulo", label: "OPERACIONAL", roles: ["admin"] },
+    { tipo: "sep" },
+    { tipo: "titulo", label: "OPERACIONAL", roles: TODOS },
     {
       tipo: "link",
       href: "atendimentos.html",
       icon: "fa-calendar-check",
       label: "Atendimentos",
-      roles: ["admin"],
+      roles: TODOS,
     },
     {
       tipo: "link",
       href: "escalas.html",
       icon: "fa-calendar-days",
       label: "Escalas",
-      roles: ["admin"],
+      roles: TODOS,
     },
     {
       tipo: "link",
       href: "solicitacoes.html",
       icon: "fa-file-lines",
       label: "Solicitações",
-      roles: ["admin"],
+      roles: TODOS,
     },
     { tipo: "sep" },
-    { tipo: "titulo", label: "FINANCEIRO", roles: ["admin", "operadora"] },
+    { tipo: "titulo", label: "FINANCEIRO", roles: TODOS },
     {
       tipo: "link",
       href: "despesas.html",
       icon: "fa-receipt",
       label: "Despesas",
-      roles: ["admin"],
+      roles: TODOS,
     },
     {
       tipo: "link",
       href: "fluxo_caixa.html",
       icon: "fa-cash-register",
       label: "Fluxo de Caixa",
-      roles: ["admin", "operadora"],
+      roles: TODOS,
     },
     {
       tipo: "link",
       href: "estoque.html",
       icon: "fa-boxes-stacked",
       label: "Estoque",
-      roles: ["admin"],
+      roles: TODOS,
     },
-    { tipo: "sep", roles: ["admin"] },
-    { tipo: "titulo", label: "CONFIGURAÇÕES", roles: ["admin"] },
+    { tipo: "sep" },
+    { tipo: "titulo", label: "CONFIGURAÇÕES", roles: TODOS },
     {
       tipo: "link",
       href: "parametros.html",
       icon: "fa-sliders",
       label: "Parâmetros",
-      roles: ["admin"],
+      roles: TODOS,
     },
   ];
 
@@ -163,15 +164,15 @@ window.logout = async function(){
     el.innerHTML = renderSidebar(role, nome);
   }
 
-  // Se auth.js já rodou e definiu usuarioLogado, renderiza imediatamente
-  // Senão aguarda DOMContentLoaded (páginas sem auth.js, ex: login)
+  // Expor para auth.js chamar depois de setar usuarioLogado
+  window.renderSidebar = init;
+
+  // Aguardar DOM e tentar renderizar
+  // auth.js vai chamar renderSidebar() novamente após setar usuarioLogado
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
   } else {
     init();
   }
-
-  // Expor para auth.js chamar depois de setar usuarioLogado
-  window.renderSidebar = init;
 
 })();

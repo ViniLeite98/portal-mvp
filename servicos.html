@@ -148,14 +148,10 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/sidebar/sidebar.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/js/auth-check.js" data-role="admin"></script>
 <script>
-
-const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
 
 let dados = [];
 let idAtual = null;
@@ -164,27 +160,22 @@ let ordemAsc = true;
 
 const GRUPOS_DEFAULT = ["Nuru","Vivencia","Four Hands","Podolatria"];
 
-/* ── PARÂMETROS ── */
 async function carregarParametros(){
-  const {data} = await supabaseClient.from("parametros").select("valor")
+  const {data} = await client.from("parametros").select("valor")
     .eq("tipo","grupos_servico").eq("ativo",true).order("valor");
   const lista = data?.length ? data.map(p => p.valor) : GRUPOS_DEFAULT;
 
-  // popula select do modal
   const selGrupo = document.getElementById("grupo");
   selGrupo.innerHTML = "<option value=''>Selecione</option>";
   lista.forEach(g => selGrupo.innerHTML += `<option>${g}</option>`);
 
-  // popula filtro da tabela
   const selFiltro = document.getElementById("filtroGrupo");
   selFiltro.innerHTML = "<option value=''>Todos os grupos</option>";
   lista.forEach(g => selFiltro.innerHTML += `<option value="${g}">${g}</option>`);
 }
 
-/* ── HELPERS ── */
 function nomeServico(s){
-  const partes = [s.grupo, s.subgrupo, s.tempo ? s.tempo + " min" : ""];
-  return partes.filter(Boolean).join(" ");
+  return [s.grupo, s.subgrupo, s.tempo ? s.tempo + " min" : ""].filter(Boolean).join(" ");
 }
 function moeda(v){
   return Number(v||0).toLocaleString("pt-BR", {minimumFractionDigits:2});
@@ -193,15 +184,13 @@ function parseMoeda(v){
   return parseFloat((v||"0").replace(/\./g,"").replace(",",".")) || 0;
 }
 
-/* ── CARREGAR ── */
 async function carregar(){
-  const {data, error} = await supabaseClient.from("servicos").select("*");
+  const {data, error} = await client.from("servicos").select("*");
   if(error){ console.error(error); return; }
   dados = data || [];
   render();
 }
 
-/* ── RENDER ── */
 function render(){
   const termo        = (document.getElementById("buscaServico").value||"").toLowerCase();
   const statusFiltro = document.getElementById("filtroStatus").value;
@@ -239,8 +228,7 @@ function render(){
     const badge = s.status === "ativo"
       ? `<span class="badge badge-ativo">Ativo</span>`
       : `<span class="badge badge-inativo">Inativo</span>`;
-    tbody.innerHTML += `
-    <tr>
+    tbody.innerHTML += `<tr>
       <td>${nomeServico(s)}</td>
       <td>${s.tempo ? s.tempo + " min" : "-"}</td>
       <td>R$ ${moeda(s.valor)}</td>
@@ -254,7 +242,6 @@ function render(){
   });
 }
 
-/* ── ORDENAÇÃO ── */
 function ordenar(col){
   ordemColuna === col ? ordemAsc = !ordemAsc : (ordemColuna = col, ordemAsc = true);
   ["servico","tempo","valor","comissao"].forEach(c =>
@@ -264,7 +251,6 @@ function ordenar(col){
   render();
 }
 
-/* ── MODAL ── */
 function resetModal(){
   document.getElementById("grupo").value    = "";
   document.getElementById("subgrupo").value = "";
@@ -295,11 +281,8 @@ async function editar(id){
   document.getElementById("modal").style.display = "flex";
 }
 
-function fecharModal(){
-  document.getElementById("modal").style.display = "none";
-}
+function fecharModal(){ document.getElementById("modal").style.display = "none"; }
 
-/* ── SALVAR ── */
 async function salvar(){
   const payload = {
     grupo:    document.getElementById("grupo").value,
@@ -312,24 +295,22 @@ async function salvar(){
   if(!payload.grupo){ alert("Selecione o grupo do serviço."); return; }
   let error;
   if(idAtual){
-    ({error} = await supabaseClient.from("servicos").update(payload).eq("id", idAtual));
+    ({error} = await client.from("servicos").update(payload).eq("id", idAtual));
   } else {
-    ({error} = await supabaseClient.from("servicos").insert(payload));
+    ({error} = await client.from("servicos").insert(payload));
   }
-  if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
+  if(error){ alert("Erro ao salvar: " + error.message); return; }
   fecharModal();
   carregar();
 }
 
-/* ── EXCLUIR ── */
 async function excluir(id){
   if(!confirm("Excluir este serviço?")) return;
-  const {error} = await supabaseClient.from("servicos").delete().eq("id", id);
+  const {error} = await client.from("servicos").delete().eq("id", id);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
   carregar();
 }
 
-/* ── EXPORTAR ── */
 function exportarExcel(){
   const exportData = dados.map(s => ({
     "Serviço":       nomeServico(s),
@@ -350,7 +331,6 @@ function exportarExcel(){
   XLSX.writeFile(wb, "servicos.xlsx");
 }
 
-/* ── INIT ── */
 document.addEventListener("DOMContentLoaded", () => {
   carregarParametros();
   document.getElementById("buscaServico").addEventListener("input", render);
@@ -360,5 +340,6 @@ document.addEventListener("DOMContentLoaded", () => {
   carregar();
 });
 </script>
+<script src="assets/sidebar/sidebar.js"></script>
 </body>
 </html>

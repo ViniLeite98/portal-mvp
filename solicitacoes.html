@@ -256,7 +256,7 @@ textarea{resize:vertical;min-height:70px;}
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
-<script src="assets/js/auth-check.js" data-role="admin"></script>
+<script src="assets/js/auth.js"></script>
 
 <script>
 // função global chamada pelo onchange do select
@@ -269,7 +269,7 @@ function toggleAprovadoPor(){
 document.addEventListener("DOMContentLoaded", function(){
 
 // usa o client global de assets/js/supabase.js
-const supabaseClient = client;
+
 
 let idEdicao       = null;
 let arquivoAtualUrl  = null;
@@ -290,7 +290,7 @@ function limparNome(nome){
 
 /* ── TERAPEUTAS ── */
 async function carregarTerapeutas(){
-  const {data} = await supabaseClient
+  const {data} = await client
     .from("terapeutas").select("cpf,nome_profissional")
     .eq("status","Ativo").order("nome_profissional");
 
@@ -306,7 +306,7 @@ async function carregarTerapeutas(){
 
 /* ── CARREGAR LISTA ── */
 async function carregar(){
-  const {data} = await supabaseClient
+  const {data} = await client
     .from("solicitacoes").select("*").order("created_at",{ascending:false});
   todasSolicitacoes = data || [];
   render();
@@ -397,7 +397,7 @@ window.abrirNovo = function(){
 
 window.abrirEditar = async function(id){
   idEdicao = id;
-  const {data: s} = await supabaseClient.from("solicitacoes").select("*").eq("id",id).single();
+  const {data: s} = await client.from("solicitacoes").select("*").eq("id",id).single();
   if(!s) return;
 
   resetModal();
@@ -450,13 +450,13 @@ window.salvar = async function(){
 
   // verificar impacto na escala (mesma lógica do escalas.html)
   if(status === "Aprovado"){
-    const {data: todasAprovadas} = await supabaseClient
+    const {data: todasAprovadas} = await client
       .from("solicitacoes")
       .select("terapeuta_cpf, data_inicio, data_fim")
       .eq("status", "Aprovado")
       .neq("terapeuta_cpf", terapeuta); // excluir o próprio terapeuta
 
-    const {data: todosTerapeutas} = await supabaseClient
+    const {data: todosTerapeutas} = await client
       .from("terapeutas")
       .select("cpf, tem_folga, dia_folga")
       .eq("status", "Ativo")
@@ -511,7 +511,7 @@ window.salvar = async function(){
   }
 
   // verificar sobreposição de período
-  let query = supabaseClient
+  let query = client
     .from("solicitacoes")
     .select("id, tipo, data_inicio, data_fim, status")
     .eq("terapeuta_cpf", terapeuta)
@@ -560,11 +560,11 @@ window.salvar = async function(){
     statusEl.style.display = "block";
 
     const fileName = `solicitacoes/${Date.now()}_${limparNome(file.name)}`;
-    const {error: upErr} = await supabaseClient.storage.from("documentos").upload(fileName, file);
+    const {error: upErr} = await client.storage.from("documentos").upload(fileName, file);
 
     if(upErr){ statusEl.style.display = "none"; alert("Erro no upload: " + upErr.message); return; }
 
-    const {data: urlData} = supabaseClient.storage.from("documentos").getPublicUrl(fileName);
+    const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
     payload.arquivo_url  = urlData.publicUrl;
     payload.arquivo_nome = file.name;
     statusEl.style.display = "none";
@@ -572,9 +572,9 @@ window.salvar = async function(){
 
   let error;
   if(idEdicao){
-    ({error} = await supabaseClient.from("solicitacoes").update(payload).eq("id", idEdicao));
+    ({error} = await client.from("solicitacoes").update(payload).eq("id", idEdicao));
   } else {
-    ({error} = await supabaseClient.from("solicitacoes").insert(payload));
+    ({error} = await client.from("solicitacoes").insert(payload));
   }
 
   if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
@@ -585,7 +585,7 @@ window.salvar = async function(){
 
 /* ── ALTERAR STATUS ── */
 window.alterarStatus = async function(id, novoStatus, aprovadoPor){
-  await supabaseClient.from("solicitacoes")
+  await client.from("solicitacoes")
     .update({status: novoStatus, aprovado_por: aprovadoPor || null})
     .eq("id", id);
   carregar();
@@ -643,10 +643,10 @@ window.excluir = async function(id, arquivoUrl){
 
   if(arquivoUrl){
     const path = arquivoUrl.split("/storage/v1/object/public/documentos/")[1];
-    if(path) await supabaseClient.storage.from("documentos").remove([decodeURIComponent(path)]);
+    if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
   }
 
-  await supabaseClient.from("solicitacoes").delete().eq("id", id);
+  await client.from("solicitacoes").delete().eq("id", id);
   carregar();
 };
 
@@ -660,6 +660,5 @@ carregarTerapeutas().then(carregar);
 
 });
 </script>
-<script src="assets/sidebar/sidebar.js"></script>
 </body>
 </html>

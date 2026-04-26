@@ -100,14 +100,14 @@ window.logout = async function(){
       label: "Estoque",
       roles: TODOS,
     },
-    { tipo: "sep" },
-    { tipo: "titulo", label: "CONFIGURAÇÕES", roles: TODOS },
+    { tipo: "sep", roles: ["admin"] },
+    { tipo: "titulo", label: "CONFIGURAÇÕES", roles: ["admin"] },
     {
       tipo: "link",
       href: "parametros.html",
       icon: "fa-sliders",
       label: "Parâmetros",
-      roles: TODOS,
+      roles: ["admin"],
     },
   ];
 
@@ -171,12 +171,16 @@ window.logout = async function(){
   // Expor para auth.js chamar depois de setar usuarioLogado
   window.renderSidebar = init;
 
-  // Aguardar DOM e tentar renderizar
-  // auth.js vai chamar renderSidebar() novamente após setar usuarioLogado
+  // Aguardar DOM — mas NÃO renderizar imediatamente se auth.js vai rodar
+  // auth.js chama renderSidebar() depois de buscar o perfil
+  // Se não tiver auth.js na página (ex: login), renderiza normalmente
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
+    document.addEventListener("DOMContentLoaded", ()=>{
+      // Aguardar um tick para o auth.js ter chance de setar usuarioLogado
+      setTimeout(init, 50);
+    });
   } else {
-    init();
+    setTimeout(init, 50);
   }
 
 })();

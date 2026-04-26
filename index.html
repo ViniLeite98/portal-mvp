@@ -166,10 +166,21 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
       <!-- Por Ano/Mês -->
       <div class="card col-4">
-        <div class="card-header"><h3><i class="fa fa-calendar"></i> Por Ano / Mês</h3></div>
+        <div class="card-header">
+          <h3><i class="fa fa-calendar"></i> Por Ano / Mês</h3>
+          <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:6px;padding:3px">
+            <button id="toggleAtend" onclick="setModoAnoMes('atend')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:#1f2937;color:#fff;border:none;cursor:pointer">Atend.</button>
+            <button id="toggleRec" onclick="setModoAnoMes('receita')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:none;color:#6b7280;border:none;cursor:pointer">Receita</button>
+          </div>
+        </div>
         <div class="dt-scroll">
           <table class="dt ano-table" id="tblAnoMes">
-            <thead><tr><th>Ano</th><th class="num">Atend.</th><th class="num">Atend. LY</th><th class="num">YoY %</th></tr></thead>
+            <thead><tr>
+              <th>Ano</th>
+              <th class="num" id="thValor">Atend.</th>
+              <th class="num" id="thLY">Atend. LY</th>
+              <th class="num">YoY %</th>
+            </tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -451,10 +462,14 @@ async function renderAtendimentos(rows){
   anoMesData.forEach(r=>{
     if(!r.data)return;
     const [y,m] = r.data.split("-");
-    if(!anoMap[y]) anoMap[y]={total:0,meses:{}};
+    if(!anoMap[y]) anoMap[y]={total:0,rec:0,meses:{},mesRec:{}};
     anoMap[y].total++;
+    anoMap[y].rec+=(r.valor||0);
     anoMap[y].meses[m]=(anoMap[y].meses[m]||0)+1;
+    anoMap[y].mesRec[m]=(anoMap[y].mesRec[m]||0)+(r.valor||0);
   });
+  window._anoMapGlobal = anoMap; // guardar para toggle
+  window._modoAnoMes = window._modoAnoMes || 'atend';
   const anos = Object.keys(anoMap).sort().reverse();
 
   // Monta tbody sem aninhar tbody dentro de tbody (HTML inválido)
@@ -468,68 +483,7 @@ async function renderAtendimentos(rows){
   const mesAtualStr = String(hoje.getMonth()+1).padStart(2,"0");
   const diaAtualStr = String(hoje.getDate()).padStart(2,"0");
 
-  anos.forEach(a=>{
-    const ly = String(parseInt(a)-1);
-    const totA = anoMap[a].total;
-
-    const isAnoAtual = a === anoAtual;
-    let totLY = 0;
-    if(isAnoAtual && anoMap[ly]){
-      // Para o ano atual: soma LY só até os meses que já ocorreram
-      // meses anteriores ao atual: mês completo vs mês completo (justo)
-      // mês atual: proporcional pelo dia (dia atual / dias no mês * total do mês no LY)
-      Object.entries(anoMap[ly].meses).forEach(([m, mTotal])=>{
-        if(m < mesAtualStr){
-          totLY += mTotal; // mês completo
-        } else if(m === mesAtualStr){
-          // proporcional: dias passados / total dias do mês
-          const diasNoMes = new Date(parseInt(ly), parseInt(m), 0).getDate();
-          const diasPassados = hoje.getDate();
-          totLY += Math.round(mTotal * diasPassados / diasNoMes);
-        }
-        // meses futuros do LY ignorados
-      });
-    } else {
-      totLY = anoMap[ly]?.total||0;
-    }
-
-    const yoy = totLY ? ((totA-totLY)/totLY*100) : null;
-    const labelYoy = isAnoAtual ? `YoY % (até ${diaAtualStr}/${mesAtualStr})` : "YoY %";
-    const yoyStr = yoy!==null
-      ? `<span class="${yoy>=0?'green':'red'}">${yoy>=0?'+':''}${yoy.toFixed(2)}%</span>`
-      : "—";
-
-    // Linha do ano
-    const trAno = document.createElement("tr");
-    trAno.style.cursor="pointer";
-    trAno.innerHTML = `
-      <td><span class="toggle-icon" id="ico-${a}">⊕</span> <strong>${a}</strong></td>
-      <td class="num">${fmtN(totA)}</td>
-      <td class="num">${totLY?fmtN(totLY):"—"}</td>
-      <td class="num">${yoyStr}</td>`;
-    trAno.addEventListener("click", ()=>toggleMesRows(a));
-    tbody.appendChild(trAno);
-
-    // Linhas dos meses (escondidas por padrão)
-    // Para ano atual: só mostra meses que já ocorreram
-    Object.entries(anoMap[a].meses).sort().forEach(([m,n])=>{
-      // pular meses futuros do ano atual
-      if(isAnoAtual && m > mesAtualStr) return;
-
-      const lyM = anoMap[ly]?.meses?.[m]||0;
-      const yoyM = lyM ? ((n-lyM)/lyM*100) : null;
-      const trMes = document.createElement("tr");
-      trMes.className = `mes-row mes-${a}`;
-      trMes.style.display = "none";
-      trMes.style.background = "#fafafa";
-      trMes.innerHTML = `
-        <td style="padding-left:28px;color:#6b7280;font-weight:normal">${MESES_FULL[parseInt(m)-1]}</td>
-        <td class="num" style="font-weight:normal">${fmtN(n)}</td>
-        <td class="num" style="font-weight:normal">${lyM?fmtN(lyM):"—"}</td>
-        <td class="num">${yoyM!==null?`<span class="${yoyM>=0?'green':'red'}">${yoyM>=0?'+':''}${yoyM.toFixed(2)}%</span>`:"—"}</td>`;
-      tbody.appendChild(trMes);
-    });
-  });
+  renderAnoMesTabela(anoMap);
 
   /* Top clientes */
   const cliMap = {};
@@ -570,6 +524,72 @@ async function renderAtendimentos(rows){
         <span class="hora-count">${fmtN(n)}</span>
       </div>`;
     }).join("");
+}
+
+function setModoAnoMes(modo){
+  window._modoAnoMes = modo;
+  // atualizar visual dos botões
+  document.getElementById("toggleAtend").style.background = modo==='atend'?'#1f2937':'none';
+  document.getElementById("toggleAtend").style.color      = modo==='atend'?'#fff':'#6b7280';
+  document.getElementById("toggleRec").style.background  = modo==='receita'?'#1f2937':'none';
+  document.getElementById("toggleRec").style.color       = modo==='receita'?'#fff':'#6b7280';
+  // atualizar header da tabela
+  document.getElementById("thValor").textContent = modo==='atend'?'Atend.':'Receita';
+  document.getElementById("thLY").textContent    = modo==='atend'?'Atend. LY':'Receita LY';
+  // re-renderizar só a tabela de ano/mês
+  if(window._anoMapGlobal) renderAnoMesTabela(window._anoMapGlobal);
+}
+
+function renderAnoMesTabela(anoMap){
+  const tbody = document.querySelector("#tblAnoMes tbody");
+  tbody.innerHTML = "";
+  const anos = Object.keys(anoMap).sort().reverse();
+  const anoAtual = anos[0];
+  const hoje = new Date();
+  const mesAtualStr = String(hoje.getMonth()+1).padStart(2,"0");
+
+  anos.forEach(a=>{
+    const ly = String(parseInt(a)-1);
+    const isAnoAtual = a === anoAtual;
+    const modo = window._modoAnoMes || 'atend';
+    const totA = modo==='atend' ? anoMap[a].total : anoMap[a].rec;
+    let totLY = 0;
+    if(isAnoAtual && anoMap[ly]){
+      const mesMap = modo==='atend' ? anoMap[ly].meses : anoMap[ly].mesRec;
+      Object.entries(mesMap||{}).forEach(([m,mTotal])=>{
+        if(m < mesAtualStr) totLY += mTotal;
+        else if(m === mesAtualStr){
+          const diasNoMes = new Date(parseInt(ly), parseInt(m), 0).getDate();
+          totLY += mTotal * hoje.getDate() / diasNoMes;
+        }
+      });
+    } else {
+      totLY = modo==='atend' ? (anoMap[ly]?.total||0) : (anoMap[ly]?.rec||0);
+    }
+    const yoy = totLY ? ((totA-totLY)/totLY*100) : null;
+    const yoyStr = yoy!==null ? `<span class="${yoy>=0?'green':'red'}">${yoy>=0?'+':''}${yoy.toFixed(2)}%</span>` : "—";
+    const fmtVal = v => modo==='atend' ? fmtN(v) : fmtM(v);
+
+    const trAno = document.createElement("tr");
+    trAno.style.cursor="pointer";
+    trAno.innerHTML = `<td><span class="toggle-icon" id="ico-${a}">⊕</span> <strong>${a}</strong></td><td class="num">${fmtVal(totA)}</td><td class="num">${totLY?fmtVal(totLY):"—"}</td><td class="num">${yoyStr}</td>`;
+    trAno.addEventListener("click",()=>toggleMesRows(a));
+    tbody.appendChild(trAno);
+
+    const mesData   = modo==='atend' ? anoMap[a].meses    : anoMap[a].mesRec;
+    const mesDataLY = modo==='atend' ? anoMap[ly]?.meses  : anoMap[ly]?.mesRec;
+    Object.entries(mesData||{}).sort().forEach(([m,n])=>{
+      if(isAnoAtual && m > mesAtualStr) return;
+      const lyM = mesDataLY?.[m]||0;
+      const yoyM = lyM ? ((n-lyM)/lyM*100) : null;
+      const trMes = document.createElement("tr");
+      trMes.className = `mes-row mes-${a}`;
+      trMes.style.display = "none";
+      trMes.style.background = "#fafafa";
+      trMes.innerHTML = `<td style="padding-left:28px;color:#6b7280;font-weight:normal">${MESES_FULL[parseInt(m)-1]}</td><td class="num" style="font-weight:normal">${fmtVal(n)}</td><td class="num" style="font-weight:normal">${lyM?fmtVal(lyM):"—"}</td><td class="num">${yoyM!==null?`<span class="${yoyM>=0?'green':'red'}">${yoyM>=0?'+':''}${yoyM.toFixed(2)}%</span>`:"—"}</td>`;
+      tbody.appendChild(trMes);
+    });
+  });
 }
 
 function toggleMesRows(ano){

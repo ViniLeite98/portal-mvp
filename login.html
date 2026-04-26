@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Login | Hara Spa</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:linear-gradient(135deg,#1f2937 0%,#111827 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;}
+
+.login-card{background:#fff;border-radius:20px;width:400px;max-width:95vw;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,.4);}
+.login-header{background:#1f2937;padding:32px;text-align:center;}
+.login-logo{font-size:32px;margin-bottom:8px;}
+.login-header h1{color:#fff;font-size:22px;font-weight:800;margin-bottom:4px;}
+.login-header p{color:#9ca3af;font-size:13px;}
+
+.login-body{padding:32px;}
+
+.tabs{display:flex;background:#f3f4f6;border-radius:10px;padding:4px;margin-bottom:24px;}
+.tab{flex:1;text-align:center;padding:8px;border-radius:8px;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;transition:all .15s;}
+.tab.active{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em;}
+.field input{width:100%;padding:11px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;color:#111827;transition:border-color .15s;}
+.field input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.field input.erro{border-color:#dc2626;}
+
+.btn-primary{width:100%;padding:13px;background:#1f2937;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary:hover{opacity:.9;}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed;}
+
+.msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:16px;display:none;}
+.msg.erro{background:#fef2f2;border:1px solid #fecaca;color:#dc2626;}
+.msg.ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;}
+.msg.visible{display:block;}
+
+.footer-link{text-align:center;margin-top:16px;font-size:12px;color:#9ca3af;}
+</style>
+</head>
+<body>
+
+<div class="login-card">
+  <div class="login-header">
+    <div class="login-logo">🌸</div>
+    <h1>Hara Spa</h1>
+    <p>Portal de Gestão</p>
+  </div>
+  <div class="login-body">
+
+    <div class="tabs">
+      <div class="tab active" id="tabEntrar" onclick="mudarTab('entrar')">Entrar</div>
+      <div class="tab" id="tabCadastrar" onclick="mudarTab('cadastrar')">Cadastrar</div>
+    </div>
+
+    <div id="msgBox" class="msg"></div>
+
+    <!-- ENTRAR -->
+    <div id="formEntrar">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="btnEntrar" onclick="entrar()">
+        <i class="fa fa-sign-in-alt"></i> Entrar
+      </button>
+    </div>
+
+    <!-- CADASTRAR -->
+    <div id="formCadastrar" style="display:none">
+      <div class="field">
+        <label>Nome</label>
+        <input type="text" id="cadNome" placeholder="Seu nome completo">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="cadEmail" placeholder="seu@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="cadSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      </div>
+      <div class="field">
+        <label>Confirmar Senha</label>
+        <input type="password" id="cadSenha2" placeholder="Repita a senha">
+      </div>
+      <button class="btn-primary" id="btnCadastrar" onclick="cadastrar()">
+        <i class="fa fa-user-plus"></i> Criar Conta
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script>
+
+function mudarTab(tab){
+  document.getElementById("tabEntrar").classList.toggle("active", tab==="entrar");
+  document.getElementById("tabCadastrar").classList.toggle("active", tab==="cadastrar");
+  document.getElementById("formEntrar").style.display    = tab==="entrar"    ? "" : "none";
+  document.getElementById("formCadastrar").style.display = tab==="cadastrar" ? "" : "none";
+  esconderMsg();
+}
+
+function showMsg(texto, tipo){
+  const el=document.getElementById("msgBox");
+  el.textContent=texto;
+  el.className=`msg ${tipo} visible`;
+}
+function esconderMsg(){ document.getElementById("msgBox").className="msg"; }
+
+function setLoading(btnId, loading){
+  const btn=document.getElementById(btnId);
+  btn.disabled=loading;
+  if(loading) btn.innerHTML=`<i class="fa fa-spinner fa-spin"></i> Aguarde...`;
+  else if(btnId==="btnEntrar") btn.innerHTML=`<i class="fa fa-sign-in-alt"></i> Entrar`;
+  else btn.innerHTML=`<i class="fa fa-user-plus"></i> Criar Conta`;
+}
+
+// Tecla Enter
+document.addEventListener("keydown", e=>{
+  if(e.key!=="Enter") return;
+  const tab=document.getElementById("tabEntrar").classList.contains("active");
+  if(tab) entrar(); else cadastrar();
+});
+
+/* ── ENTRAR ── */
+async function entrar(){
+  const email=document.getElementById("loginEmail").value.trim();
+  const senha=document.getElementById("loginSenha").value;
+  if(!email||!senha){ showMsg("Preencha email e senha.","erro"); return; }
+
+  setLoading("btnEntrar", true);
+  esconderMsg();
+
+  const {data, error} = await client.auth.signInWithPassword({email, password:senha});
+
+  if(error){
+    showMsg(traduzirErro(error.message), "erro");
+    setLoading("btnEntrar", false);
+    return;
+  }
+
+  // buscar perfil para saber para onde redirecionar
+  const {data:perfil} = await client.from("perfis").select("role").eq("id", data.user.id).single();
+  const role = perfil?.role || "operadora";
+
+  if(role === "admin"){
+    window.location.href = "dashboard.html";
+  } else {
+    window.location.href = "fluxo_caixa.html";
+  }
+}
+
+/* ── CADASTRAR ── */
+async function cadastrar(){
+  const nome  = document.getElementById("cadNome").value.trim();
+  const email = document.getElementById("cadEmail").value.trim();
+  const senha = document.getElementById("cadSenha").value;
+  const senha2= document.getElementById("cadSenha2").value;
+
+  if(!nome)          { showMsg("Informe seu nome.","erro"); return; }
+  if(!email)         { showMsg("Informe seu email.","erro"); return; }
+  if(senha.length<6) { showMsg("Senha deve ter mínimo 6 caracteres.","erro"); return; }
+  if(senha!==senha2) { showMsg("As senhas não coincidem.","erro"); return; }
+
+  setLoading("btnCadastrar", true);
+  esconderMsg();
+
+  const {data, error} = await client.auth.signUp({
+    email, password: senha,
+    options: { data: { nome } }
+  });
+
+  if(error){
+    showMsg(traduzirErro(error.message), "erro");
+    setLoading("btnCadastrar", false);
+    return;
+  }
+
+  // atualizar nome no perfil
+  if(data.user){
+    await client.from("perfis").update({nome}).eq("id", data.user.id);
+  }
+
+  showMsg("Conta criada! Você pode entrar agora.", "ok");
+  setLoading("btnCadastrar", false);
+
+  // auto-login se não precisar confirmar email
+  if(data.session){
+    const {data:perfil} = await client.from("perfis").select("role").eq("id", data.user.id).single();
+    const role = perfil?.role || "operadora";
+    setTimeout(()=>{ window.location.href = role==="admin" ? "dashboard.html" : "fluxo_caixa.html"; }, 1000);
+  } else {
+    showMsg("Conta criada! Verifique seu email para confirmar.", "ok");
+  }
+}
+
+function traduzirErro(msg){
+  if(msg.includes("Invalid login"))      return "Email ou senha incorretos.";
+  if(msg.includes("Email not confirmed")) return "Confirme seu email antes de entrar.";
+  if(msg.includes("already registered")) return "Este email já está cadastrado.";
+  if(msg.includes("Password"))           return "Senha deve ter mínimo 6 caracteres.";
+  return msg;
+}
+
+/* ── VERIFICAR SE JÁ LOGADO ── */
+document.addEventListener("DOMContentLoaded", async()=>{
+  const {data:{session}} = await client.auth.getSession();
+  if(session){
+    const {data:perfil} = await client.from("perfis").select("role").eq("id", session.user.id).single();
+    const role = perfil?.role || "operadora";
+    window.location.href = role==="admin" ? "dashboard.html" : "fluxo_caixa.html";
+  }
+});
+</script>
+</body>
+</html>

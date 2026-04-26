@@ -343,7 +343,6 @@ async function fetchTodos(overrides={}){
     let q = client.from("legado_atendimentos")
       .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
       .not("situacao","in","(\"Não comparecimento\",\"À confirmar\")")
-      .gt("valor",0)
       .range(from, from+999);
     if(ano && mes){
       const ult = new Date(parseInt(ano), parseInt(mes), 0).getDate();
@@ -367,7 +366,6 @@ async function initFiltros(){
   const {data} = await client.from("legado_atendimentos")
     .select("profissional,servico")
     .not("situacao","in","(\"Não comparecimento\",\"À confirmar\")")
-    .gt("valor",0)
     .limit(5000);
   const profs = [...new Set((data||[]).map(r=>r.profissional).filter(Boolean))].sort();
   const servs = [...new Set((data||[]).map(r=>r.servico).filter(Boolean))].sort();

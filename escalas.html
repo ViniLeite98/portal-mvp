@@ -256,7 +256,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#2563eb;box-sh
 
 let terapeutas     = [];
 let solicitacoes   = [];
-let diasBloqueados = []; // [{data, motivo}]
+let diasBloqueados = [];
 
 let hoje  = new Date();
 let ano   = hoje.getFullYear();
@@ -292,6 +292,7 @@ function folgaSemanal(t, data){
 }
 
 function folgaAprovada(t, data){
+  // Considera solicitações com status "Acordado" (antigo "Aprovado")
   return solicitacoes.some(s =>
     s.terapeuta_cpf === t.cpf &&
     data >= new Date(s.data_inicio) &&
@@ -306,7 +307,8 @@ async function carregarDados(){
   const [{data: ter}, {data: sol}, {data: bloq}] = await Promise.all([
     client.from("terapeutas").select("*").eq("status","Ativo")
       .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]),
-    client.from("solicitacoes").select("*").eq("status","Aprovado"),
+    // ← Corrigido: "Acordado" em vez de "Aprovado"
+    client.from("solicitacoes").select("*").eq("status","Acordado"),
     client.from("dias_bloqueados").select("data,motivo")
   ]);
 
@@ -423,7 +425,7 @@ function mostrarDia(dia){
 
   const disponiveis   = terapeutas.filter(t => !folgaSemanal(t,data) && !folgaAprovada(t,data));
   const indisponiveis = terapeutas.filter(t =>  folgaSemanal(t,data) ||  folgaAprovada(t,data));
-  const fem = disponiveis.filter(t =>  ehFeminina(t)).length;
+  const fem  = disponiveis.filter(t =>  ehFeminina(t)).length;
   const masc = disponiveis.filter(t => !ehFeminina(t)).length;
 
   painel.innerHTML = `
@@ -451,7 +453,7 @@ function mostrarDia(dia){
   ${indisponiveis.length ? `
   <div class="section-label">Indisponíveis (${indisponiveis.length})</div>
   ${indisponiveis.map(t => {
-    const motivo = folgaSemanal(t,data) ? `Folga (${t.dia_folga})` : "Ausência aprovada";
+    const motivo = folgaSemanal(t,data) ? `Folga (${t.dia_folga})` : "Ausência acordada";
     return `
     <div class="terapeuta-item">
       <div class="t-avatar ${ehFeminina(t) ? "fem" : "masc"}">
@@ -481,9 +483,9 @@ function fecharBloquear(){
 function verificarBloqueio(){
   const val  = document.getElementById("inputDataBloquear").value;
   const bloq = diasBloqueados.find(d => d.data === val);
-  document.getElementById("infoJaBloqueado").style.display = bloq ? "block" : "none";
-  document.getElementById("btnBloquear").style.display    = bloq ? "none"  : "inline-flex";
-  document.getElementById("btnDesbloquear").style.display = bloq ? "inline-flex" : "none";
+  document.getElementById("infoJaBloqueado").style.display = bloq ? "block"       : "none";
+  document.getElementById("btnBloquear").style.display     = bloq ? "none"        : "inline-flex";
+  document.getElementById("btnDesbloquear").style.display  = bloq ? "inline-flex" : "none";
   if(bloq) document.getElementById("inputMotivo").value = bloq.motivo || "";
 }
 

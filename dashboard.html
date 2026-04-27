@@ -32,6 +32,12 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .filtros-bar select{padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;background:#fff;color:#111827;}
 .filtros-bar .sep{width:1px;height:20px;background:#e5e7eb;margin:0 4px;}
 
+/* fonte badge */
+.fonte-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;border-radius:99px;padding:3px 10px;margin-left:8px;}
+.fonte-badge.legado{background:#fef3c7;color:#92400e;}
+.fonte-badge.novo{background:#dcfce7;color:#166534;}
+.fonte-badge.ambos{background:#eff6ff;color:#1e40af;}
+
 /* ── MAIN AREA ── */
 .main{flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:14px;}
 .page{display:none;flex-direction:column;gap:14px;}
@@ -69,12 +75,9 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 /* ── CHART ── */
 .chart-wrap{padding:12px 14px;}
 
-/* ── TABELA COMPARATIVO ANO ── */
+/* ── TABELA ANO/MES ── */
 .ano-table td,.ano-table th{font-size:11px;padding:5px 10px;}
 .ano-table .mes-row td{color:#374151;}
-.ano-table .total-row td{font-weight:700;color:#dc2626;}
-.ano-expand{cursor:pointer;}
-.ano-expand:hover td{background:#f9fafb;}
 
 /* ── HEATMAP HORA ── */
 .hora-grid{display:grid;grid-template-columns:50px 1fr;gap:4px;padding:10px 14px;}
@@ -84,8 +87,11 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .hora-bar-fill{height:100%;border-radius:3px;background:#bfdbfe;}
 .hora-count{font-size:10px;color:#6b7280;min-width:32px;text-align:right;}
 
-/* loading */
-.loading{display:flex;align-items:center;justify-content:center;height:80px;color:#9ca3af;font-size:12px;gap:8px;}
+/* loading overlay */
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px;font-size:13px;color:#6b7280;}
+.loading-overlay.hidden{display:none;}
+.spinner{width:36px;height:36px;border:4px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* interatividade */
 .dt tbody tr.selecionado td{background:#eff6ff!important;color:#1d4ed8;font-weight:700;}
@@ -101,8 +107,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 <aside id="sidebar"></aside>
 <main class="content">
 
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <span id="loadingMsg">Carregando dados...</span>
+  </div>
+
   <!-- KPI BAR -->
-  <div class="kpi-bar" id="kpiBar">
+  <div class="kpi-bar">
     <div class="kpi-cell"><div class="kpi-cell-label">Atendimentos</div><div class="kpi-cell-value" id="kAtend">—</div></div>
     <div class="kpi-cell"><div class="kpi-cell-label">Receita</div><div class="kpi-cell-value" id="kReceita">—</div></div>
     <div class="kpi-cell"><div class="kpi-cell-label">Comissão</div><div class="kpi-cell-value" id="kComissao">—</div></div>
@@ -121,8 +133,15 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 
   <!-- FILTROS -->
   <div class="filtros-bar" id="filtrosBar">
+    <label>Fonte</label>
+    <select id="fFonte" onchange="aplicarFiltros()">
+      <option value="">Ambas</option>
+      <option value="legado">Legado</option>
+      <option value="novo">Novos</option>
+    </select>
+    <div class="sep"></div>
     <label>Ano</label>
-    <select id="fAno" onchange="carregarTudo()">
+    <select id="fAno" onchange="aplicarFiltros()">
       <option value="">Todos</option>
       <option value="2026">2026</option><option value="2025" selected>2025</option>
       <option value="2024">2024</option><option value="2023">2023</option>
@@ -130,7 +149,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     </select>
     <div class="sep"></div>
     <label>Mês</label>
-    <select id="fMes" onchange="carregarTudo()">
+    <select id="fMes" onchange="aplicarFiltros()">
       <option value="">Todos</option>
       <option value="01">Janeiro</option><option value="02">Fevereiro</option>
       <option value="03">Março</option><option value="04">Abril</option>
@@ -141,10 +160,11 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     </select>
     <div class="sep"></div>
     <label>Profissional</label>
-    <select id="fProf" onchange="carregarTudo()"><option value="">Todos</option></select>
+    <select id="fProf" onchange="aplicarFiltros()"><option value="">Todos</option></select>
     <div class="sep"></div>
     <label>Serviço</label>
-    <select id="fServ" onchange="carregarTudo()"><option value="">Todos</option></select>
+    <select id="fServ" onchange="aplicarFiltros()"><option value="">Todos</option></select>
+    <span id="fonteInfo"></span>
   </div>
 
   <div class="main">
@@ -152,7 +172,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   <!-- ══ ATENDIMENTOS ══ -->
   <div class="page active" id="page-atend">
     <div class="row">
-      <!-- Profissionais -->
       <div class="card col-3">
         <div class="card-header"><h3><i class="fa fa-user-tie"></i> Por Profissional</h3></div>
         <div class="dt-scroll">
@@ -162,7 +181,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
           </table>
         </div>
       </div>
-      <!-- Serviços -->
       <div class="card col-3">
         <div class="card-header"><h3><i class="fa fa-spa"></i> Por Serviço</h3></div>
         <div class="dt-scroll">
@@ -172,13 +190,12 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
           </table>
         </div>
       </div>
-      <!-- Por Ano/Mês -->
       <div class="card col-4">
         <div class="card-header">
           <h3><i class="fa fa-calendar"></i> Por Ano / Mês</h3>
           <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:6px;padding:3px">
             <button id="toggleAtend" onclick="setModoAnoMes('atend')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:#1f2937;color:#fff;border:none;cursor:pointer">Atend.</button>
-            <button id="toggleRec" onclick="setModoAnoMes('receita')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:none;color:#6b7280;border:none;cursor:pointer">Receita</button>
+            <button id="toggleRec"   onclick="setModoAnoMes('receita')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:none;color:#6b7280;border:none;cursor:pointer">Receita</button>
           </div>
         </div>
         <div class="dt-scroll">
@@ -194,9 +211,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
         </div>
       </div>
     </div>
-
     <div class="row">
-      <!-- Top Clientes -->
       <div class="card">
         <div class="card-header"><h3><i class="fa fa-users"></i> Top Clientes</h3></div>
         <div class="dt-scroll">
@@ -206,7 +221,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
           </table>
         </div>
       </div>
-      <!-- Hora -->
       <div class="card" style="max-width:260px;flex:0 0 260px">
         <div class="card-header"><h3><i class="fa fa-clock"></i> Por Hora</h3></div>
         <div class="hora-grid" id="horaGrid"></div>
@@ -217,12 +231,10 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   <!-- ══ FINANCEIRO ══ -->
   <div class="page" id="page-financeiro">
     <div class="row">
-      <!-- Receita por mês gráfico -->
       <div class="card">
         <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Receita vs Comissão por Mês</h3></div>
         <div class="chart-wrap"><canvas id="chartRecMes" height="160"></canvas></div>
       </div>
-      <!-- Receita por serviço -->
       <div class="card col-3">
         <div class="card-header"><h3><i class="fa fa-spa"></i> Receita por Serviço</h3></div>
         <div class="dt-scroll">
@@ -234,7 +246,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
     </div>
     <div class="row">
-      <!-- Receita por ano -->
       <div class="card col-2">
         <div class="card-header"><h3><i class="fa fa-calendar-alt"></i> Histórico por Ano</h3></div>
         <table class="dt" id="tblRecAno">
@@ -242,7 +253,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
           <tbody></tbody>
         </table>
       </div>
-      <!-- Receita por profissional -->
       <div class="card">
         <div class="card-header"><h3><i class="fa fa-user-tie"></i> Receita por Profissional</h3></div>
         <div class="dt-scroll">
@@ -322,73 +332,27 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js" data-role="admin"></script>
 <script>
-const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-
-// ── SELEÇÃO INTERATIVA ──
-let selecao = { tipo: null, valor: null }; // tipo: 'prof' | 'serv' | null
-
-function filtrarPor(tipo, valor, trEl){
-  // toggle: se já está selecionado, limpa
-  if(selecao.tipo===tipo && selecao.valor===valor){
-    limparSelecao();
-    return;
-  }
-  selecao = {tipo, valor};
-
-  // destacar linha clicada
-  document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
-  if(trEl) trEl.classList.add("selecionado");
-
-  // mostrar badge
-  renderBadge();
-
-  // re-renderizar tudo com filtro
-  const dadosFiltrados = filtrarDados(allData);
-  renderKPIs(dadosFiltrados);
-  renderAtendimentos(dadosFiltrados);
-  renderFinanceiro(dadosFiltrados);
-  renderEquipe(dadosFiltrados);
-  renderExecutivo(dadosFiltrados);
-}
-
-function filtrarDados(rows){
-  if(!selecao.tipo) return rows;
-  return rows.filter(r=>{
-    if(selecao.tipo==='prof') return r.profissional===selecao.valor;
-    if(selecao.tipo==='serv') return r.servico===selecao.valor;
-    return true;
-  });
-}
-
-function limparSelecao(){
-  selecao={tipo:null,valor:null};
-  document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
-  renderBadge();
-  renderKPIs(allData);
-  renderAtendimentos(allData);
-  renderFinanceiro(allData);
-  renderEquipe(allData);
-  renderExecutivo(allData);
-}
-
-function renderBadge(){
-  const existing=document.getElementById("selecaoBadge");
-  if(existing) existing.remove();
-  if(!selecao.tipo) return;
-  const label = selecao.tipo==='prof'?`👤 ${selecao.valor}`:`💆 ${selecao.valor}`;
-  const badge=document.createElement("div");
-  badge.id="selecaoBadge";
-  badge.className="filtro-ativo-badge";
-  badge.innerHTML=`${label} <span style="font-size:14px;line-height:1">×</span>`;
-  badge.onclick=limparSelecao;
-  document.getElementById("filtrosBar").appendChild(badge);
-}
+const MESES      = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const MESES_FULL = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-let charts = {}, allData = [], allDataSemFiltro = [];
+
+/* ══════════════════════════════════════════
+   CACHE GLOBAL — carregado UMA vez
+══════════════════════════════════════════ */
+let cacheCompleto = [];   // todos os dados (legado + novos) sem filtro de ano/mes
+let allData       = [];   // dados após filtros aplicados
+let selecao       = {tipo:null, valor:null};
+let charts        = {};
+let _modoAnoMes   = "atend";
 
 const fmtM = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const fmtN = v => Number(v||0).toLocaleString("pt-BR");
 const fmtP = v => Number(v||0).toFixed(1)+"%";
+
+function setLoading(msg){
+  document.getElementById("loadingOverlay").classList.remove("hidden");
+  document.getElementById("loadingMsg").textContent = msg || "Carregando...";
+}
+function stopLoading(){ document.getElementById("loadingOverlay").classList.add("hidden"); }
 
 function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
 function mkChart(id, cfg){
@@ -398,6 +362,151 @@ function mkChart(id, cfg){
   charts[id] = new Chart(el, cfg);
 }
 
+/* ══════════════════════════════════════════
+   FETCH LEGADO — em lotes, sem filtro de data
+══════════════════════════════════════════ */
+async function fetchLegadoCompleto(){
+  let todos=[], from=0;
+  while(true){
+    const {data,error} = await client.from("legado_atendimentos")
+      .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
+      .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum")
+      .range(from, from+999);
+    if(error||!data||!data.length) break;
+    // normalizar para formato comum
+    todos = todos.concat(data.map(r=>({
+      profissional: r.profissional,
+      data:         r.data,
+      hora_inicio:  r.hora_inicio,
+      cliente:      r.cliente,
+      servico:      r.servico,
+      valor:        r.valor||0,
+      comissao:     r.comissao||0,
+      _fonte:       "legado"
+    })));
+    if(data.length < 1000) break;
+    from += 1000;
+  }
+  return todos;
+}
+
+/* ══════════════════════════════════════════
+   FETCH NOVOS — tabela atendimentos
+══════════════════════════════════════════ */
+async function fetchNovosCompleto(){
+  let todos=[], from=0;
+  while(true){
+    const {data,error} = await client.from("atendimentos")
+      .select(`data, hora_inicio, valor_final, comissao_total, status,
+        servicos(grupo,subgrupo),
+        ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),
+        ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),
+        clientes(nome)`)
+      .eq("status","Confirmado")
+      .range(from, from+999);
+    if(error||!data||!data.length) break;
+    // normalizar para formato comum
+    todos = todos.concat(data.map(r=>({
+      profissional: r.ter1?.nome_profissional || r.ter2?.nome_profissional || "—",
+      data:         r.data,
+      hora_inicio:  r.hora_inicio,
+      cliente:      r.clientes?.nome || null,
+      servico:      r.servicos ? [r.servicos.grupo, r.servicos.subgrupo].filter(Boolean).join(" ") : "—",
+      valor:        r.valor_final||0,
+      comissao:     r.comissao_total||0,
+      _fonte:       "novo"
+    })));
+    if(data.length < 1000) break;
+    from += 1000;
+  }
+  return todos;
+}
+
+/* ══════════════════════════════════════════
+   APLICAR FILTROS — só no JS, sem ir ao banco
+══════════════════════════════════════════ */
+function aplicarFiltros(){
+  selecao = {tipo:null, valor:null};
+  const badge = document.getElementById("selecaoBadge");
+  if(badge) badge.remove();
+
+  const ano   = document.getElementById("fAno").value;
+  const mes   = document.getElementById("fMes").value;
+  const prof  = document.getElementById("fProf").value;
+  const serv  = document.getElementById("fServ").value;
+  const fonte = document.getElementById("fFonte").value;
+
+  allData = cacheCompleto.filter(r => {
+    if(!r.data) return false;
+    const [y, m] = r.data.split("-");
+    if(ano  && y !== ano)  return false;
+    if(mes  && m !== mes)  return false;
+    if(prof && r.profissional !== prof) return false;
+    if(serv && r.servico !== serv)      return false;
+    if(fonte && r._fonte !== fonte)     return false;
+    return true;
+  });
+
+  // Badge de fonte
+  const total   = allData.length;
+  const legados = allData.filter(r=>r._fonte==="legado").length;
+  const novos   = allData.filter(r=>r._fonte==="novo").length;
+  const info    = document.getElementById("fonteInfo");
+  info.innerHTML = legados && novos
+    ? `<span class="fonte-badge ambos"><i class="fa fa-database"></i> ${fmtN(legados)} legado + ${fmtN(novos)} novos</span>`
+    : legados
+    ? `<span class="fonte-badge legado"><i class="fa fa-database"></i> ${fmtN(legados)} do legado</span>`
+    : `<span class="fonte-badge novo"><i class="fa fa-star"></i> ${fmtN(novos)} novos</span>`;
+
+  renderTudo(allData);
+}
+
+/* ══════════════════════════════════════════
+   SELEÇÃO INTERATIVA
+══════════════════════════════════════════ */
+function filtrarPor(tipo, valor, trEl){
+  if(selecao.tipo===tipo && selecao.valor===valor){ limparSelecao(); return; }
+  selecao = {tipo, valor};
+  document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
+  if(trEl) trEl.classList.add("selecionado");
+  renderBadge();
+  const filtrado = allData.filter(r=>{
+    if(tipo==="prof") return r.profissional===valor;
+    if(tipo==="serv") return r.servico===valor;
+    return true;
+  });
+  renderTudo(filtrado);
+}
+
+function limparSelecao(){
+  selecao={tipo:null,valor:null};
+  document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
+  const b=document.getElementById("selecaoBadge"); if(b) b.remove();
+  renderTudo(allData);
+}
+
+function renderBadge(){
+  const existing=document.getElementById("selecaoBadge"); if(existing) existing.remove();
+  if(!selecao.tipo) return;
+  const label=selecao.tipo==="prof"?`👤 ${selecao.valor}`:`💆 ${selecao.valor}`;
+  const badge=document.createElement("div");
+  badge.id="selecaoBadge"; badge.className="filtro-ativo-badge";
+  badge.innerHTML=`${label} <span style="font-size:14px">×</span>`;
+  badge.onclick=limparSelecao;
+  document.getElementById("filtrosBar").appendChild(badge);
+}
+
+/* ══════════════════════════════════════════
+   RENDER TUDO — usa dados já em memória
+══════════════════════════════════════════ */
+function renderTudo(rows){
+  renderKPIs(rows);
+  renderAtendimentos(rows);
+  renderFinanceiro(rows);
+  renderEquipe(rows);
+  renderExecutivo(rows);
+}
+
 function mudarPag(p, btn){
   document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
   document.querySelectorAll(".sub-btn").forEach(b=>b.classList.remove("active"));
@@ -405,79 +514,15 @@ function mudarPag(p, btn){
   btn.classList.add("active");
 }
 
-function getFiltro(){
-  return {
-    ano: document.getElementById("fAno").value,
-    mes: document.getElementById("fMes").value,
-    prof: document.getElementById("fProf").value,
-    serv: document.getElementById("fServ").value,
-  };
-}
-
-/* ── FETCH EM LOTES ── */
-async function fetchTodos(overrides={}){
-  const {ano, mes, prof, serv} = {...getFiltro(), ...overrides};
-  let todos=[], from=0;
-  while(true){
-    let q = client.from("legado_atendimentos")
-      .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
-      .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum")
-      .range(from, from+999);
-    if(ano && mes){
-      const ult = new Date(parseInt(ano), parseInt(mes), 0).getDate();
-      q = q.gte("data",`${ano}-${mes}-01`).lte("data",`${ano}-${mes}-${String(ult).padStart(2,"0")}`);
-    } else if(ano){
-      q = q.gte("data",`${ano}-01-01`).lte("data",`${ano}-12-31`);
-    }
-    if(prof) q = q.eq("profissional", prof);
-    if(serv) q = q.eq("servico", serv);
-    const {data, error} = await q;
-    if(error||!data||!data.length) break;
-    todos = todos.concat(data);
-    if(data.length < 1000) break;
-    from += 1000;
-  }
-  return todos;
-}
-
-/* ── INIT FILTROS ── */
-async function initFiltros(){
-  const {data} = await client.from("legado_atendimentos")
-    .select("profissional,servico")
-    .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum")
-    .limit(5000);
-  const profs = [...new Set((data||[]).map(r=>r.profissional).filter(Boolean))].sort();
-  const servs = [...new Set((data||[]).map(r=>r.servico).filter(Boolean))].sort();
-  const selP = document.getElementById("fProf");
-  const selS = document.getElementById("fServ");
-  profs.forEach(p=>selP.innerHTML+=`<option>${p}</option>`);
-  servs.forEach(s=>selS.innerHTML+=`<option>${s}</option>`);
-}
-
-/* ══════════════════════════════
-   CARREGAR TUDO
-══════════════════════════════ */
-async function carregarTudo(){
-  selecao={tipo:null,valor:null};
-  const badge=document.getElementById("selecaoBadge");
-  if(badge)badge.remove();
-  allData = await fetchTodos();
-  renderKPIs(allData);
-  renderAtendimentos(allData);
-  renderFinanceiro(allData);
-  renderEquipe(allData);
-  renderExecutivo(allData);
-}
-
 /* ── KPIs ── */
 function renderKPIs(rows){
-  const cliCount = {};
+  const cliCount={};
   rows.forEach(r=>{ if(r.cliente) cliCount[r.cliente]=(cliCount[r.cliente]||0)+1; });
-  const totalCli = Object.keys(cliCount).length;
-  const retornos = Object.values(cliCount).filter(v=>v>1).length;
-  const receita  = rows.reduce((s,r)=>s+(r.valor||0),0);
-  const comissao = rows.reduce((s,r)=>s+(r.comissao||0),0);
-  const ticket   = rows.length ? receita/rows.length : 0;
+  const totalCli=Object.keys(cliCount).length;
+  const retornos=Object.values(cliCount).filter(v=>v>1).length;
+  const receita =rows.reduce((s,r)=>s+(r.valor||0),0);
+  const comissao=rows.reduce((s,r)=>s+(r.comissao||0),0);
+  const ticket  =rows.length ? receita/rows.length : 0;
 
   document.getElementById("kAtend").textContent    = fmtN(rows.length);
   document.getElementById("kReceita").textContent  = fmtM(receita);
@@ -487,254 +532,176 @@ function renderKPIs(rows){
   document.getElementById("kRetornos").textContent = fmtN(retornos);
 }
 
-/* ════════════════════════
-   ATENDIMENTOS
-════════════════════════ */
-async function renderAtendimentos(rows){
-  const totAtend = rows.length||1;
+/* ── ATENDIMENTOS ── */
+function renderAtendimentos(rows){
+  const totAtend=rows.length||1;
 
-  /* Por profissional */
-  const profMap = {};
+  // Por profissional
+  const profMap={};
   rows.forEach(r=>{ if(r.profissional) profMap[r.profissional]=(profMap[r.profissional]||0)+1; });
-  const rankProf = Object.entries(profMap).sort((a,b)=>b[1]-a[1]);
+  const rankProf=Object.entries(profMap).sort((a,b)=>b[1]-a[1]);
   document.querySelector("#tblProf tbody").innerHTML =
-    rankProf.map(([p,n])=>`<tr class="clicavel${selecao.tipo==='prof'&&selecao.valor===p?' selecionado':''}" onclick="filtrarPor('prof','${p.replace(/'/g,"\'")}',this)">
-      <td>${p}</td>
-      <td class="num">${fmtN(n)}</td>
-      <td class="num">
-        <div class="pct-bar">
-          <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(n/totAtend*100).toFixed(1)}%"></div></div>
-          <span style="min-width:38px">${fmtP(n/totAtend*100)}</span>
-        </div>
-      </td>
-    </tr>`).join("") +
+    rankProf.map(([p,n])=>`<tr class="clicavel${selecao.tipo==="prof"&&selecao.valor===p?" selecionado":""}" onclick="filtrarPor('prof','${p.replace(/'/g,"\\'")}',this)">
+      <td>${p}</td><td class="num">${fmtN(n)}</td>
+      <td class="num"><div class="pct-bar"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(n/totAtend*100).toFixed(1)}%"></div></div><span style="min-width:38px">${fmtP(n/totAtend*100)}</span></div></td>
+    </tr>`).join("")+
     `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">100%</td></tr>`;
 
-  /* Por serviço */
-  const servMap = {};
+  // Por serviço
+  const servMap={};
   rows.forEach(r=>{ if(r.servico) servMap[r.servico]=(servMap[r.servico]||0)+1; });
-  const rankServ = Object.entries(servMap).sort((a,b)=>b[1]-a[1]);
+  const rankServ=Object.entries(servMap).sort((a,b)=>b[1]-a[1]);
   document.querySelector("#tblServ tbody").innerHTML =
-    rankServ.map(([s,n])=>`<tr class="clicavel${selecao.tipo==='serv'&&selecao.valor===s?' selecionado':''}" onclick="filtrarPor('serv','${s.replace(/'/g,"\'")}',this)">
-      <td>${s}</td>
-      <td class="num">${fmtN(n)}</td>
-      <td class="num">
-        <div class="pct-bar">
-          <div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(n/totAtend*100).toFixed(1)}%;background:#7c3aed"></div></div>
-          <span style="min-width:38px">${fmtP(n/totAtend*100)}</span>
-        </div>
-      </td>
-    </tr>`).join("") +
+    rankServ.map(([s,n])=>`<tr class="clicavel${selecao.tipo==="serv"&&selecao.valor===s?" selecionado":""}" onclick="filtrarPor('serv','${s.replace(/'/g,"\\'")}',this)">
+      <td>${s}</td><td class="num">${fmtN(n)}</td>
+      <td class="num"><div class="pct-bar"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(n/totAtend*100).toFixed(1)}%;background:#7c3aed"></div></div><span style="min-width:38px">${fmtP(n/totAtend*100)}</span></div></td>
+    </tr>`).join("")+
     `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">100%</td></tr>`;
 
-  /* Por Ano/Mês — histórico completo, aplicando seleção interativa */
-  const anoMesRaw = await fetchTodos({ano:"",mes:""});
-  const anoMesData = selecao.tipo
-    ? anoMesRaw.filter(r=>{
-        if(selecao.tipo==='prof') return r.profissional===selecao.valor;
-        if(selecao.tipo==='serv') return r.servico===selecao.valor;
-        return true;
-      })
-    : anoMesRaw;
-
-  const anoMap = {};
+  // Ano/Mês — usa cacheCompleto filtrado pela seleção (mas SEM filtro ano/mes)
+  const ano  = document.getElementById("fAno").value;
+  const mes  = document.getElementById("fMes").value;
+  const prof = document.getElementById("fProf").value;
+  const serv = document.getElementById("fServ").value;
+  const fonte= document.getElementById("fFonte").value;
+  const anoMesData = cacheCompleto.filter(r=>{
+    if(!r.data) return false;
+    if(prof  && r.profissional!==prof) return false;
+    if(serv  && r.servico!==serv)      return false;
+    if(fonte && r._fonte!==fonte)      return false;
+    if(selecao.tipo==="prof" && r.profissional!==selecao.valor) return false;
+    if(selecao.tipo==="serv" && r.servico!==selecao.valor)      return false;
+    return true;
+  });
+  const anoMap={};
   anoMesData.forEach(r=>{
-    if(!r.data)return;
-    const [y,m] = r.data.split("-");
+    const [y,m]=r.data.split("-");
     if(!anoMap[y]) anoMap[y]={total:0,rec:0,meses:{},mesRec:{}};
-    anoMap[y].total++;
-    anoMap[y].rec+=(r.valor||0);
+    anoMap[y].total++; anoMap[y].rec+=(r.valor||0);
     anoMap[y].meses[m]=(anoMap[y].meses[m]||0)+1;
     anoMap[y].mesRec[m]=(anoMap[y].mesRec[m]||0)+(r.valor||0);
   });
-  window._anoMapGlobal = anoMap;
-  window._modoAnoMes = window._modoAnoMes || 'atend';
-  const anos = Object.keys(anoMap).sort().reverse();
-
-  // Monta tbody sem aninhar tbody dentro de tbody (HTML inválido)
-  // Usa linhas normais com classe para esconder/mostrar
-  const tbody = document.querySelector("#tblAnoMes tbody");
-  tbody.innerHTML = "";
-
-  // ano atual = ano com dados mais recentes
-  const anoAtual = anos[0]; // anos está em ordem decrescente
-  const hoje = new Date();
-  const mesAtualStr = String(hoje.getMonth()+1).padStart(2,"0");
-  const diaAtualStr = String(hoje.getDate()).padStart(2,"0");
-
+  window._anoMapGlobal=anoMap;
   renderAnoMesTabela(anoMap);
 
-  /* Top clientes */
-  const cliMap = {};
-  rows.forEach(r=>{
-    if(!r.cliente)return;
-    if(!cliMap[r.cliente]) cliMap[r.cliente]={n:0,val:0,com:0};
-    cliMap[r.cliente].n++;
-    cliMap[r.cliente].val+=(r.valor||0);
-    cliMap[r.cliente].com+=(r.comissao||0);
-  });
-  const topCli = Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
-  document.querySelector("#tblCli tbody").innerHTML =
-    topCli.map(([c,v])=>`<tr>
-      <td>${c}</td>
-      <td class="num">${fmtN(v.n)}</td>
-      <td class="num">${fmtN(v.n-1)}</td>
-      <td class="num">${fmtM(v.com)}</td>
-      <td class="num">${fmtM(v.n?v.val/v.n:0)}</td>
-      <td class="num">${fmtP(v.n/totAtend*100)}</td>
-    </tr>`).join("") +
+  // Top clientes
+  const cliMap={};
+  rows.forEach(r=>{ if(!r.cliente)return; if(!cliMap[r.cliente])cliMap[r.cliente]={n:0,val:0,com:0}; cliMap[r.cliente].n++;cliMap[r.cliente].val+=(r.valor||0);cliMap[r.cliente].com+=(r.comissao||0); });
+  const topCli=Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
+  document.querySelector("#tblCli tbody").innerHTML=
+    topCli.map(([c,v])=>`<tr><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${fmtP(v.n/totAtend*100)}</td></tr>`).join("")+
     `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num"></td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0)/totAtend)}</td><td class="num">100%</td></tr>`;
 
-  /* Por hora */
-  const horaMap = {};
-  rows.forEach(r=>{
-    if(!r.hora_inicio)return;
-    const h=parseInt(r.hora_inicio.split(":")[0]);
-    if(h>=7&&h<=23) horaMap[h]=(horaMap[h]||0)+1;
-  });
-  const maxH = Math.max(...Object.values(horaMap),1);
-  document.getElementById("horaGrid").innerHTML =
+  // Por hora
+  const horaMap={};
+  rows.forEach(r=>{ if(!r.hora_inicio)return; const h=parseInt(r.hora_inicio.split(":")[0]); if(h>=7&&h<=23) horaMap[h]=(horaMap[h]||0)+1; });
+  const maxH=Math.max(...Object.values(horaMap),1);
+  document.getElementById("horaGrid").innerHTML=
     Array.from({length:17},(_,i)=>i+7).map(h=>{
       const n=horaMap[h]||0;
-      const pct=(n/maxH*100).toFixed(0);
-      return`<div class="hora-label">${h}:00</div>
-      <div class="hora-bar-wrap">
-        <div class="hora-bar-bg"><div class="hora-bar-fill" style="width:${pct}%"></div></div>
-        <span class="hora-count">${fmtN(n)}</span>
-      </div>`;
+      return`<div class="hora-label">${h}:00</div><div class="hora-bar-wrap"><div class="hora-bar-bg"><div class="hora-bar-fill" style="width:${(n/maxH*100).toFixed(0)}%"></div></div><span class="hora-count">${fmtN(n)}</span></div>`;
     }).join("");
 }
 
 function setModoAnoMes(modo){
-  window._modoAnoMes = modo;
-  // atualizar visual dos botões
-  document.getElementById("toggleAtend").style.background = modo==='atend'?'#1f2937':'none';
-  document.getElementById("toggleAtend").style.color      = modo==='atend'?'#fff':'#6b7280';
-  document.getElementById("toggleRec").style.background  = modo==='receita'?'#1f2937':'none';
-  document.getElementById("toggleRec").style.color       = modo==='receita'?'#fff':'#6b7280';
-  // atualizar header da tabela
-  document.getElementById("thValor").textContent = modo==='atend'?'Atend.':'Receita';
-  document.getElementById("thLY").textContent    = modo==='atend'?'Atend. LY':'Receita LY';
-  // re-renderizar só a tabela de ano/mês
+  _modoAnoMes=modo;
+  document.getElementById("toggleAtend").style.background=modo==="atend"?"#1f2937":"none";
+  document.getElementById("toggleAtend").style.color     =modo==="atend"?"#fff":"#6b7280";
+  document.getElementById("toggleRec").style.background  =modo==="receita"?"#1f2937":"none";
+  document.getElementById("toggleRec").style.color       =modo==="receita"?"#fff":"#6b7280";
+  document.getElementById("thValor").textContent=modo==="atend"?"Atend.":"Receita";
+  document.getElementById("thLY").textContent   =modo==="atend"?"Atend. LY":"Receita LY";
   if(window._anoMapGlobal) renderAnoMesTabela(window._anoMapGlobal);
 }
 
 function renderAnoMesTabela(anoMap){
-  const tbody = document.querySelector("#tblAnoMes tbody");
-  tbody.innerHTML = "";
-  const anos = Object.keys(anoMap).sort().reverse();
-  const anoAtual = anos[0];
-  const hoje = new Date();
-  const mesAtualStr = String(hoje.getMonth()+1).padStart(2,"0");
+  const tbody=document.querySelector("#tblAnoMes tbody");
+  tbody.innerHTML="";
+  const anos=Object.keys(anoMap).sort().reverse();
+  const anoAtual=anos[0];
+  const hoje=new Date();
+  const mesAtualStr=String(hoje.getMonth()+1).padStart(2,"0");
 
   anos.forEach(a=>{
-    const ly = String(parseInt(a)-1);
-    const isAnoAtual = a === anoAtual;
-    const modo = window._modoAnoMes || 'atend';
-    const totA = modo==='atend' ? anoMap[a].total : anoMap[a].rec;
-    let totLY = 0;
-    if(isAnoAtual && anoMap[ly]){
-      const mesMap = modo==='atend' ? anoMap[ly].meses : anoMap[ly].mesRec;
+    const ly=String(parseInt(a)-1);
+    const isAnoAtual=a===anoAtual;
+    const totA=_modoAnoMes==="atend"?anoMap[a].total:anoMap[a].rec;
+    let totLY=0;
+    if(isAnoAtual&&anoMap[ly]){
+      const mesMap=_modoAnoMes==="atend"?anoMap[ly].meses:anoMap[ly].mesRec;
       Object.entries(mesMap||{}).forEach(([m,mTotal])=>{
-        if(m < mesAtualStr) totLY += mTotal;
-        else if(m === mesAtualStr){
-          const diasNoMes = new Date(parseInt(ly), parseInt(m), 0).getDate();
-          totLY += mTotal * hoje.getDate() / diasNoMes;
-        }
+        if(m<mesAtualStr) totLY+=mTotal;
+        else if(m===mesAtualStr){ const dias=new Date(parseInt(ly),parseInt(m),0).getDate(); totLY+=mTotal*hoje.getDate()/dias; }
       });
-    } else {
-      totLY = modo==='atend' ? (anoMap[ly]?.total||0) : (anoMap[ly]?.rec||0);
-    }
-    const yoy = totLY ? ((totA-totLY)/totLY*100) : null;
-    const yoyStr = yoy!==null ? `<span class="${yoy>=0?'green':'red'}">${yoy>=0?'+':''}${yoy.toFixed(2)}%</span>` : "—";
-    const fmtVal = v => modo==='atend' ? fmtN(v) : fmtM(v);
+    } else { totLY=_modoAnoMes==="atend"?(anoMap[ly]?.total||0):(anoMap[ly]?.rec||0); }
+    const yoy=totLY?((totA-totLY)/totLY*100):null;
+    const yoyStr=yoy!==null?`<span class="${yoy>=0?"green":"red"}">${yoy>=0?"+":""}${yoy.toFixed(2)}%</span>`:"—";
+    const fmtVal=v=>_modoAnoMes==="atend"?fmtN(v):fmtM(v);
 
-    const trAno = document.createElement("tr");
+    const trAno=document.createElement("tr");
     trAno.style.cursor="pointer";
-    trAno.innerHTML = `<td><span class="toggle-icon" id="ico-${a}">⊕</span> <strong>${a}</strong></td><td class="num">${fmtVal(totA)}</td><td class="num">${totLY?fmtVal(totLY):"—"}</td><td class="num">${yoyStr}</td>`;
+    trAno.innerHTML=`<td><span id="ico-${a}">⊕</span> <strong>${a}</strong></td><td class="num">${fmtVal(totA)}</td><td class="num">${totLY?fmtVal(totLY):"—"}</td><td class="num">${yoyStr}</td>`;
     trAno.addEventListener("click",()=>toggleMesRows(a));
     tbody.appendChild(trAno);
 
-    const mesData   = modo==='atend' ? anoMap[a].meses    : anoMap[a].mesRec;
-    const mesDataLY = modo==='atend' ? anoMap[ly]?.meses  : anoMap[ly]?.mesRec;
+    const mesData  =_modoAnoMes==="atend"?anoMap[a].meses   :anoMap[a].mesRec;
+    const mesDataLY=_modoAnoMes==="atend"?anoMap[ly]?.meses :anoMap[ly]?.mesRec;
     Object.entries(mesData||{}).sort().forEach(([m,n])=>{
-      if(isAnoAtual && m > mesAtualStr) return;
-      const lyM = mesDataLY?.[m]||0;
-      const yoyM = lyM ? ((n-lyM)/lyM*100) : null;
-      const trMes = document.createElement("tr");
-      trMes.className = `mes-row mes-${a}`;
-      trMes.style.display = "none";
-      trMes.style.background = "#fafafa";
-      trMes.innerHTML = `<td style="padding-left:28px;color:#6b7280;font-weight:normal">${MESES_FULL[parseInt(m)-1]}</td><td class="num" style="font-weight:normal">${fmtVal(n)}</td><td class="num" style="font-weight:normal">${lyM?fmtVal(lyM):"—"}</td><td class="num">${yoyM!==null?`<span class="${yoyM>=0?'green':'red'}">${yoyM>=0?'+':''}${yoyM.toFixed(2)}%</span>`:"—"}</td>`;
+      if(isAnoAtual&&m>mesAtualStr) return;
+      const lyM=mesDataLY?.[m]||0;
+      const yoyM=lyM?((n-lyM)/lyM*100):null;
+      const trMes=document.createElement("tr");
+      trMes.className=`mes-row mes-${a}`;
+      trMes.style.display="none";trMes.style.background="#fafafa";
+      trMes.innerHTML=`<td style="padding-left:28px;color:#6b7280;font-weight:normal">${MESES_FULL[parseInt(m)-1]}</td><td class="num" style="font-weight:normal">${fmtVal(n)}</td><td class="num" style="font-weight:normal">${lyM?fmtVal(lyM):"—"}</td><td class="num">${yoyM!==null?`<span class="${yoyM>=0?"green":"red"}">${yoyM>=0?"+":""}${yoyM.toFixed(2)}%</span>`:"—"}</td>`;
       tbody.appendChild(trMes);
     });
   });
 }
 
 function toggleMesRows(ano){
-  const rows = document.querySelectorAll(`.mes-${ano}`);
-  const ico  = document.getElementById(`ico-${ano}`);
-  const hidden = rows.length && rows[0].style.display==="none";
+  const rows=document.querySelectorAll(`.mes-${ano}`);
+  const ico =document.getElementById(`ico-${ano}`);
+  const hidden=rows.length&&rows[0].style.display==="none";
   rows.forEach(r=>r.style.display=hidden?"":"none");
   if(ico) ico.textContent=hidden?"⊖":"⊕";
 }
 
-/* ════════════════════════
-   FINANCEIRO
-════════════════════════ */
+/* ── FINANCEIRO ── */
 function renderFinanceiro(rows){
-  /* Chart receita vs comissão por mês */
   const recMes=Array(12).fill(0), comMes=Array(12).fill(0);
-  rows.forEach(r=>{
-    if(!r.data)return;
-    const m=parseInt(r.data.split("-")[1])-1;
-    recMes[m]+=(r.valor||0); comMes[m]+=(r.comissao||0);
-  });
+  rows.forEach(r=>{ if(!r.data)return; const m=parseInt(r.data.split("-")[1])-1; recMes[m]+=(r.valor||0);comMes[m]+=(r.comissao||0); });
   mkChart("chartRecMes",{type:"bar",data:{labels:MESES,datasets:[
     {label:"Receita",data:recMes,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1},
     {label:"Comissão",data:comMes,backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1},
   ]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
 
-  /* Receita por serviço */
   const servMap={};
   rows.forEach(r=>{ if(!r.servico)return; if(!servMap[r.servico])servMap[r.servico]={n:0,rec:0}; servMap[r.servico].n++;servMap[r.servico].rec+=(r.valor||0); });
   const rankS=Object.entries(servMap).sort((a,b)=>b[1].rec-a[1].rec);
-  document.querySelector("#tblRecServ tbody").innerHTML =
-    rankS.map(([s,v])=>`<tr class="clicavel${selecao.tipo==='serv'&&selecao.valor===s?' selecionado':''}" onclick="filtrarPor('serv','${s.replace(/'/g,"\'")}',this)"><td>${s}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("") +
+  document.querySelector("#tblRecServ tbody").innerHTML=
+    rankS.map(([s,v])=>`<tr class="clicavel${selecao.tipo==="serv"&&selecao.valor===s?" selecionado":""}" onclick="filtrarPor('serv','${s.replace(/'/g,"\\'")}',this)"><td>${s}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("")+
     `<tr><td>Total</td><td class="num">${fmtN(rankS.reduce((s,[,v])=>s+v.n,0))}</td><td class="num">${fmtM(rankS.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num"></td></tr>`;
 
-  /* Histórico por ano — busca sem filtro */
-  renderRecAno();
+  // Histórico por ano — usa cacheCompleto
+  const fonte=document.getElementById("fFonte").value;
+  const hist=cacheCompleto.filter(r=>r.data&&(!fonte||r._fonte===fonte));
+  const anoMap={};
+  hist.forEach(r=>{ const a=r.data.split("-")[0]; if(!anoMap[a])anoMap[a]={n:0,rec:0,com:0}; anoMap[a].n++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0); });
+  document.querySelector("#tblRecAno tbody").innerHTML=
+    Object.entries(anoMap).sort().reverse().map(([a,v])=>`<tr><td><strong>${a}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("")+
+    `<tr><td>Total</td><td class="num">${fmtN(Object.values(anoMap).reduce((s,v)=>s+v.n,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.rec,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.com,0))}</td><td class="num"></td></tr>`;
 
-  /* Receita por profissional */
   const totAt=rows.length||1;
   const profMap={};
   rows.forEach(r=>{ if(!r.profissional)return; if(!profMap[r.profissional])profMap[r.profissional]={n:0,rec:0,com:0,cli:new Set()}; profMap[r.profissional].n++;profMap[r.profissional].rec+=(r.valor||0);profMap[r.profissional].com+=(r.comissao||0);if(r.cliente)profMap[r.profissional].cli.add(r.cliente); });
   const rankP=Object.entries(profMap).sort((a,b)=>b[1].rec-a[1].rec);
-  document.querySelector("#tblRecProf tbody").innerHTML =
-    rankP.map(([p,v])=>`<tr class="clicavel${selecao.tipo==='prof'&&selecao.valor===p?' selecionado':''}" onclick="filtrarPor('prof','${p.replace(/'/g,"\'")}',this)"><td>${p}</td><td class="num">${fmtN(v.cli.size)}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`).join("") +
+  document.querySelector("#tblRecProf tbody").innerHTML=
+    rankP.map(([p,v])=>`<tr class="clicavel${selecao.tipo==="prof"&&selecao.valor===p?" selecionado":""}" onclick="filtrarPor('prof','${p.replace(/'/g,"\\'")}',this)"><td>${p}</td><td class="num">${fmtN(v.cli.size)}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`).join("")+
     `<tr><td>Total</td><td class="num"></td><td class="num">${fmtN(totAt)}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num"></td><td class="num">100%</td></tr>`;
 }
 
-async function renderRecAno(){
-  const histRaw = await fetchTodos({ano:"",mes:""});
-  const hist = selecao.tipo
-    ? histRaw.filter(r=>{
-        if(selecao.tipo==='prof') return r.profissional===selecao.valor;
-        if(selecao.tipo==='serv') return r.servico===selecao.valor;
-        return true;
-      })
-    : histRaw;
-  const anoMap={};
-  hist.forEach(r=>{ if(!r.data)return; const a=r.data.split("-")[0]; if(!anoMap[a])anoMap[a]={n:0,rec:0,com:0}; anoMap[a].n++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0); });
-  document.querySelector("#tblRecAno tbody").innerHTML =
-    Object.entries(anoMap).sort().reverse().map(([a,v])=>`<tr><td><strong>${a}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td></tr>`).join("") +
-    `<tr><td>Total</td><td class="num">${fmtN(Object.values(anoMap).reduce((s,v)=>s+v.n,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.rec,0))}</td><td class="num">${fmtM(Object.values(anoMap).reduce((s,v)=>s+v.com,0))}</td><td class="num"></td></tr>`;
-}
-
-/* ════════════════════════
-   EQUIPE
-════════════════════════ */
+/* ── EQUIPE ── */
 function renderEquipe(rows){
   const totAt=rows.length||1;
   const profMap={};
@@ -746,74 +713,69 @@ function renderEquipe(rows){
     if(r.data){const d=parseInt(r.data.split("-")[2]);if(d<=15)profMap[p].q1++;else profMap[p].q2++;}
   });
   const rank=Object.entries(profMap).sort((a,b)=>b[1].n-a[1].n).slice(0,15);
-
   mkChart("chartEquipe",{type:"bar",data:{labels:rank.map(([p])=>p),datasets:[{label:"Atendimentos",data:rank.map(([,v])=>v.n),backgroundColor:"rgba(37,99,235,.75)",borderColor:"#2563eb",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
-
   mkChart("chartQuinz",{type:"bar",data:{labels:rank.map(([p])=>p),datasets:[
     {label:"1ª Quinzena",data:rank.map(([,v])=>v.q1),backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1},
     {label:"2ª Quinzena",data:rank.map(([,v])=>v.q2),backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1},
   ]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{beginAtZero:true}}}});
-
-  document.querySelector("#tblEquipe tbody").innerHTML =
+  document.querySelector("#tblEquipe tbody").innerHTML=
     rank.map(([p,v])=>{
       const ret=Object.values(v.cli).filter(x=>x>1).length;
       const pctRet=Object.keys(v.cli).length?((ret/Object.keys(v.cli).length)*100).toFixed(1):0;
-      return`<tr class="clicavel${selecao.tipo==='prof'&&selecao.valor===p?' selecionado':''}" onclick="filtrarPor('prof','${p.replace(/'/g,"\'")}',this)"><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${pctRet}%</td><td class="num">${fmtN(v.q1)}</td><td class="num">${fmtN(v.q2)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
-    }).join("") +
+      return`<tr class="clicavel${selecao.tipo==="prof"&&selecao.valor===p?" selecionado":""}" onclick="filtrarPor('prof','${p.replace(/'/g,"\\'")}',this)"><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${pctRet}%</td><td class="num">${fmtN(v.q1)}</td><td class="num">${fmtN(v.q2)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
+    }).join("")+
     `<tr><td>Total</td><td class="num">${fmtN(totAt)}</td><td class="num"></td><td class="num"></td><td class="num">${fmtN(rank.reduce((s,[,v])=>s+v.q1,0))}</td><td class="num">${fmtN(rank.reduce((s,[,v])=>s+v.q2,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.com,0))}</td><td class="num"></td><td class="num">100%</td></tr>`;
 }
 
-/* ════════════════════════
-   EXECUTIVO
-════════════════════════ */
-async function renderExecutivo(rowsFiltradas){
-  let hist;
-  if(rowsFiltradas){
-    hist = rowsFiltradas;
-  } else {
-    const histRaw = await fetchTodos({ano:"",mes:""});
-    hist = selecao.tipo
-      ? histRaw.filter(r=>{
-          if(selecao.tipo==='prof') return r.profissional===selecao.valor;
-          if(selecao.tipo==='serv') return r.servico===selecao.valor;
-          return true;
-        })
-      : histRaw;
-  }
+/* ── EXECUTIVO ── */
+function renderExecutivo(rows){
+  const fonte=document.getElementById("fFonte").value;
+  // Usa cacheCompleto para evolução histórica (sem filtro ano/mes)
+  const hist=cacheCompleto.filter(r=>r.data&&(!fonte||r._fonte===fonte)&&
+    (!selecao.tipo||(selecao.tipo==="prof"?r.profissional===selecao.valor:r.servico===selecao.valor)));
   const anoMap={};
-  hist.forEach(r=>{
-    if(!r.data)return;
-    const a=r.data.split("-")[0];
-    if(!anoMap[a])anoMap[a]={n:0,rec:0,com:0};
-    anoMap[a].n++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0);
-  });
+  hist.forEach(r=>{ const a=r.data.split("-")[0]; if(!anoMap[a])anoMap[a]={n:0,rec:0,com:0}; anoMap[a].n++;anoMap[a].rec+=(r.valor||0);anoMap[a].com+=(r.comissao||0); });
   const anos=Object.keys(anoMap).sort();
-
   mkChart("chartEvolAtend",{type:"bar",data:{labels:anos,datasets:[{label:"Atendimentos",data:anos.map(a=>anoMap[a].n),backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
   mkChart("chartEvolRec",{type:"bar",data:{labels:anos,datasets:[{label:"Receita",data:anos.map(a=>anoMap[a].rec),backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
 
-  // Tabela executiva por profissional (todos os anos)
   const profMap={};
-  hist.forEach(r=>{
-    const p=r.profissional;if(!p)return;
-    if(!profMap[p])profMap[p]={n:0,rec:0,com:0,cli:new Set()};
-    profMap[p].n++;profMap[p].rec+=(r.valor||0);profMap[p].com+=(r.comissao||0);
-    if(r.cliente)profMap[p].cli.add(r.cliente);
-  });
+  hist.forEach(r=>{ const p=r.profissional;if(!p)return; if(!profMap[p])profMap[p]={n:0,rec:0,com:0,cli:new Set()}; profMap[p].n++;profMap[p].rec+=(r.valor||0);profMap[p].com+=(r.comissao||0);if(r.cliente)profMap[p].cli.add(r.cliente); });
   const totAt=hist.length||1;
   const rank=Object.entries(profMap).sort((a,b)=>b[1].n-a[1].n);
-  document.querySelector("#tblExec tbody").innerHTML =
-    rank.map(([p,v])=>{
-      const ret=v.cli.size;
-      return`<tr class="clicavel${selecao.tipo==='prof'&&selecao.valor===p?' selecionado':''}" onclick="filtrarPor('prof','${p.replace(/'/g,"\'")}',this)"><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(ret)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`;
-    }).join("") +
+  document.querySelector("#tblExec tbody").innerHTML=
+    rank.map(([p,v])=>`<tr class="clicavel${selecao.tipo==="prof"&&selecao.valor===p?" selecionado":""}" onclick="filtrarPor('prof','${p.replace(/'/g,"\\'")}',this)"><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.cli.size)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`).join("")+
     `<tr><td>Total</td><td class="num">${fmtN(totAt)}</td><td class="num"></td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.com,0))}</td><td class="num"></td><td class="num"></td><td class="num">100%</td></tr>`;
 }
 
+/* ── INIT FILTROS (selects) ── */
+async function initFiltros(){
+  // Preenche profissional e serviço com dados do cache
+  const profs=[...new Set(cacheCompleto.map(r=>r.profissional).filter(Boolean))].sort();
+  const servs=[...new Set(cacheCompleto.map(r=>r.servico).filter(Boolean))].sort();
+  const selP=document.getElementById("fProf");
+  const selS=document.getElementById("fServ");
+  profs.forEach(p=>selP.innerHTML+=`<option>${p}</option>`);
+  servs.forEach(s=>selS.innerHTML+=`<option>${s}</option>`);
+}
+
 /* ── INIT ── */
-document.addEventListener("DOMContentLoaded",async()=>{
+document.addEventListener("DOMContentLoaded", async()=>{
+  setLoading("Carregando legado...");
+  const legado = await fetchLegadoCompleto();
+
+  setLoading("Carregando atendimentos novos...");
+  const novos = await fetchNovosCompleto();
+
+  cacheCompleto = [...legado, ...novos];
+
+  setLoading("Montando filtros...");
   await initFiltros();
-  await carregarTudo();
+
+  stopLoading();
+
+  // Aplicar filtro inicial (2025 selecionado)
+  aplicarFiltros();
 });
 </script>
 </body>

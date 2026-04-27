@@ -225,6 +225,12 @@ async function carregarSelects(){
 }
 
 async function carregarLista(){
+  // Aguardar usuarioLogado estar disponível
+  if(!window.usuarioLogado){
+    setTimeout(carregarLista, 100);
+    return;
+  }
+
   const u = window.usuarioLogado;
   const isAdmin = u && u.role === "admin";
 
@@ -239,14 +245,13 @@ async function carregarLista(){
   const {data} = await q;
   dados = data || [];
 
-  // Ocultar botão "Vincular" para operadora
-  const btnVincular = document.querySelector(".vincular-btn");
-  if(btnVincular) btnVincular.style.display = isAdmin ? "" : "none";
-
   render();
 }
 
 function render(){
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+
   const termo = (document.getElementById("buscaTerapeuta").value||"").toLowerCase();
   const filtrado = dados.filter(d => {
     const nome = (d.terapeutas?.nome_profissional||"").toLowerCase();
@@ -288,9 +293,23 @@ function render(){
 }
 
 function abrirVincular(){
-  document.getElementById("cpf_terapeuta").value   = "";
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+
+  // Operadora: pré-seleciona ela mesma e bloqueia o select
+  const selTer = document.getElementById("cpf_terapeuta");
+  if(!isAdmin && u && u.cpf){
+    selTer.value = u.cpf;
+    selTer.disabled = true;
+  } else {
+    selTer.value = "";
+    selTer.disabled = false;
+  }
+
   document.getElementById("certificacao_id").value = "";
   document.getElementById("data_obtencao").value   = "";
+  if(document.getElementById("arquivo_vincular"))
+    document.getElementById("arquivo_vincular").value = "";
   document.getElementById("modalVincular").style.display = "flex";
 }
 function fecharVincular(){ document.getElementById("modalVincular").style.display = "none"; }
@@ -327,6 +346,9 @@ async function vincular(){
 }
 
 function abrirModal(nome){
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+
   const registros = dados.filter(d => d.terapeutas?.nome_profissional === nome);
   document.getElementById("tituloModal").textContent = nome;
 
@@ -343,10 +365,10 @@ function abrirModal(nome){
            <a class="btn-ver-cert" href="${r.arquivo_url}" target="_blank">
              <i class="fa fa-eye"></i> ${r.arquivo_nome||"Ver certificado"}
            </a>
-           <button class="excluir" style="padding:2px 8px;font-size:11px"
+           ${isAdmin ? `<button class="excluir" style="padding:2px 8px;font-size:11px"
              onclick="excluirArquivo('${r.id}','${(r.arquivo_url||"").replace(/'/g,"\\'")}','${nome.replace(/'/g,"\\'")}')">
              <i class="fa fa-times"></i> Remover
-           </button>
+           </button>` : ""}
          </div>`
       : `<div class="cert-upload">
            <input type="file" id="file_${r.id}" accept="image/*,.pdf,.doc,.docx">
@@ -355,6 +377,12 @@ function abrirModal(nome){
            </button>
            <span class="upload-ing" id="uploading_${r.id}"><i class="fa fa-spinner fa-spin"></i></span>
          </div>`;
+
+    // Botões de editar data e excluir vínculo: só admin
+    const botoesAcao = isAdmin
+      ? `<button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>
+         <button class="excluir" onclick="excluir('${r.id}','${nome.replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>`
+      : `<button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>`;
 
     return `<div class="cert-row" id="cert-row-${r.id}">
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
@@ -365,10 +393,7 @@ function abrirModal(nome){
             <span class="cert-data"><i class="fa fa-calendar-alt"></i> ${dataFmt}</span>
           </div>
         </div>
-        <div class="cert-row-right">
-          <button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>
-          <button class="excluir" onclick="excluir('${r.id}','${nome.replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>
-        </div>
+        <div class="cert-row-right">${botoesAcao}</div>
       </div>
       ${arquivoHtml}
     </div>`;

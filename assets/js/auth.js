@@ -15,7 +15,7 @@ var MENU = [
   { href:"dashboard.html",     icon:"fa-chart-line",         label:"Dashboard",      roles:["admin"] },
   { sep:true },
   { titulo:"CADASTROS" },
-  { href:"equipe.html",        icon:"fa-users",              label:"Equipe",         roles:["admin","recepcionista","operadora"] },
+  { href:"equipe.html",        icon:"fa-users",              label:"Cadastro de Pessoal",         roles:["admin","recepcionista","operadora"] },
   { href:"clientes.html",      icon:"fa-user",               label:"Clientes",       roles:["admin","recepcionista","operadora"] },
   { href:"servicos.html",      icon:"fa-hand-holding-heart", label:"Serviços",       roles:["admin","recepcionista","operadora"] },
   { href:"certificacoes.html", icon:"fa-certificate",        label:"Certificações",  roles:["admin","recepcionista","operadora"] },

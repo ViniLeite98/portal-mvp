@@ -2,11 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Gestão da Equipe | Hara Spa</title>
+<title>Cadastro de Pessoal | Hara Spa</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/js/auth.js"></script>
 
 <style>
 *{box-sizing:border-box}
@@ -93,8 +95,41 @@ input,select{
   border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
 }
 input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .span2{grid-column:span 2;}
 .span3{grid-column:span 3;}
+
+/* ── PROGRESS CIRCLE ── */
+.progress-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:default;}
+.progress-circle{width:42px;height:42px;transform:rotate(-90deg);}
+.progress-circle .bg{fill:none;stroke:#e5e7eb;stroke-width:4;}
+.progress-circle .fill{fill:none;stroke:#22c55e;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,stroke .3s;}
+.progress-pct{position:absolute;font-size:10px;font-weight:700;color:#111827;}
+.progress-tooltip{
+  display:none;position:absolute;top:calc(100% + 8px);right:0;
+  background:#1f2937;color:#fff;border-radius:10px;
+  padding:12px 14px;font-size:12px;width:220px;z-index:100;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);line-height:1.6;
+}
+.progress-tooltip::before{
+  content:"";position:absolute;top:-6px;right:14px;
+  border:6px solid transparent;border-bottom-color:#1f2937;border-top:none;
+}
+.progress-wrap:hover .progress-tooltip{display:block;}
+.tooltip-item{display:flex;align-items:center;gap:6px;padding:2px 0;}
+.tooltip-item.done{color:#86efac;}
+.tooltip-item.missing{color:#fca5a5;}
+
+/* ── CPF EDIT AVISO ── */
+.cpf-aviso{
+  font-size:11px;color:#d97706;margin-top:4px;
+  display:flex;align-items:center;gap:5px;
+}
+.btn-editar-cpf{
+  background:none;color:#2563eb;border:none;padding:0;
+  font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline;
+  display:inline;margin-left:6px;
+}
 
 /* ── FOOTER ── */
 .modal-footer{
@@ -136,48 +171,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
 .btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
-
-/* ── PROGRESS CIRCLE ── */
-.progress-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:default;}
-.progress-circle{width:42px;height:42px;transform:rotate(-90deg);}
-.progress-circle .bg{fill:none;stroke:#e5e7eb;stroke-width:4;}
-.progress-circle .fill{fill:none;stroke:#22c55e;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,stroke .3s;}
-.progress-pct{position:absolute;font-size:10px;font-weight:700;color:#111827;}
-.progress-tooltip{
-  display:none;position:absolute;top:calc(100% + 8px);right:0;
-  background:#1f2937;color:#fff;border-radius:10px;
-  padding:12px 14px;font-size:12px;width:220px;z-index:100;
-  box-shadow:0 8px 24px rgba(0,0,0,.2);line-height:1.6;
-}
-.progress-tooltip::before{
-  content:"";position:absolute;top:-6px;right:14px;
-  border:6px solid transparent;border-bottom-color:#1f2937;border-top:none;
-}
-.progress-wrap:hover .progress-tooltip{display:block;}
-.tooltip-item{display:flex;align-items:center;gap:6px;padding:2px 0;}
-.tooltip-item.done{color:#86efac;}
-.tooltip-item.missing{color:#fca5a5;}
-
-/* ── PROGRESS CIRCLE ── */
-.progress-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:default;}
-.progress-circle{width:42px;height:42px;transform:rotate(-90deg);}
-.progress-circle .bg{fill:none;stroke:#e5e7eb;stroke-width:4;}
-.progress-circle .fill{fill:none;stroke:#22c55e;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,stroke .3s;}
-.progress-pct{position:absolute;font-size:10px;font-weight:700;color:#111827;}
-.progress-tooltip{
-  display:none;position:absolute;top:calc(100% + 8px);right:0;
-  background:#1f2937;color:#fff;border-radius:10px;
-  padding:12px 14px;font-size:12px;width:220px;z-index:100;
-  box-shadow:0 8px 24px rgba(0,0,0,.2);line-height:1.6;
-}
-.progress-tooltip::before{
-  content:"";position:absolute;top:-6px;right:14px;
-  border:6px solid transparent;border-bottom-color:#1f2937;border-top:none;
-}
-.progress-wrap:hover .progress-tooltip{display:block;}
-.tooltip-item{display:flex;align-items:center;gap:6px;padding:2px 0;}
-.tooltip-item.done{color:#86efac;}
-.tooltip-item.missing{color:#fca5a5;}
 </style>
 </head>
 
@@ -186,18 +179,18 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <aside id="sidebar"></aside>
 
 <main class="content">
-<h1>Gestão da Equipe</h1>
+<h1>Cadastro de Pessoal</h1>
 
 <div class="topbar">
   <div class="left-tools">
     <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()">
     <select id="filtroStatus">
       <option value="">Todos os status</option>
-      <option value="Ativo">Ativo</option>
+      <option value="Ativo" selected>Ativo</option>
       <option value="Inativo">Inativo</option>
     </select>
   </div>
-  <button onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Cadastro</button>
+  <button id="btnNovoCadastro" onclick="abrirNovo()" style="display:none"><i class="fa fa-plus"></i> Novo Cadastro</button>
 </div>
 
 <table>
@@ -263,7 +256,18 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
         <div class="grid">
           <div class="field span2"><label>Nome Completo *</label><input id="nome_completo"></div>
           <div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
-          <div class="field"><label>CPF *</label><input id="cpf" placeholder="000.000.000-00"></div>
+
+          <!-- CPF com controle de edição -->
+          <div class="field" id="campo_cpf_wrapper">
+            <label>CPF *</label>
+            <input id="cpf" placeholder="000.000.000-00">
+            <div id="cpf_aviso" style="display:none" class="cpf-aviso">
+              <i class="fa fa-triangle-exclamation"></i>
+              Alterar o CPF substituirá o registro completo.
+              <button class="btn-editar-cpf" onclick="habilitarEdicaoCPF()">Editar mesmo assim</button>
+            </div>
+          </div>
+
           <div class="field"><label>RG</label><input id="rg"></div>
           <div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
           <div class="field"><label>Email *</label><input id="email" type="email"></div>
@@ -327,6 +331,9 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
             <label>Cargo</label>
             <select id="cargo">
               <option value="">Selecione</option>
+              <option>Terapeuta Feminina</option><option>Terapeuta Masculino</option>
+              <option>Gerente</option><option>Atendente</option>
+              <option>Recepcionista</option><option>Faxineira</option><option>Analista</option>
             </select>
           </div>
           <div class="field">
@@ -343,16 +350,18 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
           <div class="field"><label>Data de Início no Hara</label><input type="date" id="data_inicio"></div>
           <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
           <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
+
+
           <div class="field">
             <label>Tem folga semanal?</label>
-            <select id="tem_folga" onchange="toggleDiaFolga(this)">
+            <select id="tem_folga">
               <option value="">Selecione</option><option>Sim</option><option>Não</option>
             </select>
           </div>
-          <div class="field" id="campo_dia_folga">
-            <label>Dia da Folga *</label>
+          <div class="field">
+            <label>Dia da Folga</label>
             <select id="dia_folga">
-              <option value="">Selecione o dia</option>
+              <option value="">Selecione</option>
               <option>Segunda</option><option>Terça</option><option>Quarta</option>
               <option>Quinta</option><option>Sexta</option><option>Sábado</option>
             </select>
@@ -402,15 +411,11 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </div>
 </div>
 
-<script src="assets/sidebar/sidebar.js"></script>
 <script>
-
-const supabaseClient = supabase.createClient(
-  "https://rymehgsoarjeecuwyhny.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec"
-);
-
+// CPF original do registro sendo editado (null = novo cadastro)
 let cpfAtual = null;
+// Controla se o campo CPF foi desbloqueado para edição
+let cpfEdicaoHabilitada = false;
 
 const campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
@@ -419,7 +424,9 @@ const campos = [
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
 ];
 
-/* ── MÁSCARAS ── */
+/* ══════════════════════════════════════════
+   MÁSCARAS
+══════════════════════════════════════════ */
 function mascara(id, fn){
   const el = document.getElementById(id);
   if(!el) return;
@@ -438,7 +445,6 @@ function fmtCPF(v){
   if(v.length <= 9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
   return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
 }
-
 function fmtRG(v){
   v = v.replace(/\D/g,'').substring(0,9);
   if(v.length <= 2) return v;
@@ -446,7 +452,6 @@ function fmtRG(v){
   if(v.length <= 8) return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);
   return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8);
 }
-
 function fmtTel(v){
   v = v.replace(/\D/g,'').substring(0,11);
   if(v.length <= 2) return v.length ? '('+v : v;
@@ -454,18 +459,17 @@ function fmtTel(v){
   if(v.length <= 10) return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);
   return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
 }
-
 function fmtCEP(v){
   v = v.replace(/\D/g,'').substring(0,8);
   if(v.length <= 5) return v;
   return v.slice(0,5)+'-'+v.slice(5);
 }
-
 function fmtCPFDisplay(v){
   v = (v||"").replace(/\D/g,"");
   if(v.length !== 11) return v;
   return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);
 }
+function limparCPF(v){ return (v||"").replace(/\D/g,""); }
 
 function aplicarMascaras(){
   mascara('cpf', fmtCPF);
@@ -479,7 +483,56 @@ function aplicarMascaras(){
   });
 }
 
-/* ── TABS ── */
+/* ══════════════════════════════════════════
+   CONTROLE DE EDIÇÃO DO CPF
+══════════════════════════════════════════ */
+
+/**
+ * Bloqueia o campo CPF e exibe o aviso de edição segura.
+ * Chamado ao abrir um cadastro existente.
+ */
+function bloquearCPF(){
+  const el = document.getElementById("cpf");
+  el.readOnly = true;
+  document.getElementById("cpf_aviso").style.display = "flex";
+  cpfEdicaoHabilitada = false;
+}
+
+/**
+ * Desbloqueia o campo CPF após confirmação do usuário.
+ */
+function habilitarEdicaoCPF(){
+  const confirmado = confirm(
+    "⚠️ Atenção!\n\n" +
+    "Alterar o CPF irá:\n" +
+    "• Criar um novo registro com o CPF novo\n" +
+    "• Migrar documentos e perfil de login\n" +
+    "• Excluir o registro antigo\n\n" +
+    "Deseja continuar?"
+  );
+  if(!confirmado) return;
+
+  const el = document.getElementById("cpf");
+  el.readOnly = false;
+  el.focus();
+  el.select();
+  document.getElementById("cpf_aviso").style.display = "none";
+  cpfEdicaoHabilitada = true;
+}
+
+/**
+ * Desbloqueia o CPF sem aviso (usado em novo cadastro).
+ */
+function desbloquearCPF(){
+  const el = document.getElementById("cpf");
+  el.readOnly = false;
+  document.getElementById("cpf_aviso").style.display = "none";
+  cpfEdicaoHabilitada = false;
+}
+
+/* ══════════════════════════════════════════
+   TABS
+══════════════════════════════════════════ */
 function mudarTab(tab, btn){
   document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
   document.querySelectorAll(".side-btn").forEach(el => el.classList.remove("active"));
@@ -489,7 +542,9 @@ function mudarTab(tab, btn){
   atualizarProgresso();
 }
 
-/* ── FORM HELPERS ── */
+/* ══════════════════════════════════════════
+   FORM HELPERS
+══════════════════════════════════════════ */
 function getPayload(){
   const obj = {};
   campos.forEach(c => {
@@ -512,39 +567,57 @@ function setForm(data){
   const campo = document.getElementById("campo_data_inativacao");
   if(campo) campo.style.display = data.status === "Inativo" ? "" : "none";
 
-  const campoDia = document.getElementById("campo_dia_folga");
-  if(campoDia) campoDia.style.display = data.tem_folga === "Sim" ? "" : "none";
-
   ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id => {
     const el = document.getElementById(id);
     if(el && el.value) el.dispatchEvent(new Event('input'));
   });
 }
 
-/* ── TABELA PRINCIPAL ── */
+/* ══════════════════════════════════════════
+   TABELA PRINCIPAL
+══════════════════════════════════════════ */
 async function carregar(){
+  if(!window.usuarioLogado){
+    setTimeout(carregar, 100);
+    return;
+  }
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+  const podeNovo = u && (u.role === "admin" || u.role === "recepcionista");
+
+  // Mostrar/esconder botao Novo Cadastro apos saber o role
+  const btnNovo = document.getElementById("btnNovoCadastro");
+  if(btnNovo) btnNovo.style.display = podeNovo ? "" : "none";
   const statusFiltro = document.getElementById("filtroStatus").value;
-  let query = supabaseClient.from("terapeutas")
+
+  let query = client.from("terapeutas")
     .select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro) query = query.eq("status", statusFiltro);
+  // Operadora: so ve o proprio registro. Admin e recepcionista veem todos.
+  const soVeADela = u && u.role === "operadora" && u.cpf;
+  if(soVeADela) query = query.eq("cpf", u.cpf);
+
   const {data, error} = await query;
   if(error){ console.error(error); return; }
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
   data.forEach(t => {
+    const podeExcluir = u && (u.role === "admin" || u.role === "recepcionista");
+    const acoes = podeExcluir
+      ? `<button onclick="editar('${t.cpf}')">Editar</button>
+         <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`
+      : `<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;
     tbody.innerHTML += `
     <tr>
       <td>${t.nome_profissional||""}</td>
       <td>${t.cargo||""}</td>
       <td>${fmtCPFDisplay(t.cpf)}</td>
       <td>${t.status||""}</td>
-      <td>
-        <button onclick="editar('${t.cpf}')">Editar</button>
-        <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
-      </td>
+      <td>${acoes}</td>
     </tr>`;
   });
+
   filtrarTabela();
 }
 
@@ -555,40 +628,81 @@ function filtrarTabela(){
   });
 }
 
-/* ── MODAL ── */
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
 function resetModal(){
   campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
   document.getElementById("hora_entrada").value = "09:00";
   document.getElementById("hora_saida").value   = "18:00";
-  const campoDia = document.getElementById("campo_dia_folga");
-  if(campoDia) campoDia.style.display = "none";
   mudarTab("pessoais", document.querySelector(".side-btn"));
 }
 
 function abrirNovo(){
   cpfAtual = null;
+  cpfEdicaoHabilitada = false;
   resetModal();
+  desbloquearCPF();
   document.getElementById("modalTitulo").textContent = "Novo Cadastro";
-  document.getElementById("tabDocsBtn").style.display = "";
-  document.getElementById("tab-docs").style.display   = "";
+  document.getElementById("tabDocsBtn").style.display = "none";
   document.getElementById("progressWrap").style.display = "inline-flex";
+  abaAtiva = "pessoais";
   atualizarProgresso();
+
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+  const cpfLimpo = (u && u.cpf ? u.cpf : "").replace(/[^0-9]/g,"");
+  const emailLimpo = (u && u.email ? u.email : "").toLowerCase();
+  const SUPER_CPFS = ['42372412829','36589362823'];
+  const SUPER_EMAILS = ['viniciusleitesouza_1998@hotmail.com'];
+  const isSuperAdmin = SUPER_CPFS.includes(cpfLimpo) || SUPER_EMAILS.includes(emailLimpo);
+  const elRole = document.getElementById("role_usuario");
+  if(elRole) elRole.value = "operadora";
+
   document.getElementById("modal").style.display = "flex";
 }
 
 async function editar(cpf){
   cpfAtual = cpf;
-  const {data, error} = await supabaseClient.from("terapeutas").select("*").eq("cpf", cpf).single();
+  cpfEdicaoHabilitada = false;
+  const {data, error} = await client.from("terapeutas").select("*").eq("cpf", cpf).single();
   if(error){ console.error(error); return; }
 
   resetModal();
   setForm(data);
+  bloquearCPF(); // CPF bloqueado por padrão na edição
   document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display = "";
-  document.getElementById("tab-docs").style.display   = "";
   document.getElementById("progressWrap").style.display = "inline-flex";
+  abaAtiva = "pessoais";
   setTimeout(atualizarProgresso, 50);
   carregarDocs(cpf);
+
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+  const isSuperAdmin = ['42372412829','36589362823'].includes((u&&u.cpf?u.cpf:'').replace(/[^0-9]/g,''))
+    || ['viniciusleitesouza_1998@hotmail.com'].includes((u&&u.email?u.email:'').toLowerCase());
+  if(isAdmin){
+    // Busca perfil: primeiro pelo cpf_terapeuta, depois pelo email da terapeuta como fallback
+    (async () => {
+      let perfil = null;
+
+      const {data: p1} = await client
+        .from("perfis").select("email,role").eq("cpf_terapeuta", cpf).limit(1);
+      if(p1 && p1.length > 0){
+        perfil = p1[0];
+      } else if(data.email){
+        const {data: p2} = await client
+          .from("perfis").select("email,role").eq("email", data.email.toLowerCase()).limit(1);
+        if(p2 && p2.length > 0) perfil = p2[0];
+      }
+
+
+      const elRole = document.getElementById("role_usuario");
+      if(elRole && isAdmin) elRole.value = perfil ? (perfil.role || "operadora") : "operadora";
+    })();
+  }
+
   document.getElementById("modal").style.display = "flex";
 }
 
@@ -596,54 +710,162 @@ function fecharModal(){
   document.getElementById("modal").style.display = "none";
 }
 
-/* ── SALVAR ── */
+/* ══════════════════════════════════════════
+   SALVAR (com suporte a troca de CPF)
+══════════════════════════════════════════ */
 async function salvar(){
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
   const payload = getPayload();
 
   if(!payload.nome_completo || !payload.nome_profissional || !payload.email){
     alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");
     return;
   }
-  if(!validarFolga()) return;
 
-  let error;
-
-  if(cpfAtual){
-    // sempre faz update sem mexer no CPF (chave primária)
-    const updatePayload = {...payload};
-    delete updatePayload.cpf;
-    ({error} = await supabaseClient.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
-  } else {
-    // novo cadastro — CPF é obrigatório
+  /* ── NOVO CADASTRO ── */
+  if(!cpfAtual){
     if(!payload.cpf){ alert("CPF é obrigatório."); return; }
+    const cpfNovo = limparCPF(payload.cpf);
 
-    // verificar se CPF já existe
-    const {data: existente} = await supabaseClient
-      .from("terapeutas").select("cpf").eq("cpf", payload.cpf.replace(/\D/g,"")).limit(1);
+    const {data: existente} = await client
+      .from("terapeutas").select("cpf").eq("cpf", cpfNovo).limit(1);
     if(existente && existente.length > 0){
       alert("CPF já cadastrado. Verifique o número informado.");
-      document.getElementById("cpf").focus();
       return;
     }
 
-    ({error} = await supabaseClient.from("terapeutas").insert(payload));
-    if(!error){
-      cpfAtual = payload.cpf;
-      document.getElementById("tabDocsBtn").style.display = "";
-      document.getElementById("tab-docs").style.display   = "";
-      carregarDocs(cpfAtual);
+    const {error} = await client.from("terapeutas").insert({...payload, cpf: cpfNovo});
+    if(error){ alert("Erro ao salvar: " + error.message); return; }
+
+    cpfAtual = cpfNovo;
+    document.getElementById("tabDocsBtn").style.display = "";
+    carregarDocs(cpfAtual);
+
+  /* ── EDIÇÃO COM TROCA DE CPF ── */
+  } else if(cpfEdicaoHabilitada && limparCPF(payload.cpf) !== limparCPF(cpfAtual)){
+    const cpfAntigo = limparCPF(cpfAtual);
+    const cpfNovo   = limparCPF(payload.cpf);
+
+    if(!cpfNovo || cpfNovo.length !== 11){
+      alert("CPF inválido. Informe os 11 dígitos corretamente.");
+      return;
+    }
+
+    // Verificar se o CPF novo já existe
+    const {data: existente} = await client
+      .from("terapeutas").select("cpf").eq("cpf", cpfNovo).limit(1);
+    if(existente && existente.length > 0){
+      alert("O CPF informado já pertence a outro cadastro.");
+      return;
+    }
+
+    // 1. Buscar dados atuais completos para preservar campos não editados
+    const {data: dadosAtuais} = await client
+      .from("terapeutas").select("*").eq("cpf", cpfAntigo).single();
+
+    // 2. Inserir registro com novo CPF (merge dados atuais + payload)
+    const novoRegistro = {...dadosAtuais, ...payload, cpf: cpfNovo};
+    delete novoRegistro.created_at; // evitar conflito de campos gerados pelo banco
+    const {error: errInsert} = await client.from("terapeutas").insert(novoRegistro);
+    if(errInsert){ alert("Erro ao criar registro com novo CPF: " + errInsert.message); return; }
+
+    // 3. Migrar documentos
+    const {error: errDocs} = await client
+      .from("documentos")
+      .update({ equipe_id: cpfNovo })
+      .eq("equipe_id", cpfAntigo);
+    if(errDocs) console.warn("Aviso ao migrar documentos:", errDocs.message);
+
+    // 4. Migrar solicitações
+    const {error: errSol} = await client
+      .from("solicitacoes")
+      .update({ terapeuta_cpf: cpfNovo })
+      .eq("terapeuta_cpf", cpfAntigo);
+    if(errSol) console.warn("Aviso ao migrar solicitações:", errSol.message);
+
+    // 5. Migrar perfil de login
+    const {error: errPerfil} = await client
+      .from("perfis")
+      .update({ cpf_terapeuta: cpfNovo })
+      .eq("cpf_terapeuta", cpfAntigo);
+    if(errPerfil) console.warn("Aviso ao migrar perfil:", errPerfil.message);
+
+    // 6. Excluir registro antigo
+    const {error: errDel} = await client.from("terapeutas").delete().eq("cpf", cpfAntigo);
+    if(errDel){ alert("Erro ao remover registro antigo: " + errDel.message); return; }
+
+    cpfAtual = cpfNovo;
+    cpfEdicaoHabilitada = false;
+    bloquearCPF();
+    // Atualizar o campo CPF visualmente com a máscara
+    const elCPF = document.getElementById("cpf");
+    elCPF.value = fmtCPF(cpfNovo);
+
+  /* ── EDIÇÃO NORMAL (sem troca de CPF) ── */
+  } else {
+    // Operadora so pode editar o proprio registro
+    if(u && u.role === "operadora" && u.cpf && u.cpf !== cpfAtual){
+      alert("Você não tem permissão para editar este registro.");
+      return;
+    }
+    const updatePayload = {...payload};
+    delete updatePayload.cpf; // CPF não muda neste fluxo
+    const {error} = await client.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual);
+    if(error){ alert("Erro ao salvar: " + error.message); return; }
+  }
+
+  /* ── VINCULAR LOGIN / ROLE ── */
+  const cpfParaVincular = cpfAtual;
+  const isAdminU        = u && u.role === "admin";
+
+  // Role manual definido pelo admin via campo "Perfil de Acesso"
+  const roleManual = isAdminU ? (document.getElementById("role_usuario")?.value || null) : null;
+
+  // Role automático baseado no cargo — sempre calculado, mas só aplica se nao houver override manual
+  const cargo = payload.cargo || "";
+  let roleAutomatico = null;
+  if(cargo === "Terapeuta Feminina" || cargo === "Terapeuta Masculino"){
+    roleAutomatico = "operadora";
+  } else if(cargo === "Recepcionista"){
+    roleAutomatico = "recepcionista";
+  }
+
+  // Role final: manual (admin sobrescreve) tem prioridade sobre automático
+  const novoRole = roleManual || roleAutomatico;
+
+
+    if(cpfParaVincular && novoRole) {
+    let perfilId = null;
+
+    // Buscar perfil pelo cpf_terapeuta
+    const {data: p1} = await client
+      .from("perfis").select("id").eq("cpf_terapeuta", cpfParaVincular).limit(1);
+    if(p1 && p1.length > 0) perfilId = p1[0].id;
+
+    // Fallback: buscar pelo email cadastrado
+    if(!perfilId && payload.email) {
+      const {data: p2} = await client
+        .from("perfis").select("id").eq("email", payload.email.trim().toLowerCase()).limit(1);
+      if(p2 && p2.length > 0) perfilId = p2[0].id;
+    }
+
+    if(perfilId) {
+      await client.from("perfis").update({ cpf_terapeuta: cpfParaVincular, role: novoRole }).eq("id", perfilId);
     }
   }
 
-  if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
   carregar();
   fecharModal();
 }
 
+/* ══════════════════════════════════════════
+   EXCLUIR
+══════════════════════════════════════════ */
 async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
 
-  const {data: docs} = await supabaseClient
+  const {data: docs} = await client
     .from("documentos").select("id, url").eq("equipe_id", cpf);
 
   if(docs && docs.length > 0){
@@ -652,19 +874,21 @@ async function excluir(cpf){
       .filter(Boolean)
       .map(p => decodeURIComponent(p));
     if(paths.length > 0)
-      await supabaseClient.storage.from("documentos").remove(paths);
-    await supabaseClient.from("documentos").delete().eq("equipe_id", cpf);
+      await client.storage.from("documentos").remove(paths);
+    await client.from("documentos").delete().eq("equipe_id", cpf);
   }
 
-  await supabaseClient.from("solicitacoes").delete().eq("terapeuta_cpf", cpf);
+  await client.from("solicitacoes").delete().eq("terapeuta_cpf", cpf);
 
-  const {error} = await supabaseClient.from("terapeutas").delete().eq("cpf", cpf);
+  const {error} = await client.from("terapeutas").delete().eq("cpf", cpf);
   if(error){ alert("Erro ao excluir: " + error.message); return; }
 
   carregar();
 }
 
-/* ── DOCUMENTOS ── */
+/* ══════════════════════════════════════════
+   DOCUMENTOS
+══════════════════════════════════════════ */
 function limparNome(nome){
   return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
 }
@@ -678,7 +902,7 @@ function iconeDoc(nome){
 }
 
 async function carregarDocs(cpf){
-  const {data, error} = await supabaseClient
+  const {data, error} = await client
     .from("documentos").select("*").eq("equipe_id", cpf).order("created_at",{ascending:false});
 
   const lista = document.getElementById("docLista");
@@ -722,12 +946,12 @@ async function uploadDoc(){
   statusEl.style.display = "block";
 
   const fileName = `${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
-  const {error: uploadError} = await supabaseClient.storage.from("documentos").upload(fileName, file);
+  const {error: uploadError} = await client.storage.from("documentos").upload(fileName, file);
 
   if(uploadError){ statusEl.style.display = "none"; alert("Erro no upload: " + uploadError.message); return; }
 
-  const {data: urlData} = supabaseClient.storage.from("documentos").getPublicUrl(fileName);
-  const {error} = await supabaseClient.from("documentos").insert({
+  const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
+  const {error} = await client.from("documentos").insert({
     equipe_id: cpfAtual, tipo, nome_arquivo: file.name, url: urlData.publicUrl
   });
 
@@ -740,43 +964,16 @@ async function uploadDoc(){
 async function excluirDoc(id, url){
   if(!confirm("Excluir este documento?")) return;
   const path = url.split("/storage/v1/object/public/documentos/")[1];
-  if(path) await supabaseClient.storage.from("documentos").remove([decodeURIComponent(path)]);
-  await supabaseClient.from("documentos").delete().eq("id", id);
+  if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
+  await client.from("documentos").delete().eq("id", id);
   const el = document.getElementById("doc-" + id);
   if(el) el.remove();
   carregarDocs(cpfAtual);
 }
 
-/* ── FOLGA ── */
-function toggleDiaFolga(select){
-  const campo = document.getElementById("campo_dia_folga");
-  const dia   = document.getElementById("dia_folga");
-  if(select.value === "Sim"){
-    campo.style.display = "";
-    campo.style.border  = "none";
-    if(!dia.value) dia.style.border = "1px solid #f59e0b"; // destaque amarelo
-  } else {
-    campo.style.display = "none";
-    dia.value = "";
-    dia.style.border = "";
-  }
-}
-
-// validar dia obrigatório ao salvar
-function validarFolga(){
-  const temFolga = document.getElementById("tem_folga").value;
-  const diaFolga = document.getElementById("dia_folga").value;
-  if(temFolga === "Sim" && !diaFolga){
-    document.getElementById("dia_folga").style.border = "2px solid #ef4444";
-    document.getElementById("dia_folga").focus();
-    alert("Selecione o dia da folga.");
-    return false;
-  }
-  document.getElementById("dia_folga").style.border = "";
-  return true;
-}
-
-/* ── STATUS / INATIVACAO ── */
+/* ══════════════════════════════════════════
+   STATUS / INATIVAÇÃO
+══════════════════════════════════════════ */
 function aoMudarStatus(select){
   const campo = document.getElementById("campo_data_inativacao");
   const input = document.getElementById("data_inativacao");
@@ -789,8 +986,9 @@ function aoMudarStatus(select){
   }
 }
 
-/* ── PROGRESSO ── */
-// Campos por aba — o progresso mostra os campos da aba ATIVA
+/* ══════════════════════════════════════════
+   PROGRESSO CIRCULAR
+══════════════════════════════════════════ */
 const CAMPOS_POR_ABA = {
   pessoais:  [
     {id:"nome_completo",    label:"Nome Completo"},
@@ -818,16 +1016,13 @@ const CAMPOS_POR_ABA = {
   ],
   docs: [],
 };
-
-// Todos os campos para o tooltip geral
 const TODOS_CAMPOS = Object.values(CAMPOS_POR_ABA).flat();
-
 let abaAtiva = "pessoais";
 
 function atualizarProgresso(){
-  if(document.getElementById("progressWrap").style.display === "none") return;
+  const wrap = document.getElementById("progressWrap");
+  if(!wrap || wrap.style.display === "none") return;
 
-  // Progresso GERAL (todos os campos)
   const total  = TODOS_CAMPOS.length;
   const feitos = TODOS_CAMPOS.filter(c => {
     const el = document.getElementById(c.id);
@@ -844,53 +1039,35 @@ function atualizarProgresso(){
   fill.style.strokeDashoffset = offset;
   fill.style.stroke = cor;
 
-  // Tooltip: mostra campos da aba ativa
-  const camposAba  = CAMPOS_POR_ABA[abaAtiva] || [];
-  const feitosIds  = feitos.map(c => c.id);
-  const tooltip    = document.getElementById("progressTooltip");
+  const camposAba = CAMPOS_POR_ABA[abaAtiva] || [];
+  const feitosIds = feitos.map(c => c.id);
+  const tooltip   = document.getElementById("progressTooltip");
 
   if(camposAba.length === 0){
-    tooltip.innerHTML = "<div style='color:#e5e7eb;font-size:12px'>Nenhum campo obrigatório nesta aba.</div>";
+    tooltip.innerHTML = "<div style='color:#e5e7eb;font-size:12px'>Nenhum campo nesta aba.</div>";
   } else {
-    const abaFeitos   = camposAba.filter(c => feitosIds.includes(c.id));
-    const abaPct      = Math.round((abaFeitos.length / camposAba.length) * 100);
-    tooltip.innerHTML = `<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>
-        Esta aba: ${abaPct}% · Geral: ${pct}%
-      </div>`
+    const abaFeitos = camposAba.filter(c => feitosIds.includes(c.id));
+    const abaPct    = Math.round((abaFeitos.length / camposAba.length) * 100);
+    tooltip.innerHTML = `<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Esta aba: ${abaPct}% · Geral: ${pct}%</div>`
       + camposAba.map(c => {
-        const ok = feitosIds.includes(c.id);
-        return `<div class="tooltip-item ${ok?'done':'missing'}">
-          <i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i> ${c.label}
-        </div>`;
-      }).join("")
+          const ok = feitosIds.includes(c.id);
+          return `<div class="tooltip-item ${ok?'done':'missing'}"><i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i> ${c.label}</div>`;
+        }).join("")
       + "<div style='border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px'>Passe para outras abas para ver os campos delas.</div>";
   }
 }
 
-/* ── PARÂMETROS ── */
-async function carregarParametros(){
-  const CARGOS_DEFAULT = ["Terapeuta Feminina","Terapeuta Masculino","Gerente","Atendente","Recepcionista","Faxineira","Analista"];
-  const {data} = await supabaseClient.from("parametros").select("valor")
-    .eq("tipo","cargos").eq("ativo",true).order("valor");
-  const lista = data?.length ? data.map(p => p.valor) : CARGOS_DEFAULT;
-  const sel = document.getElementById("cargo");
-  sel.innerHTML = "<option value=''>Selecione</option>";
-  lista.forEach(c => sel.innerHTML += `<option>${c}</option>`);
-}
-
-/* ── INIT ── */
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   aplicarMascaras();
-  carregarParametros();
-  document.getElementById("filtroStatus").addEventListener("change", carregar);
-
-  // atualizar progresso ao digitar
   TODOS_CAMPOS.forEach(c => {
     const el = document.getElementById(c.id);
     if(el) el.addEventListener("input",  atualizarProgresso);
     if(el) el.addEventListener("change", atualizarProgresso);
   });
-
+  document.getElementById("filtroStatus").addEventListener("change", carregar);
   carregar();
 });
 </script>

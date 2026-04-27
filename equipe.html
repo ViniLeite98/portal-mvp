@@ -463,28 +463,38 @@ function setForm(data){
 
 /* ── TABELA PRINCIPAL ── */
 async function carregar(){
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
   const statusFiltro = document.getElementById("filtroStatus").value;
+
   let query = client.from("terapeutas")
     .select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro) query = query.eq("status", statusFiltro);
+  if(!isAdmin && u && u.cpf) query = query.eq("cpf", u.cpf);
+
   const {data, error} = await query;
   if(error){ console.error(error); return; }
 
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
   data.forEach(t => {
+    const acoes = isAdmin
+      ? `<button onclick="editar('${t.cpf}')">Editar</button>
+         <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`
+      : `<button onclick="editar('${t.cpf}')">Editar</button>`;
     tbody.innerHTML += `
     <tr>
       <td>${t.nome_profissional||""}</td>
       <td>${t.cargo||""}</td>
       <td>${fmtCPFDisplay(t.cpf)}</td>
       <td>${t.status||""}</td>
-      <td>
-        <button onclick="editar('${t.cpf}')">Editar</button>
-        <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>
-      </td>
+      <td>${acoes}</td>
     </tr>`;
   });
+
+  const btnNovo = document.querySelector("button[onclick=\'abrirNovo()\']");
+  if(btnNovo) btnNovo.style.display = isAdmin ? "" : "none";
+
   filtrarTabela();
 }
 

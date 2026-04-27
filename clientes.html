@@ -3,364 +3,579 @@
 <head>
 <meta charset="UTF-8">
 <title>Clientes | Hara Spa</title>
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
-
-/* ── TABELA ── */
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
-th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
-th{background:#f9fafb;font-weight:600;}
-tr:hover td{background:#f9fafb;}
-tr:last-child td{border-bottom:none;}
-button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;}
-button.excluir{background:#dc2626;}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.left-tools input{
-  padding:9px 12px;border:1px solid #d1d5db;
-  border-radius:8px;width:280px;font-size:14px;
-}
-.left-tools input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-
-/* ── MODAL ── */
-.modal{
-  position:fixed;inset:0;background:rgba(0,0,0,.45);
-  display:none;align-items:flex-start;justify-content:center;
-  z-index:10;padding:30px 20px;overflow-y:auto;
-}
-.modal-content{
-  background:#fff;width:760px;max-width:100%;
-  border-radius:18px;overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,.2);
-}
-.modal-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:20px 28px 0;
-}
-.modal-header h2{margin:0;font-size:18px;color:#111827;}
-.btn-fechar{
-  background:none;color:#6b7280;font-size:20px;
-  border:none;cursor:pointer;padding:4px 8px;border-radius:6px;
-}
-.btn-fechar:hover{background:#f3f4f6;color:#111827;}
-.modal-body{display:flex;min-height:400px;}
-.side-nav{
-  width:180px;flex-shrink:0;
-  background:#f9fafb;border-right:1px solid #e5e7eb;
-  padding:16px 0;display:flex;flex-direction:column;gap:2px;
-}
-.side-btn{
-  display:flex;align-items:center;gap:10px;
-  background:none;color:#6b7280;border:none;border-radius:0;
-  padding:11px 20px;font-size:13px;font-weight:500;
-  cursor:pointer;text-align:left;width:100%;
-  border-left:3px solid transparent;transition:all .15s;
-}
-.side-btn i{width:16px;text-align:center;font-size:13px;}
-.side-btn:hover{background:#f3f4f6;color:#111827;}
-.side-btn.active{background:#eff6ff;color:#1d4ed8;border-left-color:#2563eb;font-weight:600;}
-.tab-panels{flex:1;overflow-y:auto;}
-.tab-panel{display:none;padding:24px 28px;}
-.tab-panel.active{display:block;}
-.section-title{
-  font-size:11px;font-weight:700;text-transform:uppercase;
-  letter-spacing:.07em;color:#9ca3af;margin:0 0 18px;
-  display:flex;align-items:center;gap:7px;
-}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
-.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px;}
-.field{display:flex;flex-direction:column;}
-.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
-input,select,textarea{
-  padding:9px 11px;border-radius:8px;
-  border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
-}
-input:focus,select:focus,textarea:focus{
-  outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);
-}
-textarea{resize:vertical;min-height:90px;}
-.span2{grid-column:span 2;}
-.chave-hint{font-size:11px;color:#6b7280;margin-top:4px;display:flex;align-items:center;gap:4px;}
-.chave-hint i{color:#2563eb;}
-.modal-footer{
-  display:flex;justify-content:flex-end;gap:10px;
-  padding:14px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;
-}
-.modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;}
-.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
-.btn-cancel:hover{background:#f3f4f6;}
-.btn-save{background:#1f2937;}
-.btn-save:hover{background:#111827;}
-.empty-row td{text-align:center;color:#9ca3af;padding:32px;}
-</style>
-</head>
-
-<body>
-<div class="app">
-<aside id="sidebar"></aside>
-
-<main class="content">
-<h1>Clientes</h1>
-
-<div class="topbar">
-  <div class="left-tools">
-    <input id="buscaCliente" placeholder="🔍  Buscar por nome ou telefone...">
-  </div>
-  <button onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Cliente</button>
-</div>
-
-<table>
-  <thead>
-    <tr>
-      <th>Nome</th>
-      <th>Telefone</th>
-      <th>Email</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody id="lista"></tbody>
-</table>
-</main>
-</div>
-
-<!-- MODAL -->
-<div class="modal" id="modal">
-<div class="modal-content">
-  <div class="modal-header">
-    <h2 id="modalTitulo">Novo Cliente</h2>
-    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
-  </div>
-  <div class="modal-body">
-    <nav class="side-nav">
-      <button class="side-btn active" onclick="mudarTab('dados',this)"><i class="fa fa-user"></i> Dados</button>
-      <button class="side-btn" onclick="mudarTab('contato',this)"><i class="fa fa-phone"></i> Contato</button>
-      <button class="side-btn" onclick="mudarTab('obs',this)"><i class="fa fa-sticky-note"></i> Observações</button>
-    </nav>
-    <div class="tab-panels">
-      <!-- Dados -->
-      <div class="tab-panel active" id="tab-dados">
-        <p class="section-title"><i class="fa fa-user"></i> Dados do Cliente</p>
-        <div class="grid">
-          <div class="field span2">
-            <label>Nome *</label>
-            <input id="nome" placeholder="Nome completo">
-            <span class="chave-hint"><i class="fa fa-key"></i> Chave única junto ao telefone</span>
-          </div>
-          <div class="field"><label>Data de Nascimento</label><input type="date" id="dt_nasc"></div>
-          <div class="field"><label>CPF / CNPJ</label><input id="cpf_cnpj" placeholder="000.000.000-00"></div>
-          <div class="field"><label>Nacionalidade</label><input id="nacionalidade" placeholder="Brasileira"></div>
-        </div>
-      </div>
-      <!-- Contato -->
-      <div class="tab-panel" id="tab-contato">
-        <p class="section-title"><i class="fa fa-phone"></i> Contato</p>
-        <div class="grid-2">
-          <div class="field">
-            <label>Telefone 1 *</label>
-            <input id="telefone_1" placeholder="(11) 99999-9999">
-            <span class="chave-hint"><i class="fa fa-key"></i> Chave única junto ao nome</span>
-          </div>
-          <div class="field"><label>Telefone 2</label><input id="telefone_2" placeholder="(11) 99999-9999"></div>
-          <div class="field span2"><label>Email</label><input id="email" type="email" placeholder="exemplo@email.com"></div>
-          <div class="field span2"><label>Endereço</label><input id="endereco" placeholder="Rua, número, bairro, cidade"></div>
-        </div>
-      </div>
-      <!-- Observações -->
-      <div class="tab-panel" id="tab-obs">
-        <p class="section-title"><i class="fa fa-sticky-note"></i> Observações</p>
-        <div class="field">
-          <label>Observação</label>
-          <textarea id="observacao" placeholder="Preferências, alergias, anotações importantes..."></textarea>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-    <button class="btn-save" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
-  </div>
-</div>
-</div>
-
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:36px 40px;}
+
+/* ── HEADER ── */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
+.page-header h1{font-size:26px;font-weight:800;color:#111827;}
+.btn{border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:7px;transition:all .15s;}
+.btn:hover{opacity:.88;transform:translateY(-1px);}
+.btn-dark{background:#1f2937;color:#fff;}
+.btn-red{background:#dc2626;color:#fff;}
+.btn-green{background:#16a34a;color:#fff;}
+.btn-ghost{background:#fff;color:#374151;border:1px solid #e5e7eb;}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+.stat-card{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f3f4f6;}
+.stat-card .num{font-size:28px;font-weight:800;color:#111827;line-height:1;}
+.stat-card .lbl{font-size:12px;color:#6b7280;margin-top:4px;font-weight:500;}
+.stat-card .icon{float:right;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+.search-wrap{position:relative;flex:1;min-width:240px;max-width:360px;}
+.search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;background:#fff;transition:.2s;}
+.search-wrap input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:14px;}
+.toolbar select{padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;background:#fff;color:#374151;cursor:pointer;}
+.toolbar select:focus{outline:none;border-color:#2563eb;}
+
+/* ── TABELA ── */
+.table-wrap{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f3f4f6;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:#f9fafb;padding:12px 18px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;text-align:left;border-bottom:1px solid #f3f4f6;}
+tbody tr{cursor:pointer;transition:background .12s;}
+tbody tr:hover td{background:#f8faff;}
+tbody tr:last-child td{border-bottom:none;}
+td{padding:14px 18px;border-bottom:1px solid #f3f4f6;font-size:13px;color:#374151;}
+
+.cliente-nome{font-weight:700;color:#111827;font-size:14px;}
+.cliente-email{font-size:11px;color:#9ca3af;margin-top:2px;}
+
+.avatar{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;flex-shrink:0;color:#fff;}
+
+.badge-visits{display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#2563eb;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;}
+.badge-valor{display:inline-flex;align-items:center;gap:4px;background:#f0fdf4;color:#16a34a;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:700;}
+.badge-nunca{background:#f9fafb;color:#9ca3af;border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600;}
+
+.acoes{display:flex;gap:6px;opacity:0;transition:.15s;}
+tr:hover .acoes{opacity:1;}
+.btn-icon{width:30px;height:30px;border:none;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:.15s;}
+.btn-icon:hover{transform:scale(1.1);}
+.btn-icon.edit{background:#eff6ff;color:#2563eb;}
+.btn-icon.del{background:#fef2f2;color:#dc2626;}
+
+.empty{text-align:center;padding:60px;color:#9ca3af;}
+.empty i{font-size:40px;display:block;margin-bottom:12px;color:#e5e7eb;}
+
+/* ── MODAL ── */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-start;justify-content:center;z-index:100;padding:30px 20px;overflow-y:auto;backdrop-filter:blur(4px);}
+.modal.open{display:flex;}
+.modal-box{background:#fff;width:680px;max-width:100%;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.2);animation:slideUp .25s ease;}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* Modal header colorido */
+.modal-hero{padding:28px 28px 20px;background:linear-gradient(135deg,#1f2937 0%,#374151 100%);color:#fff;position:relative;}
+.modal-hero .close-btn{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;}
+.modal-hero .close-btn:hover{background:rgba(255,255,255,.25);}
+.hero-avatar{width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;margin-bottom:12px;border:3px solid rgba(255,255,255,.2);}
+.hero-nome{font-size:22px;font-weight:800;margin-bottom:4px;}
+.hero-sub{font-size:13px;opacity:.7;}
+.hero-badges{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+.hero-badge{background:rgba(255,255,255,.15);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px;}
+
+/* Modal body */
+.modal-body{padding:24px 28px;}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+.info-item{background:#f9fafb;border-radius:10px;padding:12px 14px;}
+.info-item .key{font-size:11px;color:#9ca3af;font-weight:600;margin-bottom:3px;}
+.info-item .val{font-size:14px;font-weight:600;color:#111827;}
+
+/* Stats do modal */
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.stat-box{border-radius:12px;padding:16px;text-align:center;}
+.stat-box .n{font-size:24px;font-weight:800;line-height:1;}
+.stat-box .l{font-size:11px;font-weight:600;margin-top:4px;opacity:.8;}
+.stat-box.blue{background:#eff6ff;color:#2563eb;}
+.stat-box.green{background:#f0fdf4;color:#16a34a;}
+.stat-box.purple{background:#f5f3ff;color:#7c3aed;}
+
+/* Atendimentos recentes */
+.atend-list{display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;}
+.atend-item{display:flex;align-items:center;justify-content:space-between;background:#f9fafb;border-radius:10px;padding:10px 14px;}
+.atend-item .data{font-size:12px;color:#6b7280;}
+.atend-item .serv{font-size:13px;font-weight:600;color:#111827;}
+.atend-item .val{font-size:12px;font-weight:700;color:#16a34a;}
+
+/* Modal form */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.field{display:flex;flex-direction:column;}
+.field.span2{grid-column:span 2;}
+.field label{font-size:12px;font-weight:600;color:#374151;margin-bottom:5px;}
+.field input,.field select{padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;color:#111827;transition:.2s;}
+.field input:focus,.field select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:16px 28px;border-top:1px solid #f3f4f6;background:#f9fafb;}
+
+/* Tabs no modal */
+.modal-tabs{display:flex;gap:2px;padding:0 28px;background:#fff;border-bottom:1px solid #f3f4f6;}
+.modal-tab{padding:12px 16px;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;border-bottom:2px solid transparent;transition:.15s;}
+.modal-tab.active{color:#2563eb;border-bottom-color:#2563eb;}
+.tab-panel{display:none;padding:20px 28px;}
+.tab-panel.active{display:block;}
+
+.loading-row td{text-align:center;padding:40px;color:#9ca3af;}
+</style>
+</head>
+<body>
+<div class="app">
+<aside id="sidebar"></aside>
+<main class="content">
+
+  <div class="page-header">
+    <h1>Clientes</h1>
+    <button class="btn btn-dark" id="btnNovo" style="display:none" onclick="abrirNovo()">
+      <i class="fa fa-plus"></i> Novo Cliente
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="icon" style="background:#eff6ff;color:#2563eb"><i class="fa fa-users"></i></div>
+      <div class="num" id="statTotal">—</div>
+      <div class="lbl">Total de clientes</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon" style="background:#f0fdf4;color:#16a34a"><i class="fa fa-calendar-check"></i></div>
+      <div class="num" id="statAtivos">—</div>
+      <div class="lbl">Com atendimentos</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon" style="background:#f5f3ff;color:#7c3aed"><i class="fa fa-dollar-sign"></i></div>
+      <div class="num" id="statTicket">—</div>
+      <div class="lbl">Ticket médio</div>
+    </div>
+    <div class="stat-card">
+      <div class="icon" style="background:#fef3c7;color:#d97706"><i class="fa fa-clock"></i></div>
+      <div class="num" id="statSemVisita">—</div>
+      <div class="lbl">Sem visita +60 dias</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <i class="fa fa-search"></i>
+      <input type="text" id="busca" placeholder="Buscar por nome, telefone ou email...">
+    </div>
+    <select id="filtroVisita">
+      <option value="">Todos</option>
+      <option value="com">Com atendimentos</option>
+      <option value="sem">Sem atendimentos</option>
+      <option value="sumidos">Sumidos +60 dias</option>
+    </select>
+    <select id="filtroOrdem">
+      <option value="nome">Ordenar por nome</option>
+      <option value="visitas">Mais visitas</option>
+      <option value="valor">Maior valor</option>
+      <option value="recente">Última visita</option>
+    </select>
+    <button class="btn btn-ghost" onclick="carregar()"><i class="fa fa-rotate-right"></i> Atualizar</button>
+  </div>
+
+  <!-- Tabela -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:44px"></th>
+          <th>Cliente</th>
+          <th>Telefone</th>
+          <th>Última Visita</th>
+          <th>Atendimentos</th>
+          <th>Valor Total</th>
+          <th style="width:80px">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lista">
+        <tr class="loading-row"><td colspan="7"><i class="fa fa-spinner fa-spin"></i> Carregando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+</div>
+
+<!-- ══ MODAL DETALHE / EDITAR ══ -->
+<div class="modal" id="modal">
+<div class="modal-box">
+
+  <!-- Hero -->
+  <div class="modal-hero" id="modalHero">
+    <button class="close-btn" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+    <div class="hero-avatar" id="heroAvatar"></div>
+    <div class="hero-nome" id="heroNome"></div>
+    <div class="hero-sub" id="heroSub"></div>
+    <div class="hero-badges" id="heroBadges"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="modal-tabs">
+    <div class="modal-tab active" onclick="mudarTab('perfil',this)">Perfil</div>
+    <div class="modal-tab" onclick="mudarTab('historico',this)">Histórico</div>
+    <div class="modal-tab" onclick="mudarTab('editar',this)">Editar</div>
+  </div>
+
+  <!-- Tab Perfil -->
+  <div class="tab-panel active" id="tab-perfil">
+    <div class="stat-row">
+      <div class="stat-box blue">
+        <div class="n" id="detVisitas">—</div>
+        <div class="l">Atendimentos</div>
+      </div>
+      <div class="stat-box green">
+        <div class="n" id="detValor">—</div>
+        <div class="l">Total gasto</div>
+      </div>
+      <div class="stat-box purple">
+        <div class="n" id="detTicket">—</div>
+        <div class="l">Ticket médio</div>
+      </div>
+    </div>
+    <p class="section-title"><i class="fa fa-id-card"></i> Dados de Contato</p>
+    <div class="info-grid" id="detInfo"></div>
+  </div>
+
+  <!-- Tab Histórico -->
+  <div class="tab-panel" id="tab-historico">
+    <p class="section-title"><i class="fa fa-calendar-check"></i> Atendimentos Recentes</p>
+    <div class="atend-list" id="detAtendimentos">
+      <div style="text-align:center;color:#9ca3af;padding:20px">Carregando...</div>
+    </div>
+  </div>
+
+  <!-- Tab Editar -->
+  <div class="tab-panel" id="tab-editar">
+    <div class="form-grid">
+      <div class="field span2"><label>Nome *</label><input id="eNome"></div>
+      <div class="field"><label>Telefone *</label><input id="eTel" placeholder="(11) 99999-9999"></div>
+      <div class="field"><label>Email</label><input id="eEmail" type="email"></div>
+      <div class="field"><label>Data de Nascimento</label><input id="eNasc" type="date"></div>
+      <div class="field"><label>Telefone 2</label><input id="eTel2" placeholder="Opcional"></div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-ghost" onclick="fecharModal()">Fechar</button>
+    <button class="btn btn-red" id="btnExcluir" onclick="excluirCliente()"><i class="fa fa-trash"></i> Excluir</button>
+    <button class="btn btn-dark" id="btnSalvar" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
+  </div>
+
+</div>
+</div>
+
 <script>
+let dados = [];
+let clienteAtual = null;
+const fmtM = v => v != null ? `R$\u00a0${Number(v).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0})}` : "—";
+const fmtD = v => v ? new Date(v+"T00:00:00").toLocaleDateString("pt-BR") : "—";
+const fmtTel = v => {
+  const d = (v||"").replace(/\D/g,"");
+  if(d.length===11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if(d.length===10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return v||"—";
+};
 
-let idAtual = null;
-const camposCliente = ["nome","cpf_cnpj","telefone_1","telefone_2","dt_nasc","email","nacionalidade","endereco","observacao"];
+const CORES = ["#2563eb","#7c3aed","#db2777","#059669","#d97706","#dc2626","#0891b2"];
+function corAvatar(nome){ return CORES[(nome||"A").charCodeAt(0) % CORES.length]; }
+function iniciais(nome){ return (nome||"?").split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase(); }
 
-function fmtTel(v){
-  v = v.replace(/\D/g,'').substring(0,11);
-  if(v.length <= 2) return v.length ? '('+v : v;
-  if(v.length <= 6) return '('+v.slice(0,2)+') '+v.slice(2);
-  if(v.length <= 10) return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);
-  return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
+function diasAtras(data){
+  if(!data) return null;
+  const diff = (new Date() - new Date(data+"T00:00:00")) / 86400000;
+  return Math.floor(diff);
 }
 
-function fmtCPFCNPJ(v){
-  v = v.replace(/\D/g,'');
-  if(v.length <= 11){
-    if(v.length <= 3) return v;
-    if(v.length <= 6) return v.slice(0,3)+'.'+v.slice(3);
-    if(v.length <= 9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
-    return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9,11);
-  } else {
-    v = v.substring(0,14);
-    if(v.length <= 2) return v;
-    if(v.length <= 5) return v.slice(0,2)+'.'+v.slice(2);
-    if(v.length <= 8) return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);
-    if(v.length <= 12) return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'/'+v.slice(8);
-    return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'/'+v.slice(8,12)+'-'+v.slice(12);
-  }
-}
-
-function mascara(id, fn){
-  const el = document.getElementById(id);
-  if(!el) return;
-  el.addEventListener('input', function(){
-    const pos = this.selectionStart;
-    const prev = this.value;
-    this.value = fn(this.value);
-    if(this.value.length === prev.length) this.setSelectionRange(pos, pos);
-  });
-}
-
-function aplicarMascaras(){
-  mascara('telefone_1', fmtTel);
-  mascara('telefone_2', fmtTel);
-  mascara('cpf_cnpj',   fmtCPFCNPJ);
-}
-
-function mudarTab(tab, btn){
-  document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
-  document.querySelectorAll(".side-btn").forEach(el => el.classList.remove("active"));
-  document.getElementById("tab-" + tab).classList.add("active");
-  btn.classList.add("active");
-}
-
-function limparTel(v){ return (v||"").replace(/\D/g,''); }
-
+/* ── CARREGAR ── */
 async function carregar(){
-  const {data, error} = await client.from("clientes").select("*").order("nome").limit(10);
+  if(!window.usuarioLogado){ setTimeout(carregar,100); return; }
+  const u = window.usuarioLogado;
+  const isAdmin = u && (u.role==="admin"||u.role==="recepcionista");
+
+  const btnNovo = document.getElementById("btnNovo");
+  if(btnNovo) btnNovo.style.display = isAdmin ? "" : "none";
+
+  const {data, error} = await client
+    .from("clientes")
+    .select("id,nome,telefone_1,telefone_2,email,data_nascimento,total_atendimentos,valor_total,ultimo_atendimento")
+    .order("nome");
+
   if(error){ console.error(error); return; }
-  render(data, true);
+  dados = data || [];
+
+  // Stats
+  const comAtend  = dados.filter(c => c.total_atendimentos > 0);
+  const sumidos   = dados.filter(c => { const d = diasAtras(c.ultimo_atendimento); return d !== null && d > 60; });
+  const ticketMed = comAtend.length
+    ? comAtend.reduce((a,c)=>a+(c.valor_total||0),0) / comAtend.reduce((a,c)=>a+(c.total_atendimentos||0),0)
+    : 0;
+
+  document.getElementById("statTotal").textContent    = dados.length;
+  document.getElementById("statAtivos").textContent   = comAtend.length;
+  document.getElementById("statTicket").textContent   = fmtM(ticketMed);
+  document.getElementById("statSemVisita").textContent= sumidos.length;
+
+  render();
 }
 
-function render(lista, limitado){
+/* ── RENDER ── */
+function render(){
+  const busca  = (document.getElementById("busca").value||"").toLowerCase();
+  const filtro = document.getElementById("filtroVisita").value;
+  const ordem  = document.getElementById("filtroOrdem").value;
+
+  let lista = dados.filter(c => {
+    const txt = `${c.nome||""} ${c.telefone_1||""} ${c.email||""}`.toLowerCase();
+    if(!txt.includes(busca)) return false;
+    if(filtro==="com"    && !(c.total_atendimentos>0)) return false;
+    if(filtro==="sem"    &&  (c.total_atendimentos>0)) return false;
+    if(filtro==="sumidos"){ const d=diasAtras(c.ultimo_atendimento); if(!d||d<=60) return false; }
+    return true;
+  });
+
+  lista.sort((a,b)=>{
+    if(ordem==="visitas") return (b.total_atendimentos||0)-(a.total_atendimentos||0);
+    if(ordem==="valor")   return (b.valor_total||0)-(a.valor_total||0);
+    if(ordem==="recente") return (b.ultimo_atendimento||"").localeCompare(a.ultimo_atendimento||"");
+    return (a.nome||"").localeCompare(b.nome||"");
+  });
+
   const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-  if(!lista || lista.length === 0){
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="4">Nenhum cliente encontrado.</td></tr>`;
+  if(!lista.length){
+    tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><i class="fa fa-users"></i>Nenhum cliente encontrado</div></td></tr>`;
     return;
   }
-  lista.forEach(c => {
-    tbody.innerHTML += `<tr>
-      <td>${c.nome||""}</td>
-      <td>${fmtTel(c.telefone_1||"")}</td>
-      <td>${c.email||""}</td>
+
+  const hoje = new Date().toISOString().split("T")[0];
+  tbody.innerHTML = lista.map(c => {
+    const cor  = corAvatar(c.nome);
+    const ini  = iniciais(c.nome);
+    const dias = diasAtras(c.ultimo_atendimento);
+    let ultimaLabel = "—";
+    if(dias===0) ultimaLabel="Hoje";
+    else if(dias===1) ultimaLabel="Ontem";
+    else if(dias!=null) ultimaLabel=`${dias}d atrás`;
+
+    const visitBadge = c.total_atendimentos
+      ? `<span class="badge-visits"><i class="fa fa-calendar-check"></i>${c.total_atendimentos}</span>`
+      : `<span class="badge-nunca">Nenhum</span>`;
+
+    const valBadge = c.valor_total
+      ? `<span class="badge-valor">${fmtM(c.valor_total)}</span>`
+      : `<span class="badge-nunca">—</span>`;
+
+    return `<tr onclick="abrirDetalhe('${c.id}')">
+      <td><div class="avatar" style="background:${cor}">${ini}</div></td>
       <td>
-        <button onclick="editar('${c.id}')">Editar</button>
-        <button class="excluir" onclick="excluir('${c.id}')">Excluir</button>
+        <div class="cliente-nome">${c.nome||"—"}</div>
+        <div class="cliente-email">${c.email||""}</div>
+      </td>
+      <td>${fmtTel(c.telefone_1)}</td>
+      <td style="color:${dias>60?'#dc2626':dias!=null?'#374151':'#9ca3af'}">${ultimaLabel}</td>
+      <td>${visitBadge}</td>
+      <td>${valBadge}</td>
+      <td>
+        <div class="acoes">
+          <button class="btn-icon edit" onclick="event.stopPropagation();abrirDetalhe('${c.id}','editar')" title="Editar"><i class="fa fa-pencil"></i></button>
+          <button class="btn-icon del"  onclick="event.stopPropagation();confirmarExcluir('${c.id}')" title="Excluir"><i class="fa fa-trash"></i></button>
+        </div>
       </td>
     </tr>`;
+  }).join("");
+}
+
+/* ── MODAL ── */
+function mudarTab(tab, btn){
+  document.querySelectorAll(".modal-tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(t=>t.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("tab-"+tab).classList.add("active");
+
+  if(tab==="historico" && clienteAtual) carregarHistorico(clienteAtual.id);
+}
+
+async function abrirDetalhe(id, tabInicial="perfil"){
+  clienteAtual = dados.find(c=>c.id===id) || null;
+  if(!clienteAtual){
+    const {data} = await client.from("clientes").select("*").eq("id",id).single();
+    clienteAtual = data;
+  }
+  if(!clienteAtual) return;
+
+  const c   = clienteAtual;
+  const cor = corAvatar(c.nome);
+  const ini = iniciais(c.nome);
+
+  // Hero
+  document.getElementById("heroAvatar").style.background = cor;
+  document.getElementById("heroAvatar").textContent = ini;
+  document.getElementById("heroNome").textContent   = c.nome||"—";
+  document.getElementById("heroSub").textContent    = c.email || fmtTel(c.telefone_1) || "Sem contato";
+
+  const dias = diasAtras(c.ultimo_atendimento);
+  const badges = [];
+  if(c.total_atendimentos) badges.push(`<span class="hero-badge"><i class="fa fa-calendar-check"></i>${c.total_atendimentos} atendimentos</span>`);
+  if(c.valor_total)        badges.push(`<span class="hero-badge"><i class="fa fa-dollar-sign"></i>${fmtM(c.valor_total)}</span>`);
+  if(dias!=null)           badges.push(`<span class="hero-badge"><i class="fa fa-clock"></i>Última visita: ${dias===0?"hoje":dias+"d atrás"}</span>`);
+  document.getElementById("heroBadges").innerHTML = badges.join("");
+
+  // Stats
+  const ticket = c.total_atendimentos ? (c.valor_total||0)/c.total_atendimentos : 0;
+  document.getElementById("detVisitas").textContent = c.total_atendimentos||0;
+  document.getElementById("detValor").textContent   = fmtM(c.valor_total);
+  document.getElementById("detTicket").textContent  = fmtM(ticket);
+
+  // Info
+  document.getElementById("detInfo").innerHTML = [
+    {k:"Telefone",    v:fmtTel(c.telefone_1)},
+    {k:"Email",       v:c.email||"—"},
+    {k:"Nascimento",  v:fmtD(c.data_nascimento)},
+    {k:"Tel. 2",      v:fmtTel(c.telefone_2)||"—"},
+    {k:"Última visita",v:fmtD(c.ultimo_atendimento)},
+    {k:"ID",          v:`<span style="font-size:11px;color:#9ca3af">${c.id.slice(0,8)}...</span>`},
+  ].map(i=>`<div class="info-item"><div class="key">${i.k}</div><div class="val">${i.v}</div></div>`).join("");
+
+  // Form editar
+  document.getElementById("eNome").value  = c.nome||"";
+  document.getElementById("eTel").value   = c.telefone_1||"";
+  document.getElementById("eEmail").value = c.email||"";
+  document.getElementById("eNasc").value  = c.data_nascimento||"";
+  document.getElementById("eTel2").value  = c.telefone_2||"";
+
+  // Tab inicial
+  document.querySelectorAll(".modal-tab").forEach((t,i)=>{
+    const tabs=["perfil","historico","editar"];
+    t.classList.toggle("active", tabs[i]===tabInicial);
   });
-  if(limitado){
-    tbody.innerHTML += `<tr class="empty-row"><td colspan="4" style="font-size:12px;color:#9ca3af;padding:12px 14px">
-      <i class="fa fa-search"></i> Mostrando os 10 primeiros. Use a busca para encontrar outros.
-    </td></tr>`;
+  document.querySelectorAll(".tab-panel").forEach(t=>t.classList.remove("active"));
+  document.getElementById("tab-"+tabInicial).classList.add("active");
+
+  if(tabInicial==="historico") carregarHistorico(c.id);
+
+  document.getElementById("modal").classList.add("open");
+}
+
+async function carregarHistorico(clienteId){
+  const el = document.getElementById("detAtendimentos");
+  el.innerHTML = `<div style="text-align:center;color:#9ca3af;padding:20px"><i class="fa fa-spinner fa-spin"></i> Carregando...</div>`;
+
+  const {data} = await client
+    .from("atendimentos")
+    .select("data,hora_inicio,status,valor_final,servicos(grupo,subgrupo)")
+    .eq("cliente_id", clienteId)
+    .order("data",{ascending:false})
+    .limit(20);
+
+  if(!data||!data.length){
+    el.innerHTML=`<div style="text-align:center;color:#9ca3af;padding:20px">Nenhum atendimento registrado.</div>`;
+    return;
   }
+
+  el.innerHTML = data.map(a=>{
+    const serv = a.servicos ? [a.servicos.grupo,a.servicos.subgrupo].filter(Boolean).join(" ") : "—";
+    const statusCor = a.status==="Confirmado"?"#16a34a":a.status==="Cancelado"?"#dc2626":"#d97706";
+    return `<div class="atend-item">
+      <div>
+        <div class="serv">${serv}</div>
+        <div class="data">${fmtD(a.data)} · ${(a.hora_inicio||"").slice(0,5)} · <span style="color:${statusCor};font-weight:700">${a.status}</span></div>
+      </div>
+      <div class="val">${a.valor_final ? fmtM(a.valor_final) : "—"}</div>
+    </div>`;
+  }).join("");
 }
 
-async function filtrarTabela(){
-  const termo = document.getElementById("buscaCliente").value.trim();
-  if(!termo){ carregar(); return; }
-  const numero = termo.replace(/\D/g,'');
-  let resultados = [];
-  const {data: porNome} = await client.from("clientes").select("*").ilike("nome",`%${termo}%`).limit(50);
-  if(porNome) resultados.push(...porNome);
-  if(numero.length >= 3){
-    const {data: porTel} = await client.from("clientes").select("*").ilike("telefone_1",`%${numero}%`).limit(50);
-    if(porTel) porTel.forEach(t => { if(!resultados.find(r=>r.id===t.id)) resultados.push(t); });
-  }
-  resultados.sort((a,b)=>a.nome.localeCompare(b.nome));
-  render(resultados);
+function fecharModal(){
+  document.getElementById("modal").classList.remove("open");
+  clienteAtual = null;
 }
 
-function resetModal(){
-  camposCliente.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
-  mudarTab("dados", document.querySelector(".side-btn"));
-}
-
+/* ── NOVO ── */
 function abrirNovo(){
-  idAtual = null;
-  resetModal();
-  document.getElementById("modalTitulo").textContent = "Novo Cliente";
-  document.getElementById("modal").style.display = "flex";
+  clienteAtual = {id:null};
+  document.getElementById("heroAvatar").style.background="#1f2937";
+  document.getElementById("heroAvatar").textContent="N";
+  document.getElementById("heroNome").textContent="Novo Cliente";
+  document.getElementById("heroSub").textContent="Preencha os dados ao lado";
+  document.getElementById("heroBadges").innerHTML="";
+  document.getElementById("detVisitas").textContent="0";
+  document.getElementById("detValor").textContent="—";
+  document.getElementById("detTicket").textContent="—";
+  document.getElementById("detInfo").innerHTML="";
+  document.getElementById("detAtendimentos").innerHTML="";
+  ["eNome","eTel","eEmail","eNasc","eTel2"].forEach(id=>document.getElementById(id).value="");
+
+  // Ir direto para aba editar
+  document.querySelectorAll(".modal-tab").forEach((t,i)=>t.classList.toggle("active",i===2));
+  document.querySelectorAll(".tab-panel").forEach(t=>t.classList.remove("active"));
+  document.getElementById("tab-editar").classList.add("active");
+  document.getElementById("btnExcluir").style.display="none";
+
+  document.getElementById("modal").classList.add("open");
 }
 
-async function editar(id){
-  idAtual = id;
-  const {data, error} = await client.from("clientes").select("*").eq("id", id).single();
-  if(error){ console.error(error); return; }
-  resetModal();
-  camposCliente.forEach(c => { const el = document.getElementById(c); if(el) el.value = data[c]||""; });
-  ['telefone_1','telefone_2','cpf_cnpj'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el && el.value) el.dispatchEvent(new Event('input'));
-  });
-  document.getElementById("modalTitulo").textContent = data.nome || "Editar Cliente";
-  document.getElementById("modal").style.display = "flex";
-}
-
-function fecharModal(){ document.getElementById("modal").style.display = "none"; }
-
+/* ── SALVAR ── */
 async function salvar(){
-  const payload = {};
-  camposCliente.forEach(c => {
-    const el = document.getElementById(c);
-    if(el && el.value.trim()) payload[c] = el.value.trim();
-  });
-  if(!payload.nome){ alert("Nome é obrigatório."); mudarTab("dados", document.querySelector(".side-btn")); return; }
-  if(!payload.telefone_1){ alert("Telefone 1 é obrigatório."); mudarTab("contato", document.querySelectorAll(".side-btn")[1]); return; }
+  const nome = document.getElementById("eNome").value.trim();
+  const tel  = document.getElementById("eTel").value.trim();
+  if(!nome){ alert("Nome é obrigatório."); return; }
+  if(!tel){ alert("Telefone é obrigatório."); return; }
 
-  const telLimpo = limparTel(payload.telefone_1);
-  let query = client.from("clientes").select("id").eq("nome", payload.nome).eq("telefone_1", telLimpo);
-  if(idAtual) query = query.neq("id", idAtual);
-  const {data: existente} = await query;
-  if(existente && existente.length > 0){ alert("⚠️ Já existe um cliente com esse nome e telefone."); return; }
-
-  payload.telefone_1 = telLimpo;
-  if(payload.telefone_2) payload.telefone_2 = limparTel(payload.telefone_2);
+  const payload = {
+    nome,
+    telefone_1: tel,
+    email:          document.getElementById("eEmail").value.trim()||null,
+    data_nascimento:document.getElementById("eNasc").value||null,
+    telefone_2:     document.getElementById("eTel2").value.trim()||null,
+  };
 
   let error;
-  if(idAtual){
-    ({error} = await client.from("clientes").update(payload).eq("id", idAtual));
+  if(clienteAtual?.id){
+    ({error} = await client.from("clientes").update(payload).eq("id", clienteAtual.id));
   } else {
     ({error} = await client.from("clientes").insert(payload));
   }
-  if(error){ alert("Erro ao salvar: " + error.message); return; }
+
+  if(error){ alert("Erro ao salvar: "+error.message); return; }
   fecharModal();
   carregar();
 }
 
-async function excluir(id){
+/* ── EXCLUIR ── */
+async function confirmarExcluir(id){
   if(!confirm("Excluir este cliente?")) return;
-  const {error} = await client.from("clientes").delete().eq("id", id);
-  if(error){ alert("Erro ao excluir: " + error.message); return; }
+  const {error} = await client.from("clientes").delete().eq("id",id);
+  if(error){ alert("Erro: "+error.message); return; }
   carregar();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  aplicarMascaras();
-  document.getElementById("buscaCliente").addEventListener("input", filtrarTabela);
+async function excluirCliente(){
+  if(!clienteAtual?.id) return;
+  if(!confirm("Excluir este cliente?")) return;
+  const {error} = await client.from("clientes").delete().eq("id",clienteAtual.id);
+  if(error){ alert("Erro: "+error.message); return; }
+  fecharModal();
+  carregar();
+}
+
+/* ── INIT ── */
+document.addEventListener("DOMContentLoaded",()=>{
+  document.getElementById("busca").addEventListener("input", render);
+  document.getElementById("filtroVisita").addEventListener("change", render);
+  document.getElementById("filtroOrdem").addEventListener("change", render);
+  document.getElementById("modal").addEventListener("click", e=>{ if(e.target===document.getElementById("modal")) fecharModal(); });
   carregar();
 });
 </script>

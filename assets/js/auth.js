@@ -1,40 +1,34 @@
 /**
  * auth.js — autenticação + sidebar dinâmico
  *
- * Uso em TODAS as páginas protegidas:
- *   <script src="assets/js/supabase.js"></script>
- *   <script src="assets/js/auth.js" data-role="admin"></script>  ← só dashboard e parametros
- *   <script src="assets/js/auth.js"></script>                    ← demais páginas (qualquer logado)
- *
- * Colocar no final do <body>, ANTES de qualquer outro script da página.
- * NÃO precisa mais do sidebar.js separado.
+ * Roles:
+ *   admin         → acesso total
+ *   recepcionista → igual admin exceto dashboard
+ *   operadora     → acesso restrito (só vê os próprios dados)
  */
 
-// 1. Capturar role ANTES de qualquer async
 var AUTH_ROLE_EXIGIDO = (document.currentScript || {}).getAttribute("data-role") || null;
 
-// Após login: admin → equipe.html, operadora → equipe.html
-// (dashboard só acessível diretamente por admin)
-var ROTAS = { admin: "equipe.html", operadora: "equipe.html" };
+var ROTAS = { admin: "equipe.html", recepcionista: "equipe.html", operadora: "equipe.html" };
 
 var MENU = [
   { href:"dashboard.html",     icon:"fa-chart-line",         label:"Dashboard",      roles:["admin"] },
   { sep:true },
   { titulo:"CADASTROS" },
-  { href:"equipe.html",        icon:"fa-users",              label:"Equipe",         roles:["admin","operadora"] },
-  { href:"clientes.html",      icon:"fa-user",               label:"Clientes",       roles:["admin","operadora"] },
-  { href:"servicos.html",      icon:"fa-hand-holding-heart", label:"Serviços",       roles:["admin","operadora"] },
-  { href:"certificacoes.html", icon:"fa-certificate",        label:"Certificações",  roles:["admin","operadora"] },
+  { href:"equipe.html",        icon:"fa-users",              label:"Equipe",         roles:["admin","recepcionista","operadora"] },
+  { href:"clientes.html",      icon:"fa-user",               label:"Clientes",       roles:["admin","recepcionista","operadora"] },
+  { href:"servicos.html",      icon:"fa-hand-holding-heart", label:"Serviços",       roles:["admin","recepcionista","operadora"] },
+  { href:"certificacoes.html", icon:"fa-certificate",        label:"Certificações",  roles:["admin","recepcionista","operadora"] },
   { sep:true },
   { titulo:"OPERACIONAL" },
-  { href:"atendimentos.html",  icon:"fa-calendar-check",     label:"Atendimentos",   roles:["admin","operadora"] },
-  { href:"escalas.html",       icon:"fa-calendar-days",      label:"Escalas",        roles:["admin","operadora"] },
-  { href:"solicitacoes.html",  icon:"fa-file-lines",         label:"Solicitações",   roles:["admin","operadora"] },
+  { href:"atendimentos.html",  icon:"fa-calendar-check",     label:"Atendimentos",   roles:["admin","recepcionista","operadora"] },
+  { href:"escalas.html",       icon:"fa-calendar-days",      label:"Escalas",        roles:["admin","recepcionista","operadora"] },
+  { href:"solicitacoes.html",  icon:"fa-file-lines",         label:"Solicitações",   roles:["admin","recepcionista","operadora"] },
   { sep:true },
   { titulo:"FINANCEIRO" },
-  { href:"despesas.html",      icon:"fa-receipt",            label:"Despesas",       roles:["admin","operadora"] },
-  { href:"fluxo_caixa.html",   icon:"fa-cash-register",      label:"Fluxo de Caixa",roles:["admin","operadora"] },
-  { href:"estoque.html",       icon:"fa-boxes-stacked",      label:"Estoque",        roles:["admin","operadora"] },
+  { href:"despesas.html",      icon:"fa-receipt",            label:"Despesas",       roles:["admin","recepcionista","operadora"] },
+  { href:"fluxo_caixa.html",   icon:"fa-cash-register",      label:"Fluxo de Caixa",roles:["admin","recepcionista","operadora"] },
+  { href:"estoque.html",       icon:"fa-boxes-stacked",      label:"Estoque",        roles:["admin","recepcionista","operadora"] },
   { sep:true, roles:["admin"] },
   { titulo:"CONFIGURAÇÕES",    roles:["admin"] },
   { href:"parametros.html",    icon:"fa-sliders",            label:"Parâmetros",     roles:["admin"] },
@@ -43,7 +37,9 @@ var MENU = [
 function authBuildSidebar(role, nome) {
   var pag    = location.pathname.split("/").pop() || "";
   var inicial = (nome || "?")[0].toUpperCase();
-  var rotulo  = role === "admin" ? "Administrador" : "Operadora";
+  var rotulo  = role === "admin" ? "Administrador"
+              : role === "recepcionista" ? "Recepcionista"
+              : "Operadora";
   var itens   = "";
 
   MENU.forEach(function(item) {
@@ -106,19 +102,20 @@ function authInit() {
       .single()
       .then(function(res2) {
         var perfil = res2.data;
-        var role   = (perfil && perfil.role)         || "operadora";
-        var nome   = (perfil && perfil.nome)         || (perfil && perfil.email) || session.user.email;
-        var email  = (perfil && perfil.email)        || session.user.email;
+        var role   = (perfil && perfil.role)          || "operadora";
+        var nome   = (perfil && perfil.nome)          || (perfil && perfil.email) || session.user.email;
+        var email  = (perfil && perfil.email)         || session.user.email;
         var cpf    = (perfil && perfil.cpf_terapeuta) || null;
 
         // Verificar permissão da página atual
+        // data-role="admin" → só admin acessa
         if (AUTH_ROLE_EXIGIDO === "admin" && role !== "admin") {
           location.href = "equipe.html";
           return;
         }
 
         // Se operadora tem CPF vinculado, buscar nome profissional
-        if (role !== "admin" && cpf) {
+        if (role !== "admin" && role !== "recepcionista" && cpf) {
           client.from("terapeutas")
             .select("nome_profissional")
             .eq("cpf", cpf)

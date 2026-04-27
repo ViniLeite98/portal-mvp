@@ -542,7 +542,11 @@ function abrirNovo(){
 
   const u = window.usuarioLogado;
   const isAdmin = u && u.role === "admin";
-  const isSuperAdmin = u && ['42372412829','36589362823'].includes((u.cpf||"").replace(/[^0-9]/g,""));
+  const cpfLimpo = (u && u.cpf ? u.cpf : "").replace(/[^0-9]/g,"");
+  const emailLimpo = (u && u.email ? u.email : "").toLowerCase();
+  const SUPER_CPFS = ['42372412829','36589362823'];
+  const SUPER_EMAILS = ['viniciusleitesouza_1998@hotmail.com'];
+  const isSuperAdmin = SUPER_CPFS.includes(cpfLimpo) || SUPER_EMAILS.includes(emailLimpo);
   const campoLogin = document.getElementById("campoLoginVinculado");
   if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
   const campoRole = document.getElementById("campoRole");
@@ -567,7 +571,7 @@ async function editar(cpf){
   // Campo de login e role — só admin vê
   const u = window.usuarioLogado;
   const isAdmin = u && u.role === "admin";
-  const isSuperAdmin = u && ['42372412829','36589362823'].includes((u.cpf||"").replace(/\D/g,""));
+  const isSuperAdmin = ['42372412829','36589362823'].includes((u&&u.cpf?u.cpf:'').replace(/[^0-9]/g,'')) || ['viniciusleitesouza_1998@hotmail.com'].includes((u&&u.email?u.email:'').toLowerCase());
   const campoLogin = document.getElementById("campoLoginVinculado");
   if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
   const campoRole = document.getElementById("campoRole");
@@ -638,7 +642,11 @@ async function salvar(){
   // Vincular CPF ao login e atualizar role (perfis) se email foi informado
   const loginEmail = (document.getElementById(CAMPO_LOGIN)?.value || "").trim();
   const cpfParaVincular = cpfAtual || payload.cpf;
-  const isSuperAdmin = u && ['42372412829','36589362823'].includes((u.cpf||"").replace(/[^0-9]/g,""));
+  const cpfLimpo = (u && u.cpf ? u.cpf : "").replace(/[^0-9]/g,"");
+  const emailLimpo = (u && u.email ? u.email : "").toLowerCase();
+  const SUPER_CPFS = ['42372412829','36589362823'];
+  const SUPER_EMAILS = ['viniciusleitesouza_1998@hotmail.com'];
+  const isSuperAdmin = SUPER_CPFS.includes(cpfLimpo) || SUPER_EMAILS.includes(emailLimpo);
   const novoRole = isSuperAdmin ? (document.getElementById("role_usuario")?.value || "operadora") : null;
 
   if(loginEmail && cpfParaVincular) {

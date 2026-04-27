@@ -318,11 +318,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>Data de Início no Hara</label><input type="date" id="data_inicio"></div>
           <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
           <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
-          <div class="field" id="campoLoginVinculado">
-            <label>Login vinculado <span style="color:#9ca3af;font-weight:400">— e-mail do portal</span></label>
-            <input id="login_email_vinculado" type="email" placeholder="email@portal.com" style="background:#f9fafb">
-            <span style="font-size:11px;color:#9ca3af;margin-top:4px">Informe o e-mail que essa terapeuta usa para logar no portal. O vínculo será feito automaticamente ao salvar.</span>
-          </div>
+
 
           <div class="field">
             <label>Tem folga semanal?</label>
@@ -395,7 +391,6 @@ const campos = [
   "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
 ];
-const CAMPO_LOGIN = "login_email_vinculado";
 
 /* ══════════════════════════════════════════
    MÁSCARAS
@@ -604,7 +599,6 @@ function filtrarTabela(){
 ══════════════════════════════════════════ */
 function resetModal(){
   campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
-  const elLogin = document.getElementById(CAMPO_LOGIN);
   if(elLogin) elLogin.value = "";
   document.getElementById("hora_entrada").value = "09:00";
   document.getElementById("hora_saida").value   = "18:00";
@@ -614,7 +608,6 @@ function resetModal(){
 function abrirNovo(){
   cpfAtual = null;
   cpfEdicaoHabilitada = false;
-  window._emailOriginalPerfil = "";
   resetModal();
   desbloquearCPF();
   document.getElementById("modalTitulo").textContent = "Novo Cadastro";
@@ -627,7 +620,6 @@ function abrirNovo(){
   const SUPER_CPFS = ['42372412829','36589362823'];
   const SUPER_EMAILS = ['viniciusleitesouza_1998@hotmail.com'];
   const isSuperAdmin = SUPER_CPFS.includes(cpfLimpo) || SUPER_EMAILS.includes(emailLimpo);
-  const campoLogin = document.getElementById("campoLoginVinculado");
   if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
   const elRole = document.getElementById("role_usuario");
   if(elRole) elRole.value = "operadora";
@@ -652,7 +644,6 @@ async function editar(cpf){
   const isAdmin = u && u.role === "admin";
   const isSuperAdmin = ['42372412829','36589362823'].includes((u&&u.cpf?u.cpf:'').replace(/[^0-9]/g,''))
     || ['viniciusleitesouza_1998@hotmail.com'].includes((u&&u.email?u.email:'').toLowerCase());
-  const campoLogin = document.getElementById("campoLoginVinculado");
   if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
   if(isAdmin){
     // Busca perfil: primeiro pelo cpf_terapeuta, depois pelo email da terapeuta como fallback
@@ -669,9 +660,7 @@ async function editar(cpf){
         if(p2 && p2.length > 0) perfil = p2[0];
       }
 
-      const elLogin = document.getElementById(CAMPO_LOGIN);
       if(elLogin) elLogin.value = perfil ? perfil.email : "";  // so preenche se tem perfil real
-      window._emailOriginalPerfil = perfil ? perfil.email : "";  // guarda para comparar no salvar
 
       const elRole = document.getElementById("role_usuario");
       if(elRole && isAdmin) elRole.value = perfil ? (perfil.role || "operadora") : "operadora";
@@ -791,7 +780,6 @@ async function salvar(){
   }
 
   /* ── VINCULAR LOGIN / ROLE ── */
-  const loginEmail      = (document.getElementById(CAMPO_LOGIN)?.value || "").trim();
   const cpfParaVincular = cpfAtual;
   const isAdminU        = u && u.role === "admin";
 
@@ -810,36 +798,24 @@ async function salvar(){
   // Role final: manual (admin sobrescreve) tem prioridade sobre automático
   const novoRole = roleManual || roleAutomatico;
 
-  // emailOriginalPerfil: email que veio do banco ao abrir edicao (nao digitado pelo usuario)
-  const emailOriginalPerfil = window._emailOriginalPerfil || "";
-  const loginEmailManual = loginEmail && loginEmail !== emailOriginalPerfil;
 
-  if(cpfParaVincular && (loginEmail || novoRole)) {
+    if(cpfParaVincular && novoRole) {
     let perfilId = null;
 
-    if(loginEmail) {
-      const {data: p} = await client
-        .from("perfis").select("id").eq("email", loginEmail).limit(1);
-      if(p && p.length > 0) perfilId = p[0].id;
-      else if(loginEmailManual) alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito.");
-    }
+    // Buscar perfil pelo cpf_terapeuta
+    const {data: p1} = await client
+      .from("perfis").select("id").eq("cpf_terapeuta", cpfParaVincular).limit(1);
+    if(p1 && p1.length > 0) perfilId = p1[0].id;
 
-    if(!perfilId) {
-      const {data: p} = await client
-        .from("perfis").select("id").eq("cpf_terapeuta", cpfParaVincular).limit(1);
-      if(p && p.length > 0) perfilId = p[0].id;
-    }
-
+    // Fallback: buscar pelo email cadastrado
     if(!perfilId && payload.email) {
-      const {data: p} = await client
+      const {data: p2} = await client
         .from("perfis").select("id").eq("email", payload.email.trim().toLowerCase()).limit(1);
-      if(p && p.length > 0) perfilId = p[0].id;
+      if(p2 && p2.length > 0) perfilId = p2[0].id;
     }
 
     if(perfilId) {
-      const updatePerfil = { cpf_terapeuta: cpfParaVincular };
-      if(novoRole) updatePerfil.role = novoRole;
-      await client.from("perfis").update(updatePerfil).eq("id", perfilId);
+      await client.from("perfis").update({ cpf_terapeuta: cpfParaVincular, role: novoRole }).eq("id", perfilId);
     }
   }
 

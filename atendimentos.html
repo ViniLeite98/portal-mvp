@@ -373,8 +373,25 @@ async function carregarDados(){
 
 /* carregar atendimentos */
 async function carregar(){
-  const {data,error}=await client.from("atendimentos").select(`*,clientes(id,nome,telefone_1),servicos(id,grupo,subgrupo,tempo,valor,comissao),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`).order("data").order("hora_inicio");
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+
+  let q = client.from("atendimentos")
+    .select(`*,clientes(id,nome,telefone_1),servicos(id,grupo,subgrupo,tempo,valor,comissao),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`)
+    .order("data").order("hora_inicio");
+
+  // Operadora só vê atendimentos em que ela é terapeuta
+  if(!isAdmin && u && u.cpf){
+    q = q.or(`terapeuta1_cpf.eq.${u.cpf},terapeuta2_cpf.eq.${u.cpf}`);
+  }
+
+  const {data,error}=await q;
   if(error){console.error(error);return;}
+
+  // Ocultar botão novo agendamento para operadora
+  const btnNovo = document.querySelector("button[onclick='abrirNovo()']");
+  if(btnNovo) btnNovo.style.display = isAdmin ? "" : "none";
+
   dados=data||[];renderAtual();
 }
 

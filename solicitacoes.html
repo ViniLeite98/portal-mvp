@@ -159,9 +159,9 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
   </div>
   <div class="modal-body">
     <div id="confirmarInfo" style="background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#374151;line-height:1.6"></div>
-    <div class="field">
-      <label>Seu nome *</label>
-      <input id="confirmarNome" placeholder="Quem está aprovando / reprovando...">
+    <div id="confirmarNomeInfo" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:13px;color:#1d4ed8;display:flex;align-items:center;gap:8px;">
+      <i class="fa fa-user-circle"></i>
+      <span id="confirmarNomeTexto"></span>
     </div>
   </div>
   <div class="modal-footer">
@@ -233,15 +233,9 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 
     </div>
   </div>
-  <div class="modal-footer" style="flex-wrap:wrap;gap:10px;">
-    <div style="flex:1;min-width:180px;" id="wrapAcordadoPor">
-      <input id="aprovado_por" placeholder="Seu nome (quem aprova/reprova)"
-        style="width:100%;font-size:12px;padding:7px 10px">
-    </div>
-    <div style="display:flex;gap:10px">
-      <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
-      <button class="btn-save" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
-    </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+    <button class="btn-save" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
   </div>
 </div>
 </div>
@@ -561,9 +555,9 @@ window.salvar = async function(){
     return;
   }
 
-  const aprovadoPor   = (document.getElementById("aprovado_por").value||"").trim();
   const statusOriginal = idEdicao ? (todasSolicitacoes.find(s => s.id === idEdicao)||{}).status : "Pendente";
   const statusMudou   = status !== statusOriginal;
+  const nomeLogado    = (window.usuarioLogado && window.usuarioLogado.nome) || "Usuário";
 
   const payload = {
     terapeuta_cpf: terapeuta,
@@ -573,7 +567,7 @@ window.salvar = async function(){
     justificativa: justif || null,
     arquivo_url:   arquivoAtualUrl  || null,
     arquivo_nome:  arquivoAtualNome || null,
-    aprovado_por:  (statusMudou && aprovadoPor) ? aprovadoPor : undefined
+    aprovado_por:  statusMudou ? nomeLogado : undefined
   };
   if(status === "Pendente") payload.aprovado_por = null;
   Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
@@ -633,7 +627,9 @@ window.abrirConfirmar = function(id, novoStatus){
   const btn = document.getElementById("confirmarBtn");
   btn.style.background = cor;
   btn.innerHTML = `<i class="fa ${icone}"></i> ${acao}`;
-  document.getElementById("confirmarNome").value = "";
+  // Preencher automaticamente com o nome do usuario logado
+  const nomeLogado = (window.usuarioLogado && window.usuarioLogado.nome) || "";
+  document.getElementById("confirmarNomeTexto").textContent = "Registrado por: " + (nomeLogado || "Usuário");
   document.getElementById("modalConfirmar").style.display = "flex";
 };
 
@@ -642,8 +638,7 @@ window.fecharConfirmar = function(){
 };
 
 window.confirmarStatus = async function(){
-  const nome = document.getElementById("confirmarNome").value.trim();
-  if(!nome){ alert("Digite seu nome para confirmar."); return; }
+  const nome = (window.usuarioLogado && window.usuarioLogado.nome) || "Usuário";
   await alterarStatus(_confirmarId, _confirmarStatus, nome);
   fecharConfirmar();
 };

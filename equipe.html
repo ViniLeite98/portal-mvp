@@ -778,30 +778,49 @@ async function salvar(){
   }
 
   /* ── VINCULAR LOGIN / ROLE ── */
-  const loginEmail = (document.getElementById(CAMPO_LOGIN)?.value || "").trim();
+  const loginEmail    = (document.getElementById(CAMPO_LOGIN)?.value || "").trim();
   const cpfParaVincular = cpfAtual;
-  const cpfLimpoU = (u && u.cpf ? u.cpf : "").replace(/[^0-9]/g,"");
-  const emailLimpoU = (u && u.email ? u.email : "").toLowerCase();
-  const SUPER_CPFS = ['42372412829','36589362823'];
-  const SUPER_EMAILS = ['viniciusleitesouza_1998@hotmail.com'];
-  const isSuperAdmin = SUPER_CPFS.includes(cpfLimpoU) || SUPER_EMAILS.includes(emailLimpoU);
-  const novoRole = isSuperAdmin ? (document.getElementById("role_usuario")?.value || "operadora") : null;
+  const cpfLimpoU     = (u && u.cpf   ? u.cpf   : "").replace(/[^0-9]/g,"");
+  const emailLimpoU   = (u && u.email ? u.email : "").toLowerCase();
+  const SUPER_CPFS    = ['42372412829','36589362823'];
+  const SUPER_EMAILS  = ['viniciusleitesouza_1998@hotmail.com'];
+  const isSuperAdmin  = SUPER_CPFS.includes(cpfLimpoU) || SUPER_EMAILS.includes(emailLimpoU);
+  const novoRole      = isSuperAdmin ? (document.getElementById("role_usuario")?.value || "operadora") : null;
 
-  if(loginEmail && cpfParaVincular) {
-    const {data: perfisData} = await client
-      .from("perfis").select("id").eq("email", loginEmail).limit(1);
-    if(perfisData && perfisData.length > 0) {
-      const updatePerfil = { cpf_terapeuta: cpfParaVincular };
-      if(novoRole) updatePerfil.role = novoRole;
-      await client.from("perfis").update(updatePerfil).eq("id", perfisData[0].id);
-    } else {
-      alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito.");
-    }
-  } else if(novoRole && cpfParaVincular) {
-    const {data: perfisData} = await client
-      .from("perfis").select("id").eq("cpf_terapeuta", cpfParaVincular).limit(1);
-    if(perfisData && perfisData.length > 0) {
-      await client.from("perfis").update({ role: novoRole }).eq("id", perfisData[0].id);
+  if(cpfParaVincular) {
+    // 1. Se informou email de login → buscar perfil pelo email
+    if(loginEmail) {
+      const {data: perfisPorEmail} = await client
+        .from("perfis").select("id,cpf_terapeuta").eq("email", loginEmail).limit(1);
+
+      if(perfisPorEmail && perfisPorEmail.length > 0) {
+        const updatePerfil = { cpf_terapeuta: cpfParaVincular };
+        if(novoRole) updatePerfil.role = novoRole;
+        await client.from("perfis").update(updatePerfil).eq("id", perfisPorEmail[0].id);
+      } else {
+        alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito.");
+      }
+
+    // 2. Sem email de login → buscar perfil pelo cpf_terapeuta e atualizar só o role
+    } else if(novoRole) {
+      const {data: perfisPorCpf} = await client
+        .from("perfis").select("id").eq("cpf_terapeuta", cpfParaVincular).limit(1);
+
+      if(perfisPorCpf && perfisPorCpf.length > 0) {
+        await client.from("perfis").update({ role: novoRole }).eq("id", perfisPorCpf[0].id);
+      } else {
+        // Perfil ainda não tem cpf_terapeuta — tentar encontrar pelo email cadastrado na terapeuta
+        const emailTerapeuta = (payload.email || "").trim().toLowerCase();
+        if(emailTerapeuta) {
+          const {data: perfisPorEmailTerapeuta} = await client
+            .from("perfis").select("id").eq("email", emailTerapeuta).limit(1);
+          if(perfisPorEmailTerapeuta && perfisPorEmailTerapeuta.length > 0) {
+            await client.from("perfis")
+              .update({ cpf_terapeuta: cpfParaVincular, role: novoRole })
+              .eq("id", perfisPorEmailTerapeuta[0].id);
+          }
+        }
+      }
     }
   }
 

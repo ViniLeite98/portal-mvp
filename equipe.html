@@ -327,6 +327,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             <label>Perfil de Acesso</label>
             <select id="role_usuario">
               <option value="operadora">Operadora</option>
+              <option value="recepcionista">Recepcionista</option>
               <option value="admin">Administrador</option>
             </select>
             <span style="font-size:11px;color:#9ca3af;margin-top:4px">Altera o nível de acesso do usuário no portal.</span>
@@ -637,7 +638,7 @@ function abrirNovo(){
   const campoLogin = document.getElementById("campoLoginVinculado");
   if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
   const campoRole = document.getElementById("campoRole");
-  if(campoRole) campoRole.style.display = isSuperAdmin ? "" : "none";
+  if(campoRole) campoRole.style.display = isAdmin ? "" : "none";
   const elRole = document.getElementById("role_usuario");
   if(elRole) elRole.value = "operadora";
 
@@ -664,7 +665,7 @@ async function editar(cpf){
   const campoLogin = document.getElementById("campoLoginVinculado");
   if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
   const campoRole = document.getElementById("campoRole");
-  if(campoRole) campoRole.style.display = isSuperAdmin ? "" : "none";
+  if(campoRole) campoRole.style.display = isAdmin ? "" : "none";
   if(isAdmin){
     // Busca perfil: primeiro pelo cpf_terapeuta, depois pelo email da terapeuta como fallback
     (async () => {
@@ -685,7 +686,7 @@ async function editar(cpf){
       window._emailOriginalPerfil = perfil ? perfil.email : "";  // guarda para comparar no salvar
 
       const elRole = document.getElementById("role_usuario");
-      if(elRole && isSuperAdmin) elRole.value = perfil ? (perfil.role || "operadora") : "operadora";
+      if(elRole && isAdmin) elRole.value = perfil ? (perfil.role || "operadora") : "operadora";
     })();
   }
 
@@ -808,7 +809,8 @@ async function salvar(){
   const SUPER_CPFS    = ['42372412829','36589362823'];
   const SUPER_EMAILS  = ['viniciusleitesouza_1998@hotmail.com'];
   const isSuperAdmin  = SUPER_CPFS.includes(cpfLimpoU) || SUPER_EMAILS.includes(emailLimpoU);
-  const novoRole      = isSuperAdmin ? (document.getElementById("role_usuario")?.value || "operadora") : null;
+  const isAdminU      = u && u.role === "admin";
+  const novoRole      = isAdminU ? (document.getElementById("role_usuario")?.value || "operadora") : null;
 
   // emailOriginalPerfil: email que veio do banco ao abrir edicao (nao digitado pelo usuario)
   const emailOriginalPerfil = window._emailOriginalPerfil || "";

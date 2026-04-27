@@ -295,6 +295,11 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
           <div class="field"><label>Data de Início no Hara</label><input type="date" id="data_inicio"></div>
           <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
           <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
+          <div class="field" id="campoLoginVinculado">
+            <label>Login vinculado <span style="color:#9ca3af;font-weight:400">— e-mail do portal</span></label>
+            <input id="login_email_vinculado" type="email" placeholder="email@portal.com" style="background:#f9fafb">
+            <span style="font-size:11px;color:#9ca3af;margin-top:4px">Informe o e-mail que essa terapeuta usa para logar no portal. O vínculo será feito automaticamente ao salvar.</span>
+          </div>
           <div class="field">
             <label>Tem folga semanal?</label>
             <select id="tem_folga">
@@ -363,6 +368,8 @@ const campos = [
   "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
 ];
+// campo separado — não vai para terapeutas, vai para perfis
+const CAMPO_LOGIN = "login_email_vinculado";
 
 /* ── MÁSCARAS ── */
 function mascara(id, fn){
@@ -508,6 +515,8 @@ function filtrarTabela(){
 /* ── MODAL ── */
 function resetModal(){
   campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
+  const elLogin = document.getElementById(CAMPO_LOGIN);
+  if(elLogin) elLogin.value = "";
   document.getElementById("hora_entrada").value = "09:00";
   document.getElementById("hora_saida").value   = "18:00";
   mudarTab("pessoais", document.querySelector(".side-btn"));
@@ -530,7 +539,23 @@ async function editar(cpf){
   setForm(data);
   document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display = "";
+  document.getElementById("progressWrap").style.display = "inline-flex";
+  setTimeout(atualizarProgresso, 50);
   carregarDocs(cpf);
+
+  // Campo de login — só admin vê e carrega email vinculado
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+  const campoLogin = document.getElementById("campoLoginVinculado");
+  if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
+  if(isAdmin){
+    client.from("perfis").select("email").eq("cpf_terapeuta", cpf).limit(1).then(function(res){
+      const emailLogin = res.data && res.data[0] ? res.data[0].email : "";
+      const elLogin = document.getElementById(CAMPO_LOGIN);
+      if(elLogin) elLogin.value = emailLogin;
+    });
+  }
+
   document.getElementById("modal").style.display = "flex";
 }
 
@@ -570,6 +595,27 @@ async function salvar(){
   }
 
   if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
+
+  // Vincular CPF ao login (perfis) se email foi informado
+  const loginEmail = (document.getElementById(CAMPO_LOGIN)?.value || "").trim();
+  const cpfParaVincular = cpfAtual || payload.cpf;
+  if(loginEmail && cpfParaVincular) {
+    // buscar o user_id pelo email na tabela perfis
+    const {data: perfisData} = await client
+      .from("perfis")
+      .select("id")
+      .eq("email", loginEmail)
+      .limit(1);
+    if(perfisData && perfisData.length > 0) {
+      await client
+        .from("perfis")
+        .update({ cpf_terapeuta: cpfParaVincular })
+        .eq("id", perfisData[0].id);
+    } else {
+      alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito. Verifique se a pessoa já tem cadastro no portal.");
+    }
+  }
+
   carregar();
   fecharModal();
 }

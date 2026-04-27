@@ -306,9 +306,21 @@ async function carregarTerapeutas(){
 
 /* ── CARREGAR LISTA ── */
 async function carregar(){
-  const {data} = await client
-    .from("solicitacoes").select("*").order("created_at",{ascending:false});
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+
+  let q = client.from("solicitacoes").select("*").order("created_at",{ascending:false});
+
+  // Operadora só vê as próprias solicitações
+  if(!isAdmin && u && u.cpf) q = q.eq("terapeuta_cpf", u.cpf);
+
+  const {data} = await q;
   todasSolicitacoes = data || [];
+
+  // Ocultar filtros de terapeuta e botão novo para operadora (ela só pode ver as próprias)
+  const btnNovo = document.querySelector(".btn-novo");
+  if(btnNovo) btnNovo.style.display = isAdmin ? "" : "none";
+
   render();
 }
 

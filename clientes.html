@@ -147,16 +147,11 @@ tr:hover .acoes{opacity:1;}
   </div>
 
   <!-- Stats -->
-  <div class="stats">
+  <div class="stats" style="grid-template-columns:repeat(3,1fr)">
     <div class="stat-card">
       <div class="icon" style="background:#eff6ff;color:#2563eb"><i class="fa fa-users"></i></div>
       <div class="num" id="statTotal">—</div>
       <div class="lbl">Total de clientes</div>
-    </div>
-    <div class="stat-card">
-      <div class="icon" style="background:#f0fdf4;color:#16a34a"><i class="fa fa-calendar-check"></i></div>
-      <div class="num" id="statAtivos">—</div>
-      <div class="lbl">Com atendimentos</div>
     </div>
     <div class="stat-card">
       <div class="icon" style="background:#f5f3ff;color:#7c3aed"><i class="fa fa-dollar-sign"></i></div>
@@ -166,7 +161,7 @@ tr:hover .acoes{opacity:1;}
     <div class="stat-card">
       <div class="icon" style="background:#fef3c7;color:#d97706"><i class="fa fa-clock"></i></div>
       <div class="num" id="statSemVisita">—</div>
-      <div class="lbl">Sem visita +60 dias</div>
+      <div class="lbl">Sumidos +60 dias</div>
     </div>
   </div>
 
@@ -326,11 +321,6 @@ async function carregar(){
     .from("clientes")
     .select("*", {count:"exact", head:true});
 
-  const {count: ativosCount} = await client
-    .from("clientes")
-    .select("*", {count:"exact", head:true})
-    .gt("total_atendimentos", 0);
-
   const {count: sumidosCount} = await client
     .from("clientes")
     .select("*", {count:"exact", head:true})
@@ -348,7 +338,6 @@ async function carregar(){
     : 0;
 
   document.getElementById("statTotal").textContent     = totalCount ?? "—";
-  document.getElementById("statAtivos").textContent    = ativosCount ?? "—";
   document.getElementById("statTicket").textContent    = fmtM(ticketMed);
   document.getElementById("statSemVisita").textContent = sumidosCount ?? "—";
 

@@ -300,6 +300,14 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
             <input id="login_email_vinculado" type="email" placeholder="email@portal.com" style="background:#f9fafb">
             <span style="font-size:11px;color:#9ca3af;margin-top:4px">Informe o e-mail que essa terapeuta usa para logar no portal. O vínculo será feito automaticamente ao salvar.</span>
           </div>
+          <div class="field" id="campoRole" style="display:none">
+            <label>Perfil de Acesso</label>
+            <select id="role_usuario">
+              <option value="operadora">Operadora</option>
+              <option value="admin">Administrador</option>
+            </select>
+            <span style="font-size:11px;color:#9ca3af;margin-top:4px">Altera o nível de acesso do usuário no portal.</span>
+          </div>
           <div class="field">
             <label>Tem folga semanal?</label>
             <select id="tem_folga">
@@ -531,6 +539,17 @@ function abrirNovo(){
   resetModal();
   document.getElementById("modalTitulo").textContent = "Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display = "none";
+
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+  const isSuperAdmin = u && ['42372412829','36589362823'].includes((u.cpf||"").replace(/[^0-9]/g,""));
+  const campoLogin = document.getElementById("campoLoginVinculado");
+  if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
+  const campoRole = document.getElementById("campoRole");
+  if(campoRole) campoRole.style.display = isSuperAdmin ? "" : "none";
+  const elRole = document.getElementById("role_usuario");
+  if(elRole) elRole.value = "operadora";
+
   document.getElementById("modal").style.display = "flex";
 }
 
@@ -545,16 +564,21 @@ async function editar(cpf){
   document.getElementById("tabDocsBtn").style.display = "";
   carregarDocs(cpf);
 
-  // Campo de login — só admin vê e carrega email vinculado
+  // Campo de login e role — só admin vê
   const u = window.usuarioLogado;
   const isAdmin = u && u.role === "admin";
+  const isSuperAdmin = u && ['42372412829','36589362823'].includes((u.cpf||"").replace(/\D/g,""));
   const campoLogin = document.getElementById("campoLoginVinculado");
   if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
+  const campoRole = document.getElementById("campoRole");
+  if(campoRole) campoRole.style.display = isSuperAdmin ? "" : "none";
   if(isAdmin){
-    client.from("perfis").select("email").eq("cpf_terapeuta", cpf).limit(1).then(function(res){
-      const emailLogin = res.data && res.data[0] ? res.data[0].email : "";
+    client.from("perfis").select("email,role").eq("cpf_terapeuta", cpf).limit(1).then(function(res){
+      const perfil = res.data && res.data[0];
       const elLogin = document.getElementById(CAMPO_LOGIN);
-      if(elLogin) elLogin.value = emailLogin;
+      if(elLogin) elLogin.value = perfil ? perfil.email : "";
+      const elRole = document.getElementById("role_usuario");
+      if(elRole && isSuperAdmin) elRole.value = perfil ? (perfil.role || "operadora") : "operadora";
     });
   }
 
@@ -567,6 +591,9 @@ function fecharModal(){
 
 /* ── SALVAR ── */
 async function salvar(){
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+
   const payload = getPayload();
 
   if(!payload.nome_completo || !payload.nome_profissional || !payload.email){
@@ -577,17 +604,27 @@ async function salvar(){
   let error;
 
   if(cpfAtual){
-    const novoCpf = payload.cpf;
-    if(novoCpf && novoCpf !== cpfAtual){
-      await client.from("terapeutas").delete().eq("cpf", cpfAtual);
-      ({error} = await client.from("terapeutas").insert(payload));
-      if(!error) cpfAtual = novoCpf;
-    } else {
-      const updatePayload = {...payload};
-      delete updatePayload.cpf;
-      ({error} = await client.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
+    // Operadora só pode editar os próprios dados e NÃO pode trocar o CPF
+    if(!isAdmin && u && u.cpf && u.cpf !== cpfAtual){
+      alert("Você não tem permissão para editar este registro.");
+      return;
     }
+
+    const updatePayload = {...payload};
+    delete updatePayload.cpf; // CPF nunca muda — é chave primária
+
+    ({error} = await client.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
   } else {
+    // Novo cadastro — verificar CPF duplicado
+    if(!payload.cpf){ alert("CPF é obrigatório."); return; }
+
+    const {data: existente} = await client
+      .from("terapeutas").select("cpf").eq("cpf", payload.cpf.replace(/\D/g,"")).limit(1);
+    if(existente && existente.length > 0){
+      alert("CPF já cadastrado. Verifique o número informado.");
+      return;
+    }
+
     ({error} = await client.from("terapeutas").insert(payload));
     if(!error){
       cpfAtual = payload.cpf;
@@ -598,23 +635,34 @@ async function salvar(){
 
   if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
 
-  // Vincular CPF ao login (perfis) se email foi informado
+  // Vincular CPF ao login e atualizar role (perfis) se email foi informado
   const loginEmail = (document.getElementById(CAMPO_LOGIN)?.value || "").trim();
   const cpfParaVincular = cpfAtual || payload.cpf;
+  const isSuperAdmin = u && ['42372412829','36589362823'].includes((u.cpf||"").replace(/[^0-9]/g,""));
+  const novoRole = isSuperAdmin ? (document.getElementById("role_usuario")?.value || "operadora") : null;
+
   if(loginEmail && cpfParaVincular) {
-    // buscar o user_id pelo email na tabela perfis
     const {data: perfisData} = await client
       .from("perfis")
       .select("id")
       .eq("email", loginEmail)
       .limit(1);
     if(perfisData && perfisData.length > 0) {
-      await client
-        .from("perfis")
-        .update({ cpf_terapeuta: cpfParaVincular })
-        .eq("id", perfisData[0].id);
+      const updatePerfil = { cpf_terapeuta: cpfParaVincular };
+      if(novoRole) updatePerfil.role = novoRole;
+      await client.from("perfis").update(updatePerfil).eq("id", perfisData[0].id);
     } else {
-      alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito. Verifique se a pessoa já tem cadastro no portal.");
+      alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito.");
+    }
+  } else if(novoRole && cpfParaVincular) {
+    // Atualizar só o role mesmo sem trocar o email
+    const {data: perfisData} = await client
+      .from("perfis")
+      .select("id")
+      .eq("cpf_terapeuta", cpfParaVincular)
+      .limit(1);
+    if(perfisData && perfisData.length > 0) {
+      await client.from("perfis").update({ role: novoRole }).eq("id", perfisData[0].id);
     }
   }
 

@@ -23,6 +23,8 @@ button.btn-blue{background:#2563eb;}
 button.btn-yellow{background:#d97706;}
 button.btn-ghost{background:#fff;color:#374151;border:1px solid #d1d5db;}
 button.btn-ghost:hover{background:#f3f4f6;}
+/* botão novo agendamento sempre visível */
+button.btn-novo{background:#16a34a;display:inline-flex !important;}
 
 /* controles */
 .agenda-controls{display:flex;align-items:center;gap:12px;background:#fff;border-radius:12px;padding:12px 18px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:16px;flex-wrap:wrap;}
@@ -139,7 +141,7 @@ tr:hover td{background:#f9fafb;}
         <div class="leg"><div class="leg-dot" style="background:#fecaca"></div>Cancelado</div>
       </div>
       <button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
-      <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Agendamento</button>
+      <button class="btn-novo" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Agendamento</button>
     </div>
   </div>
 
@@ -168,7 +170,7 @@ tr:hover td{background:#f9fafb;}
   </div>
 
   <div id="viewSemana" class="cal-wrap"></div>
-  <div id="viewLista"  class="lista-wrap" style="display:none">
+  <div id="viewLista" class="lista-wrap" style="display:none">
     <table><thead><tr>
       <th>Data/Hora</th><th>Cliente</th><th>Serviço</th>
       <th>Terapeuta(s)</th><th>Status</th><th>Valor</th><th>Ações</th>
@@ -277,7 +279,7 @@ tr:hover td{background:#f9fafb;}
 <script src="assets/js/auth.js"></script>
 <script>
 
-const HORA_INI=9, HORA_FIM=23, SLOT_H=30, ALT_SLOT=28;
+const HORA_INI=9,HORA_FIM=23,SLOT_H=30,ALT_SLOT=28;
 const DIAS_PT=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
 let dados=[],servicosMap={},terapeutasMap={},dadosProd=[],dadosServicos=[],dadosTers=[];
@@ -294,6 +296,13 @@ const nomeS=s=>s?[s.grupo,s.subgrupo,s.tempo?s.tempo+" min":""].filter(Boolean).
 const nomeC=c=>{if(!c)return"—";const t=(c.telefone_1||"").replace(/\D/g,"");const l4=t.length>=4?t.slice(-4):"";return l4?`${c.nome} ${l4}`:c.nome;};
 const h2m=h=>{if(!h)return 0;const[hh,mm]=h.split(":");return+hh*60+ +mm;};
 const isFour=sid=>{const s=servicosMap[sid];return s&&(s.grupo||"").toLowerCase().includes("four");};
+
+/* verifica se usuário logado é admin — com retry para aguardar auth.js */
+function getUser(cb,tentativas=20){
+  if(window.usuarioLogado) return cb(window.usuarioLogado);
+  if(tentativas<=0) return cb(null);
+  setTimeout(()=>getUser(cb,tentativas-1),100);
+}
 
 /* smart search */
 function mkSS({si,hi,drop,clr,onNovo}){
@@ -373,26 +382,23 @@ async function carregarDados(){
 
 /* carregar atendimentos */
 async function carregar(){
-  const u = window.usuarioLogado;
-  const isAdmin = u && u.role === "admin";
+  getUser(async u=>{
+    const isAdmin = u && u.role === "admin";
 
-  let q = client.from("atendimentos")
-    .select(`*,clientes(id,nome,telefone_1),servicos(id,grupo,subgrupo,tempo,valor,comissao),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`)
-    .order("data").order("hora_inicio");
+    let q = client.from("atendimentos")
+      .select(`*,clientes(id,nome,telefone_1),servicos(id,grupo,subgrupo,tempo,valor,comissao),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`)
+      .order("data").order("hora_inicio");
 
-  // Operadora só vê atendimentos em que ela é terapeuta
-  if(!isAdmin && u && u.cpf){
-    q = q.or(`terapeuta1_cpf.eq.${u.cpf},terapeuta2_cpf.eq.${u.cpf}`);
-  }
+    // Operadora só vê atendimentos em que ela é terapeuta
+    if(!isAdmin && u && u.cpf){
+      q = q.or(`terapeuta1_cpf.eq.${u.cpf},terapeuta2_cpf.eq.${u.cpf}`);
+    }
 
-  const {data,error}=await q;
-  if(error){console.error(error);return;}
-
-  // Ocultar botão novo agendamento para operadora
-  const btnNovo = document.querySelector("button[onclick='abrirNovo()']");
-  if(btnNovo) btnNovo.style.display = isAdmin ? "" : "none";
-
-  dados=data||[];renderAtual();
+    const {data,error}=await q;
+    if(error){console.error(error);return;}
+    dados=data||[];
+    renderAtual();
+  });
 }
 
 function renderAtual(){ if(viewAtual==="semana") renderCal(); else renderLista(); }
@@ -424,7 +430,6 @@ function renderCal(){
   });
   html+=`</div><div style="display:grid;grid-template-columns:56px repeat(7,1fr);min-width:650px">`;
 
-  // col horas
   html+=`<div>`;
   for(let s=0;s<totalSlots;s++){
     const minT=HORA_INI*60+s*30,hh=Math.floor(minT/60),mm=minT%60;
@@ -432,7 +437,6 @@ function renderCal(){
   }
   html+=`</div>`;
 
-  // colunas dias
   dias.forEach(d=>{
     const dStr=d.toISOString().split("T")[0];
     html+=`<div class="day-col">`;
@@ -441,38 +445,23 @@ function renderCal(){
       const cls=minT%60===0?"slot-line hora-cheia":"slot-line";
       html+=`<div class="${cls}" style="height:${ALT_SLOT}px" onclick="abrirNovoSlot('${dStr}','${hh}:${mm}')"></div>`;
     }
-    // cards — detectar sobreposição e dividir largura
     const cardsDia=semDados.filter(r=>r.data===dStr).map(r=>({
-      ...r,
-      mI:h2m(r.hora_inicio),
-      mF:r.hora_fim?h2m(r.hora_fim):h2m(r.hora_inicio)+60
+      ...r,mI:h2m(r.hora_inicio),mF:r.hora_fim?h2m(r.hora_fim):h2m(r.hora_inicio)+60
     }));
-
-    // para cada card, descobrir em qual "coluna" ele cabe
     cardsDia.forEach(r=>{
       r._col=0;
-      cardsDia.forEach(o=>{
-        if(o===r||o._col===undefined) return;
-        if(o.mI<r.mF&&o.mF>r.mI&&o._col===r._col) r._col++;
-      });
+      cardsDia.forEach(o=>{if(o===r||o._col===undefined)return;if(o.mI<r.mF&&o.mF>r.mI&&o._col===r._col)r._col++;});
     });
-
-    // total de colunas simultâneas em cada card
     cardsDia.forEach(r=>{
       r._totalCols=1;
-      cardsDia.forEach(o=>{
-        if(o===r) return;
-        if(o.mI<r.mF&&o.mF>r.mI) r._totalCols=Math.max(r._totalCols,r._col+1,o._col+1);
-      });
+      cardsDia.forEach(o=>{if(o===r)return;if(o.mI<r.mF&&o.mF>r.mI)r._totalCols=Math.max(r._totalCols,r._col+1,o._col+1);});
     });
-
     cardsDia.forEach(r=>{
       const topPx=((r.mI-HORA_INI*60)/30)*ALT_SLOT;
       const hPx=Math.max(((r.mF-r.mI)/30)*ALT_SLOT,ALT_SLOT);
       const cls=r.status==="Confirmado"?"confirmado":r.status==="Cancelado"?"cancelado":"agendado";
       const ter=[r.ter1?.nome_profissional,r.ter2?.nome_profissional].filter(Boolean).join("+");
-      const pct=100/r._totalCols;
-      const left=r._col*pct;
+      const pct=100/r._totalCols,left=r._col*pct;
       html+=`<div class="ag-card ${cls}" style="top:${topPx}px;height:${hPx}px;left:calc(${left}% + 2px);width:calc(${pct}% - 4px)" onclick="abrirDet('${r.id}');event.stopPropagation()">
         <div class="ag-hora">${fmtH(r.hora_inicio)}${r.hora_fim?"–"+fmtH(r.hora_fim):""}</div>
         <div class="ag-nome">${nomeC(r.clientes)}</div>
@@ -488,6 +477,8 @@ function renderCal(){
 
 /* ─── LISTA ─── */
 function renderLista(){
+  const u=window.usuarioLogado;
+  const isAdmin=u&&u.role==="admin";
   const fT=document.getElementById("filtroTer").value;
   const fS=document.getElementById("filtroStatus").value;
   const lista=dados.filter(r=>(!fT||r.terapeuta1_cpf===fT||r.terapeuta2_cpf===fT)&&(!fS||r.status===fS));
@@ -497,6 +488,10 @@ function renderLista(){
   lista.forEach(r=>{
     const cls=r.status==="Confirmado"?"badge-confirmado":r.status==="Cancelado"?"badge-cancelado":"badge-agendado";
     const ter=[r.ter1?.nome_profissional,r.ter2?.nome_profissional].filter(Boolean).join(" + ");
+    // Botão excluir só para admin na lista
+    const btnExcluir=isAdmin
+      ?`<button class="btn-red" style="padding:5px 9px;font-size:12px" onclick="excluir('${r.id}')"><i class="fa fa-trash"></i></button>`
+      :"";
     tbody.innerHTML+=`<tr>
       <td>${fmtD(r.data)} ${fmtH(r.hora_inicio)}</td>
       <td>${nomeC(r.clientes)}</td>
@@ -506,7 +501,7 @@ function renderLista(){
       <td>${r.valor_final?fmtM(r.valor_final):"—"}</td>
       <td style="display:flex;gap:6px">
         <button class="btn-yellow" style="padding:5px 9px;font-size:12px" onclick="abrirDet('${r.id}')"><i class="fa fa-eye"></i></button>
-        <button class="btn-red" style="padding:5px 9px;font-size:12px" onclick="excluir('${r.id}')"><i class="fa fa-trash"></i></button>
+        ${btnExcluir}
       </td>
     </tr>`;
   });
@@ -539,7 +534,19 @@ function resetAg(){
   ssAg?.clearSelection();
 }
 
-function abrirNovo(){editandoId=null;resetAg();document.getElementById("agTitulo").textContent="Novo Agendamento";document.getElementById("modalAg").style.display="flex";}
+function abrirNovo(){
+  editandoId=null;
+  resetAg();
+  // Pré-selecionar a própria terapeuta para operadora
+  getUser(u=>{
+    if(u && u.role !== "admin" && u.cpf){
+      document.getElementById("agTer1").value = u.cpf;
+      calcCom();
+    }
+  });
+  document.getElementById("agTitulo").textContent="Novo Agendamento";
+  document.getElementById("modalAg").style.display="flex";
+}
 function abrirNovoSlot(data,hora){abrirNovo();document.getElementById("agData").value=data;document.getElementById("agHoraIni").value=hora;autoFim();}
 function fecharAg(){document.getElementById("modalAg").style.display="none";}
 
@@ -608,6 +615,8 @@ async function salvarAg(){
 
 /* ─── DETALHES ─── */
 function abrirDet(id){
+  const u=window.usuarioLogado;
+  const isAdmin=u&&u.role==="admin";
   const r=dados.find(d=>d.id===id);if(!r)return;
   const ter=[r.ter1?.nome_profissional,r.ter2?.nome_profissional].filter(Boolean).join(" + ");
   document.getElementById("detTit").textContent=nomeC(r.clientes);
@@ -622,13 +631,22 @@ function abrirDet(id){
     ${r.observacao?`<b>Obs:</b> ${r.observacao}`:""}
   `;
   const btns=document.getElementById("detBtns");btns.innerHTML="";
+
   if(r.status==="Agendado"){
+    // Confirmar pagamento — todos podem
     mk(btns,"btn-green","fa-check Confirmar & Pagar",()=>{fecharDet();abrirPgto(id);});
+    // Editar — todos podem
     mk(btns,"btn-yellow","fa-pencil Editar",()=>{fecharDet();abrirEditar(id);});
-    mk(btns,"btn-red","fa-times Cancelar",async()=>{if(!confirm("Cancelar?"))return;await client.from("atendimentos").update({status:"Cancelado"}).eq("id",id);fecharDet();carregar();});
+    // Cancelar — só admin
+    if(isAdmin) mk(btns,"btn-red","fa-times Cancelar",async()=>{if(!confirm("Cancelar?"))return;await client.from("atendimentos").update({status:"Cancelado"}).eq("id",id);fecharDet();carregar();});
   }
-  if(r.status==="Confirmado") mk(btns,"btn-yellow","fa-pencil Editar",()=>{fecharDet();abrirEditar(id);});
-  mk(btns,"btn-ghost","fa-trash",async()=>{fecharDet();excluir(id);},true);
+  if(r.status==="Confirmado"){
+    // Editar — todos podem
+    mk(btns,"btn-yellow","fa-pencil Editar",()=>{fecharDet();abrirEditar(id);});
+  }
+  // Excluir — só admin
+  if(isAdmin) mk(btns,"btn-ghost","fa-trash",async()=>{fecharDet();excluir(id);},true);
+
   document.getElementById("modalDet").style.display="flex";
 }
 

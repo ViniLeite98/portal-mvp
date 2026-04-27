@@ -153,7 +153,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
     <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()">
     <select id="filtroStatus">
       <option value="">Todos os status</option>
-      <option value="Ativo">Ativo</option>
+      <option value="Ativo" selected>Ativo</option>
       <option value="Inativo">Inativo</option>
     </select>
   </div>
@@ -470,6 +470,11 @@ function setForm(data){
 
 /* ── TABELA PRINCIPAL ── */
 async function carregar(){
+  // Aguardar auth.js terminar (usuarioLogado pode demorar por ser async)
+  if(!window.usuarioLogado){
+    setTimeout(carregar, 100);
+    return;
+  }
   const u = window.usuarioLogado;
   const isAdmin = u && u.role === "admin";
   const statusFiltro = document.getElementById("filtroStatus").value;

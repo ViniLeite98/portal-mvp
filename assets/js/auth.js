@@ -1,491 +1,157 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Certificações | Hara Spa</title>
+/**
+ * auth.js — autenticação + sidebar dinâmico
+ *
+ * Uso em TODAS as páginas protegidas:
+ *   <script src="assets/js/supabase.js"></script>
+ *   <script src="assets/js/auth.js" data-role="admin"></script>  ← só dashboard e parametros
+ *   <script src="assets/js/auth.js"></script>                    ← demais páginas (qualquer logado)
+ *
+ * Colocar no final do <body>, ANTES de qualquer outro script da página.
+ * NÃO precisa mais do sidebar.js separado.
+ */
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+// 1. Capturar role ANTES de qualquer async
+var AUTH_ROLE_EXIGIDO = (document.currentScript || {}).getAttribute("data-role") || null;
 
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
-.app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.left-tools{display:flex;gap:10px;align-items:center;}
-.left-tools input{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;width:280px;font-size:14px;}
-.left-tools input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.right-tools{display:flex;gap:10px;}
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
-th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
-th{background:#f9fafb;font-weight:600;}
-tr:last-child td{border-bottom:none;}
-tr:hover td{background:#f9fafb;}
-button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;}
-button.excluir{background:#dc2626;}
-button.exportar{background:#16a34a;}
-button.vincular-btn{background:#2563eb;display:inline-flex !important;align-items:center;gap:6px;}
-.cert-icones{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.cert-icones i{font-size:15px;}
-.badge-count{background:#f3f4f6;color:#374151;font-size:11px;font-weight:700;border-radius:99px;padding:2px 8px;margin-left:4px;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
-.modal-content{background:#fff;width:560px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
-.modal-content.sm{width:420px;}
-.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
-.modal-header h2{margin:0;font-size:18px;color:#111827;}
-.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
-.btn-fechar:hover{background:#f3f4f6;color:#111827;}
-.modal-body{padding:24px;}
-.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;}
-.modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;}
-.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
-.btn-cancel:hover{background:#f3f4f6;}
-.btn-save{background:#1f2937;}
-.btn-save:hover{background:#111827;}
-.grid-vincular{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
-.field{display:flex;flex-direction:column;}
-.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
-input,select{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
-input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.span2{grid-column:span 2;}
-.cert-row{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px solid #f3f4f6;}
-.cert-row:last-child{border-bottom:none;}
-.cert-row-left{display:flex;align-items:center;gap:10px;}
-.cert-info{display:flex;flex-direction:column;}
-.cert-nome{font-size:13px;font-weight:600;color:#111827;}
-.cert-data{font-size:11px;color:#9ca3af;margin-top:2px;}
-.cert-row-right{display:flex;gap:6px;align-items:center;}
-.cert-upload{margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
-.cert-upload input[type=file]{border:1px dashed #d1d5db;border-radius:6px;padding:5px 8px;font-size:12px;background:#f9fafb;cursor:pointer;flex:1;min-width:0;}
-.btn-upload-cert{background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;}
-.btn-ver-cert{font-size:12px;color:#2563eb;text-decoration:none;font-weight:500;}
-.cert-arquivo{display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;margin-top:4px;}
-.cert-arquivo i{color:#2563eb;}
-.upload-ing{font-size:11px;color:#2563eb;display:none;}
-.legenda{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px;color:#6b7280;margin-bottom:16px;}
-.legenda span{display:flex;align-items:center;gap:5px;}
-.icone-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-height:200px;overflow-y:auto;padding:4px;}
-.icone-opt{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border:2px solid #e5e7eb;border-radius:10px;cursor:pointer;font-size:11px;color:#6b7280;transition:all .15s;}
-.icone-opt:hover{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
-.icone-opt.selected{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
-.icone-opt i{font-size:18px;}
-</style>
-</head>
+// Após login: admin → equipe.html, operadora → equipe.html
+// (dashboard só acessível diretamente por admin)
+var ROTAS = { admin: "equipe.html", operadora: "equipe.html" };
 
-<body>
-<div class="app">
-<aside id="sidebar"></aside>
-<main class="content">
-<h1>Certificações</h1>
+var MENU = [
+  { href:"dashboard.html",     icon:"fa-chart-line",         label:"Dashboard",      roles:["admin"] },
+  { sep:true },
+  { titulo:"CADASTROS" },
+  { href:"equipe.html",        icon:"fa-users",              label:"Equipe",         roles:["admin","operadora"] },
+  { href:"clientes.html",      icon:"fa-user",               label:"Clientes",       roles:["admin","operadora"] },
+  { href:"servicos.html",      icon:"fa-hand-holding-heart", label:"Serviços",       roles:["admin","operadora"] },
+  { href:"certificacoes.html", icon:"fa-certificate",        label:"Certificações",  roles:["admin","operadora"] },
+  { sep:true },
+  { titulo:"OPERACIONAL" },
+  { href:"atendimentos.html",  icon:"fa-calendar-check",     label:"Atendimentos",   roles:["admin","operadora"] },
+  { href:"escalas.html",       icon:"fa-calendar-days",      label:"Escalas",        roles:["admin","operadora"] },
+  { href:"solicitacoes.html",  icon:"fa-file-lines",         label:"Solicitações",   roles:["admin","operadora"] },
+  { sep:true },
+  { titulo:"FINANCEIRO" },
+  { href:"despesas.html",      icon:"fa-receipt",            label:"Despesas",       roles:["admin","operadora"] },
+  { href:"fluxo_caixa.html",   icon:"fa-cash-register",      label:"Fluxo de Caixa",roles:["admin","operadora"] },
+  { href:"estoque.html",       icon:"fa-boxes-stacked",      label:"Estoque",        roles:["admin","operadora"] },
+  { sep:true, roles:["admin"] },
+  { titulo:"CONFIGURAÇÕES",    roles:["admin"] },
+  { href:"parametros.html",    icon:"fa-sliders",            label:"Parâmetros",     roles:["admin"] },
+];
 
-<div class="topbar">
-  <div class="left-tools">
-    <input id="buscaTerapeuta" placeholder="🔍  Buscar profissional ou certificação...">
-  </div>
-  <div class="right-tools">
-    <button class="exportar" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
-    <button class="vincular-btn" onclick="abrirVincular()"><i class="fa fa-plus"></i> Vincular Certificação</button>
-  </div>
-</div>
+function authBuildSidebar(role, nome) {
+  var pag    = location.pathname.split("/").pop() || "";
+  var inicial = (nome || "?")[0].toUpperCase();
+  var rotulo  = role === "admin" ? "Administrador" : "Operadora";
+  var itens   = "";
 
-<div class="legenda" id="legenda"></div>
-
-<table>
-  <thead>
-    <tr>
-      <th>Profissional</th>
-      <th>Certificações</th>
-      <th>Qtd</th>
-      <th>Ações</th>
-    </tr>
-  </thead>
-  <tbody id="lista"></tbody>
-</table>
-</main>
-</div>
-
-<!-- MODAL VINCULAR -->
-<div class="modal" id="modalVincular">
-<div class="modal-content">
-  <div class="modal-header">
-    <h2>Vincular Certificação</h2>
-    <button class="btn-fechar" onclick="fecharVincular()"><i class="fa fa-times"></i></button>
-  </div>
-  <div class="modal-body">
-    <div class="grid-vincular">
-      <div class="field span2"><label>Profissional</label><select id="cpf_terapeuta"></select></div>
-      <div class="field span2"><label>Certificação</label><select id="certificacao_id"></select></div>
-      <div class="field"><label>Data de Obtenção</label><input type="date" id="data_obtencao"></div>
-      <div class="field span2">
-        <label>Certificado (arquivo) <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
-        <input type="file" id="arquivo_vincular" accept="image/*,.pdf,.doc,.docx">
-      </div>
-    </div>
-    <div class="upload-ing" id="uploading_vincular" style="margin-top:8px">
-      <i class="fa fa-spinner fa-spin"></i> Enviando arquivo...
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-cancel" onclick="fecharVincular()">Cancelar</button>
-    <button class="btn-save" onclick="vincular()"><i class="fa fa-link"></i> Vincular</button>
-  </div>
-</div>
-</div>
-
-<!-- MODAL CERTS -->
-<div class="modal" id="modalCerts">
-<div class="modal-content">
-  <div class="modal-header">
-    <h2 id="tituloModal">Certificações</h2>
-    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
-  </div>
-  <div class="modal-body" id="listaCerts"></div>
-  <div class="modal-footer">
-    <button class="btn-cancel" onclick="fecharModal()">Fechar</button>
-  </div>
-</div>
-</div>
-
-<!-- MODAL EDITAR DATA -->
-<div class="modal" id="modalEditarData">
-<div class="modal-content sm">
-  <div class="modal-header">
-    <h2>Editar Data</h2>
-    <button class="btn-fechar" onclick="fecharModalData()"><i class="fa fa-times"></i></button>
-  </div>
-  <div class="modal-body">
-    <div class="field"><label>Nova Data de Obtenção</label><input type="date" id="novaDataInput"></div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-cancel" onclick="fecharModalData()">Cancelar</button>
-    <button class="btn-save" onclick="salvarNovaData()"><i class="fa fa-save"></i> Salvar</button>
-  </div>
-</div>
-</div>
-
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
-<script src="assets/js/auth.js"></script>
-<script>
-
-let dados = [];
-let editandoId = null;
-let certificacoes = [];
-
-function iconeParaCert(certId){
-  const c = certificacoes.find(x => x.id === certId || x.nome === certId);
-  return c?.icone || "fa-certificate";
-}
-
-function corIcone(icone){
-  const cores = {
-    "fa-person-dress":"#ec4899","fa-user-group":"#3b82f6",
-    "fa-droplet":"#06b6d4","fa-spa":"#10b981",
-    "fa-shoe-prints":"#f59e0b","fa-certificate":"#8b5cf6",
-    "fa-star":"#f59e0b","fa-heart":"#ef4444",
-    "fa-hands":"#6366f1","fa-leaf":"#22c55e",
-    "fa-fire":"#f97316","fa-snowflake":"#38bdf8",
-  };
-  return cores[icone] || "#6b7280";
-}
-
-function renderLegenda(){
-  const legEl = document.getElementById("legenda");
-  if(!certificacoes.length){ legEl.innerHTML = ""; return; }
-  legEl.innerHTML = `<strong>Legenda:</strong> ` +
-    certificacoes.map(c =>
-      `<span><i class="fa-solid ${c.icone||'fa-certificate'}" style="color:${corIcone(c.icone)}"></i> ${c.nome}</span>`
-    ).join("");
-}
-
-async function carregarSelects(){
-  const {data: terapeutas} = await client
-    .from("terapeutas").select("cpf,nome_profissional")
-    .eq("status","Ativo").order("nome_profissional");
-
-  const selTer = document.getElementById("cpf_terapeuta");
-  selTer.innerHTML = "<option value=''>Selecione o profissional</option>";
-  (terapeutas||[]).forEach(t =>
-    selTer.innerHTML += `<option value="${t.cpf}">${t.nome_profissional}</option>`
-  );
-
-  const {data: certs} = await client.from("certificacoes").select("id,nome,icone").order("nome");
-  certificacoes = certs || [];
-
-  const selCert = document.getElementById("certificacao_id");
-  selCert.innerHTML = "<option value=''>Selecione a certificação</option>";
-  certificacoes.forEach(c =>
-    selCert.innerHTML += `<option value="${c.id}">${c.nome}</option>`
-  );
-
-  renderLegenda();
-}
-
-async function carregarLista(){
-  // Aguardar usuarioLogado estar disponível
-  if(!window.usuarioLogado){
-    setTimeout(carregarLista, 100);
-    return;
-  }
-
-  const u = window.usuarioLogado;
-  const isAdmin = u && u.role === "admin";
-
-  let q = client
-    .from("terapeuta_certificacoes")
-    .select(`id, data_obtencao, arquivo_url, arquivo_nome, cpf_terapeuta, certificacoes(id,nome,icone), terapeutas(nome_profissional)`)
-    .order("id");
-
-  // Operadora só vê as próprias certificações
-  if(!isAdmin && u && u.cpf) q = q.eq("cpf_terapeuta", u.cpf);
-
-  const {data} = await q;
-  dados = data || [];
-
-  render();
-}
-
-function render(){
-  const u = window.usuarioLogado;
-  const isAdmin = u && u.role === "admin";
-
-  const termo = (document.getElementById("buscaTerapeuta").value||"").toLowerCase();
-  const filtrado = dados.filter(d => {
-    const nome = (d.terapeutas?.nome_profissional||"").toLowerCase();
-    const cert = (d.certificacoes?.nome||"").toLowerCase();
-    return nome.includes(termo) || cert.includes(termo);
-  });
-
-  const agrupado = {};
-  filtrado.forEach(r => {
-    const nome = r.terapeutas?.nome_profissional || "Sem nome";
-    if(!agrupado[nome]) agrupado[nome] = {nome, certs:[]};
-    agrupado[nome].certs.push(r);
-  });
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  if(!Object.keys(agrupado).length){
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:32px">Nenhum resultado encontrado.</td></tr>`;
-    return;
-  }
-
-  Object.values(agrupado).sort((a,b) => a.nome.localeCompare(b.nome)).forEach(t => {
-    const iconesUnicos = [...new Map(
-      t.certs.map(c => [c.certificacoes?.id, {icone: c.certificacoes?.icone||"fa-certificate", nome: c.certificacoes?.nome}])
-    ).values()];
-
-    const iconesHtml = iconesUnicos.map(i =>
-      `<i class="fa-solid ${i.icone}" style="color:${corIcone(i.icone)}" title="${i.nome}"></i>`
-    ).join("");
-
-    tbody.innerHTML += `<tr>
-      <td><strong>${t.nome}</strong></td>
-      <td><div class="cert-icones">${iconesHtml}</div></td>
-      <td><span class="badge-count">${t.certs.length}</span></td>
-      <td><button onclick="abrirModal('${t.nome.replace(/'/g,"\\'")}')"><i class="fa fa-eye"></i> Ver / Editar</button></td>
-    </tr>`;
-  });
-}
-
-function abrirVincular(){
-  const u = window.usuarioLogado;
-  const isAdmin = u && u.role === "admin";
-
-  // Operadora: pré-seleciona ela mesma e bloqueia o select
-  const selTer = document.getElementById("cpf_terapeuta");
-  if(!isAdmin && u && u.cpf){
-    selTer.value = u.cpf;
-    selTer.disabled = true;
-  } else {
-    selTer.value = "";
-    selTer.disabled = false;
-  }
-
-  document.getElementById("certificacao_id").value = "";
-  document.getElementById("data_obtencao").value   = "";
-  if(document.getElementById("arquivo_vincular"))
-    document.getElementById("arquivo_vincular").value = "";
-  document.getElementById("modalVincular").style.display = "flex";
-}
-function fecharVincular(){ document.getElementById("modalVincular").style.display = "none"; }
-
-async function vincular(){
-  const cpf  = document.getElementById("cpf_terapeuta").value;
-  const cert = document.getElementById("certificacao_id").value;
-  const data = document.getElementById("data_obtencao").value;
-  const file = document.getElementById("arquivo_vincular").files[0];
-  if(!cpf || !cert){ alert("Selecione o profissional e a certificação."); return; }
-
-  const {data: inserted, error} = await client
-    .from("terapeuta_certificacoes")
-    .insert({cpf_terapeuta: cpf, certificacao_id: cert, data_obtencao: data || null})
-    .select().single();
-  if(error){ alert("Erro ao vincular: " + error.message); return; }
-
-  if(file && inserted?.id){
-    const statusEl = document.getElementById("uploading_vincular");
-    statusEl.style.display = "block";
-    const fileName = `certificados/${inserted.id}/${Date.now()}_${limparNome(file.name)}`;
-    const {error: upErr} = await client.storage.from("documentos").upload(fileName, file);
-    if(!upErr){
-      const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
-      await client.from("terapeuta_certificacoes").update({
-        arquivo_url: urlData.publicUrl, arquivo_nome: file.name
-      }).eq("id", inserted.id);
+  MENU.forEach(function(item) {
+    if (item.sep) {
+      if (!item.roles || item.roles.indexOf(role) >= 0)
+        itens += '<hr style="border-color:#374151;margin:12px 0">';
+      return;
     }
-    statusEl.style.display = "none";
-  }
+    if (item.titulo) {
+      if (!item.roles || item.roles.indexOf(role) >= 0)
+        itens += '<div class="menu-title">' + item.titulo + '</div>';
+      return;
+    }
+    if (item.roles.indexOf(role) >= 0) {
+      var ativo = pag === item.href ? "active" : "";
+      itens += '<a href="' + item.href + '" class="menu-item ' + ativo + '">' +
+        '<i class="fa-solid ' + item.icon + '"></i><span>' + item.label + '</span></a>';
+    }
+  });
 
-  fecharVincular();
-  carregarLista();
+  return '<div class="sidebar">' +
+    '<div class="logo">Hara Spa</div>' +
+    '<div style="padding:12px 16px 16px;border-bottom:1px solid #374151;margin-bottom:8px">' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+        '<div style="width:34px;height:34px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">' + inicial + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div style="font-size:13px;font-weight:600;color:#f9fafb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + nome + '</div>' +
+          '<div style="font-size:10px;color:#9ca3af">' + rotulo + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<button onclick="authLogout()" style="width:100%;padding:6px;background:rgba(255,255,255,.07);border:1px solid #374151;border-radius:7px;color:#9ca3af;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.background=\'rgba(255,255,255,.15)\'" onmouseout="this.style.background=\'rgba(255,255,255,.07)\'">' +
+        '<i class="fa-solid fa-arrow-right-from-bracket"></i> Sair' +
+      '</button>' +
+    '</div>' +
+    itens +
+  '</div>';
 }
 
-function abrirModal(nome){
-  const u = window.usuarioLogado;
-  const isAdmin = u && u.role === "admin";
-
-  const registros = dados.filter(d => d.terapeutas?.nome_profissional === nome);
-  document.getElementById("tituloModal").textContent = nome;
-
-  const html = registros.map(r => {
-    const icone   = r.certificacoes?.icone || "fa-certificate";
-    const cor     = corIcone(icone);
-    const dataFmt = r.data_obtencao
-      ? new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR")
-      : "Sem data";
-
-    const arquivoHtml = r.arquivo_url
-      ? `<div class="cert-arquivo">
-           <i class="fa fa-paperclip"></i>
-           <a class="btn-ver-cert" href="${r.arquivo_url}" target="_blank">
-             <i class="fa fa-eye"></i> ${r.arquivo_nome||"Ver certificado"}
-           </a>
-           ${isAdmin ? `<button class="excluir" style="padding:2px 8px;font-size:11px"
-             onclick="excluirArquivo('${r.id}','${(r.arquivo_url||"").replace(/'/g,"\\'")}','${nome.replace(/'/g,"\\'")}')">
-             <i class="fa fa-times"></i> Remover
-           </button>` : ""}
-         </div>`
-      : `<div class="cert-upload">
-           <input type="file" id="file_${r.id}" accept="image/*,.pdf,.doc,.docx">
-           <button class="btn-upload-cert" onclick="uploadCert('${r.id}','${nome.replace(/'/g,"\\'")}')">
-             <i class="fa fa-upload"></i> Anexar certificado
-           </button>
-           <span class="upload-ing" id="uploading_${r.id}"><i class="fa fa-spinner fa-spin"></i></span>
-         </div>`;
-
-    // Botões de editar data e excluir vínculo: só admin
-    const botoesAcao = isAdmin
-      ? `<button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>
-         <button class="excluir" onclick="excluir('${r.id}','${nome.replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>`
-      : `<button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>`;
-
-    return `<div class="cert-row" id="cert-row-${r.id}">
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-        <div class="cert-row-left">
-          <i class="fa-solid ${icone}" style="font-size:18px;color:${cor}"></i>
-          <div class="cert-info">
-            <span class="cert-nome">${r.certificacoes?.nome||""}</span>
-            <span class="cert-data"><i class="fa fa-calendar-alt"></i> ${dataFmt}</span>
-          </div>
-        </div>
-        <div class="cert-row-right">${botoesAcao}</div>
-      </div>
-      ${arquivoHtml}
-    </div>`;
-  }).join("");
-
-  document.getElementById("listaCerts").innerHTML = html || `<p style="color:#9ca3af;text-align:center">Nenhuma certificação.</p>`;
-  document.getElementById("modalCerts").style.display = "flex";
+function authLogout() {
+  client.auth.signOut().finally(function() {
+    Object.keys(localStorage).forEach(function(k) {
+      if (k.startsWith("sb-")) localStorage.removeItem(k);
+    });
+    location.href = "login.html";
+  });
 }
 
-function fecharModal(){ document.getElementById("modalCerts").style.display = "none"; }
+function authInit() {
+  client.auth.getSession().then(function(res) {
+    var session = res.data && res.data.session;
 
-function editarCert(id, dataAtual){
-  editandoId = id;
-  document.getElementById("novaDataInput").value = dataAtual || "";
-  document.getElementById("modalEditarData").style.display = "flex";
-}
-function fecharModalData(){ document.getElementById("modalEditarData").style.display = "none"; }
+    if (!session) {
+      location.href = "login.html";
+      return;
+    }
 
-async function salvarNovaData(){
-  const novaData = document.getElementById("novaDataInput").value;
-  if(!novaData){ alert("Selecione uma data."); return; }
-  const {error} = await client.from("terapeuta_certificacoes")
-    .update({data_obtencao: novaData}).eq("id", editandoId);
-  if(error){ alert("Erro: " + error.message); return; }
-  fecharModalData();
-  await carregarLista();
-  const r = dados.find(d => d.id == editandoId);
-  if(r) abrirModal(r.terapeutas?.nome_profissional);
-}
+    client.from("perfis")
+      .select("role,nome,email,cpf_terapeuta")
+      .eq("id", session.user.id)
+      .single()
+      .then(function(res2) {
+        var perfil = res2.data;
+        var role   = (perfil && perfil.role)         || "operadora";
+        var nome   = (perfil && perfil.nome)         || (perfil && perfil.email) || session.user.email;
+        var email  = (perfil && perfil.email)        || session.user.email;
+        var cpf    = (perfil && perfil.cpf_terapeuta) || null;
 
-async function excluir(id, nome){
-  if(!confirm("Excluir este vínculo?")) return;
-  const {error} = await client.from("terapeuta_certificacoes").delete().eq("id", id);
-  if(error){ alert("Erro: " + error.message); return; }
-  await carregarLista();
-  const ainda = dados.filter(d => d.terapeutas?.nome_profissional === nome);
-  if(ainda.length) abrirModal(nome); else fecharModal();
-}
+        // Verificar permissão da página atual
+        if (AUTH_ROLE_EXIGIDO === "admin" && role !== "admin") {
+          location.href = "equipe.html";
+          return;
+        }
 
-function limparNome(nome){
-  return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
-}
-
-async function uploadCert(id, nomeTerapeuta){
-  const file = document.getElementById("file_"+id)?.files[0];
-  if(!file){ alert("Selecione um arquivo."); return; }
-  const statusEl = document.getElementById("uploading_"+id);
-  if(statusEl) statusEl.style.display = "inline";
-  const fileName = `certificados/${id}/${Date.now()}_${limparNome(file.name)}`;
-  const {error: upErr} = await client.storage.from("documentos").upload(fileName, file);
-  if(upErr){ if(statusEl) statusEl.style.display="none"; alert("Erro: "+upErr.message); return; }
-  const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
-  const {error} = await client.from("terapeuta_certificacoes").update({
-    arquivo_url: urlData.publicUrl, arquivo_nome: file.name
-  }).eq("id", id);
-  if(statusEl) statusEl.style.display = "none";
-  if(error){ alert("Erro: "+error.message); return; }
-  await carregarLista();
-  abrirModal(nomeTerapeuta);
-}
-
-async function excluirArquivo(id, url, nomeTerapeuta){
-  if(!confirm("Remover o arquivo?")) return;
-  const path = url.split("/storage/v1/object/public/documentos/")[1];
-  if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
-  await client.from("terapeuta_certificacoes").update({arquivo_url:null,arquivo_nome:null}).eq("id",id);
-  await carregarLista();
-  abrirModal(nomeTerapeuta);
+        // Se operadora tem CPF vinculado, buscar nome profissional
+        if (role !== "admin" && cpf) {
+          client.from("terapeutas")
+            .select("nome_profissional")
+            .eq("cpf", cpf)
+            .limit(1)
+            .then(function(res3) {
+              var ter = res3.data && res3.data[0];
+              window.usuarioLogado = {
+                id:    session.user.id,
+                role:  role,
+                nome:  (ter && ter.nome_profissional) || nome,
+                email: email,
+                cpf:   cpf
+              };
+              var el = document.getElementById("sidebar");
+              if (el) el.innerHTML = authBuildSidebar(role, window.usuarioLogado.nome);
+            });
+        } else {
+          window.usuarioLogado = {
+            id:    session.user.id,
+            role:  role,
+            nome:  nome,
+            email: email,
+            cpf:   cpf
+          };
+          var el = document.getElementById("sidebar");
+          if (el) el.innerHTML = authBuildSidebar(role, nome);
+        }
+      });
+  });
 }
 
-function exportarExcel(){
-  const exportData = dados.map(r => ({
-    "Profissional": r.terapeutas?.nome_profissional||"",
-    "Certificação": r.certificacoes?.nome||"",
-    "Data Obtenção": r.data_obtencao
-      ? new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR") : ""
-  }));
-  const ws = XLSX.utils.json_to_sheet(exportData);
-  const colunas = ["Profissional","Certificação","Data Obtenção"];
-  ws["!cols"] = colunas.map(col => ({
-    wch: Math.max(col.length, ...exportData.map(r => String(r[col]||"").length)) + 2
-  }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Certificações");
-  XLSX.writeFile(wb, "certificacoes.xlsx");
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", authInit);
+} else {
+  authInit();
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById("buscaTerapeuta").addEventListener("input", render);
-  carregarSelects();
-  carregarLista();
-});
-</script>
-</body>
-</html>

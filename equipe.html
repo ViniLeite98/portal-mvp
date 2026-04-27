@@ -95,8 +95,20 @@ input,select{
   border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
 }
 input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .span2{grid-column:span 2;}
 .span3{grid-column:span 3;}
+
+/* ── CPF EDIT AVISO ── */
+.cpf-aviso{
+  font-size:11px;color:#d97706;margin-top:4px;
+  display:flex;align-items:center;gap:5px;
+}
+.btn-editar-cpf{
+  background:none;color:#2563eb;border:none;padding:0;
+  font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline;
+  display:inline;margin-left:6px;
+}
 
 /* ── FOOTER ── */
 .modal-footer{
@@ -212,7 +224,18 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
         <div class="grid">
           <div class="field span2"><label>Nome Completo *</label><input id="nome_completo"></div>
           <div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
-          <div class="field"><label>CPF *</label><input id="cpf" placeholder="000.000.000-00"></div>
+
+          <!-- CPF com controle de edição -->
+          <div class="field" id="campo_cpf_wrapper">
+            <label>CPF *</label>
+            <input id="cpf" placeholder="000.000.000-00">
+            <div id="cpf_aviso" style="display:none" class="cpf-aviso">
+              <i class="fa fa-triangle-exclamation"></i>
+              Alterar o CPF substituirá o registro completo.
+              <button class="btn-editar-cpf" onclick="habilitarEdicaoCPF()">Editar mesmo assim</button>
+            </div>
+          </div>
+
           <div class="field"><label>RG</label><input id="rg"></div>
           <div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
           <div class="field"><label>Email *</label><input id="email" type="email"></div>
@@ -368,7 +391,10 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </div>
 
 <script>
+// CPF original do registro sendo editado (null = novo cadastro)
 let cpfAtual = null;
+// Controla se o campo CPF foi desbloqueado para edição
+let cpfEdicaoHabilitada = false;
 
 const campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
@@ -376,10 +402,11 @@ const campos = [
   "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
 ];
-// campo separado — não vai para terapeutas, vai para perfis
 const CAMPO_LOGIN = "login_email_vinculado";
 
-/* ── MÁSCARAS ── */
+/* ══════════════════════════════════════════
+   MÁSCARAS
+══════════════════════════════════════════ */
 function mascara(id, fn){
   const el = document.getElementById(id);
   if(!el) return;
@@ -398,7 +425,6 @@ function fmtCPF(v){
   if(v.length <= 9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
   return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
 }
-
 function fmtRG(v){
   v = v.replace(/\D/g,'').substring(0,9);
   if(v.length <= 2) return v;
@@ -406,7 +432,6 @@ function fmtRG(v){
   if(v.length <= 8) return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);
   return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8);
 }
-
 function fmtTel(v){
   v = v.replace(/\D/g,'').substring(0,11);
   if(v.length <= 2) return v.length ? '('+v : v;
@@ -414,18 +439,17 @@ function fmtTel(v){
   if(v.length <= 10) return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);
   return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
 }
-
 function fmtCEP(v){
   v = v.replace(/\D/g,'').substring(0,8);
   if(v.length <= 5) return v;
   return v.slice(0,5)+'-'+v.slice(5);
 }
-
 function fmtCPFDisplay(v){
   v = (v||"").replace(/\D/g,"");
   if(v.length !== 11) return v;
   return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);
 }
+function limparCPF(v){ return (v||"").replace(/\D/g,""); }
 
 function aplicarMascaras(){
   mascara('cpf', fmtCPF);
@@ -439,7 +463,56 @@ function aplicarMascaras(){
   });
 }
 
-/* ── TABS ── */
+/* ══════════════════════════════════════════
+   CONTROLE DE EDIÇÃO DO CPF
+══════════════════════════════════════════ */
+
+/**
+ * Bloqueia o campo CPF e exibe o aviso de edição segura.
+ * Chamado ao abrir um cadastro existente.
+ */
+function bloquearCPF(){
+  const el = document.getElementById("cpf");
+  el.readOnly = true;
+  document.getElementById("cpf_aviso").style.display = "flex";
+  cpfEdicaoHabilitada = false;
+}
+
+/**
+ * Desbloqueia o campo CPF após confirmação do usuário.
+ */
+function habilitarEdicaoCPF(){
+  const confirmado = confirm(
+    "⚠️ Atenção!\n\n" +
+    "Alterar o CPF irá:\n" +
+    "• Criar um novo registro com o CPF novo\n" +
+    "• Migrar documentos e perfil de login\n" +
+    "• Excluir o registro antigo\n\n" +
+    "Deseja continuar?"
+  );
+  if(!confirmado) return;
+
+  const el = document.getElementById("cpf");
+  el.readOnly = false;
+  el.focus();
+  el.select();
+  document.getElementById("cpf_aviso").style.display = "none";
+  cpfEdicaoHabilitada = true;
+}
+
+/**
+ * Desbloqueia o CPF sem aviso (usado em novo cadastro).
+ */
+function desbloquearCPF(){
+  const el = document.getElementById("cpf");
+  el.readOnly = false;
+  document.getElementById("cpf_aviso").style.display = "none";
+  cpfEdicaoHabilitada = false;
+}
+
+/* ══════════════════════════════════════════
+   TABS
+══════════════════════════════════════════ */
 function mudarTab(tab, btn){
   document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
   document.querySelectorAll(".side-btn").forEach(el => el.classList.remove("active"));
@@ -447,7 +520,9 @@ function mudarTab(tab, btn){
   btn.classList.add("active");
 }
 
-/* ── FORM HELPERS ── */
+/* ══════════════════════════════════════════
+   FORM HELPERS
+══════════════════════════════════════════ */
 function getPayload(){
   const obj = {};
   campos.forEach(c => {
@@ -476,9 +551,10 @@ function setForm(data){
   });
 }
 
-/* ── TABELA PRINCIPAL ── */
+/* ══════════════════════════════════════════
+   TABELA PRINCIPAL
+══════════════════════════════════════════ */
 async function carregar(){
-  // Aguardar auth.js terminar (usuarioLogado pode demorar por ser async)
   if(!window.usuarioLogado){
     setTimeout(carregar, 100);
     return;
@@ -512,8 +588,6 @@ async function carregar(){
     </tr>`;
   });
 
-  // Botão excluir nas linhas — só admin
-  // Botão Novo Cadastro — todos podem ver (controlado na linha acima)
   filtrarTabela();
 }
 
@@ -524,7 +598,9 @@ function filtrarTabela(){
   });
 }
 
-/* ── MODAL ── */
+/* ══════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════ */
 function resetModal(){
   campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
   const elLogin = document.getElementById(CAMPO_LOGIN);
@@ -536,7 +612,9 @@ function resetModal(){
 
 function abrirNovo(){
   cpfAtual = null;
+  cpfEdicaoHabilitada = false;
   resetModal();
+  desbloquearCPF();
   document.getElementById("modalTitulo").textContent = "Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display = "none";
 
@@ -559,19 +637,21 @@ function abrirNovo(){
 
 async function editar(cpf){
   cpfAtual = cpf;
+  cpfEdicaoHabilitada = false;
   const {data, error} = await client.from("terapeutas").select("*").eq("cpf", cpf).single();
   if(error){ console.error(error); return; }
 
   resetModal();
   setForm(data);
+  bloquearCPF(); // CPF bloqueado por padrão na edição
   document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display = "";
   carregarDocs(cpf);
 
-  // Campo de login e role — só admin vê
   const u = window.usuarioLogado;
   const isAdmin = u && u.role === "admin";
-  const isSuperAdmin = ['42372412829','36589362823'].includes((u&&u.cpf?u.cpf:'').replace(/[^0-9]/g,'')) || ['viniciusleitesouza_1998@hotmail.com'].includes((u&&u.email?u.email:'').toLowerCase());
+  const isSuperAdmin = ['42372412829','36589362823'].includes((u&&u.cpf?u.cpf:'').replace(/[^0-9]/g,''))
+    || ['viniciusleitesouza_1998@hotmail.com'].includes((u&&u.email?u.email:'').toLowerCase());
   const campoLogin = document.getElementById("campoLoginVinculado");
   if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
   const campoRole = document.getElementById("campoRole");
@@ -593,11 +673,12 @@ function fecharModal(){
   document.getElementById("modal").style.display = "none";
 }
 
-/* ── SALVAR ── */
+/* ══════════════════════════════════════════
+   SALVAR (com suporte a troca de CPF)
+══════════════════════════════════════════ */
 async function salvar(){
   const u = window.usuarioLogado;
   const isAdmin = u && u.role === "admin";
-
   const payload = getPayload();
 
   if(!payload.nome_completo || !payload.nome_profissional || !payload.email){
@@ -605,56 +686,110 @@ async function salvar(){
     return;
   }
 
-  let error;
-
-  if(cpfAtual){
-    // Operadora só pode editar os próprios dados e NÃO pode trocar o CPF
-    if(!isAdmin && u && u.cpf && u.cpf !== cpfAtual){
-      alert("Você não tem permissão para editar este registro.");
-      return;
-    }
-
-    const updatePayload = {...payload};
-    delete updatePayload.cpf; // CPF nunca muda — é chave primária
-
-    ({error} = await client.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual));
-  } else {
-    // Novo cadastro — verificar CPF duplicado
+  /* ── NOVO CADASTRO ── */
+  if(!cpfAtual){
     if(!payload.cpf){ alert("CPF é obrigatório."); return; }
+    const cpfNovo = limparCPF(payload.cpf);
 
     const {data: existente} = await client
-      .from("terapeutas").select("cpf").eq("cpf", payload.cpf.replace(/\D/g,"")).limit(1);
+      .from("terapeutas").select("cpf").eq("cpf", cpfNovo).limit(1);
     if(existente && existente.length > 0){
       alert("CPF já cadastrado. Verifique o número informado.");
       return;
     }
 
-    ({error} = await client.from("terapeutas").insert(payload));
-    if(!error){
-      cpfAtual = payload.cpf;
-      document.getElementById("tabDocsBtn").style.display = "";
-      carregarDocs(cpfAtual);
+    const {error} = await client.from("terapeutas").insert({...payload, cpf: cpfNovo});
+    if(error){ alert("Erro ao salvar: " + error.message); return; }
+
+    cpfAtual = cpfNovo;
+    document.getElementById("tabDocsBtn").style.display = "";
+    carregarDocs(cpfAtual);
+
+  /* ── EDIÇÃO COM TROCA DE CPF ── */
+  } else if(cpfEdicaoHabilitada && limparCPF(payload.cpf) !== limparCPF(cpfAtual)){
+    const cpfAntigo = limparCPF(cpfAtual);
+    const cpfNovo   = limparCPF(payload.cpf);
+
+    if(!cpfNovo || cpfNovo.length !== 11){
+      alert("CPF inválido. Informe os 11 dígitos corretamente.");
+      return;
     }
+
+    // Verificar se o CPF novo já existe
+    const {data: existente} = await client
+      .from("terapeutas").select("cpf").eq("cpf", cpfNovo).limit(1);
+    if(existente && existente.length > 0){
+      alert("O CPF informado já pertence a outro cadastro.");
+      return;
+    }
+
+    // 1. Buscar dados atuais completos para preservar campos não editados
+    const {data: dadosAtuais} = await client
+      .from("terapeutas").select("*").eq("cpf", cpfAntigo).single();
+
+    // 2. Inserir registro com novo CPF (merge dados atuais + payload)
+    const novoRegistro = {...dadosAtuais, ...payload, cpf: cpfNovo};
+    delete novoRegistro.created_at; // evitar conflito de campos gerados pelo banco
+    const {error: errInsert} = await client.from("terapeutas").insert(novoRegistro);
+    if(errInsert){ alert("Erro ao criar registro com novo CPF: " + errInsert.message); return; }
+
+    // 3. Migrar documentos
+    const {error: errDocs} = await client
+      .from("documentos")
+      .update({ equipe_id: cpfNovo })
+      .eq("equipe_id", cpfAntigo);
+    if(errDocs) console.warn("Aviso ao migrar documentos:", errDocs.message);
+
+    // 4. Migrar solicitações
+    const {error: errSol} = await client
+      .from("solicitacoes")
+      .update({ terapeuta_cpf: cpfNovo })
+      .eq("terapeuta_cpf", cpfAntigo);
+    if(errSol) console.warn("Aviso ao migrar solicitações:", errSol.message);
+
+    // 5. Migrar perfil de login
+    const {error: errPerfil} = await client
+      .from("perfis")
+      .update({ cpf_terapeuta: cpfNovo })
+      .eq("cpf_terapeuta", cpfAntigo);
+    if(errPerfil) console.warn("Aviso ao migrar perfil:", errPerfil.message);
+
+    // 6. Excluir registro antigo
+    const {error: errDel} = await client.from("terapeutas").delete().eq("cpf", cpfAntigo);
+    if(errDel){ alert("Erro ao remover registro antigo: " + errDel.message); return; }
+
+    cpfAtual = cpfNovo;
+    cpfEdicaoHabilitada = false;
+    bloquearCPF();
+    // Atualizar o campo CPF visualmente com a máscara
+    const elCPF = document.getElementById("cpf");
+    elCPF.value = fmtCPF(cpfNovo);
+
+  /* ── EDIÇÃO NORMAL (sem troca de CPF) ── */
+  } else {
+    if(!isAdmin && u && u.cpf && u.cpf !== cpfAtual){
+      alert("Você não tem permissão para editar este registro.");
+      return;
+    }
+    const updatePayload = {...payload};
+    delete updatePayload.cpf; // CPF não muda neste fluxo
+    const {error} = await client.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual);
+    if(error){ alert("Erro ao salvar: " + error.message); return; }
   }
 
-  if(error){ console.error(error); alert("Erro ao salvar: " + error.message); return; }
-
-  // Vincular CPF ao login e atualizar role (perfis) se email foi informado
+  /* ── VINCULAR LOGIN / ROLE ── */
   const loginEmail = (document.getElementById(CAMPO_LOGIN)?.value || "").trim();
-  const cpfParaVincular = cpfAtual || payload.cpf;
-  const cpfLimpo = (u && u.cpf ? u.cpf : "").replace(/[^0-9]/g,"");
-  const emailLimpo = (u && u.email ? u.email : "").toLowerCase();
+  const cpfParaVincular = cpfAtual;
+  const cpfLimpoU = (u && u.cpf ? u.cpf : "").replace(/[^0-9]/g,"");
+  const emailLimpoU = (u && u.email ? u.email : "").toLowerCase();
   const SUPER_CPFS = ['42372412829','36589362823'];
   const SUPER_EMAILS = ['viniciusleitesouza_1998@hotmail.com'];
-  const isSuperAdmin = SUPER_CPFS.includes(cpfLimpo) || SUPER_EMAILS.includes(emailLimpo);
+  const isSuperAdmin = SUPER_CPFS.includes(cpfLimpoU) || SUPER_EMAILS.includes(emailLimpoU);
   const novoRole = isSuperAdmin ? (document.getElementById("role_usuario")?.value || "operadora") : null;
 
   if(loginEmail && cpfParaVincular) {
     const {data: perfisData} = await client
-      .from("perfis")
-      .select("id")
-      .eq("email", loginEmail)
-      .limit(1);
+      .from("perfis").select("id").eq("email", loginEmail).limit(1);
     if(perfisData && perfisData.length > 0) {
       const updatePerfil = { cpf_terapeuta: cpfParaVincular };
       if(novoRole) updatePerfil.role = novoRole;
@@ -663,12 +798,8 @@ async function salvar(){
       alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito.");
     }
   } else if(novoRole && cpfParaVincular) {
-    // Atualizar só o role mesmo sem trocar o email
     const {data: perfisData} = await client
-      .from("perfis")
-      .select("id")
-      .eq("cpf_terapeuta", cpfParaVincular)
-      .limit(1);
+      .from("perfis").select("id").eq("cpf_terapeuta", cpfParaVincular).limit(1);
     if(perfisData && perfisData.length > 0) {
       await client.from("perfis").update({ role: novoRole }).eq("id", perfisData[0].id);
     }
@@ -678,6 +809,9 @@ async function salvar(){
   fecharModal();
 }
 
+/* ══════════════════════════════════════════
+   EXCLUIR
+══════════════════════════════════════════ */
 async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
 
@@ -702,7 +836,9 @@ async function excluir(cpf){
   carregar();
 }
 
-/* ── DOCUMENTOS ── */
+/* ══════════════════════════════════════════
+   DOCUMENTOS
+══════════════════════════════════════════ */
 function limparNome(nome){
   return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
 }
@@ -785,7 +921,9 @@ async function excluirDoc(id, url){
   carregarDocs(cpfAtual);
 }
 
-/* ── STATUS / INATIVACAO ── */
+/* ══════════════════════════════════════════
+   STATUS / INATIVAÇÃO
+══════════════════════════════════════════ */
 function aoMudarStatus(select){
   const campo = document.getElementById("campo_data_inativacao");
   const input = document.getElementById("data_inativacao");
@@ -798,7 +936,9 @@ function aoMudarStatus(select){
   }
 }
 
-/* ── INIT ── */
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   aplicarMascaras();
   document.getElementById("filtroStatus").addEventListener("change", carregar);

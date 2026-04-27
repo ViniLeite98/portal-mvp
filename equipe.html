@@ -657,13 +657,26 @@ async function editar(cpf){
   const campoRole = document.getElementById("campoRole");
   if(campoRole) campoRole.style.display = isSuperAdmin ? "" : "none";
   if(isAdmin){
-    client.from("perfis").select("email,role").eq("cpf_terapeuta", cpf).limit(1).then(function(res){
-      const perfil = res.data && res.data[0];
+    // Busca perfil: primeiro pelo cpf_terapeuta, depois pelo email da terapeuta como fallback
+    (async () => {
+      let perfil = null;
+
+      const {data: p1} = await client
+        .from("perfis").select("email,role").eq("cpf_terapeuta", cpf).limit(1);
+      if(p1 && p1.length > 0){
+        perfil = p1[0];
+      } else if(data.email){
+        const {data: p2} = await client
+          .from("perfis").select("email,role").eq("email", data.email.toLowerCase()).limit(1);
+        if(p2 && p2.length > 0) perfil = p2[0];
+      }
+
       const elLogin = document.getElementById(CAMPO_LOGIN);
-      if(elLogin) elLogin.value = perfil ? perfil.email : "";
+      if(elLogin) elLogin.value = perfil ? perfil.email : (data.email || "");
+
       const elRole = document.getElementById("role_usuario");
       if(elRole && isSuperAdmin) elRole.value = perfil ? (perfil.role || "operadora") : "operadora";
-    });
+    })();
   }
 
   document.getElementById("modal").style.display = "flex";
@@ -787,40 +800,32 @@ async function salvar(){
   const isSuperAdmin  = SUPER_CPFS.includes(cpfLimpoU) || SUPER_EMAILS.includes(emailLimpoU);
   const novoRole      = isSuperAdmin ? (document.getElementById("role_usuario")?.value || "operadora") : null;
 
-  if(cpfParaVincular) {
-    // 1. Se informou email de login → buscar perfil pelo email
+  if(cpfParaVincular && (loginEmail || novoRole)) {
+    let perfilId = null;
+
     if(loginEmail) {
-      const {data: perfisPorEmail} = await client
-        .from("perfis").select("id,cpf_terapeuta").eq("email", loginEmail).limit(1);
+      const {data: p} = await client
+        .from("perfis").select("id").eq("email", loginEmail).limit(1);
+      if(p && p.length > 0) perfilId = p[0].id;
+      else alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito.");
+    }
 
-      if(perfisPorEmail && perfisPorEmail.length > 0) {
-        const updatePerfil = { cpf_terapeuta: cpfParaVincular };
-        if(novoRole) updatePerfil.role = novoRole;
-        await client.from("perfis").update(updatePerfil).eq("id", perfisPorEmail[0].id);
-      } else {
-        alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito.");
-      }
-
-    // 2. Sem email de login → buscar perfil pelo cpf_terapeuta e atualizar só o role
-    } else if(novoRole) {
-      const {data: perfisPorCpf} = await client
+    if(!perfilId) {
+      const {data: p} = await client
         .from("perfis").select("id").eq("cpf_terapeuta", cpfParaVincular).limit(1);
+      if(p && p.length > 0) perfilId = p[0].id;
+    }
 
-      if(perfisPorCpf && perfisPorCpf.length > 0) {
-        await client.from("perfis").update({ role: novoRole }).eq("id", perfisPorCpf[0].id);
-      } else {
-        // Perfil ainda não tem cpf_terapeuta — tentar encontrar pelo email cadastrado na terapeuta
-        const emailTerapeuta = (payload.email || "").trim().toLowerCase();
-        if(emailTerapeuta) {
-          const {data: perfisPorEmailTerapeuta} = await client
-            .from("perfis").select("id").eq("email", emailTerapeuta).limit(1);
-          if(perfisPorEmailTerapeuta && perfisPorEmailTerapeuta.length > 0) {
-            await client.from("perfis")
-              .update({ cpf_terapeuta: cpfParaVincular, role: novoRole })
-              .eq("id", perfisPorEmailTerapeuta[0].id);
-          }
-        }
-      }
+    if(!perfilId && payload.email) {
+      const {data: p} = await client
+        .from("perfis").select("id").eq("email", payload.email.trim().toLowerCase()).limit(1);
+      if(p && p.length > 0) perfilId = p[0].id;
+    }
+
+    if(perfilId) {
+      const updatePerfil = { cpf_terapeuta: cpfParaVincular };
+      if(novoRole) updatePerfil.role = novoRole;
+      await client.from("perfis").update(updatePerfil).eq("id", perfilId);
     }
   }
 

@@ -101,14 +101,15 @@ function authInit() {
     }
 
     client.from("perfis")
-      .select("role,nome,email")
+      .select("role,nome,email,cpf_terapeuta")
       .eq("id", session.user.id)
       .single()
       .then(function(res2) {
         var perfil = res2.data;
-        var role   = (perfil && perfil.role)  || "operadora";
-        var nome   = (perfil && perfil.nome)  || (perfil && perfil.email) || session.user.email;
-        var email  = (perfil && perfil.email) || session.user.email;
+        var role   = (perfil && perfil.role)         || "operadora";
+        var nome   = (perfil && perfil.nome)         || (perfil && perfil.email) || session.user.email;
+        var email  = (perfil && perfil.email)        || session.user.email;
+        var cpf    = (perfil && perfil.cpf_terapeuta) || null;
 
         // Verificar permissão da página atual
         if (AUTH_ROLE_EXIGIDO === "admin" && role !== "admin") {
@@ -116,25 +117,21 @@ function authInit() {
           return;
         }
 
-        // Para operadora: buscar CPF na tabela terapeutas pelo email
-        if (role !== "admin") {
+        // Se operadora tem CPF vinculado, buscar nome profissional
+        if (role !== "admin" && cpf) {
           client.from("terapeutas")
-            .select("cpf,nome_profissional")
-            .eq("email", email)
+            .select("nome_profissional")
+            .eq("cpf", cpf)
             .limit(1)
             .then(function(res3) {
               var ter = res3.data && res3.data[0];
-              var cpf = ter ? ter.cpf : null;
-              var nomeProfissional = ter ? ter.nome_profissional : nome;
-
               window.usuarioLogado = {
                 id:    session.user.id,
                 role:  role,
-                nome:  nomeProfissional || nome,
+                nome:  (ter && ter.nome_profissional) || nome,
                 email: email,
-                cpf:   cpf   // CPF da terapeuta — null se não encontrado
+                cpf:   cpf
               };
-
               var el = document.getElementById("sidebar");
               if (el) el.innerHTML = authBuildSidebar(role, window.usuarioLogado.nome);
             });
@@ -144,9 +141,8 @@ function authInit() {
             role:  role,
             nome:  nome,
             email: email,
-            cpf:   null
+            cpf:   cpf
           };
-
           var el = document.getElementById("sidebar");
           if (el) el.innerHTML = authBuildSidebar(role, nome);
         }

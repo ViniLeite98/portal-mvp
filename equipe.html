@@ -599,7 +599,6 @@ function filtrarTabela(){
 ══════════════════════════════════════════ */
 function resetModal(){
   campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
-  if(elLogin) elLogin.value = "";
   document.getElementById("hora_entrada").value = "09:00";
   document.getElementById("hora_saida").value   = "18:00";
   mudarTab("pessoais", document.querySelector(".side-btn"));
@@ -620,7 +619,6 @@ function abrirNovo(){
   const SUPER_CPFS = ['42372412829','36589362823'];
   const SUPER_EMAILS = ['viniciusleitesouza_1998@hotmail.com'];
   const isSuperAdmin = SUPER_CPFS.includes(cpfLimpo) || SUPER_EMAILS.includes(emailLimpo);
-  if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
   const elRole = document.getElementById("role_usuario");
   if(elRole) elRole.value = "operadora";
 
@@ -644,7 +642,6 @@ async function editar(cpf){
   const isAdmin = u && u.role === "admin";
   const isSuperAdmin = ['42372412829','36589362823'].includes((u&&u.cpf?u.cpf:'').replace(/[^0-9]/g,''))
     || ['viniciusleitesouza_1998@hotmail.com'].includes((u&&u.email?u.email:'').toLowerCase());
-  if(campoLogin) campoLogin.style.display = isAdmin ? "" : "none";
   if(isAdmin){
     // Busca perfil: primeiro pelo cpf_terapeuta, depois pelo email da terapeuta como fallback
     (async () => {
@@ -660,7 +657,6 @@ async function editar(cpf){
         if(p2 && p2.length > 0) perfil = p2[0];
       }
 
-      if(elLogin) elLogin.value = perfil ? perfil.email : "";  // so preenche se tem perfil real
 
       const elRole = document.getElementById("role_usuario");
       if(elRole && isAdmin) elRole.value = perfil ? (perfil.role || "operadora") : "operadora";

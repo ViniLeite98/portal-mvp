@@ -588,6 +588,13 @@ async function carregar(){
     </tr>`;
   });
 
+  // Botao Novo Cadastro so para admin e recepcionista
+  const btnNovo = document.querySelector("button[onclick='abrirNovo()']");
+  if(btnNovo){
+    const podeNovo = u && (u.role === "admin" || u.role === "recepcionista");
+    btnNovo.style.display = podeNovo ? "" : "none";
+  }
+
   filtrarTabela();
 }
 
@@ -613,6 +620,7 @@ function resetModal(){
 function abrirNovo(){
   cpfAtual = null;
   cpfEdicaoHabilitada = false;
+  window._emailOriginalPerfil = "";
   resetModal();
   desbloquearCPF();
   document.getElementById("modalTitulo").textContent = "Novo Cadastro";
@@ -672,7 +680,8 @@ async function editar(cpf){
       }
 
       const elLogin = document.getElementById(CAMPO_LOGIN);
-      if(elLogin) elLogin.value = perfil ? perfil.email : (data.email || "");
+      if(elLogin) elLogin.value = perfil ? perfil.email : "";  // so preenche se tem perfil real
+      window._emailOriginalPerfil = perfil ? perfil.email : "";  // guarda para comparar no salvar
 
       const elRole = document.getElementById("role_usuario");
       if(elRole && isSuperAdmin) elRole.value = perfil ? (perfil.role || "operadora") : "operadora";
@@ -800,6 +809,10 @@ async function salvar(){
   const isSuperAdmin  = SUPER_CPFS.includes(cpfLimpoU) || SUPER_EMAILS.includes(emailLimpoU);
   const novoRole      = isSuperAdmin ? (document.getElementById("role_usuario")?.value || "operadora") : null;
 
+  // emailOriginalPerfil: email que veio do banco ao abrir edicao (nao digitado pelo usuario)
+  const emailOriginalPerfil = window._emailOriginalPerfil || "";
+  const loginEmailManual = loginEmail && loginEmail !== emailOriginalPerfil;
+
   if(cpfParaVincular && (loginEmail || novoRole)) {
     let perfilId = null;
 
@@ -807,7 +820,7 @@ async function salvar(){
       const {data: p} = await client
         .from("perfis").select("id").eq("email", loginEmail).limit(1);
       if(p && p.length > 0) perfilId = p[0].id;
-      else alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito.");
+      else if(loginEmailManual) alert("Atenção: email de login não encontrado nos perfis. O vínculo não foi feito.");
     }
 
     if(!perfilId) {

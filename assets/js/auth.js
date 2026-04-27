@@ -108,6 +108,7 @@ function authInit() {
         var perfil = res2.data;
         var role   = (perfil && perfil.role)  || "operadora";
         var nome   = (perfil && perfil.nome)  || (perfil && perfil.email) || session.user.email;
+        var email  = (perfil && perfil.email) || session.user.email;
 
         // Verificar permissão da página atual
         if (AUTH_ROLE_EXIGIDO === "admin" && role !== "admin") {
@@ -115,11 +116,40 @@ function authInit() {
           return;
         }
 
-        window.usuarioLogado = { id: session.user.id, role: role, nome: nome };
+        // Para operadora: buscar CPF na tabela terapeutas pelo email
+        if (role !== "admin") {
+          client.from("terapeutas")
+            .select("cpf,nome_profissional")
+            .eq("email", email)
+            .limit(1)
+            .then(function(res3) {
+              var ter = res3.data && res3.data[0];
+              var cpf = ter ? ter.cpf : null;
+              var nomeProfissional = ter ? ter.nome_profissional : nome;
 
-        // Renderizar sidebar
-        var el = document.getElementById("sidebar");
-        if (el) el.innerHTML = authBuildSidebar(role, nome);
+              window.usuarioLogado = {
+                id:    session.user.id,
+                role:  role,
+                nome:  nomeProfissional || nome,
+                email: email,
+                cpf:   cpf   // CPF da terapeuta — null se não encontrado
+              };
+
+              var el = document.getElementById("sidebar");
+              if (el) el.innerHTML = authBuildSidebar(role, window.usuarioLogado.nome);
+            });
+        } else {
+          window.usuarioLogado = {
+            id:    session.user.id,
+            role:  role,
+            nome:  nome,
+            email: email,
+            cpf:   null
+          };
+
+          var el = document.getElementById("sidebar");
+          if (el) el.innerHTML = authBuildSidebar(role, nome);
+        }
       });
   });
 }

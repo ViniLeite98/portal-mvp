@@ -351,7 +351,21 @@ function mkSS({si,hi,drop,clr,onNovo}){
   return{setValue(c){if(!c){clear();return;}pick(c);},clearSelection:clear};
 }
 
-/* carregar dados estáticos */
+/* helpers de role
+   admin         -> acesso total
+   recepcionista -> igual admin exceto dashboard
+   operadora     -> so ve os dela, filtro e select travados
+*/
+function getUser(cb,tentativas=20){
+  if(window.usuarioLogado) return cb(window.usuarioLogado);
+  if(tentativas<=0) return cb(null);
+  setTimeout(()=>getUser(cb,tentativas-1),100);
+}
+function podeVerTudo(u){ return u&&(u.role==="admin"||u.role==="recepcionista"); }
+function podeEditar(u) { return u&&(u.role==="admin"||u.role==="recepcionista"); }
+function eOperadora(u){ return u&&u.role==="operadora"; }
+
+/* carregar dados estaticos */
 async function carregarDados(){
   const {data:servs}=await client.from("servicos").select("*").eq("status","ativo").order("grupo");
   dadosServicos=servs||[];dadosServicos.forEach(s=>servicosMap[s.id]=s);
@@ -389,8 +403,8 @@ async function carregar(){
       .select(`*,clientes(id,nome,telefone_1),servicos(id,grupo,subgrupo,tempo,valor,comissao),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`)
       .order("data").order("hora_inicio");
 
-    // Operadora só vê atendimentos em que ela é terapeuta
-    if(!isAdmin && u && u.cpf){
+    // Operadora so ve os proprios atendimentos; recepcionista e admin veem tudo
+    if(eOperadora(u) && u.cpf){
       q = q.or(`terapeuta1_cpf.eq.${u.cpf},terapeuta2_cpf.eq.${u.cpf}`);
     }
 
@@ -478,7 +492,6 @@ function renderCal(){
 /* ─── LISTA ─── */
 function renderLista(){
   const u=window.usuarioLogado;
-  const isAdmin=u&&u.role==="admin";
   const fT=document.getElementById("filtroTer").value;
   const fS=document.getElementById("filtroStatus").value;
   const lista=dados.filter(r=>(!fT||r.terapeuta1_cpf===fT||r.terapeuta2_cpf===fT)&&(!fS||r.status===fS));
@@ -488,8 +501,8 @@ function renderLista(){
   lista.forEach(r=>{
     const cls=r.status==="Confirmado"?"badge-confirmado":r.status==="Cancelado"?"badge-cancelado":"badge-agendado";
     const ter=[r.ter1?.nome_profissional,r.ter2?.nome_profissional].filter(Boolean).join(" + ");
-    // Botão excluir só para admin na lista
-    const btnExcluir=isAdmin
+    // Botao excluir para admin e recepcionista
+    const btnExcluir=podeEditar(u)
       ?`<button class="btn-red" style="padding:5px 9px;font-size:12px" onclick="excluir('${r.id}')"><i class="fa fa-trash"></i></button>`
       :"";
     tbody.innerHTML+=`<tr>
@@ -537,12 +550,16 @@ function resetAg(){
 function abrirNovo(){
   editandoId=null;
   resetAg();
-  // Pré-selecionar a própria terapeuta para operadora
   getUser(u=>{
-    if(u && u.role !== "admin" && u.cpf){
-      document.getElementById("agTer1").value = u.cpf;
-      calcCom();
+    const sel=document.getElementById("agTer1");
+    if(eOperadora(u) && u.cpf){
+      // Operadora: pre-seleciona e trava o select de terapeuta
+      sel.value=u.cpf;
+      sel.disabled=true;
+    } else {
+      sel.disabled=false;
     }
+    calcCom();
   });
   document.getElementById("agTitulo").textContent="Novo Agendamento";
   document.getElementById("modalAg").style.display="flex";
@@ -637,15 +654,15 @@ function abrirDet(id){
     mk(btns,"btn-green","fa-check Confirmar & Pagar",()=>{fecharDet();abrirPgto(id);});
     // Editar — todos podem
     mk(btns,"btn-yellow","fa-pencil Editar",()=>{fecharDet();abrirEditar(id);});
-    // Cancelar — só admin
-    if(isAdmin) mk(btns,"btn-red","fa-times Cancelar",async()=>{if(!confirm("Cancelar?"))return;await client.from("atendimentos").update({status:"Cancelado"}).eq("id",id);fecharDet();carregar();});
+    // Cancelar - admin e recepcionista
+    if(podeEditar(u)) mk(btns,"btn-red","fa-times Cancelar",async()=>{if(!confirm("Cancelar?"))return;await client.from("atendimentos").update({status:"Cancelado"}).eq("id",id);fecharDet();carregar();});
   }
   if(r.status==="Confirmado"){
-    // Editar — todos podem
+    // Editar - todos podem
     mk(btns,"btn-yellow","fa-pencil Editar",()=>{fecharDet();abrirEditar(id);});
   }
-  // Excluir — só admin
-  if(isAdmin) mk(btns,"btn-ghost","fa-trash",async()=>{fecharDet();excluir(id);},true);
+  // Excluir - admin e recepcionista
+  if(podeEditar(u)) mk(btns,"btn-ghost","fa-trash",async()=>{fecharDet();excluir(id);},true);
 
   document.getElementById("modalDet").style.display="flex";
 }
@@ -671,7 +688,9 @@ async function abrirEditar(id){
     document.getElementById("agHoraFim").value=fmtH(r.hora_fim);
     document.getElementById("agServ").value=r.servico_id||"";
     document.getElementById("agOrigem").value=r.origem_lead||"";
-    document.getElementById("agTer1").value=r.terapeuta1_cpf||"";
+    const selTer1=document.getElementById("agTer1");
+    selTer1.value=r.terapeuta1_cpf||"";
+    getUser(u=>{ selTer1.disabled=eOperadora(u); });
     document.getElementById("agObs").value=r.observacao||"";
     const f=isFour(r.servico_id);
     document.getElementById("campoTer2").style.display=f?"":"none";
@@ -764,6 +783,14 @@ function exportarExcel(){
 /* ─── INIT ─── */
 document.addEventListener("DOMContentLoaded",async()=>{
   await carregarDados();
+  getUser(u=>{
+    if(eOperadora(u) && u.cpf){
+      // Filtro fixo na propria terapeuta para operadora
+      const sel = document.getElementById("filtroTer");
+      sel.value = u.cpf;
+      sel.disabled = true;
+    }
+  });
   await carregar();
 });
 </script>

@@ -310,7 +310,7 @@ async function carregar(){
 
   const {data, error} = await client
     .from("clientes")
-    .select("id,nome,telefone_1,telefone_2,email,data_nascimento,total_atendimentos,valor_total,ultimo_atendimento")
+    .select("id,nome,telefone_1,telefone_2,email,dt_nasc,total_atendimentos,valor_total,ultimo_atendimento")
     .order("nome");
 
   if(error){ console.error(error); return; }
@@ -442,7 +442,7 @@ async function abrirDetalhe(id, tabInicial="perfil"){
   document.getElementById("detInfo").innerHTML = [
     {k:"Telefone",    v:fmtTel(c.telefone_1)},
     {k:"Email",       v:c.email||"—"},
-    {k:"Nascimento",  v:fmtD(c.data_nascimento)},
+    {k:"Nascimento",  v:fmtD(c.dt_nasc)},
     {k:"Tel. 2",      v:fmtTel(c.telefone_2)||"—"},
     {k:"Última visita",v:fmtD(c.ultimo_atendimento)},
     {k:"ID",          v:`<span style="font-size:11px;color:#9ca3af">${c.id.slice(0,8)}...</span>`},
@@ -452,7 +452,7 @@ async function abrirDetalhe(id, tabInicial="perfil"){
   document.getElementById("eNome").value  = c.nome||"";
   document.getElementById("eTel").value   = c.telefone_1||"";
   document.getElementById("eEmail").value = c.email||"";
-  document.getElementById("eNasc").value  = c.data_nascimento||"";
+  document.getElementById("eNasc").value  = c.dt_nasc||"";
   document.getElementById("eTel2").value  = c.telefone_2||"";
 
   // Tab inicial
@@ -537,7 +537,7 @@ async function salvar(){
     nome,
     telefone_1: tel,
     email:          document.getElementById("eEmail").value.trim()||null,
-    data_nascimento:document.getElementById("eNasc").value||null,
+    dt_nasc:document.getElementById("eNasc").value||null,
     telefone_2:     document.getElementById("eTel2").value.trim()||null,
   };
 

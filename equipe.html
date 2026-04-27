@@ -803,15 +803,24 @@ async function salvar(){
   }
 
   /* ── VINCULAR LOGIN / ROLE ── */
-  const loginEmail    = (document.getElementById(CAMPO_LOGIN)?.value || "").trim();
+  const loginEmail      = (document.getElementById(CAMPO_LOGIN)?.value || "").trim();
   const cpfParaVincular = cpfAtual;
-  const cpfLimpoU     = (u && u.cpf   ? u.cpf   : "").replace(/[^0-9]/g,"");
-  const emailLimpoU   = (u && u.email ? u.email : "").toLowerCase();
-  const SUPER_CPFS    = ['42372412829','36589362823'];
-  const SUPER_EMAILS  = ['viniciusleitesouza_1998@hotmail.com'];
-  const isSuperAdmin  = SUPER_CPFS.includes(cpfLimpoU) || SUPER_EMAILS.includes(emailLimpoU);
-  const isAdminU      = u && u.role === "admin";
-  const novoRole      = isAdminU ? (document.getElementById("role_usuario")?.value || "operadora") : null;
+  const isAdminU        = u && u.role === "admin";
+
+  // Role manual definido pelo admin via campo "Perfil de Acesso"
+  const roleManual = isAdminU ? (document.getElementById("role_usuario")?.value || null) : null;
+
+  // Role automático baseado no cargo — sempre calculado, mas só aplica se nao houver override manual
+  const cargo = payload.cargo || "";
+  let roleAutomatico = null;
+  if(cargo === "Terapeuta Feminina" || cargo === "Terapeuta Masculino"){
+    roleAutomatico = "operadora";
+  } else if(cargo === "Recepcionista"){
+    roleAutomatico = "recepcionista";
+  }
+
+  // Role final: manual (admin sobrescreve) tem prioridade sobre automático
+  const novoRole = roleManual || roleAutomatico;
 
   // emailOriginalPerfil: email que veio do banco ao abrir edicao (nao digitado pelo usuario)
   const emailOriginalPerfil = window._emailOriginalPerfil || "";

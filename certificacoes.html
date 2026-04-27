@@ -225,11 +225,24 @@ async function carregarSelects(){
 }
 
 async function carregarLista(){
-  const {data} = await client
+  const u = window.usuarioLogado;
+  const isAdmin = u && u.role === "admin";
+
+  let q = client
     .from("terapeuta_certificacoes")
-    .select(`id, data_obtencao, arquivo_url, arquivo_nome, certificacoes(id,nome,icone), terapeutas(nome_profissional)`)
+    .select(`id, data_obtencao, arquivo_url, arquivo_nome, cpf_terapeuta, certificacoes(id,nome,icone), terapeutas(nome_profissional)`)
     .order("id");
+
+  // Operadora só vê as próprias certificações
+  if(!isAdmin && u && u.cpf) q = q.eq("cpf_terapeuta", u.cpf);
+
+  const {data} = await q;
   dados = data || [];
+
+  // Ocultar botão "Vincular" para operadora
+  const btnVincular = document.querySelector(".vincular-btn");
+  if(btnVincular) btnVincular.style.display = isAdmin ? "" : "none";
+
   render();
 }
 

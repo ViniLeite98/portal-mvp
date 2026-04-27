@@ -571,7 +571,9 @@ async function carregar(){
   let query = client.from("terapeutas")
     .select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro) query = query.eq("status", statusFiltro);
-  if(!isAdmin && u && u.cpf) query = query.eq("cpf", u.cpf);
+  // Operadora: so ve o proprio registro. Admin e recepcionista veem todos.
+  const soVeADela = u && u.role === "operadora" && u.cpf;
+  if(soVeADela) query = query.eq("cpf", u.cpf);
 
   const {data, error} = await query;
   if(error){ console.error(error); return; }
@@ -579,7 +581,8 @@ async function carregar(){
   const tbody = document.getElementById("lista");
   tbody.innerHTML = "";
   data.forEach(t => {
-    const acoes = isAdmin
+    const podeExcluir = u && (u.role === "admin" || u.role === "recepcionista");
+    const acoes = podeExcluir
       ? `<button onclick="editar('${t.cpf}')">Editar</button>
          <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`
       : `<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;

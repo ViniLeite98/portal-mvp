@@ -99,6 +99,26 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .span2{grid-column:span 2;}
 .span3{grid-column:span 3;}
 
+/* ── PROGRESSO CADASTRO ── */
+.progresso-wrap{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 28px 0;border-top:1px solid #f3f4f6;margin-top:12px;
+}
+.progresso-bar-bg{
+  flex:1;height:6px;background:#e5e7eb;border-radius:99px;overflow:hidden;
+}
+.progresso-bar{
+  height:100%;border-radius:99px;transition:width .4s ease,background .4s;
+  background:#ef4444;
+}
+.progresso-bar.medio{background:#f59e0b;}
+.progresso-bar.bom{background:#3b82f6;}
+.progresso-bar.completo{background:#22c55e;}
+.progresso-label{
+  font-size:12px;font-weight:700;min-width:36px;text-align:right;
+  color:#6b7280;
+}
+
 /* ── CPF EDIT AVISO ── */
 .cpf-aviso{
   font-size:11px;color:#d97706;margin-top:4px;
@@ -188,6 +208,14 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
   <div class="modal-header">
     <h2 id="modalTitulo">Novo Cadastro</h2>
     <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+  </div>
+
+  <div class="progresso-wrap">
+    <span style="font-size:11px;color:#9ca3af;font-weight:600;white-space:nowrap">Preenchimento</span>
+    <div class="progresso-bar-bg">
+      <div class="progresso-bar" id="progressoBar" style="width:0%"></div>
+    </div>
+    <span class="progresso-label" id="progressoLabel">0%</span>
   </div>
 
   <div class="modal-body">
@@ -452,6 +480,47 @@ function aplicarMascaras(){
 }
 
 /* ══════════════════════════════════════════
+   PROGRESSO DE PREENCHIMENTO
+══════════════════════════════════════════ */
+const camposProgresso = [
+  "nome_completo","nome_profissional","cpf","rg","nascimento","email","tipo_sanguineo",
+  "telefone","telefone_emergencia",
+  "cep","rua","numero","bairro","cidade","uf",
+  "pix_tipo","pix_chave",
+  "cargo","status","data_inicio","hora_entrada","hora_saida","tem_folga","dia_folga"
+];
+
+function calcularProgresso(){
+  const total = camposProgresso.length;
+  const preenchidos = camposProgresso.filter(c => {
+    const el = document.getElementById(c);
+    return el && el.value && el.value.trim() !== "";
+  }).length;
+  const pct = Math.round((preenchidos / total) * 100);
+
+  const bar = document.getElementById("progressoBar");
+  const label = document.getElementById("progressoLabel");
+  if(!bar || !label) return;
+
+  bar.style.width = pct + "%";
+  label.textContent = pct + "%";
+  label.style.color = pct === 100 ? "#22c55e" : pct >= 70 ? "#3b82f6" : pct >= 40 ? "#f59e0b" : "#ef4444";
+
+  bar.className = "progresso-bar";
+  if(pct === 100)     bar.classList.add("completo");
+  else if(pct >= 70)  bar.classList.add("bom");
+  else if(pct >= 40)  bar.classList.add("medio");
+}
+
+function ativarProgressoListeners(){
+  camposProgresso.forEach(c => {
+    const el = document.getElementById(c);
+    if(el) el.addEventListener("input", calcularProgresso);
+    if(el) el.addEventListener("change", calcularProgresso);
+  });
+}
+
+/* ══════════════════════════════════════════
    CONTROLE DE EDIÇÃO DO CPF
 ══════════════════════════════════════════ */
 
@@ -537,6 +606,7 @@ function setForm(data){
     const el = document.getElementById(id);
     if(el && el.value) el.dispatchEvent(new Event('input'));
   });
+  calcularProgresso();
 }
 
 /* ══════════════════════════════════════════
@@ -602,6 +672,7 @@ function resetModal(){
   document.getElementById("hora_entrada").value = "09:00";
   document.getElementById("hora_saida").value   = "18:00";
   mudarTab("pessoais", document.querySelector(".side-btn"));
+  calcularProgresso();
 }
 
 function abrirNovo(){
@@ -951,6 +1022,7 @@ function aoMudarStatus(select){
 ══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
   aplicarMascaras();
+  ativarProgressoListeners();
   document.getElementById("filtroStatus").addEventListener("change", carregar);
   carregar();
 });

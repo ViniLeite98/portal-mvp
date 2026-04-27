@@ -45,8 +45,8 @@ button:hover{opacity:.9;}
 
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
 .badge-pendente{background:#fef3c7;color:#d97706;}
-.badge-aprovado{background:#dcfce7;color:#16a34a;}
-.badge-reprovado{background:#fee2e2;color:#dc2626;}
+.badge-acordado{background:#dcfce7;color:#16a34a;}
+.badge-nao-acordado{background:#fee2e2;color:#dc2626;}
 
 .arquivo-link{font-size:12px;color:#2563eb;text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px;}
 .arquivo-link:hover{text-decoration:underline;}
@@ -124,16 +124,10 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
     <select id="filtroStatus">
       <option value="">Todos os status</option>
       <option value="Pendente">Pendente</option>
-      <option value="Aprovado">Aprovado</option>
-      <option value="Reprovado">Reprovado</option>
+      <option value="Acordado">Acordado</option>
+      <option value="Não Acordado">Não Acordado</option>
     </select>
-    <select id="filtroTipo">
-      <option value="">Todos os tipos</option>
-      <option>Falta</option>
-      <option>Férias</option>
-      <option>Atestado</option>
-      <option>Viagem</option>
-    </select>
+    <select id="filtroTipo"><option value="">Todos os tipos</option></select>
   </div>
   <!-- Botão nasce oculto, aparece após auth confirmar o role -->
   <button id="btnNovaSol" class="btn-novo" onclick="abrirNovo()"><i class="fa fa-plus"></i> Nova Solicitação</button>
@@ -146,7 +140,7 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
       <th>Tipo</th>
       <th>Período</th>
       <th>Status</th>
-      <th>Aprovado / Rejeitado por</th>
+      <th>Acordado / Rejeitado por</th>
       <th>Atestado</th>
       <th>Ações</th>
     </tr>
@@ -194,20 +188,15 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 
       <div class="field">
         <label>Tipo *</label>
-        <select id="tipo">
-          <option>Falta</option>
-          <option>Férias</option>
-          <option>Atestado</option>
-          <option>Viagem</option>
-        </select>
+        <select id="tipo"></select>
       </div>
 
       <div class="field">
         <label>Status</label>
-        <select id="status" onchange="toggleAprovadoPor()">
+        <select id="status" onchange="toggleAcordadoPor()">
           <option value="Pendente">Pendente</option>
-          <option value="Aprovado">Aprovado</option>
-          <option value="Reprovado">Reprovado</option>
+          <option value="Acordado">Acordado</option>
+          <option value="Não Acordado">Não Acordado</option>
         </select>
       </div>
 
@@ -245,7 +234,7 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
     </div>
   </div>
   <div class="modal-footer" style="flex-wrap:wrap;gap:10px;">
-    <div style="flex:1;min-width:180px;" id="wrapAprovadoPor">
+    <div style="flex:1;min-width:180px;" id="wrapAcordadoPor">
       <input id="aprovado_por" placeholder="Seu nome (quem aprova/reprova)"
         style="width:100%;font-size:12px;padding:7px 10px">
     </div>
@@ -262,10 +251,10 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <script src="assets/js/auth.js"></script>
 
 <script>
-function toggleAprovadoPor(){
+function toggleAcordadoPor(){
   const status = document.getElementById("status").value;
-  const wrap   = document.getElementById("wrapAprovadoPor");
-  if(wrap) wrap.style.display = (status === "Aprovado" || status === "Reprovado") ? "block" : "none";
+  const wrap   = document.getElementById("wrapAcordadoPor");
+  if(wrap) wrap.style.display = (status === "Acordado" || status === "Não Acordado") ? "block" : "none";
 }
 
 /* helpers de role */
@@ -310,6 +299,25 @@ async function carregarTerapeutas(){
   (data||[]).forEach(t => {
     sel.innerHTML += `<option value="${t.cpf}">${t.nome_profissional}</option>`;
   });
+
+  // Carregar tipos de solicitacao dos parametros
+  const {data: params} = await client
+    .from("parametros")
+    .select("valor")
+    .eq("tipo", "tipos_solicitacao")
+    .eq("ativo", true)
+    .order("valor");
+
+  const tipos = (params||[]).map(p => p.valor);
+  // fallback se nao houver parametros cadastrados
+  const listaTipos = tipos.length ? tipos : ["Falta","Férias","Atestado","Viagem"];
+
+  const selTipo = document.getElementById("tipo");
+  selTipo.innerHTML = listaTipos.map(t => `<option value="${t}">${t}</option>`).join("");
+
+  const selFiltro = document.getElementById("filtroTipo");
+  selFiltro.innerHTML = `<option value="">Todos os tipos</option>` +
+    listaTipos.map(t => `<option value="${t}">${t}</option>`).join("");
 }
 
 /* ── CARREGAR LISTA ── */
@@ -361,11 +369,11 @@ function render(){
 
   lista.forEach(s => {
     const nome = mapaTerapeutas[s.terapeuta_cpf] || s.terapeuta_cpf;
-    const badgeClass = s.status === "Aprovado"  ? "badge-aprovado"
-                     : s.status === "Reprovado" ? "badge-reprovado"
+    const badgeClass = s.status === "Acordado"  ? "badge-acordado"
+                     : s.status === "Não Acordado" ? "badge-nao-acordado"
                      : "badge-pendente";
-    const iconeStatus = s.status === "Aprovado"  ? "fa-check"
-                      : s.status === "Reprovado" ? "fa-times"
+    const iconeStatus = s.status === "Acordado"  ? "fa-check"
+                      : s.status === "Não Acordado" ? "fa-times"
                       : "fa-clock";
 
     const arquivoCol = s.arquivo_url
@@ -375,10 +383,10 @@ function render(){
       : `<span style="color:#d1d5db;font-size:12px">—</span>`;
 
     // Botões de ação: editar para todos; aprovar/reprovar/excluir só para admin e recepcionista
-    const btnAprovar  = (podeGerenciar && s.status !== "Aprovado")
-      ? `<button class="btn-aprovar"  onclick="abrirConfirmar('${s.id}','Aprovado')"><i class="fa fa-check"></i></button>` : "";
-    const btnReprovar = (podeGerenciar && s.status !== "Reprovado")
-      ? `<button class="btn-reprovar" onclick="abrirConfirmar('${s.id}','Reprovado')"><i class="fa fa-times"></i></button>` : "";
+    const btnAprovar  = (podeGerenciar && s.status !== "Acordado")
+      ? `<button class="btn-aprovar"  onclick="abrirConfirmar('${s.id}','Acordado')"><i class="fa fa-check"></i></button>` : "";
+    const btnReprovar = (podeGerenciar && s.status !== "Não Acordado")
+      ? `<button class="btn-reprovar" onclick="abrirConfirmar('${s.id}','Não Acordado')"><i class="fa fa-times"></i></button>` : "";
     const btnExcluir  = podeGerenciar
       ? `<button class="btn-excluir" onclick="excluir('${s.id}','${(s.arquivo_url||"").replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>` : "";
 
@@ -413,7 +421,7 @@ function resetModal(){
   arquivoAtualUrl  = null;
   arquivoAtualNome = null;
   document.getElementById("arquivoAtual").style.display    = "none";
-  document.getElementById("wrapAprovadoPor").style.display = "none";
+  document.getElementById("wrapAcordadoPor").style.display = "none";
 }
 
 window.abrirNovo = function(){
@@ -496,11 +504,11 @@ window.salvar = async function(){
   if(!dataInicio || !dataFim){ alert("Preencha as datas."); return; }
   if(dataFim < dataInicio){ alert("Data fim não pode ser menor que data início."); return; }
 
-  if(status === "Aprovado"){
+  if(status === "Acordado"){
     const {data: todasAprovadas} = await client
       .from("solicitacoes")
       .select("terapeuta_cpf, data_inicio, data_fim")
-      .eq("status", "Aprovado")
+      .eq("status", "Acordado")
       .neq("terapeuta_cpf", terapeuta);
 
     const {data: todosTerapeutas} = await client
@@ -542,7 +550,7 @@ window.salvar = async function(){
     .from("solicitacoes")
     .select("id, tipo, data_inicio, data_fim, status")
     .eq("terapeuta_cpf", terapeuta)
-    .neq("status", "Reprovado")
+    .neq("status", "Não Acordado")
     .lte("data_inicio", dataFim)
     .gte("data_fim", dataInicio);
   if(idEdicao) query = query.neq("id", idEdicao);
@@ -612,9 +620,9 @@ window.abrirConfirmar = function(id, novoStatus){
   const nome = s ? (mapaTerapeutas[s.terapeuta_cpf] || s.terapeuta_cpf) : "";
   const de   = s ? fmtData(s.data_inicio) : "";
   const ate  = s ? fmtData(s.data_fim)    : "";
-  const cor   = novoStatus === "Aprovado" ? "#16a34a" : "#dc2626";
-  const icone = novoStatus === "Aprovado" ? "fa-check-circle" : "fa-times-circle";
-  const acao  = novoStatus === "Aprovado" ? "Aprovar" : "Reprovar";
+  const cor   = novoStatus === "Acordado" ? "#16a34a" : "#dc2626";
+  const icone = novoStatus === "Acordado" ? "fa-check-circle" : "fa-times-circle";
+  const acao  = novoStatus === "Acordado" ? "Aprovar" : "Reprovar";
   document.getElementById("confirmarTitulo").innerHTML = `<i class="fa ${icone}" style="color:${cor}"></i> ${acao} Solicitação`;
   document.getElementById("confirmarInfo").innerHTML = `
     <strong>${nome}</strong><br>

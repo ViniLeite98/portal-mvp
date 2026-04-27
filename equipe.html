@@ -169,7 +169,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
       <option value="Inativo">Inativo</option>
     </select>
   </div>
-  <button onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Cadastro</button>
+  <button id="btnNovoCadastro" onclick="abrirNovo()" style="display:none"><i class="fa fa-plus"></i> Novo Cadastro</button>
 </div>
 
 <table>
@@ -561,6 +561,11 @@ async function carregar(){
   }
   const u = window.usuarioLogado;
   const isAdmin = u && u.role === "admin";
+  const podeNovo = u && (u.role === "admin" || u.role === "recepcionista");
+
+  // Mostrar/esconder botao Novo Cadastro apos saber o role
+  const btnNovo = document.getElementById("btnNovoCadastro");
+  if(btnNovo) btnNovo.style.display = podeNovo ? "" : "none";
   const statusFiltro = document.getElementById("filtroStatus").value;
 
   let query = client.from("terapeutas")
@@ -587,13 +592,6 @@ async function carregar(){
       <td>${acoes}</td>
     </tr>`;
   });
-
-  // Botao Novo Cadastro so para admin e recepcionista
-  const btnNovo = document.querySelector("button[onclick='abrirNovo()']");
-  if(btnNovo){
-    const podeNovo = u && (u.role === "admin" || u.role === "recepcionista");
-    btnNovo.style.display = podeNovo ? "" : "none";
-  }
 
   filtrarTabela();
 }

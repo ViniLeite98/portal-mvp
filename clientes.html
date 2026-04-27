@@ -178,8 +178,6 @@ tr:hover .acoes{opacity:1;}
     </div>
     <select id="filtroVisita">
       <option value="">Todos</option>
-      <option value="com">Com atendimentos</option>
-      <option value="sem">Sem atendimentos</option>
       <option value="sumidos">Sumidos +60 dias</option>
     </select>
     <select id="filtroOrdem">
@@ -373,8 +371,6 @@ async function carregarPagina(){
 
   // Filtros no banco
   if(busca)             q = q.or(`nome.ilike.%${busca}%,telefone_1.ilike.%${busca}%,email.ilike.%${busca}%`);
-  if(filtro==="com")    q = q.gt("total_atendimentos",0);
-  if(filtro==="sem")    q = q.eq("total_atendimentos",0);
   if(filtro==="sumidos") q = q
     .not("ultimo_atendimento","is",null)
     .lt("ultimo_atendimento", new Date(Date.now()-60*86400000).toISOString().split("T")[0]);
@@ -505,7 +501,7 @@ async function abrirDetalhe(id, tabInicial="perfil"){
     {k:"Nascimento",  v:fmtD(c.dt_nasc)},
     {k:"Tel. 2",      v:fmtTel(c.telefone_2)||"—"},
     {k:"Última visita",v:fmtD(c.ultimo_atendimento)},
-    {k:"ID",          v:`<span style="font-size:11px;color:#9ca3af">${c.id.slice(0,8)}...</span>`},
+    {k:"ID",          v:`<span style="font-size:11px;color:#9ca3af">#${c.id}</span>`},
   ].map(i=>`<div class="info-item"><div class="key">${i.k}</div><div class="val">${i.v}</div></div>`).join("");
 
   // Form editar
@@ -534,10 +530,13 @@ async function carregarHistorico(clienteId){
 
   const {data} = await client
     .from("atendimentos")
-    .select("data,hora_inicio,status,valor_final,servicos(grupo,subgrupo)")
+    .select(`data, hora_inicio, status, valor_final,
+      servicos(grupo, subgrupo),
+      ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),
+      ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional)`)
     .eq("cliente_id", clienteId)
     .order("data",{ascending:false})
-    .limit(20);
+    .limit(30);
 
   if(!data||!data.length){
     el.innerHTML=`<div style="text-align:center;color:#9ca3af;padding:20px">Nenhum atendimento registrado.</div>`;
@@ -546,11 +545,13 @@ async function carregarHistorico(clienteId){
 
   el.innerHTML = data.map(a=>{
     const serv = a.servicos ? [a.servicos.grupo,a.servicos.subgrupo].filter(Boolean).join(" ") : "—";
-    const statusCor = a.status==="Confirmado"?"#16a34a":a.status==="Cancelado"?"#dc2626":"#d97706";
+    const terapeutas = [a.ter1?.nome_profissional, a.ter2?.nome_profissional].filter(Boolean).join(" + ") || "—";
+    const statusCor  = a.status==="Confirmado"?"#16a34a":a.status==="Cancelado"?"#dc2626":"#d97706";
     return `<div class="atend-item">
-      <div>
+      <div style="flex:1">
         <div class="serv">${serv}</div>
-        <div class="data">${fmtD(a.data)} · ${(a.hora_inicio||"").slice(0,5)} · <span style="color:${statusCor};font-weight:700">${a.status}</span></div>
+        <div class="data">${fmtD(a.data)} · ${(a.hora_inicio||"").slice(0,5)}</div>
+        <div class="data" style="margin-top:2px"><i class="fa fa-user" style="font-size:10px"></i> ${terapeutas} · <span style="color:${statusCor};font-weight:700">${a.status}</span></div>
       </div>
       <div class="val">${a.valor_final ? fmtM(a.valor_final) : "—"}</div>
     </div>`;

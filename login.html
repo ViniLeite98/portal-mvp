@@ -350,8 +350,12 @@ body{
     <!-- CADASTRAR -->
     <div id="fCad" style="display:none">
       <div class="field">
-        <label>Nome</label>
+        <label>Nome Completo</label>
         <input type="text" id="cNome" placeholder="Seu nome completo">
+      </div>
+      <div class="field">
+        <label>CPF</label>
+        <input type="text" id="cCpf" placeholder="000.000.000-00" maxlength="14">
       </div>
       <div class="field">
         <label>Email</label>
@@ -466,35 +470,79 @@ function entrar() {
   });
 }
 
-function cad() {
+function fmtCPF(v) {
+  v = v.replace(/\D/g,'').substring(0,11);
+  if(v.length <= 3) return v;
+  if(v.length <= 6) return v.slice(0,3)+'.'+v.slice(3);
+  if(v.length <= 9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
+  return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  var cpfEl = document.getElementById("cCpf");
+  if(cpfEl) cpfEl.addEventListener("input", function() {
+    this.value = fmtCPF(this.value);
+  });
+});
+
+async function cad() {
   var nome   = document.getElementById("cNome").value.trim();
+  var cpf    = document.getElementById("cCpf").value.trim();
   var email  = document.getElementById("cEmail").value.trim();
   var senha  = document.getElementById("cSenha").value;
   var senha2 = document.getElementById("cSenha2").value;
-  if (!nome)           { showMsg("Informe seu nome.", "e"); return; }
-  if (!email)          { showMsg("Informe seu email.", "e"); return; }
-  if (senha.length < 6){ showMsg("Senha: mínimo 6 caracteres.", "e"); return; }
-  if (senha !== senha2){ showMsg("As senhas não coincidem.", "e"); return; }
+
+  if (!nome)            { showMsg("Informe seu nome completo.", "e"); return; }
+  if (!cpf || cpf.replace(/\D/g,'').length !== 11) { showMsg("Informe um CPF válido.", "e"); return; }
+  if (!email)           { showMsg("Informe seu email.", "e"); return; }
+  if (senha.length < 6) { showMsg("Senha: mínimo 6 caracteres.", "e"); return; }
+  if (senha !== senha2) { showMsg("As senhas não coincidem.", "e"); return; }
+
+  var cpfLimpo = cpf.replace(/\D/g,'');
 
   btn("bCad", true, "Criar Conta");
   document.getElementById("msg").className = "msg";
 
-  client.auth.signUp({ email: email, password: senha, options: { data: { nome: nome } } }).then(function(res) {
-    if (res.error) {
-      showMsg(traduzir(res.error.message), "e");
-      btn("bCad", false, "Criar Conta");
-      return;
-    }
-    if (res.data && res.data.user) {
-      client.from("perfis").upsert({ id: res.data.user.id, email: email, nome: nome, role: "operadora" });
-    }
-    if (res.data && res.data.session) {
-      irPara("operadora");
-    } else {
-      showMsg("Conta criada! Verifique seu email para confirmar.", "s");
-      btn("bCad", false, "Criar Conta");
-    }
-  });
+  // Verificar se CPF já existe em terapeutas
+  var {data: cpfExiste} = await client.from("terapeutas").select("cpf").eq("cpf", cpfLimpo).limit(1);
+  if(cpfExiste && cpfExiste.length > 0) {
+    showMsg("CPF já cadastrado. Entre em contato com o administrador.", "e");
+    btn("bCad", false, "Criar Conta");
+    return;
+  }
+
+  var res = await client.auth.signUp({ email: email, password: senha, options: { data: { nome: nome } } });
+
+  if (res.error) {
+    showMsg(traduzir(res.error.message), "e");
+    btn("bCad", false, "Criar Conta");
+    return;
+  }
+
+  if (res.data && res.data.user) {
+    var userId = res.data.user.id;
+
+    // Criar perfil
+    await client.from("perfis").upsert({
+      id: userId, email: email, nome: nome, role: "operadora", cpf_terapeuta: cpfLimpo
+    });
+
+    // Criar pré-cadastro em terapeutas
+    await client.from("terapeutas").upsert({
+      cpf: cpfLimpo,
+      nome_completo: nome,
+      nome_profissional: nome.split(" ")[0],
+      email: email,
+      status: "Ativo"
+    }, { onConflict: "cpf" });
+  }
+
+  if (res.data && res.data.session) {
+    irPara("operadora");
+  } else {
+    showMsg("Conta criada! Verifique seu email para confirmar.", "s");
+    btn("bCad", false, "Criar Conta");
+  }
 }
 
 function toggleSenha(inputId, eyeId) {

@@ -405,20 +405,22 @@ function render(){
 
 /* ── MODAL ── */
 function resetModal(){
-  document.getElementById("terapeuta").value    = "";
-  document.getElementById("terapeuta").disabled = false;
-  document.getElementById("tipo").value         = "Falta";
-  document.getElementById("status").value       = "Pendente";
-  document.getElementById("status").disabled    = false;
-  document.getElementById("data_inicio").value  = "";
-  document.getElementById("data_fim").value     = "";
-  document.getElementById("justificativa").value= "";
-  document.getElementById("aprovado_por").value = "";
-  document.getElementById("arquivo").value      = "";
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+  const setDisplay = (id, val) => { const el = document.getElementById(id); if(el) el.style.display = val; };
+  const setDisabled = (id, val) => { const el = document.getElementById(id); if(el) el.disabled = val; };
+
+  set("terapeuta", "");           setDisabled("terapeuta", false);
+  const tipoEl = document.getElementById("tipo");
+  if(tipoEl) tipoEl.value = tipoEl.options[0]?.value || "";
+  set("status", "Pendente");      setDisabled("status", false);
+  set("data_inicio", "");
+  set("data_fim", "");
+  set("justificativa", "");
+  const arqEl = document.getElementById("arquivo");
+  if(arqEl) { try { arqEl.value = ""; } catch(e) {} }
   arquivoAtualUrl  = null;
   arquivoAtualNome = null;
-  document.getElementById("arquivoAtual").style.display    = "none";
-  document.getElementById("wrapAcordadoPor").style.display = "none";
+  setDisplay("arquivoAtual", "none");
 }
 
 window.abrirNovo = function(){

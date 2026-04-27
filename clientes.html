@@ -127,6 +127,11 @@ tr:hover .acoes{opacity:1;}
 .tab-panel.active{display:block;}
 
 .loading-row td{text-align:center;padding:40px;color:#9ca3af;}
+.paginacao{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-top:1px solid #f3f4f6;background:#f9fafb;font-size:13px;color:#6b7280;}
+.paginacao-btns{display:flex;gap:6px;}
+.paginacao-btns button{padding:6px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#374151;}
+.paginacao-btns button:hover{background:#f3f4f6;}
+.paginacao-btns button:disabled{opacity:.4;cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -204,6 +209,13 @@ tr:hover .acoes{opacity:1;}
         <tr class="loading-row"><td colspan="7"><i class="fa fa-spinner fa-spin"></i> Carregando...</td></tr>
       </tbody>
     </table>
+    <div class="paginacao" id="paginacao" style="display:none">
+      <span id="paginacaoInfo"></span>
+      <div class="paginacao-btns">
+        <button id="btnAnterior" onclick="mudarPagina(-1)"><i class="fa fa-chevron-left"></i> Anterior</button>
+        <button id="btnProxima"  onclick="mudarPagina(1)">Próxima <i class="fa fa-chevron-right"></i></button>
+      </div>
+    </div>
   </div>
 
 </main>
@@ -280,6 +292,9 @@ tr:hover .acoes{opacity:1;}
 <script>
 let dados = [];
 let clienteAtual = null;
+let paginaAtual = 0;
+const POR_PAGINA = 10;
+let totalFiltrado = 0;
 const fmtM = v => v != null ? `R$\u00a0${Number(v).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0})}` : "—";
 const fmtD = v => v ? new Date(v+"T00:00:00").toLocaleDateString("pt-BR") : "—";
 const fmtTel = v => {
@@ -308,55 +323,100 @@ async function carregar(){
   const btnNovo = document.getElementById("btnNovo");
   if(btnNovo) btnNovo.style.display = isAdmin ? "" : "none";
 
-  const {data, error} = await client
+  // Buscar count total real (ignora limite de 1000)
+  const {count: totalCount} = await client
     .from("clientes")
-    .select("id,nome,telefone_1,telefone_2,email,dt_nasc,total_atendimentos,valor_total,ultimo_atendimento")
-    .order("nome");
+    .select("*", {count:"exact", head:true});
 
-  if(error){ console.error(error); return; }
-  dados = data || [];
+  const {count: ativosCount} = await client
+    .from("clientes")
+    .select("*", {count:"exact", head:true})
+    .gt("total_atendimentos", 0);
 
-  // Stats
-  const comAtend  = dados.filter(c => c.total_atendimentos > 0);
-  const sumidos   = dados.filter(c => { const d = diasAtras(c.ultimo_atendimento); return d !== null && d > 60; });
-  const ticketMed = comAtend.length
-    ? comAtend.reduce((a,c)=>a+(c.valor_total||0),0) / comAtend.reduce((a,c)=>a+(c.total_atendimentos||0),0)
+  const {count: sumidosCount} = await client
+    .from("clientes")
+    .select("*", {count:"exact", head:true})
+    .not("ultimo_atendimento","is",null)
+    .lt("ultimo_atendimento", new Date(Date.now()-60*86400000).toISOString().split("T")[0]);
+
+  // Buscar ticket medio via agregacao
+  const {data: ticketData} = await client
+    .from("clientes")
+    .select("valor_total,total_atendimentos")
+    .gt("total_atendimentos", 0)
+    .limit(5000);
+  const ticketMed = ticketData?.length
+    ? ticketData.reduce((a,c)=>a+(c.valor_total||0),0) / ticketData.reduce((a,c)=>a+(c.total_atendimentos||0),0)
     : 0;
 
-  document.getElementById("statTotal").textContent    = dados.length;
-  document.getElementById("statAtivos").textContent   = comAtend.length;
-  document.getElementById("statTicket").textContent   = fmtM(ticketMed);
-  document.getElementById("statSemVisita").textContent= sumidos.length;
+  document.getElementById("statTotal").textContent     = totalCount ?? "—";
+  document.getElementById("statAtivos").textContent    = ativosCount ?? "—";
+  document.getElementById("statTicket").textContent    = fmtM(ticketMed);
+  document.getElementById("statSemVisita").textContent = sumidosCount ?? "—";
 
+  // Carregar apenas primeira pagina
+  paginaAtual = 0;
+  await carregarPagina();
+}
+
+/* ── CARREGAR PAGINA DO SUPABASE ── */
+async function carregarPagina(){
+  const busca  = (document.getElementById("busca").value||"").toLowerCase();
+  const filtro = document.getElementById("filtroVisita").value;
+  const ordem  = document.getElementById("filtroOrdem").value;
+
+  const inicio = paginaAtual * POR_PAGINA;
+  const fim    = inicio + POR_PAGINA - 1;
+
+  let q = client.from("clientes")
+    .select("id,nome,telefone_1,telefone_2,email,dt_nasc,total_atendimentos,valor_total,ultimo_atendimento", {count:"exact"});
+
+  // Filtros no banco
+  if(busca)             q = q.or(`nome.ilike.%${busca}%,telefone_1.ilike.%${busca}%,email.ilike.%${busca}%`);
+  if(filtro==="com")    q = q.gt("total_atendimentos",0);
+  if(filtro==="sem")    q = q.eq("total_atendimentos",0);
+  if(filtro==="sumidos") q = q
+    .not("ultimo_atendimento","is",null)
+    .lt("ultimo_atendimento", new Date(Date.now()-60*86400000).toISOString().split("T")[0]);
+
+  // Ordenacao
+  if(ordem==="visitas") q = q.order("total_atendimentos",{ascending:false});
+  else if(ordem==="valor")   q = q.order("valor_total",{ascending:false});
+  else if(ordem==="recente") q = q.order("ultimo_atendimento",{ascending:false,nullsFirst:false});
+  else                       q = q.order("nome");
+
+  q = q.range(inicio, fim);
+
+  const {data, count, error} = await q;
+  if(error){ console.error(error); return; }
+
+  dados = data || [];
+  totalFiltrado = count || 0;
   render();
 }
 
 /* ── RENDER ── */
 function render(){
-  const busca  = (document.getElementById("busca").value||"").toLowerCase();
-  const filtro = document.getElementById("filtroVisita").value;
-  const ordem  = document.getElementById("filtroOrdem").value;
-
-  let lista = dados.filter(c => {
-    const txt = `${c.nome||""} ${c.telefone_1||""} ${c.email||""}`.toLowerCase();
-    if(!txt.includes(busca)) return false;
-    if(filtro==="com"    && !(c.total_atendimentos>0)) return false;
-    if(filtro==="sem"    &&  (c.total_atendimentos>0)) return false;
-    if(filtro==="sumidos"){ const d=diasAtras(c.ultimo_atendimento); if(!d||d<=60) return false; }
-    return true;
-  });
-
-  lista.sort((a,b)=>{
-    if(ordem==="visitas") return (b.total_atendimentos||0)-(a.total_atendimentos||0);
-    if(ordem==="valor")   return (b.valor_total||0)-(a.valor_total||0);
-    if(ordem==="recente") return (b.ultimo_atendimento||"").localeCompare(a.ultimo_atendimento||"");
-    return (a.nome||"").localeCompare(b.nome||"");
-  });
+  const lista = dados;
 
   const tbody = document.getElementById("lista");
   if(!lista.length){
     tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><i class="fa fa-users"></i>Nenhum cliente encontrado</div></td></tr>`;
     return;
+  }
+
+  // Paginacao
+  const paginacaoEl = document.getElementById("paginacao");
+  const totalPags = Math.ceil(totalFiltrado / POR_PAGINA);
+  if(totalFiltrado > POR_PAGINA){
+    paginacaoEl.style.display = "flex";
+    const inicio = paginaAtual * POR_PAGINA + 1;
+    const fim    = Math.min((paginaAtual+1)*POR_PAGINA, totalFiltrado);
+    document.getElementById("paginacaoInfo").textContent = `Exibindo ${inicio}–${fim} de ${totalFiltrado} clientes`;
+    document.getElementById("btnAnterior").disabled = paginaAtual === 0;
+    document.getElementById("btnProxima").disabled  = paginaAtual >= totalPags-1;
+  } else {
+    paginacaoEl.style.display = "none";
   }
 
   const hoje = new Date().toISOString().split("T")[0];
@@ -571,10 +631,17 @@ async function excluirCliente(){
 }
 
 /* ── INIT ── */
+function mudarPagina(delta){
+  paginaAtual += delta;
+  carregarPagina();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
 document.addEventListener("DOMContentLoaded",()=>{
-  document.getElementById("busca").addEventListener("input", render);
-  document.getElementById("filtroVisita").addEventListener("change", render);
-  document.getElementById("filtroOrdem").addEventListener("change", render);
+  const resetPagina = () => { paginaAtual = 0; carregarPagina(); };
+  document.getElementById("busca").addEventListener("input", resetPagina);
+  document.getElementById("filtroVisita").addEventListener("change", resetPagina);
+  document.getElementById("filtroOrdem").addEventListener("change", resetPagina);
   document.getElementById("modal").addEventListener("click", e=>{ if(e.target===document.getElementById("modal")) fecharModal(); });
   carregar();
 });

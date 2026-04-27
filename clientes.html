@@ -102,12 +102,6 @@ tr:hover .acoes{opacity:1;}
 .stat-box.green{background:#f0fdf4;color:#16a34a;}
 .stat-box.purple{background:#f5f3ff;color:#7c3aed;}
 
-/* Atendimentos recentes */
-.atend-list{display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto;}
-.atend-item{display:flex;align-items:center;justify-content:space-between;background:#f9fafb;border-radius:10px;padding:10px 14px;}
-.atend-item .data{font-size:12px;color:#6b7280;}
-.atend-item .serv{font-size:13px;font-weight:600;color:#111827;}
-.atend-item .val{font-size:12px;font-weight:700;color:#16a34a;}
 
 /* Modal form */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -230,7 +224,6 @@ tr:hover .acoes{opacity:1;}
   <!-- Tabs -->
   <div class="modal-tabs">
     <div class="modal-tab active" onclick="mudarTab('perfil',this)">Perfil</div>
-    <div class="modal-tab" onclick="mudarTab('historico',this)">Histórico</div>
     <div class="modal-tab" onclick="mudarTab('editar',this)">Editar</div>
   </div>
 
@@ -252,14 +245,6 @@ tr:hover .acoes{opacity:1;}
     </div>
     <p class="section-title"><i class="fa fa-id-card"></i> Dados de Contato</p>
     <div class="info-grid" id="detInfo"></div>
-  </div>
-
-  <!-- Tab Histórico -->
-  <div class="tab-panel" id="tab-historico">
-    <p class="section-title"><i class="fa fa-calendar-check"></i> Atendimentos Recentes</p>
-    <div class="atend-list" id="detAtendimentos">
-      <div style="text-align:center;color:#9ca3af;padding:20px">Carregando...</div>
-    </div>
   </div>
 
   <!-- Tab Editar -->
@@ -449,7 +434,6 @@ function mudarTab(tab, btn){
   btn.classList.add("active");
   document.getElementById("tab-"+tab).classList.add("active");
 
-  if(tab==="historico" && clienteAtual) carregarHistorico(clienteAtual.id);
 }
 
 async function abrirDetalhe(id, tabInicial="perfil"){
@@ -508,29 +492,10 @@ async function abrirDetalhe(id, tabInicial="perfil"){
   document.querySelectorAll(".tab-panel").forEach(t=>t.classList.remove("active"));
   document.getElementById("tab-"+tabInicial).classList.add("active");
 
-  if(tabInicial==="historico") carregarHistorico(c.id);
 
   document.getElementById("modal").classList.add("open");
 }
 
-async function carregarHistorico(clienteId){
-  const el = document.getElementById("detAtendimentos");
-  el.innerHTML = `<div style="text-align:center;color:#9ca3af;padding:20px"><i class="fa fa-spinner fa-spin"></i> Carregando...</div>`;
-
-  const {data} = await client
-    .from("atendimentos")
-    .select(`data, hora_inicio, status, valor_final,
-      servicos(grupo, subgrupo),
-      ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),
-      ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional)`)
-    .eq("cliente_id", clienteId)
-    .order("data",{ascending:false})
-    .limit(30);
-
-  if(!data||!data.length){
-    el.innerHTML=`<div style="text-align:center;color:#9ca3af;padding:20px">Nenhum atendimento registrado.</div>`;
-    return;
-  }
 
   el.innerHTML = data.map(a=>{
     const serv = a.servicos ? [a.servicos.grupo,a.servicos.subgrupo].filter(Boolean).join(" ") : "—";
@@ -564,7 +529,6 @@ function abrirNovo(){
   document.getElementById("detValor").textContent="—";
   document.getElementById("detTicket").textContent="—";
   document.getElementById("detInfo").innerHTML="";
-  document.getElementById("detAtendimentos").innerHTML="";
   ["eNome","eTel","eEmail","eNasc","eTel2"].forEach(id=>document.getElementById(id).value="");
 
   // Ir direto para aba editar

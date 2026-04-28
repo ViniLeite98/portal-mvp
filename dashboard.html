@@ -591,7 +591,7 @@ function filtrarPor(tipo, valor, trEl){
     if(tipo==="prof") return r.profissional===valor;
     if(tipo==="serv") return r.servico===valor;
     if(tipo==="cli")  return r.cliente===valor;
-    if(tipo==="tel4") return (r.cliente||"").replace(/\D/g,"").slice(-4)===valor;
+    if(tipo==="tel4") return (r.cliente||"").replace(/\D/g,"").slice(-6)===valor;
     if(tipo==="hora") return r.hora_inicio && parseInt(r.hora_inicio.split(":")[0])===parseInt(valor);
     return true;
   });
@@ -771,8 +771,9 @@ function renderTopClientes(rows){
     // Usar dados da tabela clientes (nomes limpos)
     const lista = _clientesCadastrados.slice(0, 30);
     tbody.innerHTML = lista.map(c=>{
-      const tel4 = (c.telefone_1||"").replace(/\D/g,"").slice(-4);
-      const nomeExib = tel4 ? `${c.nome} ${tel4}` : c.nome;
+      const tel4 = (c.telefone_1||"").replace(/\D/g,"").slice(-6);
+      const tel4display = (c.telefone_1||"").replace(/\D/g,"").slice(-4);
+      const nomeExib = tel4 ? `${c.nome} ${tel4display}` : c.nome;
       const isSel = selecao.tipo==="cli" && selecao.valor===c.nome;
       return `<tr class="clicavel${isSel?" selecionado":""}" onclick="filtrarPor('cli','${c.nome.replace(/'/g,"\'")}',this)"><td>${nomeExib}</td><td class="num">${fmtN(c.total_atendimentos||0)}</td><td class="num">${fmtN((c.total_atendimentos||1)-1)}</td><td class="num">${fmtM(c.valor_total||0)}</td><td class="num">—</td><td class="num">${fmtM(c.total_atendimentos?(c.valor_total||0)/c.total_atendimentos:0)}</td><td class="num">—</td></tr>`;
     }).join("") +

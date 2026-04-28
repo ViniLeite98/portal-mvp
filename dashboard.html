@@ -234,6 +234,17 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
           </table>
         </div>
       </div>
+      <!-- Grafico Cliente -->
+      <div class="card col-3" id="cardCliente" style="display:none">
+        <div class="card-header">
+          <h3><i class="fa fa-user"></i> Cliente: <span id="cliNomeLabel">—</span></h3>
+          <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:6px;padding:3px">
+            <button id="toggleCliAtend" onclick="setModoCliente('atend')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:#1f2937;color:#fff;border:none;cursor:pointer">Atend.</button>
+            <button id="toggleCliRec"   onclick="setModoCliente('receita')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:none;color:#6b7280;border:none;cursor:pointer">Receita</button>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chartCliente" height="180"></canvas></div>
+      </div>
     </div>
     <div class="row">
       <div class="card">
@@ -557,11 +568,24 @@ function filtrarPor(tipo, valor, trEl){
   if(selecao.tipo===tipo && selecao.valor===valor){ limparSelecao(); return; }
   selecao = {tipo, valor};
   document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
-  if(trEl) trEl.classList.add("selecionado");
+  document.querySelectorAll(".hora-bar-bg").forEach(r=>r.parentElement.style.opacity="0.4");
+  if(trEl){
+    trEl.classList.add("selecionado");
+    // se for hora, destacar a barra
+    if(tipo==="hora"){
+      document.querySelectorAll(".hora-bar-bg").forEach(r=>r.parentElement.style.opacity="0.4");
+      const horaEl = document.getElementById("hora-row-"+valor);
+      if(horaEl) horaEl.style.opacity="1";
+    } else {
+      document.querySelectorAll(".hora-bar-bg").forEach(r=>r.parentElement.style.opacity="1");
+    }
+  }
   renderBadge();
   const filtrado = allData.filter(r=>{
     if(tipo==="prof") return r.profissional===valor;
     if(tipo==="serv") return r.servico===valor;
+    if(tipo==="cli")  return r.cliente===valor;
+    if(tipo==="hora") return r.hora_inicio && parseInt(r.hora_inicio.split(":")[0])===parseInt(valor);
     return true;
   });
   renderTudo(filtrado);
@@ -570,6 +594,7 @@ function filtrarPor(tipo, valor, trEl){
 function limparSelecao(){
   selecao={tipo:null,valor:null};
   document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
+  document.querySelectorAll(".hora-bar-bg").forEach(r=>r.parentElement.style.opacity="1");
   const b=document.getElementById("selecaoBadge"); if(b) b.remove();
   renderTudo(allData);
 }
@@ -577,7 +602,9 @@ function limparSelecao(){
 function renderBadge(){
   const existing=document.getElementById("selecaoBadge"); if(existing) existing.remove();
   if(!selecao.tipo) return;
-  const label=selecao.tipo==="prof"?`👤 ${selecao.valor}`:`💆 ${selecao.valor}`;
+  const icons = {prof:"👤", serv:"💆", cli:"🧑", hora:"🕐"};
+  const sufixo = selecao.tipo==="hora" ? `${selecao.valor}:00h` : selecao.valor;
+  const label = `${icons[selecao.tipo]||""} ${sufixo}`;
   const badge=document.createElement("div");
   badge.id="selecaoBadge"; badge.className="filtro-ativo-badge";
   badge.innerHTML=`${label} <span style="font-size:14px">×</span>`;
@@ -683,8 +710,15 @@ function renderAtendimentos(rows){
   rows.forEach(r=>{ if(!r.cliente)return; if(!cliMap[r.cliente])cliMap[r.cliente]={n:0,val:0,com:0}; cliMap[r.cliente].n++;cliMap[r.cliente].val+=(r.valor||0);cliMap[r.cliente].com+=(r.comissao||0); });
   const topCli=Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
   document.querySelector("#tblCli tbody").innerHTML=
-    topCli.map(([c,v])=>`<tr><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${fmtP(v.n/totAtend*100)}</td></tr>`).join("")+
+    topCli.map(([c,v])=>`<tr class="clicavel${selecao.tipo==="cli"&&selecao.valor===c?" selecionado":""}" onclick="filtrarPor('cli','${c.replace(/'/g,"\'")}',this)"><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${fmtP(v.n/totAtend*100)}</td></tr>`).join("")+
     `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num"></td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0)/totAtend)}</td><td class="num">100%</td></tr>`;
+
+  // Grafico cliente
+  if(selecao.tipo==="cli"){
+    renderGraficoCliente(selecao.valor, rows.filter(r=>r.cliente===selecao.valor));
+  } else {
+    document.getElementById("cardCliente").style.display="none";
+  }
 
   // Por hora
   const horaMap={};
@@ -693,8 +727,60 @@ function renderAtendimentos(rows){
   document.getElementById("horaGrid").innerHTML=
     Array.from({length:17},(_,i)=>i+7).map(h=>{
       const n=horaMap[h]||0;
-      return`<div class="hora-label">${h}:00</div><div class="hora-bar-wrap"><div class="hora-bar-bg"><div class="hora-bar-fill" style="width:${(n/maxH*100).toFixed(0)}%"></div></div><span class="hora-count">${fmtN(n)}</span></div>`;
+      const isSelected = selecao.tipo==="hora" && parseInt(selecao.valor)===h;
+      const opacity = selecao.tipo==="hora" && !isSelected ? "0.4" : "1";
+      return`<div class="hora-label" style="cursor:pointer;font-weight:${isSelected?"700":"400"};color:${isSelected?"#2563eb":"#9ca3af"}" onclick="filtrarPor('hora','${h}',null)">${h}:00</div>
+      <div id="hora-row-${h}" class="hora-bar-wrap" style="opacity:${opacity};cursor:pointer" onclick="filtrarPor('hora','${h}',null)">
+        <div class="hora-bar-bg"><div class="hora-bar-fill" style="width:${(n/maxH*100).toFixed(0)}%;background:${isSelected?"#2563eb":"#bfdbfe"}"></div></div>
+        <span class="hora-count">${fmtN(n)}</span>
+      </div>`;
     }).join("");
+}
+
+let _modoCliente = "atend";
+
+function setModoCliente(modo){
+  _modoCliente = modo;
+  document.getElementById("toggleCliAtend").style.background = modo==="atend"?"#1f2937":"none";
+  document.getElementById("toggleCliAtend").style.color      = modo==="atend"?"#fff":"#6b7280";
+  document.getElementById("toggleCliRec").style.background   = modo==="receita"?"#1f2937":"none";
+  document.getElementById("toggleCliRec").style.color        = modo==="receita"?"#fff":"#6b7280";
+  if(selecao.tipo==="cli") renderGraficoCliente(selecao.valor, allData.filter(r=>r.cliente===selecao.valor));
+}
+
+function renderGraficoCliente(nome, rows){
+  const card = document.getElementById("cardCliente");
+  if(!nome || !rows.length){ card.style.display="none"; return; }
+  card.style.display="";
+  document.getElementById("cliNomeLabel").textContent = nome.length>20 ? nome.slice(0,20)+"..." : nome;
+
+  // agrupar por mes
+  const mesMap={};
+  rows.forEach(r=>{
+    if(!r.data) return;
+    const [y,m] = r.data.split("-");
+    const key = `${y}-${m}`;
+    if(!mesMap[key]) mesMap[key]={n:0,rec:0};
+    mesMap[key].n++;
+    mesMap[key].rec+=(r.valor||0);
+  });
+  const keys = Object.keys(mesMap).sort();
+  const labels = keys.map(k=>{ const[y,m]=k.split("-"); return MESES[parseInt(m)-1]+"/"+y.slice(2); });
+  const vals   = keys.map(k=> _modoCliente==="atend" ? mesMap[k].n : mesMap[k].rec);
+
+  mkChart("chartCliente",{
+    type:"bar",
+    data:{labels, datasets:[{
+      data: vals,
+      backgroundColor: "rgba(37,99,235,.7)",
+      borderColor: "#2563eb",
+      borderWidth:1
+    }]},
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true, ticks:{callback: v=> _modoCliente==="receita"?"R$"+fmtN(v):v}}}
+    }
+  });
 }
 
 function setModoAnoMes(modo){

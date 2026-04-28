@@ -334,21 +334,33 @@ INSTRUÇÕES:
 - Formate listas com quebras de linha usando \\n
 - Se não tiver os dados para responder, diga honestamente`;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    // Gemini API — chamada direta do browser (sem proxy)
+    const GEMINI_KEY = "AIzaSyBMoJSvV3-K2loxif_dumBA-Z_W2ldSZlM";
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+
+    // Montar historico no formato Gemini
+    const geminiHistory = chatHistory
+      .filter(m => m.role === "user" || m.role === "assistant")
+      .slice(-10)
+      .map(m => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }]
+      }));
+
+    const response = await fetch(GEMINI_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1000,
-        system: systemPrompt,
-        messages: chatHistory.filter(m => m.role === "user" || m.role === "assistant")
-          .slice(-10) // últimas 10 mensagens para contexto
-          .map(m => ({ role: m.role, content: m.content }))
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: geminiHistory,
+        generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
       })
     });
 
     const data = await response.json();
-    const resposta = data.content?.[0]?.text || "Desculpe, não consegui processar sua pergunta.";
+    const resposta = data.candidates?.[0]?.content?.parts?.[0]?.text
+      || data.error?.message
+      || "Desculpe, não consegui processar sua pergunta.";
 
     removeTyping();
     addMsg("bot", resposta);

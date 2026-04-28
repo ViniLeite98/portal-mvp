@@ -152,3 +152,20 @@ if (document.readyState === "loading") {
 } else {
   authInit();
 }
+
+/* ── CHATBOT — carrega automaticamente em todas as páginas ── */
+(function() {
+  function loadChatbot() {
+    // Não carregar na página de login
+    if (location.pathname.includes("login")) return;
+    var script = document.createElement("script");
+    script.src = "assets/js/chatbot.js";
+    script.defer = true;
+    document.body.appendChild(script);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadChatbot);
+  } else {
+    loadChatbot();
+  }
+})();

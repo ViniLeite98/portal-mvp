@@ -591,6 +591,7 @@ function filtrarPor(tipo, valor, trEl){
     if(tipo==="prof") return r.profissional===valor;
     if(tipo==="serv") return r.servico===valor;
     if(tipo==="cli")  return r.cliente===valor;
+    if(tipo==="tel4") return (r.cliente||"").replace(/\D/g,"").slice(-4)===valor;
     if(tipo==="hora") return r.hora_inicio && parseInt(r.hora_inicio.split(":")[0])===parseInt(valor);
     return true;
   });
@@ -608,7 +609,7 @@ function limparSelecao(){
 function renderBadge(){
   const existing=document.getElementById("selecaoBadge"); if(existing) existing.remove();
   if(!selecao.tipo) return;
-  const icons = {prof:"👤", serv:"💆", cli:"🧑", hora:"🕐"};
+  const icons = {prof:"👤", serv:"💆", cli:"🧑", tel4:"🧑", hora:"🕐"};
   const sufixo = selecao.tipo==="hora" ? `${selecao.valor}:00h` : selecao.valor;
   const label = `${icons[selecao.tipo]||""} ${sufixo}`;
   const badge=document.createElement("div");

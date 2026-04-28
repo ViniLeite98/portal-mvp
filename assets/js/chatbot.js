@@ -335,7 +335,7 @@ INSTRUÇÕES:
 - Se não tiver os dados para responder, diga honestamente`;
 
     // Gemini API — chamada direta do browser (sem proxy)
-    const GEMINI_KEY = "AIzaSyBMoJSvV3-K2loxif_dumBA-Z_W2ldSZlM";
+    const GEMINI_KEY = "AIzaSyDsSKKobsWAtV3VqMNHIVsb_nWC2HCMpLE";
     const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
 
     // Montar historico no formato Gemini

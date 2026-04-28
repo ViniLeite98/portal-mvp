@@ -159,6 +159,13 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       <option value="11">Novembro</option><option value="12">Dezembro</option>
     </select>
     <div class="sep"></div>
+    <label>Quinzena</label>
+    <select id="fQuinz" onchange="aplicarFiltros()">
+      <option value="">Todas</option>
+      <option value="1">1ª Quinzena (1–15)</option>
+      <option value="2">2ª Quinzena (16–fim)</option>
+    </select>
+    <div class="sep"></div>
     <label>Profissional</label>
     <select id="fProf" onchange="aplicarFiltros()"><option value="">Todos</option></select>
     <div class="sep"></div>
@@ -432,18 +439,21 @@ function aplicarFiltros(){
 
   const ano   = document.getElementById("fAno").value;
   const mes   = document.getElementById("fMes").value;
+  const quinz = document.getElementById("fQuinz").value;
   const prof  = document.getElementById("fProf").value;
   const serv  = document.getElementById("fServ").value;
   const fonte = document.getElementById("fFonte").value;
 
   allData = cacheCompleto.filter(r => {
     if(!r.data) return false;
-    const [y, m] = r.data.split("-");
-    if(ano  && y !== ano)  return false;
-    if(mes  && m !== mes)  return false;
-    if(prof && r.profissional !== prof) return false;
-    if(serv && r.servico !== serv)      return false;
-    if(fonte && r._fonte !== fonte)     return false;
+    const [y, m, d] = r.data.split("-");
+    if(ano   && y !== ano)  return false;
+    if(mes   && m !== mes)  return false;
+    if(quinz === "1" && parseInt(d) > 15)  return false;
+    if(quinz === "2" && parseInt(d) <= 15) return false;
+    if(prof  && r.profissional !== prof) return false;
+    if(serv  && r.servico !== serv)      return false;
+    if(fonte && r._fonte !== fonte)      return false;
     return true;
   });
 
@@ -564,8 +574,12 @@ function renderAtendimentos(rows){
   const prof = document.getElementById("fProf").value;
   const serv = document.getElementById("fServ").value;
   const fonte= document.getElementById("fFonte").value;
+  const quinzAM = document.getElementById("fQuinz").value;
   const anoMesData = cacheCompleto.filter(r=>{
     if(!r.data) return false;
+    const dNum = parseInt(r.data.split("-")[2]);
+    if(quinzAM==="1" && dNum > 15)  return false;
+    if(quinzAM==="2" && dNum <= 15) return false;
     if(prof  && r.profissional!==prof) return false;
     if(serv  && r.servico!==serv)      return false;
     if(fonte && r._fonte!==fonte)      return false;

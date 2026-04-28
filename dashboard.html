@@ -746,7 +746,7 @@ let _clientesCadastrados = []; // cache dos clientes do banco
 async function carregarClientesCadastrados(){
   const {data} = await client
     .from("clientes")
-    .select("nome, total_atendimentos, valor_total")
+    .select("nome, telefone_1, total_atendimentos, valor_total")
     .gt("total_atendimentos", 0)
     .order("total_atendimentos", {ascending: false})
     .limit(100);
@@ -769,17 +769,12 @@ function renderTopClientes(rows){
   if(_modoTopClientes === "cadastro"){
     // Usar dados da tabela clientes (nomes limpos)
     const lista = _clientesCadastrados.slice(0, 30);
-    tbody.innerHTML = lista.map(c=>`
-      <tr class="clicavel${selecao.tipo==="cli"&&selecao.valor===c.nome?" selecionado":""}"
-          onclick="filtrarPor('cli','${c.nome.replace(/'/g,"\'")}',this)">
-        <td>${c.nome}</td>
-        <td class="num">${fmtN(c.total_atendimentos||0)}</td>
-        <td class="num">${fmtN((c.total_atendimentos||1)-1)}</td>
-        <td class="num">${fmtM(c.valor_total||0)}</td>
-        <td class="num">—</td>
-        <td class="num">${fmtM(c.total_atendimentos?(c.valor_total||0)/c.total_atendimentos:0)}</td>
-        <td class="num">—</td>
-      </tr>`).join("") +
+    tbody.innerHTML = lista.map(c=>{
+      const tel4 = (c.telefone_1||"").replace(/\D/g,"").slice(-4);
+      const nomeExib = tel4 ? `${c.nome} ${tel4}` : c.nome;
+      const isSel = selecao.tipo==="cli" && selecao.valor===c.nome;
+      return `<tr class="clicavel${isSel?" selecionado":""}" onclick="filtrarPor('cli','${c.nome.replace(/'/g,"\'")}',this)"><td>${nomeExib}</td><td class="num">${fmtN(c.total_atendimentos||0)}</td><td class="num">${fmtN((c.total_atendimentos||1)-1)}</td><td class="num">${fmtM(c.valor_total||0)}</td><td class="num">—</td><td class="num">${fmtM(c.total_atendimentos?(c.valor_total||0)/c.total_atendimentos:0)}</td><td class="num">—</td></tr>`;
+    }).join("") +
       `<tr><td>Total cadastrados</td><td class="num">${fmtN(_clientesCadastrados.reduce((s,c)=>s+(c.total_atendimentos||0),0))}</td><td class="num"></td><td class="num">${fmtM(_clientesCadastrados.reduce((s,c)=>s+(c.valor_total||0),0))}</td><td class="num"></td><td class="num"></td><td class="num"></td></tr>`;
   } else {
     // Usar dados do legado (comportamento original)

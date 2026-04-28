@@ -101,6 +101,18 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .filtro-ativo-badge:hover{background:#dbeafe;}
 .card-header.filtrado{border-bottom-color:#bfdbfe;background:#f8fbff;}
 
+/* ── ATENDENTE — interatividade de hora ── */
+function selecionarHoraAtendente(h){
+  if(_horaAtendente === h){
+    _horaAtendente = null;
+  } else {
+    _horaAtendente = h;
+  }
+  // Re-renderizar com o profissional atual
+  const prof = document.getElementById("fProf").value;
+  if(prof) renderAtendente(allData);
+}
+
 /* ── ATENDENTE ── */
 .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
 .kpi-grid-2{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-bottom:14px;}
@@ -160,7 +172,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     <label>Ano</label>
     <select id="fAno" onchange="aplicarFiltros()">
       <option value="">Todos</option>
-      <option value="2026">2026</option><option value="2025" selected>2025</option>
+      <option value="2026" selected>2026</option><option value="2025">2025</option>
       <option value="2024">2024</option><option value="2023">2023</option>
       <option value="2022">2022</option><option value="2021">2021</option>
     </select>
@@ -399,6 +411,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
                 <th class="num">Atend.</th>
                 <th class="num">Comissão</th>
                 <th class="num">Dias Trab.</th>
+                <th class="num">Dias Úteis</th>
                 <th class="num">Média Comissão</th>
                 <th class="num">Ticket Médio</th>
               </tr></thead>
@@ -738,6 +751,7 @@ function renderAtendimentos(rows){
 }
 
 let _modoCliente     = "atend";
+let _horaAtendente   = null; // hora selecionada na pagina atendente
 
 
 function setModoCliente(modo){
@@ -935,6 +949,7 @@ function renderAtendente(rows){
   const prof = document.getElementById("fProf").value;
 
   // Se nao selecionou profissional, mostrar aviso
+  _horaAtendente = null;
   if(!prof){
     document.getElementById("atendenteSemProf").style.display = "";
     document.getElementById("atendenteContent").style.display = "none";
@@ -945,6 +960,11 @@ function renderAtendente(rows){
 
   const rowsProf = rows.filter(r => r.profissional === prof);
   const total    = rowsProf.length;
+
+  // Aplicar filtro de hora selecionada para heatmap e grafico (mas nao para cards e tabela)
+  const rowsProfFiltradosHora = _horaAtendente !== null
+    ? rowsProf.filter(r => r.hora_inicio && parseInt(r.hora_inicio.split(":")[0]) === _horaAtendente)
+    : rowsProf;
 
   // Clientes e retornos
   const cliMap = {};
@@ -1005,18 +1025,36 @@ function renderAtendente(rows){
     if(r.data) horaMap[h].dias.add(r.data);
   });
   const recTotal = rowsProf.reduce((s,r)=>s+(r.valor||0),0);
+  // Calcular dias uteis por hora (seg-sex)
+  const DIAS_SEMANA_UTEIS = [1,2,3,4,5];
+  Object.keys(horaMap).forEach(h=>{
+    horaMap[h].diasUteis = new Set([...horaMap[h].dias].filter(d=>{
+      const dow = new Date(d+"T12:00:00").getDay();
+      return DIAS_SEMANA_UTEIS.includes(dow);
+    }));
+  });
+
   const tbody = document.querySelector("#tblAtHora tbody");
   const horas = Object.keys(horaMap).map(Number).sort((a,b)=>a-b);
   tbody.innerHTML = horas.map(h=>{
     const v=horaMap[h];
-    return`<tr><td>${h}:00</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtN(v.dias.size)}</td><td class="num">${fmtM(v.dias.size?v.com/v.dias.size:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td></tr>`;
+    const isSel = _horaAtendente===h;
+    return`<tr class="clicavel${isSel?" selecionado":""}" onclick="selecionarHoraAtendente(${h})" style="cursor:pointer">
+      <td><strong>${h}:00</strong></td>
+      <td class="num">${fmtN(v.n)}</td>
+      <td class="num">${fmtM(v.com)}</td>
+      <td class="num">${fmtN(v.dias.size)}</td>
+      <td class="num">${fmtN(v.diasUteis.size)}</td>
+      <td class="num">${fmtM(v.dias.size?v.com/v.dias.size:0)}</td>
+      <td class="num">${fmtM(v.n?v.com/v.n:0)}</td>
+    </tr>`;
   }).join("")+
-  `<tr><td>Total</td><td class="num">${fmtN(total)}</td><td class="num">${fmtM(ganho)}</td><td class="num">${fmtN(diasTrab)}</td><td class="num">${fmtM(diasTrab?ganho/diasTrab:0)}</td><td class="num">${fmtM(total?ganho/total:0)}</td></tr>`;
+  `<tr><td>Total</td><td class="num">${fmtN(total)}</td><td class="num">${fmtM(ganho)}</td><td class="num">${fmtN(diasTrab)}</td><td class="num">${fmtN([...new Set(rowsProf.filter(r=>r.data&&[1,2,3,4,5].includes(new Date(r.data+"T12:00:00").getDay())).map(r=>r.data))].length)}</td><td class="num">${fmtM(diasTrab?ganho/diasTrab:0)}</td><td class="num">${fmtM(total?ganho/total:0)}</td></tr>`;
 
   // Heatmap hora x dia
   const DIAS_HM = ["Seg","Ter","Qua","Qui","Sex","Sáb"];
   const heatMap = {};
-  rowsProf.forEach(r=>{
+  rowsProfFiltradosHora.forEach(r=>{
     if(!r.hora_inicio||!r.data) return;
     const h=parseInt(r.hora_inicio.split(":")[0]);
     const dow=new Date(r.data+"T12:00:00").getDay();
@@ -1039,7 +1077,7 @@ function renderAtendente(rows){
 
   // Grafico barras diario
   const diaMap={};
-  rowsProf.forEach(r=>{ if(r.data) diaMap[r.data]=(diaMap[r.data]||0)+1; });
+  rowsProfFiltradosHora.forEach(r=>{ if(r.data) diaMap[r.data]=(diaMap[r.data]||0)+1; });
   const diasOrd=Object.keys(diaMap).sort();
   const vals=diasOrd.map(d=>diaMap[d]);
   const maxV=Math.max(...vals,1);

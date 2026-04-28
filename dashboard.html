@@ -100,6 +100,22 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .filtro-ativo-badge{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:12px;cursor:pointer;}
 .filtro-ativo-badge:hover{background:#dbeafe;}
 .card-header.filtrado{border-bottom-color:#bfdbfe;background:#f8fbff;}
+
+/* ── ATENDENTE ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.kpi-grid-2{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-bottom:14px;}
+.kpi-box{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:center;}
+.kpi-box .kb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:6px;}
+.kpi-box .kb-val{font-size:18px;font-weight:800;color:#111827;line-height:1.2;}
+.kpi-box .kb-val.green{color:#16a34a;}
+.kpi-box .kb-val.blue{color:#2563eb;}
+.kpi-box .kb-val.purple{color:#7c3aed;}
+.heatmap-wrap{display:grid;grid-template-columns:40px repeat(6,1fr);gap:2px;font-size:10px;}
+.hm-header{background:#f9fafb;text-align:center;padding:4px 2px;font-weight:700;color:#6b7280;border-radius:4px;}
+.hm-label{display:flex;align-items:center;color:#9ca3af;font-size:10px;}
+.hm-cell{border-radius:4px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;}
+.sem-prof{text-align:center;padding:60px;color:#9ca3af;font-size:14px;}
+.sem-prof i{font-size:40px;display:block;margin-bottom:12px;color:#e5e7eb;}
 </style>
 </head>
 <body>
@@ -129,6 +145,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     <button class="sub-btn" onclick="mudarPag('financeiro',this)"><i class="fa fa-dollar-sign"></i> Financeiro</button>
     <button class="sub-btn" onclick="mudarPag('equipe',this)"><i class="fa fa-users"></i> Equipe</button>
     <button class="sub-btn" onclick="mudarPag('executivo',this)"><i class="fa fa-chart-line"></i> Executivo</button>
+    <button class="sub-btn" onclick="mudarPag('atendente',this)"><i class="fa fa-user-tie"></i> Atendente</button>
   </div>
 
   <!-- FILTROS -->
@@ -331,6 +348,68 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     </div>
   </div>
 
+  <!-- ══ ATENDENTE ══ -->
+  <div class="page" id="page-atendente">
+    <div id="atendenteSemProf" class="card" style="display:none">
+      <div class="sem-prof">
+        <i class="fa fa-user-tie"></i>
+        Selecione um profissional no filtro acima para ver os dados do atendente.
+      </div>
+    </div>
+    <div id="atendenteContent">
+      <!-- Cards linha 1 -->
+      <div class="kpi-grid">
+        <div class="kpi-box"><div class="kb-label">Atendente</div><div class="kb-val blue" id="at_nome">—</div></div>
+        <div class="kpi-box"><div class="kb-label">Retornos</div><div class="kb-val" id="at_retornos">—</div></div>
+        <div class="kpi-box"><div class="kb-label">Nº Atendimentos</div><div class="kb-val" id="at_total">—</div></div>
+        <div class="kpi-box"><div class="kb-label">Total Ganho no Período</div><div class="kb-val green" id="at_ganho">—</div></div>
+        <div class="kpi-box"><div class="kb-label">Ganhos desde que começou</div><div class="kb-val green" id="at_ganho_total">—</div></div>
+      </div>
+      <!-- Cards linha 2 -->
+      <div class="kpi-grid-2">
+        <div class="kpi-box"><div class="kb-label">Primeiro Atendimento</div><div class="kb-val" id="at_primeiro" style="font-size:13px">—</div></div>
+        <div class="kpi-box"><div class="kb-label">% Retornos</div><div class="kb-val purple" id="at_pct_ret">—</div></div>
+        <div class="kpi-box"><div class="kb-label">1ª Quinzena</div><div class="kb-val" id="at_q1">—</div></div>
+        <div class="kpi-box"><div class="kb-label">2ª Quinzena</div><div class="kb-val" id="at_q2">—</div></div>
+        <div class="kpi-box"><div class="kb-label">1ª Quinzena R$</div><div class="kb-val green" id="at_q1r">—</div></div>
+        <div class="kpi-box"><div class="kb-label">2ª Quinzena R$</div><div class="kb-val green" id="at_q2r">—</div></div>
+        <div class="kpi-box"><div class="kb-label">Dias Trabalhados</div><div class="kb-val" id="at_dias">—</div></div>
+        <div class="kpi-box"><div class="kb-label">Dias da Semana</div><div class="kb-val" id="at_diasem">—</div></div>
+        <div class="kpi-box"><div class="kb-label">Sábados</div><div class="kb-val" id="at_sab">—</div></div>
+      </div>
+      <!-- Tabela por hora + Heatmap -->
+      <div class="row">
+        <div class="card">
+          <div class="card-header"><h3><i class="fa fa-clock"></i> Por Horário de Início</h3></div>
+          <div class="dt-scroll">
+            <table class="dt" id="tblAtHora">
+              <thead><tr>
+                <th>Hora</th>
+                <th class="num">Atend.</th>
+                <th class="num">Comissão</th>
+                <th class="num">Dias Trab.</th>
+                <th class="num">Média Comissão</th>
+                <th class="num">Ticket Médio</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card col-2">
+          <div class="card-header"><h3><i class="fa fa-th"></i> Heatmap Hora × Dia</h3></div>
+          <div class="card-body" style="padding:12px 14px">
+            <div class="heatmap-wrap" id="atHeatmap"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Grafico barras diario -->
+      <div class="card">
+        <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Atendimentos por Dia</h3></div>
+        <div class="chart-wrap"><canvas id="chartAtDia" height="100"></canvas></div>
+      </div>
+    </div>
+  </div>
+
   </div><!-- /main -->
 </main>
 </div>
@@ -515,6 +594,7 @@ function renderTudo(rows){
   renderFinanceiro(rows);
   renderEquipe(rows);
   renderExecutivo(rows);
+  renderAtendente(rows);
 }
 
 function mudarPag(p, btn){
@@ -762,6 +842,125 @@ function renderExecutivo(rows){
     rank.map(([p,v])=>`<tr class="clicavel${selecao.tipo==="prof"&&selecao.valor===p?" selecionado":""}" onclick="filtrarPor('prof','${p.replace(/'/g,"\\'")}',this)"><td><strong>${p}</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.cli.size)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td><td class="num">${fmtP(v.n/totAt*100)}</td></tr>`).join("")+
     `<tr><td>Total</td><td class="num">${fmtN(totAt)}</td><td class="num"></td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.rec,0))}</td><td class="num">${fmtM(rank.reduce((s,[,v])=>s+v.com,0))}</td><td class="num"></td><td class="num"></td><td class="num">100%</td></tr>`;
 }
+
+/* ── ATENDENTE ── */
+function renderAtendente(rows){
+  const prof = document.getElementById("fProf").value;
+
+  // Se nao selecionou profissional, mostrar aviso
+  if(!prof){
+    document.getElementById("atendenteSemProf").style.display = "";
+    document.getElementById("atendenteContent").style.display = "none";
+    return;
+  }
+  document.getElementById("atendenteSemProf").style.display = "none";
+  document.getElementById("atendenteContent").style.display = "";
+
+  const rowsProf = rows.filter(r => r.profissional === prof);
+  const total    = rowsProf.length;
+
+  // Clientes e retornos
+  const cliMap = {};
+  rowsProf.forEach(r=>{ if(r.cliente) cliMap[r.cliente]=(cliMap[r.cliente]||0)+1; });
+  const totalCli = Object.keys(cliMap).length;
+  const retornos = Object.values(cliMap).filter(v=>v>1).length;
+  const pctRet   = totalCli ? (retornos/totalCli*100).toFixed(2)+"%" : "0%";
+
+  // Ganho periodo e total historico
+  const ganho = rowsProf.reduce((s,r)=>s+(r.comissao||0),0);
+  const rowsProfTotal = cacheCompleto.filter(r=>r.profissional===prof);
+  const ganhoTotal    = rowsProfTotal.reduce((s,r)=>s+(r.comissao||0),0);
+
+  // Primeiro atendimento
+  const datas = rowsProfTotal.map(r=>r.data).filter(Boolean).sort();
+  const primeiro = datas[0] ? fmtD(datas[0]) : "—";
+
+  // Quinzenas
+  let q1=0,q2=0,q1r=0,q2r=0;
+  rowsProf.forEach(r=>{
+    if(!r.data) return;
+    const d = parseInt(r.data.split("-")[2]);
+    if(d<=15){ q1++; q1r+=(r.comissao||0); }
+    else      { q2++; q2r+=(r.comissao||0); }
+  });
+
+  // Dias trabalhados
+  const diasSet    = new Set(rowsProf.map(r=>r.data).filter(Boolean));
+  const diasTrab   = diasSet.size;
+  const diasSem    = [...diasSet].filter(d=>{ const dow=new Date(d+"T12:00:00").getDay(); return dow>=1&&dow<=5; }).length;
+  const diasSab    = [...diasSet].filter(d=>new Date(d+"T12:00:00").getDay()===6).length;
+
+  // Preencher cards
+  document.getElementById("at_nome").textContent       = prof;
+  document.getElementById("at_retornos").textContent   = fmtN(retornos);
+  document.getElementById("at_total").textContent      = fmtN(total);
+  document.getElementById("at_ganho").textContent      = fmtM(ganho);
+  document.getElementById("at_ganho_total").textContent= fmtM(ganhoTotal);
+  document.getElementById("at_primeiro").textContent   = primeiro;
+  document.getElementById("at_pct_ret").textContent    = pctRet;
+  document.getElementById("at_q1").textContent         = fmtN(q1);
+  document.getElementById("at_q2").textContent         = fmtN(q2);
+  document.getElementById("at_q1r").textContent        = fmtM(q1r);
+  document.getElementById("at_q2r").textContent        = fmtM(q2r);
+  document.getElementById("at_dias").textContent       = fmtN(diasTrab);
+  document.getElementById("at_diasem").textContent     = fmtN(diasSem);
+  document.getElementById("at_sab").textContent        = fmtN(diasSab);
+
+  // Tabela por hora
+  const horaMap={};
+  rowsProf.forEach(r=>{
+    if(!r.hora_inicio) return;
+    const h=parseInt(r.hora_inicio.split(":")[0]);
+    if(h<7||h>23) return;
+    if(!horaMap[h]) horaMap[h]={n:0,com:0,dias:new Set()};
+    horaMap[h].n++;
+    horaMap[h].com+=(r.comissao||0);
+    if(r.data) horaMap[h].dias.add(r.data);
+  });
+  const recTotal = rowsProf.reduce((s,r)=>s+(r.valor||0),0);
+  const tbody = document.querySelector("#tblAtHora tbody");
+  const horas = Object.keys(horaMap).map(Number).sort((a,b)=>a-b);
+  tbody.innerHTML = horas.map(h=>{
+    const v=horaMap[h];
+    return`<tr><td>${h}:00</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtN(v.dias.size)}</td><td class="num">${fmtM(v.dias.size?v.com/v.dias.size:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td></tr>`;
+  }).join("")+
+  `<tr><td>Total</td><td class="num">${fmtN(total)}</td><td class="num">${fmtM(ganho)}</td><td class="num">${fmtN(diasTrab)}</td><td class="num">${fmtM(diasTrab?ganho/diasTrab:0)}</td><td class="num">${fmtM(total?ganho/total:0)}</td></tr>`;
+
+  // Heatmap hora x dia
+  const DIAS_HM = ["Seg","Ter","Qua","Qui","Sex","Sáb"];
+  const heatMap = {};
+  rowsProf.forEach(r=>{
+    if(!r.hora_inicio||!r.data) return;
+    const h=parseInt(r.hora_inicio.split(":")[0]);
+    const dow=new Date(r.data+"T12:00:00").getDay();
+    if(h<9||h>20||dow===0) return;
+    const key=`${h}-${dow}`;
+    heatMap[key]=(heatMap[key]||0)+1;
+  });
+  const maxHM=Math.max(...Object.values(heatMap),1);
+  let heatHTML='<div></div>'+DIAS_HM.map(d=>`<div class="hm-header">${d}</div>`).join("");
+  for(let h=9;h<=20;h++){
+    heatHTML+=`<div class="hm-label">${h}h</div>`;
+    for(let dow=1;dow<=6;dow++){
+      const n=heatMap[`${h}-${dow}`]||0;
+      const pct=n/maxHM;
+      const bg=n===0?"#f3f4f6":`rgba(37,99,235,${(0.15+pct*0.85).toFixed(2)})`;
+      heatHTML+=`<div class="hm-cell" style="background:${bg}">${n||""}</div>`;
+    }
+  }
+  document.getElementById("atHeatmap").innerHTML=heatHTML;
+
+  // Grafico barras diario
+  const diaMap={};
+  rowsProf.forEach(r=>{ if(r.data) diaMap[r.data]=(diaMap[r.data]||0)+1; });
+  const diasOrd=Object.keys(diaMap).sort();
+  const vals=diasOrd.map(d=>diaMap[d]);
+  const maxV=Math.max(...vals,1);
+  const cores=vals.map(v=>v>=6?"rgba(22,163,74,.8)":v>=4?"rgba(234,179,8,.8)":v>=2?"rgba(249,115,22,.8)":"rgba(220,38,38,.8)");
+  mkChart("chartAtDia",{type:"bar",data:{labels:diasOrd.map(d=>{const[,m,dd]=d.split("-");return`${dd}/${m}`;}),datasets:[{data:vals,backgroundColor:cores,borderWidth:0}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+}
+
+const fmtD = v => v ? new Date(v+"T12:00:00").toLocaleDateString("pt-BR") : "—";
 
 /* ── INIT FILTROS (selects) ── */
 async function initFiltros(){

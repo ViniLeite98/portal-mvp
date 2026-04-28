@@ -248,7 +248,13 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     </div>
     <div class="row">
       <div class="card">
-        <div class="card-header"><h3><i class="fa fa-users"></i> Top Clientes</h3></div>
+        <div class="card-header">
+          <h3><i class="fa fa-users"></i> Top Clientes</h3>
+          <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:6px;padding:3px">
+            <button id="toggleCliLegado" onclick="setModoTopClientes('legado')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:#1f2937;color:#fff;border:none;cursor:pointer">Legado</button>
+            <button id="toggleCliCad"    onclick="setModoTopClientes('cadastro')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:none;color:#6b7280;border:none;cursor:pointer">Cadastrados</button>
+          </div>
+        </div>
         <div class="dt-scroll">
           <table class="dt" id="tblCli">
             <thead><tr><th>Cliente</th><th class="num">Atend.</th><th class="num">Retornos</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket Médio</th><th class="num">% Atend.</th></tr></thead>
@@ -706,12 +712,7 @@ function renderAtendimentos(rows){
   renderAnoMesTabela(anoMap);
 
   // Top clientes
-  const cliMap={};
-  rows.forEach(r=>{ if(!r.cliente)return; if(!cliMap[r.cliente])cliMap[r.cliente]={n:0,val:0,com:0}; cliMap[r.cliente].n++;cliMap[r.cliente].val+=(r.valor||0);cliMap[r.cliente].com+=(r.comissao||0); });
-  const topCli=Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
-  document.querySelector("#tblCli tbody").innerHTML=
-    topCli.map(([c,v])=>`<tr class="clicavel${selecao.tipo==="cli"&&selecao.valor===c?" selecionado":""}" onclick="filtrarPor('cli','${c.replace(/'/g,"\'")}',this)"><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${fmtP(v.n/totAtend*100)}</td></tr>`).join("")+
-    `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num"></td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0)/totAtend)}</td><td class="num">100%</td></tr>`;
+  renderTopClientes(rows);
 
   // Grafico cliente
   if(selecao.tipo==="cli"){
@@ -737,7 +738,59 @@ function renderAtendimentos(rows){
     }).join("");
 }
 
-let _modoCliente = "atend";
+let _modoCliente     = "atend";
+let _modoTopClientes = "legado";
+let _clientesCadastrados = []; // cache dos clientes do banco
+
+// Buscar clientes cadastrados uma vez
+async function carregarClientesCadastrados(){
+  const {data} = await client
+    .from("clientes")
+    .select("nome, total_atendimentos, valor_total")
+    .gt("total_atendimentos", 0)
+    .order("total_atendimentos", {ascending: false})
+    .limit(100);
+  _clientesCadastrados = data || [];
+}
+
+function setModoTopClientes(modo){
+  _modoTopClientes = modo;
+  document.getElementById("toggleCliLegado").style.background = modo==="legado"?"#1f2937":"none";
+  document.getElementById("toggleCliLegado").style.color      = modo==="legado"?"#fff":"#6b7280";
+  document.getElementById("toggleCliCad").style.background    = modo==="cadastro"?"#1f2937":"none";
+  document.getElementById("toggleCliCad").style.color         = modo==="cadastro"?"#fff":"#6b7280";
+  renderTopClientes(allData);
+}
+
+function renderTopClientes(rows){
+  const totAtend = rows.length || 1;
+  const tbody = document.querySelector("#tblCli tbody");
+
+  if(_modoTopClientes === "cadastro"){
+    // Usar dados da tabela clientes (nomes limpos)
+    const lista = _clientesCadastrados.slice(0, 30);
+    tbody.innerHTML = lista.map(c=>`
+      <tr class="clicavel${selecao.tipo==="cli"&&selecao.valor===c.nome?" selecionado":""}"
+          onclick="filtrarPor('cli','${c.nome.replace(/'/g,"\'")}',this)">
+        <td>${c.nome}</td>
+        <td class="num">${fmtN(c.total_atendimentos||0)}</td>
+        <td class="num">${fmtN((c.total_atendimentos||1)-1)}</td>
+        <td class="num">${fmtM(c.valor_total||0)}</td>
+        <td class="num">—</td>
+        <td class="num">${fmtM(c.total_atendimentos?(c.valor_total||0)/c.total_atendimentos:0)}</td>
+        <td class="num">—</td>
+      </tr>`).join("") +
+      `<tr><td>Total cadastrados</td><td class="num">${fmtN(_clientesCadastrados.reduce((s,c)=>s+(c.total_atendimentos||0),0))}</td><td class="num"></td><td class="num">${fmtM(_clientesCadastrados.reduce((s,c)=>s+(c.valor_total||0),0))}</td><td class="num"></td><td class="num"></td><td class="num"></td></tr>`;
+  } else {
+    // Usar dados do legado (comportamento original)
+    const cliMap={};
+    rows.forEach(r=>{ if(!r.cliente)return; if(!cliMap[r.cliente])cliMap[r.cliente]={n:0,val:0,com:0}; cliMap[r.cliente].n++;cliMap[r.cliente].val+=(r.valor||0);cliMap[r.cliente].com+=(r.comissao||0); });
+    const topCli=Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
+    tbody.innerHTML=
+      topCli.map(([c,v])=>`<tr class="clicavel${selecao.tipo==="cli"&&selecao.valor===c?" selecionado":""}" onclick="filtrarPor('cli','${c.replace(/'/g,"\'")}',this)"><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${fmtP(v.n/totAtend*100)}</td></tr>`).join("")+
+      `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num"></td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0)/totAtend)}</td><td class="num">100%</td></tr>`;
+  }
+}
 
 function setModoCliente(modo){
   _modoCliente = modo;
@@ -1075,6 +1128,7 @@ document.addEventListener("DOMContentLoaded", async()=>{
   stopLoading();
 
   // Aplicar filtro inicial (2025 selecionado)
+  await carregarClientesCadastrados();
   aplicarFiltros();
 });
 </script>

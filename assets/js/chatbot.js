@@ -336,7 +336,7 @@ INSTRUÇÕES:
 
     // Gemini API — chamada direta do browser (sem proxy)
     const GEMINI_KEY = "AIzaSyDsSKKobsWAtV3VqMNHIVsb_nWC2HCMpLE";
-    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+    const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key=${GEMINI_KEY}`;
 
     // Montar historico no formato Gemini
     const geminiHistory = chatHistory

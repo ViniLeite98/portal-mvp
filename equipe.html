@@ -3,21 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <title>Cadastro de Pessoal | Hara Spa</title>
-
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
-
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
+#sidebar{flex-shrink:0;}
 .content{flex:1;padding:40px;}
-
-/* ── TABELA PRINCIPAL ── */
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
 th{background:#f9fafb;font-weight:600;}
@@ -28,143 +24,60 @@ button.excluir{background:#dc2626}
 .left-tools input{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;width:260px;font-size:14px;}
 .left-tools input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 .left-tools select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;}
-
-/* ── MODAL ── */
-.modal{
-  position:fixed;inset:0;background:rgba(0,0,0,.45);
-  display:none;align-items:flex-start;justify-content:center;
-  z-index:10;padding:30px 20px;overflow-y:auto;
-}
-.modal-content{
-  background:#fff;width:860px;max-width:100%;
-  border-radius:18px;overflow:hidden;
-  box-shadow:0 20px 60px rgba(0,0,0,.2);
-}
-
-/* ── HEADER ── */
-.modal-header{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:20px 28px 0;
-}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
+.modal-content{background:#fff;width:860px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px 0;}
 .modal-header h2{margin:0;font-size:18px;color:#111827;}
-.btn-fechar{
-  background:none;color:#6b7280;font-size:20px;
-  border:none;cursor:pointer;padding:4px 8px;border-radius:6px;
-}
+.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
 .btn-fechar:hover{background:#f3f4f6;color:#111827;}
-
-/* ── BODY: sidenav + panels ── */
 .modal-body{display:flex;min-height:480px;}
-
-.side-nav{
-  width:190px;flex-shrink:0;
-  background:#f9fafb;border-right:1px solid #e5e7eb;
-  padding:16px 0;display:flex;flex-direction:column;gap:2px;
-}
-.side-btn{
-  display:flex;align-items:center;gap:10px;
-  background:none;color:#6b7280;border:none;border-radius:0;
-  padding:11px 20px;font-size:13px;font-weight:500;
-  cursor:pointer;text-align:left;width:100%;
-  border-left:3px solid transparent;transition:all .15s;
-}
+.side-nav{width:190px;flex-shrink:0;background:#f9fafb;border-right:1px solid #e5e7eb;padding:16px 0;display:flex;flex-direction:column;gap:2px;}
+.side-btn{display:flex;align-items:center;gap:10px;background:none;color:#6b7280;border:none;border-radius:0;padding:11px 20px;font-size:13px;font-weight:500;cursor:pointer;text-align:left;width:100%;border-left:3px solid transparent;transition:all .15s;}
 .side-btn i{width:16px;text-align:center;font-size:13px;}
 .side-btn:hover{background:#f3f4f6;color:#111827;}
 .side-btn.active{background:#eff6ff;color:#1d4ed8;border-left-color:#2563eb;font-weight:600;}
-.tab-badge{
-  margin-left:auto;background:#2563eb;color:#fff;
-  font-size:10px;border-radius:99px;padding:1px 6px;font-weight:700;
-}
-
+.tab-badge{margin-left:auto;background:#2563eb;color:#fff;font-size:10px;border-radius:99px;padding:1px 6px;font-weight:700;}
 .tab-panels{flex:1;overflow-y:auto;}
 .tab-panel{display:none;padding:24px 28px;}
 .tab-panel.active{display:block;}
-
-/* ── FORM ── */
-.section-title{
-  font-size:11px;font-weight:700;text-transform:uppercase;
-  letter-spacing:.07em;color:#9ca3af;margin:0 0 18px;
-  display:flex;align-items:center;gap:7px;
-}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin:0 0 18px;display:flex;align-items:center;gap:7px;}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:20px;}
 .field{display:flex;flex-direction:column;}
 .field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
-input,select{
-  padding:9px 11px;border-radius:8px;
-  border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;
-}
+input,select{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
 input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .span2{grid-column:span 2;}
 .span3{grid-column:span 3;}
-
-/* ── PROGRESS CIRCLE ── */
 .progress-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;cursor:default;}
 .progress-circle{width:42px;height:42px;transform:rotate(-90deg);}
 .progress-circle .bg{fill:none;stroke:#e5e7eb;stroke-width:4;}
 .progress-circle .fill{fill:none;stroke:#22c55e;stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .4s ease,stroke .3s;}
 .progress-pct{position:absolute;font-size:10px;font-weight:700;color:#111827;}
-.progress-tooltip{
-  display:none;position:absolute;top:calc(100% + 8px);right:0;
-  background:#1f2937;color:#fff;border-radius:10px;
-  padding:12px 14px;font-size:12px;width:220px;z-index:100;
-  box-shadow:0 8px 24px rgba(0,0,0,.2);line-height:1.6;
-}
-.progress-tooltip::before{
-  content:"";position:absolute;top:-6px;right:14px;
-  border:6px solid transparent;border-bottom-color:#1f2937;border-top:none;
-}
+.progress-tooltip{display:none;position:absolute;top:calc(100% + 8px);right:0;background:#1f2937;color:#fff;border-radius:10px;padding:12px 14px;font-size:12px;width:220px;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.2);line-height:1.6;}
+.progress-tooltip::before{content:"";position:absolute;top:-6px;right:14px;border:6px solid transparent;border-bottom-color:#1f2937;border-top:none;}
 .progress-wrap:hover .progress-tooltip{display:block;}
 .tooltip-item{display:flex;align-items:center;gap:6px;padding:2px 0;}
 .tooltip-item.done{color:#86efac;}
 .tooltip-item.missing{color:#fca5a5;}
-
-/* ── CPF EDIT AVISO ── */
-.cpf-aviso{
-  font-size:11px;color:#d97706;margin-top:4px;
-  display:flex;align-items:center;gap:5px;
-}
-.btn-editar-cpf{
-  background:none;color:#2563eb;border:none;padding:0;
-  font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline;
-  display:inline;margin-left:6px;
-}
-
-/* ── FOOTER ── */
-.modal-footer{
-  display:flex;justify-content:flex-end;gap:10px;
-  padding:14px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;
-}
+.cpf-aviso{font-size:11px;color:#d97706;margin-top:4px;display:flex;align-items:center;gap:5px;}
+.btn-editar-cpf{background:none;color:#2563eb;border:none;padding:0;font-size:11px;font-weight:600;cursor:pointer;text-decoration:underline;display:inline;margin-left:6px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 28px;border-top:1px solid #e5e7eb;background:#f9fafb;}
 .modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;}
 .btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
 .btn-cancel:hover{background:#f3f4f6;}
 .btn-save{background:#1f2937;}
 .btn-save:hover{background:#111827;}
-
-/* ── DOCUMENTOS ── */
-.doc-upload-box{
-  background:#f9fafb;border:2px dashed #d1d5db;
-  border-radius:12px;padding:18px;margin-bottom:20px;
-}
+.doc-upload-box{background:#f9fafb;border:2px dashed #d1d5db;border-radius:12px;padding:18px;margin-bottom:20px;}
 .doc-upload-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
 .doc-upload-row .field{flex:1;min-width:140px;}
-.btn-upload{
-  height:38px;padding:0 16px;white-space:nowrap;
-  background:#2563eb;font-size:13px;align-self:flex-end;border-radius:6px;
-}
+.btn-upload{height:38px;padding:0 16px;white-space:nowrap;background:#2563eb;font-size:13px;align-self:flex-end;border-radius:6px;}
 .upload-status{font-size:13px;color:#2563eb;margin-top:8px;display:none;}
 .doc-list{display:flex;flex-direction:column;gap:8px;}
-.doc-item{
-  display:flex;align-items:center;justify-content:space-between;
-  background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px 14px;
-}
+.doc-item{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px 14px;}
 .doc-item-left{display:flex;align-items:center;gap:11px;}
-.doc-icon{
-  width:36px;height:36px;background:#eff6ff;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  color:#2563eb;font-size:15px;flex-shrink:0;
-}
+.doc-icon{width:36px;height:36px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#2563eb;font-size:15px;flex-shrink:0;}
 .doc-name{font-size:13px;font-weight:600;color:#1f2937;}
 .doc-tipo{font-size:11px;color:#6b7280;margin-top:2px;}
 .doc-item-right{display:flex;gap:8px;align-items:center;}
@@ -173,14 +86,11 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
 </style>
 </head>
-
 <body>
 <div class="app">
 <aside id="sidebar"></aside>
-
 <main class="content">
 <h1>Cadastro de Pessoal</h1>
-
 <div class="topbar">
   <div class="left-tools">
     <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()">
@@ -192,28 +102,22 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
   </div>
   <button id="btnNovoCadastro" onclick="abrirNovo()" style="display:none"><i class="fa fa-plus"></i> Novo Cadastro</button>
 </div>
-
 <table>
-  <thead>
-    <tr><th>Nome Profissional</th><th>Cargo</th><th>CPF</th><th>Status</th><th>Ações</th></tr>
-  </thead>
+  <thead><tr><th>Nome Profissional</th><th>Cargo</th><th>CPF</th><th>Status</th><th>Ações</th></tr></thead>
   <tbody id="lista"></tbody>
 </table>
 </main>
 </div>
 
-<!-- ══════════════════════════ MODAL ══════════════════════════ -->
 <div class="modal" id="modal">
 <div class="modal-content">
-
   <div class="modal-header">
     <h2 id="modalTitulo">Novo Cadastro</h2>
     <div style="display:flex;align-items:center;gap:12px;">
       <div class="progress-wrap" id="progressWrap" style="display:none">
         <svg class="progress-circle" viewBox="0 0 42 42">
           <circle class="bg" cx="21" cy="21" r="18"/>
-          <circle class="fill" id="progressFill" cx="21" cy="21" r="18"
-            stroke-dasharray="113" stroke-dashoffset="113"/>
+          <circle class="fill" id="progressFill" cx="21" cy="21" r="18" stroke-dasharray="113" stroke-dashoffset="113"/>
         </svg>
         <span class="progress-pct" id="progressPct">0%</span>
         <div class="progress-tooltip" id="progressTooltip"></div>
@@ -221,43 +125,24 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
       <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
     </div>
   </div>
-
   <div class="modal-body">
-
-    <!-- Sidenav -->
     <nav class="side-nav">
-      <button class="side-btn active" onclick="mudarTab('pessoais',this)">
-        <i class="fa fa-id-card"></i> Dados Pessoais
-      </button>
-      <button class="side-btn" onclick="mudarTab('contatos',this)">
-        <i class="fa fa-phone"></i> Contatos
-      </button>
-      <button class="side-btn" onclick="mudarTab('endereco',this)">
-        <i class="fa fa-map-marker-alt"></i> Endereço
-      </button>
-      <button class="side-btn" onclick="mudarTab('pagamento',this)">
-        <i class="fa fa-dollar-sign"></i> Pagamento
-      </button>
-      <button class="side-btn" onclick="mudarTab('funcional',this)">
-        <i class="fa fa-briefcase"></i> Dados Funcionais
-      </button>
+      <button class="side-btn active" onclick="mudarTab('pessoais',this)"><i class="fa fa-id-card"></i> Dados Pessoais</button>
+      <button class="side-btn" onclick="mudarTab('contatos',this)"><i class="fa fa-phone"></i> Contatos</button>
+      <button class="side-btn" onclick="mudarTab('endereco',this)"><i class="fa fa-map-marker-alt"></i> Endereço</button>
+      <button class="side-btn" onclick="mudarTab('pagamento',this)"><i class="fa fa-dollar-sign"></i> Pagamento</button>
+      <button class="side-btn" onclick="mudarTab('funcional',this)"><i class="fa fa-briefcase"></i> Dados Funcionais</button>
       <button class="side-btn" id="tabDocsBtn" style="display:none" onclick="mudarTab('docs',this)">
         <i class="fa fa-file-alt"></i> Documentos
         <span class="tab-badge" id="docBadge" style="display:none">0</span>
       </button>
     </nav>
-
-    <!-- Panels -->
     <div class="tab-panels">
-
-      <!-- Dados Pessoais -->
       <div class="tab-panel active" id="tab-pessoais">
         <p class="section-title"><i class="fa fa-id-card"></i> Dados Pessoais</p>
         <div class="grid">
           <div class="field span2"><label>Nome Completo *</label><input id="nome_completo"></div>
           <div class="field"><label>Nome Profissional *</label><input id="nome_profissional"></div>
-
-          <!-- CPF com controle de edição -->
           <div class="field" id="campo_cpf_wrapper">
             <label>CPF *</label>
             <input id="cpf" placeholder="000.000.000-00">
@@ -267,7 +152,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
               <button class="btn-editar-cpf" onclick="habilitarEdicaoCPF()">Editar mesmo assim</button>
             </div>
           </div>
-
           <div class="field"><label>RG</label><input id="rg"></div>
           <div class="field"><label>Data de Nascimento</label><input type="date" id="nascimento"></div>
           <div class="field"><label>Email *</label><input id="email" type="email"></div>
@@ -275,16 +159,12 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             <label>Tipo Sanguíneo</label>
             <select id="tipo_sanguineo">
               <option value="">Selecione</option>
-              <option>A+</option><option>A-</option>
-              <option>B+</option><option>B-</option>
-              <option>AB+</option><option>AB-</option>
-              <option>O+</option><option>O-</option>
+              <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
             </select>
           </div>
         </div>
       </div>
-
-      <!-- Contatos -->
       <div class="tab-panel" id="tab-contatos">
         <p class="section-title"><i class="fa fa-phone"></i> Contatos</p>
         <div class="grid-2">
@@ -292,8 +172,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>Contato de Emergência</label><input id="telefone_emergencia" placeholder="(11) 99999-9999"></div>
         </div>
       </div>
-
-      <!-- Endereço -->
       <div class="tab-panel" id="tab-endereco">
         <p class="section-title"><i class="fa fa-map-marker-alt"></i> Endereço</p>
         <div class="grid">
@@ -306,8 +184,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>UF</label><input id="uf" maxlength="2" style="text-transform:uppercase"></div>
         </div>
       </div>
-
-      <!-- Pagamento -->
       <div class="tab-panel" id="tab-pagamento">
         <p class="section-title"><i class="fa fa-dollar-sign"></i> Pagamento via PIX</p>
         <div class="grid-2">
@@ -315,15 +191,12 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             <label>Tipo de Chave PIX</label>
             <select id="pix_tipo">
               <option value="">Selecione</option>
-              <option>CPF</option><option>Email</option>
-              <option>Telefone</option><option>Aleatória</option>
+              <option>CPF</option><option>Email</option><option>Telefone</option><option>Aleatória</option>
             </select>
           </div>
           <div class="field"><label>Chave PIX</label><input id="pix_chave"></div>
         </div>
       </div>
-
-      <!-- Dados Funcionais -->
       <div class="tab-panel" id="tab-funcional">
         <p class="section-title"><i class="fa fa-briefcase"></i> Dados Funcionais</p>
         <div class="grid">
@@ -339,24 +212,18 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field">
             <label>Status</label>
             <select id="status" onchange="aoMudarStatus(this)">
-              <option value="">Selecione</option>
-              <option>Ativo</option><option>Inativo</option>
+              <option value="">Selecione</option><option>Ativo</option><option>Inativo</option>
             </select>
           </div>
           <div class="field" id="campo_data_inativacao" style="display:none">
-            <label>Data de Inativação</label>
-            <input type="date" id="data_inativacao">
+            <label>Data de Inativação</label><input type="date" id="data_inativacao">
           </div>
           <div class="field"><label>Data de Início no Hara</label><input type="date" id="data_inicio"></div>
           <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
           <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
-
-
           <div class="field">
             <label>Tem folga semanal?</label>
-            <select id="tem_folga">
-              <option value="">Selecione</option><option>Sim</option><option>Não</option>
-            </select>
+            <select id="tem_folga"><option value="">Selecione</option><option>Sim</option><option>Não</option></select>
           </div>
           <div class="field">
             <label>Dia da Folga</label>
@@ -368,8 +235,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           </div>
         </div>
       </div>
-
-      <!-- Documentos -->
       <div class="tab-panel" id="tab-docs">
         <p class="section-title"><i class="fa fa-file-alt"></i> Documentos Anexados</p>
         <div class="doc-upload-box">
@@ -377,44 +242,29 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             <div class="field">
               <label>Tipo</label>
               <select id="doc_tipo">
-                <option>RG</option><option>CPF</option>
-                <option>Comprovante de Residência</option><option>Contrato</option>
-                <option>Certidão de Nascimento</option><option>Diploma / Certificado</option>
-                <option>Outro</option>
+                <option>RG</option><option>CPF</option><option>Comprovante de Residência</option>
+                <option>Contrato</option><option>Certidão de Nascimento</option>
+                <option>Diploma / Certificado</option><option>Outro</option>
               </select>
             </div>
-            <div class="field" style="flex:2">
-              <label>Arquivo</label>
-              <input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx">
-            </div>
-            <button class="btn-upload" onclick="uploadDoc()">
-              <i class="fa fa-upload"></i> Enviar
-            </button>
+            <div class="field" style="flex:2"><label>Arquivo</label><input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx"></div>
+            <button class="btn-upload" onclick="uploadDoc()"><i class="fa fa-upload"></i> Enviar</button>
           </div>
-          <div class="upload-status" id="uploadStatus">
-            <i class="fa fa-spinner fa-spin"></i> Enviando...
-          </div>
+          <div class="upload-status" id="uploadStatus"><i class="fa fa-spinner fa-spin"></i> Enviando...</div>
         </div>
-        <div id="docLista" class="doc-list">
-          <div class="doc-empty">Nenhum documento anexado.</div>
-        </div>
+        <div id="docLista" class="doc-list"><div class="doc-empty">Nenhum documento anexado.</div></div>
       </div>
-
-    </div><!-- /tab-panels -->
-  </div><!-- /modal-body -->
-
+    </div>
+  </div>
   <div class="modal-footer">
     <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
     <button class="btn-save" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
   </div>
-
 </div>
 </div>
 
 <script>
-// CPF original do registro sendo editado (null = novo cadastro)
 let cpfAtual = null;
-// Controla se o campo CPF foi desbloqueado para edição
 let cpfEdicaoHabilitada = false;
 
 const campos = [
@@ -424,650 +274,260 @@ const campos = [
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
 ];
 
-/* ══════════════════════════════════════════
-   MÁSCARAS
-══════════════════════════════════════════ */
 function mascara(id, fn){
-  const el = document.getElementById(id);
-  if(!el) return;
+  const el = document.getElementById(id); if(!el) return;
   el.addEventListener('input', function(){
-    const pos = this.selectionStart;
-    const prev = this.value;
+    const pos = this.selectionStart, prev = this.value;
     this.value = fn(this.value);
     if(this.value.length === prev.length) this.setSelectionRange(pos, pos);
   });
 }
-
-function fmtCPF(v){
-  v = v.replace(/\D/g,'').substring(0,11);
-  if(v.length <= 3) return v;
-  if(v.length <= 6) return v.slice(0,3)+'.'+v.slice(3);
-  if(v.length <= 9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
-  return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
-}
-function fmtRG(v){
-  v = v.replace(/\D/g,'').substring(0,9);
-  if(v.length <= 2) return v;
-  if(v.length <= 5) return v.slice(0,2)+'.'+v.slice(2);
-  if(v.length <= 8) return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);
-  return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8);
-}
-function fmtTel(v){
-  v = v.replace(/\D/g,'').substring(0,11);
-  if(v.length <= 2) return v.length ? '('+v : v;
-  if(v.length <= 6) return '('+v.slice(0,2)+') '+v.slice(2);
-  if(v.length <= 10) return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);
-  return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
-}
-function fmtCEP(v){
-  v = v.replace(/\D/g,'').substring(0,8);
-  if(v.length <= 5) return v;
-  return v.slice(0,5)+'-'+v.slice(5);
-}
-function fmtCPFDisplay(v){
-  v = (v||"").replace(/\D/g,"");
-  if(v.length !== 11) return v;
-  return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);
-}
+function fmtCPF(v){ v=v.replace(/\D/g,'').substring(0,11); if(v.length<=3)return v; if(v.length<=6)return v.slice(0,3)+'.'+v.slice(3); if(v.length<=9)return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6); return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9); }
+function fmtRG(v){ v=v.replace(/\D/g,'').substring(0,9); if(v.length<=2)return v; if(v.length<=5)return v.slice(0,2)+'.'+v.slice(2); if(v.length<=8)return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5); return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8); }
+function fmtTel(v){ v=v.replace(/\D/g,'').substring(0,11); if(v.length<=2)return v.length?'('+v:v; if(v.length<=6)return '('+v.slice(0,2)+') '+v.slice(2); if(v.length<=10)return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6); return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7); }
+function fmtCEP(v){ v=v.replace(/\D/g,'').substring(0,8); if(v.length<=5)return v; return v.slice(0,5)+'-'+v.slice(5); }
+function fmtCPFDisplay(v){ v=(v||"").replace(/\D/g,""); if(v.length!==11)return v; return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9); }
 function limparCPF(v){ return (v||"").replace(/\D/g,""); }
 
 function aplicarMascaras(){
-  mascara('cpf', fmtCPF);
-  mascara('rg',  fmtRG);
-  mascara('telefone', fmtTel);
-  mascara('telefone_emergencia', fmtTel);
-  mascara('cep', fmtCEP);
-  const uf = document.getElementById('uf');
-  if(uf) uf.addEventListener('input', function(){
-    this.value = this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2);
-  });
+  mascara('cpf',fmtCPF); mascara('rg',fmtRG); mascara('telefone',fmtTel);
+  mascara('telefone_emergencia',fmtTel); mascara('cep',fmtCEP);
+  const uf=document.getElementById('uf');
+  if(uf) uf.addEventListener('input',function(){ this.value=this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2); });
 }
 
-/* ══════════════════════════════════════════
-   CONTROLE DE EDIÇÃO DO CPF
-══════════════════════════════════════════ */
-
-/**
- * Bloqueia o campo CPF e exibe o aviso de edição segura.
- * Chamado ao abrir um cadastro existente.
- */
-function bloquearCPF(){
-  const el = document.getElementById("cpf");
-  el.readOnly = true;
-  document.getElementById("cpf_aviso").style.display = "flex";
-  cpfEdicaoHabilitada = false;
-}
-
-/**
- * Desbloqueia o campo CPF após confirmação do usuário.
- */
+function bloquearCPF(){ document.getElementById("cpf").readOnly=true; document.getElementById("cpf_aviso").style.display="flex"; cpfEdicaoHabilitada=false; }
 function habilitarEdicaoCPF(){
-  const confirmado = confirm(
-    "⚠️ Atenção!\n\n" +
-    "Alterar o CPF irá:\n" +
-    "• Criar um novo registro com o CPF novo\n" +
-    "• Migrar documentos e perfil de login\n" +
-    "• Excluir o registro antigo\n\n" +
-    "Deseja continuar?"
-  );
-  if(!confirmado) return;
-
-  const el = document.getElementById("cpf");
-  el.readOnly = false;
-  el.focus();
-  el.select();
-  document.getElementById("cpf_aviso").style.display = "none";
-  cpfEdicaoHabilitada = true;
+  if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?")) return;
+  const el=document.getElementById("cpf"); el.readOnly=false; el.focus(); el.select();
+  document.getElementById("cpf_aviso").style.display="none"; cpfEdicaoHabilitada=true;
 }
+function desbloquearCPF(){ document.getElementById("cpf").readOnly=false; document.getElementById("cpf_aviso").style.display="none"; cpfEdicaoHabilitada=false; }
 
-/**
- * Desbloqueia o CPF sem aviso (usado em novo cadastro).
- */
-function desbloquearCPF(){
-  const el = document.getElementById("cpf");
-  el.readOnly = false;
-  document.getElementById("cpf_aviso").style.display = "none";
-  cpfEdicaoHabilitada = false;
-}
-
-/* ══════════════════════════════════════════
-   TABS
-══════════════════════════════════════════ */
 function mudarTab(tab, btn){
-  document.querySelectorAll(".tab-panel").forEach(el => el.classList.remove("active"));
-  document.querySelectorAll(".side-btn").forEach(el => el.classList.remove("active"));
-  document.getElementById("tab-" + tab).classList.add("active");
-  btn.classList.add("active");
-  abaAtiva = tab;
-  atualizarProgresso();
+  document.querySelectorAll(".tab-panel").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".side-btn").forEach(el=>el.classList.remove("active"));
+  document.getElementById("tab-"+tab).classList.add("active");
+  btn.classList.add("active"); abaAtiva=tab; atualizarProgresso();
 }
 
-/* ══════════════════════════════════════════
-   FORM HELPERS
-══════════════════════════════════════════ */
-function getPayload(){
-  const obj = {};
-  campos.forEach(c => {
-    const el = document.getElementById(c);
-    if(el && el.value !== "") obj[c] = el.value;
-  });
-  return obj;
-}
+function getPayload(){ const obj={}; campos.forEach(c=>{ const el=document.getElementById(c); if(el&&el.value!=="")obj[c]=el.value; }); return obj; }
 
 function setForm(data){
-  campos.forEach(c => {
-    const el = document.getElementById(c);
-    if(!el) return;
-    if(c === "hora_entrada" || c === "hora_saida"){
-      el.value = data[c] ? data[c].substring(0,5) : "";
-    } else {
-      el.value = data[c] || "";
-    }
-  });
-  const campo = document.getElementById("campo_data_inativacao");
-  if(campo) campo.style.display = data.status === "Inativo" ? "" : "none";
-
-  ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id => {
-    const el = document.getElementById(id);
-    if(el && el.value) el.dispatchEvent(new Event('input'));
-  });
+  campos.forEach(c=>{ const el=document.getElementById(c); if(!el)return; el.value=(c==="hora_entrada"||c==="hora_saida")?(data[c]?data[c].substring(0,5):""):(data[c]||""); });
+  const campo=document.getElementById("campo_data_inativacao"); if(campo) campo.style.display=data.status==="Inativo"?"":"none";
+  ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id=>{ const el=document.getElementById(id); if(el&&el.value) el.dispatchEvent(new Event('input')); });
 }
 
-/* ══════════════════════════════════════════
-   TABELA PRINCIPAL
-══════════════════════════════════════════ */
 async function carregar(){
-  if(!window.usuarioLogado){
-    setTimeout(carregar, 100);
-    return;
-  }
-  const u = window.usuarioLogado;
-  const isAdmin = u && u.role === "admin";
-  const podeNovo = u && (u.role === "admin" || u.role === "recepcionista");
-
-  // Mostrar/esconder botao Novo Cadastro apos saber o role
-  const btnNovo = document.getElementById("btnNovoCadastro");
-  if(btnNovo) btnNovo.style.display = podeNovo ? "" : "none";
-  const statusFiltro = document.getElementById("filtroStatus").value;
-
-  let query = client.from("terapeutas")
-    .select("cpf,nome_profissional,status,cargo").order("nome_profissional");
-  if(statusFiltro) query = query.eq("status", statusFiltro);
-  // Operadora: so ve o proprio registro. Admin e recepcionista veem todos.
-  const soVeADela = u && u.role === "operadora" && u.cpf;
-  if(soVeADela) query = query.eq("cpf", u.cpf);
-
-  const {data, error} = await query;
+  if(!window.usuarioLogado){ setTimeout(carregar,100); return; }
+  const u=window.usuarioLogado;
+  const podeNovo=u&&(u.role==="admin"||u.role==="recepcionista");
+  const btnNovo=document.getElementById("btnNovoCadastro");
+  if(btnNovo) btnNovo.style.display=podeNovo?"":"none";
+  const statusFiltro=document.getElementById("filtroStatus").value;
+  let query=client.from("terapeutas").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
+  if(statusFiltro) query=query.eq("status",statusFiltro);
+  if(u&&u.role==="operadora"&&u.cpf) query=query.eq("cpf",u.cpf);
+  const {data,error}=await query;
   if(error){ console.error(error); return; }
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-  data.forEach(t => {
-    const podeExcluir = u && (u.role === "admin" || u.role === "recepcionista");
-    const acoes = podeExcluir
-      ? `<button onclick="editar('${t.cpf}')">Editar</button>
-         <button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`
-      : `<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;
-    tbody.innerHTML += `
-    <tr>
-      <td>${t.nome_profissional||""}</td>
-      <td>${t.cargo||""}</td>
-      <td>${fmtCPFDisplay(t.cpf)}</td>
-      <td>${t.status||""}</td>
-      <td>${acoes}</td>
-    </tr>`;
+  const tbody=document.getElementById("lista"); tbody.innerHTML="";
+  data.forEach(t=>{
+    const podeExcluir=u&&(u.role==="admin"||u.role==="recepcionista");
+    const acoes=podeExcluir?`<button onclick="editar('${t.cpf}')">Editar</button><button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`:`<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;
+    tbody.innerHTML+=`<tr><td>${t.nome_profissional||""}</td><td>${t.cargo||""}</td><td>${fmtCPFDisplay(t.cpf)}</td><td>${t.status||""}</td><td>${acoes}</td></tr>`;
   });
-
   filtrarTabela();
 }
 
 function filtrarTabela(){
-  const filtro = document.getElementById("pesquisaNome").value.toLowerCase();
-  document.querySelectorAll("#lista tr").forEach(linha => {
-    linha.style.display = linha.children[0].innerText.toLowerCase().includes(filtro) ? "" : "none";
-  });
+  const filtro=document.getElementById("pesquisaNome").value.toLowerCase();
+  document.querySelectorAll("#lista tr").forEach(linha=>{ linha.style.display=linha.children[0].innerText.toLowerCase().includes(filtro)?"":"none"; });
 }
 
-/* ══════════════════════════════════════════
-   MODAL
-══════════════════════════════════════════ */
 function resetModal(){
-  campos.forEach(c => { const el = document.getElementById(c); if(el) el.value = ""; });
-  document.getElementById("hora_entrada").value = "09:00";
-  document.getElementById("hora_saida").value   = "18:00";
-  mudarTab("pessoais", document.querySelector(".side-btn"));
+  campos.forEach(c=>{ const el=document.getElementById(c); if(el) el.value=""; });
+  document.getElementById("hora_entrada").value="09:00"; document.getElementById("hora_saida").value="18:00";
+  mudarTab("pessoais",document.querySelector(".side-btn"));
 }
 
 function abrirNovo(){
-  cpfAtual = null;
-  cpfEdicaoHabilitada = false;
-  resetModal();
-  desbloquearCPF();
-  document.getElementById("modalTitulo").textContent = "Novo Cadastro";
-  document.getElementById("tabDocsBtn").style.display = "none";
-  document.getElementById("progressWrap").style.display = "inline-flex";
-  abaAtiva = "pessoais";
-  atualizarProgresso();
-
-  const u = window.usuarioLogado;
-  const isAdmin = u && u.role === "admin";
-  const cpfLimpo = (u && u.cpf ? u.cpf : "").replace(/[^0-9]/g,"");
-  const emailLimpo = (u && u.email ? u.email : "").toLowerCase();
-  const SUPER_CPFS = ['42372412829','36589362823'];
-  const SUPER_EMAILS = ['viniciusleitesouza_1998@hotmail.com'];
-  const isSuperAdmin = SUPER_CPFS.includes(cpfLimpo) || SUPER_EMAILS.includes(emailLimpo);
-  const elRole = document.getElementById("role_usuario");
-  if(elRole) elRole.value = "operadora";
-
-  document.getElementById("modal").style.display = "flex";
+  cpfAtual=null; cpfEdicaoHabilitada=false; resetModal(); desbloquearCPF();
+  document.getElementById("modalTitulo").textContent="Novo Cadastro";
+  document.getElementById("tabDocsBtn").style.display="none";
+  document.getElementById("progressWrap").style.display="inline-flex";
+  abaAtiva="pessoais"; atualizarProgresso();
+  document.getElementById("modal").style.display="flex";
 }
 
 async function editar(cpf){
-  cpfAtual = cpf;
-  cpfEdicaoHabilitada = false;
-  const {data, error} = await client.from("terapeutas").select("*").eq("cpf", cpf).single();
+  cpfAtual=cpf; cpfEdicaoHabilitada=false;
+  const {data,error}=await client.from("terapeutas").select("*").eq("cpf",cpf).single();
   if(error){ console.error(error); return; }
-
-  resetModal();
-  setForm(data);
-  bloquearCPF(); // CPF bloqueado por padrão na edição
-  document.getElementById("modalTitulo").textContent = data.nome_profissional || "Editar Cadastro";
-  document.getElementById("tabDocsBtn").style.display = "";
-  document.getElementById("progressWrap").style.display = "inline-flex";
-  abaAtiva = "pessoais";
-  setTimeout(atualizarProgresso, 50);
-  carregarDocs(cpf);
-
-  const u = window.usuarioLogado;
-  const isAdmin = u && u.role === "admin";
-  const isSuperAdmin = ['42372412829','36589362823'].includes((u&&u.cpf?u.cpf:'').replace(/[^0-9]/g,''))
-    || ['viniciusleitesouza_1998@hotmail.com'].includes((u&&u.email?u.email:'').toLowerCase());
-  if(isAdmin){
-    // Busca perfil: primeiro pelo cpf_terapeuta, depois pelo email da terapeuta como fallback
-    (async () => {
-      let perfil = null;
-
-      const {data: p1} = await client
-        .from("perfis").select("email,role").eq("cpf_terapeuta", cpf).limit(1);
-      if(p1 && p1.length > 0){
-        perfil = p1[0];
-      } else if(data.email){
-        const {data: p2} = await client
-          .from("perfis").select("email,role").eq("email", data.email.toLowerCase()).limit(1);
-        if(p2 && p2.length > 0) perfil = p2[0];
+  resetModal(); setForm(data); bloquearCPF();
+  document.getElementById("modalTitulo").textContent=data.nome_profissional||"Editar Cadastro";
+  document.getElementById("tabDocsBtn").style.display="";
+  document.getElementById("progressWrap").style.display="inline-flex";
+  abaAtiva="pessoais"; setTimeout(atualizarProgresso,50); carregarDocs(cpf);
+  const u=window.usuarioLogado;
+  if(u&&u.role==="admin"){
+    (async()=>{
+      let perfil=null;
+      const {data:p1}=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);
+      if(p1&&p1.length>0){ perfil=p1[0]; } else if(data.email){
+        const {data:p2}=await client.from("perfis").select("email,role").eq("email",data.email.toLowerCase()).limit(1);
+        if(p2&&p2.length>0) perfil=p2[0];
       }
-
-
-      const elRole = document.getElementById("role_usuario");
-      if(elRole && isAdmin) elRole.value = perfil ? (perfil.role || "operadora") : "operadora";
+      const elRole=document.getElementById("role_usuario");
+      if(elRole) elRole.value=perfil?(perfil.role||"operadora"):"operadora";
     })();
   }
-
-  document.getElementById("modal").style.display = "flex";
+  document.getElementById("modal").style.display="flex";
 }
 
-function fecharModal(){
-  document.getElementById("modal").style.display = "none";
-}
+function fecharModal(){ document.getElementById("modal").style.display="none"; }
 
-/* ══════════════════════════════════════════
-   SALVAR (com suporte a troca de CPF)
-══════════════════════════════════════════ */
 async function salvar(){
-  const u = window.usuarioLogado;
-  const isAdmin = u && u.role === "admin";
-  const payload = getPayload();
-
-  if(!payload.nome_completo || !payload.nome_profissional || !payload.email){
-    alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");
-    return;
-  }
-
-  /* ── NOVO CADASTRO ── */
+  const u=window.usuarioLogado; const payload=getPayload();
+  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){ alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email."); return; }
   if(!cpfAtual){
     if(!payload.cpf){ alert("CPF é obrigatório."); return; }
-    const cpfNovo = limparCPF(payload.cpf);
-
-    const {data: existente} = await client
-      .from("terapeutas").select("cpf").eq("cpf", cpfNovo).limit(1);
-    if(existente && existente.length > 0){
-      alert("CPF já cadastrado. Verifique o número informado.");
-      return;
-    }
-
-    const {error} = await client.from("terapeutas").insert({...payload, cpf: cpfNovo});
-    if(error){ alert("Erro ao salvar: " + error.message); return; }
-
-    cpfAtual = cpfNovo;
-    document.getElementById("tabDocsBtn").style.display = "";
-    carregarDocs(cpfAtual);
-
-  /* ── EDIÇÃO COM TROCA DE CPF ── */
-  } else if(cpfEdicaoHabilitada && limparCPF(payload.cpf) !== limparCPF(cpfAtual)){
-    const cpfAntigo = limparCPF(cpfAtual);
-    const cpfNovo   = limparCPF(payload.cpf);
-
-    if(!cpfNovo || cpfNovo.length !== 11){
-      alert("CPF inválido. Informe os 11 dígitos corretamente.");
-      return;
-    }
-
-    // Verificar se o CPF novo já existe
-    const {data: existente} = await client
-      .from("terapeutas").select("cpf").eq("cpf", cpfNovo).limit(1);
-    if(existente && existente.length > 0){
-      alert("O CPF informado já pertence a outro cadastro.");
-      return;
-    }
-
-    // 1. Buscar dados atuais completos para preservar campos não editados
-    const {data: dadosAtuais} = await client
-      .from("terapeutas").select("*").eq("cpf", cpfAntigo).single();
-
-    // 2. Inserir registro com novo CPF (merge dados atuais + payload)
-    const novoRegistro = {...dadosAtuais, ...payload, cpf: cpfNovo};
-    delete novoRegistro.created_at; // evitar conflito de campos gerados pelo banco
-    const {error: errInsert} = await client.from("terapeutas").insert(novoRegistro);
-    if(errInsert){ alert("Erro ao criar registro com novo CPF: " + errInsert.message); return; }
-
-    // 3. Migrar documentos
-    const {error: errDocs} = await client
-      .from("documentos")
-      .update({ equipe_id: cpfNovo })
-      .eq("equipe_id", cpfAntigo);
-    if(errDocs) console.warn("Aviso ao migrar documentos:", errDocs.message);
-
-    // 4. Migrar solicitações
-    const {error: errSol} = await client
-      .from("solicitacoes")
-      .update({ terapeuta_cpf: cpfNovo })
-      .eq("terapeuta_cpf", cpfAntigo);
-    if(errSol) console.warn("Aviso ao migrar solicitações:", errSol.message);
-
-    // 5. Migrar perfil de login
-    const {error: errPerfil} = await client
-      .from("perfis")
-      .update({ cpf_terapeuta: cpfNovo })
-      .eq("cpf_terapeuta", cpfAntigo);
-    if(errPerfil) console.warn("Aviso ao migrar perfil:", errPerfil.message);
-
-    // 6. Excluir registro antigo
-    const {error: errDel} = await client.from("terapeutas").delete().eq("cpf", cpfAntigo);
-    if(errDel){ alert("Erro ao remover registro antigo: " + errDel.message); return; }
-
-    cpfAtual = cpfNovo;
-    cpfEdicaoHabilitada = false;
-    bloquearCPF();
-    // Atualizar o campo CPF visualmente com a máscara
-    const elCPF = document.getElementById("cpf");
-    elCPF.value = fmtCPF(cpfNovo);
-
-  /* ── EDIÇÃO NORMAL (sem troca de CPF) ── */
+    const cpfNovo=limparCPF(payload.cpf);
+    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
+    if(existente&&existente.length>0){ alert("CPF já cadastrado."); return; }
+    const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});
+    if(error){ alert("Erro ao salvar: "+error.message); return; }
+    cpfAtual=cpfNovo; document.getElementById("tabDocsBtn").style.display=""; carregarDocs(cpfAtual);
+  } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
+    const cpfAntigo=limparCPF(cpfAtual); const cpfNovo=limparCPF(payload.cpf);
+    if(!cpfNovo||cpfNovo.length!==11){ alert("CPF inválido."); return; }
+    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
+    if(existente&&existente.length>0){ alert("CPF já pertence a outro cadastro."); return; }
+    const {data:dadosAtuais}=await client.from("terapeutas").select("*").eq("cpf",cpfAntigo).single();
+    const novoRegistro={...dadosAtuais,...payload,cpf:cpfNovo}; delete novoRegistro.created_at;
+    const {error:errInsert}=await client.from("terapeutas").insert(novoRegistro);
+    if(errInsert){ alert("Erro ao criar registro: "+errInsert.message); return; }
+    await client.from("documentos").update({equipe_id:cpfNovo}).eq("equipe_id",cpfAntigo);
+    await client.from("solicitacoes").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
+    await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("cpf_terapeuta",cpfAntigo);
+    const {error:errDel}=await client.from("terapeutas").delete().eq("cpf",cpfAntigo);
+    if(errDel){ alert("Erro ao remover registro antigo: "+errDel.message); return; }
+    cpfAtual=cpfNovo; cpfEdicaoHabilitada=false; bloquearCPF();
+    document.getElementById("cpf").value=fmtCPF(cpfNovo);
   } else {
-    // Operadora so pode editar o proprio registro
-    if(u && u.role === "operadora" && u.cpf && u.cpf !== cpfAtual){
-      alert("Você não tem permissão para editar este registro.");
-      return;
-    }
-    const updatePayload = {...payload};
-    delete updatePayload.cpf; // CPF não muda neste fluxo
-    const {error} = await client.from("terapeutas").update(updatePayload).eq("cpf", cpfAtual);
-    if(error){ alert("Erro ao salvar: " + error.message); return; }
+    if(u&&u.role==="operadora"&&u.cpf&&u.cpf!==cpfAtual){ alert("Sem permissão."); return; }
+    const updatePayload={...payload}; delete updatePayload.cpf;
+    const {error}=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);
+    if(error){ alert("Erro ao salvar: "+error.message); return; }
   }
-
-  /* ── VINCULAR LOGIN / ROLE ── */
-  const cpfParaVincular = cpfAtual;
-  const isAdminU        = u && u.role === "admin";
-
-  // Role manual definido pelo admin via campo "Perfil de Acesso"
-  const roleManual = isAdminU ? (document.getElementById("role_usuario")?.value || null) : null;
-
-  // Role automático baseado no cargo — sempre calculado, mas só aplica se nao houver override manual
-  const cargo = payload.cargo || "";
-  let roleAutomatico = null;
-  if(cargo === "Terapeuta Feminina" || cargo === "Terapeuta Masculino"){
-    roleAutomatico = "operadora";
-  } else if(cargo === "Recepcionista"){
-    roleAutomatico = "recepcionista";
-  }
-
-  // Role final: manual (admin sobrescreve) tem prioridade sobre automático
-  const novoRole = roleManual || roleAutomatico;
-
-
-    if(cpfParaVincular && novoRole) {
-    let perfilId = null;
-
-    // Buscar perfil pelo cpf_terapeuta
-    const {data: p1} = await client
-      .from("perfis").select("id").eq("cpf_terapeuta", cpfParaVincular).limit(1);
-    if(p1 && p1.length > 0) perfilId = p1[0].id;
-
-    // Fallback: buscar pelo email cadastrado
-    if(!perfilId && payload.email) {
-      const {data: p2} = await client
-        .from("perfis").select("id").eq("email", payload.email.trim().toLowerCase()).limit(1);
-      if(p2 && p2.length > 0) perfilId = p2[0].id;
+  const cpfParaVincular=cpfAtual; const isAdminU=u&&u.role==="admin";
+  const roleManual=isAdminU?(document.getElementById("role_usuario")?.value||null):null;
+  const cargo=payload.cargo||""; let roleAutomatico=null;
+  if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino") roleAutomatico="operadora";
+  else if(cargo==="Recepcionista") roleAutomatico="recepcionista";
+  const novoRole=roleManual||roleAutomatico;
+  if(cpfParaVincular&&novoRole){
+    let perfilId=null;
+    const {data:p1}=await client.from("perfis").select("id").eq("cpf_terapeuta",cpfParaVincular).limit(1);
+    if(p1&&p1.length>0) perfilId=p1[0].id;
+    if(!perfilId&&payload.email){
+      const {data:p2}=await client.from("perfis").select("id").eq("email",payload.email.trim().toLowerCase()).limit(1);
+      if(p2&&p2.length>0) perfilId=p2[0].id;
     }
-
-    if(perfilId) {
-      await client.from("perfis").update({ cpf_terapeuta: cpfParaVincular, role: novoRole }).eq("id", perfilId);
-    }
+    if(perfilId) await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId);
   }
-
-  carregar();
-  fecharModal();
+  carregar(); fecharModal();
 }
 
-/* ══════════════════════════════════════════
-   EXCLUIR
-══════════════════════════════════════════ */
 async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
-
-  const {data: docs} = await client
-    .from("documentos").select("id, url").eq("equipe_id", cpf);
-
-  if(docs && docs.length > 0){
-    const paths = docs
-      .map(d => d.url.split("/storage/v1/object/public/documentos/")[1])
-      .filter(Boolean)
-      .map(p => decodeURIComponent(p));
-    if(paths.length > 0)
-      await client.storage.from("documentos").remove(paths);
-    await client.from("documentos").delete().eq("equipe_id", cpf);
+  const {data:docs}=await client.from("documentos").select("id,url").eq("equipe_id",cpf);
+  if(docs&&docs.length>0){
+    const paths=docs.map(d=>d.url.split("/storage/v1/object/public/documentos/")[1]).filter(Boolean).map(p=>decodeURIComponent(p));
+    if(paths.length>0) await client.storage.from("documentos").remove(paths);
+    await client.from("documentos").delete().eq("equipe_id",cpf);
   }
-
-  await client.from("solicitacoes").delete().eq("terapeuta_cpf", cpf);
-
-  const {error} = await client.from("terapeutas").delete().eq("cpf", cpf);
-  if(error){ alert("Erro ao excluir: " + error.message); return; }
-
+  await client.from("solicitacoes").delete().eq("terapeuta_cpf",cpf);
+  const {error}=await client.from("terapeutas").delete().eq("cpf",cpf);
+  if(error){ alert("Erro ao excluir: "+error.message); return; }
   carregar();
 }
 
-/* ══════════════════════════════════════════
-   DOCUMENTOS
-══════════════════════════════════════════ */
-function limparNome(nome){
-  return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
-}
-
-function iconeDoc(nome){
-  const ext = (nome||"").split(".").pop().toLowerCase();
-  if(["jpg","jpeg","png","gif","webp"].includes(ext)) return "fa-image";
-  if(ext === "pdf") return "fa-file-pdf";
-  if(["doc","docx"].includes(ext)) return "fa-file-word";
-  return "fa-file-alt";
-}
+function limparNome(nome){ return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_"); }
+function iconeDoc(nome){ const ext=(nome||"").split(".").pop().toLowerCase(); if(["jpg","jpeg","png","gif","webp"].includes(ext))return "fa-image"; if(ext==="pdf")return "fa-file-pdf"; if(["doc","docx"].includes(ext))return "fa-file-word"; return "fa-file-alt"; }
 
 async function carregarDocs(cpf){
-  const {data, error} = await client
-    .from("documentos").select("*").eq("equipe_id", cpf).order("created_at",{ascending:false});
-
-  const lista = document.getElementById("docLista");
-  const badge = document.getElementById("docBadge");
-
-  if(error || !data || data.length === 0){
-    lista.innerHTML = `<div class="doc-empty">Nenhum documento anexado.</div>`;
-    badge.style.display = "none";
-    return;
-  }
-
-  badge.textContent = data.length;
-  badge.style.display = "";
-
-  lista.innerHTML = data.map(d => `
-    <div class="doc-item" id="doc-${d.id}">
-      <div class="doc-item-left">
-        <div class="doc-icon"><i class="fa ${iconeDoc(d.nome_arquivo)}"></i></div>
-        <div>
-          <div class="doc-name">${d.nome_arquivo}</div>
-          <div class="doc-tipo">${d.tipo} · ${new Date(d.created_at).toLocaleDateString('pt-BR')}</div>
-        </div>
-      </div>
-      <div class="doc-item-right">
-        <a href="${d.url}" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a>
-        <button class="btn-del" onclick="excluirDoc('${d.id}','${d.url}')" title="Excluir">
-          <i class="fa fa-trash"></i>
-        </button>
-      </div>
-    </div>
-  `).join("");
+  const {data,error}=await client.from("documentos").select("*").eq("equipe_id",cpf).order("created_at",{ascending:false});
+  const lista=document.getElementById("docLista"); const badge=document.getElementById("docBadge");
+  if(error||!data||data.length===0){ lista.innerHTML=`<div class="doc-empty">Nenhum documento anexado.</div>`; badge.style.display="none"; return; }
+  badge.textContent=data.length; badge.style.display="";
+  lista.innerHTML=data.map(d=>`<div class="doc-item" id="doc-${d.id}"><div class="doc-item-left"><div class="doc-icon"><i class="fa ${iconeDoc(d.nome_arquivo)}"></i></div><div><div class="doc-name">${d.nome_arquivo}</div><div class="doc-tipo">${d.tipo} · ${new Date(d.created_at).toLocaleDateString('pt-BR')}</div></div></div><div class="doc-item-right"><a href="${d.url}" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc('${d.id}','${d.url}')"><i class="fa fa-trash"></i></button></div></div>`).join("");
 }
 
 async function uploadDoc(){
   if(!cpfAtual){ alert("Salve o cadastro antes de anexar documentos."); return; }
-  const tipo = document.getElementById("doc_tipo").value;
-  const file = document.getElementById("doc_arquivo").files[0];
+  const tipo=document.getElementById("doc_tipo").value; const file=document.getElementById("doc_arquivo").files[0];
   if(!file){ alert("Selecione um arquivo."); return; }
-
-  const statusEl = document.getElementById("uploadStatus");
-  statusEl.style.display = "block";
-
-  const fileName = `${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
-  const {error: uploadError} = await client.storage.from("documentos").upload(fileName, file);
-
-  if(uploadError){ statusEl.style.display = "none"; alert("Erro no upload: " + uploadError.message); return; }
-
-  const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
-  const {error} = await client.from("documentos").insert({
-    equipe_id: cpfAtual, tipo, nome_arquivo: file.name, url: urlData.publicUrl
-  });
-
-  statusEl.style.display = "none";
-  if(error){ alert("Erro ao salvar: " + error.message); return; }
-  document.getElementById("doc_arquivo").value = "";
-  carregarDocs(cpfAtual);
+  const statusEl=document.getElementById("uploadStatus"); statusEl.style.display="block";
+  const fileName=`${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
+  const {error:uploadError}=await client.storage.from("documentos").upload(fileName,file);
+  if(uploadError){ statusEl.style.display="none"; alert("Erro no upload: "+uploadError.message); return; }
+  const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
+  const {error}=await client.from("documentos").insert({equipe_id:cpfAtual,tipo,nome_arquivo:file.name,url:urlData.publicUrl});
+  statusEl.style.display="none";
+  if(error){ alert("Erro ao salvar: "+error.message); return; }
+  document.getElementById("doc_arquivo").value=""; carregarDocs(cpfAtual);
 }
 
-async function excluirDoc(id, url){
+async function excluirDoc(id,url){
   if(!confirm("Excluir este documento?")) return;
-  const path = url.split("/storage/v1/object/public/documentos/")[1];
+  const path=url.split("/storage/v1/object/public/documentos/")[1];
   if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
-  await client.from("documentos").delete().eq("id", id);
-  const el = document.getElementById("doc-" + id);
-  if(el) el.remove();
-  carregarDocs(cpfAtual);
+  await client.from("documentos").delete().eq("id",id); carregarDocs(cpfAtual);
 }
 
-/* ══════════════════════════════════════════
-   STATUS / INATIVAÇÃO
-══════════════════════════════════════════ */
 function aoMudarStatus(select){
-  const campo = document.getElementById("campo_data_inativacao");
-  const input = document.getElementById("data_inativacao");
-  if(select.value === "Inativo"){
-    campo.style.display = "";
-    if(!input.value) input.value = new Date().toISOString().split("T")[0];
-  } else {
-    campo.style.display = "none";
-    input.value = "";
-  }
+  const campo=document.getElementById("campo_data_inativacao"); const input=document.getElementById("data_inativacao");
+  if(select.value==="Inativo"){ campo.style.display=""; if(!input.value) input.value=new Date().toISOString().split("T")[0]; }
+  else { campo.style.display="none"; input.value=""; }
 }
 
-/* ══════════════════════════════════════════
-   PROGRESSO CIRCULAR
-══════════════════════════════════════════ */
-const CAMPOS_POR_ABA = {
-  pessoais:  [
-    {id:"nome_completo",    label:"Nome Completo"},
-    {id:"nome_profissional",label:"Nome Profissional"},
-    {id:"cpf",              label:"CPF"},
-    {id:"email",            label:"Email"},
-  ],
-  contatos:  [
-    {id:"telefone",         label:"Telefone"},
-  ],
-  endereco:  [
-    {id:"cep",              label:"CEP"},
-    {id:"rua",              label:"Rua"},
-    {id:"cidade",           label:"Cidade"},
-    {id:"uf",               label:"UF"},
-  ],
-  pagamento: [
-    {id:"pix_tipo",         label:"Tipo PIX"},
-    {id:"pix_chave",        label:"Chave PIX"},
-  ],
-  funcional: [
-    {id:"cargo",            label:"Cargo"},
-    {id:"status",           label:"Status"},
-    {id:"data_inicio",      label:"Data de Início"},
-  ],
-  docs: [],
+const CAMPOS_POR_ABA={
+  pessoais:[{id:"nome_completo",label:"Nome Completo"},{id:"nome_profissional",label:"Nome Profissional"},{id:"cpf",label:"CPF"},{id:"email",label:"Email"}],
+  contatos:[{id:"telefone",label:"Telefone"}],
+  endereco:[{id:"cep",label:"CEP"},{id:"rua",label:"Rua"},{id:"cidade",label:"Cidade"},{id:"uf",label:"UF"}],
+  pagamento:[{id:"pix_tipo",label:"Tipo PIX"},{id:"pix_chave",label:"Chave PIX"}],
+  funcional:[{id:"cargo",label:"Cargo"},{id:"status",label:"Status"},{id:"data_inicio",label:"Data de Início"}],
+  docs:[],
 };
-const TODOS_CAMPOS = Object.values(CAMPOS_POR_ABA).flat();
-let abaAtiva = "pessoais";
+const TODOS_CAMPOS=Object.values(CAMPOS_POR_ABA).flat();
+let abaAtiva="pessoais";
 
 function atualizarProgresso(){
-  const wrap = document.getElementById("progressWrap");
-  if(!wrap || wrap.style.display === "none") return;
-
-  const total  = TODOS_CAMPOS.length;
-  const feitos = TODOS_CAMPOS.filter(c => {
-    const el = document.getElementById(c.id);
-    return el && el.value && el.value.trim() !== "";
-  });
-  const pct    = total > 0 ? Math.round((feitos.length / total) * 100) : 0;
-  const circum = 113;
-  const offset = circum - (circum * pct / 100);
-  const cor    = pct === 100 ? "#22c55e" : pct >= 50 ? "#f59e0b" : "#ef4444";
-
-  document.getElementById("progressPct").textContent = pct + "%";
-  document.getElementById("progressPct").style.color = cor;
-  const fill = document.getElementById("progressFill");
-  fill.style.strokeDashoffset = offset;
-  fill.style.stroke = cor;
-
-  const camposAba = CAMPOS_POR_ABA[abaAtiva] || [];
-  const feitosIds = feitos.map(c => c.id);
-  const tooltip   = document.getElementById("progressTooltip");
-
-  if(camposAba.length === 0){
-    tooltip.innerHTML = "<div style='color:#e5e7eb;font-size:12px'>Nenhum campo nesta aba.</div>";
-  } else {
-    const abaFeitos = camposAba.filter(c => feitosIds.includes(c.id));
-    const abaPct    = Math.round((abaFeitos.length / camposAba.length) * 100);
-    tooltip.innerHTML = `<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Esta aba: ${abaPct}% · Geral: ${pct}%</div>`
-      + camposAba.map(c => {
-          const ok = feitosIds.includes(c.id);
-          return `<div class="tooltip-item ${ok?'done':'missing'}"><i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i> ${c.label}</div>`;
-        }).join("")
-      + "<div style='border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px'>Passe para outras abas para ver os campos delas.</div>";
+  const wrap=document.getElementById("progressWrap"); if(!wrap||wrap.style.display==="none") return;
+  const total=TODOS_CAMPOS.length;
+  const feitos=TODOS_CAMPOS.filter(c=>{ const el=document.getElementById(c.id); return el&&el.value&&el.value.trim()!==""; });
+  const pct=total>0?Math.round((feitos.length/total)*100):0;
+  const circum=113; const offset=circum-(circum*pct/100);
+  const cor=pct===100?"#22c55e":pct>=50?"#f59e0b":"#ef4444";
+  document.getElementById("progressPct").textContent=pct+"%"; document.getElementById("progressPct").style.color=cor;
+  const fill=document.getElementById("progressFill"); fill.style.strokeDashoffset=offset; fill.style.stroke=cor;
+  const camposAba=CAMPOS_POR_ABA[abaAtiva]||[]; const feitosIds=feitos.map(c=>c.id);
+  const tooltip=document.getElementById("progressTooltip");
+  if(camposAba.length===0){ tooltip.innerHTML="<div style='color:#e5e7eb;font-size:12px'>Nenhum campo nesta aba.</div>"; }
+  else {
+    const abaFeitos=camposAba.filter(c=>feitosIds.includes(c.id));
+    const abaPct=Math.round((abaFeitos.length/camposAba.length)*100);
+    tooltip.innerHTML=`<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Esta aba: ${abaPct}% · Geral: ${pct}%</div>`
+      +camposAba.map(c=>{ const ok=feitosIds.includes(c.id); return `<div class="tooltip-item ${ok?'done':'missing'}"><i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i> ${c.label}</div>`; }).join("")
+      +"<div style='border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px'>Passe para outras abas para ver os campos delas.</div>";
   }
 }
 
-/* ══════════════════════════════════════════
-   INIT
-══════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded',()=>{
   aplicarMascaras();
-  TODOS_CAMPOS.forEach(c => {
-    const el = document.getElementById(c.id);
-    if(el) el.addEventListener("input",  atualizarProgresso);
-    if(el) el.addEventListener("change", atualizarProgresso);
-  });
-  document.getElementById("filtroStatus").addEventListener("change", carregar);
+  TODOS_CAMPOS.forEach(c=>{ const el=document.getElementById(c.id); if(el){ el.addEventListener("input",atualizarProgresso); el.addEventListener("change",atualizarProgresso); } });
+  document.getElementById("filtroStatus").addEventListener("change",carregar);
   carregar();
 });
 </script>

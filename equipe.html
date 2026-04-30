@@ -450,15 +450,26 @@ async function salvar(){
   if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino") roleAutomatico="usuario";
   else if(cargo==="Recepcionista") roleAutomatico="apoio";
   const novoRole=roleManual||roleAutomatico;
+  console.log("[ROLE] cpfParaVincular:", cpfParaVincular, "novoRole:", novoRole, "roleManual:", roleManual, "roleAutomatico:", roleAutomatico);
   if(cpfParaVincular&&novoRole){
     let perfilId=null;
-    const {data:p1}=await client.from("perfis").select("id").eq("cpf_terapeuta",cpfParaVincular).limit(1);
+    const {data:p1,error:ep1}=await client.from("perfis").select("id,role,cpf_terapeuta").eq("cpf_terapeuta",cpfParaVincular).limit(1);
+    console.log("[ROLE] busca por cpf_terapeuta:", p1, "erro:", ep1);
     if(p1&&p1.length>0) perfilId=p1[0].id;
     if(!perfilId&&payload.email){
-      const {data:p2}=await client.from("perfis").select("id").eq("email",payload.email.trim().toLowerCase()).limit(1);
+      const {data:p2,error:ep2}=await client.from("perfis").select("id,role,email").eq("email",payload.email.trim().toLowerCase()).limit(1);
+      console.log("[ROLE] busca por email:", p2, "erro:", ep2);
       if(p2&&p2.length>0) perfilId=p2[0].id;
     }
-    if(perfilId) await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId);
+    console.log("[ROLE] perfilId encontrado:", perfilId);
+    if(perfilId){
+      const {data:upd, error:eUpd}=await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId).select();
+      console.log("[ROLE] update resultado:", upd, "erro:", eUpd);
+    } else {
+      console.warn("[ROLE] Nenhum perfil encontrado para atualizar!");
+    }
+  } else {
+    console.warn("[ROLE] Nao entrou no bloco — cpfParaVincular:", cpfParaVincular, "novoRole:", novoRole);
   }
   carregar(); fecharModal();
 }

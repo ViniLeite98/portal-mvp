@@ -221,6 +221,14 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>Data de Início no Hara</label><input type="date" id="data_inicio"></div>
           <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
           <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
+          <div class="field" id="campo_role" style="display:none">
+            <label>Perfil de Acesso</label>
+            <select id="role_usuario">
+              <option value="usuario">Usuário</option>
+              <option value="apoio">Apoio</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
           <div class="field">
             <label>Tem folga semanal?</label>
             <select id="tem_folga"><option value="">Selecione</option><option>Sim</option><option>Não</option></select>
@@ -322,18 +330,18 @@ function setForm(data){
 async function carregar(){
   if(!window.usuarioLogado){ setTimeout(carregar,100); return; }
   const u=window.usuarioLogado;
-  const podeNovo=u&&(u.role==="admin"||u.role==="recepcionista");
+  const podeNovo=u&&(u.role==="admin"||u.role==="apoio");
   const btnNovo=document.getElementById("btnNovoCadastro");
   if(btnNovo) btnNovo.style.display=podeNovo?"":"none";
   const statusFiltro=document.getElementById("filtroStatus").value;
   let query=client.from("terapeutas").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro) query=query.eq("status",statusFiltro);
-  if(u&&u.role==="operadora"&&u.cpf) query=query.eq("cpf",u.cpf);
+  if(u&&u.role==="usuario"&&u.cpf) query=query.eq("cpf",u.cpf);
   const {data,error}=await query;
   if(error){ console.error(error); return; }
   const tbody=document.getElementById("lista"); tbody.innerHTML="";
   data.forEach(t=>{
-    const podeExcluir=u&&(u.role==="admin"||u.role==="recepcionista");
+    const podeExcluir=u&&(u.role==="admin"||u.role==="apoio");
     const acoes=podeExcluir?`<button onclick="editar('${t.cpf}')">Editar</button><button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`:`<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;
     tbody.innerHTML+=`<tr><td>${t.nome_profissional||""}</td><td>${t.cargo||""}</td><td>${fmtCPFDisplay(t.cpf)}</td><td>${t.status||""}</td><td>${acoes}</td></tr>`;
   });
@@ -348,11 +356,15 @@ function filtrarTabela(){
 function resetModal(){
   campos.forEach(c=>{ const el=document.getElementById(c); if(el) el.value=""; });
   document.getElementById("hora_entrada").value="09:00"; document.getElementById("hora_saida").value="18:00";
+  const campoRole=document.getElementById("campo_role");
+  if(campoRole) campoRole.style.display=window.usuarioLogado?.role==="admin"?"":"none";
   mudarTab("pessoais",document.querySelector(".side-btn"));
 }
 
 function abrirNovo(){
   cpfAtual=null; cpfEdicaoHabilitada=false; resetModal(); desbloquearCPF();
+  document.getElementById("campo_role").style.display=window.usuarioLogado?.role==="admin"?"":"";
+  document.getElementById("role_usuario").value="usuario";
   document.getElementById("modalTitulo").textContent="Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display="none";
   document.getElementById("progressWrap").style.display="inline-flex";
@@ -371,6 +383,7 @@ async function editar(cpf){
   abaAtiva="pessoais"; setTimeout(atualizarProgresso,50); carregarDocs(cpf);
   const u=window.usuarioLogado;
   if(u&&u.role==="admin"){
+    document.getElementById("campo_role").style.display="";
     (async()=>{
       let perfil=null;
       const {data:p1}=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);
@@ -379,7 +392,7 @@ async function editar(cpf){
         if(p2&&p2.length>0) perfil=p2[0];
       }
       const elRole=document.getElementById("role_usuario");
-      if(elRole) elRole.value=perfil?(perfil.role||"operadora"):"operadora";
+      if(elRole) elRole.value=perfil?(perfil.role||"usuario"):"usuario";
     })();
   }
   document.getElementById("modal").style.display="flex";
@@ -415,7 +428,7 @@ async function salvar(){
     cpfAtual=cpfNovo; cpfEdicaoHabilitada=false; bloquearCPF();
     document.getElementById("cpf").value=fmtCPF(cpfNovo);
   } else {
-    if(u&&u.role==="operadora"&&u.cpf&&u.cpf!==cpfAtual){ alert("Sem permissão."); return; }
+    if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){ alert("Sem permissão."); return; }
     const updatePayload={...payload}; delete updatePayload.cpf;
     const {error}=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);
     if(error){ alert("Erro ao salvar: "+error.message); return; }
@@ -423,8 +436,8 @@ async function salvar(){
   const cpfParaVincular=cpfAtual; const isAdminU=u&&u.role==="admin";
   const roleManual=isAdminU?(document.getElementById("role_usuario")?.value||null):null;
   const cargo=payload.cargo||""; let roleAutomatico=null;
-  if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino") roleAutomatico="operadora";
-  else if(cargo==="Recepcionista") roleAutomatico="recepcionista";
+  if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino") roleAutomatico="usuario";
+  else if(cargo==="Recepcionista") roleAutomatico="apoio";
   const novoRole=roleManual||roleAutomatico;
   if(cpfParaVincular&&novoRole){
     let perfilId=null;

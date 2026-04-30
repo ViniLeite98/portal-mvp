@@ -3,32 +3,32 @@
  *
  * Roles:
  *   admin         → acesso total
- *   recepcionista → igual admin exceto dashboard
- *   operadora     → acesso restrito (só vê os próprios dados)
+ *   apoio         → igual admin exceto dashboard
+ *   usuario     → acesso restrito (só vê os próprios dados)
  */
 
 var AUTH_ROLE_EXIGIDO = (document.currentScript || {}).getAttribute("data-role") || null;
 
-var ROTAS = { admin: "equipe.html", recepcionista: "equipe.html", operadora: "equipe.html" };
+var ROTAS = { admin: "equipe.html", apoio: "equipe.html", usuario: "equipe.html" };
 
 var MENU = [
   { href:"dashboard.html",     icon:"fa-chart-line",         label:"Dashboard",      roles:["admin"] },
   { sep:true },
   { titulo:"CADASTROS" },
-  { href:"equipe.html",        icon:"fa-users",              label:"Cadastro de Pessoal",         roles:["admin","recepcionista","operadora"] },
-  { href:"clientes.html",      icon:"fa-user",               label:"Clientes",       roles:["admin","recepcionista"] },
-  { href:"servicos.html",      icon:"fa-hand-holding-heart", label:"Serviços",       roles:["admin","recepcionista"] },
-  { href:"certificacoes.html", icon:"fa-certificate",        label:"Certificações",  roles:["admin","recepcionista","operadora"] },
+  { href:"equipe.html",        icon:"fa-users",              label:"Cadastro de Pessoal",         roles:["admin","apoio","usuario"] },
+  { href:"clientes.html",      icon:"fa-user",               label:"Clientes",       roles:["admin","apoio"] },
+  { href:"servicos.html",      icon:"fa-hand-holding-heart", label:"Serviços",       roles:["admin","apoio"] },
+  { href:"certificacoes.html", icon:"fa-certificate",        label:"Certificações",  roles:["admin","apoio","usuario"] },
   { sep:true },
   { titulo:"OPERACIONAL" },
-  { href:"atendimentos.html",  icon:"fa-calendar-check",     label:"Atendimentos",   roles:["admin","recepcionista","operadora"] },
-  { href:"escalas.html",       icon:"fa-calendar-days",      label:"Escalas",        roles:["admin","recepcionista","operadora"] },
-  { href:"solicitacoes.html",  icon:"fa-file-lines",         label:"Solicitações",   roles:["admin","recepcionista","operadora"] },
+  { href:"atendimentos.html",  icon:"fa-calendar-check",     label:"Atendimentos",   roles:["admin","apoio","usuario"] },
+  { href:"escalas.html",       icon:"fa-calendar-days",      label:"Escalas",        roles:["admin","apoio","usuario"] },
+  { href:"solicitacoes.html",  icon:"fa-file-lines",         label:"Solicitações",   roles:["admin","apoio","usuario"] },
   { sep:true },
   { titulo:"FINANCEIRO" },
-  { href:"despesas.html",      icon:"fa-receipt",            label:"Despesas",       roles:["admin","recepcionista","operadora"] },
-  { href:"fluxo_caixa.html",   icon:"fa-cash-register",      label:"Fluxo de Caixa",roles:["admin","recepcionista","operadora"] },
-  { href:"estoque.html",       icon:"fa-boxes-stacked",      label:"Estoque",        roles:["admin","recepcionista","operadora"] },
+  { href:"despesas.html",      icon:"fa-receipt",            label:"Despesas",       roles:["admin","apoio","usuario"] },
+  { href:"fluxo_caixa.html",   icon:"fa-cash-register",      label:"Fluxo de Caixa",roles:["admin","apoio","usuario"] },
+  { href:"estoque.html",       icon:"fa-boxes-stacked",      label:"Estoque",        roles:["admin","apoio","usuario"] },
   { sep:true, roles:["admin"] },
   { titulo:"CONFIGURAÇÕES",    roles:["admin"] },
   { href:"parametros.html",    icon:"fa-sliders",            label:"Parâmetros",     roles:["admin"] },
@@ -37,9 +37,7 @@ var MENU = [
 function authBuildSidebar(role, nome) {
   var pag    = location.pathname.split("/").pop() || "";
   var inicial = (nome || "?")[0].toUpperCase();
-  var rotulo  = role === "admin" ? "Administrador"
-              : role === "recepcionista" ? "Recepcionista"
-              : "Operadora";
+  var rotulo = role === "admin" ? "Administrador" : role === "apoio" ? "Apoio" : "Usuário";
   var itens   = "";
 
   MENU.forEach(function(item) {
@@ -102,7 +100,7 @@ function authInit() {
       .single()
       .then(function(res2) {
         var perfil = res2.data;
-        var role   = (perfil && perfil.role)          || "operadora";
+        var role   = (perfil && perfil.role)          || "usuario";
         var nome   = (perfil && perfil.nome)          || (perfil && perfil.email) || session.user.email;
         var email  = (perfil && perfil.email)         || session.user.email;
         var cpf    = (perfil && perfil.cpf_terapeuta) || null;
@@ -114,8 +112,8 @@ function authInit() {
           return;
         }
 
-        // Se operadora tem CPF vinculado, buscar nome profissional
-        if (role !== "admin" && role !== "recepcionista" && cpf) {
+        // Se usuario tem CPF vinculado, buscar nome profissional
+        if (role !== "admin" && role !== "apoio" && cpf) {
           client.from("terapeutas")
             .select("nome_profissional")
             .eq("cpf", cpf)

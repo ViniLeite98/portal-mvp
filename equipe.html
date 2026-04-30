@@ -222,7 +222,12 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>Hora de Entrada</label><input type="time" id="hora_entrada" value="09:00"></div>
           <div class="field"><label>Hora de Saída</label><input type="time" id="hora_saida" value="18:00"></div>
           <div class="field" id="campo_role" style="display:none">
-            <label>Perfil de Acesso</label>
+            <label style="display:flex;align-items:center;gap:6px">
+              Perfil de Acesso
+              <span style="font-size:10px;background:#fee2e2;color:#991b1b;border-radius:4px;padding:1px 6px;font-weight:700">
+                <i class="fa fa-lock"></i> Só Admin
+              </span>
+            </label>
             <select id="role_usuario">
               <option value="usuario">Usuário</option>
               <option value="apoio">Apoio</option>
@@ -357,14 +362,19 @@ function resetModal(){
   campos.forEach(c=>{ const el=document.getElementById(c); if(el) el.value=""; });
   document.getElementById("hora_entrada").value="09:00"; document.getElementById("hora_saida").value="18:00";
   const campoRole=document.getElementById("campo_role");
-  if(campoRole) campoRole.style.display=window.usuarioLogado?.role==="admin"?"":"none";
+  const roleEl=document.getElementById("role_usuario");
+  const isAdmin=window.usuarioLogado?.role==="admin";
+  if(campoRole) campoRole.style.display=isAdmin?"":"none";
+  if(roleEl){ roleEl.disabled=!isAdmin; }
   mudarTab("pessoais",document.querySelector(".side-btn"));
 }
 
 function abrirNovo(){
   cpfAtual=null; cpfEdicaoHabilitada=false; resetModal(); desbloquearCPF();
-  document.getElementById("campo_role").style.display=window.usuarioLogado?.role==="admin"?"":"";
-  document.getElementById("role_usuario").value="usuario";
+  const isAdm = window.usuarioLogado?.role === "admin";
+  document.getElementById("campo_role").style.display = isAdm ? "" : "none";
+  document.getElementById("role_usuario").disabled = !isAdm;
+  document.getElementById("role_usuario").value = "usuario";
   document.getElementById("modalTitulo").textContent="Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display="none";
   document.getElementById("progressWrap").style.display="inline-flex";
@@ -384,6 +394,7 @@ async function editar(cpf){
   const u=window.usuarioLogado;
   if(u&&u.role==="admin"){
     document.getElementById("campo_role").style.display="";
+    document.getElementById("role_usuario").disabled=false;
     (async()=>{
       let perfil=null;
       const {data:p1}=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);
@@ -434,7 +445,7 @@ async function salvar(){
     if(error){ alert("Erro ao salvar: "+error.message); return; }
   }
   const cpfParaVincular=cpfAtual; const isAdminU=u&&u.role==="admin";
-  const roleManual=isAdminU?(document.getElementById("role_usuario")?.value||null):null;
+  const roleManual=isAdminU&&!document.getElementById("role_usuario")?.disabled?(document.getElementById("role_usuario")?.value||null):null;
   const cargo=payload.cargo||""; let roleAutomatico=null;
   if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino") roleAutomatico="usuario";
   else if(cargo==="Recepcionista") roleAutomatico="apoio";

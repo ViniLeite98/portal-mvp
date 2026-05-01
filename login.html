@@ -305,9 +305,13 @@ async function cad() {
   btn("bCad", true, "Criar Conta");
   document.getElementById("msg").className = "msg";
 
-  var {data: cpfExiste} = await client.from("terapeutas").select("cpf").eq("cpf", cpfDigits).limit(1);
-  if(cpfExiste && cpfExiste.length > 0){
+  // Verificar CPF em terapeutas
+  var {data: cpfTer} = await client.from("terapeutas").select("cpf").eq("cpf", cpfDigits).limit(1);
+  // Verificar CPF em perfis
+  var {data: cpfPer} = await client.from("perfis").select("id").eq("cpf_terapeuta", cpfDigits).limit(1);
+  if((cpfTer && cpfTer.length > 0) || (cpfPer && cpfPer.length > 0)){
     showMsg("CPF já cadastrado. Entre em contato com o administrador.", "e");
+    document.getElementById("cCpf").className = "error";
     btn("bCad", false, "Criar Conta");
     return;
   }

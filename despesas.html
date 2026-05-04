@@ -10,7 +10,7 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
-#sidebar{width:260px;flex-shrink:0;}
+#sidebar{flex-shrink:0;}
 .content{flex:1;padding:40px;}
 .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .topbar h1{margin:0;}
@@ -62,21 +62,30 @@ tr:hover td{background:#f9fafb;}
 .modal-body textarea{resize:vertical;min-height:70px;}
 .pagar-info{background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.7;}
 .pagar-info strong{color:#111827;}
+
+/* ── QUINZENA TABLE ── */
 .q-table{width:100%;border-collapse:collapse;}
-.q-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;padding:8px 12px;background:#f9fafb;text-align:left;border-bottom:1px solid #e5e7eb;}
-.q-table td{padding:10px 12px;border-bottom:1px solid #f3f4f6;font-size:13px;vertical-align:middle;}
+.q-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;padding:8px 10px;background:#f9fafb;text-align:left;border-bottom:1px solid #e5e7eb;}
+.q-table td{padding:8px 10px;border-bottom:1px solid #f3f4f6;font-size:13px;vertical-align:middle;}
 .q-table tr:last-child td{border-bottom:none;}
 .q-table tr:hover td{background:#fafafa;}
 .q-check{width:16px;height:16px;cursor:pointer;accent-color:#2563eb;}
 .q-nome{font-weight:600;color:#111827;font-size:13px;}
-.q-valor{width:110px;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right;}
+.q-valor{width:100px;padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:right;}
 .q-valor:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.q-avatar{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;font-size:12px;flex-shrink:0;}
+.q-desconto{width:90px;padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:right;}
+.q-desconto:focus{outline:none;border-color:#dc2626;box-shadow:0 0 0 3px rgba(220,38,38,.1);}
+.q-desc-motivo{width:120px;padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:11px;}
+.q-desc-motivo:focus{outline:none;border-color:#dc2626;}
+.q-avatar{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:11px;flex-shrink:0;}
 .q-avatar.fem{background:#fce7f3;color:#db2777;}
 .q-avatar.masc{background:#dbeafe;color:#2563eb;}
-.quinzena-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-.quinzena-periodo{display:flex;gap:10px;margin-bottom:16px;background:#f9fafb;border-radius:10px;padding:12px;}
-.quinzena-periodo .field{flex:1;}
+.q-legado-tag{font-size:10px;color:#9ca3af;margin-left:4px;}
+.q-liquido{font-size:12px;font-weight:700;color:#16a34a;min-width:80px;text-align:right;}
+.quinzena-periodo{display:flex;gap:10px;margin-bottom:16px;background:#f9fafb;border-radius:10px;padding:12px;flex-wrap:wrap;}
+.quinzena-periodo .field{flex:1;min-width:120px;}
+.quinzena-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.loading-legado{font-size:12px;color:#9ca3af;display:flex;align-items:center;gap:6px;padding:8px 12px;}
 </style>
 </head>
 <body>
@@ -157,22 +166,51 @@ tr:hover td{background:#f9fafb;}
 
 <!-- MODAL GERAR QUINZENA -->
 <div class="modal" id="modalQuinzena">
-<div class="modal-content" style="width:620px">
+<div class="modal-content" style="width:820px">
   <div class="modal-header">
     <h2><i class="fa fa-users" style="color:#2563eb;margin-right:8px"></i> Gerar Pagamento Quinzenal</h2>
     <button class="btn-fechar" onclick="fecharQuinzena()"><i class="fa fa-times"></i></button>
   </div>
   <div class="modal-body">
     <div class="quinzena-periodo">
-      <div class="field"><label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Período</label><select id="qPeriodo" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px"><option value="1">1ª Quinzena</option><option value="2">2ª Quinzena</option></select></div>
-      <div class="field"><label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Mês/Ano</label><input type="month" id="qMes" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px"></div>
-      <div class="field"><label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Vencimento</label><input type="date" id="qVencimento" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px"></div>
-      <div class="field" style="justify-content:flex-end"><label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Valor padrão (R$)</label><input type="number" id="qValorPadrao" placeholder="0,00" step="0.01" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px" oninput="aplicarValorPadrao()"></div>
+      <div class="field">
+        <label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Período</label>
+        <select id="qPeriodo" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px" onchange="buscarComissoesLegado()">
+          <option value="1">1ª Quinzena</option>
+          <option value="2">2ª Quinzena</option>
+        </select>
+      </div>
+      <div class="field">
+        <label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Mês/Ano</label>
+        <input type="month" id="qMes" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px" onchange="buscarComissoesLegado()">
+      </div>
+      <div class="field">
+        <label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Vencimento</label>
+        <input type="date" id="qVencimento" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
+      </div>
     </div>
-    <div class="quinzena-header"><span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af">Profissionais</span></div>
-    <div style="max-height:300px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;">
+
+    <!-- Status de carregamento do legado -->
+    <div id="loadingLegado" class="loading-legado" style="display:none">
+      <i class="fa fa-spinner fa-spin"></i> Buscando comissões do legado...
+    </div>
+
+    <div class="quinzena-header">
+      <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af">Profissionais</span>
+      <span style="font-size:11px;color:#9ca3af">Comissão do legado pré-preenchida · editável</span>
+    </div>
+    <div style="max-height:360px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;">
       <table class="q-table">
-        <thead><tr><th style="width:32px"><input type="checkbox" id="qCheckAll" onchange="toggleTodos(this)" class="q-check"></th><th>Profissional</th><th style="width:130px;text-align:right">Valor (R$)</th></tr></thead>
+        <thead>
+          <tr>
+            <th style="width:32px"><input type="checkbox" id="qCheckAll" onchange="toggleTodos(this)" class="q-check"></th>
+            <th>Profissional</th>
+            <th style="text-align:right">Comissão (R$)</th>
+            <th style="text-align:right;color:#dc2626">Desconto (R$)</th>
+            <th>Motivo Desconto</th>
+            <th style="text-align:right;color:#16a34a">Líquido (R$)</th>
+          </tr>
+        </thead>
         <tbody id="qLista"></tbody>
       </table>
     </div>
@@ -181,7 +219,7 @@ tr:hover td{background:#f9fafb;}
     <span id="qResumo" style="font-size:13px;color:#6b7280"></span>
     <div style="display:flex;gap:10px">
       <button class="btn-cancel" onclick="fecharQuinzena()">Cancelar</button>
-      <button class="btn-green" onclick="confirmarQuinzena()"><i class="fa fa-check"></i> Gerar Despesas</button>
+      <button class="btn-green" onclick="confirmarQuinzena()"><i class="fa fa-check"></i> Gerar Despesas + PDF</button>
     </div>
   </div>
 </div>
@@ -194,10 +232,12 @@ tr:hover td{background:#f9fafb;}
 let dados=[], listaFiltrada=[], editandoId=null, pagarId=null;
 const CATEGORIAS_DEFAULT=["Aluguel","Água","Luz","Internet","Telefone","Material de Limpeza","Material de Escritório","Manutenção","Publicidade","Outros"];
 const CENTROS_DEFAULT=["Operacional","Estrutura","Marketing","Pessoal","Outros"];
+
 function fmtMoeda(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function fmtData(v){if(!v)return"—";const[y,m,d]=v.split("-");return`${d}/${m}/${y}`;}
 function hoje(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().split("T")[0];}
 function isVencido(vencimento,status){if(status==="Pago")return false;return vencimento<hoje();}
+
 async function carregarParametros(){
   const{data}=await client.from("parametros").select("tipo,valor").in("tipo",["categorias_despesa","centros_custo"]).eq("ativo",true).order("valor");
   const cats=data?.filter(p=>p.tipo==="categorias_despesa").map(p=>p.valor)||[];
@@ -206,12 +246,14 @@ async function carregarParametros(){
   ["categoria","filtroCategoria"].forEach(id=>{const sel=document.getElementById(id),pfx=id.startsWith("filtro")?"<option value=''>Todas</option>":"<option value=''>Selecione</option>";sel.innerHTML=pfx;listaC.forEach(c=>sel.innerHTML+=`<option>${c}</option>`);});
   ["centro_custo","filtroCentro"].forEach(id=>{const sel=document.getElementById(id),pfx=id.startsWith("filtro")?"<option value=''>Todos</option>":"<option value=''>Selecione</option>";sel.innerHTML=pfx;listaCC.forEach(c=>sel.innerHTML+=`<option>${c}</option>`);});
 }
+
 async function carregar(){
   const{data,error}=await client.from("despesas").select("*").order("data_vencimento");
   if(error){console.error(error);return;}
   dados=(data||[]).map(d=>({...d,status:isVencido(d.data_vencimento,d.status)?"Vencido":d.status}));
   listaFiltrada=[...dados];render();
 }
+
 function render(){
   const tbody=document.getElementById("lista");tbody.innerHTML="";
   if(!listaFiltrada.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:32px">Nenhuma despesa encontrada.</td></tr>`;atualizarTotais([]);return;}
@@ -220,15 +262,27 @@ function render(){
     const iconeStatus=d.status==="Pago"?"fa-check":d.status==="Vencido"?"fa-exclamation-circle":"fa-clock";
     const recBadge=d.recorrente?`<span class="badge badge-recorrente"><i class="fa fa-rotate"></i> ${d.recorrencia||"mensal"}</span>`:"";
     const btnPagar=d.status!=="Pago"?`<button class="btn-green" style="padding:5px 10px;font-size:12px" onclick="abrirPagar('${d.id}')"><i class="fa fa-check"></i> Pagar</button>`:"";
-    tbody.innerHTML+=`<tr><td><div style="font-weight:600;color:#111827">${d.descricao}</div>${d.observacao?`<div style="font-size:11px;color:#9ca3af;margin-top:2px">${d.observacao}</div>`:""}${recBadge}</td><td>${d.categoria||"—"}</td><td>${d.centro_custo||"—"}</td><td style="${d.status==='Vencido'?'color:#dc2626;font-weight:600':''}">${fmtData(d.data_vencimento)}${d.data_pagamento?`<div style="font-size:11px;color:#16a34a">Pago em ${fmtData(d.data_pagamento)}</div>`:""}</td><td><strong>${fmtMoeda(d.valor)}</strong></td><td><span class="badge ${badgeClass}"><i class="fa ${iconeStatus}"></i> ${d.status}</span></td><td style="display:flex;gap:5px;flex-wrap:wrap">${btnPagar}<button class="btn-yellow" style="padding:5px 10px;font-size:12px" onclick="abrirEditar('${d.id}')"><i class="fa fa-pencil"></i></button><button class="btn-red" style="padding:5px 10px;font-size:12px" onclick="excluir('${d.id}')"><i class="fa fa-trash"></i></button></td></tr>`;
+    tbody.innerHTML+=`<tr>
+      <td><div style="font-weight:600;color:#111827">${d.descricao}</div>${d.observacao?`<div style="font-size:11px;color:#9ca3af;margin-top:2px">${d.observacao}</div>`:""}${recBadge}</td>
+      <td>${d.categoria||"—"}</td><td>${d.centro_custo||"—"}</td>
+      <td style="${d.status==='Vencido'?'color:#dc2626;font-weight:600':''}">${fmtData(d.data_vencimento)}${d.data_pagamento?`<div style="font-size:11px;color:#16a34a">Pago em ${fmtData(d.data_pagamento)}</div>`:""}</td>
+      <td><strong>${fmtMoeda(d.valor)}</strong></td>
+      <td><span class="badge ${badgeClass}"><i class="fa ${iconeStatus}"></i> ${d.status}</span></td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap">${btnPagar}<button class="btn-yellow" style="padding:5px 10px;font-size:12px" onclick="abrirEditar('${d.id}')"><i class="fa fa-pencil"></i></button><button class="btn-red" style="padding:5px 10px;font-size:12px" onclick="excluir('${d.id}')"><i class="fa fa-trash"></i></button></td>
+    </tr>`;
   });
   atualizarTotais(listaFiltrada);
 }
+
 function atualizarTotais(lista){
   const aPagar=lista.filter(d=>d.status==="A pagar"),vencido=lista.filter(d=>d.status==="Vencido"),pago=lista.filter(d=>d.status==="Pago");
   const soma=arr=>arr.reduce((s,d)=>s+(d.valor||0),0);
-  document.getElementById("totalCount").textContent=lista.length;document.getElementById("totalAPagar").textContent=fmtMoeda(soma(aPagar));document.getElementById("totalVencido").textContent=fmtMoeda(soma(vencido));document.getElementById("totalPago").textContent=fmtMoeda(soma(pago));
+  document.getElementById("totalCount").textContent=lista.length;
+  document.getElementById("totalAPagar").textContent=fmtMoeda(soma(aPagar));
+  document.getElementById("totalVencido").textContent=fmtMoeda(soma(vencido));
+  document.getElementById("totalPago").textContent=fmtMoeda(soma(pago));
 }
+
 function aplicarFiltro(){
   const ini=document.getElementById("filtroInicio").value,fim=document.getElementById("filtroFim").value,status=document.getElementById("filtroStatus").value,cat=document.getElementById("filtroCategoria").value,centro=document.getElementById("filtroCentro").value;
   listaFiltrada=dados.filter(d=>{if(ini&&d.data_vencimento<ini)return false;if(fim&&d.data_vencimento>fim)return false;if(status&&d.status!==status)return false;if(cat&&d.categoria!==cat)return false;if(centro&&d.centro_custo!==centro)return false;return true;});render();
@@ -240,6 +294,7 @@ function resetModal(){document.getElementById("descricao").value="";document.get
 function abrirNovo(){editandoId=null;resetModal();document.getElementById("modalTitulo").textContent="Nova Despesa";document.getElementById("modalDespesa").style.display="flex";}
 function abrirEditar(id){editandoId=id;const d=dados.find(x=>String(x.id)===String(id));if(!d)return;document.getElementById("modalTitulo").textContent="Editar Despesa";document.getElementById("modalDespesa").style.display="flex";setTimeout(()=>{document.getElementById("descricao").value=d.descricao||"";document.getElementById("categoria").value=d.categoria||"";document.getElementById("centro_custo").value=d.centro_custo||"";document.getElementById("valor").value=d.valor||"";document.getElementById("data_vencimento").value=d.data_vencimento||"";document.getElementById("status").value=d.status||"A pagar";document.getElementById("data_pagamento").value=d.data_pagamento||"";document.getElementById("recorrente").value=d.recorrente?"true":"false";document.getElementById("recorrencia").value=d.recorrencia||"mensal";document.getElementById("observacao").value=d.observacao||"";toggleDataPagamento();toggleRecorrencia();},30);}
 function fecharModal(){document.getElementById("modalDespesa").style.display="none";}
+
 async function salvar(){
   const descricao=document.getElementById("descricao").value.trim(),valor=parseFloat(document.getElementById("valor").value||0),data_vencimento=document.getElementById("data_vencimento").value;
   if(!descricao){alert("Descrição obrigatória.");return;}if(!valor||valor<=0){alert("Informe um valor válido.");return;}if(!data_vencimento){alert("Informe a data de vencimento.");return;}
@@ -249,55 +304,316 @@ async function salvar(){
   if(editandoId){({error}=await client.from("despesas").update(payload).eq("id",editandoId));}else{({error}=await client.from("despesas").insert(payload));}
   if(error){alert("Erro ao salvar: "+error.message);return;}fecharModal();carregar();
 }
+
 async function excluir(id){if(!confirm("Excluir esta despesa?"))return;await client.from("despesas").delete().eq("id",id);carregar();}
 function abrirPagar(id){pagarId=id;const d=dados.find(x=>String(x.id)===String(id));if(!d)return;document.getElementById("pagarInfo").innerHTML=`<strong>${d.descricao}</strong><br>Vencimento: ${fmtData(d.data_vencimento)}<br>Valor: <strong style="color:#111827">${fmtMoeda(d.valor)}</strong><br>${d.categoria?`Categoria: ${d.categoria}`:""}`;document.getElementById("pagarData").value=hoje();document.getElementById("modalPagar").style.display="flex";}
 function fecharModalPagar(){document.getElementById("modalPagar").style.display="none";}
 async function confirmarPagamento(){const data=document.getElementById("pagarData").value;if(!data){alert("Informe a data de pagamento.");return;}const{error}=await client.from("despesas").update({status:"Pago",data_pagamento:data}).eq("id",pagarId);if(error){alert("Erro: "+error.message);return;}fecharModalPagar();carregar();}
+
 function exportarExcel(){
   if(!listaFiltrada.length){alert("Nada para exportar.");return;}
   const exportData=listaFiltrada.map(d=>({"Descrição":d.descricao,"Categoria":d.categoria||"","Centro de Custo":d.centro_custo||"","Vencimento":fmtData(d.data_vencimento),"Pagamento":fmtData(d.data_pagamento),"Valor":Number(d.valor||0),"Status":d.status,"Recorrente":d.recorrente?`Sim (${d.recorrencia})`:"Não","Observação":d.observacao||""}));
   const ws=XLSX.utils.json_to_sheet(exportData);ws["!cols"]=Object.keys(exportData[0]).map(col=>({wch:Math.max(col.length,...exportData.map(r=>String(r[col]||"").length))+2}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Despesas");XLSX.writeFile(wb,"despesas.xlsx");
 }
-let terapeutasQ=[];
+
+/* ══════════════════════════════════════
+   QUINZENA
+══════════════════════════════════════ */
+let terapeutasQ = [];
+let comissoesLegado = {}; // cpf -> valor comissao do legado
+
 function mesAtualISO(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;}
 function nomesMes(){return["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];}
+
 async function abrirGerarQuinzena(){
   const{data}=await client.from("terapeutas").select("cpf,nome_profissional,cargo,pix_tipo,pix_chave").eq("status","Ativo").in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]).order("nome_profissional");
-  terapeutasQ=data||[];const agora=new Date(),dia=agora.getDate();
-  document.getElementById("qPeriodo").value=dia<=15?"1":"2";document.getElementById("qMes").value=mesAtualISO();document.getElementById("qValorPadrao").value="";
-  definirVencimentoPadrao();renderQlista();document.getElementById("modalQuinzena").style.display="flex";
+  terapeutasQ=data||[];
+  const agora=new Date(),dia=agora.getDate();
+  document.getElementById("qPeriodo").value=dia<=15?"1":"2";
+  document.getElementById("qMes").value=mesAtualISO();
+  definirVencimentoPadrao();
+  document.getElementById("modalQuinzena").style.display="flex";
+  await buscarComissoesLegado();
 }
-function definirVencimentoPadrao(){const mes=document.getElementById("qMes").value,periodo=document.getElementById("qPeriodo").value;if(!mes)return;const[y,m]=mes.split("-").map(Number);if(periodo==="1"){document.getElementById("qVencimento").value=`${y}-${String(m).padStart(2,"0")}-15`;}else{const ultimo=new Date(y,m,0).getDate();document.getElementById("qVencimento").value=`${y}-${String(m).padStart(2,"0")}-${ultimo}`;}}
-function fecharQuinzena(){document.getElementById("modalQuinzena").style.display="none";}
+
+function definirVencimentoPadrao(){
+  const mes=document.getElementById("qMes").value,periodo=document.getElementById("qPeriodo").value;
+  if(!mes)return;
+  const[y,m]=mes.split("-").map(Number);
+  if(periodo==="1"){document.getElementById("qVencimento").value=`${y}-${String(m).padStart(2,"0")}-15`;}
+  else{const ultimo=new Date(y,m,0).getDate();document.getElementById("qVencimento").value=`${y}-${String(m).padStart(2,"0")}-${ultimo}`;}
+}
+
+async function buscarComissoesLegado(){
+  const mes=document.getElementById("qMes").value;
+  const periodo=document.getElementById("qPeriodo").value;
+  if(!mes||!terapeutasQ.length){renderQlista();return;}
+
+  document.getElementById("loadingLegado").style.display="flex";
+
+  const[y,m]=mes.split("-");
+  const diaIni=periodo==="1"?"01":"16";
+  const diaFim=periodo==="1"?"15":String(new Date(parseInt(y),parseInt(m),0).getDate()).padStart(2,"0");
+  const dataIni=`${y}-${m}-${diaIni}`;
+  const dataFim=`${y}-${m}-${diaFim}`;
+
+  comissoesLegado={};
+
+  // Buscar comissoes do legado para cada profissional no periodo
+  const nomes=terapeutasQ.map(t=>t.nome_profissional);
+
+  const{data,error}=await client.from("legado_atendimentos")
+    .select("profissional,comissao")
+    .gte("data",dataIni)
+    .lte("data",dataFim)
+    .in("profissional",nomes)
+    .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
+
+  if(!error&&data){
+    data.forEach(r=>{
+      if(!r.profissional||!r.comissao)return;
+      comissoesLegado[r.profissional]=(comissoesLegado[r.profissional]||0)+(r.comissao||0);
+    });
+  }
+
+  document.getElementById("loadingLegado").style.display="none";
+  renderQlista();
+}
+
 function renderQlista(){
   const tbody=document.getElementById("qLista");tbody.innerHTML="";
   terapeutasQ.forEach(t=>{
-    const fem=t.cargo==="Terapeuta Feminina",tr=document.createElement("tr");
-    const tdChk=document.createElement("td"),chk=document.createElement("input");chk.type="checkbox";chk.className="q-check";chk.id="qCheck_"+t.cpf;chk.value=t.cpf;chk.checked=true;chk.addEventListener("change",atualizarResumo);tdChk.appendChild(chk);
-    const tdNome=document.createElement("td"),avatar=document.createElement("span");avatar.className="q-avatar "+(fem?"fem":"masc");avatar.innerHTML='<i class="fa '+(fem?"fa-person-dress":"fa-person")+'"></i>';const nomeSpan=document.createElement("span");nomeSpan.className="q-nome";nomeSpan.style.marginLeft="8px";nomeSpan.textContent=t.nome_profissional;tdNome.appendChild(avatar);tdNome.appendChild(nomeSpan);
-    const tdVal=document.createElement("td");tdVal.style.textAlign="right";const inp=document.createElement("input");inp.type="number";inp.className="q-valor";inp.id="qValor_"+t.cpf;inp.placeholder="0,00";inp.step="0.01";inp.min="0";inp.addEventListener("input",atualizarResumo);tdVal.appendChild(inp);
-    tr.appendChild(tdChk);tr.appendChild(tdNome);tr.appendChild(tdVal);tbody.appendChild(tr);
+    const fem=t.cargo==="Terapeuta Feminina";
+    const comissao=comissoesLegado[t.nome_profissional]||0;
+    const tr=document.createElement("tr");
+
+    // Checkbox
+    const tdChk=document.createElement("td");
+    const chk=document.createElement("input");chk.type="checkbox";chk.className="q-check";chk.id="qCheck_"+t.cpf;chk.value=t.cpf;chk.checked=true;
+    chk.addEventListener("change",atualizarResumo);tdChk.appendChild(chk);
+
+    // Nome
+    const tdNome=document.createElement("td");
+    tdNome.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
+      <span class="q-avatar ${fem?"fem":"masc"}"><i class="fa ${fem?"fa-person-dress":"fa-person"}"></i></span>
+      <div>
+        <div class="q-nome">${t.nome_profissional}</div>
+        ${t.pix_chave?`<div style="font-size:10px;color:#9ca3af">${t.pix_tipo||"PIX"}: ${t.pix_chave}</div>`:'<div style="font-size:10px;color:#dc2626">Sem PIX</div>'}
+      </div>
+    </div>`;
+
+    // Valor comissao (pre-preenchido do legado)
+    const tdVal=document.createElement("td");tdVal.style.textAlign="right";
+    const inp=document.createElement("input");inp.type="number";inp.className="q-valor";inp.id="qValor_"+t.cpf;
+    inp.value=comissao>0?comissao.toFixed(2):"";inp.placeholder="0,00";inp.step="0.01";inp.min="0";
+    if(comissao>0)inp.title=`Comissão do legado: ${fmtMoeda(comissao)}`;
+    inp.addEventListener("input",()=>atualizarLiquido(t.cpf));tdVal.appendChild(inp);
+    if(comissao>0){const tag=document.createElement("div");tag.className="q-legado-tag";tag.textContent="↑ legado";tdVal.appendChild(tag);}
+
+    // Desconto
+    const tdDesc=document.createElement("td");tdDesc.style.textAlign="right";
+    const inpDesc=document.createElement("input");inpDesc.type="number";inpDesc.className="q-desconto";inpDesc.id="qDesc_"+t.cpf;
+    inpDesc.placeholder="0,00";inpDesc.step="0.01";inpDesc.min="0";
+    inpDesc.addEventListener("input",()=>atualizarLiquido(t.cpf));tdDesc.appendChild(inpDesc);
+
+    // Motivo desconto
+    const tdMotivo=document.createElement("td");
+    const inpMotivo=document.createElement("input");inpMotivo.type="text";inpMotivo.className="q-desc-motivo";inpMotivo.id="qMotivo_"+t.cpf;
+    inpMotivo.placeholder="Ex: Vale, falta...";tdMotivo.appendChild(inpMotivo);
+
+    // Liquido
+    const tdLiq=document.createElement("td");tdLiq.style.textAlign="right";
+    const liq=document.createElement("span");liq.className="q-liquido";liq.id="qLiq_"+t.cpf;
+    liq.textContent=fmtMoeda(comissao);tdLiq.appendChild(liq);
+
+    tr.appendChild(tdChk);tr.appendChild(tdNome);tr.appendChild(tdVal);tr.appendChild(tdDesc);tr.appendChild(tdMotivo);tr.appendChild(tdLiq);
+    tbody.appendChild(tr);
   });
-  document.getElementById("qCheckAll").checked=true;atualizarResumo();
+  document.getElementById("qCheckAll").checked=true;
+  atualizarResumo();
 }
-function aplicarValorPadrao(){const v=document.getElementById("qValorPadrao").value;terapeutasQ.forEach(t=>{const input=document.getElementById("qValor_"+t.cpf);if(input)input.value=v;});atualizarResumo();}
-function toggleTodos(cb){terapeutasQ.forEach(t=>{const chk=document.getElementById("qCheck_"+t.cpf);if(chk)chk.checked=cb.checked;});atualizarResumo();}
-function atualizarResumo(){let count=0,total=0;terapeutasQ.forEach(t=>{const chk=document.getElementById("qCheck_"+t.cpf),val=parseFloat(document.getElementById("qValor_"+t.cpf)?.value||0);if(chk?.checked){count++;total+=val;}});document.getElementById("qResumo").textContent=`${count} profissional${count!==1?"is":""} · Total: ${fmtMoeda(total)}`;}
+
+function atualizarLiquido(cpf){
+  const val=parseFloat(document.getElementById("qValor_"+cpf)?.value||0);
+  const desc=parseFloat(document.getElementById("qDesc_"+cpf)?.value||0);
+  const liq=Math.max(0,val-desc);
+  const el=document.getElementById("qLiq_"+cpf);
+  if(el){el.textContent=fmtMoeda(liq);el.style.color=liq>0?"#16a34a":"#dc2626";}
+  atualizarResumo();
+}
+
+function toggleTodos(cb){
+  terapeutasQ.forEach(t=>{const chk=document.getElementById("qCheck_"+t.cpf);if(chk)chk.checked=cb.checked;});
+  atualizarResumo();
+}
+
+function atualizarResumo(){
+  let count=0,total=0;
+  terapeutasQ.forEach(t=>{
+    const chk=document.getElementById("qCheck_"+t.cpf);
+    const val=parseFloat(document.getElementById("qValor_"+t.cpf)?.value||0);
+    const desc=parseFloat(document.getElementById("qDesc_"+t.cpf)?.value||0);
+    if(chk?.checked){count++;total+=Math.max(0,val-desc);}
+  });
+  document.getElementById("qResumo").textContent=`${count} profissional${count!==1?"is":""} · Líquido total: ${fmtMoeda(total)}`;
+}
+
+function fecharQuinzena(){document.getElementById("modalQuinzena").style.display="none";}
+
 async function confirmarQuinzena(){
   const periodo=document.getElementById("qPeriodo").value,mes=document.getElementById("qMes").value,vencimento=document.getElementById("qVencimento").value;
   if(!mes){alert("Selecione o mês.");return;}if(!vencimento){alert("Informe a data de vencimento.");return;}
   const[y,m]=mes.split("-").map(Number),nomeMes=nomesMes()[m-1],periodoStr=periodo==="1"?"1ª Quinzena":"2ª Quinzena";
+
   const selecionados=terapeutasQ.filter(t=>document.getElementById("qCheck_"+t.cpf)?.checked);
   if(!selecionados.length){alert("Selecione ao menos um profissional.");return;}
+
   const semValor=selecionados.filter(t=>!(parseFloat(document.getElementById("qValor_"+t.cpf)?.value||0)>0));
   if(semValor.length){alert(`Informe o valor para: ${semValor.map(t=>t.nome_profissional).join(", ")}`);return;}
-  const despesas=selecionados.map(t=>({descricao:`Pagamento ${t.nome_profissional} - ${periodoStr} ${nomeMes} ${y}`,categoria:"Pessoal",centro_custo:"Pessoal",valor:parseFloat(document.getElementById("qValor_"+t.cpf).value),data_vencimento:vencimento,status:"A pagar",recorrente:false,observacao:`CPF: ${t.cpf}${t.pix_chave?' | PIX ('+(t.pix_tipo||'PIX')+'):  '+t.pix_chave:' | Sem PIX cadastrado'}`}));
+
+  // Montar dados de cada profissional
+  const itens=selecionados.map(t=>{
+    const val=parseFloat(document.getElementById("qValor_"+t.cpf).value||0);
+    const desc=parseFloat(document.getElementById("qDesc_"+t.cpf)?.value||0);
+    const motivo=document.getElementById("qMotivo_"+t.cpf)?.value.trim()||"";
+    const liquido=Math.max(0,val-desc);
+    return{t,val,desc,motivo,liquido,periodoStr,nomeMes,y,vencimento};
+  });
+
+  // Inserir despesas
+  const despesas=itens.map(({t,liquido,periodoStr,nomeMes,y,vencimento,val,desc,motivo})=>({
+    descricao:`Pagamento ${t.nome_profissional} - ${periodoStr} ${nomeMes} ${y}`,
+    categoria:"Pessoal",centro_custo:"Pessoal",
+    valor:liquido,
+    data_vencimento:vencimento,status:"A pagar",recorrente:false,
+    observacao:[
+      `CPF: ${t.cpf}`,
+      t.pix_chave?`PIX (${t.pix_tipo||"PIX"}): ${t.pix_chave}`:"Sem PIX cadastrado",
+      `Comissão bruta: ${fmtMoeda(val)}`,
+      desc>0?`Desconto: ${fmtMoeda(desc)}${motivo?" ("+motivo+")":""}`:"",
+    ].filter(Boolean).join(" | ")
+  }));
+
   const{error}=await client.from("despesas").insert(despesas);
   if(error){alert("Erro ao gerar: "+error.message);return;}
-  fecharQuinzena();carregar();alert(`${despesas.length} despesa${despesas.length!==1?"s":""} gerada${despesas.length!==1?"s":""}!`);
+
+  fecharQuinzena();carregar();
+
+  // Gerar PDFs individuais
+  gerarPDFs(itens);
 }
+
+/* ══════════════════════════════════════
+   GERAR PDFs INDIVIDUAIS
+══════════════════════════════════════ */
+function gerarPDFs(itens){
+  itens.forEach((item,idx)=>{
+    setTimeout(()=>gerarPDFIndividual(item), idx*300);
+  });
+}
+
+function gerarPDFIndividual({t, val, desc, motivo, liquido, periodoStr, nomeMes, y, vencimento}){
+  const{jsPDF}=window.jspdf||{};
+
+  // Criar HTML do comprovante e abrir para impressão
+  const html=`
+  <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+  <style>
+    body{font-family:'Segoe UI',sans-serif;margin:0;padding:30px;color:#111827;font-size:13px;}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1f2937;}
+    .logo{font-size:20px;font-weight:800;color:#1f2937;}
+    .logo span{color:#c4826a;}
+    .titulo{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin-top:4px;}
+    h2{margin:0 0 4px;font-size:16px;}
+    .badge{display:inline-block;background:#eff6ff;color:#2563eb;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700;}
+    .info-box{background:#f9fafb;border-radius:10px;padding:16px;margin-bottom:16px;}
+    .row{display:flex;justify-content:space-between;margin-bottom:8px;gap:16px;}
+    .row:last-child{margin-bottom:0;}
+    .label{color:#6b7280;font-size:12px;}
+    .value{font-weight:600;text-align:right;}
+    .divider{border:none;border-top:1px solid #e5e7eb;margin:14px 0;}
+    .total-row{display:flex;justify-content:space-between;font-size:16px;font-weight:800;}
+    .total-row .value{color:#16a34a;}
+    .desconto-row .value{color:#dc2626;}
+    .pix-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:16px;}
+    .pix-label{font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+    .pix-value{font-size:14px;font-weight:700;color:#111827;}
+    .pix-tipo{font-size:11px;color:#6b7280;margin-top:2px;}
+    .footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center;}
+    .no-pix{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;color:#dc2626;font-size:12px;}
+    @media print{body{padding:20px;}button{display:none!important;}}
+  </style></head><body>
+  <div class="header">
+    <div>
+      <div class="logo">Hara <span>Spa</span></div>
+      <div class="titulo">Comprovante de Pagamento</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;color:#9ca3af">Gerado em</div>
+      <div style="font-weight:600">${new Date().toLocaleDateString("pt-BR")}</div>
+    </div>
+  </div>
+
+  <div style="margin-bottom:16px">
+    <h2>${t.nome_profissional}</h2>
+    <span class="badge">${periodoStr} ${nomeMes} ${y}</span>
+    <span style="font-size:11px;color:#9ca3af;margin-left:8px">CPF: ${t.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4")}</span>
+  </div>
+
+  <div class="info-box">
+    <div class="row">
+      <span class="label">Período</span>
+      <span class="value">${periodoStr} de ${nomeMes} de ${y}</span>
+    </div>
+    <div class="row">
+      <span class="label">Data de Vencimento</span>
+      <span class="value">${fmtData(vencimento)}</span>
+    </div>
+    <hr class="divider">
+    <div class="row">
+      <span class="label">Comissão Bruta</span>
+      <span class="value">${fmtMoeda(val)}</span>
+    </div>
+    ${desc>0?`
+    <div class="row desconto-row">
+      <span class="label">Desconto${motivo?" — "+motivo:""}</span>
+      <span class="value">− ${fmtMoeda(desc)}</span>
+    </div>`:""}
+    <hr class="divider">
+    <div class="total-row">
+      <span>Valor Líquido</span>
+      <span class="value">${fmtMoeda(liquido)}</span>
+    </div>
+  </div>
+
+  ${t.pix_chave?`
+  <div class="pix-box">
+    <div class="pix-label"><i>✓</i> Chave PIX para pagamento</div>
+    <div class="pix-value">${t.pix_chave}</div>
+    <div class="pix-tipo">Tipo: ${t.pix_tipo||"PIX"} · Titular: ${t.nome_profissional}</div>
+  </div>`:`
+  <div class="no-pix">⚠️ Nenhuma chave PIX cadastrada para este profissional.</div>`}
+
+  <div class="footer">
+    Hara Spa · Este comprovante foi gerado automaticamente pelo sistema de gestão.<br>
+    ${periodoStr} ${nomeMes} ${y} · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+  </div>
+
+  <div style="text-align:center;margin-top:20px">
+    <button onclick="window.print()" style="background:#1f2937;color:#fff;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;font-size:13px;font-weight:600">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  </body></html>`;
+
+  const win=window.open("","_blank","width=700,height=900");
+  if(win){win.document.write(html);win.document.close();}
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
-  setTimeout(()=>{const qPeriodo=document.getElementById("qPeriodo"),qMes=document.getElementById("qMes");if(qPeriodo)qPeriodo.addEventListener("change",definirVencimentoPadrao);if(qMes)qMes.addEventListener("change",definirVencimentoPadrao);},100);
+  setTimeout(()=>{
+    const qPeriodo=document.getElementById("qPeriodo"),qMes=document.getElementById("qMes");
+    if(qPeriodo)qPeriodo.addEventListener("change",definirVencimentoPadrao);
+    if(qMes)qMes.addEventListener("change",definirVencimentoPadrao);
+  },100);
   carregarParametros();carregar();
 });
 </script>

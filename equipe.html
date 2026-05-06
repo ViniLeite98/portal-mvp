@@ -366,19 +366,6 @@ function setForm(data){
   });
 }
 
-async function chamarManageAuth(body){
-  var resp = await fetch(MANAGE_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "apikey": ANON_KEY,
-      "Authorization": "Bearer " + ANON_KEY
-    },
-    body: JSON.stringify(body)
-  });
-  return await resp.json();
-}
-
 async function carregar(){
   if(!window.usuarioLogado){ setTimeout(carregar,100); return; }
   var u=window.usuarioLogado;
@@ -487,16 +474,36 @@ async function salvar(){
     document.getElementById("tabDocsBtn").style.display=""; carregarDocs(cpfAtual);
 
     // Criar login com senha 2026
-    var json=await chamarManageAuth({
-      acao:"criar",
-      email:payload.email.trim().toLowerCase(),
-      password:SENHA_PADRAO,
-      nome:payload.nome_completo||payload.nome_profissional||"",
-      cpf:cpfNovo
-    });
-    if(json.error){
-      console.warn("Aviso ao criar login:", json.error);
-      // Não bloqueia — dados já foram salvos
+    // Salva sessão atual para não perder o login do admin
+    var sessaoAtual = await client.auth.getSession();
+    var tokenAtual  = sessaoAtual.data && sessaoAtual.data.session ? sessaoAtual.data.session.access_token : null;
+    var refreshAtual = sessaoAtual.data && sessaoAtual.data.session ? sessaoAtual.data.session.refresh_token : null;
+
+    if(payload.email){
+      var signUpRes = await client.auth.signUp({
+        email: payload.email.trim().toLowerCase(),
+        password: SENHA_PADRAO,
+        options: { data: { nome: payload.nome_completo || "" } }
+      });
+
+      if(signUpRes.error){
+        console.warn("Aviso ao criar login:", signUpRes.error.message);
+      } else if(signUpRes.data && signUpRes.data.user){
+        var novoUserId = signUpRes.data.user.id;
+        // Inserir em perfis
+        await client.from("perfis").upsert({
+          id: novoUserId,
+          email: payload.email.trim().toLowerCase(),
+          nome: payload.nome_completo || payload.nome_profissional || "",
+          role: "usuario",
+          cpf_terapeuta: cpfNovo
+        });
+      }
+
+      // Restaurar sessão do admin
+      if(tokenAtual && refreshAtual){
+        await client.auth.setSession({ access_token: tokenAtual, refresh_token: refreshAtual });
+      }
     }
 
   } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){

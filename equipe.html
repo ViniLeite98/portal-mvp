@@ -249,12 +249,12 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field">
             <label>Senha de Acesso</label>
             <div style="position:relative">
-              <input type="password" id="senha_acesso" autocomplete="new-password"
+              <input type="text" id="senha_acesso" autocomplete="new-password"
                 placeholder="Deixe em branco para manter"
                 style="width:100%;box-sizing:border-box;padding-right:36px">
               <button type="button" onclick="toggleSenhaEquipe(this)"
                 style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:14px;padding:0">
-                <i class="fa fa-eye"></i>
+                <i class="fa fa-eye-slash"></i>
               </button>
             </div>
           </div>
@@ -350,25 +350,47 @@ function setForm(data){
 
 function toggleSenhaEquipe(btn){
   const el = document.getElementById("senha_acesso");
-  const show = el.type === "password";
-  el.type = show ? "text" : "password";
-  btn.querySelector("i").className = show ? "fa fa-eye-slash" : "fa fa-eye";
+  const ocultar = el.type === "text";
+  el.type = ocultar ? "password" : "text";
+  btn.querySelector("i").className = ocultar ? "fa fa-eye" : "fa fa-eye-slash";
 }
 
 async function salvarSenhaBackend(cpfV, senhaV, emailV){
+  console.log("[SENHA] iniciando para cpf:", cpfV, "email:", emailV);
   let pid = null;
-  const r1 = await client.from("perfis").select("id").eq("cpf_terapeuta", cpfV).limit(1);
+  let perfilEncontrado = null;
+
+  // Busca por cpf_terapeuta
+  const r1 = await client.from("perfis").select("id, cpf_terapeuta, email").eq("cpf_terapeuta", cpfV).limit(1);
+  console.log("[SENHA] busca por cpf_terapeuta:", r1.data, "erro:", r1.error);
   if(r1.data && r1.data.length > 0){
     pid = r1.data[0].id;
-  } else if(emailV){
-    const r2 = await client.from("perfis").select("id").eq("email", emailV.trim().toLowerCase()).limit(1);
-    if(r2.data && r2.data.length > 0) pid = r2.data[0].id;
+    perfilEncontrado = r1.data[0];
   }
+
+  // Se não achou por CPF, tenta por email
+  if(!pid && emailV){
+    const r2 = await client.from("perfis").select("id, cpf_terapeuta, email").eq("email", emailV.trim().toLowerCase()).limit(1);
+    console.log("[SENHA] busca por email:", r2.data, "erro:", r2.error);
+    if(r2.data && r2.data.length > 0){
+      pid = r2.data[0].id;
+      perfilEncontrado = r2.data[0];
+    }
+  }
+
+  console.log("[SENHA] perfilId encontrado:", pid, "perfil:", perfilEncontrado);
+
   if(pid){
     const r = await client.from("perfis").update({senha_plain: senhaV, tem_senha: true}).eq("id", pid);
-    if(r.error) console.warn("Erro senha:", r.error.message);
+    console.log("[SENHA] update resultado:", r.data, "erro:", r.error);
+    if(r.error){
+      alert("Erro ao salvar senha: " + r.error.message);
+    } else {
+      console.log("[SENHA] salva com sucesso!");
+    }
   } else {
-    console.warn("Perfil nao encontrado - senha sera salva no 1o login.");
+    console.warn("[SENHA] Perfil nao encontrado pelo CPF nem pelo email.");
+    alert("Atenção: a senha não foi salva pois o perfil de acesso ainda não existe para este profissional. A senha poderá ser definida após o primeiro login.");
   }
 }
 
@@ -403,7 +425,7 @@ function resetModal(){
   document.getElementById("hora_entrada").value="09:00";
   document.getElementById("hora_saida").value="18:00";
   const elSenha=document.getElementById("senha_acesso");
-  if(elSenha){ elSenha.value=""; elSenha.type="password"; }
+  if(elSenha){ elSenha.value=""; elSenha.type="text"; const btnOlho=elSenha.parentNode.querySelector("button"); if(btnOlho) btnOlho.querySelector("i").className="fa fa-eye-slash"; }
   const campoRole=document.getElementById("campo_role");
   const roleEl=document.getElementById("role_usuario");
   const isAdmin=window.usuarioLogado && window.usuarioLogado.role==="admin";
@@ -441,13 +463,25 @@ async function editar(cpf){
     document.getElementById("role_usuario").disabled=false;
     (async function(){
       let perfil=null;
-      const rp1=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);
+      const rp1=await client.from("perfis").select("email,role,senha_plain").eq("cpf_terapeuta",cpf).limit(1);
       if(rp1.data&&rp1.data.length>0){ perfil=rp1.data[0]; } else if(data.email){
-        const rp2=await client.from("perfis").select("email,role").eq("email",data.email.toLowerCase()).limit(1);
+        const rp2=await client.from("perfis").select("email,role,senha_plain").eq("email",data.email.toLowerCase()).limit(1);
         if(rp2.data&&rp2.data.length>0) perfil=rp2.data[0];
       }
       const elRole=document.getElementById("role_usuario");
       if(elRole) elRole.value=perfil?(perfil.role||"usuario"):"usuario";
+      // Preencher senha atual se existir
+      const elSenha=document.getElementById("senha_acesso");
+      if(elSenha && perfil && perfil.senha_plain) elSenha.value=perfil.senha_plain;
+    })();
+  } else {
+    // Para não-admin também mostrar a senha do próprio perfil
+    (async function(){
+      const rp=await client.from("perfis").select("senha_plain").eq("cpf_terapeuta",cpf).limit(1);
+      const elSenha=document.getElementById("senha_acesso");
+      if(elSenha && rp.data && rp.data.length>0 && rp.data[0].senha_plain){
+        elSenha.value=rp.data[0].senha_plain;
+      }
     })();
   }
   document.getElementById("modal").style.display="flex";

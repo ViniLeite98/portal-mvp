@@ -470,12 +470,13 @@ async function salvar(){
     var reEx=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
     if(reEx.data&&reEx.data.length>0){ alert("CPF já cadastrado."); return; }
 
-    // Validar email duplicado
-    var reEmail=await client.from("terapeutas").select("email").eq("email",payload.email.trim().toLowerCase()).limit(1);
+    // Validar email duplicado em terapeutas (case insensitive)
+    var emailLimpo = payload.email.trim().toLowerCase();
+    var reEmail=await client.from("terapeutas").select("email").ilike("email", emailLimpo).limit(1);
     if(reEmail.data&&reEmail.data.length>0){ alert("Email já cadastrado para outro funcionário."); return; }
 
     // Validar email duplicado no Auth (perfis)
-    var rePerfil=await client.from("perfis").select("id").eq("email",payload.email.trim().toLowerCase()).limit(1);
+    var rePerfil=await client.from("perfis").select("id").ilike("email", emailLimpo).limit(1);
     if(rePerfil.data&&rePerfil.data.length>0){ alert("Email já possui login cadastrado no sistema."); return; }
 
     var ri=await client.from("terapeutas").insert(Object.assign({},payload,{cpf:cpfNovo}));

@@ -84,34 +84,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
 .btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
-
-/* ── Campo senha ── */
-.senha-wrap{position:relative;}
-.senha-wrap input{width:100%;padding-right:38px;box-sizing:border-box;}
-.btn-toggle-senha{
-  position:absolute;right:10px;top:50%;transform:translateY(-50%);
-  background:none;border:none;cursor:pointer;color:#9ca3af;padding:0;font-size:15px;
-  display:flex;align-items:center;justify-content:center;
-}
-.btn-toggle-senha:hover{color:#374151;}
-.senha-box{
-  background:#f0fdf4;
-  border:1px solid #bbf7d0;
-  border-radius:12px;
-  padding:16px;
-  margin-top:8px;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-.senha-box-title{
-  font-size:12px;font-weight:700;color:#15803d;
-  display:flex;align-items:center;gap:6px;
-  margin:0 0 4px;
-}
-.senha-status{font-size:11px;margin-top:4px;}
-.senha-status.ok{color:#16a34a;}
-.senha-status.erro{color:#dc2626;}
 .senha-strength{height:4px;border-radius:2px;margin-top:6px;transition:width .3s,background .3s;}
 </style>
 </head>
@@ -122,7 +94,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <h1>Cadastro de Pessoal</h1>
 <div class="topbar">
   <div class="left-tools">
-    <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()">
+    <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()" autocomplete="off">
     <select id="filtroStatus">
       <option value="">Todos os status</option>
       <option value="Ativo" selected>Ativo</option>
@@ -285,50 +257,14 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
               <option>Quinta</option><option>Sexta</option><option>Sábado</option>
             </select>
           </div>
-        </div>
-
-        <!-- ── BLOCO SENHA ── -->
-        <div class="senha-box" id="senhaBox">
-          <p class="senha-box-title"><i class="fa fa-key"></i> Senha de Acesso ao Sistema</p>
-
-          <div class="grid-2">
-            <div class="field">
-              <label>Nova Senha</label>
-              <div class="senha-wrap">
-                <input type="password" id="nova_senha" placeholder="Mínimo 6 caracteres"
-                  oninput="validarSenhas()">
-                <button type="button" class="btn-toggle-senha" onclick="toggleSenha('nova_senha',this)"
-                  title="Mostrar/ocultar">
-                  <i class="fa fa-eye"></i>
-                </button>
-              </div>
-              <!-- barra de força -->
-              <div style="height:4px;border-radius:2px;margin-top:6px;background:#e5e7eb;overflow:hidden">
-                <div id="senhaStrength" style="height:100%;width:0%;border-radius:2px;transition:width .3s,background .3s"></div>
-              </div>
-              <span id="senhaStrengthLabel" class="senha-status" style="font-size:11px;color:#9ca3af"></span>
-            </div>
-
-            <div class="field">
-              <label>Confirmar Senha</label>
-              <div class="senha-wrap">
-                <input type="password" id="confirmar_senha" placeholder="Repita a senha"
-                  oninput="validarSenhas()">
-                <button type="button" class="btn-toggle-senha" onclick="toggleSenha('confirmar_senha',this)"
-                  title="Mostrar/ocultar">
-                  <i class="fa fa-eye"></i>
-                </button>
-              </div>
-              <span id="senhaMatch" class="senha-status"></span>
+          <div class="field">
+            <label>Senha de Acesso</label>
+            <div style="position:relative">
+              <input type="password" id="senha_acesso" placeholder="Deixe em branco para manter" style="width:100%;box-sizing:border-box;padding-right:36px">
+              <button type="button" onclick="toggleSenhaEquipe(this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:14px;padding:0"><i class="fa fa-eye"></i></button>
             </div>
           </div>
-
-          <div id="senhaExistenteInfo" style="display:none;font-size:12px;color:#6b7280;background:#f3f4f6;border-radius:8px;padding:8px 12px;">
-            <i class="fa fa-info-circle"></i>
-            Este cadastro já possui senha definida. Preencha os campos acima <strong>só se quiser alterar</strong>. Deixe em branco para manter a senha atual.
-          </div>
         </div>
-        <!-- ── FIM BLOCO SENHA ── -->
 
       </div>
 
@@ -409,51 +345,6 @@ async function buscarCepEquipe(cep){
   }catch(e){ console.error("CEP error",e); }
 }
 
-/* ── Senha ── */
-function toggleSenha(id, btn){
-  const el = document.getElementById(id);
-  const mostrar = el.type === "password";
-  el.type = mostrar ? "text" : "password";
-  btn.querySelector("i").className = mostrar ? "fa fa-eye-slash" : "fa fa-eye";
-}
-
-function forcaSenha(v){
-  if(!v) return 0;
-  let f = 0;
-  if(v.length >= 6)  f++;
-  if(v.length >= 10) f++;
-  if(/[A-Z]/.test(v)) f++;
-  if(/[0-9]/.test(v)) f++;
-  if(/[^A-Za-z0-9]/.test(v)) f++;
-  return f;  // 0-5
-}
-
-function validarSenhas(){
-  const nova     = document.getElementById("nova_senha").value;
-  const confirma = document.getElementById("confirmar_senha").value;
-  const bar      = document.getElementById("senhaStrength");
-  const lbl      = document.getElementById("senhaStrengthLabel");
-  const match    = document.getElementById("senhaMatch");
-
-  // barra de força
-  const f = forcaSenha(nova);
-  const pct = nova ? Math.round((f/5)*100) : 0;
-  const cor = f<=1?"#ef4444":f<=3?"#f59e0b":"#22c55e";
-  const nomes = ["","Muito fraca","Fraca","Razoável","Forte","Muito forte"];
-  bar.style.width  = pct+"%";
-  bar.style.background = cor;
-  lbl.textContent  = nova ? (nomes[f]||"") : "";
-  lbl.style.color  = cor;
-
-  // match
-  if(!confirma){ match.textContent=""; return; }
-  if(nova === confirma){
-    match.textContent = "✓ Senhas conferem"; match.className="senha-status ok";
-  } else {
-    match.textContent = "✗ Senhas não conferem"; match.className="senha-status erro";
-  }
-}
-
 /* ── CPF ── */
 function bloquearCPF(){ document.getElementById("cpf").readOnly=true; document.getElementById("cpf_aviso").style.display="flex"; cpfEdicaoHabilitada=false; }
 function habilitarEdicaoCPF(){
@@ -510,7 +401,7 @@ function filtrarTabela(){
 function resetModal(){
   campos.forEach(c=>{ const el=document.getElementById(c); if(el) el.value=""; });
   document.getElementById("hora_entrada").value="09:00"; document.getElementById("hora_saida").value="18:00";
-  limparCamposSenha();
+  const elSenha=document.getElementById("senha_acesso"); if(elSenha) elSenha.value="";
   // Limpar campos de senha
   document.getElementById("nova_senha").value="";
   document.getElementById("confirmar_senha").value="";
@@ -550,101 +441,6 @@ async function editar(cpf){
   document.getElementById("tabDocsBtn").style.display="";
   document.getElementById("progressWrap").style.display="inline-flex";
   abaAtiva="pessoais"; setTimeout(atualizarProgresso,50); carregarDocs(cpf);
-
-  // Verificar se já tem senha cadastrada no perfil
-  const { data: perfil } = await client.from("perfis")
-    .select("id, tem_senha")
-    .eq("cpf_terapeuta", cpf)
-    .limit(1)
-  if(perfil && perfil.length > 0 && perfil[0].tem_senha){
-    document.getElementById("senhaExistenteInfo").style.display = "block"
-  }
-
-  const u=window.usuarioLogado;
-  if(u&&u.role==="admin"){
-    document.getElementById("campo_role").style.display="";
-    document.getElementById("role_usuario").disabled=false;
-    (async()=>{
-      let perfil=null;
-      const {data:p1}=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);
-      if(p1&&p1.length>0){ perfil=p1[0]; } else if(data.email){
-        const {data:p2}=await client.from("perfis").select("email,role").eq("email",data.email.toLowerCase()).limit(1);
-        if(p2&&p2.length>0) perfil=p2[0];
-      }
-      const elRole=document.getElementById("role_usuario");
-      if(elRole) elRole.value=perfil?(perfil.role||"usuario"):"usuario";
-    })();
-  }
-  document.getElementById("modal").style.display="flex";
-}
-
-function fecharModal(){ document.getElementById("modal").style.display="none"; }
-
-/* ── Salvar ── */
-async function salvar(){
-  const u=window.usuarioLogado; const payload=getPayload();
-  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){ alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email."); return; }
-
-  // Validar senha se preenchida
-  const novaSenha     = document.getElementById("nova_senha").value
-  const confirmarSenha = document.getElementById("confirmar_senha").value
-  if(novaSenha || confirmarSenha){
-    if(novaSenha.length < 6){ alert("A senha deve ter pelo menos 6 caracteres."); return; }
-    if(novaSenha !== confirmarSenha){ alert("As senhas não conferem."); return; }
-  }
-
-  let cpfParaVincular = cpfAtual
-
-  if(!cpfAtual){
-    if(!payload.cpf){ alert("CPF é obrigatório."); return; }
-    const cpfNovo=limparCPF(payload.cpf);
-    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
-    if(existente&&existente.length>0){ alert("CPF já cadastrado."); return; }
-    const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});
-    if(error){ alert("Erro ao salvar: "+error.message); return; }
-    cpfAtual=cpfNovo; cpfParaVincular=cpfNovo;
-    document.getElementById("tabDocsBtn").style.display=""; carregarDocs(cpfAtual);
-  } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
-    const cpfAntigo=limparCPF(cpfAtual); const cpfNovo=limparCPF(payload.cpf);
-    if(!cpfNovo||cpfNovo.length!==11){ alert("CPF inválido."); return; }
-    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
-    if(existente&&existente.length>0){ alert("CPF já pertence a outro cadastro."); return; }
-    const {data:dadosAtuais}=await client.from("terapeutas").select("*").eq("cpf",cpfAntigo).single();
-    const novoRegistro={...dadosAtuais,...payload,cpf:cpfNovo}; delete novoRegistro.created_at;
-    const {error:errInsert}=await client.from("terapeutas").insert(novoRegistro);
-    if(errInsert){ alert("Erro ao criar registro: "+errInsert.message); return; }
-    await client.from("documentos").update({equipe_id:cpfNovo}).eq("equipe_id",cpfAntigo);
-    await client.from("solicitacoes").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
-    await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("cpf_terapeuta",cpfAntigo);
-    const {error:errDel}=await client.from("terapeutas").delete().eq("cpf",cpfAntigo);
-    if(errDel){ alert("Erro ao remover registro antigo: "+errDel.message); return; }
-    cpfAtual=cpfNovo; cpfParaVincular=cpfNovo; cpfEdicaoHabilitada=false; bloquearCPF();
-    document.getElementById("cpf").value=fmtCPF(cpfNovo);
-  } else {
-    if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){ alert("Sem permissão."); return; }
-    const updatePayload={...payload}; delete updatePayload.cpf;
-    const {error}=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);
-    if(error){ alert("Erro ao salvar: "+error.message); return; }
-  }
-
-  // ── Salvar senha no perfil ──
-  if(novaSenha && cpfParaVincular){
-    // Buscar perfil vinculado
-    let perfilId = null
-    const { data: pByCpf } = await client.from("perfis")
-      .select("id").eq("cpf_terapeuta", cpfParaVincular).limit(1)
-    if(pByCpf && pByCpf.length > 0){
-      perfilId = pByCpf[0].id
-    } else if(payload.email){
-      const { data: pByEmail } = await client.from("perfis")
-        .select("id").eq("email", payload.email.trim().toLowerCase()).limit(1)
-      if(pByEmail && pByEmail.length > 0) perfilId = pByEmail[0].id
-    }
-    if(perfilId){
-      // Atualizar senha via Supabase Admin — usa a função RPC set_user_password se existir
-      // Se não tiver RPC, salva hash na tabela perfis (campo senha_hash)
-      const { error: errSenha } = await client.from("perfis")
-        .update({ senha_plain: novaSenha, tem_senha: true })
         .eq("id", perfilId)
       if(errSenha) console.warn("Aviso ao salvar senha:", errSenha.message)
       else document.getElementById("senhaExistenteInfo").style.display = "block"
@@ -672,14 +468,23 @@ async function salvar(){
       await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId);
     }
   }
-
   // salvar senha se preenchida
-  const novaSenha = document.getElementById("nova_senha")?.value
-  const confSenha = document.getElementById("confirmar_senha")?.value
-  if(novaSenha || confSenha){
-    if(novaSenha.length < 6){ alert("Senha deve ter ao menos 6 caracteres."); return }
-    if(novaSenha !== confSenha){ alert("As senhas não conferem."); return }
-    await salvarSenhaNoBackend(cpfParaVincular, novaSenha, payload.email)
+  const _senha = document.getElementById("senha_acesso")?.value?.trim()
+  if(_senha){
+    if(_senha.length < 6){ alert("Senha deve ter pelo menos 6 caracteres."); return }
+    const _cpfV = cpfAtual
+    const _emailV = payload.email
+    ;(async()=>{
+      let _pid = null
+      const {data:_p1} = await client.from("perfis").select("id").eq("cpf_terapeuta",_cpfV).limit(1)
+      if(_p1&&_p1.length>0) _pid=_p1[0].id
+      else if(_emailV){
+        const {data:_p2} = await client.from("perfis").select("id").eq("email",_emailV.trim().toLowerCase()).limit(1)
+        if(_p2&&_p2.length>0) _pid=_p2[0].id
+      }
+      if(_pid) await client.from("perfis").update({senha_plain:_senha,tem_senha:true}).eq("id",_pid)
+      else console.warn("Perfil não encontrado — senha salva após 1º login.")
+    })()
   }
   carregar(); fecharModal();
 }
@@ -773,6 +578,13 @@ function atualizarProgresso(){
   }
 }
 
+
+function toggleSenhaEquipe(btn){
+  const el = document.getElementById("senha_acesso")
+  const mostrar = el.type === "password"
+  el.type = mostrar ? "text" : "password"
+  btn.querySelector("i").className = mostrar ? "fa fa-eye-slash" : "fa fa-eye"
+}
 document.addEventListener('DOMContentLoaded',()=>{
   aplicarMascaras();
   TODOS_CAMPOS.forEach(c=>{ const el=document.getElementById(c.id); if(el){ el.addEventListener("input",atualizarProgresso); el.addEventListener("change",atualizarProgresso); } });

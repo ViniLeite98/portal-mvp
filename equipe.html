@@ -289,6 +289,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 </div>
 
 <script>
+var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
 let cpfAtual = null;
 let cpfEdicaoHabilitada = false;
 
@@ -356,30 +357,21 @@ function toggleSenhaEquipe(btn){
 }
 
 async function salvarSenhaBackend(cpfV, senhaV, emailV){
-  // Buscar email do perfil se não veio
   var emailBusca = emailV ? emailV.trim().toLowerCase() : "";
   if(!emailBusca){
     var rp = await client.from("perfis").select("email").eq("cpf_terapeuta", cpfV).limit(1);
     if(rp.data && rp.data.length > 0) emailBusca = rp.data[0].email || "";
   }
-  if(!emailBusca){
-    alert("Email não encontrado para este profissional.");
-    return;
-  }
+  if(!emailBusca){ alert("Email nao encontrado."); return; }
 
-  var res = await client.functions.invoke("manage-auth", {
-    body: { acao: "atualizar_senha", email: emailBusca, password: senhaV }
+  var resp = await fetch("https://rymehgsoarjeecuwyhny.supabase.co/functions/v1/manage-auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+    body: JSON.stringify({ acao: "atualizar_senha", email: emailBusca, password: senhaV })
   });
-
-  if(res.error){
-    alert("Erro: " + (res.error.message || JSON.stringify(res.error)));
-    return;
-  }
-  if(res.data && res.data.error){
-    alert("Erro: " + res.data.error);
-    return;
-  }
-  alert("Senha atualizada! O profissional já pode logar com a nova senha.");
+  var json = await resp.json();
+  if(json.error){ alert("Erro: " + json.error); }
+  else { alert("Senha atualizada! Profissional pode logar com a nova senha."); }
 }
 
 async function carregar(){

@@ -476,7 +476,7 @@ async function salvar(){
     // Criar login com senha 2026
     // Salva sessão atual para não perder o login do admin
     var sessaoAtual = await client.auth.getSession();
-    var tokenAtual  = sessaoAtual.data && sessaoAtual.data.session ? sessaoAtual.data.session.access_token : null;
+    var tokenAtual   = sessaoAtual.data && sessaoAtual.data.session ? sessaoAtual.data.session.access_token : null;
     var refreshAtual = sessaoAtual.data && sessaoAtual.data.session ? sessaoAtual.data.session.refresh_token : null;
 
     if(payload.email){
@@ -487,10 +487,9 @@ async function salvar(){
       });
 
       if(signUpRes.error){
-        console.warn("Aviso ao criar login:", signUpRes.error.message);
+        alert("Erro ao criar login: " + signUpRes.error.message);
       } else if(signUpRes.data && signUpRes.data.user){
         var novoUserId = signUpRes.data.user.id;
-        // Inserir em perfis
         await client.from("perfis").upsert({
           id: novoUserId,
           email: payload.email.trim().toLowerCase(),
@@ -498,6 +497,9 @@ async function salvar(){
           role: "usuario",
           cpf_terapeuta: cpfNovo
         });
+        alert("Login criado com sucesso! Email: " + payload.email + " | Senha: 2026");
+      } else {
+        alert("signUp sem erro e sem usuario. Resposta: " + JSON.stringify(signUpRes.data));
       }
 
       // Restaurar sessão do admin

@@ -84,7 +84,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
 .btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
-.senha-strength{height:4px;border-radius:2px;margin-top:6px;transition:width .3s,background .3s;}
 </style>
 </head>
 <body>
@@ -139,8 +138,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
       </button>
     </nav>
     <div class="tab-panels">
-
-      <!-- DADOS PESSOAIS -->
       <div class="tab-panel active" id="tab-pessoais">
         <p class="section-title"><i class="fa fa-id-card"></i> Dados Pessoais</p>
         <div class="grid">
@@ -168,8 +165,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           </div>
         </div>
       </div>
-
-      <!-- CONTATOS -->
       <div class="tab-panel" id="tab-contatos">
         <p class="section-title"><i class="fa fa-phone"></i> Contatos</p>
         <div class="grid-2">
@@ -177,12 +172,10 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>Contato de Emergência</label><input id="telefone_emergencia" placeholder="(11) 99999-9999"></div>
         </div>
       </div>
-
-      <!-- ENDEREÇO -->
       <div class="tab-panel" id="tab-endereco">
         <p class="section-title"><i class="fa fa-map-marker-alt"></i> Endereço</p>
         <div class="grid">
-          <div class="field"><label>CEP</label><input id="cep" placeholder="00000-000" oninput="buscarCepEquipe(this.value)"></div>
+          <div class="field"><label>CEP</label><input id="cep" placeholder="00000-000"></div>
           <div class="field span2"><label>Rua</label><input id="rua"></div>
           <div class="field"><label>Número</label><input id="numero"></div>
           <div class="field"><label>Complemento</label><input id="complemento"></div>
@@ -191,8 +184,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>UF</label><input id="uf" maxlength="2" style="text-transform:uppercase"></div>
         </div>
       </div>
-
-      <!-- PAGAMENTO -->
       <div class="tab-panel" id="tab-pagamento">
         <p class="section-title"><i class="fa fa-dollar-sign"></i> Pagamento via PIX</p>
         <div class="grid-2">
@@ -206,8 +197,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>Chave PIX</label><input id="pix_chave"></div>
         </div>
       </div>
-
-      <!-- DADOS FUNCIONAIS -->
       <div class="tab-panel" id="tab-funcional">
         <p class="section-title"><i class="fa fa-briefcase"></i> Dados Funcionais</p>
         <div class="grid">
@@ -260,15 +249,17 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field">
             <label>Senha de Acesso</label>
             <div style="position:relative">
-              <input type="password" id="senha_acesso" autocomplete="new-password" placeholder="Deixe em branco para manter" style="width:100%;box-sizing:border-box;padding-right:36px">
-              <button type="button" onclick="toggleSenhaEquipe(this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:14px;padding:0"><i class="fa fa-eye"></i></button>
+              <input type="password" id="senha_acesso" autocomplete="new-password"
+                placeholder="Deixe em branco para manter"
+                style="width:100%;box-sizing:border-box;padding-right:36px">
+              <button type="button" onclick="toggleSenhaEquipe(this)"
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:14px;padding:0">
+                <i class="fa fa-eye"></i>
+              </button>
             </div>
           </div>
         </div>
-
       </div>
-
-      <!-- DOCUMENTOS -->
       <div class="tab-panel" id="tab-docs">
         <p class="section-title"><i class="fa fa-file-alt"></i> Documentos Anexados</p>
         <div class="doc-upload-box">
@@ -288,7 +279,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
         </div>
         <div id="docLista" class="doc-list"><div class="doc-empty">Nenhum documento anexado.</div></div>
       </div>
-
     </div>
   </div>
   <div class="modal-footer">
@@ -309,7 +299,6 @@ const campos = [
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
 ];
 
-/* ── Máscaras ── */
 function mascara(id, fn){
   const el = document.getElementById(id); if(!el) return;
   el.addEventListener('input', function(){
@@ -332,45 +321,57 @@ function aplicarMascaras(){
   if(uf) uf.addEventListener('input',function(){ this.value=this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2); });
 }
 
-/* ── CEP ── */
-async function buscarCepEquipe(cep){
-  const d = cep.replace(/\D/g,""); if(d.length!==8) return;
-  try{
-    const r = await fetch(`https://viacep.com.br/ws/${d}/json/`);
-    const j = await r.json(); if(j.erro) return;
-    document.getElementById("rua").value      = j.logradouro||"";
-    document.getElementById("bairro").value   = j.bairro||"";
-    document.getElementById("cidade").value   = j.localidade||"";
-    document.getElementById("uf").value       = j.uf||"";
-  }catch(e){ console.error("CEP error",e); }
-}
-
-/* ── CPF ── */
 function bloquearCPF(){ document.getElementById("cpf").readOnly=true; document.getElementById("cpf_aviso").style.display="flex"; cpfEdicaoHabilitada=false; }
 function habilitarEdicaoCPF(){
-  if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?")) return;
+  if(!confirm("Alterar o CPF ira:\n- Criar novo registro\n- Migrar documentos\n- Excluir registro antigo\n\nDeseja continuar?")) return;
   const el=document.getElementById("cpf"); el.readOnly=false; el.focus(); el.select();
   document.getElementById("cpf_aviso").style.display="none"; cpfEdicaoHabilitada=true;
 }
 function desbloquearCPF(){ document.getElementById("cpf").readOnly=false; document.getElementById("cpf_aviso").style.display="none"; cpfEdicaoHabilitada=false; }
 
-/* ── Abas ── */
 function mudarTab(tab, btn){
-  document.querySelectorAll(".tab-panel").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".side-btn").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(function(el){ el.classList.remove("active"); });
+  document.querySelectorAll(".side-btn").forEach(function(el){ el.classList.remove("active"); });
   document.getElementById("tab-"+tab).classList.add("active");
   btn.classList.add("active"); abaAtiva=tab; atualizarProgresso();
 }
 
-function getPayload(){ const obj={}; campos.forEach(c=>{ const el=document.getElementById(c); if(el&&el.value!=="")obj[c]=el.value; }); return obj; }
-
-function setForm(data){
-  campos.forEach(c=>{ const el=document.getElementById(c); if(!el)return; el.value=(c==="hora_entrada"||c==="hora_saida")?(data[c]?data[c].substring(0,5):""):(data[c]||""); });
-  const campo=document.getElementById("campo_data_inativacao"); if(campo) campo.style.display=data.status==="Inativo"?"":"none";
-  ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id=>{ const el=document.getElementById(id); if(el&&el.value) el.dispatchEvent(new Event('input')); });
+function getPayload(){
+  const obj={};
+  campos.forEach(function(c){ const el=document.getElementById(c); if(el&&el.value!=="")obj[c]=el.value; });
+  return obj;
 }
 
-/* ── Carregar lista ── */
+function setForm(data){
+  campos.forEach(function(c){ const el=document.getElementById(c); if(!el)return; el.value=(c==="hora_entrada"||c==="hora_saida")?(data[c]?data[c].substring(0,5):""):(data[c]||""); });
+  const campo=document.getElementById("campo_data_inativacao"); if(campo) campo.style.display=data.status==="Inativo"?"":"none";
+  ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(function(id){ const el=document.getElementById(id); if(el&&el.value) el.dispatchEvent(new Event('input')); });
+}
+
+function toggleSenhaEquipe(btn){
+  const el = document.getElementById("senha_acesso");
+  const show = el.type === "password";
+  el.type = show ? "text" : "password";
+  btn.querySelector("i").className = show ? "fa fa-eye-slash" : "fa fa-eye";
+}
+
+async function salvarSenhaBackend(cpfV, senhaV, emailV){
+  let pid = null;
+  const r1 = await client.from("perfis").select("id").eq("cpf_terapeuta", cpfV).limit(1);
+  if(r1.data && r1.data.length > 0){
+    pid = r1.data[0].id;
+  } else if(emailV){
+    const r2 = await client.from("perfis").select("id").eq("email", emailV.trim().toLowerCase()).limit(1);
+    if(r2.data && r2.data.length > 0) pid = r2.data[0].id;
+  }
+  if(pid){
+    const r = await client.from("perfis").update({senha_plain: senhaV, tem_senha: true}).eq("id", pid);
+    if(r.error) console.warn("Erro senha:", r.error.message);
+  } else {
+    console.warn("Perfil nao encontrado - senha sera salva no 1o login.");
+  }
+}
+
 async function carregar(){
   if(!window.usuarioLogado){ setTimeout(carregar,100); return; }
   const u=window.usuarioLogado;
@@ -381,47 +382,39 @@ async function carregar(){
   let query=client.from("terapeutas").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro) query=query.eq("status",statusFiltro);
   if(u&&u.role==="usuario"&&u.cpf) query=query.eq("cpf",u.cpf);
-  const {data,error}=await query;
-  if(error){ console.error(error); return; }
+  const res=await query;
+  if(res.error){ console.error(res.error); return; }
   const tbody=document.getElementById("lista"); tbody.innerHTML="";
-  data.forEach(t=>{
+  res.data.forEach(function(t){
     const podeExcluir=u&&(u.role==="admin"||u.role==="apoio");
-    const acoes=podeExcluir?`<button onclick="editar('${t.cpf}')">Editar</button><button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`:`<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;
-    tbody.innerHTML+=`<tr><td>${t.nome_profissional||""}</td><td>${t.cargo||""}</td><td>${fmtCPFDisplay(t.cpf)}</td><td>${t.status||""}</td><td>${acoes}</td></tr>`;
+    const acoes=podeExcluir?'<button onclick="editar(\''+t.cpf+'\')">Editar</button><button class="excluir" onclick="excluir(\''+t.cpf+'\')">Excluir</button>':`<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;
+    tbody.innerHTML+='<tr><td>'+(t.nome_profissional||"")+'</td><td>'+(t.cargo||"")+'</td><td>'+fmtCPFDisplay(t.cpf)+'</td><td>'+(t.status||"")+'</td><td>'+acoes+'</td></tr>';
   });
   filtrarTabela();
 }
 
 function filtrarTabela(){
   const filtro=document.getElementById("pesquisaNome").value.toLowerCase();
-  document.querySelectorAll("#lista tr").forEach(linha=>{ linha.style.display=linha.children[0].innerText.toLowerCase().includes(filtro)?"":"none"; });
+  document.querySelectorAll("#lista tr").forEach(function(linha){ linha.style.display=linha.children[0].innerText.toLowerCase().includes(filtro)?"":"none"; });
 }
 
-/* ── Resetar modal ── */
 function resetModal(){
-  campos.forEach(c=>{ const el=document.getElementById(c); if(el) el.value=""; });
-  document.getElementById("hora_entrada").value="09:00"; document.getElementById("hora_saida").value="18:00";
-  const _elS=document.getElementById("senha_acesso"); if(_elS){ _elS.value=""; _elS.type="password"; }
-  const elSenha=document.getElementById("senha_acesso"); if(elSenha) elSenha.value="";
-  // Limpar campos de senha
-  document.getElementById("nova_senha").value="";
-  document.getElementById("confirmar_senha").value="";
-  document.getElementById("senhaMatch").textContent="";
-  document.getElementById("senhaStrength").style.width="0%";
-  document.getElementById("senhaStrengthLabel").textContent="";
-  document.getElementById("senhaExistenteInfo").style.display="none";
+  campos.forEach(function(c){ const el=document.getElementById(c); if(el) el.value=""; });
+  document.getElementById("hora_entrada").value="09:00";
+  document.getElementById("hora_saida").value="18:00";
+  const elSenha=document.getElementById("senha_acesso");
+  if(elSenha){ elSenha.value=""; elSenha.type="password"; }
   const campoRole=document.getElementById("campo_role");
   const roleEl=document.getElementById("role_usuario");
-  const isAdmin=window.usuarioLogado?.role==="admin";
+  const isAdmin=window.usuarioLogado && window.usuarioLogado.role==="admin";
   if(campoRole) campoRole.style.display=isAdmin?"":"none";
   if(roleEl){ roleEl.disabled=!isAdmin; }
   mudarTab("pessoais",document.querySelector(".side-btn"));
 }
 
-/* ── Abrir novo ── */
 function abrirNovo(){
   cpfAtual=null; cpfEdicaoHabilitada=false; resetModal(); desbloquearCPF();
-  const isAdm = window.usuarioLogado?.role === "admin";
+  const isAdm = window.usuarioLogado && window.usuarioLogado.role === "admin";
   document.getElementById("campo_role").style.display = isAdm ? "" : "none";
   document.getElementById("role_usuario").disabled = !isAdm;
   document.getElementById("role_usuario").value = "usuario";
@@ -432,95 +425,141 @@ function abrirNovo(){
   document.getElementById("modal").style.display="flex";
 }
 
-/* ── Editar ── */
 async function editar(cpf){
   cpfAtual=cpf; cpfEdicaoHabilitada=false;
-  const {data,error}=await client.from("terapeutas").select("*").eq("cpf",cpf).single();
-  if(error){ console.error(error); return; }
+  const res=await client.from("terapeutas").select("*").eq("cpf",cpf).single();
+  if(res.error){ console.error(res.error); return; }
+  const data=res.data;
   resetModal(); setForm(data); bloquearCPF();
   document.getElementById("modalTitulo").textContent=data.nome_profissional||"Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display="";
   document.getElementById("progressWrap").style.display="inline-flex";
   abaAtiva="pessoais"; setTimeout(atualizarProgresso,50); carregarDocs(cpf);
-        .eq("id", perfilId)
-      if(errSenha) console.warn("Aviso ao salvar senha:", errSenha.message)
-      else document.getElementById("senhaExistenteInfo").style.display = "block"
-    } else {
-      console.warn("Perfil não encontrado para salvar senha. O perfil é criado no primeiro login.")
-    }
+  const u=window.usuarioLogado;
+  if(u&&u.role==="admin"){
+    document.getElementById("campo_role").style.display="";
+    document.getElementById("role_usuario").disabled=false;
+    (async function(){
+      let perfil=null;
+      const rp1=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);
+      if(rp1.data&&rp1.data.length>0){ perfil=rp1.data[0]; } else if(data.email){
+        const rp2=await client.from("perfis").select("email,role").eq("email",data.email.toLowerCase()).limit(1);
+        if(rp2.data&&rp2.data.length>0) perfil=rp2.data[0];
+      }
+      const elRole=document.getElementById("role_usuario");
+      if(elRole) elRole.value=perfil?(perfil.role||"usuario"):"usuario";
+    })();
+  }
+  document.getElementById("modal").style.display="flex";
+}
+
+function fecharModal(){ document.getElementById("modal").style.display="none"; }
+
+async function salvar(){
+  const u=window.usuarioLogado;
+  const payload=getPayload();
+  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){ alert("Preencha os campos obrigatorios: Nome Completo, Nome Profissional e Email."); return; }
+
+  let cpfParaVincular = cpfAtual;
+
+  if(!cpfAtual){
+    if(!payload.cpf){ alert("CPF e obrigatorio."); return; }
+    const cpfNovo=limparCPF(payload.cpf);
+    const re=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
+    if(re.data&&re.data.length>0){ alert("CPF ja cadastrado."); return; }
+    const ri=await client.from("terapeutas").insert(Object.assign({},payload,{cpf:cpfNovo}));
+    if(ri.error){ alert("Erro ao salvar: "+ri.error.message); return; }
+    cpfAtual=cpfNovo; cpfParaVincular=cpfNovo;
+    document.getElementById("tabDocsBtn").style.display=""; carregarDocs(cpfAtual);
+  } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
+    const cpfAntigo=limparCPF(cpfAtual); const cpfNovo=limparCPF(payload.cpf);
+    if(!cpfNovo||cpfNovo.length!==11){ alert("CPF invalido."); return; }
+    const re=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
+    if(re.data&&re.data.length>0){ alert("CPF ja pertence a outro cadastro."); return; }
+    const rd=await client.from("terapeutas").select("*").eq("cpf",cpfAntigo).single();
+    const novoRegistro=Object.assign({},rd.data,payload,{cpf:cpfNovo}); delete novoRegistro.created_at;
+    const ri=await client.from("terapeutas").insert(novoRegistro);
+    if(ri.error){ alert("Erro ao criar registro: "+ri.error.message); return; }
+    await client.from("documentos").update({equipe_id:cpfNovo}).eq("equipe_id",cpfAntigo);
+    await client.from("solicitacoes").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
+    await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("cpf_terapeuta",cpfAntigo);
+    const rdel=await client.from("terapeutas").delete().eq("cpf",cpfAntigo);
+    if(rdel.error){ alert("Erro ao remover registro antigo: "+rdel.error.message); return; }
+    cpfAtual=cpfNovo; cpfParaVincular=cpfNovo; cpfEdicaoHabilitada=false; bloquearCPF();
+    document.getElementById("cpf").value=fmtCPF(cpfNovo);
+  } else {
+    if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){ alert("Sem permissao."); return; }
+    const updatePayload=Object.assign({},payload); delete updatePayload.cpf;
+    const ru=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);
+    if(ru.error){ alert("Erro ao salvar: "+ru.error.message); return; }
   }
 
-  // ── Role ──
+  // Role
   const isAdminU=u&&u.role==="admin";
-  const roleManual=isAdminU&&!document.getElementById("role_usuario")?.disabled?(document.getElementById("role_usuario")?.value||null):null;
+  const roleEl=document.getElementById("role_usuario");
+  const roleManual=isAdminU&&roleEl&&!roleEl.disabled?roleEl.value:null;
   const cargo=payload.cargo||""; let roleAutomatico=null;
   if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino") roleAutomatico="usuario";
   else if(cargo==="Recepcionista") roleAutomatico="apoio";
   const novoRole=roleManual||roleAutomatico;
   if(cpfParaVincular&&novoRole){
     let perfilId=null;
-    const {data:p1}=await client.from("perfis").select("id,role,cpf_terapeuta").eq("cpf_terapeuta",cpfParaVincular).limit(1);
-    if(p1&&p1.length>0) perfilId=p1[0].id;
+    const rp1=await client.from("perfis").select("id,role,cpf_terapeuta").eq("cpf_terapeuta",cpfParaVincular).limit(1);
+    if(rp1.data&&rp1.data.length>0) perfilId=rp1.data[0].id;
     if(!perfilId&&payload.email){
-      const {data:p2}=await client.from("perfis").select("id,role,email").eq("email",payload.email.trim().toLowerCase()).limit(1);
-      if(p2&&p2.length>0) perfilId=p2[0].id;
+      const rp2=await client.from("perfis").select("id,role,email").eq("email",payload.email.trim().toLowerCase()).limit(1);
+      if(rp2.data&&rp2.data.length>0) perfilId=rp2.data[0].id;
     }
     if(perfilId){
       await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId);
     }
   }
-  // salvar senha se preenchida
-  const _senha = document.getElementById("senha_acesso")?.value?.trim()
-  if(_senha){
-    if(_senha.length < 6){ alert("Senha deve ter pelo menos 6 caracteres."); return }
-    const _cpfV = cpfAtual
-    const _emailV = payload.email
-    ;(async()=>{
-      let _pid = null
-      const {data:_p1} = await client.from("perfis").select("id").eq("cpf_terapeuta",_cpfV).limit(1)
-      if(_p1&&_p1.length>0) _pid=_p1[0].id
-      else if(_emailV){
-        const {data:_p2} = await client.from("perfis").select("id").eq("email",_emailV.trim().toLowerCase()).limit(1)
-        if(_p2&&_p2.length>0) _pid=_p2[0].id
-      }
-      if(_pid) await client.from("perfis").update({senha_plain:_senha,tem_senha:true}).eq("id",_pid)
-      else console.warn("Perfil não encontrado — senha salva após 1º login.")
-    })()
-  }
+
   // Senha
-  const _s = document.getElementById("senha_acesso")?.value?.trim()
-  if(_s){
-    if(_s.length < 6){ alert("Senha deve ter pelo menos 6 caracteres."); return }
-    await _salvarSenhaBackend(cpfParaVincular, _s, payload.email)
+  const senhaEl=document.getElementById("senha_acesso");
+  const senha=senhaEl?senhaEl.value.trim():"";
+  if(senha){
+    if(senha.length<6){ alert("Senha deve ter pelo menos 6 caracteres."); return; }
+    await salvarSenhaBackend(cpfParaVincular, senha, payload.email);
   }
+
   carregar(); fecharModal();
 }
 
-/* ── Excluir ── */
 async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
-  const {data:docs}=await client.from("documentos").select("id,url").eq("equipe_id",cpf);
-  if(docs&&docs.length>0){
-    const paths=docs.map(d=>d.url.split("/storage/v1/object/public/documentos/")[1]).filter(Boolean).map(p=>decodeURIComponent(p));
+  const rd=await client.from("documentos").select("id,url").eq("equipe_id",cpf);
+  if(rd.data&&rd.data.length>0){
+    const paths=rd.data.map(function(d){ return d.url.split("/storage/v1/object/public/documentos/")[1]; }).filter(Boolean).map(decodeURIComponent);
     if(paths.length>0) await client.storage.from("documentos").remove(paths);
     await client.from("documentos").delete().eq("equipe_id",cpf);
   }
   await client.from("solicitacoes").delete().eq("terapeuta_cpf",cpf);
-  const {error}=await client.from("terapeutas").delete().eq("cpf",cpf);
-  if(error){ alert("Erro ao excluir: "+error.message); return; }
+  const re=await client.from("terapeutas").delete().eq("cpf",cpf);
+  if(re.error){ alert("Erro ao excluir: "+re.error.message); return; }
   carregar();
 }
 
-/* ── Docs ── */
 function limparNome(nome){ return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_"); }
 function iconeDoc(nome){ const ext=(nome||"").split(".").pop().toLowerCase(); if(["jpg","jpeg","png","gif","webp"].includes(ext))return "fa-image"; if(ext==="pdf")return "fa-file-pdf"; if(["doc","docx"].includes(ext))return "fa-file-word"; return "fa-file-alt"; }
 
 async function carregarDocs(cpf){
-  const {data,error}=await client.from("documentos").select("*").eq("equipe_id",cpf).order("created_at",{ascending:false});
+  const res=await client.from("documentos").select("*").eq("equipe_id",cpf).order("created_at",{ascending:false});
   const lista=document.getElementById("docLista"); const badge=document.getElementById("docBadge");
-  if(error||!data||data.length===0){ lista.innerHTML=`<div class="doc-empty">Nenhum documento anexado.</div>`; badge.style.display="none"; return; }
-  badge.textContent=data.length; badge.style.display="";
-  lista.innerHTML=data.map(d=>`<div class="doc-item" id="doc-${d.id}"><div class="doc-item-left"><div class="doc-icon"><i class="fa ${iconeDoc(d.nome_arquivo)}"></i></div><div><div class="doc-name">${d.nome_arquivo}</div><div class="doc-tipo">${d.tipo} · ${new Date(d.created_at).toLocaleDateString('pt-BR')}</div></div></div><div class="doc-item-right"><a href="${d.url}" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc('${d.id}','${d.url}')"><i class="fa fa-trash"></i></button></div></div>`).join("");
+  if(res.error||!res.data||res.data.length===0){ lista.innerHTML='<div class="doc-empty">Nenhum documento anexado.</div>'; badge.style.display="none"; return; }
+  badge.textContent=res.data.length; badge.style.display="";
+  lista.innerHTML = res.data.map(function(d){
+    var ext = (d.nome_arquivo||'').split('.').pop().toLowerCase();
+    var ico = ['jpg','jpeg','png','gif','webp'].includes(ext)?'fa-image':ext==='pdf'?'fa-file-pdf':['doc','docx'].includes(ext)?'fa-file-word':'fa-file-alt';
+    return '<div class="doc-item"><div class="doc-item-left">'
+      +'<div class="doc-icon"><i class="fa '+ico+'"></i></div>'
+      +'<div><div class="doc-name">'+d.nome_arquivo+'</div>'
+      +'<div class="doc-tipo">'+d.tipo+'</div></div></div>'
+      +'<div class="doc-item-right">'
+      +'<a href="'+d.url+'" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a>'
+      +'<button class="btn-del" onclick="excluirDoc(this.dataset.id,this.dataset.url)" data-id="'+d.id+'" data-url="'+d.url+'"><i class="fa fa-trash"></i></button>'
+      +'</div></div>';
+  }).join('');
 }
 
 async function uploadDoc(){
@@ -528,37 +567,37 @@ async function uploadDoc(){
   const tipo=document.getElementById("doc_tipo").value; const file=document.getElementById("doc_arquivo").files[0];
   if(!file){ alert("Selecione um arquivo."); return; }
   const statusEl=document.getElementById("uploadStatus"); statusEl.style.display="block";
-  const fileName=`${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
-  const {error:uploadError}=await client.storage.from("documentos").upload(fileName,file);
-  if(uploadError){ statusEl.style.display="none"; alert("Erro no upload: "+uploadError.message); return; }
-  const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
-  const {error}=await client.from("documentos").insert({equipe_id:cpfAtual,tipo,nome_arquivo:file.name,url:urlData.publicUrl});
+  const fileName=cpfAtual+"/"+Date.now()+"_"+limparNome(file.name);
+  const ru=await client.storage.from("documentos").upload(fileName,file);
+  if(ru.error){ statusEl.style.display="none"; alert("Erro no upload: "+ru.error.message); return; }
+  const urlData=client.storage.from("documentos").getPublicUrl(fileName);
+  const ri=await client.from("documentos").insert({equipe_id:cpfAtual,tipo:tipo,nome_arquivo:file.name,url:urlData.data.publicUrl});
   statusEl.style.display="none";
-  if(error){ alert("Erro ao salvar: "+error.message); return; }
+  if(ri.error){ alert("Erro ao salvar: "+ri.error.message); return; }
   document.getElementById("doc_arquivo").value=""; carregarDocs(cpfAtual);
 }
 
-async function excluirDoc(id,url){
+async function excluirDoc(btn,id,url){
   if(!confirm("Excluir este documento?")) return;
-  const path=url.split("/storage/v1/object/public/documentos/")[1];
+  const _id = id || btn.dataset.id;
+  const _url = url || btn.dataset.url;
+  const path=_url.split("/storage/v1/object/public/documentos/")[1];
   if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
-  await client.from("documentos").delete().eq("id",id); carregarDocs(cpfAtual);
+  await client.from("documentos").delete().eq("id",_id); carregarDocs(cpfAtual);
 }
 
-/* ── Status ── */
 function aoMudarStatus(select){
   const campo=document.getElementById("campo_data_inativacao"); const input=document.getElementById("data_inativacao");
   if(select.value==="Inativo"){ campo.style.display=""; if(!input.value) input.value=new Date().toISOString().split("T")[0]; }
   else { campo.style.display="none"; input.value=""; }
 }
 
-/* ── Progresso ── */
 const CAMPOS_POR_ABA={
   pessoais:[{id:"nome_completo",label:"Nome Completo"},{id:"nome_profissional",label:"Nome Profissional"},{id:"cpf",label:"CPF"},{id:"email",label:"Email"}],
   contatos:[{id:"telefone",label:"Telefone"}],
   endereco:[{id:"cep",label:"CEP"},{id:"rua",label:"Rua"},{id:"cidade",label:"Cidade"},{id:"uf",label:"UF"}],
   pagamento:[{id:"pix_tipo",label:"Tipo PIX"},{id:"pix_chave",label:"Chave PIX"}],
-  funcional:[{id:"cargo",label:"Cargo"},{id:"status",label:"Status"},{id:"data_inicio",label:"Data de Início"}],
+  funcional:[{id:"cargo",label:"Cargo"},{id:"status",label:"Status"},{id:"data_inicio",label:"Data de Inicio"}],
   docs:[],
 };
 const TODOS_CAMPOS=Object.values(CAMPOS_POR_ABA).flat();
@@ -567,58 +606,27 @@ let abaAtiva="pessoais";
 function atualizarProgresso(){
   const wrap=document.getElementById("progressWrap"); if(!wrap||wrap.style.display==="none") return;
   const total=TODOS_CAMPOS.length;
-  const feitos=TODOS_CAMPOS.filter(c=>{ const el=document.getElementById(c.id); return el&&el.value&&el.value.trim()!==""; });
+  const feitos=TODOS_CAMPOS.filter(function(c){ const el=document.getElementById(c.id); return el&&el.value&&el.value.trim()!==""; });
   const pct=total>0?Math.round((feitos.length/total)*100):0;
   const circum=113; const offset=circum-(circum*pct/100);
   const cor=pct===100?"#22c55e":pct>=50?"#f59e0b":"#ef4444";
   document.getElementById("progressPct").textContent=pct+"%"; document.getElementById("progressPct").style.color=cor;
   const fill=document.getElementById("progressFill"); fill.style.strokeDashoffset=offset; fill.style.stroke=cor;
-  const camposAba=CAMPOS_POR_ABA[abaAtiva]||[]; const feitosIds=feitos.map(c=>c.id);
+  const camposAba=CAMPOS_POR_ABA[abaAtiva]||[]; const feitosIds=feitos.map(function(c){ return c.id; });
   const tooltip=document.getElementById("progressTooltip");
   if(camposAba.length===0){ tooltip.innerHTML="<div style='color:#e5e7eb;font-size:12px'>Nenhum campo nesta aba.</div>"; }
   else {
-    const abaFeitos=camposAba.filter(c=>feitosIds.includes(c.id));
+    const abaFeitos=camposAba.filter(function(c){ return feitosIds.includes(c.id); });
     const abaPct=Math.round((abaFeitos.length/camposAba.length)*100);
-    tooltip.innerHTML=`<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Esta aba: ${abaPct}% · Geral: ${pct}%</div>`
-      +camposAba.map(c=>{ const ok=feitosIds.includes(c.id); return `<div class="tooltip-item ${ok?'done':'missing'}"><i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i> ${c.label}</div>`; }).join("")
+    tooltip.innerHTML="<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Esta aba: "+abaPct+"% · Geral: "+pct+"%</div>"
+      +camposAba.map(function(c){ const ok=feitosIds.includes(c.id); return "<div class='tooltip-item "+(ok?"done":"missing")+"'><i class='fa "+(ok?"fa-check-circle":"fa-times-circle")+"'></i> "+c.label+"</div>"; }).join("")
       +"<div style='border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px'>Passe para outras abas para ver os campos delas.</div>";
   }
 }
 
-
-function toggleSenhaEquipe(btn){
-  const el = document.getElementById("senha_acesso")
-  const mostrar = el.type === "password"
-  el.type = mostrar ? "text" : "password"
-  btn.querySelector("i").className = mostrar ? "fa fa-eye-slash" : "fa fa-eye"
-}
-
-function toggleSenhaEquipe(btn){
-  const el = document.getElementById("senha_acesso")
-  const show = el.type === "password"
-  el.type = show ? "text" : "password"
-  btn.querySelector("i").className = show ? "fa fa-eye-slash" : "fa fa-eye"
-}
-
-async function _salvarSenhaBackend(cpfV, senhaV, emailV){
-  let pid = null
-  const {data:p1} = await client.from("perfis").select("id").eq("cpf_terapeuta", cpfV).limit(1)
-  if(p1 && p1.length > 0) pid = p1[0].id
-  else if(emailV){
-    const {data:p2} = await client.from("perfis").select("id").eq("email", emailV.trim().toLowerCase()).limit(1)
-    if(p2 && p2.length > 0) pid = p2[0].id
-  }
-  if(pid){
-    const {error} = await client.from("perfis").update({senha_plain: senhaV, tem_senha: true}).eq("id", pid)
-    if(error) console.warn("Erro ao salvar senha:", error.message)
-  } else {
-    console.warn("Perfil não encontrado — senha será salva no 1º login.")
-  }
-}
-
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded',function(){
   aplicarMascaras();
-  TODOS_CAMPOS.forEach(c=>{ const el=document.getElementById(c.id); if(el){ el.addEventListener("input",atualizarProgresso); el.addEventListener("change",atualizarProgresso); } });
+  TODOS_CAMPOS.forEach(function(c){ const el=document.getElementById(c.id); if(el){ el.addEventListener("input",atualizarProgresso); el.addEventListener("change",atualizarProgresso); } });
   document.getElementById("filtroStatus").addEventListener("change",carregar);
   carregar();
 });

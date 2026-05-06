@@ -356,42 +356,30 @@ function toggleSenhaEquipe(btn){
 }
 
 async function salvarSenhaBackend(cpfV, senhaV, emailV){
-  console.log("[SENHA] iniciando para cpf:", cpfV, "email:", emailV);
-  let pid = null;
-  let perfilEncontrado = null;
-
-  // Busca por cpf_terapeuta
-  const r1 = await client.from("perfis").select("id, cpf_terapeuta, email").eq("cpf_terapeuta", cpfV).limit(1);
-  console.log("[SENHA] busca por cpf_terapeuta:", r1.data, "erro:", r1.error);
-  if(r1.data && r1.data.length > 0){
-    pid = r1.data[0].id;
-    perfilEncontrado = r1.data[0];
+  // Buscar email do perfil se não veio
+  var emailBusca = emailV ? emailV.trim().toLowerCase() : "";
+  if(!emailBusca){
+    var rp = await client.from("perfis").select("email").eq("cpf_terapeuta", cpfV).limit(1);
+    if(rp.data && rp.data.length > 0) emailBusca = rp.data[0].email || "";
+  }
+  if(!emailBusca){
+    alert("Email não encontrado para este profissional.");
+    return;
   }
 
-  // Se não achou por CPF, tenta por email
-  if(!pid && emailV){
-    const r2 = await client.from("perfis").select("id, cpf_terapeuta, email").eq("email", emailV.trim().toLowerCase()).limit(1);
-    console.log("[SENHA] busca por email:", r2.data, "erro:", r2.error);
-    if(r2.data && r2.data.length > 0){
-      pid = r2.data[0].id;
-      perfilEncontrado = r2.data[0];
-    }
-  }
+  var res = await client.functions.invoke("manage-auth", {
+    body: { acao: "atualizar_senha", email: emailBusca, password: senhaV }
+  });
 
-  console.log("[SENHA] perfilId encontrado:", pid, "perfil:", perfilEncontrado);
-
-  if(pid){
-    const r = await client.from("perfis").update({senha_plain: senhaV, tem_senha: true}).eq("id", pid);
-    console.log("[SENHA] update resultado:", r.data, "erro:", r.error);
-    if(r.error){
-      alert("Erro ao salvar senha: " + r.error.message);
-    } else {
-      console.log("[SENHA] salva com sucesso!");
-    }
-  } else {
-    console.warn("[SENHA] Perfil nao encontrado pelo CPF nem pelo email.");
-    alert("Atenção: a senha não foi salva pois o perfil de acesso ainda não existe para este profissional. A senha poderá ser definida após o primeiro login.");
+  if(res.error){
+    alert("Erro: " + (res.error.message || JSON.stringify(res.error)));
+    return;
   }
+  if(res.data && res.data.error){
+    alert("Erro: " + res.data.error);
+    return;
+  }
+  alert("Senha atualizada! O profissional já pode logar com a nova senha.");
 }
 
 async function carregar(){
@@ -458,32 +446,51 @@ async function editar(cpf){
   document.getElementById("progressWrap").style.display="inline-flex";
   abaAtiva="pessoais"; setTimeout(atualizarProgresso,50); carregarDocs(cpf);
   const u=window.usuarioLogado;
-  if(u&&u.role==="admin"){
-    document.getElementById("campo_role").style.display="";
-    document.getElementById("role_usuario").disabled=false;
-    (async function(){
-      let perfil=null;
-      const rp1=await client.from("perfis").select("email,role,senha_plain").eq("cpf_terapeuta",cpf).limit(1);
-      if(rp1.data&&rp1.data.length>0){ perfil=rp1.data[0]; } else if(data.email){
-        const rp2=await client.from("perfis").select("email,role,senha_plain").eq("email",data.email.toLowerCase()).limit(1);
-        if(rp2.data&&rp2.data.length>0) perfil=rp2.data[0];
-      }
+
+  // Busca perfil sempre — para preencher role E senha
+  (async function(){
+    let perfil=null;
+
+    // 1. tenta por cpf_terapeuta
+    const rp1=await client.from("perfis").select("email,role,senha_plain,cpf_terapeuta").eq("cpf_terapeuta",cpf).limit(1);
+    console.log("[PERFIL] busca cpf_terapeuta="+cpf+":", rp1.data, rp1.error);
+    if(rp1.data&&rp1.data.length>0){
+      perfil=rp1.data[0];
+    }
+
+    // 2. tenta por email
+    if(!perfil&&data.email){
+      const rp2=await client.from("perfis").select("email,role,senha_plain,cpf_terapeuta").eq("email",data.email.toLowerCase()).limit(1);
+      console.log("[PERFIL] busca email="+data.email+":", rp2.data, rp2.error);
+      if(rp2.data&&rp2.data.length>0) perfil=rp2.data[0];
+    }
+
+    // 3. tenta buscar TODOS os perfis e filtrar (caso cpf_terapeuta seja int e cpf seja string)
+    if(!perfil){
+      const rp3=await client.from("perfis").select("email,role,senha_plain,cpf_terapeuta").ilike("email", data.email||"").limit(5);
+      console.log("[PERFIL] busca ilike email:", rp3.data, rp3.error);
+      if(rp3.data&&rp3.data.length>0) perfil=rp3.data[0];
+    }
+
+    console.log("[PERFIL] resultado final:", perfil);
+
+    // Role (só admin vê o campo)
+    if(u&&u.role==="admin"){
+      document.getElementById("campo_role").style.display="";
+      document.getElementById("role_usuario").disabled=false;
       const elRole=document.getElementById("role_usuario");
       if(elRole) elRole.value=perfil?(perfil.role||"usuario"):"usuario";
-      // Preencher senha atual se existir
-      const elSenha=document.getElementById("senha_acesso");
-      if(elSenha && perfil && perfil.senha_plain) elSenha.value=perfil.senha_plain;
-    })();
-  } else {
-    // Para não-admin também mostrar a senha do próprio perfil
-    (async function(){
-      const rp=await client.from("perfis").select("senha_plain").eq("cpf_terapeuta",cpf).limit(1);
-      const elSenha=document.getElementById("senha_acesso");
-      if(elSenha && rp.data && rp.data.length>0 && rp.data[0].senha_plain){
-        elSenha.value=rp.data[0].senha_plain;
-      }
-    })();
-  }
+    }
+
+    // Senha — sempre preenche se existir
+    const elSenha=document.getElementById("senha_acesso");
+    if(elSenha){
+      elSenha.value = (perfil&&perfil.senha_plain) ? perfil.senha_plain : "";
+      const btnOlho=elSenha.parentNode.querySelector("button");
+      if(btnOlho) btnOlho.querySelector("i").className="fa fa-eye-slash";
+    }
+  })();
+
   document.getElementById("modal").style.display="flex";
 }
 
@@ -505,6 +512,20 @@ async function salvar(){
     if(ri.error){ alert("Erro ao salvar: "+ri.error.message); return; }
     cpfAtual=cpfNovo; cpfParaVincular=cpfNovo;
     document.getElementById("tabDocsBtn").style.display=""; carregarDocs(cpfAtual);
+
+    // Criar login no Auth se email e senha informados
+    var senhaEl2=document.getElementById("senha_acesso");
+    var senha2=senhaEl2?senhaEl2.value.trim():"";
+    if(payload.email && senha2){
+      var rc=await client.functions.invoke("manage-auth",{
+        body:{ acao:"criar", email:payload.email.trim().toLowerCase(), password:senha2, nome:payload.nome_completo||payload.nome_profissional||"", cpf:cpfNovo }
+      });
+      if(rc.data && rc.data.error){
+        alert("Cadastro salvo, mas erro ao criar login: " + rc.data.error);
+      } else if(!rc.error){
+        if(senhaEl2) senhaEl2.value = senha2; // mantém visível
+      }
+    }
   } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
     const cpfAntigo=limparCPF(cpfAtual); const cpfNovo=limparCPF(payload.cpf);
     if(!cpfNovo||cpfNovo.length!==11){ alert("CPF invalido."); return; }

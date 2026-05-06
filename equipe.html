@@ -260,7 +260,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field">
             <label>Senha de Acesso</label>
             <div style="position:relative">
-              <input type="password" id="senha_acesso" placeholder="Deixe em branco para manter" style="width:100%;box-sizing:border-box;padding-right:36px">
+              <input type="password" id="senha_acesso" autocomplete="new-password" placeholder="Deixe em branco para manter" style="width:100%;box-sizing:border-box;padding-right:36px">
               <button type="button" onclick="toggleSenhaEquipe(this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:14px;padding:0"><i class="fa fa-eye"></i></button>
             </div>
           </div>
@@ -401,6 +401,7 @@ function filtrarTabela(){
 function resetModal(){
   campos.forEach(c=>{ const el=document.getElementById(c); if(el) el.value=""; });
   document.getElementById("hora_entrada").value="09:00"; document.getElementById("hora_saida").value="18:00";
+  const _elS=document.getElementById("senha_acesso"); if(_elS){ _elS.value=""; _elS.type="password"; }
   const elSenha=document.getElementById("senha_acesso"); if(elSenha) elSenha.value="";
   // Limpar campos de senha
   document.getElementById("nova_senha").value="";
@@ -485,6 +486,12 @@ async function editar(cpf){
       if(_pid) await client.from("perfis").update({senha_plain:_senha,tem_senha:true}).eq("id",_pid)
       else console.warn("Perfil não encontrado — senha salva após 1º login.")
     })()
+  }
+  // Senha
+  const _s = document.getElementById("senha_acesso")?.value?.trim()
+  if(_s){
+    if(_s.length < 6){ alert("Senha deve ter pelo menos 6 caracteres."); return }
+    await _salvarSenhaBackend(cpfParaVincular, _s, payload.email)
   }
   carregar(); fecharModal();
 }
@@ -585,6 +592,30 @@ function toggleSenhaEquipe(btn){
   el.type = mostrar ? "text" : "password"
   btn.querySelector("i").className = mostrar ? "fa fa-eye-slash" : "fa fa-eye"
 }
+
+function toggleSenhaEquipe(btn){
+  const el = document.getElementById("senha_acesso")
+  const show = el.type === "password"
+  el.type = show ? "text" : "password"
+  btn.querySelector("i").className = show ? "fa fa-eye-slash" : "fa fa-eye"
+}
+
+async function _salvarSenhaBackend(cpfV, senhaV, emailV){
+  let pid = null
+  const {data:p1} = await client.from("perfis").select("id").eq("cpf_terapeuta", cpfV).limit(1)
+  if(p1 && p1.length > 0) pid = p1[0].id
+  else if(emailV){
+    const {data:p2} = await client.from("perfis").select("id").eq("email", emailV.trim().toLowerCase()).limit(1)
+    if(p2 && p2.length > 0) pid = p2[0].id
+  }
+  if(pid){
+    const {error} = await client.from("perfis").update({senha_plain: senhaV, tem_senha: true}).eq("id", pid)
+    if(error) console.warn("Erro ao salvar senha:", error.message)
+  } else {
+    console.warn("Perfil não encontrado — senha será salva no 1º login.")
+  }
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   aplicarMascaras();
   TODOS_CAMPOS.forEach(c=>{ const el=document.getElementById(c.id); if(el){ el.addEventListener("input",atualizarProgresso); el.addEventListener("change",atualizarProgresso); } });

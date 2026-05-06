@@ -84,6 +84,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
 .btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
+.aviso-login{background:#fefce8;border:1px solid #fde047;border-radius:8px;padding:10px 14px;font-size:12px;color:#854d0e;display:flex;align-items:flex-start;gap:8px;margin-top:8px;}
 </style>
 </head>
 <body>
@@ -93,7 +94,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <h1>Cadastro de Pessoal</h1>
 <div class="topbar">
   <div class="left-tools">
-    <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()">
+    <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()" autocomplete="off">
     <select id="filtroStatus">
       <option value="">Todos os status</option>
       <option value="Ativo" selected>Ativo</option>
@@ -138,6 +139,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
       </button>
     </nav>
     <div class="tab-panels">
+
       <div class="tab-panel active" id="tab-pessoais">
         <p class="section-title"><i class="fa fa-id-card"></i> Dados Pessoais</p>
         <div class="grid">
@@ -165,6 +167,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           </div>
         </div>
       </div>
+
       <div class="tab-panel" id="tab-contatos">
         <p class="section-title"><i class="fa fa-phone"></i> Contatos</p>
         <div class="grid-2">
@@ -172,6 +175,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>Contato de Emergência</label><input id="telefone_emergencia" placeholder="(11) 99999-9999"></div>
         </div>
       </div>
+
       <div class="tab-panel" id="tab-endereco">
         <p class="section-title"><i class="fa fa-map-marker-alt"></i> Endereço</p>
         <div class="grid">
@@ -184,6 +188,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>UF</label><input id="uf" maxlength="2" style="text-transform:uppercase"></div>
         </div>
       </div>
+
       <div class="tab-panel" id="tab-pagamento">
         <p class="section-title"><i class="fa fa-dollar-sign"></i> Pagamento via PIX</p>
         <div class="grid-2">
@@ -197,6 +202,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field"><label>Chave PIX</label><input id="pix_chave"></div>
         </div>
       </div>
+
       <div class="tab-panel" id="tab-funcional">
         <p class="section-title"><i class="fa fa-briefcase"></i> Dados Funcionais</p>
         <div class="grid">
@@ -247,7 +253,12 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             </select>
           </div>
         </div>
+        <div id="avisoLoginNovo" style="display:none" class="aviso-login">
+          <span style="font-size:16px">⚠️</span>
+          <span>Ao salvar, será criado automaticamente um login com a senha padrão <strong>2026</strong>. O profissional deve trocar no primeiro acesso em "Esqueci a senha".</span>
+        </div>
       </div>
+
       <div class="tab-panel" id="tab-docs">
         <p class="section-title"><i class="fa fa-file-alt"></i> Documentos Anexados</p>
         <div class="doc-upload-box">
@@ -267,6 +278,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
         </div>
         <div id="docLista" class="doc-list"><div class="doc-empty">Nenhum documento anexado.</div></div>
       </div>
+
     </div>
   </div>
   <div class="modal-footer">
@@ -277,10 +289,14 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 </div>
 
 <script>
-let cpfAtual = null;
-let cpfEdicaoHabilitada = false;
+var ANON_KEY   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ5bWVoZ3NvYXJqZWVjdXd5aG55Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA2NTc0ODUsImV4cCI6MjA4NjIzMzQ4NX0.K9BUapByrh6TsSi5jEkL8HGLDmMT_tGSSykl7LGxIec";
+var MANAGE_URL = "https://rymehgsoarjeecuwyhny.supabase.co/functions/v1/manage-auth";
+var SENHA_PADRAO = "2026";
 
-const campos = [
+var cpfAtual = null;
+var cpfEdicaoHabilitada = false;
+
+var campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
   "tipo_sanguineo","telefone","telefone_emergencia","cep","rua","numero",
   "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
@@ -288,9 +304,9 @@ const campos = [
 ];
 
 function mascara(id, fn){
-  const el = document.getElementById(id); if(!el) return;
+  var el = document.getElementById(id); if(!el) return;
   el.addEventListener('input', function(){
-    const pos = this.selectionStart, prev = this.value;
+    var pos = this.selectionStart, prev = this.value;
     this.value = fn(this.value);
     if(this.value.length === prev.length) this.setSelectionRange(pos, pos);
   });
@@ -305,104 +321,142 @@ function limparCPF(v){ return (v||"").replace(/\D/g,""); }
 function aplicarMascaras(){
   mascara('cpf',fmtCPF); mascara('rg',fmtRG); mascara('telefone',fmtTel);
   mascara('telefone_emergencia',fmtTel); mascara('cep',fmtCEP);
-  const uf=document.getElementById('uf');
+  var uf=document.getElementById('uf');
   if(uf) uf.addEventListener('input',function(){ this.value=this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2); });
 }
 
-function bloquearCPF(){ document.getElementById("cpf").readOnly=true; document.getElementById("cpf_aviso").style.display="flex"; cpfEdicaoHabilitada=false; }
+function bloquearCPF(){
+  document.getElementById("cpf").readOnly=true;
+  document.getElementById("cpf_aviso").style.display="flex";
+  cpfEdicaoHabilitada=false;
+}
 function habilitarEdicaoCPF(){
-  if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?")) return;
-  const el=document.getElementById("cpf"); el.readOnly=false; el.focus(); el.select();
+  if(!confirm("Alterar o CPF ira:\n- Criar novo registro\n- Migrar documentos e perfil\n- Excluir registro antigo\n\nDeseja continuar?")) return;
+  var el=document.getElementById("cpf"); el.readOnly=false; el.focus(); el.select();
   document.getElementById("cpf_aviso").style.display="none"; cpfEdicaoHabilitada=true;
 }
-function desbloquearCPF(){ document.getElementById("cpf").readOnly=false; document.getElementById("cpf_aviso").style.display="none"; cpfEdicaoHabilitada=false; }
+function desbloquearCPF(){
+  document.getElementById("cpf").readOnly=false;
+  document.getElementById("cpf_aviso").style.display="none";
+  cpfEdicaoHabilitada=false;
+}
 
 function mudarTab(tab, btn){
-  document.querySelectorAll(".tab-panel").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".side-btn").forEach(el=>el.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(function(el){ el.classList.remove("active"); });
+  document.querySelectorAll(".side-btn").forEach(function(el){ el.classList.remove("active"); });
   document.getElementById("tab-"+tab).classList.add("active");
   btn.classList.add("active"); abaAtiva=tab; atualizarProgresso();
 }
 
-function getPayload(){ const obj={}; campos.forEach(c=>{ const el=document.getElementById(c); if(el&&el.value!=="")obj[c]=el.value; }); return obj; }
+function getPayload(){
+  var obj={};
+  campos.forEach(function(c){ var el=document.getElementById(c); if(el&&el.value!=="")obj[c]=el.value; });
+  return obj;
+}
 
 function setForm(data){
-  campos.forEach(c=>{ const el=document.getElementById(c); if(!el)return; el.value=(c==="hora_entrada"||c==="hora_saida")?(data[c]?data[c].substring(0,5):""):(data[c]||""); });
-  const campo=document.getElementById("campo_data_inativacao"); if(campo) campo.style.display=data.status==="Inativo"?"":"none";
-  ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id=>{ const el=document.getElementById(id); if(el&&el.value) el.dispatchEvent(new Event('input')); });
+  campos.forEach(function(c){
+    var el=document.getElementById(c); if(!el)return;
+    el.value=(c==="hora_entrada"||c==="hora_saida")?(data[c]?data[c].substring(0,5):""):(data[c]||"");
+  });
+  var campo=document.getElementById("campo_data_inativacao");
+  if(campo) campo.style.display=data.status==="Inativo"?"":"none";
+  ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(function(id){
+    var el=document.getElementById(id); if(el&&el.value) el.dispatchEvent(new Event('input'));
+  });
+}
+
+async function chamarManageAuth(body){
+  var resp = await fetch(MANAGE_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": ANON_KEY,
+      "Authorization": "Bearer " + ANON_KEY
+    },
+    body: JSON.stringify(body)
+  });
+  return await resp.json();
 }
 
 async function carregar(){
   if(!window.usuarioLogado){ setTimeout(carregar,100); return; }
-  const u=window.usuarioLogado;
-  const podeNovo=u&&(u.role==="admin"||u.role==="apoio");
-  const btnNovo=document.getElementById("btnNovoCadastro");
-  if(btnNovo) btnNovo.style.display=podeNovo?"":"none";
-  const statusFiltro=document.getElementById("filtroStatus").value;
-  let query=client.from("terapeutas").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
+  var u=window.usuarioLogado;
+  var btnNovo=document.getElementById("btnNovoCadastro");
+  if(btnNovo) btnNovo.style.display=(u&&(u.role==="admin"||u.role==="apoio"))?"":"none";
+  var statusFiltro=document.getElementById("filtroStatus").value;
+  var query=client.from("terapeutas").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro) query=query.eq("status",statusFiltro);
   if(u&&u.role==="usuario"&&u.cpf) query=query.eq("cpf",u.cpf);
-  const {data,error}=await query;
-  if(error){ console.error(error); return; }
-  const tbody=document.getElementById("lista"); tbody.innerHTML="";
-  data.forEach(t=>{
-    const podeExcluir=u&&(u.role==="admin"||u.role==="apoio");
-    const acoes=podeExcluir?`<button onclick="editar('${t.cpf}')">Editar</button><button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`:`<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;
-    tbody.innerHTML+=`<tr><td>${t.nome_profissional||""}</td><td>${t.cargo||""}</td><td>${fmtCPFDisplay(t.cpf)}</td><td>${t.status||""}</td><td>${acoes}</td></tr>`;
+  var res=await query;
+  if(res.error){ console.error(res.error); return; }
+  var tbody=document.getElementById("lista"); tbody.innerHTML="";
+  res.data.forEach(function(t){
+    var podeEx=u&&(u.role==="admin"||u.role==="apoio");
+    var acoes=podeEx
+      ? '<button onclick="editar(\''+t.cpf+'\')">Editar</button> <button class="excluir" onclick="excluir(\''+t.cpf+'\')">Excluir</button>'
+      : '<button onclick="editar(\''+t.cpf+'\')">Ver / Editar</button>';
+    tbody.innerHTML+='<tr><td>'+(t.nome_profissional||"")+'</td><td>'+(t.cargo||"")+'</td><td>'+fmtCPFDisplay(t.cpf)+'</td><td>'+(t.status||"")+'</td><td>'+acoes+'</td></tr>';
   });
   filtrarTabela();
 }
 
 function filtrarTabela(){
-  const filtro=document.getElementById("pesquisaNome").value.toLowerCase();
-  document.querySelectorAll("#lista tr").forEach(linha=>{ linha.style.display=linha.children[0].innerText.toLowerCase().includes(filtro)?"":"none"; });
+  var filtro=document.getElementById("pesquisaNome").value.toLowerCase();
+  document.querySelectorAll("#lista tr").forEach(function(l){ l.style.display=l.children[0].innerText.toLowerCase().includes(filtro)?"":"none"; });
 }
 
 function resetModal(){
-  campos.forEach(c=>{ const el=document.getElementById(c); if(el) el.value=""; });
-  document.getElementById("hora_entrada").value="09:00"; document.getElementById("hora_saida").value="18:00";
-  const campoRole=document.getElementById("campo_role");
-  const roleEl=document.getElementById("role_usuario");
-  const isAdmin=window.usuarioLogado?.role==="admin";
+  campos.forEach(function(c){ var el=document.getElementById(c); if(el) el.value=""; });
+  document.getElementById("hora_entrada").value="09:00";
+  document.getElementById("hora_saida").value="18:00";
+  document.getElementById("avisoLoginNovo").style.display="none";
+  var campoRole=document.getElementById("campo_role");
+  var roleEl=document.getElementById("role_usuario");
+  var isAdmin=window.usuarioLogado && window.usuarioLogado.role==="admin";
   if(campoRole) campoRole.style.display=isAdmin?"":"none";
-  if(roleEl){ roleEl.disabled=!isAdmin; }
+  if(roleEl) roleEl.disabled=!isAdmin;
   mudarTab("pessoais",document.querySelector(".side-btn"));
 }
 
 function abrirNovo(){
   cpfAtual=null; cpfEdicaoHabilitada=false; resetModal(); desbloquearCPF();
-  const isAdm = window.usuarioLogado?.role === "admin";
-  document.getElementById("campo_role").style.display = isAdm ? "" : "none";
-  document.getElementById("role_usuario").disabled = !isAdm;
-  document.getElementById("role_usuario").value = "usuario";
+  var isAdm=window.usuarioLogado && window.usuarioLogado.role==="admin";
+  document.getElementById("campo_role").style.display=isAdm?"":"none";
+  document.getElementById("role_usuario").disabled=!isAdm;
+  document.getElementById("role_usuario").value="usuario";
   document.getElementById("modalTitulo").textContent="Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display="none";
   document.getElementById("progressWrap").style.display="inline-flex";
+  document.getElementById("avisoLoginNovo").style.display="flex";
   abaAtiva="pessoais"; atualizarProgresso();
   document.getElementById("modal").style.display="flex";
 }
 
 async function editar(cpf){
   cpfAtual=cpf; cpfEdicaoHabilitada=false;
-  const {data,error}=await client.from("terapeutas").select("*").eq("cpf",cpf).single();
-  if(error){ console.error(error); return; }
+  var res=await client.from("terapeutas").select("*").eq("cpf",cpf).single();
+  if(res.error){ console.error(res.error); return; }
+  var data=res.data;
   resetModal(); setForm(data); bloquearCPF();
   document.getElementById("modalTitulo").textContent=data.nome_profissional||"Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display="";
   document.getElementById("progressWrap").style.display="inline-flex";
+  document.getElementById("avisoLoginNovo").style.display="none";
   abaAtiva="pessoais"; setTimeout(atualizarProgresso,50); carregarDocs(cpf);
-  const u=window.usuarioLogado;
+  var u=window.usuarioLogado;
   if(u&&u.role==="admin"){
     document.getElementById("campo_role").style.display="";
     document.getElementById("role_usuario").disabled=false;
-    (async()=>{
-      let perfil=null;
-      const {data:p1}=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);
-      if(p1&&p1.length>0){ perfil=p1[0]; } else if(data.email){
-        const {data:p2}=await client.from("perfis").select("email,role").eq("email",data.email.toLowerCase()).limit(1);
-        if(p2&&p2.length>0) perfil=p2[0];
+    (async function(){
+      var perfil=null;
+      var rp1=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);
+      if(rp1.data&&rp1.data.length>0){ perfil=rp1.data[0]; }
+      else if(data.email){
+        var rp2=await client.from("perfis").select("email,role").eq("email",data.email.toLowerCase()).limit(1);
+        if(rp2.data&&rp2.data.length>0) perfil=rp2.data[0];
       }
-      const elRole=document.getElementById("role_usuario");
+      var elRole=document.getElementById("role_usuario");
       if(elRole) elRole.value=perfil?(perfil.role||"usuario"):"usuario";
     })();
   }
@@ -412,122 +466,156 @@ async function editar(cpf){
 function fecharModal(){ document.getElementById("modal").style.display="none"; }
 
 async function salvar(){
-  const u=window.usuarioLogado; const payload=getPayload();
-  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){ alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email."); return; }
+  var u=window.usuarioLogado;
+  var payload=getPayload();
+  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){
+    alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email."); return;
+  }
+
+  var cpfParaVincular=cpfAtual;
+
   if(!cpfAtual){
+    // NOVO
     if(!payload.cpf){ alert("CPF é obrigatório."); return; }
-    const cpfNovo=limparCPF(payload.cpf);
-    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
-    if(existente&&existente.length>0){ alert("CPF já cadastrado."); return; }
-    const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});
-    if(error){ alert("Erro ao salvar: "+error.message); return; }
-    cpfAtual=cpfNovo; document.getElementById("tabDocsBtn").style.display=""; carregarDocs(cpfAtual);
+    var cpfNovo=limparCPF(payload.cpf);
+    var reEx=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
+    if(reEx.data&&reEx.data.length>0){ alert("CPF já cadastrado."); return; }
+
+    var ri=await client.from("terapeutas").insert(Object.assign({},payload,{cpf:cpfNovo}));
+    if(ri.error){ alert("Erro ao salvar: "+ri.error.message); return; }
+    cpfAtual=cpfNovo; cpfParaVincular=cpfNovo;
+    document.getElementById("tabDocsBtn").style.display=""; carregarDocs(cpfAtual);
+
+    // Criar login com senha 2026
+    var json=await chamarManageAuth({
+      acao:"criar",
+      email:payload.email.trim().toLowerCase(),
+      password:SENHA_PADRAO,
+      nome:payload.nome_completo||payload.nome_profissional||"",
+      cpf:cpfNovo
+    });
+    if(json.error){
+      console.warn("Aviso ao criar login:", json.error);
+      // Não bloqueia — dados já foram salvos
+    }
+
   } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
-    const cpfAntigo=limparCPF(cpfAtual); const cpfNovo=limparCPF(payload.cpf);
-    if(!cpfNovo||cpfNovo.length!==11){ alert("CPF inválido."); return; }
-    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
-    if(existente&&existente.length>0){ alert("CPF já pertence a outro cadastro."); return; }
-    const {data:dadosAtuais}=await client.from("terapeutas").select("*").eq("cpf",cpfAntigo).single();
-    const novoRegistro={...dadosAtuais,...payload,cpf:cpfNovo}; delete novoRegistro.created_at;
-    const {error:errInsert}=await client.from("terapeutas").insert(novoRegistro);
-    if(errInsert){ alert("Erro ao criar registro: "+errInsert.message); return; }
-    await client.from("documentos").update({equipe_id:cpfNovo}).eq("equipe_id",cpfAntigo);
-    await client.from("solicitacoes").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
-    await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("cpf_terapeuta",cpfAntigo);
-    const {error:errDel}=await client.from("terapeutas").delete().eq("cpf",cpfAntigo);
-    if(errDel){ alert("Erro ao remover registro antigo: "+errDel.message); return; }
-    cpfAtual=cpfNovo; cpfEdicaoHabilitada=false; bloquearCPF();
-    document.getElementById("cpf").value=fmtCPF(cpfNovo);
+    // EDITAR CPF
+    var cpfAnt=limparCPF(cpfAtual); var cpfN=limparCPF(payload.cpf);
+    if(!cpfN||cpfN.length!==11){ alert("CPF inválido."); return; }
+    var reEx2=await client.from("terapeutas").select("cpf").eq("cpf",cpfN).limit(1);
+    if(reEx2.data&&reEx2.data.length>0){ alert("CPF já pertence a outro cadastro."); return; }
+    var rd=await client.from("terapeutas").select("*").eq("cpf",cpfAnt).single();
+    var novoReg=Object.assign({},rd.data,payload,{cpf:cpfN}); delete novoReg.created_at;
+    var riN=await client.from("terapeutas").insert(novoReg);
+    if(riN.error){ alert("Erro ao criar registro: "+riN.error.message); return; }
+    await client.from("documentos").update({equipe_id:cpfN}).eq("equipe_id",cpfAnt);
+    await client.from("solicitacoes").update({terapeuta_cpf:cpfN}).eq("terapeuta_cpf",cpfAnt);
+    await client.from("perfis").update({cpf_terapeuta:cpfN}).eq("cpf_terapeuta",cpfAnt);
+    var rdel=await client.from("terapeutas").delete().eq("cpf",cpfAnt);
+    if(rdel.error){ alert("Erro ao remover registro antigo: "+rdel.error.message); return; }
+    cpfAtual=cpfN; cpfParaVincular=cpfN; cpfEdicaoHabilitada=false; bloquearCPF();
+    document.getElementById("cpf").value=fmtCPF(cpfN);
+
   } else {
+    // EDITAR normal
     if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){ alert("Sem permissão."); return; }
-    const updatePayload={...payload}; delete updatePayload.cpf;
-    const {error}=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);
-    if(error){ alert("Erro ao salvar: "+error.message); return; }
+    var upd=Object.assign({},payload); delete upd.cpf;
+    var ru=await client.from("terapeutas").update(upd).eq("cpf",cpfAtual);
+    if(ru.error){ alert("Erro ao salvar: "+ru.error.message); return; }
   }
-  const cpfParaVincular=cpfAtual; const isAdminU=u&&u.role==="admin";
-  const roleManual=isAdminU&&!document.getElementById("role_usuario")?.disabled?(document.getElementById("role_usuario")?.value||null):null;
-  const cargo=payload.cargo||""; let roleAutomatico=null;
-  if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino") roleAutomatico="usuario";
-  else if(cargo==="Recepcionista") roleAutomatico="apoio";
-  const novoRole=roleManual||roleAutomatico;
-  console.log("[ROLE] cpfParaVincular:", cpfParaVincular, "novoRole:", novoRole, "roleManual:", roleManual, "roleAutomatico:", roleAutomatico);
+
+  // Role
+  var isAdminU=u&&u.role==="admin";
+  var roleEl=document.getElementById("role_usuario");
+  var roleManual=isAdminU&&roleEl&&!roleEl.disabled?roleEl.value:null;
+  var cargo=payload.cargo||""; var roleAuto=null;
+  if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino") roleAuto="usuario";
+  else if(cargo==="Recepcionista") roleAuto="apoio";
+  var novoRole=roleManual||roleAuto;
   if(cpfParaVincular&&novoRole){
-    let perfilId=null;
-    const {data:p1,error:ep1}=await client.from("perfis").select("id,role,cpf_terapeuta").eq("cpf_terapeuta",cpfParaVincular).limit(1);
-    console.log("[ROLE] busca por cpf_terapeuta:", p1, "erro:", ep1);
-    if(p1&&p1.length>0) perfilId=p1[0].id;
-    if(!perfilId&&payload.email){
-      const {data:p2,error:ep2}=await client.from("perfis").select("id,role,email").eq("email",payload.email.trim().toLowerCase()).limit(1);
-      console.log("[ROLE] busca por email:", p2, "erro:", ep2);
-      if(p2&&p2.length>0) perfilId=p2[0].id;
+    var pid=null;
+    var rp1=await client.from("perfis").select("id").eq("cpf_terapeuta",cpfParaVincular).limit(1);
+    if(rp1.data&&rp1.data.length>0) pid=rp1.data[0].id;
+    if(!pid&&payload.email){
+      var rp2=await client.from("perfis").select("id").eq("email",payload.email.trim().toLowerCase()).limit(1);
+      if(rp2.data&&rp2.data.length>0) pid=rp2.data[0].id;
     }
-    console.log("[ROLE] perfilId encontrado:", perfilId);
-    if(perfilId){
-      const {data:upd, error:eUpd}=await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId).select();
-      console.log("[ROLE] update resultado:", upd, "erro:", eUpd);
-    } else {
-      console.warn("[ROLE] Nenhum perfil encontrado para atualizar!");
-    }
-  } else {
-    console.warn("[ROLE] Nao entrou no bloco — cpfParaVincular:", cpfParaVincular, "novoRole:", novoRole);
+    if(pid){ await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",pid); }
   }
+
   carregar(); fecharModal();
 }
 
 async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
-  const {data:docs}=await client.from("documentos").select("id,url").eq("equipe_id",cpf);
-  if(docs&&docs.length>0){
-    const paths=docs.map(d=>d.url.split("/storage/v1/object/public/documentos/")[1]).filter(Boolean).map(p=>decodeURIComponent(p));
+  var rd=await client.from("documentos").select("id,url").eq("equipe_id",cpf);
+  if(rd.data&&rd.data.length>0){
+    var paths=rd.data.map(function(d){ return d.url.split("/storage/v1/object/public/documentos/")[1]; }).filter(Boolean).map(decodeURIComponent);
     if(paths.length>0) await client.storage.from("documentos").remove(paths);
     await client.from("documentos").delete().eq("equipe_id",cpf);
   }
   await client.from("solicitacoes").delete().eq("terapeuta_cpf",cpf);
-  const {error}=await client.from("terapeutas").delete().eq("cpf",cpf);
-  if(error){ alert("Erro ao excluir: "+error.message); return; }
+  var re=await client.from("terapeutas").delete().eq("cpf",cpf);
+  if(re.error){ alert("Erro ao excluir: "+re.error.message); return; }
   carregar();
 }
 
 function limparNome(nome){ return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_"); }
-function iconeDoc(nome){ const ext=(nome||"").split(".").pop().toLowerCase(); if(["jpg","jpeg","png","gif","webp"].includes(ext))return "fa-image"; if(ext==="pdf")return "fa-file-pdf"; if(["doc","docx"].includes(ext))return "fa-file-word"; return "fa-file-alt"; }
+function iconeDoc(nome){ var ext=(nome||"").split(".").pop().toLowerCase(); if(["jpg","jpeg","png","gif","webp"].includes(ext))return "fa-image"; if(ext==="pdf")return "fa-file-pdf"; if(["doc","docx"].includes(ext))return "fa-file-word"; return "fa-file-alt"; }
 
 async function carregarDocs(cpf){
-  const {data,error}=await client.from("documentos").select("*").eq("equipe_id",cpf).order("created_at",{ascending:false});
-  const lista=document.getElementById("docLista"); const badge=document.getElementById("docBadge");
-  if(error||!data||data.length===0){ lista.innerHTML=`<div class="doc-empty">Nenhum documento anexado.</div>`; badge.style.display="none"; return; }
-  badge.textContent=data.length; badge.style.display="";
-  lista.innerHTML=data.map(d=>`<div class="doc-item" id="doc-${d.id}"><div class="doc-item-left"><div class="doc-icon"><i class="fa ${iconeDoc(d.nome_arquivo)}"></i></div><div><div class="doc-name">${d.nome_arquivo}</div><div class="doc-tipo">${d.tipo} · ${new Date(d.created_at).toLocaleDateString('pt-BR')}</div></div></div><div class="doc-item-right"><a href="${d.url}" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc('${d.id}','${d.url}')"><i class="fa fa-trash"></i></button></div></div>`).join("");
+  var res=await client.from("documentos").select("*").eq("equipe_id",cpf).order("created_at",{ascending:false});
+  var lista=document.getElementById("docLista"); var badge=document.getElementById("docBadge");
+  if(res.error||!res.data||res.data.length===0){
+    lista.innerHTML='<div class="doc-empty">Nenhum documento anexado.</div>'; badge.style.display="none"; return;
+  }
+  badge.textContent=res.data.length; badge.style.display="";
+  lista.innerHTML=res.data.map(function(d){
+    return '<div class="doc-item"><div class="doc-item-left">'
+      +'<div class="doc-icon"><i class="fa '+iconeDoc(d.nome_arquivo)+'"></i></div>'
+      +'<div><div class="doc-name">'+d.nome_arquivo+'</div>'
+      +'<div class="doc-tipo">'+d.tipo+' &middot; '+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div></div></div>'
+      +'<div class="doc-item-right">'
+      +'<a href="'+d.url+'" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a>'
+      +'<button class="btn-del" data-id="'+d.id+'" data-url="'+encodeURIComponent(d.url)+'" onclick="excluirDoc(this)"><i class="fa fa-trash"></i></button>'
+      +'</div></div>';
+  }).join('');
 }
 
 async function uploadDoc(){
   if(!cpfAtual){ alert("Salve o cadastro antes de anexar documentos."); return; }
-  const tipo=document.getElementById("doc_tipo").value; const file=document.getElementById("doc_arquivo").files[0];
+  var tipo=document.getElementById("doc_tipo").value;
+  var file=document.getElementById("doc_arquivo").files[0];
   if(!file){ alert("Selecione um arquivo."); return; }
-  const statusEl=document.getElementById("uploadStatus"); statusEl.style.display="block";
-  const fileName=`${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
-  const {error:uploadError}=await client.storage.from("documentos").upload(fileName,file);
-  if(uploadError){ statusEl.style.display="none"; alert("Erro no upload: "+uploadError.message); return; }
-  const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
-  const {error}=await client.from("documentos").insert({equipe_id:cpfAtual,tipo,nome_arquivo:file.name,url:urlData.publicUrl});
+  var statusEl=document.getElementById("uploadStatus"); statusEl.style.display="block";
+  var fileName=cpfAtual+"/"+Date.now()+"_"+limparNome(file.name);
+  var ru=await client.storage.from("documentos").upload(fileName,file);
+  if(ru.error){ statusEl.style.display="none"; alert("Erro no upload: "+ru.error.message); return; }
+  var urlData=client.storage.from("documentos").getPublicUrl(fileName);
+  var ri=await client.from("documentos").insert({equipe_id:cpfAtual,tipo:tipo,nome_arquivo:file.name,url:urlData.data.publicUrl});
   statusEl.style.display="none";
-  if(error){ alert("Erro ao salvar: "+error.message); return; }
+  if(ri.error){ alert("Erro ao salvar: "+ri.error.message); return; }
   document.getElementById("doc_arquivo").value=""; carregarDocs(cpfAtual);
 }
 
-async function excluirDoc(id,url){
+async function excluirDoc(btn){
   if(!confirm("Excluir este documento?")) return;
-  const path=url.split("/storage/v1/object/public/documentos/")[1];
+  var id=btn.dataset.id;
+  var url=decodeURIComponent(btn.dataset.url);
+  var path=url.split("/storage/v1/object/public/documentos/")[1];
   if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
-  await client.from("documentos").delete().eq("id",id); carregarDocs(cpfAtual);
+  await client.from("documentos").delete().eq("id",id);
+  carregarDocs(cpfAtual);
 }
 
 function aoMudarStatus(select){
-  const campo=document.getElementById("campo_data_inativacao"); const input=document.getElementById("data_inativacao");
+  var campo=document.getElementById("campo_data_inativacao"); var input=document.getElementById("data_inativacao");
   if(select.value==="Inativo"){ campo.style.display=""; if(!input.value) input.value=new Date().toISOString().split("T")[0]; }
   else { campo.style.display="none"; input.value=""; }
 }
 
-const CAMPOS_POR_ABA={
+var CAMPOS_POR_ABA={
   pessoais:[{id:"nome_completo",label:"Nome Completo"},{id:"nome_profissional",label:"Nome Profissional"},{id:"cpf",label:"CPF"},{id:"email",label:"Email"}],
   contatos:[{id:"telefone",label:"Telefone"}],
   endereco:[{id:"cep",label:"CEP"},{id:"rua",label:"Rua"},{id:"cidade",label:"Cidade"},{id:"uf",label:"UF"}],
@@ -535,33 +623,33 @@ const CAMPOS_POR_ABA={
   funcional:[{id:"cargo",label:"Cargo"},{id:"status",label:"Status"},{id:"data_inicio",label:"Data de Início"}],
   docs:[],
 };
-const TODOS_CAMPOS=Object.values(CAMPOS_POR_ABA).flat();
-let abaAtiva="pessoais";
+var TODOS_CAMPOS=Object.values(CAMPOS_POR_ABA).flat();
+var abaAtiva="pessoais";
 
 function atualizarProgresso(){
-  const wrap=document.getElementById("progressWrap"); if(!wrap||wrap.style.display==="none") return;
-  const total=TODOS_CAMPOS.length;
-  const feitos=TODOS_CAMPOS.filter(c=>{ const el=document.getElementById(c.id); return el&&el.value&&el.value.trim()!==""; });
-  const pct=total>0?Math.round((feitos.length/total)*100):0;
-  const circum=113; const offset=circum-(circum*pct/100);
-  const cor=pct===100?"#22c55e":pct>=50?"#f59e0b":"#ef4444";
+  var wrap=document.getElementById("progressWrap"); if(!wrap||wrap.style.display==="none") return;
+  var total=TODOS_CAMPOS.length;
+  var feitos=TODOS_CAMPOS.filter(function(c){ var el=document.getElementById(c.id); return el&&el.value&&el.value.trim()!==""; });
+  var pct=total>0?Math.round((feitos.length/total)*100):0;
+  var circum=113; var offset=circum-(circum*pct/100);
+  var cor=pct===100?"#22c55e":pct>=50?"#f59e0b":"#ef4444";
   document.getElementById("progressPct").textContent=pct+"%"; document.getElementById("progressPct").style.color=cor;
-  const fill=document.getElementById("progressFill"); fill.style.strokeDashoffset=offset; fill.style.stroke=cor;
-  const camposAba=CAMPOS_POR_ABA[abaAtiva]||[]; const feitosIds=feitos.map(c=>c.id);
-  const tooltip=document.getElementById("progressTooltip");
+  var fill=document.getElementById("progressFill"); fill.style.strokeDashoffset=offset; fill.style.stroke=cor;
+  var camposAba=CAMPOS_POR_ABA[abaAtiva]||[]; var feitosIds=feitos.map(function(c){ return c.id; });
+  var tooltip=document.getElementById("progressTooltip");
   if(camposAba.length===0){ tooltip.innerHTML="<div style='color:#e5e7eb;font-size:12px'>Nenhum campo nesta aba.</div>"; }
   else {
-    const abaFeitos=camposAba.filter(c=>feitosIds.includes(c.id));
-    const abaPct=Math.round((abaFeitos.length/camposAba.length)*100);
-    tooltip.innerHTML=`<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Esta aba: ${abaPct}% · Geral: ${pct}%</div>`
-      +camposAba.map(c=>{ const ok=feitosIds.includes(c.id); return `<div class="tooltip-item ${ok?'done':'missing'}"><i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i> ${c.label}</div>`; }).join("")
+    var abaFeitos=camposAba.filter(function(c){ return feitosIds.includes(c.id); });
+    var abaPct=Math.round((abaFeitos.length/camposAba.length)*100);
+    tooltip.innerHTML="<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Esta aba: "+abaPct+"% &middot; Geral: "+pct+"%</div>"
+      +camposAba.map(function(c){ var ok=feitosIds.includes(c.id); return "<div class='tooltip-item "+(ok?"done":"missing")+"'><i class='fa "+(ok?"fa-check-circle":"fa-times-circle")+"'></i> "+c.label+"</div>"; }).join("")
       +"<div style='border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px'>Passe para outras abas para ver os campos delas.</div>";
   }
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded',function(){
   aplicarMascaras();
-  TODOS_CAMPOS.forEach(c=>{ const el=document.getElementById(c.id); if(el){ el.addEventListener("input",atualizarProgresso); el.addEventListener("change",atualizarProgresso); } });
+  TODOS_CAMPOS.forEach(function(c){ var el=document.getElementById(c.id); if(el){ el.addEventListener("input",atualizarProgresso); el.addEventListener("change",atualizarProgresso); } });
   document.getElementById("filtroStatus").addEventListener("change",carregar);
   carregar();
 });

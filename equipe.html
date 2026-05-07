@@ -179,13 +179,25 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
       <div class="tab-panel" id="tab-endereco">
         <p class="section-title"><i class="fa fa-map-marker-alt"></i> Endereço</p>
         <div class="grid">
-          <div class="field"><label>CEP</label><input id="cep" placeholder="00000-000"></div>
+          <div class="field"><label>CEP</label><input id="cep" placeholder="00000-000" oninput="buscarCepEquipe(this.value)"></div>
           <div class="field span2"><label>Rua</label><input id="rua"></div>
           <div class="field"><label>Número</label><input id="numero"></div>
           <div class="field"><label>Complemento</label><input id="complemento"></div>
           <div class="field"><label>Bairro</label><input id="bairro"></div>
           <div class="field span2"><label>Cidade</label><input id="cidade"></div>
-          <div class="field"><label>UF</label><input id="uf" maxlength="2" style="text-transform:uppercase"></div>
+          <div class="field">
+            <label>UF</label>
+            <select id="uf">
+              <option value="">Selecione</option>
+              <option>AC</option><option>AL</option><option>AP</option><option>AM</option>
+              <option>BA</option><option>CE</option><option>DF</option><option>ES</option>
+              <option>GO</option><option>MA</option><option>MT</option><option>MS</option>
+              <option>MG</option><option>PA</option><option>PB</option><option>PR</option>
+              <option>PE</option><option>PI</option><option>RJ</option><option>RN</option>
+              <option>RS</option><option>RO</option><option>RR</option><option>SC</option>
+              <option>SP</option><option>SE</option><option>TO</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -200,6 +212,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             </select>
           </div>
           <div class="field"><label>Chave PIX</label><input id="pix_chave"></div>
+          <div class="field"><label>Nome do Favorecido</label><input id="pix_favorecido" placeholder="Nome como aparece no PIX"></div>
         </div>
       </div>
 
@@ -252,6 +265,14 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
               <option>Quinta</option><option>Sexta</option><option>Sábado</option>
             </select>
           </div>
+          <div class="field">
+            <label>Possui Agenda?</label>
+            <select id="possui_agenda">
+              <option value="">Selecione</option>
+              <option value="Sim">Sim</option>
+              <option value="Não">Não</option>
+            </select>
+          </div>
         </div>
         <div id="avisoLoginNovo" style="display:none" class="aviso-login">
           <span style="font-size:16px">⚠️</span>
@@ -299,8 +320,8 @@ var cpfEdicaoHabilitada = false;
 var campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
   "tipo_sanguineo","telefone","telefone_emergencia","cep","rua","numero",
-  "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-  "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao"
+  "complemento","bairro","cidade","uf","pix_tipo","pix_chave","pix_favorecido",
+  "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao","possui_agenda"
 ];
 
 function mascara(id, fn){
@@ -321,8 +342,7 @@ function limparCPF(v){ return (v||"").replace(/\D/g,""); }
 function aplicarMascaras(){
   mascara('cpf',fmtCPF); mascara('rg',fmtRG); mascara('telefone',fmtTel);
   mascara('telefone_emergencia',fmtTel); mascara('cep',fmtCEP);
-  var uf=document.getElementById('uf');
-  if(uf) uf.addEventListener('input',function(){ this.value=this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2); });
+
 }
 
 function bloquearCPF(){
@@ -466,9 +486,23 @@ async function salvar(){
     if(!payload.cpf){ alert("CPF é obrigatório."); return; }
     var cpfNovo=limparCPF(payload.cpf);
 
-    // Validar CPF duplicado
-    var reEx=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
-    if(reEx.data&&reEx.data.length>0){ alert("CPF já cadastrado."); return; }
+    // Validar CPF duplicado — busca com e sem máscara
+    var reEx1=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
+    var cpfFormatado=fmtCPF(cpfNovo);
+    var reEx2=await client.from("terapeutas").select("cpf").eq("cpf",cpfFormatado).limit(1);
+    if((reEx1.data&&reEx1.data.length>0)||(reEx2.data&&reEx2.data.length>0)){
+      alert("CPF já cadastrado."); return;
+    }
+
+    // Normalizar CPFs antigos com máscara no banco (limpeza automática)
+    var reComMascara=await client.from("terapeutas").select("cpf").like("cpf","%-%");
+    if(reComMascara.data&&reComMascara.data.length>0){
+      for(var im=0;im<reComMascara.data.length;im++){
+        var cpfSujo=reComMascara.data[im].cpf;
+        var cpfLimpoDb=cpfSujo.replace(/\D/g,"");
+        await client.from("terapeutas").update({cpf:cpfLimpoDb}).eq("cpf",cpfSujo);
+      }
+    }
 
     // Validar email duplicado em terapeutas (case insensitive)
     var emailLimpo = payload.email.trim().toLowerCase();

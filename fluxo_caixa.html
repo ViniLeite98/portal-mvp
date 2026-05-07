@@ -139,14 +139,7 @@ tr:hover td{background:#f9fafb;}
     <div class="field"><label>Data até</label><input type="date" id="filtroFim"></div>
     <div class="field"><label>Operador</label><select id="filtroOp"><option value="">Todos</option></select></div>
     <div class="field"><label>Terapeuta</label><select id="filtroTer"><option value="">Todos</option></select></div>
-    <div class="field"><label>Moeda</label>
-      <select id="filtroMoeda">
-        <option value="">Todas</option>
-        <option value="BRL">Real (R$)</option>
-        <option value="USD">Dólar ($)</option>
-        <option value="EUR">Euro (€)</option>
-      </select>
-    </div>
+
     <button class="btn-blue" onclick="aplicarFiltro()"><i class="fa fa-filter"></i> Filtrar</button>
     <button class="btn-ghost" onclick="limparFiltro()"><i class="fa fa-times"></i> Limpar</button>
   </div>
@@ -242,25 +235,13 @@ tr:hover td{background:#f9fafb;}
     <div class="sep">
       <h4><i class="fa fa-money-bill-wave"></i> Pagamento</h4>
       <div class="pgto-row">
-        <select id="p1Forma" onchange="onPgtoMoeda(1)"><option value="">Forma de Pgto 1</option></select>
-        <select id="p1Moeda" onchange="onPgtoMoeda(1)" style="width:90px;padding:8px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px">
-          <option value="BRL">R$</option><option value="USD">USD</option><option value="EUR">EUR</option>
-        </select>
-        <input type="number" id="p1ValEstr" step="0.01" placeholder="Valor" oninput="onPgtoMoeda(1)" style="display:none;width:100px;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right">
-        <input type="number" id="p1Cot" step="0.01" placeholder="Cotação" oninput="onPgtoMoeda(1)" style="display:none;width:90px;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right">
-        <input type="number" id="p1Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()" style="width:120px">
+        <select id="p1Forma"><option value="">Forma de Pgto 1</option></select>
+        <input type="number" id="p1Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()" style="width:150px">
       </div>
-      <div style="font-size:11px;color:#9ca3af;margin:-4px 0 8px 4px" id="p1Info"></div>
       <div class="pgto-row">
-        <select id="p2Forma" onchange="onPgtoMoeda(2)"><option value="">Forma de Pgto 2 (opcional)</option></select>
-        <select id="p2Moeda" onchange="onPgtoMoeda(2)" style="width:90px;padding:8px 6px;border:1px solid #d1d5db;border-radius:8px;font-size:12px">
-          <option value="BRL">R$</option><option value="USD">USD</option><option value="EUR">EUR</option>
-        </select>
-        <input type="number" id="p2ValEstr" step="0.01" placeholder="Valor" oninput="onPgtoMoeda(2)" style="display:none;width:100px;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right">
-        <input type="number" id="p2Cot" step="0.01" placeholder="Cotação" oninput="onPgtoMoeda(2)" style="display:none;width:90px;padding:8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right">
-        <input type="number" id="p2Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()" style="width:120px">
+        <select id="p2Forma"><option value="">Forma de Pgto 2 (opcional)</option></select>
+        <input type="number" id="p2Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()" style="width:150px">
       </div>
-      <div style="font-size:11px;color:#9ca3af;margin:-4px 0 8px 4px" id="p2Info"></div>
       <div class="resumo-box" style="margin-top:10px">
         <div class="rl"><span>Total a pagar</span><span id="tAPagar">R$ 0,00</span></div>
         <div class="rl"><span>Total pago</span><span id="tPago">R$ 0,00</span></div>
@@ -505,16 +486,6 @@ function getServicos(){
 }
 
 /* ── CÁLCULOS ── */
-function onPgtoMoeda(n){
-  const moeda=document.getElementById(`p${n}Moeda`).value;
-  const isEstr=moeda!=="BRL";
-  document.getElementById(`p${n}ValEstr`).style.display=isEstr?"":"none";
-  document.getElementById(`p${n}Cot`).style.display=isEstr?"":"none";
-  if(isEstr){
-    const valEstr=parseFloat(document.getElementById(`p${n}ValEstr`).value||0);
-    const cot=parseFloat(document.getElementById(`p${n}Cot`).value||0);
-    const sym=moeda==="USD"?"$":"€";
-    if(valEstr&&cot){const brl=valEstr*cot;document.getElementById(`p${n}Val`).value=brl.toFixed(2);document.getElementById(`p${n}Info`).textContent=`${sym} ${valEstr.toLocaleString("pt-BR",{minimumFractionDigits:2})} × R$ ${cot.toFixed(2)} = ${fmtM(brl)}`;}
     else{document.getElementById(`p${n}Val`).value="";document.getElementById(`p${n}Info`).textContent=moeda==="USD"?"Informe o valor em dólar e a cotação":"Informe o valor em euro e a cotação";}
   } else {document.getElementById(`p${n}Info`).textContent="";}
   calcTroco();
@@ -559,12 +530,9 @@ function resetModal(){
   document.getElementById("lancObs").value="";
   document.getElementById("lancTer").value="";
   document.getElementById("lancTrocoDestino").value="troco";
-  ["p1Forma","p1Val","p1Moeda","p1ValEstr","p1Cot","p2Forma","p2Val","p2Moeda","p2ValEstr","p2Cot"].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){if(id.includes("Moeda"))el.value="BRL";else el.value="";}
+  ["p1Forma","p1Val","p2Forma","p2Val"].forEach(id=>{
+    const el=document.getElementById(id);if(el)el.value="";
   });
-  ["p1ValEstr","p1Cot","p2ValEstr","p2Cot"].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display="none";});
-  ["p1Info","p2Info"].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent="";});
   document.getElementById("servItens").innerHTML="";
   ssCliente?.clearSelection();
   calcRes();
@@ -683,7 +651,6 @@ async function carregar(){
   const fim=document.getElementById("filtroFim").value;
   const op=document.getElementById("filtroOp").value;
   const ter=document.getElementById("filtroTer").value;
-  const moeda=document.getElementById("filtroMoeda").value;
 
   let q=client.from("fluxo_caixa").select("*",{count:"exact"})
     .order("data",{ascending:false}).order("created_at",{ascending:false})
@@ -693,7 +660,6 @@ async function carregar(){
   if(fim)   q=q.lte("data",fim);
   if(op)    q=q.eq("operador_cpf",op);
   if(ter)   q=q.eq("terapeuta_cpf",ter);
-  if(moeda) q=q.eq("moeda",moeda);
 
   const {data,error,count}=await q;
   if(error){console.error(error);return;}
@@ -723,14 +689,12 @@ async function atualizarTotaisServidor(){
   const fim=document.getElementById("filtroFim").value;
   const op=document.getElementById("filtroOp").value;
   const ter=document.getElementById("filtroTer").value;
-  const moeda=document.getElementById("filtroMoeda").value;
 
   let q=client.from("fluxo_caixa").select("valor_bruto,desconto,comissao_total,valor_final");
   if(ini)   q=q.gte("data",ini);
   if(fim)   q=q.lte("data",fim);
   if(op)    q=q.eq("operador_cpf",op);
   if(ter)   q=q.eq("terapeuta_cpf",ter);
-  if(moeda) q=q.eq("moeda",moeda);
 
   const {data}=await q;
   document.getElementById("totCount").textContent=fcTotal;
@@ -762,7 +726,7 @@ function render(){
   const tbody=document.getElementById("lista");tbody.innerHTML="";
   if(!listaFilt.length){tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;color:#9ca3af;padding:32px">Nenhum lançamento.</td></tr>`;return;}
   listaFilt.forEach(r=>{
-    const mb=r.moeda==="USD"?'<span class="badge-moeda badge-usd">$ USD</span>':r.moeda==="EUR"?'<span class="badge-moeda badge-eur">€ EUR</span>':'<span class="badge-moeda badge-brl">R$ BRL</span>';
+
     const trocoBadge = r.troco > 0
       ? (r.troco_destino==="caixa"
           ? `<span style="background:#dcfce7;color:#16a34a;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700">📦 Caixa</span>`
@@ -775,7 +739,7 @@ function render(){
       <td><strong>${r.cliente_nome||"—"}</strong>${r.fechamento_id?'<span style="display:inline-block;margin-left:6px;background:#f3f4f6;color:#9ca3af;border-radius:99px;padding:1px 7px;font-size:10px;font-weight:700">✓ fechado</span>':""}</td>
       <td style="font-size:12px;color:#7c3aed">${r._terNome||"—"}</td>
       <td style="font-size:12px;color:#6b7280;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r._servNomes||"—"}</td>
-      <td>${mb}</td>
+
       <td><strong>${fmtM(r.valor_final)}</strong></td>
       <td style="color:#7c3aed">${fmtM(r.comissao_total)}</td>
       <td style="font-size:12px">${[r.forma_pgto_1,r.forma_pgto_2].filter(Boolean).join(" + ")||"—"}</td>
@@ -789,7 +753,7 @@ function render(){
 }
 
 function aplicarFiltro(){fcPagina=1;carregar();}
-function limparFiltro(){["filtroIni","filtroFim","filtroOp","filtroTer","filtroMoeda"].forEach(id=>document.getElementById(id).value="");fcPagina=1;carregar();}
+function limparFiltro(){["filtroIni","filtroFim","filtroOp","filtroTer"].forEach(id=>document.getElementById(id).value="");fcPagina=1;carregar();}
 
 async function excluir(id){
   if(!confirm("Excluir este lançamento?"))return;
@@ -811,8 +775,7 @@ function exportarExcel(){
   if(!listaFilt.length){alert("Nada para exportar.");return;}
   const exp=listaFilt.map(r=>({
     "Data":fmtD(r.data),"Operador":r._opNome||"","Terapeuta":r._terNome||"","Cliente":r.cliente_nome||"",
-    "Serviços":r._servNomes||"","Moeda":r.moeda||"BRL","Cotação":r.cotacao||1,
-    "Valor Bruto":+r.valor_bruto||0,"Desconto":+r.desconto||0,"Acréscimo":+r.acrescimo||0,
+    "Serviços":r._servNomes||"","Valor Bruto":+r.valor_bruto||0,"Desconto":+r.desconto||0,"Acréscimo":+r.acrescimo||0,
     "Valor Final":+r.valor_final||0,"Valor Pago":+r.valor_pago||0,"Troco":+r.troco||0,
     "Troco Destino":r.troco_destino||"troco","Comissão":+r.comissao_total||0,
     "Pgto 1":r.forma_pgto_1||"","Valor Pgto 1":+r.valor_pgto_1||0,

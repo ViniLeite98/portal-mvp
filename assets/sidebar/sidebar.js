@@ -1,25 +1,32 @@
 const paginaAtual = window.location.pathname.split("/").pop();
-document.getElementById("sidebar").innerHTML = `
+
+function renderSidebar() {
+  if(!window.usuarioLogado){ setTimeout(renderSidebar, 100); return; }
+
+  const u = window.usuarioLogado;
+  const usuario = u && u.role === "usuario"; // terapeuta — menu reduzido
+
+  document.getElementById("sidebar").innerHTML = `
 <div class="sidebar">
   <div class="logo">Hara Spa</div>
-  <a href="dashboard.html" class="menu-item ${paginaAtual === 'dashboard.html' ? 'active' : ''}">
+  ${!usuario ? `<a href="dashboard.html" class="menu-item ${paginaAtual === 'dashboard.html' ? 'active' : ''}">
     <i class="fa-solid fa-chart-line"></i>
     <span>Dashboard</span>
-  </a>
+  </a>` : ''}
   <hr style="border-color:#374151; margin:18px 0;">
   <div class="menu-title">CADASTROS</div>
   <a href="equipe.html" class="menu-item ${paginaAtual === 'equipe.html' ? 'active' : ''}">
     <i class="fa-solid fa-users"></i>
     <span>Equipe</span>
   </a>
-  <a href="clientes.html" class="menu-item ${paginaAtual === 'clientes.html' ? 'active' : ''}">
+  ${!usuario ? `<a href="clientes.html" class="menu-item ${paginaAtual === 'clientes.html' ? 'active' : ''}">
     <i class="fa-solid fa-user"></i>
     <span>Clientes</span>
   </a>
   <a href="servicos.html" class="menu-item ${paginaAtual === 'servicos.html' ? 'active' : ''}">
     <i class="fa-solid fa-hand-holding-heart"></i>
     <span>Serviços</span>
-  </a>
+  </a>` : ''}
   <a href="certificacoes.html" class="menu-item ${paginaAtual === 'certificacoes.html' ? 'active' : ''}">
     <i class="fa-solid fa-certificate"></i>
     <span>Certificações</span>
@@ -38,7 +45,7 @@ document.getElementById("sidebar").innerHTML = `
     <i class="fa-solid fa-file-lines"></i>
     <span>Solicitações</span>
   </a>
-  <hr style="border-color:#374151; margin:18px 0;">
+  ${!usuario ? `<hr style="border-color:#374151; margin:18px 0;">
   <div class="menu-title">FINANCEIRO</div>
   <a href="despesas.html" class="menu-item ${paginaAtual === 'despesas.html' ? 'active' : ''}">
     <i class="fa-solid fa-receipt"></i>
@@ -57,7 +64,7 @@ document.getElementById("sidebar").innerHTML = `
   <a href="parametros.html" class="menu-item ${paginaAtual === 'parametros.html' ? 'active' : ''}">
     <i class="fa-solid fa-sliders"></i>
     <span>Parâmetros</span>
-  </a>
+  </a>` : ''}
   <hr style="border-color:#374151; margin:18px 0;">
   <a href="#" class="menu-item" onclick="sairDoCaixa()" style="color:#f87171">
     <i class="fa-solid fa-arrow-right-from-bracket"></i>
@@ -65,6 +72,9 @@ document.getElementById("sidebar").innerHTML = `
   </a>
 </div>
 `;
+}
+
+renderSidebar();
 
 function sairDoCaixa() {
   if (typeof client !== 'undefined') {

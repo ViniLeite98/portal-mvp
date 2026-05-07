@@ -23,12 +23,13 @@ button.btn-blue{background:#2563eb;}
 button.btn-yellow{background:#d97706;}
 button.btn-ghost{background:#fff;color:#374151;border:1px solid #d1d5db;}
 button.btn-ghost:hover{background:#f9fafb;}
+button.btn-purple{background:#7c3aed;}
 .filtros-card{background:#fff;border-radius:14px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:20px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;}
 .field{display:flex;flex-direction:column;gap:4px;}
 .field label{font-size:12px;font-weight:600;color:#374151;}
 .field input,.field select,.field textarea{padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#111827;background:#fff;}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.totais{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.totais{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;}
 .total-card{background:#fff;border-radius:12px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .t-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:4px;}
 .t-valor{font-size:20px;font-weight:800;color:#111827;}
@@ -42,6 +43,8 @@ tr:hover td{background:#f9fafb;}
 .badge-pago{background:#dcfce7;color:#16a34a;}
 .badge-apagar{background:#fef3c7;color:#d97706;}
 .badge-vencido{background:#fee2e2;color:#dc2626;}
+.badge-pendente-apr{background:#ede9fe;color:#7c3aed;}
+.badge-reprovado{background:#fee2e2;color:#dc2626;}
 .badge-recorrente{background:#ede9fe;color:#7c3aed;font-size:10px;padding:2px 7px;}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:580px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
@@ -61,9 +64,10 @@ tr:hover td{background:#f9fafb;}
 .modal-body input:focus,.modal-body select:focus,.modal-body textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 .modal-body textarea{resize:vertical;min-height:70px;}
 .pagar-info{background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.7;}
-.pagar-info strong{color:#111827;}
-
-/* ── QUINZENA TABLE ── */
+.nf-atual{display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:12px;margin-top:6px;}
+.nf-atual a{color:#16a34a;text-decoration:none;font-weight:600;}
+.upload-status{font-size:12px;color:#2563eb;margin-top:6px;display:none;}
+/* quinzena */
 .q-table{width:100%;border-collapse:collapse;}
 .q-table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;padding:8px 10px;background:#f9fafb;text-align:left;border-bottom:1px solid #e5e7eb;}
 .q-table td{padding:8px 10px;border-bottom:1px solid #f3f4f6;font-size:13px;vertical-align:middle;}
@@ -72,11 +76,8 @@ tr:hover td{background:#f9fafb;}
 .q-check{width:16px;height:16px;cursor:pointer;accent-color:#2563eb;}
 .q-nome{font-weight:600;color:#111827;font-size:13px;}
 .q-valor{width:100px;padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:right;}
-.q-valor:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 .q-desconto{width:90px;padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:right;}
-.q-desconto:focus{outline:none;border-color:#dc2626;box-shadow:0 0 0 3px rgba(220,38,38,.1);}
 .q-desc-motivo{width:120px;padding:6px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:11px;}
-.q-desc-motivo:focus{outline:none;border-color:#dc2626;}
 .q-avatar{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;font-size:11px;flex-shrink:0;}
 .q-avatar.fem{background:#fce7f3;color:#db2777;}
 .q-avatar.masc{background:#dbeafe;color:#2563eb;}
@@ -94,30 +95,39 @@ tr:hover td{background:#f9fafb;}
 <main class="content">
   <div class="topbar">
     <h1>Despesas</h1>
-    <div class="topbar-btns">
-      <button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
-      <button class="btn-blue" onclick="abrirGerarQuinzena()"><i class="fa fa-users"></i> Gerar Quinzena</button>
-      <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Nova Despesa</button>
+    <div class="topbar-btns" id="topbarBtns">
+      <!-- Botões renderizados após auth -->
     </div>
   </div>
   <div class="filtros-card">
     <div class="field"><label>Vencimento de</label><input type="date" id="filtroInicio"></div>
     <div class="field"><label>Vencimento até</label><input type="date" id="filtroFim"></div>
-    <div class="field"><label>Status</label><select id="filtroStatus"><option value="">Todos</option><option value="A pagar">A pagar</option><option value="Pago">Pago</option><option value="Vencido">Vencido</option></select></div>
+    <div class="field"><label>Status</label>
+      <select id="filtroStatus">
+        <option value="">Todos</option>
+        <option value="Pendente Aprovação">Pendente Aprovação</option>
+        <option value="Aprovado">Aprovado</option>
+        <option value="Reprovado">Reprovado</option>
+        <option value="A pagar">A pagar</option>
+        <option value="Pago">Pago</option>
+        <option value="Vencido">Vencido</option>
+      </select>
+    </div>
     <div class="field"><label>Categoria</label><select id="filtroCategoria"><option value="">Todas</option></select></div>
     <div class="field"><label>Centro de Custo</label><select id="filtroCentro"><option value="">Todos</option></select></div>
     <button class="btn-blue" onclick="aplicarFiltro()"><i class="fa fa-filter"></i> Filtrar</button>
     <button class="btn-ghost" onclick="limparFiltro()"><i class="fa fa-times"></i> Limpar</button>
   </div>
   <div class="totais">
-    <div class="total-card"><div class="t-label"><i class="fa fa-list"></i> Total</div><div class="t-valor" id="totalCount">—</div></div>
-    <div class="total-card" style="border-left:3px solid #d97706"><div class="t-label" style="color:#d97706"><i class="fa fa-clock"></i> A Pagar</div><div class="t-valor" id="totalAPagar" style="color:#d97706">—</div></div>
-    <div class="total-card" style="border-left:3px solid #dc2626"><div class="t-label" style="color:#dc2626"><i class="fa fa-exclamation-circle"></i> Vencido</div><div class="t-valor" id="totalVencido" style="color:#dc2626">—</div></div>
-    <div class="total-card" style="border-left:3px solid #16a34a"><div class="t-label" style="color:#16a34a"><i class="fa fa-check-circle"></i> Pago</div><div class="t-valor" id="totalPago" style="color:#16a34a">—</div></div>
+    <div class="total-card"><div class="t-label">Total</div><div class="t-valor" id="totalCount">—</div></div>
+    <div class="total-card" style="border-left:3px solid #7c3aed"><div class="t-label" style="color:#7c3aed">Pend. Aprovação</div><div class="t-valor" id="totalPendApr" style="color:#7c3aed">—</div></div>
+    <div class="total-card" style="border-left:3px solid #d97706"><div class="t-label" style="color:#d97706">A Pagar</div><div class="t-valor" id="totalAPagar" style="color:#d97706">—</div></div>
+    <div class="total-card" style="border-left:3px solid #dc2626"><div class="t-label" style="color:#dc2626">Vencido</div><div class="t-valor" id="totalVencido" style="color:#dc2626">—</div></div>
+    <div class="total-card" style="border-left:3px solid #16a34a"><div class="t-label" style="color:#16a34a">Pago</div><div class="t-valor" id="totalPago" style="color:#16a34a">—</div></div>
   </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Descrição</th><th>Categoria</th><th>Centro de Custo</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+      <thead><tr><th>Descrição</th><th>Categoria</th><th>Centro de Custo</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>NF</th><th>Ações</th></tr></thead>
       <tbody id="lista"></tbody>
     </table>
   </div>
@@ -135,11 +145,27 @@ tr:hover td{background:#f9fafb;}
       <div class="field"><label>Centro de Custo</label><select id="centro_custo"><option value="">Selecione</option></select></div>
       <div class="field"><label>Valor (R$) *</label><input type="number" id="valor" step="0.01" min="0" placeholder="0,00"></div>
       <div class="field"><label>Data de Vencimento *</label><input type="date" id="data_vencimento"></div>
-      <div class="field"><label>Status</label><select id="status" onchange="toggleDataPagamento()"><option value="A pagar">A pagar</option><option value="Pago">Pago</option><option value="Vencido">Vencido</option></select></div>
+      <div class="field" id="campoStatus"><label>Status</label>
+        <select id="status" onchange="toggleDataPagamento()">
+          <option value="A pagar">A pagar</option>
+          <option value="Pago">Pago</option>
+          <option value="Vencido">Vencido</option>
+        </select>
+      </div>
       <div class="field" id="campoPagamento" style="display:none"><label>Data de Pagamento</label><input type="date" id="data_pagamento"></div>
       <div class="field"><label>Recorrente?</label><select id="recorrente" onchange="toggleRecorrencia()"><option value="false">Não</option><option value="true">Sim</option></select></div>
       <div class="field" id="campoRecorrencia" style="display:none"><label>Frequência</label><select id="recorrencia"><option value="mensal">Mensal</option><option value="semanal">Semanal</option><option value="anual">Anual</option></select></div>
       <div class="field span2"><label>Observação</label><textarea id="observacao" placeholder="Informações adicionais..."></textarea></div>
+      <div class="field span2">
+        <label>Nota Fiscal <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
+        <input type="file" id="nfArquivo" accept="image/*,.pdf,.doc,.docx,.xml">
+        <div class="nf-atual" id="nfAtual" style="display:none">
+          <i class="fa fa-receipt" style="color:#16a34a"></i>
+          <a id="nfLink" href="#" target="_blank">Ver nota fiscal</a>
+          <button onclick="removerNF()" style="background:none;color:#dc2626;border:none;cursor:pointer;padding:2px 6px;font-size:12px" title="Remover"><i class="fa fa-times"></i></button>
+        </div>
+        <div class="upload-status" id="nfUploadStatus"><i class="fa fa-spinner fa-spin"></i> Enviando nota fiscal...</div>
+      </div>
     </div>
   </div>
   <div class="modal-footer">
@@ -176,8 +202,7 @@ tr:hover td{background:#f9fafb;}
       <div class="field">
         <label style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Período</label>
         <select id="qPeriodo" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px" onchange="buscarComissoesLegado()">
-          <option value="1">1ª Quinzena</option>
-          <option value="2">2ª Quinzena</option>
+          <option value="1">1ª Quinzena</option><option value="2">2ª Quinzena</option>
         </select>
       </div>
       <div class="field">
@@ -189,12 +214,9 @@ tr:hover td{background:#f9fafb;}
         <input type="date" id="qVencimento" style="padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px">
       </div>
     </div>
-
-    <!-- Status de carregamento do legado -->
     <div id="loadingLegado" class="loading-legado" style="display:none">
       <i class="fa fa-spinner fa-spin"></i> Buscando comissões do legado...
     </div>
-
     <div class="quinzena-header">
       <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af">Profissionais</span>
       <span style="font-size:11px;color:#9ca3af">Comissão do legado pré-preenchida · editável</span>
@@ -230,13 +252,32 @@ tr:hover td{background:#f9fafb;}
 <script src="assets/js/auth.js"></script>
 <script>
 let dados=[], listaFiltrada=[], editandoId=null, pagarId=null;
+let nfAtualUrl=null, nfAtualNome=null;
+let isAdmin=false;
 const CATEGORIAS_DEFAULT=["Aluguel","Água","Luz","Internet","Telefone","Material de Limpeza","Material de Escritório","Manutenção","Publicidade","Outros"];
 const CENTROS_DEFAULT=["Operacional","Estrutura","Marketing","Pessoal","Outros"];
 
 function fmtMoeda(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function fmtData(v){if(!v)return"—";const[y,m,d]=v.split("-");return`${d}/${m}/${y}`;}
 function hoje(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().split("T")[0];}
-function isVencido(vencimento,status){if(status==="Pago")return false;return vencimento<hoje();}
+function isVencido(vencimento,status){if(status==="Pago"||status==="Pendente Aprovação"||status==="Reprovado")return false;return vencimento<hoje();}
+function limparNome(nome){return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");}
+
+function getUser(cb,tentativas=20){
+  if(window.usuarioLogado) return cb(window.usuarioLogado);
+  if(tentativas<=0) return cb(null);
+  setTimeout(()=>getUser(cb,tentativas-1),100);
+}
+
+function renderTopbar(u){
+  const admin = u && u.role === "admin";
+  isAdmin = admin;
+  const btns = document.getElementById("topbarBtns");
+  btns.innerHTML =
+    (admin ? `<button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>` : "") +
+    (admin ? `<button class="btn-blue" onclick="abrirGerarQuinzena()"><i class="fa fa-users"></i> Gerar Quinzena</button>` : "") +
+    `<button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Nova Despesa</button>`;
+}
 
 async function carregarParametros(){
   const{data}=await client.from("parametros").select("tipo,valor").in("tipo",["categorias_despesa","centros_custo"]).eq("ativo",true).order("valor");
@@ -250,34 +291,75 @@ async function carregarParametros(){
 async function carregar(){
   const{data,error}=await client.from("despesas").select("*").order("data_vencimento");
   if(error){console.error(error);return;}
-  dados=(data||[]).map(d=>({...d,status:isVencido(d.data_vencimento,d.status)?"Vencido":d.status}));
+  dados=(data||[]).map(d=>({
+    ...d,
+    status:(!["Pago","Pendente Aprovação","Aprovado","Reprovado"].includes(d.status)&&isVencido(d.data_vencimento,d.status))?"Vencido":d.status
+  }));
   listaFiltrada=[...dados];render();
 }
 
 function render(){
   const tbody=document.getElementById("lista");tbody.innerHTML="";
-  if(!listaFiltrada.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:32px">Nenhuma despesa encontrada.</td></tr>`;atualizarTotais([]);return;}
+  if(!listaFiltrada.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:#9ca3af;padding:32px">Nenhuma despesa encontrada.</td></tr>`;atualizarTotais([]);return;}
   listaFiltrada.forEach(d=>{
-    const badgeClass=d.status==="Pago"?"badge-pago":d.status==="Vencido"?"badge-vencido":"badge-apagar";
-    const iconeStatus=d.status==="Pago"?"fa-check":d.status==="Vencido"?"fa-exclamation-circle":"fa-clock";
+    const badgeClass=
+      d.status==="Pago"?"badge-pago":
+      d.status==="Vencido"?"badge-vencido":
+      d.status==="Pendente Aprovação"?"badge-pendente-apr":
+      d.status==="Reprovado"?"badge-reprovado":
+      "badge-apagar";
+    const iconeStatus=
+      d.status==="Pago"?"fa-check":
+      d.status==="Vencido"?"fa-exclamation-circle":
+      d.status==="Pendente Aprovação"?"fa-clock":
+      d.status==="Reprovado"?"fa-times":
+      "fa-clock";
     const recBadge=d.recorrente?`<span class="badge badge-recorrente"><i class="fa fa-rotate"></i> ${d.recorrencia||"mensal"}</span>`:"";
-    const btnPagar=d.status!=="Pago"?`<button class="btn-green" style="padding:5px 10px;font-size:12px" onclick="abrirPagar('${d.id}')"><i class="fa fa-check"></i> Pagar</button>`:"";
+
+    // NF column
+    const nfCol=d.nf_url
+      ?`<a href="${d.nf_url}" target="_blank" style="color:#2563eb;font-size:12px;text-decoration:none"><i class="fa fa-receipt"></i> Ver</a>`
+      :`<span style="color:#d1d5db;font-size:12px">—</span>`;
+
+    // Botões de ação
+    let btnsAcao="";
+    // Pagar: só admin e se aprovado ou a pagar
+    if(isAdmin && d.status!=="Pago" && d.status!=="Pendente Aprovação" && d.status!=="Reprovado"){
+      btnsAcao+=`<button class="btn-green" style="padding:5px 10px;font-size:12px" onclick="abrirPagar('${d.id}')"><i class="fa fa-check"></i> Pagar</button>`;
+    }
+    // Aprovar/Reprovar: só admin, só quando Pendente Aprovação
+    if(isAdmin && d.status==="Pendente Aprovação"){
+      btnsAcao+=`<button class="btn-green" style="padding:5px 10px;font-size:12px" onclick="aprovar('${d.id}')"><i class="fa fa-check"></i> Aprovar</button>`;
+      btnsAcao+=`<button class="btn-red" style="padding:5px 10px;font-size:12px" onclick="reprovar('${d.id}')"><i class="fa fa-times"></i> Reprovar</button>`;
+    }
+    // Editar: todos
+    btnsAcao+=`<button class="btn-yellow" style="padding:5px 10px;font-size:12px" onclick="abrirEditar('${d.id}')"><i class="fa fa-pencil"></i></button>`;
+    // Excluir: só admin
+    if(isAdmin){
+      btnsAcao+=`<button class="btn-red" style="padding:5px 10px;font-size:12px" onclick="excluir('${d.id}')"><i class="fa fa-trash"></i></button>`;
+    }
+
     tbody.innerHTML+=`<tr>
       <td><div style="font-weight:600;color:#111827">${d.descricao}</div>${d.observacao?`<div style="font-size:11px;color:#9ca3af;margin-top:2px">${d.observacao}</div>`:""}${recBadge}</td>
       <td>${d.categoria||"—"}</td><td>${d.centro_custo||"—"}</td>
-      <td style="${d.status==='Vencido'?'color:#dc2626;font-weight:600':''}">${fmtData(d.data_vencimento)}${d.data_pagamento?`<div style="font-size:11px;color:#16a34a">Pago em ${fmtData(d.data_pagamento)}</div>`:""}</td>
+      <td style="${d.status==="Vencido"?"color:#dc2626;font-weight:600":""}">${fmtData(d.data_vencimento)}${d.data_pagamento?`<div style="font-size:11px;color:#16a34a">Pago em ${fmtData(d.data_pagamento)}</div>`:""}</td>
       <td><strong>${fmtMoeda(d.valor)}</strong></td>
       <td><span class="badge ${badgeClass}"><i class="fa ${iconeStatus}"></i> ${d.status}</span></td>
-      <td style="display:flex;gap:5px;flex-wrap:wrap">${btnPagar}<button class="btn-yellow" style="padding:5px 10px;font-size:12px" onclick="abrirEditar('${d.id}')"><i class="fa fa-pencil"></i></button><button class="btn-red" style="padding:5px 10px;font-size:12px" onclick="excluir('${d.id}')"><i class="fa fa-trash"></i></button></td>
+      <td>${nfCol}</td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap">${btnsAcao}</td>
     </tr>`;
   });
   atualizarTotais(listaFiltrada);
 }
 
 function atualizarTotais(lista){
-  const aPagar=lista.filter(d=>d.status==="A pagar"),vencido=lista.filter(d=>d.status==="Vencido"),pago=lista.filter(d=>d.status==="Pago");
+  const pendApr=lista.filter(d=>d.status==="Pendente Aprovação");
+  const aPagar=lista.filter(d=>d.status==="A pagar"||d.status==="Aprovado");
+  const vencido=lista.filter(d=>d.status==="Vencido");
+  const pago=lista.filter(d=>d.status==="Pago");
   const soma=arr=>arr.reduce((s,d)=>s+(d.valor||0),0);
   document.getElementById("totalCount").textContent=lista.length;
+  document.getElementById("totalPendApr").textContent=fmtMoeda(soma(pendApr));
   document.getElementById("totalAPagar").textContent=fmtMoeda(soma(aPagar));
   document.getElementById("totalVencido").textContent=fmtMoeda(soma(vencido));
   document.getElementById("totalPago").textContent=fmtMoeda(soma(pago));
@@ -288,40 +370,158 @@ function aplicarFiltro(){
   listaFiltrada=dados.filter(d=>{if(ini&&d.data_vencimento<ini)return false;if(fim&&d.data_vencimento>fim)return false;if(status&&d.status!==status)return false;if(cat&&d.categoria!==cat)return false;if(centro&&d.centro_custo!==centro)return false;return true;});render();
 }
 function limparFiltro(){["filtroInicio","filtroFim"].forEach(id=>document.getElementById(id).value="");["filtroStatus","filtroCategoria","filtroCentro"].forEach(id=>document.getElementById(id).value="");listaFiltrada=[...dados];render();}
-function toggleDataPagamento(){const status=document.getElementById("status").value;document.getElementById("campoPagamento").style.display=status==="Pago"?"":"none";if(status==="Pago"&&!document.getElementById("data_pagamento").value)document.getElementById("data_pagamento").value=hoje();}
+function toggleDataPagamento(){const s=document.getElementById("status").value;document.getElementById("campoPagamento").style.display=s==="Pago"?"":"none";if(s==="Pago"&&!document.getElementById("data_pagamento").value)document.getElementById("data_pagamento").value=hoje();}
 function toggleRecorrencia(){document.getElementById("campoRecorrencia").style.display=document.getElementById("recorrente").value==="true"?"":"none";}
-function resetModal(){document.getElementById("descricao").value="";document.getElementById("categoria").value="";document.getElementById("centro_custo").value="";document.getElementById("valor").value="";document.getElementById("data_vencimento").value=hoje();document.getElementById("status").value="A pagar";document.getElementById("data_pagamento").value="";document.getElementById("recorrente").value="false";document.getElementById("recorrencia").value="mensal";document.getElementById("observacao").value="";document.getElementById("campoPagamento").style.display="none";document.getElementById("campoRecorrencia").style.display="none";}
-function abrirNovo(){editandoId=null;resetModal();document.getElementById("modalTitulo").textContent="Nova Despesa";document.getElementById("modalDespesa").style.display="flex";}
-function abrirEditar(id){editandoId=id;const d=dados.find(x=>String(x.id)===String(id));if(!d)return;document.getElementById("modalTitulo").textContent="Editar Despesa";document.getElementById("modalDespesa").style.display="flex";setTimeout(()=>{document.getElementById("descricao").value=d.descricao||"";document.getElementById("categoria").value=d.categoria||"";document.getElementById("centro_custo").value=d.centro_custo||"";document.getElementById("valor").value=d.valor||"";document.getElementById("data_vencimento").value=d.data_vencimento||"";document.getElementById("status").value=d.status||"A pagar";document.getElementById("data_pagamento").value=d.data_pagamento||"";document.getElementById("recorrente").value=d.recorrente?"true":"false";document.getElementById("recorrencia").value=d.recorrencia||"mensal";document.getElementById("observacao").value=d.observacao||"";toggleDataPagamento();toggleRecorrencia();},30);}
+
+function removerNF(){
+  nfAtualUrl=null; nfAtualNome=null;
+  document.getElementById("nfAtual").style.display="none";
+  document.getElementById("nfArquivo").value="";
+}
+
+function resetModal(){
+  document.getElementById("descricao").value="";
+  document.getElementById("categoria").value="";
+  document.getElementById("centro_custo").value="";
+  document.getElementById("valor").value="";
+  document.getElementById("data_vencimento").value=hoje();
+  document.getElementById("recorrente").value="false";
+  document.getElementById("recorrencia").value="mensal";
+  document.getElementById("observacao").value="";
+  document.getElementById("campoPagamento").style.display="none";
+  document.getElementById("campoRecorrencia").style.display="none";
+  document.getElementById("nfAtual").style.display="none";
+  try{document.getElementById("nfArquivo").value="";}catch(e){}
+  nfAtualUrl=null; nfAtualNome=null;
+
+  // Admin pode escolher status; apoio não
+  const campoStatus=document.getElementById("campoStatus");
+  const selStatus=document.getElementById("status");
+  if(isAdmin){
+    campoStatus.style.display="";
+    selStatus.value="A pagar";
+  } else {
+    campoStatus.style.display="none";
+    selStatus.value="Pendente Aprovação";
+  }
+}
+
+function abrirNovo(){
+  editandoId=null; resetModal();
+  document.getElementById("modalTitulo").textContent="Nova Despesa";
+  document.getElementById("modalDespesa").style.display="flex";
+}
+
+function abrirEditar(id){
+  editandoId=id;
+  const d=dados.find(x=>String(x.id)===String(id));if(!d)return;
+  document.getElementById("modalTitulo").textContent="Editar Despesa";
+  document.getElementById("modalDespesa").style.display="flex";
+  setTimeout(()=>{
+    document.getElementById("descricao").value=d.descricao||"";
+    document.getElementById("categoria").value=d.categoria||"";
+    document.getElementById("centro_custo").value=d.centro_custo||"";
+    document.getElementById("valor").value=d.valor||"";
+    document.getElementById("data_vencimento").value=d.data_vencimento||"";
+    document.getElementById("recorrente").value=d.recorrente?"true":"false";
+    document.getElementById("recorrencia").value=d.recorrencia||"mensal";
+    document.getElementById("observacao").value=d.observacao||"";
+    const campoStatus=document.getElementById("campoStatus");
+    const selStatus=document.getElementById("status");
+    if(isAdmin){ campoStatus.style.display=""; selStatus.value=d.status||"A pagar"; }
+    else { campoStatus.style.display="none"; selStatus.value=d.status||"Pendente Aprovação"; }
+    document.getElementById("data_pagamento").value=d.data_pagamento||"";
+    toggleDataPagamento(); toggleRecorrencia();
+    if(d.nf_url){
+      nfAtualUrl=d.nf_url; nfAtualNome=d.nf_nome||"Ver nota fiscal";
+      document.getElementById("nfAtual").style.display="flex";
+      document.getElementById("nfLink").href=d.nf_url;
+      document.getElementById("nfLink").textContent=d.nf_nome||"Ver nota fiscal";
+    }
+  },30);
+}
+
 function fecharModal(){document.getElementById("modalDespesa").style.display="none";}
 
 async function salvar(){
-  const descricao=document.getElementById("descricao").value.trim(),valor=parseFloat(document.getElementById("valor").value||0),data_vencimento=document.getElementById("data_vencimento").value;
-  if(!descricao){alert("Descrição obrigatória.");return;}if(!valor||valor<=0){alert("Informe um valor válido.");return;}if(!data_vencimento){alert("Informe a data de vencimento.");return;}
+  const descricao=document.getElementById("descricao").value.trim();
+  const valor=parseFloat(document.getElementById("valor").value||0);
+  const data_vencimento=document.getElementById("data_vencimento").value;
+  if(!descricao){alert("Descrição obrigatória.");return;}
+  if(!valor||valor<=0){alert("Informe um valor válido.");return;}
+  if(!data_vencimento){alert("Informe a data de vencimento.");return;}
+
   const status=document.getElementById("status").value;
-  const payload={descricao,categoria:document.getElementById("categoria").value||null,centro_custo:document.getElementById("centro_custo").value||null,valor,data_vencimento,status,data_pagamento:status==="Pago"?(document.getElementById("data_pagamento").value||hoje()):null,recorrente:document.getElementById("recorrente").value==="true",recorrencia:document.getElementById("recorrente").value==="true"?document.getElementById("recorrencia").value:null,observacao:document.getElementById("observacao").value.trim()||null};
+  const file=document.getElementById("nfArquivo").files[0];
+
+  const payload={
+    descricao,
+    categoria:document.getElementById("categoria").value||null,
+    centro_custo:document.getElementById("centro_custo").value||null,
+    valor, data_vencimento, status,
+    data_pagamento:status==="Pago"?(document.getElementById("data_pagamento").value||hoje()):null,
+    recorrente:document.getElementById("recorrente").value==="true",
+    recorrencia:document.getElementById("recorrente").value==="true"?document.getElementById("recorrencia").value:null,
+    observacao:document.getElementById("observacao").value.trim()||null,
+    nf_url:nfAtualUrl||null,
+    nf_nome:nfAtualNome||null
+  };
+
+  // Upload NF se houver
+  if(file){
+    const statusEl=document.getElementById("nfUploadStatus");
+    statusEl.style.display="block";
+    const fileName=`notas_fiscais/${Date.now()}_${limparNome(file.name)}`;
+    const{error:upErr}=await client.storage.from("documentos").upload(fileName,file);
+    if(upErr){statusEl.style.display="none";alert("Erro no upload da NF: "+upErr.message);return;}
+    const{data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
+    payload.nf_url=urlData.publicUrl;
+    payload.nf_nome=file.name;
+    statusEl.style.display="none";
+  }
+
   let error;
-  if(editandoId){({error}=await client.from("despesas").update(payload).eq("id",editandoId));}else{({error}=await client.from("despesas").insert(payload));}
-  if(error){alert("Erro ao salvar: "+error.message);return;}fecharModal();carregar();
+  if(editandoId){({error}=await client.from("despesas").update(payload).eq("id",editandoId));}
+  else{({error}=await client.from("despesas").insert(payload));}
+  if(error){alert("Erro ao salvar: "+error.message);return;}
+  fecharModal();carregar();
 }
 
+async function aprovar(id){
+  if(!confirm("Aprovar esta despesa?"))return;
+  await client.from("despesas").update({status:"A pagar"}).eq("id",id);
+  carregar();
+}
+async function reprovar(id){
+  if(!confirm("Reprovar esta despesa?"))return;
+  await client.from("despesas").update({status:"Reprovado"}).eq("id",id);
+  carregar();
+}
 async function excluir(id){if(!confirm("Excluir esta despesa?"))return;await client.from("despesas").delete().eq("id",id);carregar();}
-function abrirPagar(id){pagarId=id;const d=dados.find(x=>String(x.id)===String(id));if(!d)return;document.getElementById("pagarInfo").innerHTML=`<strong>${d.descricao}</strong><br>Vencimento: ${fmtData(d.data_vencimento)}<br>Valor: <strong style="color:#111827">${fmtMoeda(d.valor)}</strong><br>${d.categoria?`Categoria: ${d.categoria}`:""}`;document.getElementById("pagarData").value=hoje();document.getElementById("modalPagar").style.display="flex";}
+
+function abrirPagar(id){
+  pagarId=id;const d=dados.find(x=>String(x.id)===String(id));if(!d)return;
+  document.getElementById("pagarInfo").innerHTML=`<strong>${d.descricao}</strong><br>Vencimento: ${fmtData(d.data_vencimento)}<br>Valor: <strong style="color:#111827">${fmtMoeda(d.valor)}</strong><br>${d.categoria?`Categoria: ${d.categoria}`:""}`;
+  document.getElementById("pagarData").value=hoje();
+  document.getElementById("modalPagar").style.display="flex";
+}
 function fecharModalPagar(){document.getElementById("modalPagar").style.display="none";}
-async function confirmarPagamento(){const data=document.getElementById("pagarData").value;if(!data){alert("Informe a data de pagamento.");return;}const{error}=await client.from("despesas").update({status:"Pago",data_pagamento:data}).eq("id",pagarId);if(error){alert("Erro: "+error.message);return;}fecharModalPagar();carregar();}
+async function confirmarPagamento(){
+  const data=document.getElementById("pagarData").value;
+  if(!data){alert("Informe a data de pagamento.");return;}
+  const{error}=await client.from("despesas").update({status:"Pago",data_pagamento:data}).eq("id",pagarId);
+  if(error){alert("Erro: "+error.message);return;}
+  fecharModalPagar();carregar();
+}
 
 function exportarExcel(){
   if(!listaFiltrada.length){alert("Nada para exportar.");return;}
-  const exportData=listaFiltrada.map(d=>({"Descrição":d.descricao,"Categoria":d.categoria||"","Centro de Custo":d.centro_custo||"","Vencimento":fmtData(d.data_vencimento),"Pagamento":fmtData(d.data_pagamento),"Valor":Number(d.valor||0),"Status":d.status,"Recorrente":d.recorrente?`Sim (${d.recorrencia})`:"Não","Observação":d.observacao||""}));
+  const exportData=listaFiltrada.map(d=>({"Descrição":d.descricao,"Categoria":d.categoria||"","Centro de Custo":d.centro_custo||"","Vencimento":fmtData(d.data_vencimento),"Pagamento":fmtData(d.data_pagamento),"Valor":Number(d.valor||0),"Status":d.status,"Recorrente":d.recorrente?`Sim (${d.recorrencia})`:"Não","NF":d.nf_url?"Sim":"Não","Observação":d.observacao||""}));
   const ws=XLSX.utils.json_to_sheet(exportData);ws["!cols"]=Object.keys(exportData[0]).map(col=>({wch:Math.max(col.length,...exportData.map(r=>String(r[col]||"").length))+2}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Despesas");XLSX.writeFile(wb,"despesas.xlsx");
 }
 
-/* ══════════════════════════════════════
-   QUINZENA
-══════════════════════════════════════ */
-let terapeutasQ = [];
-let comissoesLegado = {}; // cpf -> valor comissao do legado
-
+/* ══ QUINZENA ══ */
+let terapeutasQ=[], comissoesLegado={};
 function mesAtualISO(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;}
 function nomesMes(){return["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];}
 
@@ -345,37 +545,16 @@ function definirVencimentoPadrao(){
 }
 
 async function buscarComissoesLegado(){
-  const mes=document.getElementById("qMes").value;
-  const periodo=document.getElementById("qPeriodo").value;
+  const mes=document.getElementById("qMes").value,periodo=document.getElementById("qPeriodo").value;
   if(!mes||!terapeutasQ.length){renderQlista();return;}
-
   document.getElementById("loadingLegado").style.display="flex";
-
   const[y,m]=mes.split("-");
   const diaIni=periodo==="1"?"01":"16";
   const diaFim=periodo==="1"?"15":String(new Date(parseInt(y),parseInt(m),0).getDate()).padStart(2,"0");
-  const dataIni=`${y}-${m}-${diaIni}`;
-  const dataFim=`${y}-${m}-${diaFim}`;
-
   comissoesLegado={};
-
-  // Buscar comissoes do legado para cada profissional no periodo
   const nomes=terapeutasQ.map(t=>t.nome_profissional);
-
-  const{data,error}=await client.from("legado_atendimentos")
-    .select("profissional,comissao")
-    .gte("data",dataIni)
-    .lte("data",dataFim)
-    .in("profissional",nomes)
-    .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
-
-  if(!error&&data){
-    data.forEach(r=>{
-      if(!r.profissional||!r.comissao)return;
-      comissoesLegado[r.profissional]=(comissoesLegado[r.profissional]||0)+(r.comissao||0);
-    });
-  }
-
+  const{data,error}=await client.from("legado_atendimentos").select("profissional,comissao").gte("data",`${y}-${m}-${diaIni}`).lte("data",`${y}-${m}-${diaFim}`).in("profissional",nomes).or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
+  if(!error&&data){data.forEach(r=>{if(!r.profissional||!r.comissao)return;comissoesLegado[r.profissional]=(comissoesLegado[r.profissional]||0)+(r.comissao||0);});}
   document.getElementById("loadingLegado").style.display="none";
   renderQlista();
 }
@@ -386,46 +565,22 @@ function renderQlista(){
     const fem=t.cargo==="Terapeuta Feminina";
     const comissao=comissoesLegado[t.nome_profissional]||0;
     const tr=document.createElement("tr");
-
-    // Checkbox
     const tdChk=document.createElement("td");
     const chk=document.createElement("input");chk.type="checkbox";chk.className="q-check";chk.id="qCheck_"+t.cpf;chk.value=t.cpf;chk.checked=true;
     chk.addEventListener("change",atualizarResumo);tdChk.appendChild(chk);
-
-    // Nome
     const tdNome=document.createElement("td");
-    tdNome.innerHTML=`<div style="display:flex;align-items:center;gap:8px">
-      <span class="q-avatar ${fem?"fem":"masc"}"><i class="fa ${fem?"fa-person-dress":"fa-person"}"></i></span>
-      <div>
-        <div class="q-nome">${t.nome_profissional}</div>
-        ${t.pix_chave?`<div style="font-size:10px;color:#9ca3af">${t.pix_tipo||"PIX"}: ${t.pix_chave}</div>`:'<div style="font-size:10px;color:#dc2626">Sem PIX</div>'}
-      </div>
-    </div>`;
-
-    // Valor comissao (pre-preenchido do legado)
+    tdNome.innerHTML=`<div style="display:flex;align-items:center;gap:8px"><span class="q-avatar ${fem?"fem":"masc"}"><i class="fa ${fem?"fa-person-dress":"fa-person"}"></i></span><div><div class="q-nome">${t.nome_profissional}</div>${t.pix_chave?`<div style="font-size:10px;color:#9ca3af">${t.pix_tipo||"PIX"}: ${t.pix_chave}</div>`:'<div style="font-size:10px;color:#dc2626">Sem PIX</div>'}</div></div>`;
     const tdVal=document.createElement("td");tdVal.style.textAlign="right";
-    const inp=document.createElement("input");inp.type="number";inp.className="q-valor";inp.id="qValor_"+t.cpf;
-    inp.value=comissao>0?comissao.toFixed(2):"";inp.placeholder="0,00";inp.step="0.01";inp.min="0";
-    if(comissao>0)inp.title=`Comissão do legado: ${fmtMoeda(comissao)}`;
+    const inp=document.createElement("input");inp.type="number";inp.className="q-valor";inp.id="qValor_"+t.cpf;inp.value=comissao>0?comissao.toFixed(2):"";inp.placeholder="0,00";inp.step="0.01";inp.min="0";
     inp.addEventListener("input",()=>atualizarLiquido(t.cpf));tdVal.appendChild(inp);
     if(comissao>0){const tag=document.createElement("div");tag.className="q-legado-tag";tag.textContent="↑ legado";tdVal.appendChild(tag);}
-
-    // Desconto
     const tdDesc=document.createElement("td");tdDesc.style.textAlign="right";
-    const inpDesc=document.createElement("input");inpDesc.type="number";inpDesc.className="q-desconto";inpDesc.id="qDesc_"+t.cpf;
-    inpDesc.placeholder="0,00";inpDesc.step="0.01";inpDesc.min="0";
+    const inpDesc=document.createElement("input");inpDesc.type="number";inpDesc.className="q-desconto";inpDesc.id="qDesc_"+t.cpf;inpDesc.placeholder="0,00";inpDesc.step="0.01";inpDesc.min="0";
     inpDesc.addEventListener("input",()=>atualizarLiquido(t.cpf));tdDesc.appendChild(inpDesc);
-
-    // Motivo desconto
     const tdMotivo=document.createElement("td");
-    const inpMotivo=document.createElement("input");inpMotivo.type="text";inpMotivo.className="q-desc-motivo";inpMotivo.id="qMotivo_"+t.cpf;
-    inpMotivo.placeholder="Ex: Vale, falta...";tdMotivo.appendChild(inpMotivo);
-
-    // Liquido
+    const inpMotivo=document.createElement("input");inpMotivo.type="text";inpMotivo.className="q-desc-motivo";inpMotivo.id="qMotivo_"+t.cpf;inpMotivo.placeholder="Ex: Vale, falta...";tdMotivo.appendChild(inpMotivo);
     const tdLiq=document.createElement("td");tdLiq.style.textAlign="right";
-    const liq=document.createElement("span");liq.className="q-liquido";liq.id="qLiq_"+t.cpf;
-    liq.textContent=fmtMoeda(comissao);tdLiq.appendChild(liq);
-
+    const liq=document.createElement("span");liq.className="q-liquido";liq.id="qLiq_"+t.cpf;liq.textContent=fmtMoeda(comissao);tdLiq.appendChild(liq);
     tr.appendChild(tdChk);tr.appendChild(tdNome);tr.appendChild(tdVal);tr.appendChild(tdDesc);tr.appendChild(tdMotivo);tr.appendChild(tdLiq);
     tbody.appendChild(tr);
   });
@@ -442,10 +597,7 @@ function atualizarLiquido(cpf){
   atualizarResumo();
 }
 
-function toggleTodos(cb){
-  terapeutasQ.forEach(t=>{const chk=document.getElementById("qCheck_"+t.cpf);if(chk)chk.checked=cb.checked;});
-  atualizarResumo();
-}
+function toggleTodos(cb){terapeutasQ.forEach(t=>{const chk=document.getElementById("qCheck_"+t.cpf);if(chk)chk.checked=cb.checked;});atualizarResumo();}
 
 function atualizarResumo(){
   let count=0,total=0;
@@ -464,14 +616,10 @@ async function confirmarQuinzena(){
   const periodo=document.getElementById("qPeriodo").value,mes=document.getElementById("qMes").value,vencimento=document.getElementById("qVencimento").value;
   if(!mes){alert("Selecione o mês.");return;}if(!vencimento){alert("Informe a data de vencimento.");return;}
   const[y,m]=mes.split("-").map(Number),nomeMes=nomesMes()[m-1],periodoStr=periodo==="1"?"1ª Quinzena":"2ª Quinzena";
-
   const selecionados=terapeutasQ.filter(t=>document.getElementById("qCheck_"+t.cpf)?.checked);
   if(!selecionados.length){alert("Selecione ao menos um profissional.");return;}
-
   const semValor=selecionados.filter(t=>!(parseFloat(document.getElementById("qValor_"+t.cpf)?.value||0)>0));
   if(semValor.length){alert(`Informe o valor para: ${semValor.map(t=>t.nome_profissional).join(", ")}`);return;}
-
-  // Montar dados de cada profissional
   const itens=selecionados.map(t=>{
     const val=parseFloat(document.getElementById("qValor_"+t.cpf).value||0);
     const desc=parseFloat(document.getElementById("qDesc_"+t.cpf)?.value||0);
@@ -479,142 +627,46 @@ async function confirmarQuinzena(){
     const liquido=Math.max(0,val-desc);
     return{t,val,desc,motivo,liquido,periodoStr,nomeMes,y,vencimento};
   });
-
-  // Inserir despesas
   const despesas=itens.map(({t,liquido,periodoStr,nomeMes,y,vencimento,val,desc,motivo})=>({
     descricao:`Pagamento ${t.nome_profissional} - ${periodoStr} ${nomeMes} ${y}`,
     categoria:"Pessoal",centro_custo:"Pessoal",
-    valor:liquido,
-    data_vencimento:vencimento,status:"A pagar",recorrente:false,
-    observacao:[
-      `CPF: ${t.cpf}`,
-      t.pix_chave?`PIX (${t.pix_tipo||"PIX"}): ${t.pix_chave}`:"Sem PIX cadastrado",
-      `Comissão bruta: ${fmtMoeda(val)}`,
-      desc>0?`Desconto: ${fmtMoeda(desc)}${motivo?" ("+motivo+")":""}`:"",
-    ].filter(Boolean).join(" | ")
+    valor:liquido,data_vencimento:vencimento,status:"A pagar",recorrente:false,
+    observacao:[`CPF: ${t.cpf}`,t.pix_chave?`PIX (${t.pix_tipo||"PIX"}): ${t.pix_chave}`:"Sem PIX cadastrado",`Comissão bruta: ${fmtMoeda(val)}`,desc>0?`Desconto: ${fmtMoeda(desc)}${motivo?" ("+motivo+")":""}`:""]. filter(Boolean).join(" | ")
   }));
-
   const{error}=await client.from("despesas").insert(despesas);
   if(error){alert("Erro ao gerar: "+error.message);return;}
-
   fecharQuinzena();carregar();
-
-  // Gerar PDFs individuais
-  gerarPDFs(itens);
+  itens.forEach((item,idx)=>setTimeout(()=>gerarPDFIndividual(item),idx*300));
 }
 
-/* ══════════════════════════════════════
-   GERAR PDFs INDIVIDUAIS
-══════════════════════════════════════ */
-function gerarPDFs(itens){
-  itens.forEach((item,idx)=>{
-    setTimeout(()=>gerarPDFIndividual(item), idx*300);
-  });
-}
-
-function gerarPDFIndividual({t, val, desc, motivo, liquido, periodoStr, nomeMes, y, vencimento}){
-  const{jsPDF}=window.jspdf||{};
-
-  // Criar HTML do comprovante e abrir para impressão
-  const html=`
-  <!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-  <style>
-    body{font-family:'Segoe UI',sans-serif;margin:0;padding:30px;color:#111827;font-size:13px;}
-    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1f2937;}
-    .logo{font-size:20px;font-weight:800;color:#1f2937;}
-    .logo span{color:#c4826a;}
-    .titulo{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#9ca3af;margin-top:4px;}
-    h2{margin:0 0 4px;font-size:16px;}
-    .badge{display:inline-block;background:#eff6ff;color:#2563eb;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700;}
-    .info-box{background:#f9fafb;border-radius:10px;padding:16px;margin-bottom:16px;}
-    .row{display:flex;justify-content:space-between;margin-bottom:8px;gap:16px;}
-    .row:last-child{margin-bottom:0;}
-    .label{color:#6b7280;font-size:12px;}
-    .value{font-weight:600;text-align:right;}
-    .divider{border:none;border-top:1px solid #e5e7eb;margin:14px 0;}
-    .total-row{display:flex;justify-content:space-between;font-size:16px;font-weight:800;}
-    .total-row .value{color:#16a34a;}
-    .desconto-row .value{color:#dc2626;}
-    .pix-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:16px;}
-    .pix-label{font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
-    .pix-value{font-size:14px;font-weight:700;color:#111827;}
-    .pix-tipo{font-size:11px;color:#6b7280;margin-top:2px;}
-    .footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center;}
-    .no-pix{background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;color:#dc2626;font-size:12px;}
-    @media print{body{padding:20px;}button{display:none!important;}}
-  </style></head><body>
-  <div class="header">
-    <div>
-      <div class="logo">Hara <span>Spa</span></div>
-      <div class="titulo">Comprovante de Pagamento</div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:11px;color:#9ca3af">Gerado em</div>
-      <div style="font-weight:600">${new Date().toLocaleDateString("pt-BR")}</div>
-    </div>
-  </div>
-
-  <div style="margin-bottom:16px">
-    <h2>${t.nome_profissional}</h2>
-    <span class="badge">${periodoStr} ${nomeMes} ${y}</span>
-    <span style="font-size:11px;color:#9ca3af;margin-left:8px">CPF: ${t.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/,"$1.$2.$3-$4")}</span>
-  </div>
-
-  <div class="info-box">
-    <div class="row">
-      <span class="label">Período</span>
-      <span class="value">${periodoStr} de ${nomeMes} de ${y}</span>
-    </div>
-    <div class="row">
-      <span class="label">Data de Vencimento</span>
-      <span class="value">${fmtData(vencimento)}</span>
-    </div>
-    <hr class="divider">
-    <div class="row">
-      <span class="label">Comissão Bruta</span>
-      <span class="value">${fmtMoeda(val)}</span>
-    </div>
-    ${desc>0?`
-    <div class="row desconto-row">
-      <span class="label">Desconto${motivo?" — "+motivo:""}</span>
-      <span class="value">− ${fmtMoeda(desc)}</span>
-    </div>`:""}
-    <hr class="divider">
-    <div class="total-row">
-      <span>Valor Líquido</span>
-      <span class="value">${fmtMoeda(liquido)}</span>
-    </div>
-  </div>
-
-  ${t.pix_chave?`
-  <div class="pix-box">
-    <div class="pix-label"><i>✓</i> Chave PIX para pagamento</div>
-    <div class="pix-value">${t.pix_chave}</div>
-    <div class="pix-tipo">Tipo: ${t.pix_tipo||"PIX"} · Titular: ${t.nome_profissional}</div>
-  </div>`:`
-  <div class="no-pix">⚠️ Nenhuma chave PIX cadastrada para este profissional.</div>`}
-
-  <div class="footer">
-    Hara Spa · Este comprovante foi gerado automaticamente pelo sistema de gestão.<br>
-    ${periodoStr} ${nomeMes} ${y} · Gerado em ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
-  </div>
-
-  <div style="text-align:center;margin-top:20px">
-    <button onclick="window.print()" style="background:#1f2937;color:#fff;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;font-size:13px;font-weight:600">🖨️ Imprimir / Salvar PDF</button>
-  </div>
+function gerarPDFIndividual({t,val,desc,motivo,liquido,periodoStr,nomeMes,y,vencimento}){
+  const html=`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><style>body{font-family:'Segoe UI',sans-serif;margin:0;padding:30px;color:#111827;font-size:13px;}.header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #1f2937;}.logo{font-size:20px;font-weight:800;color:#1f2937;}.logo span{color:#c4826a;}.info-box{background:#f9fafb;border-radius:10px;padding:16px;margin-bottom:16px;}.row{display:flex;justify-content:space-between;margin-bottom:8px;}.label{color:#6b7280;font-size:12px;}.value{font-weight:600;}.divider{border:none;border-top:1px solid #e5e7eb;margin:14px 0;}.total-row{display:flex;justify-content:space-between;font-size:16px;font-weight:800;}.total-row .value{color:#16a34a;}.pix-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:16px;}.footer{margin-top:32px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:11px;color:#9ca3af;text-align:center;}@media print{button{display:none!important;}}</style></head><body>
+  <div class="header"><div><div class="logo">Hara <span>Spa</span></div><div style="font-size:11px;color:#9ca3af">Comprovante de Pagamento</div></div><div style="text-align:right"><div style="font-size:11px;color:#9ca3af">Gerado em</div><div style="font-weight:600">${new Date().toLocaleDateString("pt-BR")}</div></div></div>
+  <div style="margin-bottom:16px"><h2 style="margin:0 0 4px">${t.nome_profissional}</h2><span style="background:#eff6ff;color:#2563eb;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700">${periodoStr} ${nomeMes} ${y}</span></div>
+  <div class="info-box"><div class="row"><span class="label">Período</span><span class="value">${periodoStr} de ${nomeMes} de ${y}</span></div><div class="row"><span class="label">Vencimento</span><span class="value">${fmtData(vencimento)}</span></div><hr class="divider"><div class="row"><span class="label">Comissão Bruta</span><span class="value">${fmtMoeda(val)}</span></div>${desc>0?`<div class="row"><span class="label">Desconto${motivo?" — "+motivo:""}</span><span class="value" style="color:#dc2626">− ${fmtMoeda(desc)}</span></div>`:""}<hr class="divider"><div class="total-row"><span>Valor Líquido</span><span class="value">${fmtMoeda(liquido)}</span></div></div>
+  ${t.pix_chave?`<div class="pix-box"><div style="font-size:11px;font-weight:700;color:#16a34a;margin-bottom:6px">✓ Chave PIX</div><div style="font-size:14px;font-weight:700">${t.pix_chave}</div><div style="font-size:11px;color:#6b7280">Tipo: ${t.pix_tipo||"PIX"}</div></div>`:`<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;color:#dc2626;font-size:12px">⚠️ Sem PIX cadastrado</div>`}
+  <div class="footer">Hara Spa · ${periodoStr} ${nomeMes} ${y}</div>
+  <div style="text-align:center;margin-top:20px"><button onclick="window.print()" style="background:#1f2937;color:#fff;border:none;border-radius:8px;padding:10px 24px;cursor:pointer;font-size:13px;font-weight:600">🖨️ Imprimir / Salvar PDF</button></div>
   </body></html>`;
-
   const win=window.open("","_blank","width=700,height=900");
   if(win){win.document.write(html);win.document.close();}
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
   setTimeout(()=>{
-    const qPeriodo=document.getElementById("qPeriodo"),qMes=document.getElementById("qMes");
-    if(qPeriodo)qPeriodo.addEventListener("change",definirVencimentoPadrao);
-    if(qMes)qMes.addEventListener("change",definirVencimentoPadrao);
+    const qP=document.getElementById("qPeriodo"),qM=document.getElementById("qMes");
+    if(qP)qP.addEventListener("change",definirVencimentoPadrao);
+    if(qM)qM.addEventListener("change",definirVencimentoPadrao);
   },100);
-  carregarParametros();carregar();
+
+  // Aguardar auth e renderizar topbar
+  getUser(u=>{
+    renderTopbar(u);
+    carregarParametros();
+    carregar();
+  });
+
+  // Adicionar coluna NF ao banco se não existir (via SQL separado)
 });
 </script>
 </body>

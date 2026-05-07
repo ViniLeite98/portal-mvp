@@ -4,7 +4,7 @@
  * Roles:
  *   admin         → acesso total
  *   apoio         → igual admin exceto dashboard
- *   usuario     → acesso restrito (só vê os próprios dados)
+ *   usuario       → acesso restrito (só vê os próprios dados)
  */
 
 var AUTH_ROLE_EXIGIDO = (document.currentScript || {}).getAttribute("data-role") || null;
@@ -12,26 +12,26 @@ var AUTH_ROLE_EXIGIDO = (document.currentScript || {}).getAttribute("data-role")
 var ROTAS = { admin: "equipe.html", apoio: "equipe.html", usuario: "equipe.html" };
 
 var MENU = [
-  { href:"dashboard.html",     icon:"fa-chart-line",         label:"Dashboard",      roles:["admin"] },
+  { href:"dashboard.html",     icon:"fa-chart-line",         label:"Dashboard",            roles:["admin"] },
   { sep:true },
   { titulo:"CADASTROS" },
-  { href:"equipe.html",        icon:"fa-users",              label:"Cadastro de Pessoal",         roles:["admin","apoio","usuario"] },
-  { href:"clientes.html",      icon:"fa-user",               label:"Clientes",       roles:["admin","apoio"] },
-  { href:"servicos.html",      icon:"fa-hand-holding-heart", label:"Serviços",       roles:["admin","apoio"] },
-  { href:"certificacoes.html", icon:"fa-certificate",        label:"Certificações",  roles:["admin","apoio","usuario"] },
+  { href:"equipe.html",        icon:"fa-users",              label:"Cadastro de Pessoal",  roles:["admin","apoio","usuario"] },
+  { href:"clientes.html",      icon:"fa-user",               label:"Clientes",             roles:["admin","apoio"] },
+  { href:"servicos.html",      icon:"fa-hand-holding-heart", label:"Serviços",             roles:["admin","apoio"] },
+  { href:"certificacoes.html", icon:"fa-certificate",        label:"Certificações",        roles:["admin","apoio","usuario"] },
   { sep:true },
   { titulo:"OPERACIONAL" },
-  { href:"atendimentos.html",  icon:"fa-calendar-check",     label:"Atendimentos",   roles:["admin","apoio","usuario"] },
-  { href:"escalas.html",       icon:"fa-calendar-days",      label:"Escalas",        roles:["admin","apoio","usuario"] },
-  { href:"solicitacoes.html",  icon:"fa-file-lines",         label:"Solicitações",   roles:["admin","apoio","usuario"] },
-  { sep:true },
-  { titulo:"FINANCEIRO" },
-  { href:"despesas.html",      icon:"fa-receipt",            label:"Despesas",       roles:["admin","apoio","usuario"] },
-  { href:"fluxo_caixa.html",   icon:"fa-cash-register",      label:"Fluxo de Caixa",roles:["admin","apoio","usuario"] },
-  { href:"estoque.html",       icon:"fa-boxes-stacked",      label:"Estoque",        roles:["admin","apoio","usuario"] },
-  { sep:true, roles:["admin"] },
-  { titulo:"CONFIGURAÇÕES",    roles:["admin"] },
-  { href:"parametros.html",    icon:"fa-sliders",            label:"Parâmetros",     roles:["admin"] },
+  { href:"atendimentos.html",  icon:"fa-calendar-check",     label:"Atendimentos",         roles:["admin","apoio","usuario"] },
+  { href:"escalas.html",       icon:"fa-calendar-days",      label:"Escalas",              roles:["admin","apoio","usuario"] },
+  { href:"solicitacoes.html",  icon:"fa-file-lines",         label:"Solicitações",         roles:["admin","apoio","usuario"] },
+  { sep:true,                                                                               roles:["admin","apoio"] },
+  { titulo:"FINANCEIRO",                                                                    roles:["admin","apoio"] },
+  { href:"despesas.html",      icon:"fa-receipt",            label:"Despesas",             roles:["admin","apoio"] },
+  { href:"fluxo_caixa.html",   icon:"fa-cash-register",      label:"Fluxo de Caixa",       roles:["admin","apoio"] },
+  { href:"estoque.html",       icon:"fa-boxes-stacked",      label:"Estoque",              roles:["admin","apoio"] },
+  { sep:true,                                                                               roles:["admin"] },
+  { titulo:"CONFIGURAÇÕES",                                                                 roles:["admin"] },
+  { href:"parametros.html",    icon:"fa-sliders",            label:"Parâmetros",           roles:["admin"] },
 ];
 
 function authBuildSidebar(role, nome) {
@@ -105,14 +105,11 @@ function authInit() {
         var email  = (perfil && perfil.email)         || session.user.email;
         var cpf    = (perfil && perfil.cpf_terapeuta) || null;
 
-        // Verificar permissão da página atual
-        // data-role="admin" → só admin acessa
         if (AUTH_ROLE_EXIGIDO === "admin" && role !== "admin") {
           location.href = "equipe.html";
           return;
         }
 
-        // Se usuario tem CPF vinculado, buscar nome profissional
         if (role !== "admin" && role !== "apoio" && cpf) {
           client.from("terapeutas")
             .select("nome_profissional")
@@ -154,7 +151,6 @@ if (document.readyState === "loading") {
 /* ── CHATBOT — carrega automaticamente em todas as páginas ── */
 (function() {
   function loadChatbot() {
-    // Não carregar na página de login
     if (location.pathname.includes("login")) return;
     var script = document.createElement("script");
     script.src = "assets/js/chatbot.js";

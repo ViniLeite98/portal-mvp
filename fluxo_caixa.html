@@ -234,6 +234,7 @@ tr:hover td{background:#f9fafb;}
     <!-- Pagamento -->
     <div class="sep">
       <h4><i class="fa fa-money-bill-wave"></i> Pagamento</h4>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:8px;display:flex;align-items:center;gap:6px"><i class="fa fa-info-circle" style="color:#2563eb"></i> Selecione a forma de pagamento e informe o valor recebido</div>
       <div class="pgto-row">
         <select id="p1Forma"><option value="">Forma de Pgto 1</option></select>
         <input type="number" id="p1Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()" style="width:150px">
@@ -252,6 +253,7 @@ tr:hover td{background:#f9fafb;}
       <div class="mfield" style="margin-top:12px">
         <label>Destino do Troco</label>
         <select id="lancTrocoDestino">
+          <option value="nenhum">Não teve troco</option>
           <option value="troco">Troco devolvido ao cliente</option>
           <option value="caixa">Ficou no caixa</option>
         </select>
@@ -452,7 +454,12 @@ async function carregarDados(){
   const {data:params}=await client.from("parametros").select("valor").eq("tipo","formas_pagamento").eq("ativo",true).order("valor");
   formasPgto=(params||[]).map(p=>p.valor);
   if(!formasPgto.length) formasPgto=["Dinheiro","PIX","Cartão Débito","Cartão Crédito","Dólar","Euro"];
-  ["p1Forma","p2Forma"].forEach(id=>{const sel=document.getElementById(id);formasPgto.forEach(f=>sel.innerHTML+=`<option>${f}</option>`);});
+  const sel1=document.getElementById("p1Forma");
+  const sel2=document.getElementById("p2Forma");
+  formasPgto.forEach(f=>{
+    sel1.innerHTML+=`<option>${f}</option>`;
+    sel2.innerHTML+=`<option>${f}</option>`;
+  });
 
   ssCliente=mkSS({si:document.getElementById("cliSrc"),hi:document.getElementById("cliId"),drop:document.getElementById("cliDrop"),clr:document.getElementById("cliClr"),onNovo:nome=>abrirNC(nome)});
 }
@@ -524,7 +531,7 @@ function resetModal(){
   document.getElementById("lancAcres").value="0";
   document.getElementById("lancObs").value="";
   document.getElementById("lancTer").value="";
-  document.getElementById("lancTrocoDestino").value="troco";
+  document.getElementById("lancTrocoDestino").value="nenhum";
   ["p1Forma","p1Val","p2Forma","p2Val"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value="";
   });
@@ -565,7 +572,7 @@ async function abrirEditar(id){
     document.getElementById("lancDescExtra").value=r.desconto||0;
     document.getElementById("lancAcres").value=r.acrescimo||0;
     document.getElementById("lancObs").value=r.observacao||"";
-    document.getElementById("lancTrocoDestino").value=r.troco_destino||"troco";
+    document.getElementById("lancTrocoDestino").value=r.troco_destino||"nenhum";
     document.getElementById("p1Forma").value=r.forma_pgto_1||"";document.getElementById("p1Val").value=r.valor_pgto_1||"";
     document.getElementById("p2Forma").value=r.forma_pgto_2||"";document.getElementById("p2Val").value=r.valor_pgto_2||"";
     if(r.cliente_id){const {data:c}=await client.from("clientes").select("id,nome,telefone_1").eq("id",r.cliente_id).limit(1);ssCliente?.setValue(c?.[0]||null);}

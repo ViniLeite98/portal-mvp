@@ -166,8 +166,10 @@ tr:hover td{background:#f9fafb;}
     <div class="grid-2" style="margin-bottom:20px">
       <div class="mfield" style="margin-bottom:0">
         <label>Funcionário *</label>
-        <input type="text" id="lancFunc" placeholder="Nome do funcionário" list="funcList" autocomplete="off">
-        <datalist id="funcList"></datalist>
+        <select id="lancFunc" onchange="onFuncChange()">
+          <option value="">Selecione o funcionário</option>
+        </select>
+        <div id="lancFuncCargo" style="font-size:11px;color:#6b7280;margin-top:4px"></div>
       </div>
       <div class="mfield" style="margin-bottom:0">
         <label>Data *</label>
@@ -262,7 +264,7 @@ tr:hover td{background:#f9fafb;}
   </div>
   <div class="modal-body">
     <div class="mfield"><label>Data *</label><input type="date" id="editData"></div>
-    <div class="mfield"><label>Funcionário *</label><input type="text" id="editFunc" list="funcList2" autocomplete="off"><datalist id="funcList2"></datalist></div>
+    <div class="mfield"><label>Funcionário *</label><select id="editFunc"><option value="">Selecione</option></select></div>
     <div class="mfield">
       <label>Tipo *</label>
       <select id="editTipo">
@@ -299,8 +301,9 @@ tr:hover td{background:#f9fafb;}
     <div style="display:flex;gap:14px;margin-bottom:20px;background:#f9fafb;border-radius:10px;padding:14px;">
       <div class="mfield" style="flex:1;margin-bottom:0">
         <label>Funcionário</label>
-        <input type="text" id="holFunc" placeholder="Nome do funcionário" list="funcListHol" oninput="gerarPreviewHolerite()" autocomplete="off">
-        <datalist id="funcListHol"></datalist>
+        <select id="holFunc" onchange="gerarPreviewHolerite()">
+          <option value="">Selecione o funcionário</option>
+        </select>
       </div>
       <div class="mfield" style="flex:1;margin-bottom:0">
         <label>Mês/Ano</label>
@@ -310,7 +313,8 @@ tr:hover td{background:#f9fafb;}
     <div id="holPreview" style="display:none">
       <div class="hol-funcionario">
         <div class="hol-avatar" id="holAvatar">?</div>
-        <div><div class="hol-nome" id="holNome">—</div><div class="hol-sub" id="holPeriodo">—</div></div>
+        <div><div class="hol-nome" id="holNome">—</div><div class="hol-sub" id="holSub" style="color:#7c3aed;font-weight:600"></div>
+        <div class="hol-sub" id="holPeriodo">—</div></div>
       </div>
       <table class="hol-table">
         <thead><tr><th>Cód.</th><th>Data</th><th>Tipo</th><th>Observação</th><th style="text-align:right">Valor</th></tr></thead>
@@ -433,23 +437,41 @@ async function carregar(){
   if(error){console.error(error);return;}
   dados=data||[];listaFiltrada=[...dados];
 
-  const{data:allFunc}=await client.from("folha_pagamento").select("funcionario");
-  const todos=[...new Set((allFunc||[]).map(d=>d.funcionario).filter(Boolean))].sort();
-  funcionarios=todos;
-  popularFuncSelects(todos);
+  await carregarFuncionarios();
   render();
 }
 
-function popularFuncSelects(lista){
-  const sel=document.getElementById("filtroFunc");
-  const val=sel.value;
-  sel.innerHTML='<option value="">Todos</option>';
-  lista.forEach(f=>sel.innerHTML+=`<option value="${f}">${f}</option>`);
-  if(val) sel.value=val;
-  ["funcList","funcList2","funcListHol"].forEach(id=>{
-    const dl=document.getElementById(id);if(!dl)return;
-    dl.innerHTML="";lista.forEach(f=>dl.innerHTML+=`<option value="${f}">`);
+let terapeutasMap = {}; // nome -> cargo
+
+async function carregarFuncionarios(){
+  const{data}=await client.from("terapeutas").select("nome_profissional,cargo").eq("status","Ativo").order("nome_profissional");
+  terapeutasMap={};
+  (data||[]).forEach(t=>{ terapeutasMap[t.nome_profissional]=t.cargo; });
+  const lista=(data||[]).map(t=>t.nome_profissional);
+  funcionarios=lista;
+
+  // Popular todos os selects de funcionário
+  const optHtml = lista.map(n=>`<option value="${n}">${n} — ${terapeutasMap[n]||""}</option>`).join("");
+  const optHtmlSimples = lista.map(n=>`<option value="${n}">${n}</option>`).join("");
+
+  ["lancFunc","editFunc"].forEach(id=>{
+    const sel=document.getElementById(id);if(!sel)return;
+    const val=sel.value;
+    sel.innerHTML=`<option value="">Selecione o funcionário</option>${optHtml}`;
+    if(val) sel.value=val;
   });
+  const holSel=document.getElementById("holFunc");
+  if(holSel){ const val=holSel.value; holSel.innerHTML=`<option value="">Selecione o funcionário</option>${optHtml}`; if(val) holSel.value=val; }
+
+  // Filtro usa nome simples
+  const filtroSel=document.getElementById("filtroFunc");
+  if(filtroSel){ const val=filtroSel.value; filtroSel.innerHTML=`<option value="">Todos</option>${optHtmlSimples}`; if(val) filtroSel.value=val; }
+}
+
+function onFuncChange(){
+  const func=document.getElementById("lancFunc").value;
+  const cargo=terapeutasMap[func]||"";
+  document.getElementById("lancFuncCargo").textContent=cargo?`Cargo: ${cargo}`:"";
 }
 
 function render(){
@@ -507,7 +529,7 @@ function abrirNovo(){
 function fecharModal(){document.getElementById("modalLanc").style.display="none";}
 
 async function salvar(){
-  const funcionario=document.getElementById("lancFunc").value.trim();
+  const funcionario=document.getElementById("lancFunc").value;
   const data_pgto  =document.getElementById("lancData").value;
   if(!funcionario){alert("Informe o funcionário.");return;}
   if(!data_pgto)  {alert("Informe a data.");return;}
@@ -597,8 +619,10 @@ async function gerarPreviewHolerite(){
     return;
   }
 
+  const holCargo=terapeutasMap[func]||"";
   document.getElementById("holAvatar").textContent=func[0].toUpperCase();
   document.getElementById("holNome").textContent=func;
+  document.getElementById("holSub").textContent=holCargo;
   const NM=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   document.getElementById("holPeriodo").textContent=`${NM[parseInt(m)-1]} de ${y}`;
 
@@ -701,7 +725,7 @@ function exportarExcel(){
 
 document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("filtroMes").value=mesAtual();
-  carregar();
+  carregarFuncionarios().then(()=>carregar());
 });
 </script>
 </body>

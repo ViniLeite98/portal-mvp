@@ -181,55 +181,7 @@ tr:hover td{background:#f9fafb;}
     <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:8px">
       Valores <span style="font-weight:400;color:#9ca3af">— preencha apenas o que se aplica</span>
     </div>
-    <div class="tipos-grid">
-      <div class="sep-label">Proventos</div>
-      <div class="tipo-row" id="row-Remuneração">
-        <div class="tipo-label">Remuneração</div>
-        <div class="tipo-input-wrap"><input type="number" class="tipo-input" id="val-Remuneração" placeholder="—" step="0.01" min="0" oninput="onValorInput(this,'Remuneração',false)"></div>
-      </div>
-      <div class="tipo-row" id="row-Vale Transporte">
-        <div class="tipo-label">Vale Transporte</div>
-        <div class="tipo-input-wrap"><input type="number" class="tipo-input" id="val-Vale Transporte" placeholder="—" step="0.01" min="0" oninput="onValorInput(this,'Vale Transporte',false)"></div>
-      </div>
-      <div class="tipo-row" id="row-Hora Extra">
-        <div class="tipo-label">Hora Extra</div>
-        <div class="tipo-input-wrap"><input type="number" class="tipo-input" id="val-Hora Extra" placeholder="—" step="0.01" min="0" oninput="onValorInput(this,'Hora Extra',false)"></div>
-      </div>
-      <div class="tipo-row" id="row-Comissão">
-        <div class="tipo-label">Comissão</div>
-        <div class="tipo-input-wrap"><input type="number" class="tipo-input" id="val-Comissão" placeholder="—" step="0.01" min="0" oninput="onValorInput(this,'Comissão',false)"></div>
-      </div>
-      <div class="tipo-row" id="row-Bônus de Garantia">
-        <div class="tipo-label">Bônus de Garantia</div>
-        <div class="tipo-input-wrap"><input type="number" class="tipo-input" id="val-Bônus de Garantia" placeholder="—" step="0.01" min="0" oninput="onValorInput(this,'Bônus de Garantia',false)"></div>
-      </div>
-      <div class="tipo-row" id="row-Bônus de Natal">
-        <div class="tipo-label">Bônus de Natal</div>
-        <div class="tipo-input-wrap"><input type="number" class="tipo-input" id="val-Bônus de Natal" placeholder="—" step="0.01" min="0" oninput="onValorInput(this,'Bônus de Natal',false)"></div>
-      </div>
-      <div class="tipo-row" id="row-Adicional Férias">
-        <div class="tipo-label">Adicional Férias</div>
-        <div class="tipo-input-wrap"><input type="number" class="tipo-input" id="val-Adicional Férias" placeholder="—" step="0.01" min="0" oninput="onValorInput(this,'Adicional Férias',false)"></div>
-      </div>
-
-      <div class="sep-label">Descontos <span style="font-weight:400;font-size:10px">(serão salvos como negativos)</span></div>
-      <div class="tipo-row" id="row-Desconto">
-        <div class="tipo-label">Desconto</div>
-        <div class="tipo-input-wrap"><input type="number" class="tipo-input" id="val-Desconto" placeholder="—" step="0.01" min="0" oninput="onValorInput(this,'Desconto',true)"></div>
-      </div>
-      <div class="tipo-row" id="row-Adiantamento">
-        <div class="tipo-label">Adiantamento</div>
-        <div class="tipo-input-wrap"><input type="number" class="tipo-input" id="val-Adiantamento" placeholder="—" step="0.01" min="0" oninput="onValorInput(this,'Adiantamento',true)"></div>
-      </div>
-
-      <div class="sep-label">Outros</div>
-      <div class="tipo-row" id="row-Outros">
-        <div class="tipo-label">Outros</div>
-        <div class="tipo-input-wrap">
-          <input type="number" class="tipo-input" id="val-Outros" placeholder="—" step="0.01" oninput="onValorInput(this,'Outros',false)">
-          <input type="text" class="obs-mini" id="obs-Outros" placeholder="Descrição...">
-        </div>
-      </div>
+    <div class="tipos-grid" id="tiposGrid">
     </div>
 
     <!-- Resumo rápido -->
@@ -342,19 +294,38 @@ tr:hover td{background:#f9fafb;}
 <script src="assets/js/auth.js"></script>
 <script>
 
-const TIPOS = [
-  {cod:"001",label:"Remuneração",    negativo:false},
-  {cod:"002",label:"Vale Transporte",negativo:false},
-  {cod:"003",label:"Hora Extra",     negativo:false},
-  {cod:"004",label:"Comissão",       negativo:false},
-  {cod:"005",label:"Bônus de Garantia",negativo:false},
-  {cod:"006",label:"Bônus de Natal", negativo:false},
-  {cod:"007",label:"Adicional Férias",negativo:false},
-  {cod:"008",label:"Desconto",       negativo:true},
-  {cod:"009",label:"Adiantamento",   negativo:true},
-  {cod:"010",label:"Outros",         negativo:false},
-];
+let TIPOS = []; // carregado dos parâmetros
+
 function getCodigo(tipo){ return (TIPOS.find(t=>t.label===tipo)||{}).cod||"—"; }
+function isNegativo(tipo){ return (TIPOS.find(t=>t.label===tipo)||{}).negativo||false; }
+
+async function carregarTipos(){
+  const{data}=await client.from("parametros")
+    .select("valor,descricao,icone,ordem")
+    .eq("tipo","tipos_pagamento").eq("ativo",true)
+    .order("ordem").order("valor");
+  if(data&&data.length){
+    TIPOS=(data||[]).map(p=>({
+      cod:p.descricao||"—",
+      label:p.valor,
+      negativo:p.icone==="negativo"
+    }));
+  } else {
+    // fallback padrão
+    TIPOS=[
+      {cod:"001",label:"Remuneração",    negativo:false},
+      {cod:"002",label:"Vale Transporte",negativo:false},
+      {cod:"003",label:"Hora Extra",     negativo:false},
+      {cod:"004",label:"Comissão",       negativo:false},
+      {cod:"005",label:"Bônus de Garantia",negativo:false},
+      {cod:"006",label:"Bônus de Natal", negativo:false},
+      {cod:"007",label:"Adicional Férias",negativo:false},
+      {cod:"008",label:"Desconto",       negativo:true},
+      {cod:"009",label:"Adiantamento",   negativo:true},
+      {cod:"010",label:"Outros",         negativo:false},
+    ];
+  }
+}
 
 let dados=[], listaFiltrada=[], editandoId=null, holDados=[], funcionarios=[];
 
@@ -584,6 +555,60 @@ async function excluir(id){
   carregar();
 }
 
+/* ── RENDERIZAR GRADE DE TIPOS DINAMICAMENTE ── */
+function renderGrade(){
+  const proventos = TIPOS.filter(t=>!t.negativo);
+  const descontos = TIPOS.filter(t=>t.negativo);
+
+  let html = "";
+
+  // Proventos
+  html += `<div class="sep-label">Proventos</div>`;
+  proventos.forEach(t=>{
+    const id = "val-"+t.label;
+    const rowId = "row-"+t.label;
+    html += `<div class="tipo-row" id="${rowId}">
+      <div class="tipo-label">${t.label}</div>
+      <div class="tipo-input-wrap">
+        <input type="number" class="tipo-input" id="${id}" placeholder="—" step="0.01" min="0"
+          oninput="onValorInput(this,'${t.label.replace(/'/g,"\'")}',false)">
+      </div>
+    </div>`;
+  });
+
+  // Descontos
+  if(descontos.length){
+    html += `<div class="sep-label">Descontos <span style="font-weight:400;font-size:10px">(serão salvos como negativos)</span></div>`;
+    descontos.forEach(t=>{
+      const id = "val-"+t.label;
+      const rowId = "row-"+t.label;
+      html += `<div class="tipo-row" id="${rowId}">
+        <div class="tipo-label">${t.label}</div>
+        <div class="tipo-input-wrap">
+          <input type="number" class="tipo-input" id="${id}" placeholder="—" step="0.01" min="0"
+            oninput="onValorInput(this,'${t.label.replace(/'/g,"\'")}',true)">
+        </div>
+      </div>`;
+    });
+  }
+
+  // Outros sempre no final se não estiver nos TIPOS
+  const temOutros = TIPOS.find(t=>t.label==="Outros");
+  if(!temOutros){
+    html += `<div class="sep-label">Outros</div>
+    <div class="tipo-row" id="row-Outros">
+      <div class="tipo-label">Outros</div>
+      <div class="tipo-input-wrap">
+        <input type="number" class="tipo-input" id="val-Outros" placeholder="—" step="0.01"
+          oninput="onValorInput(this,'Outros',false)">
+        <input type="text" class="obs-mini" id="obs-Outros" placeholder="Descrição...">
+      </div>
+    </div>`;
+  }
+
+  document.getElementById("tiposGrid").innerHTML = html;
+}
+
 /* ── HOLERITE ── */
 function abrirHolerite(){
   document.getElementById("holFunc").value="";
@@ -723,9 +748,12 @@ function exportarExcel(){
   XLSX.writeFile(wb,"folha_pagamento.xlsx");
 }
 
-document.addEventListener("DOMContentLoaded",()=>{
+document.addEventListener("DOMContentLoaded",async()=>{
   document.getElementById("filtroMes").value=mesAtual();
-  carregarFuncionarios().then(()=>carregar());
+  await carregarTipos();
+  await carregarFuncionarios();
+  renderGrade(); // construir grade com tipos dinâmicos
+  carregar();
 });
 </script>
 </body>

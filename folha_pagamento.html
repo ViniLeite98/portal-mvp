@@ -301,14 +301,14 @@ function isNegativo(tipo){ return (TIPOS.find(t=>t.label===tipo)||{}).negativo||
 
 async function carregarTipos(){
   const{data}=await client.from("parametros")
-    .select("valor,descricao,icone,ordem")
+    .select("valor,descricao,negativo,ordem")
     .eq("tipo","tipos_pagamento").eq("ativo",true)
     .order("ordem").order("valor");
   if(data&&data.length){
     TIPOS=(data||[]).map(p=>({
       cod:p.descricao||"—",
       label:p.valor,
-      negativo:p.icone==="negativo"
+      negativo:p.negativo||false
     }));
   } else {
     // fallback padrão

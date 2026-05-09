@@ -177,6 +177,25 @@ tr:hover td{background:#f9fafb;}
       </div>
     </div>
 
+    <!-- Quinzena para buscar comissão -->
+    <div class="grid-2" style="margin-bottom:14px">
+      <div class="mfield" style="margin-bottom:0">
+        <label>Mês de Referência</label>
+        <input type="month" id="lancMesRef" onchange="buscarComissao()">
+      </div>
+      <div class="mfield" style="margin-bottom:0">
+        <label>Quinzena</label>
+        <select id="lancQuinzena" onchange="buscarComissao()">
+          <option value="1">1ª Quinzena (dias 1–15)</option>
+          <option value="2">2ª Quinzena (dias 16–fim)</option>
+        </select>
+      </div>
+    </div>
+    <div id="comissaoInfo" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;font-size:12px;color:#1d4ed8;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+      <i class="fa fa-spinner fa-spin" id="comissaoSpinner"></i>
+      <span id="comissaoInfoTxt"></span>
+    </div>
+
     <!-- Grade de tipos -->
     <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:8px">
       Valores <span style="font-weight:400;color:#9ca3af">— preencha apenas o que se aplica</span>
@@ -443,6 +462,88 @@ function onFuncChange(){
   const func=document.getElementById("lancFunc").value;
   const cargo=terapeutasMap[func]||"";
   document.getElementById("lancFuncCargo").textContent=cargo?`Cargo: ${cargo}`:"";
+  buscarComissao();
+}
+
+async function buscarComissao(){
+  const func = document.getElementById("lancFunc").value;
+  const mes  = document.getElementById("lancMesRef").value;
+  const quin = document.getElementById("lancQuinzena").value;
+  const infoEl = document.getElementById("comissaoInfo");
+  const spinEl = document.getElementById("comissaoSpinner");
+  const txtEl  = document.getElementById("comissaoInfoTxt");
+
+  if(!func || !mes){
+    infoEl.style.display="none";
+    return;
+  }
+
+  infoEl.style.display="flex";
+  spinEl.style.display="inline-block";
+  txtEl.textContent="Buscando comissão do legado...";
+
+  const [y,m] = mes.split("-");
+  const diaIni = quin==="1" ? "01" : "16";
+  const diaFim = quin==="1" ? "15" : String(new Date(parseInt(y),parseInt(m),0).getDate()).padStart(2,"0");
+  const dataIni = `${y}-${m}-${diaIni}`;
+  const dataFim = `${y}-${m}-${diaFim}`;
+
+  const {data, error} = await client.from("legado_atendimentos")
+    .select("comissao")
+    .eq("profissional", func)
+    .gte("data", dataIni)
+    .lte("data", dataFim)
+    .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
+
+  spinEl.style.display="none";
+
+  if(error || !data || !data.length){
+    txtEl.textContent=`Nenhuma comissão encontrada para ${func} neste período.`;
+    infoEl.style.background="#f9fafb";
+    infoEl.style.borderColor="#e5e7eb";
+    infoEl.style.color="#6b7280";
+    return;
+  }
+
+  const total = data.reduce((s,r) => s + (r.comissao||0), 0);
+  const fmtMoeda = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  const periodoStr = quin==="1" ? "1ª Quinzena" : "2ª Quinzena";
+  const NM=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+  txtEl.textContent=`${periodoStr} ${NM[parseInt(m)-1]}/${y}: ${fmtMoeda(total)} — clicando em Aplicar o campo Comissão será preenchido`;
+  infoEl.style.background="#eff6ff";
+  infoEl.style.borderColor="#bfdbfe";
+  infoEl.style.color="#1d4ed8";
+
+  // Guardar valor para aplicar
+  infoEl.dataset.valorComissao = total.toFixed(2);
+
+  // Mostrar botão aplicar ao lado
+  const btnExiste = document.getElementById("btnAplicarComissao");
+  if(!btnExiste){
+    const btn = document.createElement("button");
+    btn.id = "btnAplicarComissao";
+    btn.className = "btn-blue";
+    btn.style = "padding:4px 10px;font-size:11px;margin-left:4px;flex-shrink:0";
+    btn.innerHTML = '<i class="fa fa-magic"></i> Aplicar';
+    btn.onclick = aplicarComissao;
+    infoEl.appendChild(btn);
+  }
+}
+
+function aplicarComissao(){
+  const infoEl = document.getElementById("comissaoInfo");
+  const total  = parseFloat(infoEl.dataset.valorComissao||0);
+  if(!total) return;
+
+  // Encontrar o tipo Comissão na grade
+  const tipoComissao = TIPOS.find(t=>t.label==="Comissão");
+  if(!tipoComissao) return;
+
+  const inp = document.getElementById("val-Comissão");
+  if(!inp) return;
+  inp.value = total.toFixed(2);
+  onValorInput(inp, "Comissão", false);
 }
 
 function render(){
@@ -493,7 +594,22 @@ function limparFiltro(){
 function abrirNovo(){
   document.getElementById("lancTitulo").textContent="Novo Lançamento";
   document.getElementById("lancFunc").value="";
+  document.getElementById("lancFuncCargo").textContent="";
   document.getElementById("lancData").value=hoje();
+
+  // Setar mês atual e quinzena correta pelo dia
+  const agora = new Date();
+  const y = agora.getFullYear();
+  const m = String(agora.getMonth()+1).padStart(2,"0");
+  document.getElementById("lancMesRef").value = `${y}-${m}`;
+  document.getElementById("lancQuinzena").value = agora.getDate()<=15?"1":"2";
+
+  // Esconder info comissão
+  const infoEl = document.getElementById("comissaoInfo");
+  infoEl.style.display="none";
+  const btnApl = document.getElementById("btnAplicarComissao");
+  if(btnApl) btnApl.remove();
+
   limparGrade();
   document.getElementById("modalLanc").style.display="flex";
 }

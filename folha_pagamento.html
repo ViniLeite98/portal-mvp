@@ -121,19 +121,7 @@ tr:hover td{background:#f9fafb;}
     </div>
     <div class="field">
       <label>Tipo</label>
-      <select id="filtroTipo">
-        <option value="">Todos</option>
-        <option value="Remuneração">Remuneração</option>
-        <option value="Vale Transporte">Vale Transporte</option>
-        <option value="Hora Extra">Hora Extra</option>
-        <option value="Comissão">Comissão</option>
-        <option value="Bônus de Garantia">Bônus de Garantia</option>
-        <option value="Bônus de Natal">Bônus de Natal</option>
-        <option value="Adicional Férias">Adicional Férias</option>
-        <option value="Desconto">Desconto</option>
-        <option value="Adiantamento">Adiantamento</option>
-        <option value="Outros">Outros</option>
-      </select>
+      <select id="filtroTipo"><option value="">Todos</option></select>
     </div>
     <button class="btn-blue" onclick="aplicarFiltro()"><i class="fa fa-filter"></i> Filtrar</button>
     <button class="btn-ghost" onclick="limparFiltro()"><i class="fa fa-times"></i> Limpar</button>
@@ -144,6 +132,12 @@ tr:hover td{background:#f9fafb;}
     <div class="r-card" style="border-left:3px solid #16a34a"><div class="r-label" style="color:#16a34a">Total Proventos</div><div class="r-valor" style="color:#16a34a" id="totProv">—</div></div>
     <div class="r-card" style="border-left:3px solid #dc2626"><div class="r-label" style="color:#dc2626">Total Descontos</div><div class="r-valor" style="color:#dc2626" id="totDesc">—</div></div>
     <div class="r-card" style="border-left:3px solid #2563eb"><div class="r-label" style="color:#2563eb">Líquido Total</div><div class="r-valor" style="color:#2563eb" id="totLiq">—</div></div>
+  </div>
+
+  <!-- Resumo por funcionário (aparece quando filtrado) -->
+  <div id="resumoFuncBox" style="display:none;background:#fff;border-radius:14px;padding:18px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:20px">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:14px">Resumo — <span id="resumoFuncNome"></span></div>
+    <div id="resumoFuncItens" style="display:flex;flex-wrap:wrap;gap:10px"></div>
   </div>
 
   <div id="barraSelecao" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 16px;margin-bottom:10px;display:none;align-items:center;justify-content:space-between">
@@ -157,7 +151,7 @@ tr:hover td{background:#f9fafb;}
     <table>
       <thead><tr>
         <th style="width:36px"><input type="checkbox" id="checkAll" onchange="toggleSelecionarTodos(this)" style="accent-color:#2563eb"></th>
-        <th>Cód.</th><th>Data</th><th>Funcionário</th><th>Tipo</th><th>Valor</th><th>Observação</th><th>Ações</th>
+        <th>Cód.</th><th>Data</th><th>Funcionário</th><th>Cargo</th><th>Tipo</th><th>Valor</th><th>Observação</th><th>Ações</th>
       </tr></thead>
       <tbody id="lista"></tbody>
     </table>
@@ -295,8 +289,27 @@ tr:hover td{background:#f9fafb;}
     <div id="holPreview" style="display:none">
       <div class="hol-funcionario">
         <div class="hol-avatar" id="holAvatar">?</div>
-        <div><div class="hol-nome" id="holNome">—</div><div class="hol-sub" id="holSub" style="color:#7c3aed;font-weight:600"></div>
-        <div class="hol-sub" id="holPeriodo">—</div></div>
+        <div>
+          <div class="hol-nome" id="holNome">—</div>
+          <div class="hol-sub" id="holSub" style="color:#7c3aed;font-weight:600"></div>
+          <div class="hol-sub" id="holPeriodo">—</div>
+        </div>
+      </div>
+      <!-- Dados Pix -->
+      <div id="holPixBox" style="display:none;margin-top:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;font-size:12px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:8px"><i class="fa fa-qrcode" style="margin-right:4px"></i>Dados para Pagamento</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div><span style="color:#9ca3af">Favorecido</span><div style="font-weight:700;color:#111827" id="holPixFavorecido">—</div></div>
+          <div><span style="color:#9ca3af">Tipo de Chave</span><div style="font-weight:700;color:#111827" id="holPixTipo">—</div></div>
+          <div style="grid-column:span 2"><span style="color:#9ca3af">Chave Pix</span>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:2px">
+              <div style="font-weight:700;color:#111827;font-family:monospace;font-size:13px" id="holPixChave">—</div>
+              <button onclick="copiarPix()" style="padding:3px 8px;font-size:11px;background:#16a34a;border-radius:5px" title="Copiar chave"><i class="fa fa-copy"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:none">
       </div>
       <table class="hol-table">
         <thead><tr><th>Cód.</th><th>Data</th><th>Tipo</th><th>Observação</th><th style="text-align:right">Valor</th></tr></thead>
@@ -420,6 +433,17 @@ async function carregarTipos(){
       {cod:"009",label:"Adiantamento",   negativo:true},
       {cod:"010",label:"Outros",         negativo:false},
     ];
+  }
+  // Popular filtro tipo dinamicamente
+  const selTipo = document.getElementById("filtroTipo");
+  if(selTipo){
+    selTipo.innerHTML = '<option value="">Todos</option>' +
+      TIPOS.map(t=>`<option value="${t.label}">${t.label}</option>`).join("");
+  }
+  // Popular editTipo dinamicamente
+  const selEditTipo = document.getElementById("editTipo");
+  if(selEditTipo){
+    selEditTipo.innerHTML = TIPOS.map(t=>`<option value="${t.label}">${t.label}</option>`).join("");
   }
 }
 
@@ -626,7 +650,7 @@ function aplicarComissao(){
 function render(){
   const tbody=document.getElementById("lista");tbody.innerHTML="";
   if(!listaFiltrada.length){
-    tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:32px">Nenhum lançamento encontrado.</td></tr>`;
+    tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:32px">Nenhum lançamento encontrado.</td></tr>`;
     atualizarTotais([]);return;
   }
   listaFiltrada.forEach(r=>{
@@ -637,6 +661,7 @@ function render(){
       <td><span class="badge-cod">${cod}</span></td>
       <td>${fmtD(r.data_pgto)}</td>
       <td><strong>${r.funcionario}</strong></td>
+      <td style="font-size:12px;color:#6b7280">${terapeutasMap[r.funcionario]||"—"}</td>
       <td>${badgeTipo(r.tipo)}</td>
       <td style="font-weight:700;${valCor}">${fmtM(r.valor)}</td>
       <td style="font-size:12px;color:#6b7280">${r.observacao||"—"}</td>
@@ -658,6 +683,32 @@ function atualizarTotais(lista){
   document.getElementById("totDesc").textContent=fmtM(desc);
   document.getElementById("totLiq").textContent=fmtM(liq);
   document.getElementById("totLiq").style.color=liq>=0?"#2563eb":"#dc2626";
+
+  // Resumo por funcionário quando filtrado
+  const funcFiltro=document.getElementById("filtroFunc").value;
+  const boxFunc=document.getElementById("resumoFuncBox");
+  if(funcFiltro && lista.length){
+    document.getElementById("resumoFuncNome").textContent=funcFiltro;
+    // Agrupar por tipo
+    const porTipo={};
+    lista.forEach(r=>{ porTipo[r.tipo]=(porTipo[r.tipo]||0)+r.valor; });
+    const itensEl=document.getElementById("resumoFuncItens");
+    itensEl.innerHTML=Object.entries(porTipo).map(([tipo,val])=>{
+      const cor=val<0?"#dc2626":"#16a34a";
+      const bg=val<0?"#fee2e2":"#dcfce7";
+      return`<div style="background:${bg};border-radius:8px;padding:8px 14px;font-size:13px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;margin-bottom:2px">${tipo}</div>
+        <div style="font-weight:800;color:${cor}">${fmtM(val)}</div>
+      </div>`;
+    }).join("")+
+    `<div style="background:#eff6ff;border-radius:8px;padding:8px 14px;font-size:13px;border:1px solid #bfdbfe">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#2563eb;margin-bottom:2px">Líquido</div>
+      <div style="font-weight:800;color:${liq>=0?"#2563eb":"#dc2626"}">${fmtM(liq)}</div>
+    </div>`;
+    boxFunc.style.display="block";
+  } else {
+    boxFunc.style.display="none";
+  }
 }
 
 function aplicarFiltro(){carregar();}
@@ -803,6 +854,16 @@ function renderGrade(){
   document.getElementById("tiposGrid").innerHTML = html;
 }
 
+function copiarPix(){
+  const chave=document.getElementById("holPixChave").textContent;
+  if(!chave||chave==="—") return;
+  navigator.clipboard.writeText(chave).then(()=>{
+    const btn=event.target.closest("button");
+    btn.innerHTML='<i class="fa fa-check"></i>';
+    setTimeout(()=>btn.innerHTML='<i class="fa fa-copy"></i>',1500);
+  });
+}
+
 /* ── HOLERITE ── */
 function abrirHolerite(){
   document.getElementById("holFunc").value="";
@@ -842,6 +903,21 @@ async function gerarPreviewHolerite(){
   document.getElementById("holAvatar").textContent=func[0].toUpperCase();
   document.getElementById("holNome").textContent=func;
   document.getElementById("holSub").textContent=holCargo;
+
+  // Buscar dados Pix da terapeuta
+  const{data:pixData}=await client.from("terapeutas")
+    .select("pix_tipo,pix_chave,pix_favorecido")
+    .eq("nome_profissional",func)
+    .single();
+  const pixBox=document.getElementById("holPixBox");
+  if(pixData&&pixData.pix_chave){
+    document.getElementById("holPixFavorecido").textContent=pixData.pix_favorecido||"—";
+    document.getElementById("holPixTipo").textContent=pixData.pix_tipo||"—";
+    document.getElementById("holPixChave").textContent=pixData.pix_chave||"—";
+    pixBox.style.display="block";
+  } else {
+    pixBox.style.display="none";
+  }
   const NM=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   document.getElementById("holPeriodo").textContent=`${NM[parseInt(m)-1]} de ${y}`;
 
@@ -881,6 +957,20 @@ function imprimirHolerite(){
   const liquido  =holDados.reduce((s,r)=>s+r.valor,0);
   const proventos=holDados.filter(r=>r.valor>0).reduce((s,r)=>s+r.valor,0);
   const descontos=holDados.filter(r=>r.valor<0).reduce((s,r)=>s+Math.abs(r.valor),0);
+
+  // Dados Pix para o PDF
+  const pixChave=document.getElementById("holPixChave")?.textContent||"";
+  const pixTipo =document.getElementById("holPixTipo")?.textContent||"";
+  const pixFav  =document.getElementById("holPixFavorecido")?.textContent||"";
+  const holPixPDF = (pixChave&&pixChave!=="—") ? `
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:8px">Dados para Pagamento (Pix)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div><div style="color:#9ca3af">Favorecido</div><div style="font-weight:700">${pixFav}</div></div>
+        <div><div style="color:#9ca3af">Tipo</div><div style="font-weight:700">${pixTipo}</div></div>
+        <div style="grid-column:span 2"><div style="color:#9ca3af">Chave</div><div style="font-weight:700;font-family:monospace">${pixChave}</div></div>
+      </div>
+    </div>` : "";
   const linhas=holDados.map(r=>`<tr>
     <td style="font-family:monospace;font-weight:800;color:#6b7280;font-size:11px">${getCodigo(r.tipo)}</td>
     <td>${fmtDP(r.data_pgto)}</td><td>${r.tipo}</td>
@@ -911,6 +1001,7 @@ td{padding:9px 10px;border-bottom:1px solid #f3f4f6;font-size:13px;}tr:last-chil
 <div style="text-align:right"><div style="font-size:11px;color:#9ca3af">Gerado em</div><div style="font-weight:600">${new Date().toLocaleDateString("pt-BR")}</div></div></div>
 <div class="func-box"><div class="avatar">${func[0].toUpperCase()}</div>
 <div><div class="f-nome">${func}</div><div class="f-per">${nomeMes} de ${y}</div></div></div>
+${holPixPDF}
 <div class="sumario">
 <div class="sum-card"><div class="sum-label">Proventos</div><div class="sum-val" style="color:#16a34a">${fmtMP(proventos)}</div></div>
 <div class="sum-card"><div class="sum-label">Descontos</div><div class="sum-val" style="color:#dc2626">${fmtMP(descontos)}</div></div>

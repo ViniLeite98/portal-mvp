@@ -108,6 +108,7 @@ tr:hover td{background:#f9fafb;}
     <div class="topbar-btns">
       <button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
       <button class="btn-purple" onclick="abrirHolerite()"><i class="fa fa-file-invoice"></i> Gerar Holerite</button>
+      <button class="btn-blue" onclick="abrirGerarComissoes()"><i class="fa fa-users"></i> Gerar Comissões</button>
       <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Lançamento</button>
     </div>
   </div>
@@ -303,6 +304,72 @@ tr:hover td{background:#f9fafb;}
     <div style="display:flex;gap:10px">
       <button class="btn-cancel" onclick="fecharHolerite()">Fechar</button>
       <button class="btn-purple" onclick="imprimirHolerite()" id="btnImprimirHol" style="display:none"><i class="fa fa-print"></i> Imprimir / PDF</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL GERAR COMISSÕES -->
+<div class="modal" id="modalComissoes">
+<div class="modal-content" style="width:780px">
+  <div class="modal-header">
+    <h2><i class="fa fa-users" style="color:#2563eb;margin-right:8px"></i> Gerar Comissões das Terapeutas</h2>
+    <button class="btn-fechar" onclick="fecharComissoes()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <!-- Período -->
+    <div style="display:flex;gap:14px;margin-bottom:16px;background:#f9fafb;border-radius:10px;padding:14px;flex-wrap:wrap">
+      <div class="mfield" style="flex:1;min-width:130px;margin-bottom:0">
+        <label>Mês/Ano</label>
+        <input type="month" id="gcMes" onchange="buscarTodasComissoes()">
+      </div>
+      <div class="mfield" style="flex:1;min-width:130px;margin-bottom:0">
+        <label>Quinzena</label>
+        <select id="gcQuinzena" onchange="buscarTodasComissoes()">
+          <option value="1">1ª Quinzena (dias 1–15)</option>
+          <option value="2">2ª Quinzena (dias 16–fim)</option>
+        </select>
+      </div>
+      <div class="mfield" style="flex:1;min-width:130px;margin-bottom:0">
+        <label>Data de Pagamento</label>
+        <input type="date" id="gcDataPgto">
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="gcLoading" style="display:none;text-align:center;padding:20px;color:#9ca3af;font-size:13px">
+      <i class="fa fa-spinner fa-spin" style="margin-right:6px"></i> Buscando comissões...
+    </div>
+
+    <!-- Tabela -->
+    <div id="gcTabela" style="display:none">
+      <div style="max-height:380px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;">
+        <table style="width:100%;border-collapse:collapse">
+          <thead>
+            <tr style="background:#f9fafb">
+              <th style="padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;text-align:left;width:32px">
+                <input type="checkbox" id="gcCheckAll" onchange="gcToggleTodos(this)" style="accent-color:#2563eb">
+              </th>
+              <th style="padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;text-align:left">Terapeuta</th>
+              <th style="padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;text-align:right">Comissão (legado)</th>
+              <th style="padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;border-bottom:1px solid #e5e7eb;text-align:right">Valor a lançar</th>
+            </tr>
+          </thead>
+          <tbody id="gcLista"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="gcVazio" style="display:none;text-align:center;color:#9ca3af;padding:32px;font-size:13px">
+      <i class="fa fa-search" style="font-size:28px;display:block;margin-bottom:10px;color:#d1d5db"></i>
+      Nenhuma comissão encontrada para este período.
+    </div>
+  </div>
+  <div class="modal-footer" style="justify-content:space-between">
+    <span style="font-size:12px;color:#6b7280" id="gcResumo"></span>
+    <div style="display:flex;gap:10px">
+      <button class="btn-cancel" onclick="fecharComissoes()">Cancelar</button>
+      <button class="btn-green" onclick="confirmarGerarComissoes()"><i class="fa fa-check"></i> Gerar Lançamentos</button>
     </div>
   </div>
 </div>
@@ -862,6 +929,162 @@ function exportarExcel(){
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,"Folha de Pagamento");
   XLSX.writeFile(wb,"folha_pagamento.xlsx");
+}
+
+/* ── GERAR COMISSÕES ── */
+let gcDados = []; // {nome, comissao}
+
+function abrirGerarComissoes(){
+  const agora=new Date();
+  const y=agora.getFullYear();
+  const m=String(agora.getMonth()+1).padStart(2,"0");
+  document.getElementById("gcMes").value=`${y}-${m}`;
+  document.getElementById("gcQuinzena").value=agora.getDate()<=15?"1":"2";
+
+  // data de pagamento padrão
+  const dia=agora.getDate();
+  const ultimo=new Date(y,agora.getMonth()+1,0).getDate();
+  const dataPgto=dia<=15?`${y}-${m}-15`:`${y}-${m}-${String(ultimo).padStart(2,"0")}`;
+  document.getElementById("gcDataPgto").value=dataPgto;
+
+  document.getElementById("gcLoading").style.display="none";
+  document.getElementById("gcTabela").style.display="none";
+  document.getElementById("gcVazio").style.display="none";
+  document.getElementById("gcResumo").textContent="";
+  document.getElementById("modalComissoes").style.display="flex";
+  buscarTodasComissoes();
+}
+
+function fecharComissoes(){document.getElementById("modalComissoes").style.display="none";}
+
+async function buscarTodasComissoes(){
+  const mes  =document.getElementById("gcMes").value;
+  const quin =document.getElementById("gcQuinzena").value;
+  if(!mes) return;
+
+  document.getElementById("gcLoading").style.display="block";
+  document.getElementById("gcTabela").style.display="none";
+  document.getElementById("gcVazio").style.display="none";
+
+  const[y,m]=mes.split("-");
+  const diaIni=quin==="1"?"01":"16";
+  const diaFim=quin==="1"?"15":String(new Date(parseInt(y),parseInt(m),0).getDate()).padStart(2,"0");
+
+  // Buscar todas as terapeutas ativas
+  const{data:terapeutas}=await client.from("terapeutas")
+    .select("nome_profissional,cargo")
+    .eq("status","Ativo")
+    .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"])
+    .order("nome_profissional");
+
+  const nomes=(terapeutas||[]).map(t=>t.nome_profissional);
+
+  // Buscar comissões do legado para todas no período
+  const{data:legado}=await client.from("legado_atendimentos")
+    .select("profissional,comissao")
+    .gte("data",`${y}-${m}-${diaIni}`)
+    .lte("data",`${y}-${m}-${diaFim}`)
+    .in("profissional",nomes)
+    .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
+
+  // Agrupar por profissional
+  const totais={};
+  (legado||[]).forEach(r=>{
+    if(!r.profissional||!r.comissao) return;
+    totais[r.profissional]=(totais[r.profissional]||0)+(r.comissao||0);
+  });
+
+  // Montar lista só com quem tem comissão
+  gcDados=(terapeutas||[])
+    .filter(t=>totais[t.nome_profissional]>0)
+    .map(t=>({nome:t.nome_profissional,cargo:t.cargo,comissao:totais[t.nome_profissional]||0}));
+
+  document.getElementById("gcLoading").style.display="none";
+
+  if(!gcDados.length){
+    document.getElementById("gcVazio").style.display="block";
+    document.getElementById("gcResumo").textContent="";
+    return;
+  }
+
+  renderGcTabela();
+  document.getElementById("gcTabela").style.display="block";
+}
+
+function renderGcTabela(){
+  const tbody=document.getElementById("gcLista");
+  const fmtMoeda=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  tbody.innerHTML=gcDados.map((t,i)=>`
+    <tr style="border-bottom:1px solid #f3f4f6">
+      <td style="padding:10px 14px">
+        <input type="checkbox" class="gc-check" data-idx="${i}" checked style="accent-color:#2563eb" onchange="gcAtualizarResumo()">
+      </td>
+      <td style="padding:10px 14px">
+        <strong style="font-size:13px">${t.nome}</strong>
+        <div style="font-size:11px;color:#9ca3af">${t.cargo}</div>
+      </td>
+      <td style="padding:10px 14px;text-align:right;font-size:13px;color:#6b7280">${fmtMoeda(t.comissao)}</td>
+      <td style="padding:10px 14px;text-align:right">
+        <input type="number" class="gc-valor" data-idx="${i}"
+          value="${t.comissao.toFixed(2)}" step="0.01" min="0"
+          style="width:120px;padding:6px 10px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;text-align:right;font-weight:600"
+          oninput="gcAtualizarResumo()">
+      </td>
+    </tr>`).join("");
+
+  document.getElementById("gcCheckAll").checked=true;
+  gcAtualizarResumo();
+}
+
+function gcToggleTodos(cb){
+  document.querySelectorAll(".gc-check").forEach(el=>el.checked=cb.checked);
+  gcAtualizarResumo();
+}
+
+function gcAtualizarResumo(){
+  const checks=document.querySelectorAll(".gc-check");
+  const vals  =document.querySelectorAll(".gc-valor");
+  let count=0, total=0;
+  checks.forEach((chk,i)=>{
+    if(chk.checked){ count++; total+=parseFloat(vals[i]?.value||0); }
+  });
+  const fmtMoeda=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  document.getElementById("gcResumo").textContent=
+    `${count} terapeuta${count!==1?"s":""} · Total: ${fmtMoeda(total)}`;
+}
+
+async function confirmarGerarComissoes(){
+  const dataPgto=document.getElementById("gcDataPgto").value;
+  if(!dataPgto){alert("Informe a data de pagamento.");return;}
+
+  const checks=document.querySelectorAll(".gc-check");
+  const vals  =document.querySelectorAll(".gc-valor");
+  const codigoCom=getCodigo("Comissão");
+
+  const itens=[];
+  checks.forEach((chk,i)=>{
+    if(!chk.checked) return;
+    const t=gcDados[i];
+    const valor=parseFloat(vals[i]?.value||0);
+    if(!valor||valor<=0) return;
+    itens.push({
+      data_pgto:dataPgto,
+      funcionario:t.nome,
+      tipo:"Comissão",
+      codigo:codigoCom,
+      valor,
+      observacao:null
+    });
+  });
+
+  if(!itens.length){alert("Nenhum lançamento selecionado.");return;}
+
+  const{error}=await client.from("folha_pagamento").insert(itens);
+  if(error){alert("Erro: "+error.message);return;}
+
+  fecharComissoes();
+  carregar();
+  alert(`${itens.length} lançamento${itens.length!==1?"s":""} de comissão gerado${itens.length!==1?"s":""}!`);
 }
 
 document.addEventListener("DOMContentLoaded",async()=>{

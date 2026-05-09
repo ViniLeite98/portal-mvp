@@ -970,22 +970,14 @@ async function buscarTodasComissoes(){
   const diaIni=quin==="1"?"01":"16";
   const diaFim=quin==="1"?"15":String(new Date(parseInt(y),parseInt(m),0).getDate()).padStart(2,"0");
 
-  // Buscar todas as terapeutas ativas
-  const{data:terapeutas}=await client.from("terapeutas")
-    .select("nome_profissional,cargo")
-    .eq("status","Ativo")
-    .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"])
-    .order("nome_profissional");
-
-  const nomes=(terapeutas||[]).map(t=>t.nome_profissional);
-
-  // Buscar comissões do legado para todas no período
+  // Buscar direto do legado — sem filtrar por tabela terapeutas
   const{data:legado}=await client.from("legado_atendimentos")
     .select("profissional,comissao")
     .gte("data",`${y}-${m}-${diaIni}`)
     .lte("data",`${y}-${m}-${diaFim}`)
-    .in("profissional",nomes)
-    .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
+    .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum")
+    .not("profissional","is",null)
+    .not("comissao","is",null);
 
   // Agrupar por profissional
   const totais={};
@@ -994,10 +986,11 @@ async function buscarTodasComissoes(){
     totais[r.profissional]=(totais[r.profissional]||0)+(r.comissao||0);
   });
 
-  // Montar lista só com quem tem comissão
-  gcDados=(terapeutas||[])
-    .filter(t=>totais[t.nome_profissional]>0)
-    .map(t=>({nome:t.nome_profissional,cargo:t.cargo,comissao:totais[t.nome_profissional]||0}));
+  // Montar lista ordenada por nome — fonte: legado, não tabela terapeutas
+  gcDados=Object.entries(totais)
+    .filter(([,v])=>v>0)
+    .sort((a,b)=>a[0].localeCompare(b[0]))
+    .map(([nome,comissao])=>({nome,comissao}));
 
   document.getElementById("gcLoading").style.display="none";
 
@@ -1021,7 +1014,6 @@ function renderGcTabela(){
       </td>
       <td style="padding:10px 14px">
         <strong style="font-size:13px">${t.nome}</strong>
-        <div style="font-size:11px;color:#9ca3af">${t.cargo}</div>
       </td>
       <td style="padding:10px 14px;text-align:right;font-size:13px;color:#6b7280">${fmtMoeda(t.comissao)}</td>
       <td style="padding:10px 14px;text-align:right">

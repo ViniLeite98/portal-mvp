@@ -146,9 +146,19 @@ tr:hover td{background:#f9fafb;}
     <div class="r-card" style="border-left:3px solid #2563eb"><div class="r-label" style="color:#2563eb">Líquido Total</div><div class="r-valor" style="color:#2563eb" id="totLiq">—</div></div>
   </div>
 
+  <div id="barraSelecao" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 16px;margin-bottom:10px;display:none;align-items:center;justify-content:space-between">
+    <span style="font-size:13px;color:#1d4ed8;font-weight:600" id="barraSelecaoTexto">0 selecionados</span>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="limparSelecao()" style="font-size:12px;padding:5px 12px">Limpar seleção</button>
+      <button class="btn-red" onclick="excluirSelecionados()" style="font-size:12px;padding:5px 12px"><i class="fa fa-trash"></i> Excluir selecionados</button>
+    </div>
+  </div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>Cód.</th><th>Data</th><th>Funcionário</th><th>Tipo</th><th>Valor</th><th>Observação</th><th>Ações</th></tr></thead>
+      <thead><tr>
+        <th style="width:36px"><input type="checkbox" id="checkAll" onchange="toggleSelecionarTodos(this)" style="accent-color:#2563eb"></th>
+        <th>Cód.</th><th>Data</th><th>Funcionário</th><th>Tipo</th><th>Valor</th><th>Observação</th><th>Ações</th>
+      </tr></thead>
       <tbody id="lista"></tbody>
     </table>
   </div>
@@ -623,6 +633,7 @@ function render(){
     const cod=getCodigo(r.tipo);
     const valCor=r.valor<0?"color:#dc2626":r.valor===0?"":"color:#16a34a";
     tbody.innerHTML+=`<tr>
+      <td><input type="checkbox" class="row-check" data-id="${r.id}" style="accent-color:#2563eb" onchange="atualizarBarraSelecao()"></td>
       <td><span class="badge-cod">${cod}</span></td>
       <td>${fmtD(r.data_pgto)}</td>
       <td><strong>${r.funcionario}</strong></td>
@@ -1077,6 +1088,48 @@ async function confirmarGerarComissoes(){
   fecharComissoes();
   carregar();
   alert(`${itens.length} lançamento${itens.length!==1?"s":""} de comissão gerado${itens.length!==1?"s":""}!`);
+}
+
+/* ── SELEÇÃO EM MASSA ── */
+function toggleSelecionarTodos(cb){
+  document.querySelectorAll(".row-check").forEach(el=>el.checked=cb.checked);
+  atualizarBarraSelecao();
+}
+
+function atualizarBarraSelecao(){
+  const checks=document.querySelectorAll(".row-check:checked");
+  const barra=document.getElementById("barraSelecao");
+  const texto=document.getElementById("barraSelecaoTexto");
+  const total=checks.length;
+  if(total>0){
+    barra.style.display="flex";
+    texto.textContent=`${total} lançamento${total!==1?"s":""} selecionado${total!==1?"s":""}`;
+  } else {
+    barra.style.display="none";
+  }
+  // Atualizar checkbox geral
+  const todos=document.querySelectorAll(".row-check");
+  const checkAll=document.getElementById("checkAll");
+  if(checkAll) checkAll.indeterminate=total>0&&total<todos.length;
+  if(checkAll) checkAll.checked=todos.length>0&&total===todos.length;
+}
+
+function limparSelecao(){
+  document.querySelectorAll(".row-check").forEach(el=>el.checked=false);
+  const checkAll=document.getElementById("checkAll");
+  if(checkAll){checkAll.checked=false;checkAll.indeterminate=false;}
+  document.getElementById("barraSelecao").style.display="none";
+}
+
+async function excluirSelecionados(){
+  const checks=document.querySelectorAll(".row-check:checked");
+  const ids=[...checks].map(el=>el.dataset.id);
+  if(!ids.length) return;
+  if(!confirm(`Excluir ${ids.length} lançamento${ids.length!==1?"s":""}?`)) return;
+  const{error}=await client.from("folha_pagamento").delete().in("id",ids);
+  if(error){alert("Erro: "+error.message);return;}
+  limparSelecao();
+  carregar();
 }
 
 document.addEventListener("DOMContentLoaded",async()=>{

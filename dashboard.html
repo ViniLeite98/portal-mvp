@@ -6,6 +6,20 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script>
+// Registrar plugin zoom globalmente
+document.addEventListener("DOMContentLoaded",()=>{
+  if(window.Chart && window.ChartZoom) Chart.register(window.ChartZoom);
+});
+</script>
+<script>
+// Registrar plugin de zoom globalmente assim que carrega
+document.addEventListener("DOMContentLoaded", () => {
+  if(window.Chart && window.ChartZoom) Chart.register(window.ChartZoom);
+});
+</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
@@ -357,26 +371,26 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 
     <!-- Cards principais -->
     <div class="val-grid">
-      <div class="val-card" style="border-left:4px solid #2563eb">
-        <div class="val-label">MRR — Receita Mensal Recorrente</div>
+      <div class="val-card" style="border-left:4px solid #2563eb" title="MRR (Monthly Recurring Revenue): média da receita dos últimos N meses selecionados. Indica quanto o negócio fatura em média por mês.">
+        <div class="val-label">MRR — Receita Mensal Recorrente <span style="color:#d1d5db;font-size:10px">ⓘ</span></div>
         <div class="val-value" id="vMRR">—</div>
         <div class="val-sub" id="vMRRsub">Média dos últimos N meses</div>
         <div class="val-badge blue" id="vMRRbadge">—</div>
       </div>
-      <div class="val-card" style="border-left:4px solid #16a34a">
-        <div class="val-label">ARR — Receita Anual Recorrente</div>
+      <div class="val-card" style="border-left:4px solid #16a34a" title="ARR (Annual Recurring Revenue): MRR × 12. Representa a receita projetada para um ano inteiro com base na média atual.">
+        <div class="val-label">ARR — Receita Anual Recorrente <span style="color:#d1d5db;font-size:10px">ⓘ</span></div>
         <div class="val-value" id="vARR">—</div>
         <div class="val-sub">MRR × 12</div>
         <div class="val-badge green">Projetado</div>
       </div>
-      <div class="val-card" style="border-left:4px solid #7c3aed">
-        <div class="val-label">Valuation Estimado</div>
+      <div class="val-card" style="border-left:4px solid #7c3aed" title="Valuation: ARR multiplicado pelo múltiplo de receita. Múltiplos típicos: 2–4× para serviços físicos, 4–6× para modelos escaláveis. Use o slider para ajustar.">
+        <div class="val-label">Valuation Estimado <span style="color:#d1d5db;font-size:10px">ⓘ</span></div>
         <div class="val-value" id="vValuation">—</div>
         <div class="val-sub" id="vValuationSub">ARR × múltiplo</div>
         <div class="val-badge purple" id="vMultiploBadge">3×</div>
       </div>
       <div class="val-card" style="border-left:4px solid #d97706">
-        <div class="val-label">Crescimento YoY</div>
+        <div class="val-label">Crescimento YoY <span title="Year-over-Year: compara a receita do mesmo período deste ano vs ano anterior (até hoje)" style="cursor:help;color:#d1d5db;font-size:11px">ⓘ</span></div>
         <div class="val-value" id="vYoY">—</div>
         <div class="val-sub" id="vYoYsub">Receita ano atual vs anterior</div>
         <div class="val-badge green" id="vYoYbadge">—</div>
@@ -385,13 +399,13 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 
     <!-- Segunda linha -->
     <div class="val-grid">
-      <div class="val-card">
-        <div class="val-label">LTV Médio por Cliente</div>
+      <div class="val-card" title="LTV (Lifetime Value): receita histórica total dividida pelo número de clientes únicos. Indica quanto cada cliente gera em média ao longo do tempo.">
+        <div class="val-label">LTV Médio por Cliente <span style="color:#d1d5db;font-size:10px">ⓘ</span></div>
         <div class="val-value" id="vLTV">—</div>
         <div class="val-sub">Receita total ÷ clientes únicos</div>
       </div>
-      <div class="val-card">
-        <div class="val-label">Taxa de Retenção</div>
+      <div class="val-card" title="Taxa de Retenção: percentual de clientes que retornaram para pelo menos um segundo atendimento. Quanto maior, mais fidelizado é o público.">
+        <div class="val-label">Taxa de Retenção <span style="color:#d1d5db;font-size:10px">ⓘ</span></div>
         <div class="val-value" id="vRetencao">—</div>
         <div class="val-sub">Clientes que retornaram</div>
         <div class="val-badge green" id="vRetencaoBadge">—</div>
@@ -411,19 +425,26 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     <!-- Gráfico projeção -->
     <div class="row">
       <div class="card">
-        <div class="card-header"><h3><i class="fa fa-chart-line"></i> Receita Mensal + Projeção 6 meses</h3></div>
+        <div class="card-header">
+          <h3><i class="fa fa-chart-line"></i> Receita Mensal + Projeção 6 meses</h3>
+          <div style="display:flex;gap:6px">
+            <button onclick="resetZoomProj()" style="padding:4px 10px;font-size:11px;font-weight:600;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer">↺ Reset Zoom</button>
+            <button onclick="verTudoProj()" style="padding:4px 10px;font-size:11px;font-weight:600;background:#1f2937;color:#fff;border:none;border-radius:6px;cursor:pointer">Ver tudo</button>
+          </div>
+        </div>
         <div class="chart-wrap"><canvas id="chartValProj" height="140"></canvas></div>
       </div>
       <div class="card col-2">
         <div class="card-header"><h3><i class="fa fa-info-circle"></i> Premissas do Valuation</h3></div>
         <div style="padding:16px;font-size:12px;color:#6b7280;line-height:1.8">
-          <p><strong style="color:#111827">Método:</strong> Múltiplo de ARR (Revenue Multiple)</p>
-          <p><strong style="color:#111827">Referência:</strong> 2–4× para serviços físicos, 4–6× para modelos escaláveis</p>
-          <p><strong style="color:#111827">MRR:</strong> Média da receita dos últimos N meses selecionados</p>
-          <p><strong style="color:#111827">ARR:</strong> MRR × 12 (anualizado)</p>
-          <p><strong style="color:#111827">LTV:</strong> Receita histórica total ÷ clientes únicos</p>
-          <p><strong style="color:#111827">Retenção:</strong> % de clientes com mais de 1 atendimento</p>
-          <p style="margin-top:10px;font-style:italic">⚠️ Estimativa orientativa. Valuation real depende de auditoria, dívidas, contratos e outros fatores.</p>
+          <p><strong style="color:#111827">MRR</strong> (Monthly Recurring Revenue): média da receita mensal dos últimos N meses selecionados.</p>
+          <p><strong style="color:#111827">ARR</strong> (Annual Recurring Revenue): MRR × 12 — receita anual projetada.</p>
+          <p><strong style="color:#111827">Valuation</strong>: ARR × múltiplo de receita. Para serviços físicos o padrão é 2–4×; modelos mais escaláveis chegam a 6×.</p>
+          <p><strong style="color:#111827">YoY</strong> (Year-over-Year): compara Jan→hoje deste ano com o mesmo período do ano anterior. Evita distorção de meses futuros sem dados.</p>
+          <p><strong style="color:#111827">LTV</strong> (Lifetime Value): receita total histórica ÷ número de clientes únicos. Estima quanto cada cliente gera no total.</p>
+          <p><strong style="color:#111827">Retenção</strong>: % de clientes que fizeram mais de 1 atendimento. Alta retenção = negócio saudável.</p>
+          <p><strong style="color:#111827">Projeção</strong>: usa sazonalidade histórica de cada mês (ex: novembro costuma ser X% do MRR) para oscilar naturalmente ao redor do MRR.</p>
+          <p style="margin-top:10px;padding:8px 10px;background:#fef3c7;border-radius:6px;font-size:11px">⚠️ Estimativa orientativa. Valuation real depende de auditoria, passivo, contratos, goodwill e outros fatores não capturados aqui.</p>
         </div>
       </div>
     </div>
@@ -909,14 +930,21 @@ function atualizarValuation(){
   document.getElementById("vARR").textContent=fmtM(arr);
   document.getElementById("vValuation").textContent=fmtM(valuation);
 
-  // YoY
-  const anoAtual=new Date().getFullYear();
+  // YoY — comparar até a mesma data do ano anterior (same period last year)
+  const hoje2=new Date();
+  const anoAtual=hoje2.getFullYear();
   const anoAnt=anoAtual-1;
-  const recAtual=cacheCompleto.filter(r=>r.data?.startsWith(anoAtual)).reduce((s,r)=>s+(r.valor||0),0);
-  const recAnt  =cacheCompleto.filter(r=>r.data?.startsWith(anoAnt)).reduce((s,r)=>s+(r.valor||0),0);
+  // Data de corte: mesmo mês e dia no ano anterior
+  const mesCorte=String(hoje2.getMonth()+1).padStart(2,"0");
+  const diaCorte=String(hoje2.getDate()).padStart(2,"0");
+  const corteAtual=`${anoAtual}-${mesCorte}-${diaCorte}`;
+  const corteAnt  =`${anoAnt}-${mesCorte}-${diaCorte}`;
+  const recAtual=cacheCompleto.filter(r=>r.data&&r.data>=`${anoAtual}-01-01`&&r.data<=corteAtual).reduce((s,r)=>s+(r.valor||0),0);
+  const recAnt  =cacheCompleto.filter(r=>r.data&&r.data>=`${anoAnt}-01-01`  &&r.data<=corteAnt).reduce((s,r)=>s+(r.valor||0),0);
   const yoy=recAnt?((recAtual-recAnt)/recAnt*100):null;
-  document.getElementById("vYoY").textContent=yoy!==null?(yoy>=0?"+":"")+yoy.toFixed(1)+"%":"—";
-  document.getElementById("vYoYsub").textContent=`${fmtM(recAnt)} → ${fmtM(recAtual)}`;
+  const yoyLabel=yoy!==null?(yoy>=0?"+":"")+yoy.toFixed(1)+"%":"—";
+  document.getElementById("vYoY").textContent=yoyLabel;
+  document.getElementById("vYoYsub").textContent=`Jan–${MESES[hoje2.getMonth()]} ${anoAnt}: ${fmtM(recAnt)} → ${anoAtual}: ${fmtM(recAtual)}`;
   const yoyBadge=document.getElementById("vYoYbadge");
   yoyBadge.textContent=yoy!==null?(yoy>=0?"▲ Crescimento":"▼ Queda"):"—";
   yoyBadge.className="val-badge "+(yoy===null?"blue":yoy>=0?"green":"red");
@@ -951,18 +979,21 @@ function atualizarValuation(){
   const labels=ultimos12.map(([k])=>{ const[y,m]=k.split("-"); return MESES[parseInt(m)-1]+"/"+y.slice(2); });
   const vals=ultimos12.map(([,v])=>v);
 
-  // Projeção inteligente: usa MRR como base + crescimento médio mensal positivo
-  // Calcula crescimento médio apenas entre meses crescentes (ignora queda)
-  const base=mesesOrdenados.slice(-janela);
-  let somaCresc=0, countCresc=0;
-  for(let i=1;i<base.length;i++){
-    const delta=base[i][1]-base[i-1][1];
-    if(delta>0){ somaCresc+=delta; countCresc++; }
-  }
-  // Crescimento médio mensal positivo; se não houver, usa 0 (projeção flat no MRR)
-  const crescMedio = countCresc>0 ? somaCresc/countCresc : 0;
-  // Fator de suavização: 30% do crescimento médio (conservador)
-  const fatorProj = crescMedio * 0.3;
+  // Projeção sazonal: para cada mês futuro, usa a média histórica daquele mês
+  // Ex: se Junho historicamente é 10% acima do MRR, projeta MRR*1.10
+  // Isso faz a curva oscilar naturalmente seguindo a sazonalidade real
+  const sazoMap={}; // mes(01-12) -> [valores]
+  mesesOrdenados.forEach(([k,v])=>{
+    const m=k.split("-")[1];
+    if(!sazoMap[m]) sazoMap[m]=[];
+    sazoMap[m].push(v);
+  });
+  // Fator sazonal: média do mês / MRR global
+  const sazoFator={};
+  Object.entries(sazoMap).forEach(([m,vals])=>{
+    const media=vals.reduce((s,v)=>s+v,0)/vals.length;
+    sazoFator[m]= mrr>0 ? media/mrr : 1;
+  });
 
   const projLabels=[]; const projVals=[];
   const lastDate=ultimos12.length?ultimos12[ultimos12.length-1][0]:null;
@@ -970,23 +1001,63 @@ function atualizarValuation(){
     let[y,m]=lastDate.split("-").map(Number);
     for(let i=1;i<=6;i++){
       m++; if(m>12){m=1;y++;}
+      const mesStr=String(m).padStart(2,"0");
       projLabels.push(MESES[m-1]+"/"+String(y).slice(2));
-      // Parte do MRR e cresce suavemente
-      projVals.push(Math.max(mrr, mrr + fatorProj*i));
+      const fator=sazoFator[mesStr]||1;
+      // Projeta MRR × fator sazonal, limitado entre 70% e 130% do MRR
+      const fatorClamp=Math.min(1.3,Math.max(0.7,fator));
+      projVals.push(mrr * fatorClamp);
     }
   }
+  // Usar TODOS os meses históricos, não só últimos 12
+  const todosLabels=mesesOrdenados.map(([k])=>{ const[y,m]=k.split("-"); return MESES[parseInt(m)-1]+"/"+y.slice(2); });
+  const todosVals=mesesOrdenados.map(([,v])=>v);
+  const allLabels=[...todosLabels,...projLabels];
+  const allReais=[...todosVals,...Array(projLabels.length).fill(null)];
+  const allProj=[...Array(todosLabels.length-1).fill(null),todosVals[todosVals.length-1],...projVals];
+  const allMRR=allLabels.map(()=>mrr);
+
   mkChart("chartValProj",{
     type:"line",
     data:{
-      labels:[...labels,...projLabels],
+      labels:allLabels,
       datasets:[
-        {label:"Receita Real",data:[...vals,...Array(projLabels.length).fill(null)],borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.1)",tension:.3,fill:true,pointRadius:3},
-        {label:"Projeção",data:[...Array(labels.length-1).fill(null),vals[vals.length-1],...projVals],borderColor:"#16a34a",borderDash:[6,4],backgroundColor:"rgba(22,163,74,.05)",tension:.3,fill:true,pointRadius:3},
-        {label:"MRR",data:[...labels,...projLabels].map(()=>mrr),borderColor:"#d97706",borderDash:[3,3],pointRadius:0,borderWidth:1.5},
+        {label:"Receita Real",data:allReais,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.1)",tension:.3,fill:true,pointRadius:2,pointHoverRadius:5},
+        {label:"Projeção",data:allProj,borderColor:"#16a34a",borderDash:[6,4],backgroundColor:"rgba(22,163,74,.05)",tension:.3,fill:true,pointRadius:2},
+        {label:"MRR",data:allMRR,borderColor:"#d97706",borderDash:[3,3],pointRadius:0,borderWidth:1.5},
       ]
     },
-    options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{position:"bottom",labels:{font:{size:11}}},
+        zoom:{
+          zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"},
+          pan:{enabled:true,mode:"x"},
+        },
+        tooltip:{callbacks:{label:ctx=>" "+fmtM(ctx.parsed.y)}}
+      },
+      scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}},
+    }
   });
+  // Scroll automático para o fim (dados mais recentes)
+  setTimeout(()=>{
+    const ch=charts["chartValProj"];
+    if(!ch) return;
+    const total=allLabels.length;
+    const mostrar=18; // mostrar ~18 meses por padrão
+    if(total>mostrar){
+      ch.zoomScale("x",{min:total-mostrar,max:total-1},"none");
+    }
+  },100);
+}
+
+function resetZoomProj(){
+  const ch=charts["chartValProj"];
+  if(ch){ ch.resetZoom(); setTimeout(()=>{ const total=ch.data.labels.length; if(total>18) ch.zoomScale("x",{min:total-18,max:total-1},"none"); },50); }
+}
+function verTudoProj(){
+  const ch=charts["chartValProj"]; if(ch) ch.resetZoom();
 }
 
 /* ── INIT ── */

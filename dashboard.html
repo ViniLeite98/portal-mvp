@@ -915,10 +915,12 @@ function atualizarValuation(){
   document.getElementById("vMultiploBadge").textContent=multiplo+"×";
   document.getElementById("vValuationSub").textContent=`ARR × ${multiplo}×`;
 
-  // Calcular MRR — média dos últimos N meses com dados
+  // Todos os meses ordenados com receita
   const mesMap={};
-  cacheCompleto.forEach(r=>{ if(!r.data)return; const[y,m]=r.data.split("-"); const key=`${y}-${m}`; mesMap[key]=(mesMap[key]||0)+(r.valor||0); });
+  cacheCompleto.forEach(r=>{ if(!r.data)return; const[y,m]=r.data.split("-"); mesMap[`${y}-${m}`]=(mesMap[`${y}-${m}`]||0)+(r.valor||0); });
   const mesesOrdenados=Object.entries(mesMap).sort((a,b)=>a[0].localeCompare(b[0]));
+
+  // MRR: média dos últimos N meses
   const ultimos=mesesOrdenados.slice(-janela);
   const mrr=ultimos.length?ultimos.reduce((s,[,v])=>s+v,0)/ultimos.length:0;
   const arr=mrr*12;
@@ -930,21 +932,19 @@ function atualizarValuation(){
   document.getElementById("vARR").textContent=fmtM(arr);
   document.getElementById("vValuation").textContent=fmtM(valuation);
 
-  // YoY — comparar até a mesma data do ano anterior (same period last year)
-  const hoje2=new Date();
-  const anoAtual=hoje2.getFullYear();
+  // YoY — mesmo período (jan-hoje) ano atual vs ano anterior
+  const hoje=new Date();
+  const anoAtual=hoje.getFullYear();
   const anoAnt=anoAtual-1;
-  // Data de corte: mesmo mês e dia no ano anterior
-  const mesCorte=String(hoje2.getMonth()+1).padStart(2,"0");
-  const diaCorte=String(hoje2.getDate()).padStart(2,"0");
-  const corteAtual=`${anoAtual}-${mesCorte}-${diaCorte}`;
-  const corteAnt  =`${anoAnt}-${mesCorte}-${diaCorte}`;
+  const mesHoje=String(hoje.getMonth()+1).padStart(2,"0");
+  const diaHoje=String(hoje.getDate()).padStart(2,"0");
+  const corteAtual=`${anoAtual}-${mesHoje}-${diaHoje}`;
+  const corteAnt=`${anoAnt}-${mesHoje}-${diaHoje}`;
   const recAtual=cacheCompleto.filter(r=>r.data&&r.data>=`${anoAtual}-01-01`&&r.data<=corteAtual).reduce((s,r)=>s+(r.valor||0),0);
-  const recAnt  =cacheCompleto.filter(r=>r.data&&r.data>=`${anoAnt}-01-01`  &&r.data<=corteAnt).reduce((s,r)=>s+(r.valor||0),0);
+  const recAnt=cacheCompleto.filter(r=>r.data&&r.data>=`${anoAnt}-01-01`&&r.data<=corteAnt).reduce((s,r)=>s+(r.valor||0),0);
   const yoy=recAnt?((recAtual-recAnt)/recAnt*100):null;
-  const yoyLabel=yoy!==null?(yoy>=0?"+":"")+yoy.toFixed(1)+"%":"—";
-  document.getElementById("vYoY").textContent=yoyLabel;
-  document.getElementById("vYoYsub").textContent=`Jan–${MESES[hoje2.getMonth()]} ${anoAnt}: ${fmtM(recAnt)} → ${anoAtual}: ${fmtM(recAtual)}`;
+  document.getElementById("vYoY").textContent=yoy!==null?(yoy>=0?"+":"")+yoy.toFixed(1)+"%":"—";
+  document.getElementById("vYoYsub").textContent=`${fmtM(recAnt)} → ${fmtM(recAtual)}`;
   const yoyBadge=document.getElementById("vYoYbadge");
   yoyBadge.textContent=yoy!==null?(yoy>=0?"▲ Crescimento":"▼ Queda"):"—";
   yoyBadge.className="val-badge "+(yoy===null?"blue":yoy>=0?"green":"red");
@@ -962,148 +962,49 @@ function atualizarValuation(){
   cacheCompleto.forEach(r=>{ if(r.cliente) cliCount[r.cliente]=(cliCount[r.cliente]||0)+1; });
   const totalUniq=Object.keys(cliCount).length||1;
   const retornaram=Object.values(cliCount).filter(v=>v>1).length;
-  const pctRet=(retornaram/totalUniq*100).toFixed(1);
-  document.getElementById("vRetencao").textContent=pctRet+"%";
+  document.getElementById("vRetencao").textContent=(retornaram/totalUniq*100).toFixed(1)+"%";
   document.getElementById("vRetencaoBadge").textContent=`${fmtN(retornaram)} de ${fmtN(totalUniq)} clientes`;
 
   // Melhor mês
   if(mesesOrdenados.length){
-    const [melhorKey, melhorVal]=mesesOrdenados.reduce((a,b)=>b[1]>a[1]?b:a);
-    const[y,m]=melhorKey.split("-");
-    document.getElementById("vMelhorMes").textContent=MESES_FULL[parseInt(m)-1]+" "+y;
-    document.getElementById("vMelhorMesSub").textContent=fmtM(melhorVal);
+    const [mk,mv]=mesesOrdenados.reduce((a,b)=>b[1]>a[1]?b:a);
+    const[my,mm]=mk.split("-");
+    document.getElementById("vMelhorMes").textContent=MESES_FULL[parseInt(mm)-1]+" "+my;
+    document.getElementById("vMelhorMesSub").textContent=fmtM(mv);
   }
 
-  // Gráfico projeção
-  const ultimos12=mesesOrdenados.slice(-12);
-  const labels=ultimos12.map(([k])=>{ const[y,m]=k.split("-"); return MESES[parseInt(m)-1]+"/"+y.slice(2); });
-  const vals=ultimos12.map(([,v])=>v);
-
-  // Projeção sazonal: para cada mês futuro, usa a média histórica daquele mês
-  // Ex: se Junho historicamente é 10% acima do MRR, projeta MRR*1.10
-  // Isso faz a curva oscilar naturalmente seguindo a sazonalidade real
-  const sazoMap={}; // mes(01-12) -> [valores]
-  mesesOrdenados.forEach(([k,v])=>{
-    const m=k.split("-")[1];
-    if(!sazoMap[m]) sazoMap[m]=[];
-    sazoMap[m].push(v);
-  });
-  // Fator sazonal: média do mês / MRR global
-  const sazoFator={};
-  Object.entries(sazoMap).forEach(([m,vals])=>{
-    const media=vals.reduce((s,v)=>s+v,0)/vals.length;
-    sazoFator[m]= mrr>0 ? media/mrr : 1;
-  });
-
-  // Usar TODOS os meses históricos, não só últimos 12
-  const todosLabels=mesesOrdenados.map(([k])=>{ const[y,m]=k.split("-"); return MESES[parseInt(m)-1]+"/"+y.slice(2); });
-  const todosVals=mesesOrdenados.map(([,v])=>v);
-  const allLabels=[...todosLabels,...projLabels];
-  const allReais=[...todosVals,...Array(projLabels.length).fill(null)];
-  const allProj=[...Array(todosLabels.length-1).fill(null),todosVals[todosVals.length-1],...projVals];
-  const allMRR=allLabels.map(()=>mrr);
-
-  mkChart("chartValProj",{
-    type:"line",
-    data:{
-      labels:allLabels,
-      datasets:[
-        {label:"Receita Real",data:allReais,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.1)",tension:.3,fill:true,pointRadius:2,pointHoverRadius:5},
-        {label:"Projeção",data:allProj,borderColor:"#16a34a",borderDash:[6,4],backgroundColor:"rgba(22,163,74,.05)",tension:.3,fill:true,pointRadius:2},
-        {label:"MRR",data:allMRR,borderColor:"#d97706",borderDash:[3,3],pointRadius:0,borderWidth:1.5},
-      ]
-    },
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{position:"bottom",labels:{font:{size:11}}},
-        zoom:{
-          zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"},
-          pan:{enabled:true,mode:"x"},
-        },
-        tooltip:{callbacks:{label:ctx=>" "+fmtM(ctx.parsed.y)}}
-      },
-      scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}},
-    }
-  });
-  // Scroll automático para o fim (dados mais recentes)
-  setTimeout(()=>{
-    const ch=charts["chartValProj"];
-    if(!ch) return;
-    const total=allLabels.length;
-    const mostrar=18; // mostrar ~18 meses por padrão
-    if(total>mostrar){
-      ch.zoomScale("x",{min:total-mostrar,max:total-1},"none");
-    }
-  },100);
-}
-
-function resetZoomProj(){
-  const ch=charts["chartValProj"];
-  if(ch){ ch.resetZoom(); setTimeout(()=>{ const total=ch.data.labels.length; if(total>18) ch.zoomScale("x",{min:total-18,max:total-1},"none"); },50); }
-}
-function verTudoProj(){
-  const ch=charts["chartValProj"]; if(ch) ch.resetZoom();
-}
-
-/* ── INIT ── */
-async function initFiltros(){
-  const profs=[...new Set(cacheCompleto.map(r=>r.profissional).filter(Boolean))].sort();
-  const servs=[...new Set(cacheCompleto.map(r=>r.servico).filter(Boolean))].sort();
-  const selP=document.getElementById("fProf");
-  const selS=document.getElementById("fServ");
-  profs.forEach(p=>selP.innerHTML+=`<option>${p}</option>`);
-  servs.forEach(s=>selS.innerHTML+=`<option>${s}</option>`);
-}
-
-document.addEventListener("DOMContentLoaded",async()=>{
-  setLoading("Carregando dados...");
-  const [legado, novos] = await Promise.all([
-    fetchLegadoCompleto(),
-    fetchNovosCompleto()
-  ]);
-  cacheCompleto=[...legado,...novos];
-  setLoading("Montando filtros...");
-  await initFiltros();
-  stopLoading();
-  aplicarFiltros();
-});
-</script>
-</body>
-</html>  sazoMap={}; // mes(01-12) -> [valores]
-  mesesOrdenados.forEach(([k,v])=>{
-    const m=k.split("-")[1];
-    if(!sazoMap[m]) sazoMap[m]=[];
-    sazoMap[m].push(v);
-  });
-  // Fator sazonal real: media historica do mes / MRR global
+  // ── PROJEÇÃO ──
+  // 1. Sazonalidade: fator médio histórico de cada mês relativo ao MRR global
   const mrrGlobal=mesesOrdenados.reduce((s,[,v])=>s+v,0)/(mesesOrdenados.length||1);
+  const sazoMap={};
+  mesesOrdenados.forEach(([k,v])=>{ const m=k.split("-")[1]; if(!sazoMap[m])sazoMap[m]=[]; sazoMap[m].push(v); });
   const sazoFator={};
   Object.entries(sazoMap).forEach(([m,vals])=>{
     const med=vals.reduce((s,v)=>s+v,0)/vals.length;
     sazoFator[m]=mrrGlobal>0?med/mrrGlobal:1;
   });
 
-  // Desvio padrao dos ultimos N meses = volatilidade real
+  // 2. Desvio padrão dos últimos N meses = amplitude de oscilação
   const bVals=mesesOrdenados.slice(-janela).map(([,v])=>v);
   const bMed=bVals.reduce((s,v)=>s+v,0)/(bVals.length||1);
   const desvioReal=Math.sqrt(bVals.reduce((s,v)=>s+(v-bMed)**2,0)/(bVals.length||1));
 
+  // 3. Gerar 6 meses de projeção
   const projLabels=[]; const projVals=[];
-  const lastDate=mesesOrdenados.length?mesesOrdenados[mesesOrdenados.length-1][0]:null;
-  if(lastDate){
-    let[y,m]=lastDate.split("-").map(Number);
+  if(mesesOrdenados.length){
+    let[py,pm]=mesesOrdenados[mesesOrdenados.length-1][0].split("-").map(Number);
     for(let i=1;i<=6;i++){
-      m++; if(m>12){m=1;y++;}
-      const ms=String(m).padStart(2,"0");
-      projLabels.push(MESES[m-1]+"/"+String(y).slice(2));
+      pm++; if(pm>12){pm=1;py++;}
+      const ms=String(pm).padStart(2,"0");
+      projLabels.push(MESES[pm-1]+"/"+String(py).slice(2));
       const fSazo=sazoFator[ms]||1;
-      // Base sazonalizada + oscilacao real (±40% do desvio, senoide com fase variada)
-      const oscil=desvioReal*0.45*Math.sin(i*1.8+0.9);
+      // Oscilação: desvio real × seno com fase diferente por mês (garante sobe e desce)
+      const oscil=desvioReal*0.5*Math.sin(i*1.9+0.7);
       projVals.push(Math.max(mrr*0.5, mrr*fSazo+oscil));
     }
   }
-    // Usar TODOS os meses históricos, não só últimos 12
+
+  // 4. Montar gráfico com histórico completo
   const todosLabels=mesesOrdenados.map(([k])=>{ const[y,m]=k.split("-"); return MESES[parseInt(m)-1]+"/"+y.slice(2); });
   const todosVals=mesesOrdenados.map(([,v])=>v);
   const allLabels=[...todosLabels,...projLabels];
@@ -1117,7 +1018,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
       labels:allLabels,
       datasets:[
         {label:"Receita Real",data:allReais,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.1)",tension:.3,fill:true,pointRadius:2,pointHoverRadius:5},
-        {label:"Projeção",data:allProj,borderColor:"#16a34a",borderDash:[6,4],backgroundColor:"rgba(22,163,74,.05)",tension:.3,fill:true,pointRadius:2},
+        {label:"Projeção",data:allProj,borderColor:"#16a34a",borderDash:[6,4],backgroundColor:"rgba(22,163,74,.05)",tension:.3,fill:true,pointRadius:3},
         {label:"MRR",data:allMRR,borderColor:"#d97706",borderDash:[3,3],pointRadius:0,borderWidth:1.5},
       ]
     },
@@ -1125,27 +1026,20 @@ document.addEventListener("DOMContentLoaded",async()=>{
       responsive:true,
       plugins:{
         legend:{position:"bottom",labels:{font:{size:11}}},
-        zoom:{
-          zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"},
-          pan:{enabled:true,mode:"x"},
-        },
+        zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"},pan:{enabled:true,mode:"x"}},
         tooltip:{callbacks:{label:ctx=>" "+fmtM(ctx.parsed.y)}}
       },
-      scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}},
+      scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}
     }
   });
-  // Scroll automático para o fim (dados mais recentes)
+
+  // Scroll para o fim (últimos 18 meses visíveis por padrão)
   setTimeout(()=>{
-    const ch=charts["chartValProj"];
-    if(!ch) return;
+    const ch=charts["chartValProj"]; if(!ch)return;
     const total=allLabels.length;
-    const mostrar=18; // mostrar ~18 meses por padrão
-    if(total>mostrar){
-      ch.zoomScale("x",{min:total-mostrar,max:total-1},"none");
-    }
+    if(total>18) ch.zoomScale("x",{min:total-18,max:total-1},"none");
   },100);
 }
-
 function resetZoomProj(){
   const ch=charts["chartValProj"];
   if(ch){ ch.resetZoom(); setTimeout(()=>{ const total=ch.data.labels.length; if(total>18) ch.zoomScale("x",{min:total-18,max:total-1},"none"); },50); }

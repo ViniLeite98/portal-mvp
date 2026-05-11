@@ -160,7 +160,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   <div class="sub-nav">
     <button class="sub-btn active" onclick="mudarPag('geral',this)"><i class="fa fa-chart-bar"></i> Geral</button>
     <button class="sub-btn" onclick="mudarPag('profissional',this)"><i class="fa fa-user-tie"></i> Profissional</button>
-    <button class="sub-btn" onclick="mudarPag('executivo',this)"><i class="fa fa-chart-line"></i> Executivo</button>
     <button class="sub-btn" onclick="mudarPag('valuation',this)"><i class="fa fa-dollar-sign"></i> Valuation</button>
   </div>
 
@@ -213,7 +212,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   <div class="page active" id="page-geral">
     <div class="row">
       <!-- Por Profissional -->
-      <div class="card col-3">
+      <div class="card col-4">
         <div class="card-header"><h3><i class="fa fa-user-tie"></i> Por Profissional</h3></div>
         <div class="dt-scroll">
           <table class="dt" id="tblProf">
@@ -329,52 +328,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       <div class="card">
         <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Atendimentos por Dia</h3></div>
         <div class="chart-wrap"><canvas id="chartAtDia" height="100"></canvas></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ EXECUTIVO ══ -->
-  <div class="page" id="page-executivo">
-    <div class="row">
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-chart-line"></i> Evolução — Atendimentos</h3></div>
-        <div class="chart-wrap"><canvas id="chartEvolAtend" height="160"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-dollar-sign"></i> Evolução — Receita</h3></div>
-        <div class="chart-wrap"><canvas id="chartEvolRec" height="160"></canvas></div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="card col-2">
-        <div class="card-header"><h3><i class="fa fa-calendar-alt"></i> Histórico por Ano</h3></div>
-        <table class="dt" id="tblRecAno">
-          <thead><tr><th>Ano</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket Médio</th></tr></thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="card col-2">
-        <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Atend. por Profissional</h3></div>
-        <div class="chart-wrap"><canvas id="chartEquipe" height="220"></canvas></div>
-      </div>
-      <div class="card col-2">
-        <div class="card-header"><h3><i class="fa fa-calendar-week"></i> 1ª vs 2ª Quinzena</h3></div>
-        <div class="chart-wrap"><canvas id="chartQuinz" height="220"></canvas></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-header"><h3><i class="fa fa-table"></i> Performance Completa</h3></div>
-      <div class="dt-scroll" style="max-height:360px">
-        <table class="dt" id="tblEquipe">
-          <thead><tr>
-            <th>Profissional</th>
-            <th class="num">Atend.</th><th class="num">Retornos</th><th class="num">% Retorno</th>
-            <th class="num">1ª Quinzena</th><th class="num">2ª Quinzena</th>
-            <th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket</th>
-            <th class="num">% Atend.</th>
-          </tr></thead>
-          <tbody></tbody>
-        </table>
       </div>
     </div>
   </div>
@@ -611,7 +564,6 @@ function renderTudo(rows){
   renderKPIs(rows);
   renderGeral(rows);
   renderProfissional(rows);
-  renderExecutivo(rows);
   atualizarValuation();
 }
 
@@ -998,9 +950,20 @@ function atualizarValuation(){
   const ultimos12=mesesOrdenados.slice(-12);
   const labels=ultimos12.map(([k])=>{ const[y,m]=k.split("-"); return MESES[parseInt(m)-1]+"/"+y.slice(2); });
   const vals=ultimos12.map(([,v])=>v);
-  // Projeção linear simples (últimos 6 meses)
-  const base=ultimos12.slice(-6);
-  const tendencia=base.length>1?(base[base.length-1][1]-base[0][1])/(base.length-1):0;
+
+  // Projeção inteligente: usa MRR como base + crescimento médio mensal positivo
+  // Calcula crescimento médio apenas entre meses crescentes (ignora queda)
+  const base=mesesOrdenados.slice(-janela);
+  let somaCresc=0, countCresc=0;
+  for(let i=1;i<base.length;i++){
+    const delta=base[i][1]-base[i-1][1];
+    if(delta>0){ somaCresc+=delta; countCresc++; }
+  }
+  // Crescimento médio mensal positivo; se não houver, usa 0 (projeção flat no MRR)
+  const crescMedio = countCresc>0 ? somaCresc/countCresc : 0;
+  // Fator de suavização: 30% do crescimento médio (conservador)
+  const fatorProj = crescMedio * 0.3;
+
   const projLabels=[]; const projVals=[];
   const lastDate=ultimos12.length?ultimos12[ultimos12.length-1][0]:null;
   if(lastDate){
@@ -1008,7 +971,8 @@ function atualizarValuation(){
     for(let i=1;i<=6;i++){
       m++; if(m>12){m=1;y++;}
       projLabels.push(MESES[m-1]+"/"+String(y).slice(2));
-      projVals.push(Math.max(0, mrr + tendencia*i));
+      // Parte do MRR e cresce suavemente
+      projVals.push(Math.max(mrr, mrr + fatorProj*i));
     }
   }
   mkChart("chartValProj",{
@@ -1036,10 +1000,11 @@ async function initFiltros(){
 }
 
 document.addEventListener("DOMContentLoaded",async()=>{
-  setLoading("Carregando legado...");
-  const legado=await fetchLegadoCompleto();
-  setLoading("Carregando atendimentos novos...");
-  const novos=await fetchNovosCompleto();
+  setLoading("Carregando dados...");
+  const [legado, novos] = await Promise.all([
+    fetchLegadoCompleto(),
+    fetchNovosCompleto()
+  ]);
   cacheCompleto=[...legado,...novos];
   setLoading("Montando filtros...");
   await initFiltros();

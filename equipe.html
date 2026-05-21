@@ -8,6 +8,7 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
@@ -84,8 +85,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .doc-item-right a{font-size:13px;color:#2563eb;text-decoration:none;font-weight:500;}
 .btn-del{background:none;color:#dc2626;border:none;cursor:pointer;font-size:14px;padding:4px 6px;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
-
-/* ── RESPONSIVO ── */
 @media (max-width: 1366px) {
   .content{padding:24px;}
   h1{font-size:20px;}
@@ -101,13 +100,11 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
   .modal-header h2{font-size:16px;}
   .modal-footer button{padding:8px 16px;font-size:12px;}
 }
-
 @media (min-width: 1367px) and (max-width: 1920px) {
   .content{padding:40px;}
   .modal-content{width:860px;}
   .side-nav{width:190px;}
 }
-
 @media (min-width: 1921px) {
   .content{padding:56px;}
   h1{font-size:30px;}
@@ -204,15 +201,9 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             <label>Cor do Cabelo</label>
             <select id="cor_cabelo">
               <option value="">Selecione</option>
-              <option>Preto</option>
-              <option>Castanho Escuro</option>
-              <option>Castanho Claro</option>
-              <option>Loiro</option>
-              <option>Ruivo</option>
-              <option>Grisalho</option>
-              <option>Branco</option>
-              <option>Colorido</option>
-              <option>Outro</option>
+              <option>Preto</option><option>Castanho Escuro</option><option>Castanho Claro</option>
+              <option>Loiro</option><option>Ruivo</option><option>Grisalho</option>
+              <option>Branco</option><option>Colorido</option><option>Outro</option>
             </select>
           </div>
         </div>
@@ -331,289 +322,42 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <script>
 let cpfAtual = null;
 let cpfEdicaoHabilitada = false;
-
-const campos = [
-  "nome_completo","nome_profissional","cpf","rg","nascimento","email",
-  "tipo_sanguineo","telefone","telefone_emergencia","cep","rua","numero",
-  "complemento","bairro","cidade","uf","pix_tipo","pix_chave",
-  "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao","peso","altura","cor_cabelo"
-];
-
-function mascara(id, fn){
-  const el = document.getElementById(id); if(!el) return;
-  el.addEventListener('input', function(){
-    const pos = this.selectionStart, prev = this.value;
-    this.value = fn(this.value);
-    if(this.value.length === prev.length) this.setSelectionRange(pos, pos);
-  });
-}
-function fmtCPF(v){ v=v.replace(/\D/g,'').substring(0,11); if(v.length<=3)return v; if(v.length<=6)return v.slice(0,3)+'.'+v.slice(3); if(v.length<=9)return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6); return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9); }
-function fmtRG(v){ v=v.replace(/\D/g,'').substring(0,9); if(v.length<=2)return v; if(v.length<=5)return v.slice(0,2)+'.'+v.slice(2); if(v.length<=8)return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5); return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8); }
-function fmtTel(v){ v=v.replace(/\D/g,'').substring(0,11); if(v.length<=2)return v.length?'('+v:v; if(v.length<=6)return '('+v.slice(0,2)+') '+v.slice(2); if(v.length<=10)return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6); return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7); }
-function fmtCEP(v){ v=v.replace(/\D/g,'').substring(0,8); if(v.length<=5)return v; return v.slice(0,5)+'-'+v.slice(5); }
-function fmtCPFDisplay(v){ v=(v||"").replace(/\D/g,""); if(v.length!==11)return v; return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9); }
-function limparCPF(v){ return (v||"").replace(/\D/g,""); }
-
-function aplicarMascaras(){
-  mascara('cpf',fmtCPF); mascara('rg',fmtRG); mascara('telefone',fmtTel);
-  mascara('telefone_emergencia',fmtTel); mascara('cep',fmtCEP);
-  const uf=document.getElementById('uf');
-  if(uf) uf.addEventListener('input',function(){ this.value=this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2); });
-}
-
-function bloquearCPF(){ document.getElementById("cpf").readOnly=true; document.getElementById("cpf_aviso").style.display="flex"; cpfEdicaoHabilitada=false; }
-function habilitarEdicaoCPF(){
-  if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?")) return;
-  const el=document.getElementById("cpf"); el.readOnly=false; el.focus(); el.select();
-  document.getElementById("cpf_aviso").style.display="none"; cpfEdicaoHabilitada=true;
-}
-function desbloquearCPF(){ document.getElementById("cpf").readOnly=false; document.getElementById("cpf_aviso").style.display="none"; cpfEdicaoHabilitada=false; }
-
-function mudarTab(tab, btn){
-  document.querySelectorAll(".tab-panel").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".side-btn").forEach(el=>el.classList.remove("active"));
-  document.getElementById("tab-"+tab).classList.add("active");
-  btn.classList.add("active"); abaAtiva=tab; atualizarProgresso();
-}
-
-function getPayload(){ const obj={}; campos.forEach(c=>{ const el=document.getElementById(c); if(el&&el.value!=="")obj[c]=el.value; }); return obj; }
-
-function setForm(data){
-  campos.forEach(c=>{ const el=document.getElementById(c); if(!el)return; el.value=(c==="hora_entrada"||c==="hora_saida")?(data[c]?data[c].substring(0,5):""):(data[c]||""); });
-  const campo=document.getElementById("campo_data_inativacao"); if(campo) campo.style.display=data.status==="Inativo"?"":"none";
-  ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id=>{ const el=document.getElementById(id); if(el&&el.value) el.dispatchEvent(new Event('input')); });
-}
-
-async function carregar(){
-  if(!window.usuarioLogado){ setTimeout(carregar,100); return; }
-  const u=window.usuarioLogado;
-  const podeNovo=u&&(u.role==="admin"||u.role==="apoio");
-  const btnNovo=document.getElementById("btnNovoCadastro");
-  if(btnNovo) btnNovo.style.display=podeNovo?"":"none";
-  const statusFiltro=document.getElementById("filtroStatus").value;
-  let query=client.from("terapeutas").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
-  if(statusFiltro) query=query.eq("status",statusFiltro);
-  if(u&&u.role==="usuario"&&u.cpf) query=query.eq("cpf",u.cpf);
-  const {data,error}=await query;
-  if(error){ console.error(error); return; }
-  const tbody=document.getElementById("lista"); tbody.innerHTML="";
-  data.forEach(t=>{
-    const podeExcluir=u&&(u.role==="admin"||u.role==="apoio");
-    const acoes=podeExcluir?`<button onclick="editar('${t.cpf}')">Editar</button><button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`:`<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;
-    tbody.innerHTML+=`<tr><td>${t.nome_profissional||""}</td><td>${t.cargo||""}</td><td>${fmtCPFDisplay(t.cpf)}</td><td>${t.status||""}</td><td>${acoes}</td></tr>`;
-  });
-  filtrarTabela();
-}
-
-function filtrarTabela(){
-  const filtro=document.getElementById("pesquisaNome").value.toLowerCase();
-  document.querySelectorAll("#lista tr").forEach(linha=>{ linha.style.display=linha.children[0].innerText.toLowerCase().includes(filtro)?"":"none"; });
-}
-
-function resetModal(){
-  campos.forEach(c=>{ const el=document.getElementById(c); if(el) el.value=""; });
-  document.getElementById("hora_entrada").value="09:00"; document.getElementById("hora_saida").value="18:00";
-  const campoRole=document.getElementById("campo_role");
-  const roleEl=document.getElementById("role_usuario");
-  const isAdmin=window.usuarioLogado?.role==="admin";
-  if(campoRole) campoRole.style.display=isAdmin?"":"none";
-  if(roleEl){ roleEl.disabled=!isAdmin; }
-  mudarTab("pessoais",document.querySelector(".side-btn"));
-}
-
-function abrirNovo(){
-  cpfAtual=null; cpfEdicaoHabilitada=false; resetModal(); desbloquearCPF();
-  const isAdm = window.usuarioLogado?.role === "admin";
-  document.getElementById("campo_role").style.display = isAdm ? "" : "none";
-  document.getElementById("role_usuario").disabled = !isAdm;
-  document.getElementById("role_usuario").value = "usuario";
-  document.getElementById("modalTitulo").textContent="Novo Cadastro";
-  document.getElementById("tabDocsBtn").style.display="none";
-  document.getElementById("progressWrap").style.display="inline-flex";
-  abaAtiva="pessoais"; atualizarProgresso();
-  document.getElementById("modal").style.display="flex";
-}
-
-async function editar(cpf){
-  cpfAtual=cpf; cpfEdicaoHabilitada=false;
-  const {data,error}=await client.from("terapeutas").select("*").eq("cpf",cpf).single();
-  if(error){ console.error(error); return; }
-  resetModal(); setForm(data); bloquearCPF();
-  document.getElementById("modalTitulo").textContent=data.nome_profissional||"Editar Cadastro";
-  document.getElementById("tabDocsBtn").style.display="";
-  document.getElementById("progressWrap").style.display="inline-flex";
-  abaAtiva="pessoais"; setTimeout(atualizarProgresso,50); carregarDocs(cpf);
-  const u=window.usuarioLogado;
-  if(u&&u.role==="admin"){
-    document.getElementById("campo_role").style.display="";
-    document.getElementById("role_usuario").disabled=false;
-    (async()=>{
-      let perfil=null;
-      const {data:p1}=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);
-      if(p1&&p1.length>0){ perfil=p1[0]; } else if(data.email){
-        const {data:p2}=await client.from("perfis").select("email,role").eq("email",data.email.toLowerCase()).limit(1);
-        if(p2&&p2.length>0) perfil=p2[0];
-      }
-      const elRole=document.getElementById("role_usuario");
-      if(elRole) elRole.value=perfil?(perfil.role||"usuario"):"usuario";
-    })();
-  }
-  document.getElementById("modal").style.display="flex";
-}
-
-function fecharModal(){ document.getElementById("modal").style.display="none"; }
-
-async function salvar(){
-  const u=window.usuarioLogado; const payload=getPayload();
-  if(!payload.nome_completo||!payload.nome_profissional||!payload.email){ alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email."); return; }
-  if(!cpfAtual){
-    if(!payload.cpf){ alert("CPF é obrigatório."); return; }
-    const cpfNovo=limparCPF(payload.cpf);
-    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
-    if(existente&&existente.length>0){ alert("CPF já cadastrado."); return; }
-    const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});
-    if(error){ alert("Erro ao salvar: "+error.message); return; }
-    cpfAtual=cpfNovo; document.getElementById("tabDocsBtn").style.display=""; carregarDocs(cpfAtual);
-  } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
-    const cpfAntigo=limparCPF(cpfAtual); const cpfNovo=limparCPF(payload.cpf);
-    if(!cpfNovo||cpfNovo.length!==11){ alert("CPF inválido."); return; }
-    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
-    if(existente&&existente.length>0){ alert("CPF já pertence a outro cadastro."); return; }
-    const {data:dadosAtuais}=await client.from("terapeutas").select("*").eq("cpf",cpfAntigo).single();
-    const novoRegistro={...dadosAtuais,...payload,cpf:cpfNovo}; delete novoRegistro.created_at;
-    const {error:errInsert}=await client.from("terapeutas").insert(novoRegistro);
-    if(errInsert){ alert("Erro ao criar registro: "+errInsert.message); return; }
-    await client.from("documentos").update({equipe_id:cpfNovo}).eq("equipe_id",cpfAntigo);
-    await client.from("solicitacoes").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
-    await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("cpf_terapeuta",cpfAntigo);
-    const {error:errDel}=await client.from("terapeutas").delete().eq("cpf",cpfAntigo);
-    if(errDel){ alert("Erro ao remover registro antigo: "+errDel.message); return; }
-    cpfAtual=cpfNovo; cpfEdicaoHabilitada=false; bloquearCPF();
-    document.getElementById("cpf").value=fmtCPF(cpfNovo);
-  } else {
-    if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){ alert("Sem permissão."); return; }
-    const updatePayload={...payload}; delete updatePayload.cpf;
-    const {error}=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);
-    if(error){ alert("Erro ao salvar: "+error.message); return; }
-  }
-  const cpfParaVincular=cpfAtual; const isAdminU=u&&u.role==="admin";
-  const roleManual=isAdminU&&!document.getElementById("role_usuario")?.disabled?(document.getElementById("role_usuario")?.value||null):null;
-  const cargo=payload.cargo||""; let roleAutomatico=null;
-  if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino") roleAutomatico="usuario";
-  else if(cargo==="Recepcionista") roleAutomatico="apoio";
-  const novoRole=roleManual||roleAutomatico;
-  console.log("[ROLE] cpfParaVincular:", cpfParaVincular, "novoRole:", novoRole, "roleManual:", roleManual, "roleAutomatico:", roleAutomatico);
-  if(cpfParaVincular&&novoRole){
-    let perfilId=null;
-    const {data:p1,error:ep1}=await client.from("perfis").select("id,role,cpf_terapeuta").eq("cpf_terapeuta",cpfParaVincular).limit(1);
-    console.log("[ROLE] busca por cpf_terapeuta:", p1, "erro:", ep1);
-    if(p1&&p1.length>0) perfilId=p1[0].id;
-    if(!perfilId&&payload.email){
-      const {data:p2,error:ep2}=await client.from("perfis").select("id,role,email").eq("email",payload.email.trim().toLowerCase()).limit(1);
-      console.log("[ROLE] busca por email:", p2, "erro:", ep2);
-      if(p2&&p2.length>0) perfilId=p2[0].id;
-    }
-    console.log("[ROLE] perfilId encontrado:", perfilId);
-    if(perfilId){
-      const {data:upd, error:eUpd}=await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId).select();
-      console.log("[ROLE] update resultado:", upd, "erro:", eUpd);
-    } else {
-      console.warn("[ROLE] Nenhum perfil encontrado para atualizar!");
-    }
-  } else {
-    console.warn("[ROLE] Nao entrou no bloco — cpfParaVincular:", cpfParaVincular, "novoRole:", novoRole);
-  }
-  carregar(); fecharModal();
-}
-
-async function excluir(cpf){
-  if(!confirm("Excluir este registro e todos os documentos vinculados?")) return;
-  const {data:docs}=await client.from("documentos").select("id,url").eq("equipe_id",cpf);
-  if(docs&&docs.length>0){
-    const paths=docs.map(d=>d.url.split("/storage/v1/object/public/documentos/")[1]).filter(Boolean).map(p=>decodeURIComponent(p));
-    if(paths.length>0) await client.storage.from("documentos").remove(paths);
-    await client.from("documentos").delete().eq("equipe_id",cpf);
-  }
-  await client.from("solicitacoes").delete().eq("terapeuta_cpf",cpf);
-  const {error}=await client.from("terapeutas").delete().eq("cpf",cpf);
-  if(error){ alert("Erro ao excluir: "+error.message); return; }
-  carregar();
-}
-
-function limparNome(nome){ return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_"); }
-function iconeDoc(nome){ const ext=(nome||"").split(".").pop().toLowerCase(); if(["jpg","jpeg","png","gif","webp"].includes(ext))return "fa-image"; if(ext==="pdf")return "fa-file-pdf"; if(["doc","docx"].includes(ext))return "fa-file-word"; return "fa-file-alt"; }
-
-async function carregarDocs(cpf){
-  const {data,error}=await client.from("documentos").select("*").eq("equipe_id",cpf).order("created_at",{ascending:false});
-  const lista=document.getElementById("docLista"); const badge=document.getElementById("docBadge");
-  if(error||!data||data.length===0){ lista.innerHTML=`<div class="doc-empty">Nenhum documento anexado.</div>`; badge.style.display="none"; return; }
-  badge.textContent=data.length; badge.style.display="";
-  lista.innerHTML=data.map(d=>`<div class="doc-item" id="doc-${d.id}"><div class="doc-item-left"><div class="doc-icon"><i class="fa ${iconeDoc(d.nome_arquivo)}"></i></div><div><div class="doc-name">${d.nome_arquivo}</div><div class="doc-tipo">${d.tipo} · ${new Date(d.created_at).toLocaleDateString('pt-BR')}</div></div></div><div class="doc-item-right"><a href="${d.url}" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc('${d.id}','${d.url}')"><i class="fa fa-trash"></i></button></div></div>`).join("");
-}
-
-async function uploadDoc(){
-  if(!cpfAtual){ alert("Salve o cadastro antes de anexar documentos."); return; }
-  const tipo=document.getElementById("doc_tipo").value; const file=document.getElementById("doc_arquivo").files[0];
-  if(!file){ alert("Selecione um arquivo."); return; }
-  const statusEl=document.getElementById("uploadStatus"); statusEl.style.display="block";
-  const fileName=`${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;
-  const {error:uploadError}=await client.storage.from("documentos").upload(fileName,file);
-  if(uploadError){ statusEl.style.display="none"; alert("Erro no upload: "+uploadError.message); return; }
-  const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
-  const {error}=await client.from("documentos").insert({equipe_id:cpfAtual,tipo,nome_arquivo:file.name,url:urlData.publicUrl});
-  statusEl.style.display="none";
-  if(error){ alert("Erro ao salvar: "+error.message); return; }
-  document.getElementById("doc_arquivo").value=""; carregarDocs(cpfAtual);
-}
-
-async function excluirDoc(id,url){
-  if(!confirm("Excluir este documento?")) return;
-  const path=url.split("/storage/v1/object/public/documentos/")[1];
-  if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
-  await client.from("documentos").delete().eq("id",id); carregarDocs(cpfAtual);
-}
-
-function aoMudarStatus(select){
-  const campo=document.getElementById("campo_data_inativacao"); const input=document.getElementById("data_inativacao");
-  if(select.value==="Inativo"){ campo.style.display=""; if(!input.value) input.value=new Date().toISOString().split("T")[0]; }
-  else { campo.style.display="none"; input.value=""; }
-}
-
-const CAMPOS_POR_ABA={
-  pessoais:[{id:"nome_completo",label:"Nome Completo"},{id:"nome_profissional",label:"Nome Profissional"},{id:"cpf",label:"CPF"},{id:"email",label:"Email"}],
-  contatos:[{id:"telefone",label:"Telefone"}],
-  endereco:[{id:"cep",label:"CEP"},{id:"rua",label:"Rua"},{id:"cidade",label:"Cidade"},{id:"uf",label:"UF"}],
-  pagamento:[{id:"pix_tipo",label:"Tipo PIX"},{id:"pix_chave",label:"Chave PIX"}],
-  funcional:[{id:"cargo",label:"Cargo"},{id:"status",label:"Status"},{id:"data_inicio",label:"Data de Início"}],
-  docs:[],
-};
+const campos = ["nome_completo","nome_profissional","cpf","rg","nascimento","email","tipo_sanguineo","telefone","telefone_emergencia","cep","rua","numero","complemento","bairro","cidade","uf","pix_tipo","pix_chave","cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio","status","data_inativacao","peso","altura","cor_cabelo"];
+function mascara(id,fn){const el=document.getElementById(id);if(!el)return;el.addEventListener('input',function(){const pos=this.selectionStart,prev=this.value;this.value=fn(this.value);if(this.value.length===prev.length)this.setSelectionRange(pos,pos);});}
+function fmtCPF(v){v=v.replace(/\D/g,'').substring(0,11);if(v.length<=3)return v;if(v.length<=6)return v.slice(0,3)+'.'+v.slice(3);if(v.length<=9)return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);}
+function fmtRG(v){v=v.replace(/\D/g,'').substring(0,9);if(v.length<=2)return v;if(v.length<=5)return v.slice(0,2)+'.'+v.slice(2);if(v.length<=8)return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8);}
+function fmtTel(v){v=v.replace(/\D/g,'').substring(0,11);if(v.length<=2)return v.length?'('+v:v;if(v.length<=6)return '('+v.slice(0,2)+') '+v.slice(2);if(v.length<=10)return '('+v.slice(0,2)+') '+v.slice(2,6)+'-'+v.slice(6);return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);}
+function fmtCEP(v){v=v.replace(/\D/g,'').substring(0,8);if(v.length<=5)return v;return v.slice(0,5)+'-'+v.slice(5);}
+function fmtCPFDisplay(v){v=(v||"").replace(/\D/g,"");if(v.length!==11)return v;return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);}
+function limparCPF(v){return (v||"").replace(/\D/g,"");}
+function aplicarMascaras(){mascara('cpf',fmtCPF);mascara('rg',fmtRG);mascara('telefone',fmtTel);mascara('telefone_emergencia',fmtTel);mascara('cep',fmtCEP);const uf=document.getElementById('uf');if(uf)uf.addEventListener('input',function(){this.value=this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2);});}
+function bloquearCPF(){document.getElementById("cpf").readOnly=true;document.getElementById("cpf_aviso").style.display="flex";cpfEdicaoHabilitada=false;}
+function habilitarEdicaoCPF(){if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?"))return;const el=document.getElementById("cpf");el.readOnly=false;el.focus();el.select();document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=true;}
+function desbloquearCPF(){document.getElementById("cpf").readOnly=false;document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=false;}
+function mudarTab(tab,btn){document.querySelectorAll(".tab-panel").forEach(el=>el.classList.remove("active"));document.querySelectorAll(".side-btn").forEach(el=>el.classList.remove("active"));document.getElementById("tab-"+tab).classList.add("active");btn.classList.add("active");abaAtiva=tab;atualizarProgresso();}
+function getPayload(){const obj={};campos.forEach(c=>{const el=document.getElementById(c);if(el&&el.value!=="")obj[c]=el.value;});return obj;}
+function setForm(data){campos.forEach(c=>{const el=document.getElementById(c);if(!el)return;el.value=(c==="hora_entrada"||c==="hora_saida")?(data[c]?data[c].substring(0,5):""):(data[c]||"");});const campo=document.getElementById("campo_data_inativacao");if(campo)campo.style.display=data.status==="Inativo"?"":"none";['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id=>{const el=document.getElementById(id);if(el&&el.value)el.dispatchEvent(new Event('input'));});}
+async function carregar(){if(!window.usuarioLogado){setTimeout(carregar,100);return;}const u=window.usuarioLogado;const podeNovo=u&&(u.role==="admin"||u.role==="apoio");const btnNovo=document.getElementById("btnNovoCadastro");if(btnNovo)btnNovo.style.display=podeNovo?"":"none";const statusFiltro=document.getElementById("filtroStatus").value;let query=client.from("terapeutas").select("cpf,nome_profissional,status,cargo").order("nome_profissional");if(statusFiltro)query=query.eq("status",statusFiltro);if(u&&u.role==="usuario"&&u.cpf)query=query.eq("cpf",u.cpf);const {data,error}=await query;if(error){console.error(error);return;}const tbody=document.getElementById("lista");tbody.innerHTML="";data.forEach(t=>{const podeExcluir=u&&(u.role==="admin"||u.role==="apoio");const acoes=podeExcluir?`<button onclick="editar('${t.cpf}')">Editar</button><button class="excluir" onclick="excluir('${t.cpf}')">Excluir</button>`:`<button onclick="editar('${t.cpf}')">Ver / Editar</button>`;tbody.innerHTML+=`<tr><td>${t.nome_profissional||""}</td><td>${t.cargo||""}</td><td>${fmtCPFDisplay(t.cpf)}</td><td>${t.status||""}</td><td>${acoes}</td></tr>`;});filtrarTabela();}
+function filtrarTabela(){const filtro=document.getElementById("pesquisaNome").value.toLowerCase();document.querySelectorAll("#lista tr").forEach(linha=>{linha.style.display=linha.children[0].innerText.toLowerCase().includes(filtro)?"":"none";});}
+function resetModal(){campos.forEach(c=>{const el=document.getElementById(c);if(el)el.value="";});document.getElementById("hora_entrada").value="09:00";document.getElementById("hora_saida").value="18:00";const campoRole=document.getElementById("campo_role");const roleEl=document.getElementById("role_usuario");const isAdmin=window.usuarioLogado?.role==="admin";if(campoRole)campoRole.style.display=isAdmin?"":"none";if(roleEl){roleEl.disabled=!isAdmin;}mudarTab("pessoais",document.querySelector(".side-btn"));}
+function abrirNovo(){cpfAtual=null;cpfEdicaoHabilitada=false;resetModal();desbloquearCPF();const isAdm=window.usuarioLogado?.role==="admin";document.getElementById("campo_role").style.display=isAdm?"":"none";document.getElementById("role_usuario").disabled=!isAdm;document.getElementById("role_usuario").value="usuario";document.getElementById("modalTitulo").textContent="Novo Cadastro";document.getElementById("tabDocsBtn").style.display="none";document.getElementById("progressWrap").style.display="inline-flex";abaAtiva="pessoais";atualizarProgresso();document.getElementById("modal").style.display="flex";}
+async function editar(cpf){cpfAtual=cpf;cpfEdicaoHabilitada=false;const {data,error}=await client.from("terapeutas").select("*").eq("cpf",cpf).single();if(error){console.error(error);return;}resetModal();setForm(data);bloquearCPF();document.getElementById("modalTitulo").textContent=data.nome_profissional||"Editar Cadastro";document.getElementById("tabDocsBtn").style.display="";document.getElementById("progressWrap").style.display="inline-flex";abaAtiva="pessoais";setTimeout(atualizarProgresso,50);carregarDocs(cpf);const u=window.usuarioLogado;if(u&&u.role==="admin"){document.getElementById("campo_role").style.display="";document.getElementById("role_usuario").disabled=false;(async()=>{let perfil=null;const {data:p1}=await client.from("perfis").select("email,role").eq("cpf_terapeuta",cpf).limit(1);if(p1&&p1.length>0){perfil=p1[0];}else if(data.email){const {data:p2}=await client.from("perfis").select("email,role").eq("email",data.email.toLowerCase()).limit(1);if(p2&&p2.length>0)perfil=p2[0];}const elRole=document.getElementById("role_usuario");if(elRole)elRole.value=perfil?(perfil.role||"usuario"):"usuario";})();}document.getElementById("modal").style.display="flex";}
+function fecharModal(){document.getElementById("modal").style.display="none";}
+async function salvar(){const u=window.usuarioLogado;const payload=getPayload();if(!payload.nome_completo||!payload.nome_profissional||!payload.email){alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");return;}if(!cpfAtual){if(!payload.cpf){alert("CPF é obrigatório.");return;}const cpfNovo=limparCPF(payload.cpf);const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);if(existente&&existente.length>0){alert("CPF já cadastrado.");return;}const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});if(error){alert("Erro ao salvar: "+error.message);return;}cpfAtual=cpfNovo;document.getElementById("tabDocsBtn").style.display="";carregarDocs(cpfAtual);}else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){const cpfAntigo=limparCPF(cpfAtual);const cpfNovo=limparCPF(payload.cpf);if(!cpfNovo||cpfNovo.length!==11){alert("CPF inválido.");return;}const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);if(existente&&existente.length>0){alert("CPF já pertence a outro cadastro.");return;}const {data:dadosAtuais}=await client.from("terapeutas").select("*").eq("cpf",cpfAntigo).single();const novoRegistro={...dadosAtuais,...payload,cpf:cpfNovo};delete novoRegistro.created_at;const {error:errInsert}=await client.from("terapeutas").insert(novoRegistro);if(errInsert){alert("Erro ao criar registro: "+errInsert.message);return;}await client.from("documentos").update({equipe_id:cpfNovo}).eq("equipe_id",cpfAntigo);await client.from("solicitacoes").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("cpf_terapeuta",cpfAntigo);const {error:errDel}=await client.from("terapeutas").delete().eq("cpf",cpfAntigo);if(errDel){alert("Erro ao remover registro antigo: "+errDel.message);return;}cpfAtual=cpfNovo;cpfEdicaoHabilitada=false;bloquearCPF();document.getElementById("cpf").value=fmtCPF(cpfNovo);}else{if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){alert("Sem permissão.");return;}const updatePayload={...payload};delete updatePayload.cpf;const {error}=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);if(error){alert("Erro ao salvar: "+error.message);return;}}const cpfParaVincular=cpfAtual;const isAdminU=u&&u.role==="admin";const roleManual=isAdminU&&!document.getElementById("role_usuario")?.disabled?(document.getElementById("role_usuario")?.value||null):null;const cargo=payload.cargo||"";let roleAutomatico=null;if(cargo==="Terapeuta Feminina"||cargo==="Terapeuta Masculino")roleAutomatico="usuario";else if(cargo==="Recepcionista")roleAutomatico="apoio";const novoRole=roleManual||roleAutomatico;if(cpfParaVincular&&novoRole){let perfilId=null;const {data:p1}=await client.from("perfis").select("id,role,cpf_terapeuta").eq("cpf_terapeuta",cpfParaVincular).limit(1);if(p1&&p1.length>0)perfilId=p1[0].id;if(!perfilId&&payload.email){const {data:p2}=await client.from("perfis").select("id,role,email").eq("email",payload.email.trim().toLowerCase()).limit(1);if(p2&&p2.length>0)perfilId=p2[0].id;}if(perfilId){await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId);}}carregar();fecharModal();}
+async function excluir(cpf){if(!confirm("Excluir este registro e todos os documentos vinculados?"))return;const {data:docs}=await client.from("documentos").select("id,url").eq("equipe_id",cpf);if(docs&&docs.length>0){const paths=docs.map(d=>d.url.split("/storage/v1/object/public/documentos/")[1]).filter(Boolean).map(p=>decodeURIComponent(p));if(paths.length>0)await client.storage.from("documentos").remove(paths);await client.from("documentos").delete().eq("equipe_id",cpf);}await client.from("solicitacoes").delete().eq("terapeuta_cpf",cpf);const {error}=await client.from("terapeutas").delete().eq("cpf",cpf);if(error){alert("Erro ao excluir: "+error.message);return;}carregar();}
+function limparNome(nome){return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");}
+function iconeDoc(nome){const ext=(nome||"").split(".").pop().toLowerCase();if(["jpg","jpeg","png","gif","webp"].includes(ext))return "fa-image";if(ext==="pdf")return "fa-file-pdf";if(["doc","docx"].includes(ext))return "fa-file-word";return "fa-file-alt";}
+async function carregarDocs(cpf){const {data,error}=await client.from("documentos").select("*").eq("equipe_id",cpf).order("created_at",{ascending:false});const lista=document.getElementById("docLista");const badge=document.getElementById("docBadge");if(error||!data||data.length===0){lista.innerHTML=`<div class="doc-empty">Nenhum documento anexado.</div>`;badge.style.display="none";return;}badge.textContent=data.length;badge.style.display="";lista.innerHTML=data.map(d=>`<div class="doc-item" id="doc-${d.id}"><div class="doc-item-left"><div class="doc-icon"><i class="fa ${iconeDoc(d.nome_arquivo)}"></i></div><div><div class="doc-name">${d.nome_arquivo}</div><div class="doc-tipo">${d.tipo} · ${new Date(d.created_at).toLocaleDateString('pt-BR')}</div></div></div><div class="doc-item-right"><a href="${d.url}" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc('${d.id}','${d.url}')"><i class="fa fa-trash"></i></button></div></div>`).join("");}
+async function uploadDoc(){if(!cpfAtual){alert("Salve o cadastro antes de anexar documentos.");return;}const tipo=document.getElementById("doc_tipo").value;const file=document.getElementById("doc_arquivo").files[0];if(!file){alert("Selecione um arquivo.");return;}const statusEl=document.getElementById("uploadStatus");statusEl.style.display="block";const fileName=`${cpfAtual}/${Date.now()}_${limparNome(file.name)}`;const {error:uploadError}=await client.storage.from("documentos").upload(fileName,file);if(uploadError){statusEl.style.display="none";alert("Erro no upload: "+uploadError.message);return;}const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);const {error}=await client.from("documentos").insert({equipe_id:cpfAtual,tipo,nome_arquivo:file.name,url:urlData.publicUrl});statusEl.style.display="none";if(error){alert("Erro ao salvar: "+error.message);return;}document.getElementById("doc_arquivo").value="";carregarDocs(cpfAtual);}
+async function excluirDoc(id,url){if(!confirm("Excluir este documento?"))return;const path=url.split("/storage/v1/object/public/documentos/")[1];if(path)await client.storage.from("documentos").remove([decodeURIComponent(path)]);await client.from("documentos").delete().eq("id",id);carregarDocs(cpfAtual);}
+function aoMudarStatus(select){const campo=document.getElementById("campo_data_inativacao");const input=document.getElementById("data_inativacao");if(select.value==="Inativo"){campo.style.display="";if(!input.value)input.value=new Date().toISOString().split("T")[0];}else{campo.style.display="none";input.value="";}}
+const CAMPOS_POR_ABA={pessoais:[{id:"nome_completo",label:"Nome Completo"},{id:"nome_profissional",label:"Nome Profissional"},{id:"cpf",label:"CPF"},{id:"email",label:"Email"}],contatos:[{id:"telefone",label:"Telefone"}],endereco:[{id:"cep",label:"CEP"},{id:"rua",label:"Rua"},{id:"cidade",label:"Cidade"},{id:"uf",label:"UF"}],pagamento:[{id:"pix_tipo",label:"Tipo PIX"},{id:"pix_chave",label:"Chave PIX"}],funcional:[{id:"cargo",label:"Cargo"},{id:"status",label:"Status"},{id:"data_inicio",label:"Data de Início"}],docs:[]};
 const TODOS_CAMPOS=Object.values(CAMPOS_POR_ABA).flat();
 let abaAtiva="pessoais";
-
-function atualizarProgresso(){
-  const wrap=document.getElementById("progressWrap"); if(!wrap||wrap.style.display==="none") return;
-  const total=TODOS_CAMPOS.length;
-  const feitos=TODOS_CAMPOS.filter(c=>{ const el=document.getElementById(c.id); return el&&el.value&&el.value.trim()!==""; });
-  const pct=total>0?Math.round((feitos.length/total)*100):0;
-  const circum=113; const offset=circum-(circum*pct/100);
-  const cor=pct===100?"#22c55e":pct>=50?"#f59e0b":"#ef4444";
-  document.getElementById("progressPct").textContent=pct+"%"; document.getElementById("progressPct").style.color=cor;
-  const fill=document.getElementById("progressFill"); fill.style.strokeDashoffset=offset; fill.style.stroke=cor;
-  const camposAba=CAMPOS_POR_ABA[abaAtiva]||[]; const feitosIds=feitos.map(c=>c.id);
-  const tooltip=document.getElementById("progressTooltip");
-  if(camposAba.length===0){ tooltip.innerHTML="<div style='color:#e5e7eb;font-size:12px'>Nenhum campo nesta aba.</div>"; }
-  else {
-    const abaFeitos=camposAba.filter(c=>feitosIds.includes(c.id));
-    const abaPct=Math.round((abaFeitos.length/camposAba.length)*100);
-    tooltip.innerHTML=`<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Esta aba: ${abaPct}% · Geral: ${pct}%</div>`
-      +camposAba.map(c=>{ const ok=feitosIds.includes(c.id); return `<div class="tooltip-item ${ok?'done':'missing'}"><i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i> ${c.label}</div>`; }).join("")
-      +"<div style='border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px'>Passe para outras abas para ver os campos delas.</div>";
-  }
-}
-
+function atualizarProgresso(){const wrap=document.getElementById("progressWrap");if(!wrap||wrap.style.display==="none")return;const total=TODOS_CAMPOS.length;const feitos=TODOS_CAMPOS.filter(c=>{const el=document.getElementById(c.id);return el&&el.value&&el.value.trim()!=="";});const pct=total>0?Math.round((feitos.length/total)*100):0;const circum=113;const offset=circum-(circum*pct/100);const cor=pct===100?"#22c55e":pct>=50?"#f59e0b":"#ef4444";document.getElementById("progressPct").textContent=pct+"%";document.getElementById("progressPct").style.color=cor;const fill=document.getElementById("progressFill");fill.style.strokeDashoffset=offset;fill.style.stroke=cor;const camposAba=CAMPOS_POR_ABA[abaAtiva]||[];const feitosIds=feitos.map(c=>c.id);const tooltip=document.getElementById("progressTooltip");if(camposAba.length===0){tooltip.innerHTML="<div style='color:#e5e7eb;font-size:12px'>Nenhum campo nesta aba.</div>";}else{const abaFeitos=camposAba.filter(c=>feitosIds.includes(c.id));const abaPct=Math.round((abaFeitos.length/camposAba.length)*100);tooltip.innerHTML=`<div style='font-weight:700;margin-bottom:6px;color:#e5e7eb'>Esta aba: ${abaPct}% · Geral: ${pct}%</div>`+camposAba.map(c=>{const ok=feitosIds.includes(c.id);return `<div class="tooltip-item ${ok?'done':'missing'}"><i class="fa ${ok?'fa-check-circle':'fa-times-circle'}"></i> ${c.label}</div>`;}).join("")+"<div style='border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px'>Passe para outras abas para ver os campos delas.</div>";}}
 document.addEventListener('DOMContentLoaded',()=>{
   aplicarMascaras();
-  TODOS_CAMPOS.forEach(c=>{ const el=document.getElementById(c.id); if(el){ el.addEventListener("input",atualizarProgresso); el.addEventListener("change",atualizarProgresso); } });
+  TODOS_CAMPOS.forEach(c=>{const el=document.getElementById(c.id);if(el){el.addEventListener("input",atualizarProgresso);el.addEventListener("change",atualizarProgresso);}});
   document.getElementById("filtroStatus").addEventListener("change",carregar);
   carregar();
 });

@@ -161,13 +161,14 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
+<script src="assets/sidebar/sidebar.js" defer></script>
+<script src="assets/sidebar/sidebar.js" defer></script>
 <script>
 
 let dados = [];
 let editandoId = null;
 let certificacoes = [];
 
-// admin e apoio veem tudo; usuario vê só o próprio
 function podeVerTudo(u){ return u && (u.role === "admin" || u.role === "apoio"); }
 
 function iconeParaCert(certId){
@@ -229,7 +230,6 @@ async function carregarLista(){
     .select(`id, data_obtencao, arquivo_url, arquivo_nome, cpf_terapeuta, certificacoes(id,nome,icone), terapeutas(nome_profissional)`)
     .order("id");
 
-  // Usuário (terapeuta): vê só as próprias
   if(!podeVerTudo(u) && u && u.cpf) q = q.eq("cpf_terapeuta", u.cpf);
 
   const {data} = await q;
@@ -283,7 +283,6 @@ function abrirVincular(){
   const u = window.usuarioLogado;
   const selTer = document.getElementById("cpf_terapeuta");
 
-  // Usuário: pré-seleciona e bloqueia
   if(!podeVerTudo(u) && u && u.cpf){
     selTer.value = u.cpf;
     selTer.disabled = true;
@@ -362,7 +361,6 @@ function abrirModal(nome){
            <span class="upload-ing" id="uploading_${r.id}"><i class="fa fa-spinner fa-spin"></i></span>
          </div>`;
 
-    // Excluir vínculo: só admin/apoio
     const botoesAcao = podeVerTudo(u)
       ? `<button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>
          <button class="excluir" onclick="excluir('${r.id}','${nome.replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>`

@@ -265,6 +265,7 @@ tr:hover td{background:#f9fafb;}
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
+<script src="assets/sidebar/sidebar.js" defer></script>
 <script>
 
 const HORA_INI=9,HORA_FIM=23,SLOT_H=30,ALT_SLOT=28;
@@ -290,8 +291,6 @@ function getUser(cb,tentativas=20){
   setTimeout(()=>getUser(cb,tentativas-1),100);
 }
 
-/* Terapeuta = role "usuario" com cargo de terapeuta
-   Admin/Apoio = role "admin" ou "apoio" — vê tudo e pode selecionar qualquer terapeuta */
 function eTerapeuta(u){ return u && u.role==="usuario"; }
 function podeEditar(u){ return u && (u.role==="admin" || u.role==="apoio"); }
 
@@ -375,7 +374,6 @@ async function carregar(){
       .select(`*,clientes(id,nome,telefone_1),servicos(id,grupo,subgrupo,tempo,valor,comissao),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`)
       .order("data").order("hora_inicio");
 
-    // Terapeuta logada: vê só os próprios atendimentos
     if(eTerapeuta(u) && u.cpf){
       q=q.or(`terapeuta1_cpf.eq.${u.cpf},terapeuta2_cpf.eq.${u.cpf}`);
     }
@@ -519,11 +517,9 @@ function abrirNovo(){
   resetAg();
   getUser(u=>{
     const sel=document.getElementById("agTer1");
-    // Se for terapeuta (role usuario): pre-seleciona e trava o select
     if(eTerapeuta(u) && u.cpf){
       sel.value=u.cpf;
       sel.disabled=true;
-      // Também travar filtro de terapeuta
       const ft=document.getElementById("filtroTer");
       ft.value=u.cpf; ft.disabled=true;
     } else {
@@ -740,7 +736,6 @@ function exportarExcel(){
 document.addEventListener("DOMContentLoaded",async()=>{
   await carregarDados();
   getUser(u=>{
-    // Terapeuta logada: trava filtro e select na própria terapeuta
     if(eTerapeuta(u) && u.cpf){
       const ft=document.getElementById("filtroTer");
       ft.value=u.cpf; ft.disabled=true;

@@ -1,11 +1,8 @@
 const paginaAtual = window.location.pathname.split("/").pop();
-
 function renderSidebar() {
   if(!window.usuarioLogado){ setTimeout(renderSidebar, 100); return; }
-
   const u = window.usuarioLogado;
   const usuario = u && u.role === "usuario"; // terapeuta — menu reduzido
-
   document.getElementById("sidebar").innerHTML = `
 <div class="sidebar">
   <div class="logo">Hara Spa</div>
@@ -45,6 +42,10 @@ function renderSidebar() {
     <i class="fa-solid fa-file-lines"></i>
     <span>Solicitações</span>
   </a>
+  <a href="kanban.html" class="menu-item ${paginaAtual === 'kanban.html' ? 'active' : ''}">
+    <i class="fa-solid fa-table-columns"></i>
+    <span>Kanban</span>
+  </a>
   ${!usuario ? `<hr style="border-color:#374151; margin:18px 0;">
   <div class="menu-title">FINANCEIRO</div>
   <a href="despesas.html" class="menu-item ${paginaAtual === 'despesas.html' ? 'active' : ''}">
@@ -73,9 +74,7 @@ function renderSidebar() {
 </div>
 `;
 }
-
 renderSidebar();
-
 function sairDoCaixa() {
   if (typeof client !== 'undefined') {
     client.auth.signOut().finally(function() {

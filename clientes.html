@@ -216,7 +216,7 @@ tr:hover .acoes{opacity:1;}
 <script>
 let dados = [];
 let clienteAtual = null;
-let paginaAtual = 0;
+let paginaClientes = 0;
 const POR_PAGINA = 10;
 let totalFiltrado = 0;
 const fmtM = v => v != null ? `R$\u00a0${Number(v).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0})}` : "—";
@@ -254,7 +254,7 @@ async function carregar(){
   document.getElementById("statTicket").textContent    = fmtM(ticketMed);
   document.getElementById("statSemVisita").textContent = sumidosCount ?? "—";
 
-  paginaAtual = 0;
+  paginaClientes = 0;
   await carregarPagina();
 }
 
@@ -262,7 +262,7 @@ async function carregarPagina(){
   const busca  = (document.getElementById("busca").value||"").toLowerCase();
   const filtro = document.getElementById("filtroVisita").value;
   const ordem  = document.getElementById("filtroOrdem").value;
-  const inicio = paginaAtual * POR_PAGINA;
+  const inicio = paginaClientes * POR_PAGINA;
   const fim    = inicio + POR_PAGINA - 1;
 
   let q = client.from("clientes")
@@ -293,11 +293,11 @@ function render(){
   const totalPags = Math.ceil(totalFiltrado / POR_PAGINA);
   if(totalFiltrado > POR_PAGINA){
     paginacaoEl.style.display = "flex";
-    const inicio = paginaAtual * POR_PAGINA + 1;
-    const fim    = Math.min((paginaAtual+1)*POR_PAGINA, totalFiltrado);
+    const inicio = paginaClientes * POR_PAGINA + 1;
+    const fim    = Math.min((paginaClientes+1)*POR_PAGINA, totalFiltrado);
     document.getElementById("paginacaoInfo").textContent = `Exibindo ${inicio}–${fim} de ${totalFiltrado} clientes`;
-    document.getElementById("btnAnterior").disabled = paginaAtual === 0;
-    document.getElementById("btnProxima").disabled  = paginaAtual >= totalPags-1;
+    document.getElementById("btnAnterior").disabled = paginaClientes === 0;
+    document.getElementById("btnProxima").disabled  = paginaClientes >= totalPags-1;
   } else {
     paginacaoEl.style.display = "none";
   }
@@ -434,10 +434,10 @@ async function excluirCliente(){
   fecharModal(); carregar();
 }
 
-function mudarPagina(delta){ paginaAtual += delta; carregarPagina(); window.scrollTo({top:0,behavior:"smooth"}); }
+function mudarPagina(delta){ paginaClientes += delta; carregarPagina(); window.scrollTo({top:0,behavior:"smooth"}); }
 
 document.addEventListener("DOMContentLoaded",()=>{
-  const resetPagina = () => { paginaAtual = 0; carregarPagina(); };
+  const resetPagina = () => { paginaClientes = 0; carregarPagina(); };
   document.getElementById("busca").addEventListener("input", resetPagina);
   document.getElementById("filtroVisita").addEventListener("change", resetPagina);
   document.getElementById("filtroOrdem").addEventListener("change", resetPagina);

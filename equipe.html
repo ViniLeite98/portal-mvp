@@ -8,7 +8,6 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
@@ -512,6 +511,32 @@ async function salvar(){
     const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});
     if(error){alert("Erro ao salvar: "+error.message);return;}
     cpfAtual=cpfNovo;document.getElementById("tabDocsBtn").style.display="";carregarDocs(cpfAtual);
+
+    // Criar acesso automático com senha padrão hara2026
+    if(payload.email){
+      const {data:perfilExist}=await client.from("perfis").select("id").eq("email",payload.email.trim().toLowerCase()).limit(1);
+      if(!perfilExist||perfilExist.length===0){
+        const cargo=payload.cargo||"";
+        let roleNovo="usuario";
+        if(cargo==="Recepcionista"||cargo==="Gerente"||cargo==="Analista"||cargo==="Atendente")roleNovo="apoio";
+        const {data:signUpData,error:signUpErr}=await client.auth.signUp({
+          email:payload.email.trim(),
+          password:"hara2026",
+          options:{data:{nome:payload.nome_profissional||payload.nome_completo}}
+        });
+        if(!signUpErr&&signUpData&&signUpData.user){
+          await client.from("perfis").upsert({
+            id:signUpData.user.id,
+            email:payload.email.trim().toLowerCase(),
+            nome:payload.nome_profissional||payload.nome_completo,
+            role:roleNovo,
+            cpf_terapeuta:cpfNovo
+          });
+        }
+      } else {
+        await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("email",payload.email.trim().toLowerCase());
+      }
+    }
   } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
     const cpfAntigo=limparCPF(cpfAtual);const cpfNovo=limparCPF(payload.cpf);
     if(!cpfNovo||cpfNovo.length!==11){alert("CPF inválido.");return;}

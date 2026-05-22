@@ -3,7 +3,7 @@
  *
  * Roles:
  *   admin         → acesso total
- *   apoio         → igual admin exceto dashboard
+ *   apoio         → igual admin exceto algumas seções
  *   usuario       → acesso restrito (só vê os próprios dados)
  */
 
@@ -12,10 +12,10 @@ var AUTH_ROLE_EXIGIDO = (document.currentScript || {}).getAttribute("data-role")
 var ROTAS = { admin: "equipe.html", apoio: "equipe.html", usuario: "equipe.html" };
 
 var MENU = [
-  { href:"dashboard.html",        icon:"fa-chart-line",           label:"Dashboard",            roles:["admin"] },
+  { href:"dashboard.html",        icon:"fa-chart-line",           label:"Dashboard",            roles:["admin","apoio"] },
   { sep:true },
   { titulo:"CADASTROS" },
-  { href:"equipe.html",           icon:"fa-users",                label:"Cadastro de Pessoal",  roles:["admin","apoio","usuario"] },
+  { href:"equipe.html",           icon:"fa-users",                label:"Equipe",               roles:["admin","apoio","usuario"] },
   { href:"clientes.html",         icon:"fa-user",                 label:"Clientes",             roles:["admin","apoio"] },
   { href:"servicos.html",         icon:"fa-hand-holding-heart",   label:"Serviços",             roles:["admin","apoio"] },
   { href:"certificacoes.html",    icon:"fa-certificate",          label:"Certificações",        roles:["admin","apoio","usuario"] },
@@ -24,23 +24,22 @@ var MENU = [
   { href:"atendimentos.html",     icon:"fa-calendar-check",       label:"Atendimentos",         roles:["admin","apoio","usuario"] },
   { href:"escalas.html",          icon:"fa-calendar-days",        label:"Escalas",              roles:["admin","apoio","usuario"] },
   { href:"solicitacoes.html",     icon:"fa-file-lines",           label:"Solicitações",         roles:["admin","apoio","usuario"] },
+  { href:"kanban.html",           icon:"fa-table-columns",        label:"Kanban",               roles:["admin","apoio","usuario"] },
   { sep:true,                                                                                    roles:["admin","apoio"] },
   { titulo:"FINANCEIRO",                                                                         roles:["admin","apoio"] },
   { href:"despesas.html",         icon:"fa-receipt",              label:"Despesas",             roles:["admin","apoio"] },
   { href:"fluxo_caixa.html",      icon:"fa-cash-register",        label:"Fluxo de Caixa",       roles:["admin","apoio"] },
   { href:"estoque.html",          icon:"fa-boxes-stacked",        label:"Estoque",              roles:["admin","apoio"] },
-  { sep:true,                                                                                    roles:["admin"] },
-  { titulo:"PESSOAS",                                                                            roles:["admin"] },
-  { href:"folha_pagamento.html",  icon:"fa-money-check-dollar",   label:"Folha de Pagamento",   roles:["admin"] },
+  { href:"folha_pagamento.html",  icon:"fa-money-check-dollar",   label:"Folha de Pagamento",   roles:["admin","apoio"] },
   { sep:true,                                                                                    roles:["admin"] },
   { titulo:"CONFIGURAÇÕES",                                                                      roles:["admin"] },
   { href:"parametros.html",       icon:"fa-sliders",              label:"Parâmetros",           roles:["admin"] },
 ];
 
 function authBuildSidebar(role, nome) {
-  var pag    = location.pathname.split("/").pop() || "";
+  var pag     = location.pathname.split("/").pop() || "";
   var inicial = (nome || "?")[0].toUpperCase();
-  var rotulo = role === "admin" ? "Administrador" : role === "apoio" ? "Apoio" : "Usuário";
+  var rotulo  = role === "admin" ? "Administrador" : role === "apoio" ? "Apoio" : "Usuário";
   var itens   = "";
 
   MENU.forEach(function(item) {
@@ -54,7 +53,7 @@ function authBuildSidebar(role, nome) {
         itens += '<div class="menu-title">' + item.titulo + '</div>';
       return;
     }
-    if (item.roles.indexOf(role) >= 0) {
+    if (item.roles && item.roles.indexOf(role) >= 0) {
       var ativo = pag === item.href ? "active" : "";
       itens += '<a href="' + item.href + '" class="menu-item ' + ativo + '">' +
         '<i class="fa-solid ' + item.icon + '"></i><span>' + item.label + '</span></a>';
@@ -151,7 +150,7 @@ if (document.readyState === "loading") {
   authInit();
 }
 
-/* ── CHATBOT — carrega automaticamente em todas as páginas ── */
+/* ── CHATBOT ── */
 (function() {
   function loadChatbot() {
     if (location.pathname.includes("login")) return;

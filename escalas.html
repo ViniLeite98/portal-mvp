@@ -55,7 +55,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .t-detalhe{font-size:11px;color:#6b7280;margin-top:1px;}
 .badge-motivo{font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px;background:#fee2e2;color:#991b1b;}
 .empty-state{text-align:center;color:#9ca3af;padding:40px 0;font-size:13px;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:1000;padding:30px 20px;}
 .modal-content{background:#fff;width:440px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
 .modal-header h2{margin:0;font-size:18px;color:#111827;}
@@ -148,18 +148,19 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#2563eb;box-sh
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 <script>
-let terapeutas     = [];
-let solicitacoes   = [];
+let terapeutas = [];
+let solicitacoes = [];
 let diasBloqueados = [];
 let minhaTerapeuta = null;
 let hoje = new Date();
-let ano  = hoje.getFullYear();
-let mes  = hoje.getMonth();
+let ano = hoje.getFullYear();
+let mes = hoje.getMonth();
 let diaSelecionado = null;
+
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const FERIADOS = ["01-01","04-21","05-01","09-07","10-12","11-02","11-15","12-25"];
+
 function isoDate(d){ return d.toISOString().split("T")[0]; }
 function ehFeriado(data){ const md=String(data.getMonth()+1).padStart(2,"0")+"-"+String(data.getDate()).padStart(2,"0"); return FERIADOS.includes(md); }
 function getBloqueado(data){ return diasBloqueados.find(d=>d.data===isoDate(data)); }
@@ -169,6 +170,7 @@ function folgaAprovada(t,data){ return solicitacoes.some(s=>s.terapeuta_cpf===t.
 function ehFeminina(t){ return t.cargo==="Terapeuta Feminina"; }
 function eTerapeuta(u){ return u&&u.role==="usuario"; }
 function getUser(cb,tentativas=20){ if(window.usuarioLogado)return cb(window.usuarioLogado); if(tentativas<=0)return cb(null); setTimeout(()=>getUser(cb,tentativas-1),100); }
+
 async function carregarDados(){
   getUser(async u=>{
     const btnBloq=document.getElementById("btnBloquearDia");
@@ -181,19 +183,27 @@ async function carregarDados(){
     terapeutas=ter||[]; solicitacoes=sol||[]; diasBloqueados=bloq||[];
     if(eTerapeuta(u)&&u.cpf){
       minhaTerapeuta=terapeutas.find(t=>t.cpf===u.cpf)||null;
-      document.getElementById("legendaWrap").innerHTML=`
-        <span><span class="leg-dot" style="background:#22c55e"></span> Disponível</span>
-        <span><span class="leg-dot" style="background:#ef4444"></span> Ausente</span>
-        <span><span class="leg-dot" style="background:#d1d5db"></span> Fechado / Bloqueado</span>`;
+      document.getElementById("legendaWrap").innerHTML=
+        '<span><span class="leg-dot" style="background:#22c55e"></span> Disponível</span>'+
+        '<span><span class="leg-dot" style="background:#ef4444"></span> Ausente</span>'+
+        '<span><span class="leg-dot" style="background:#d1d5db"></span> Fechado / Bloqueado</span>';
     }
     renderCalendar();
   });
 }
-function mudarMes(delta){ mes+=delta; if(mes<0){mes=11;ano--;}if(mes>11){mes=0;ano++;}renderCalendar(); }
+
+function mudarMes(delta){
+  mes+=delta;
+  if(mes<0){mes=11;ano--;}
+  if(mes>11){mes=0;ano++;}
+  renderCalendar();
+}
+
 function renderCalendar(){
   const u=window.usuarioLogado;
-  document.getElementById("tituloMes").textContent=`${MESES[mes]} ${ano}`;
-  const cal=document.getElementById("calendar"); cal.innerHTML="";
+  document.getElementById("tituloMes").textContent=MESES[mes]+" "+ano;
+  const cal=document.getElementById("calendar");
+  cal.innerHTML="";
   const primeiroDia=new Date(ano,mes,1).getDay();
   const totalDias=new Date(ano,mes+1,0).getDate();
   for(let i=0;i<primeiroDia;i++) cal.appendChild(document.createElement("div"));
@@ -207,57 +217,156 @@ function renderCalendar(){
     const feriado=ehFeriado(data);
     if(bloqueado||domingo||feriado){
       div.classList.add(bloqueado?"day-bloqueado":"day-fechado");
-      div.innerHTML=`<div class="day-number">${d}</div><small>${bloqueado?(bloqueado.motivo||"Bloqueado"):"Fechado"}</small>`;
-      if(bloqueado&&u&&(u.role==="admin"||u.role==="apoio")){ div.style.cursor="pointer"; div.onclick=()=>mostrarDia(d); }
-      cal.appendChild(div); continue;
+      div.innerHTML='<div class="day-number">'+d+'</div><small>'+(bloqueado?(bloqueado.motivo||"Bloqueado"):"Fechado")+'</small>';
+      if(bloqueado&&u&&(u.role==="admin"||u.role==="apoio")){
+        div.style.cursor="pointer";
+        div.onclick=(function(dd){return function(){mostrarDia(dd);};})(d);
+      }
+      cal.appendChild(div);
+      continue;
     }
     if(diaSelecionado===d) div.classList.add("selected");
     if(eTerapeuta(u)&&minhaTerapeuta){
       const ausente=folgaSemanal(minhaTerapeuta,data)||folgaAprovada(minhaTerapeuta,data);
       div.classList.add(ausente?"day-vermelho":"day-verde");
-      div.innerHTML=`<div class="day-number">${d}</div><small>${ausente?"Ausente":"Disponível"}</small>`;
+      div.innerHTML='<div class="day-number">'+d+'</div><small>'+(ausente?"Ausente":"Disponível")+'</small>';
     } else {
       const disponiveis=terapeutas.filter(t=>!folgaSemanal(t,data)&&!folgaAprovada(t,data));
       const ausentes=terapeutas.length-disponiveis.length;
       if(ausentes===0) div.classList.add("day-verde");
       else if(ausentes<4) div.classList.add("day-amarelo");
       else div.classList.add("day-vermelho");
-      div.innerHTML=`<div class="day-number">${d}</div><small>${disponiveis.length} disponíveis</small>`;
+      div.innerHTML='<div class="day-number">'+d+'</div><small>'+disponiveis.length+' disponíveis</small>';
     }
-    div.onclick=()=>mostrarDia(d);
+    div.onclick=(function(dd){return function(){mostrarDia(dd);};})(d);
     cal.appendChild(div);
   }
 }
+
 function mostrarDia(dia){
-  diaSelecionado=dia; renderCalendar();
+  diaSelecionado=dia;
+  renderCalendar();
   const u=window.usuarioLogado;
   const data=new Date(ano,mes,dia);
   const painel=document.getElementById("painelDia");
-  const dataStr=`${String(dia).padStart(2,"0")}/${String(mes+1).padStart(2,"0")}/${ano}`;
+  const dataStr=String(dia).padStart(2,"0")+"/"+String(mes+1).padStart(2,"0")+"/"+ano;
   const bloq=getBloqueado(data);
   const domingo=data.getDay()===0;
   const feriado=ehFeriado(data);
-  if(domingo||feriado){ painel.innerHTML=`<div class="dia-header"><h3>${dataStr}</h3><span class="dia-badge" style="background:#f3f4f6;color:#6b7280">Fechado</span></div><div class="bloqueado-info"><i class="fa fa-store-slash"></i>${domingo?"Domingo — clínica fechada":"Feriado nacional"}</div>`; return; }
-  if(bloq){ const btnDesbloquear=u&&(u.role==="admin"||u.role==="apoio")?`<br><br><button onclick="abrirBloquear('${isoDate(data)}')" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px"><i class="fa fa-lock-open"></i> Desbloquear</button>`:""; painel.innerHTML=`<div class="dia-header"><h3>${dataStr}</h3><span class="dia-badge" style="background:#fee2e2;color:#991b1b">Bloqueado</span></div><div class="bloqueado-info"><i class="fa fa-lock"></i>${bloq.motivo||"Dia bloqueado"}${btnDesbloquear}</div>`; return; }
+
+  if(domingo||feriado){
+    painel.innerHTML=
+      '<div class="dia-header"><h3>'+dataStr+'</h3><span class="dia-badge" style="background:#f3f4f6;color:#6b7280">Fechado</span></div>'+
+      '<div class="bloqueado-info"><i class="fa fa-store-slash"></i>'+(domingo?"Domingo — clínica fechada":"Feriado nacional")+'</div>';
+    return;
+  }
+
+  if(bloq){
+    const btnDesbloq=(u&&(u.role==="admin"||u.role==="apoio"))
+      ? '<br><br><button onclick="abrirBloquear(\''+isoDate(data)+'\')" style="background:#dc2626;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:13px"><i class="fa fa-lock-open"></i> Desbloquear</button>'
+      : "";
+    painel.innerHTML=
+      '<div class="dia-header"><h3>'+dataStr+'</h3><span class="dia-badge" style="background:#fee2e2;color:#991b1b">Bloqueado</span></div>'+
+      '<div class="bloqueado-info"><i class="fa fa-lock"></i>'+(bloq.motivo||"Dia bloqueado")+btnDesbloq+'</div>';
+    return;
+  }
+
   if(eTerapeuta(u)&&minhaTerapeuta){
     const t=minhaTerapeuta;
     const ausente=folgaSemanal(t,data)||folgaAprovada(t,data);
-    const motivo=folgaSemanal(t,data)?`Folga (${t.dia_folga})`:"Ausência acordada";
-    painel.innerHTML=`<div class="dia-header"><h3>${dataStr}</h3><span class="dia-badge" style="background:${ausente?"#fee2e2;color:#991b1b":"#dcfce7;color:#16a34a"}">${ausente?"Ausente":"Disponível"}</span></div><div class="terapeuta-item" style="border:none"><div class="t-avatar ${ehFeminina(t)?"fem":"masc'}"><i class="fa ${ehFeminina(t)?"fa-person-dress":"fa-person"}"></i></div><div class="t-info"><div class="t-nome">${t.nome_profissional}</div><div class="t-detalhe">${ausente?`<span class="badge-motivo">${motivo}</span>`:`${t.hora_entrada||""} – ${t.hora_saida||""}`}</div></div></div>`;
+    const motivo=folgaSemanal(t,data)?"Folga ("+t.dia_folga+")":"Ausência acordada";
+    const corBadge=ausente?"background:#fee2e2;color:#991b1b":"background:#dcfce7;color:#16a34a";
+    const avatarClass=ehFeminina(t)?"fem":"masc";
+    const iconClass=ehFeminina(t)?"fa-person-dress":"fa-person";
+    painel.innerHTML=
+      '<div class="dia-header"><h3>'+dataStr+'</h3><span class="dia-badge" style="'+corBadge+'">'+(ausente?"Ausente":"Disponível")+'</span></div>'+
+      '<div class="terapeuta-item" style="border:none">'+
+        '<div class="t-avatar '+avatarClass+'"><i class="fa '+iconClass+'"></i></div>'+
+        '<div class="t-info">'+
+          '<div class="t-nome">'+t.nome_profissional+'</div>'+
+          '<div class="t-detalhe">'+(ausente?'<span class="badge-motivo">'+motivo+'</span>':(t.hora_entrada||"")+" – "+(t.hora_saida||""))+'</div>'+
+        '</div>'+
+      '</div>';
     return;
   }
+
   const disponiveis=terapeutas.filter(t=>!folgaSemanal(t,data)&&!folgaAprovada(t,data));
   const indisponiveis=terapeutas.filter(t=>folgaSemanal(t,data)||folgaAprovada(t,data));
   const fem=disponiveis.filter(t=>ehFeminina(t)).length;
   const masc=disponiveis.filter(t=>!ehFeminina(t)).length;
-  painel.innerHTML=`<div class="dia-header"><h3>${dataStr}</h3><span class="dia-badge" style="background:#dcfce7;color:#16a34a">${disponiveis.length} disponíveis</span></div><div style="display:flex;gap:8px;font-size:12px;color:#6b7280;margin-bottom:4px"><span><i class="fa fa-person-dress" style="color:#db2777"></i> ${fem} femininas</span><span><i class="fa fa-person" style="color:#2563eb"></i> ${masc} masculinos</span></div><div class="section-label">Disponíveis (${disponiveis.length})</div>${disponiveis.map(t=>`<div class="terapeuta-item"><div class="t-avatar ${ehFeminina(t)?"fem":"masc'}"><i class="fa ${ehFeminina(t)?"fa-person-dress":"fa-person"}"></i></div><div class="t-info"><div class="t-nome">${t.nome_profissional}</div><div class="t-detalhe">${t.hora_entrada||""} – ${t.hora_saida||""}</div></div></div>`).join("")||'<div style="color:#9ca3af;font-size:13px">Nenhum disponível</div>'}${indisponiveis.length?`<div class="section-label">Indisponíveis (${indisponiveis.length})</div>${indisponiveis.map(t=>{const motivo=folgaSemanal(t,data)?`Folga (${t.dia_folga})`:"Ausência acordada";return`<div class="terapeuta-item"><div class="t-avatar ${ehFeminina(t)?"fem":"masc'}"><i class="fa ${ehFeminina(t)?"fa-person-dress":"fa-person"}"></i></div><div class="t-info"><div class="t-nome">${t.nome_profissional}</div><div class="t-detalhe"><span class="badge-motivo">${motivo}</span></div></div></div>`;}).join("")}`:""}`;
+
+  let html=
+    '<div class="dia-header"><h3>'+dataStr+'</h3><span class="dia-badge" style="background:#dcfce7;color:#16a34a">'+disponiveis.length+' disponíveis</span></div>'+
+    '<div style="display:flex;gap:8px;font-size:12px;color:#6b7280;margin-bottom:4px">'+
+      '<span><i class="fa fa-person-dress" style="color:#db2777"></i> '+fem+' femininas</span>'+
+      '<span><i class="fa fa-person" style="color:#2563eb"></i> '+masc+' masculinos</span>'+
+    '</div>'+
+    '<div class="section-label">Disponíveis ('+disponiveis.length+')</div>';
+
+  if(disponiveis.length){
+    disponiveis.forEach(function(t){
+      html+='<div class="terapeuta-item">'+
+        '<div class="t-avatar '+(ehFeminina(t)?"fem":"masc")+'"><i class="fa '+(ehFeminina(t)?"fa-person-dress":"fa-person")+'"></i></div>'+
+        '<div class="t-info"><div class="t-nome">'+t.nome_profissional+'</div><div class="t-detalhe">'+(t.hora_entrada||"")+" – "+(t.hora_saida||"")+'</div></div>'+
+      '</div>';
+    });
+  } else {
+    html+='<div style="color:#9ca3af;font-size:13px">Nenhum disponível</div>';
+  }
+
+  if(indisponiveis.length){
+    html+='<div class="section-label">Indisponíveis ('+indisponiveis.length+')</div>';
+    indisponiveis.forEach(function(t){
+      const motivo=folgaSemanal(t,data)?"Folga ("+t.dia_folga+")":"Ausência acordada";
+      html+='<div class="terapeuta-item">'+
+        '<div class="t-avatar '+(ehFeminina(t)?"fem":"masc")+'"><i class="fa '+(ehFeminina(t)?"fa-person-dress":"fa-person")+'"></i></div>'+
+        '<div class="t-info"><div class="t-nome">'+t.nome_profissional+'</div><div class="t-detalhe"><span class="badge-motivo">'+motivo+'</span></div></div>'+
+      '</div>';
+    });
+  }
+
+  painel.innerHTML=html;
 }
-function abrirBloquear(dataPreenchida){ document.getElementById("inputDataBloquear").value=dataPreenchida||isoDate(hoje); document.getElementById("inputMotivo").value=""; verificarBloqueio(); document.getElementById("modalBloquear").style.display="flex"; }
+
+function abrirBloquear(dataPreenchida){
+  document.getElementById("inputDataBloquear").value=dataPreenchida||isoDate(hoje);
+  document.getElementById("inputMotivo").value="";
+  verificarBloqueio();
+  document.getElementById("modalBloquear").style.display="flex";
+}
 function fecharBloquear(){ document.getElementById("modalBloquear").style.display="none"; }
-function verificarBloqueio(){ const val=document.getElementById("inputDataBloquear").value; const bloq=diasBloqueados.find(d=>d.data===val); document.getElementById("infoJaBloqueado").style.display=bloq?"block":"none"; document.getElementById("btnBloquear").style.display=bloq?"none":"inline-flex"; document.getElementById("btnDesbloquear").style.display=bloq?"inline-flex":"none"; if(bloq)document.getElementById("inputMotivo").value=bloq.motivo||""; }
-async function bloquear(){ const data=document.getElementById("inputDataBloquear").value; const motivo=document.getElementById("inputMotivo").value.trim(); if(!data){alert("Selecione uma data.");return;} const {error}=await client.from("dias_bloqueados").upsert({data,motivo:motivo||null}); if(error){alert("Erro: "+error.message);return;} fecharBloquear();await carregarDados(); if(diaSelecionado)mostrarDia(diaSelecionado); }
-async function desbloquear(){ const data=document.getElementById("inputDataBloquear").value; if(!data)return; const {error}=await client.from("dias_bloqueados").delete().eq("data",data); if(error){alert("Erro: "+error.message);return;} fecharBloquear();await carregarDados(); if(diaSelecionado)mostrarDia(diaSelecionado); }
-document.addEventListener('DOMContentLoaded',()=>{
+
+function verificarBloqueio(){
+  const val=document.getElementById("inputDataBloquear").value;
+  const bloq=diasBloqueados.find(d=>d.data===val);
+  document.getElementById("infoJaBloqueado").style.display=bloq?"block":"none";
+  document.getElementById("btnBloquear").style.display=bloq?"none":"inline-flex";
+  document.getElementById("btnDesbloquear").style.display=bloq?"inline-flex":"none";
+  if(bloq) document.getElementById("inputMotivo").value=bloq.motivo||"";
+}
+
+async function bloquear(){
+  const data=document.getElementById("inputDataBloquear").value;
+  const motivo=document.getElementById("inputMotivo").value.trim();
+  if(!data){alert("Selecione uma data.");return;}
+  const {error}=await client.from("dias_bloqueados").upsert({data,motivo:motivo||null});
+  if(error){alert("Erro: "+error.message);return;}
+  fecharBloquear();
+  await carregarDados();
+  if(diaSelecionado) mostrarDia(diaSelecionado);
+}
+
+async function desbloquear(){
+  const data=document.getElementById("inputDataBloquear").value;
+  if(!data) return;
+  const {error}=await client.from("dias_bloqueados").delete().eq("data",data);
+  if(error){alert("Erro: "+error.message);return;}
+  fecharBloquear();
+  await carregarDados();
+  if(diaSelecionado) mostrarDia(diaSelecionado);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
   document.getElementById("inputDataBloquear").addEventListener("change",verificarBloqueio);
   carregarDados();
 });

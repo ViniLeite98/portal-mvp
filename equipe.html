@@ -75,6 +75,16 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .doc-upload-row .field{flex:1;min-width:140px;}
 .btn-upload{height:38px;padding:0 16px;white-space:nowrap;background:#2563eb;font-size:13px;align-self:flex-end;border-radius:6px;}
 .upload-status{font-size:13px;color:#2563eb;margin-top:8px;display:none;}
+.fila-upload{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+.fila-item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;}
+.fila-item-tipo{font-size:12px;font-weight:600;color:#2563eb;background:#eff6ff;border-radius:6px;padding:2px 8px;white-space:nowrap;}
+.fila-item-nome{flex:1;font-size:12px;color:#374151;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fila-item-remove{background:none;color:#dc2626;border:none;cursor:pointer;font-size:13px;padding:2px 6px;flex-shrink:0;}
+.fila-item-status{font-size:11px;font-weight:600;white-space:nowrap;}
+.fila-item-status.ok{color:#16a34a;}
+.fila-item-status.err{color:#dc2626;}
+.fila-item-status.sending{color:#2563eb;}
+.btn-upload-all{background:#16a34a;height:38px;padding:0 18px;white-space:nowrap;font-size:13px;border-radius:6px;display:inline-flex;align-items:center;gap:7px;}
 .doc-list{display:flex;flex-direction:column;gap:8px;}
 .doc-item{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:11px 14px;}
 .doc-item-left{display:flex;align-items:center;gap:11px;}
@@ -341,12 +351,20 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
                 <option>Diploma / Certificado</option><option>Outro</option>
               </select>
             </div>
-            <div class="field" style="flex:2"><label>Arquivo</label><input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx"></div>
-            <button class="btn-upload" onclick="uploadDoc()"><i class="fa fa-upload"></i> Enviar</button>
+            <div class="field" style="flex:2"><label>Arquivo(s)</label>
+              <input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx" multiple onchange="adicionarFilaUpload()">
+            </div>
+            <button class="btn-upload" onclick="adicionarFilaUpload()" style="white-space:nowrap"><i class="fa fa-plus"></i> Adicionar</button>
           </div>
-          <div class="upload-status" id="uploadStatus"><i class="fa fa-spinner fa-spin"></i> Enviando...</div>
+          <div class="fila-upload" id="filaUpload"></div>
+          <div style="display:flex;justify-content:flex-end;margin-top:10px">
+            <button class="btn-upload-all" id="btnEnviarTodos" onclick="enviarTodos()" style="display:none">
+              <i class="fa fa-upload"></i> Enviar Todos
+            </button>
+          </div>
         </div>
-        <div id="docAviso" style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:12px;display:none"><i class="fa fa-info-circle"></i> Salve o cadastro primeiro para habilitar o envio de documentos.</div><div id="docLista" class="doc-list"><div class="doc-empty">Nenhum documento anexado.</div></div>
+        <div id="docAviso" style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:12px;display:none"><i class="fa fa-info-circle"></i> Salve o cadastro primeiro para habilitar o envio de documentos.</div>
+        <div id="docLista" class="doc-list"><div class="doc-empty">Nenhum documento anexado.</div></div>
       </div>
 
     </div>
@@ -557,19 +575,107 @@ async function carregarDocs(cpf){
   lista.innerHTML=data.map(d=>'<div class="doc-item" id="doc-'+d.id+'"><div class="doc-item-left"><div class="doc-icon"><i class="fa '+iconeDoc(d.nome_arquivo)+'"></i></div><div><div class="doc-name">'+d.nome_arquivo+'</div><div class="doc-tipo">'+d.tipo+' · '+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div></div></div><div class="doc-item-right"><a href="'+d.url+'" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc(\''+d.id+'\',\''+d.url+'\')"><i class="fa fa-trash"></i></button></div></div>').join("");
 }
 
+// fila de arquivos pendentes: [{tipo, file, id}]
+var filaItems = [];
+var filaCounter = 0;
+
+function adicionarFilaUpload(){
+  if(!cpfAtual){
+    document.getElementById("docAviso").style.display="block";
+    document.getElementById("doc_arquivo").value="";
+    return;
+  }
+  const tipo = document.getElementById("doc_tipo").value;
+  const files = document.getElementById("doc_arquivo").files;
+  if(!files||!files.length) return;
+
+  Array.from(files).forEach(function(file){
+    const id = "fila-"+(++filaCounter);
+    filaItems.push({id, tipo, file, status:"pendente"});
+    renderFilaItem({id, tipo, file, status:"pendente"});
+  });
+
+  document.getElementById("doc_arquivo").value="";
+  atualizarBtnEnviar();
+}
+
+function renderFilaItem(item){
+  const fila = document.getElementById("filaUpload");
+  const div = document.createElement("div");
+  div.className = "fila-item";
+  div.id = item.id;
+  div.innerHTML =
+    '<span class="fila-item-tipo">'+item.tipo+'</span>'+
+    '<span class="fila-item-nome" title="'+item.file.name+'">'+item.file.name+'</span>'+
+    '<span class="fila-item-status" id="st-'+item.id+'">Pendente</span>'+
+    '<button class="fila-item-remove" onclick="removerFilaItem(''+item.id+'')" title="Remover"><i class="fa fa-times"></i></button>';
+  fila.appendChild(div);
+}
+
+function removerFilaItem(id){
+  filaItems = filaItems.filter(function(i){return i.id!==id;});
+  const el = document.getElementById(id);
+  if(el) el.remove();
+  atualizarBtnEnviar();
+}
+
+function atualizarBtnEnviar(){
+  const pendentes = filaItems.filter(function(i){return i.status==="pendente";});
+  const btn = document.getElementById("btnEnviarTodos");
+  if(btn) btn.style.display = pendentes.length ? "inline-flex" : "none";
+  if(btn) btn.innerHTML = '<i class="fa fa-upload"></i> Enviar '+pendentes.length+' arquivo'+(pendentes.length!==1?"s":"");
+}
+
+async function enviarTodos(){
+  if(!cpfAtual){alert("Salve os dados pessoais primeiro.");return;}
+  const pendentes = filaItems.filter(function(i){return i.status==="pendente";});
+  if(!pendentes.length) return;
+
+  const btn = document.getElementById("btnEnviarTodos");
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i> Enviando...';}
+
+  for(var i=0;i<pendentes.length;i++){
+    const item = pendentes[i];
+    const stEl = document.getElementById("st-"+item.id);
+    if(stEl){stEl.textContent="Enviando...";stEl.className="fila-item-status sending";}
+
+    const fileName = cpfAtual+"/"+Date.now()+"_"+limparNome(item.file.name);
+    const {error:upErr} = await client.storage.from("documentos").upload(fileName, item.file);
+    if(upErr){
+      item.status="erro";
+      if(stEl){stEl.textContent="Erro!";stEl.className="fila-item-status err";}
+      continue;
+    }
+    const {data:urlData} = client.storage.from("documentos").getPublicUrl(fileName);
+    const {error:dbErr} = await client.from("documentos").insert({
+      equipe_id:cpfAtual, tipo:item.tipo,
+      nome_arquivo:item.file.name, url:urlData.publicUrl
+    });
+    if(dbErr){
+      item.status="erro";
+      if(stEl){stEl.textContent="Erro!";stEl.className="fila-item-status err";}
+    } else {
+      item.status="ok";
+      if(stEl){stEl.textContent="✓ Enviado";stEl.className="fila-item-status ok";}
+      // remove da fila visual após 1.5s
+      setTimeout((function(iid){return function(){
+        const el=document.getElementById(iid);if(el)el.remove();
+      };})(item.id), 1500);
+    }
+  }
+
+  // limpa itens ok da array
+  setTimeout(function(){
+    filaItems = filaItems.filter(function(i){return i.status!=="ok";});
+    atualizarBtnEnviar();
+    carregarDocs(cpfAtual);
+    if(btn){btn.disabled=false;}
+  }, 1600);
+}
+
 async function uploadDoc(){
-  if(!cpfAtual){alert("Salve os dados pessoais primeiro para habilitar o envio de documentos.");return;}
-  const tipo=document.getElementById("doc_tipo").value;const file=document.getElementById("doc_arquivo").files[0];
-  if(!file){alert("Selecione um arquivo.");return;}
-  const statusEl=document.getElementById("uploadStatus");statusEl.style.display="block";
-  const fileName=cpfAtual+'/'+Date.now()+'_'+limparNome(file.name);
-  const {error:uploadError}=await client.storage.from("documentos").upload(fileName,file);
-  if(uploadError){statusEl.style.display="none";alert("Erro no upload: "+uploadError.message);return;}
-  const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
-  const {error}=await client.from("documentos").insert({equipe_id:cpfAtual,tipo,nome_arquivo:file.name,url:urlData.publicUrl});
-  statusEl.style.display="none";
-  if(error){alert("Erro ao salvar: "+error.message);return;}
-  document.getElementById("doc_arquivo").value="";carregarDocs(cpfAtual);
+  // mantido para compatibilidade mas agora usa novo fluxo
+  adicionarFilaUpload();
 }
 
 async function excluirDoc(id,url){

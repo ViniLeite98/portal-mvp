@@ -34,7 +34,7 @@ button:hover{opacity:.9;}
 .badge-nao-acordado{background:#fee2e2;color:#dc2626;}
 .arquivo-link{font-size:12px;color:#2563eb;text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px;}
 .arquivo-link:hover{text-decoration:underline;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:1000;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:600px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
 .modal-header h2{margin:0;font-size:18px;color:#111827;}
@@ -132,7 +132,7 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
       <div class="field"><label>Tipo *</label><select id="tipo"></select></div>
       <div class="field">
         <label>Status</label>
-        <select id="status" onchange="toggleAcordadoPor()">
+        <select id="status">
           <option value="Pendente">Pendente</option>
           <option value="Acordado">Acordado</option>
           <option value="Não Acordado">Não Acordado</option>
@@ -163,313 +163,243 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 <script>
-function toggleAcordadoPor(){
-  const status = document.getElementById("status").value;
-  const wrap   = document.getElementById("wrapAcordadoPor");
-  if(wrap) wrap.style.display = (status==="Acordado"||status==="Não Acordado")?"block":"none";
-}
+function getUser(cb,tentativas=20){if(window.usuarioLogado)return cb(window.usuarioLogado);if(tentativas<=0)return cb(null);setTimeout(()=>getUser(cb,tentativas-1),100);}
+function podeVerTudo(u){return u&&(u.role==="admin"||u.role==="apoio");}
+function eUsuario(u){return u&&u.role==="usuario";}
 
-/* ── ROLES ── */
-function getUser(cb, tentativas=20){
-  if(window.usuarioLogado) return cb(window.usuarioLogado);
-  if(tentativas<=0) return cb(null);
-  setTimeout(()=>getUser(cb,tentativas-1),100);
-}
-function podeVerTudo(u){ return u && (u.role==="admin" || u.role==="apoio"); }
-function eUsuario(u){ return u && u.role==="usuario"; }
+document.addEventListener("DOMContentLoaded",function(){
+  let idEdicao=null,arquivoAtualUrl=null,arquivoAtualNome=null,mapaTerapeutas={},todasSolicitacoes=[];
 
-document.addEventListener("DOMContentLoaded", function(){
+  function fmtData(v){if(!v)return"—";const[y,m,d]=v.split("-");return d+"/"+m+"/"+y;}
+  function limparNome(nome){return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");}
 
-let idEdicao          = null;
-let arquivoAtualUrl   = null;
-let arquivoAtualNome  = null;
-let mapaTerapeutas    = {};
-let todasSolicitacoes = [];
-
-function fmtData(v){
-  if(!v) return "—";
-  const[y,m,d]=v.split("-");return`${d}/${m}/${y}`;
-}
-function limparNome(nome){
-  return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
-}
-
-async function carregarTerapeutas(){
-  const {data} = await client.from("terapeutas").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
-  mapaTerapeutas = {};
-  (data||[]).forEach(t=>{ mapaTerapeutas[t.cpf]=t.nome_profissional; });
-  const sel=document.getElementById("terapeuta");
-  sel.innerHTML="<option value=''>Selecione</option>";
-  (data||[]).forEach(t=>{ sel.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`; });
-
-  const {data:params}=await client.from("parametros").select("valor").eq("tipo","tipos_solicitacao").eq("ativo",true).order("valor");
-  const tipos=(params||[]).map(p=>p.valor);
-  const listaTipos=tipos.length?tipos:["Falta","Férias","Atestado","Viagem"];
-  const selTipo=document.getElementById("tipo");
-  selTipo.innerHTML=listaTipos.map(t=>`<option value="${t}">${t}</option>`).join("");
-  const selFiltro=document.getElementById("filtroTipo");
-  selFiltro.innerHTML=`<option value="">Todos os tipos</option>`+listaTipos.map(t=>`<option value="${t}">${t}</option>`).join("");
-}
-
-async function carregar(){
-  getUser(async u=>{
-    let q=client.from("solicitacoes").select("*").order("created_at",{ascending:false});
-
-    // Usuario: vê só as próprias
-    if(eUsuario(u) && u.cpf) q=q.eq("terapeuta_cpf",u.cpf);
-
-    const {data}=await q;
-    todasSolicitacoes=data||[];
-
-    // Botão Nova Solicitação — todos podem criar
-    const btn=document.getElementById("btnNovaSol");
-    if(btn) btn.style.display="inline-flex";
-
-    // Botões aprovar/reprovar/excluir — só admin e apoio
-    window._podeGerenciar=podeVerTudo(u);
-
-    render();
-  });
-}
-
-function render(){
-  const busca     =(document.getElementById("buscaNome").value||"").toLowerCase();
-  const filtStatus=document.getElementById("filtroStatus").value;
-  const filtTipo  =document.getElementById("filtroTipo").value;
-
-  const lista=todasSolicitacoes.filter(s=>{
-    const nome=(mapaTerapeutas[s.terapeuta_cpf]||"").toLowerCase();
-    return nome.includes(busca)&&(!filtStatus||s.status===filtStatus)&&(!filtTipo||s.tipo===filtTipo);
-  });
-
-  const tbody=document.getElementById("lista");
-  tbody.innerHTML="";
-  if(!lista.length){
-    tbody.innerHTML=`<tr class="empty-row"><td colspan="7">Nenhuma solicitação encontrada.</td></tr>`;
-    return;
-  }
-
-  const podeGerenciar=window._podeGerenciar;
-
-  lista.forEach(s=>{
-    const nome=mapaTerapeutas[s.terapeuta_cpf]||s.terapeuta_cpf;
-    const badgeClass=s.status==="Acordado"?"badge-acordado":s.status==="Não Acordado"?"badge-nao-acordado":"badge-pendente";
-    const iconeStatus=s.status==="Acordado"?"fa-check":s.status==="Não Acordado"?"fa-times":"fa-clock";
-    const arquivoCol=s.arquivo_url
-      ?`<a class="arquivo-link" href="${s.arquivo_url}" target="_blank"><i class="fa fa-paperclip"></i> Ver</a>`
-      :`<span style="color:#d1d5db;font-size:12px">—</span>`;
-
-    const btnAprovar =(podeGerenciar&&s.status!=="Acordado")
-      ?`<button class="btn-aprovar" onclick="abrirConfirmar('${s.id}','Acordado')"><i class="fa fa-check"></i></button>`:"";
-    const btnReprovar=(podeGerenciar&&s.status!=="Não Acordado")
-      ?`<button class="btn-reprovar" onclick="abrirConfirmar('${s.id}','Não Acordado')"><i class="fa fa-times"></i></button>`:"";
-    const btnExcluir =podeGerenciar
-      ?`<button class="btn-excluir" onclick="excluir('${s.id}','${(s.arquivo_url||"").replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>`:"";
-
-    tbody.innerHTML+=`<tr>
-      <td><strong>${nome}</strong></td>
-      <td>${s.tipo}</td>
-      <td style="white-space:nowrap">${fmtData(s.data_inicio)} → ${fmtData(s.data_fim)}</td>
-      <td><span class="badge ${badgeClass}"><i class="fa ${iconeStatus}"></i> ${s.status}</span></td>
-      <td style="font-size:12px;color:#6b7280">${s.aprovado_por?`<i class="fa fa-user"></i> ${s.aprovado_por}`:"—"}</td>
-      <td>${arquivoCol}</td>
-      <td style="white-space:nowrap;display:flex;gap:4px">
-        <button onclick="abrirEditar('${s.id}')"><i class="fa fa-pencil"></i></button>
-        ${btnAprovar}${btnReprovar}${btnExcluir}
-      </td>
-    </tr>`;
-  });
-}
-
-function resetModal(){
-  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
-  set("terapeuta",""); document.getElementById("terapeuta").disabled=false;
-  const tipoEl=document.getElementById("tipo");if(tipoEl)tipoEl.value=tipoEl.options[0]?.value||"";
-  set("status","Pendente"); document.getElementById("status").disabled=false;
-  set("data_inicio",""); set("data_fim",""); set("justificativa","");
-  const arqEl=document.getElementById("arquivo");if(arqEl){try{arqEl.value="";}catch(e){}}
-  arquivoAtualUrl=null; arquivoAtualNome=null;
-  document.getElementById("arquivoAtual").style.display="none";
-}
-
-window.abrirNovo=function(){
-  idEdicao=null; resetModal();
-  document.getElementById("modalTitulo").textContent="Nova Solicitação";
-  document.getElementById("status").value="Pendente";
-  document.getElementById("status").disabled=true;
-  getUser(u=>{
+  async function carregarTerapeutas(){
+    const {data}=await client.from("terapeutas").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
+    mapaTerapeutas={};
+    (data||[]).forEach(t=>{mapaTerapeutas[t.cpf]=t.nome_profissional;});
     const sel=document.getElementById("terapeuta");
-    // Usuario: pré-seleciona e trava
-    if(eUsuario(u)&&u.cpf){ sel.value=u.cpf; sel.disabled=true; }
-    else { sel.disabled=false; }
-  });
-  document.getElementById("modal").style.display="flex";
-};
-
-window.abrirEditar=async function(id){
-  idEdicao=id;
-  const {data:s}=await client.from("solicitacoes").select("*").eq("id",id).single();
-  if(!s) return;
-  resetModal();
-  document.getElementById("terapeuta").value   =s.terapeuta_cpf||"";
-  document.getElementById("tipo").value        =s.tipo||"Falta";
-  document.getElementById("status").value      =s.status||"Pendente";
-  document.getElementById("data_inicio").value =s.data_inicio||"";
-  document.getElementById("data_fim").value    =s.data_fim||"";
-  document.getElementById("justificativa").value=s.justificativa||"";
-  if(s.arquivo_url){
-    arquivoAtualUrl=s.arquivo_url; arquivoAtualNome=s.arquivo_nome||"Ver arquivo";
-    const el=document.getElementById("arquivoAtual"); el.style.display="flex";
-    document.getElementById("arquivoLink").href=s.arquivo_url;
-    document.getElementById("arquivoLink").textContent=s.arquivo_nome||"Ver arquivo";
-  }
-  document.getElementById("modalTitulo").textContent=mapaTerapeutas[s.terapeuta_cpf]||"Editar Solicitação";
-  document.getElementById("status").disabled=false;
-  getUser(u=>{
-    const sel=document.getElementById("terapeuta");
-    sel.disabled=eUsuario(u);
-  });
-  document.getElementById("modal").style.display="flex";
-};
-
-window.fecharModal=function(){ document.getElementById("modal").style.display="none"; };
-window.removerArquivo=function(){
-  arquivoAtualUrl=null; arquivoAtualNome=null;
-  document.getElementById("arquivoAtual").style.display="none";
-  document.getElementById("arquivo").value="";
-};
-
-window.salvar=async function(){
-  const terapeuta =document.getElementById("terapeuta").value;
-  const tipo      =document.getElementById("tipo").value;
-  const status    =document.getElementById("status").value;
-  const dataInicio=document.getElementById("data_inicio").value;
-  const dataFim   =document.getElementById("data_fim").value;
-  const justif    =document.getElementById("justificativa").value.trim();
-  const file      =document.getElementById("arquivo").files[0];
-
-  if(!terapeuta){alert("Selecione o profissional.");return;}
-  if(!dataInicio||!dataFim){alert("Preencha as datas.");return;}
-  if(dataFim<dataInicio){alert("Data fim não pode ser menor que data início.");return;}
-
-  if(status==="Acordado"){
-    const {data:todasAprovadas}=await client.from("solicitacoes").select("terapeuta_cpf,data_inicio,data_fim").eq("status","Acordado").neq("terapeuta_cpf",terapeuta);
-    const {data:todosTerapeutas}=await client.from("terapeutas").select("cpf,tem_folga,dia_folga").eq("status","Ativo").in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]);
-    const DIAS_SEMANA=["domingo","segunda","terça","quarta","quinta","sexta","sábado"];
-    let diaMaisCritico=null,maxAusentes=0;
-    const inicio=new Date(dataInicio+"T00:00:00"),fim=new Date(dataFim+"T00:00:00");
-    for(let d=new Date(inicio);d<=fim;d.setDate(d.getDate()+1)){
-      if(d.getDay()===0) continue;
-      const dStr=d.toISOString().split("T")[0],diaSem=DIAS_SEMANA[d.getDay()];
-      let ausentes=0;
-      (todosTerapeutas||[]).forEach(t=>{if(t.tem_folga==="Sim"&&(t.dia_folga||"").toLowerCase()===diaSem)ausentes++;});
-      (todasAprovadas||[]).forEach(s=>{if(dStr>=s.data_inicio&&dStr<=s.data_fim)ausentes++;});
-      ausentes++;
-      if(ausentes>maxAusentes){maxAusentes=ausentes;diaMaisCritico=new Date(d);}
-    }
-    if(diaMaisCritico&&maxAusentes>=4){
-      if(!confirm(`🔴 ATENÇÃO: No dia ${diaMaisCritico.toLocaleDateString("pt-BR")}, ${maxAusentes} terapeutas estarão ausentes.\n\nDeseja aprovar mesmo assim?`)) return;
-    } else if(diaMaisCritico&&maxAusentes>=2){
-      if(!confirm(`🟡 Atenção: No dia ${diaMaisCritico.toLocaleDateString("pt-BR")}, ${maxAusentes} terapeutas estarão ausentes.\n\nDeseja aprovar mesmo assim?`)) return;
-    }
+    sel.innerHTML="<option value=''>Selecione</option>";
+    (data||[]).forEach(t=>{sel.innerHTML+="<option value='"+t.cpf+"'>"+t.nome_profissional+"</option>";});
+    const {data:params}=await client.from("parametros").select("valor").eq("tipo","tipos_solicitacao").eq("ativo",true).order("valor");
+    const tipos=(params||[]).map(p=>p.valor);
+    const listaTipos=tipos.length?tipos:["Falta","Férias","Atestado","Viagem"];
+    const selTipo=document.getElementById("tipo");
+    selTipo.innerHTML=listaTipos.map(t=>"<option value='"+t+"'>"+t+"</option>").join("");
+    const selFiltro=document.getElementById("filtroTipo");
+    selFiltro.innerHTML="<option value=''>Todos os tipos</option>"+listaTipos.map(t=>"<option value='"+t+"'>"+t+"</option>").join("");
   }
 
-  let query=client.from("solicitacoes").select("id,tipo,data_inicio,data_fim,status").eq("terapeuta_cpf",terapeuta).neq("status","Não Acordado").lte("data_inicio",dataFim).gte("data_fim",dataInicio);
-  if(idEdicao) query=query.neq("id",idEdicao);
-  const {data:conflitos}=await query;
-  if(conflitos&&conflitos.length>0){
-    const c=conflitos[0];
-    alert(`⚠️ Já existe uma solicitação de "${c.tipo}" para este profissional no período ${fmtData(c.data_inicio)} → ${fmtData(c.data_fim)} (${c.status}).\nRevise as datas antes de continuar.`);
-    return;
+  async function carregar(){
+    getUser(async u=>{
+      let q=client.from("solicitacoes").select("*").order("created_at",{ascending:false});
+      if(eUsuario(u)&&u.cpf) q=q.eq("terapeuta_cpf",u.cpf);
+      const {data}=await q;
+      todasSolicitacoes=data||[];
+      const btn=document.getElementById("btnNovaSol");
+      if(btn) btn.style.display="inline-flex";
+      window._podeGerenciar=podeVerTudo(u);
+      render();
+    });
   }
 
-  const statusOriginal=idEdicao?(todasSolicitacoes.find(s=>s.id===idEdicao)||{}).status:"Pendente";
-  const statusMudou=status!==statusOriginal;
-  const nomeLogado=(window.usuarioLogado&&window.usuarioLogado.nome)||"Usuário";
+  function render(){
+    const busca=(document.getElementById("buscaNome").value||"").toLowerCase();
+    const filtStatus=document.getElementById("filtroStatus").value;
+    const filtTipo=document.getElementById("filtroTipo").value;
+    const lista=todasSolicitacoes.filter(s=>{
+      const nome=(mapaTerapeutas[s.terapeuta_cpf]||"").toLowerCase();
+      return nome.includes(busca)&&(!filtStatus||s.status===filtStatus)&&(!filtTipo||s.tipo===filtTipo);
+    });
+    const tbody=document.getElementById("lista");
+    tbody.innerHTML="";
+    if(!lista.length){tbody.innerHTML="<tr class='empty-row'><td colspan='7'>Nenhuma solicitação encontrada.</td></tr>";return;}
+    const podeGerenciar=window._podeGerenciar;
+    lista.forEach(s=>{
+      const nome=mapaTerapeutas[s.terapeuta_cpf]||s.terapeuta_cpf;
+      const badgeClass=s.status==="Acordado"?"badge-acordado":s.status==="Não Acordado"?"badge-nao-acordado":"badge-pendente";
+      const iconeStatus=s.status==="Acordado"?"fa-check":s.status==="Não Acordado"?"fa-times":"fa-clock";
+      const arquivoCol=s.arquivo_url
+        ?"<a class='arquivo-link' href='"+s.arquivo_url+"' target='_blank'><i class='fa fa-paperclip'></i> Ver</a>"
+        :"<span style='color:#d1d5db;font-size:12px'>—</span>";
+      const btnAprovar=(podeGerenciar&&s.status!=="Acordado")
+        ?"<button class='btn-aprovar' onclick=\"abrirConfirmar('"+s.id+"','Acordado')\"><i class='fa fa-check'></i></button>":"";
+      const btnReprovar=(podeGerenciar&&s.status!=="Não Acordado")
+        ?"<button class='btn-reprovar' onclick=\"abrirConfirmar('"+s.id+"','Não Acordado')\"><i class='fa fa-times'></i></button>":"";
+      const btnExcluir=podeGerenciar
+        ?"<button class='btn-excluir' onclick=\"excluir('"+s.id+"','"+( s.arquivo_url||"").replace(/'/g,"\\'")+"')\"><i class='fa fa-trash'></i></button>":"";
+      tbody.innerHTML+="<tr>"+
+        "<td><strong>"+nome+"</strong></td>"+
+        "<td>"+s.tipo+"</td>"+
+        "<td style='white-space:nowrap'>"+fmtData(s.data_inicio)+" → "+fmtData(s.data_fim)+"</td>"+
+        "<td><span class='badge "+badgeClass+"'><i class='fa "+iconeStatus+"'></i> "+s.status+"</span></td>"+
+        "<td style='font-size:12px;color:#6b7280'>"+(s.aprovado_por?"<i class='fa fa-user'></i> "+s.aprovado_por:"—")+"</td>"+
+        "<td>"+arquivoCol+"</td>"+
+        "<td style='white-space:nowrap;display:flex;gap:4px'>"+
+          "<button onclick=\"abrirEditar('"+s.id+"')\"><i class='fa fa-pencil'></i></button>"+
+          btnAprovar+btnReprovar+btnExcluir+
+        "</td>"+
+      "</tr>";
+    });
+  }
 
-  const payload={
-    terapeuta_cpf:terapeuta, tipo, status,
-    data_inicio:dataInicio, data_fim:dataFim,
-    justificativa:justif||null,
-    arquivo_url:arquivoAtualUrl||null,
-    arquivo_nome:arquivoAtualNome||null,
-    aprovado_por:statusMudou?nomeLogado:undefined
+  function resetModal(){
+    const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val;};
+    set("terapeuta",""); document.getElementById("terapeuta").disabled=false;
+    const tipoEl=document.getElementById("tipo");if(tipoEl)tipoEl.value=tipoEl.options[0]?.value||"";
+    set("status","Pendente"); document.getElementById("status").disabled=false;
+    set("data_inicio",""); set("data_fim",""); set("justificativa","");
+    const arqEl=document.getElementById("arquivo");if(arqEl){try{arqEl.value="";}catch(e){}}
+    arquivoAtualUrl=null; arquivoAtualNome=null;
+    document.getElementById("arquivoAtual").style.display="none";
+  }
+
+  window.abrirNovo=function(){
+    idEdicao=null; resetModal();
+    document.getElementById("modalTitulo").textContent="Nova Solicitação";
+    document.getElementById("status").value="Pendente";
+    document.getElementById("status").disabled=true;
+    getUser(u=>{
+      const sel=document.getElementById("terapeuta");
+      if(eUsuario(u)&&u.cpf){sel.value=u.cpf;sel.disabled=true;}
+      else{sel.disabled=false;}
+    });
+    document.getElementById("modal").style.display="flex";
   };
-  if(status==="Pendente") payload.aprovado_por=null;
-  Object.keys(payload).forEach(k=>payload[k]===undefined&&delete payload[k]);
 
-  if(file){
-    const statusEl=document.getElementById("uploadStatus");
-    statusEl.style.display="block";
-    const fileName=`solicitacoes/${Date.now()}_${limparNome(file.name)}`;
-    const {error:upErr}=await client.storage.from("documentos").upload(fileName,file);
-    if(upErr){statusEl.style.display="none";alert("Erro no upload: "+upErr.message);return;}
-    const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
-    payload.arquivo_url=urlData.publicUrl; payload.arquivo_nome=file.name;
-    statusEl.style.display="none";
-  }
+  window.abrirEditar=async function(id){
+    idEdicao=id;
+    const {data:s}=await client.from("solicitacoes").select("*").eq("id",id).single();
+    if(!s) return;
+    resetModal();
+    document.getElementById("terapeuta").value=s.terapeuta_cpf||"";
+    document.getElementById("tipo").value=s.tipo||"Falta";
+    document.getElementById("status").value=s.status||"Pendente";
+    document.getElementById("data_inicio").value=s.data_inicio||"";
+    document.getElementById("data_fim").value=s.data_fim||"";
+    document.getElementById("justificativa").value=s.justificativa||"";
+    if(s.arquivo_url){
+      arquivoAtualUrl=s.arquivo_url; arquivoAtualNome=s.arquivo_nome||"Ver arquivo";
+      const el=document.getElementById("arquivoAtual"); el.style.display="flex";
+      document.getElementById("arquivoLink").href=s.arquivo_url;
+      document.getElementById("arquivoLink").textContent=s.arquivo_nome||"Ver arquivo";
+    }
+    document.getElementById("modalTitulo").textContent=mapaTerapeutas[s.terapeuta_cpf]||"Editar Solicitação";
+    document.getElementById("status").disabled=false;
+    getUser(u=>{const sel=document.getElementById("terapeuta");sel.disabled=eUsuario(u);});
+    document.getElementById("modal").style.display="flex";
+  };
 
-  let error;
-  if(idEdicao){({error}=await client.from("solicitacoes").update(payload).eq("id",idEdicao));}
-  else{({error}=await client.from("solicitacoes").insert(payload));}
-  if(error){alert("Erro ao salvar: "+error.message);return;}
-  fecharModal(); carregar();
-};
+  window.fecharModal=function(){document.getElementById("modal").style.display="none";};
+  window.removerArquivo=function(){
+    arquivoAtualUrl=null; arquivoAtualNome=null;
+    document.getElementById("arquivoAtual").style.display="none";
+    document.getElementById("arquivo").value="";
+  };
 
-window.alterarStatus=async function(id,novoStatus,aprovadoPor){
-  await client.from("solicitacoes").update({status:novoStatus,aprovado_por:aprovadoPor||null}).eq("id",id);
-  carregar();
-};
+  window.salvar=async function(){
+    const terapeuta=document.getElementById("terapeuta").value;
+    const tipo=document.getElementById("tipo").value;
+    const status=document.getElementById("status").value;
+    const dataInicio=document.getElementById("data_inicio").value;
+    const dataFim=document.getElementById("data_fim").value;
+    const justif=document.getElementById("justificativa").value.trim();
+    const file=document.getElementById("arquivo").files[0];
+    if(!terapeuta){alert("Selecione o profissional.");return;}
+    if(!dataInicio||!dataFim){alert("Preencha as datas.");return;}
+    if(dataFim<dataInicio){alert("Data fim não pode ser menor que data início.");return;}
+    let query=client.from("solicitacoes").select("id,tipo,data_inicio,data_fim,status").eq("terapeuta_cpf",terapeuta).neq("status","Não Acordado").lte("data_inicio",dataFim).gte("data_fim",dataInicio);
+    if(idEdicao) query=query.neq("id",idEdicao);
+    const {data:conflitos}=await query;
+    if(conflitos&&conflitos.length>0){
+      const c=conflitos[0];
+      alert("⚠️ Já existe uma solicitação de \""+c.tipo+"\" para este profissional no período "+fmtData(c.data_inicio)+" → "+fmtData(c.data_fim)+" ("+c.status+").\nRevise as datas antes de continuar.");
+      return;
+    }
+    const statusOriginal=idEdicao?(todasSolicitacoes.find(s=>s.id===idEdicao)||{}).status:"Pendente";
+    const statusMudou=status!==statusOriginal;
+    const nomeLogado=(window.usuarioLogado&&window.usuarioLogado.nome)||"Usuário";
+    const payload={
+      terapeuta_cpf:terapeuta,tipo,status,
+      data_inicio:dataInicio,data_fim:dataFim,
+      justificativa:justif||null,
+      arquivo_url:arquivoAtualUrl||null,
+      arquivo_nome:arquivoAtualNome||null,
+      aprovado_por:statusMudou?nomeLogado:undefined
+    };
+    if(status==="Pendente") payload.aprovado_por=null;
+    Object.keys(payload).forEach(k=>payload[k]===undefined&&delete payload[k]);
+    if(file){
+      const statusEl=document.getElementById("uploadStatus");
+      statusEl.style.display="block";
+      const fileName="solicitacoes/"+Date.now()+"_"+limparNome(file.name);
+      const {error:upErr}=await client.storage.from("documentos").upload(fileName,file);
+      if(upErr){statusEl.style.display="none";alert("Erro no upload: "+upErr.message);return;}
+      const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
+      payload.arquivo_url=urlData.publicUrl; payload.arquivo_nome=file.name;
+      statusEl.style.display="none";
+    }
+    let error;
+    if(idEdicao){({error}=await client.from("solicitacoes").update(payload).eq("id",idEdicao));}
+    else{({error}=await client.from("solicitacoes").insert(payload));}
+    if(error){alert("Erro ao salvar: "+error.message);return;}
+    fecharModal(); carregar();
+  };
 
-let _confirmarId=null,_confirmarStatus=null;
+  window.alterarStatus=async function(id,novoStatus,aprovadoPor){
+    await client.from("solicitacoes").update({status:novoStatus,aprovado_por:aprovadoPor||null}).eq("id",id);
+    carregar();
+  };
 
-window.abrirConfirmar=function(id,novoStatus){
-  _confirmarId=id; _confirmarStatus=novoStatus;
-  const s=todasSolicitacoes.find(x=>x.id===id);
-  const nome=s?(mapaTerapeutas[s.terapeuta_cpf]||s.terapeuta_cpf):"";
-  const de=s?fmtData(s.data_inicio):"",ate=s?fmtData(s.data_fim):"";
-  const cor=novoStatus==="Acordado"?"#16a34a":"#dc2626";
-  const icone=novoStatus==="Acordado"?"fa-check-circle":"fa-times-circle";
-  const acao=novoStatus==="Acordado"?"Aprovar":"Reprovar";
-  document.getElementById("confirmarTitulo").innerHTML=`<i class="fa ${icone}" style="color:${cor}"></i> ${acao} Solicitação`;
-  document.getElementById("confirmarInfo").innerHTML=`<strong>${nome}</strong><br>Tipo: ${s?.tipo||"—"}<br>Período: ${de} → ${ate}<br>Justificativa: ${s?.justificativa||"—"}`;
-  const btn=document.getElementById("confirmarBtn");
-  btn.style.background=cor; btn.innerHTML=`<i class="fa ${icone}"></i> ${acao}`;
-  const nomeLogado=(window.usuarioLogado&&window.usuarioLogado.nome)||"";
-  document.getElementById("confirmarNomeTexto").textContent="Registrado por: "+(nomeLogado||"Usuário");
-  document.getElementById("modalConfirmar").style.display="flex";
-};
+  let _confirmarId=null,_confirmarStatus=null;
 
-window.fecharConfirmar=function(){ document.getElementById("modalConfirmar").style.display="none"; };
-window.confirmarStatus=async function(){
-  const nome=(window.usuarioLogado&&window.usuarioLogado.nome)||"Usuário";
-  await alterarStatus(_confirmarId,_confirmarStatus,nome);
-  fecharConfirmar();
-};
+  window.abrirConfirmar=function(id,novoStatus){
+    _confirmarId=id; _confirmarStatus=novoStatus;
+    const s=todasSolicitacoes.find(x=>x.id===id);
+    const nome=s?(mapaTerapeutas[s.terapeuta_cpf]||s.terapeuta_cpf):"";
+    const de=s?fmtData(s.data_inicio):"",ate=s?fmtData(s.data_fim):"";
+    const cor=novoStatus==="Acordado"?"#16a34a":"#dc2626";
+    const icone=novoStatus==="Acordado"?"fa-check-circle":"fa-times-circle";
+    const acao=novoStatus==="Acordado"?"Aprovar":"Reprovar";
+    document.getElementById("confirmarTitulo").innerHTML="<i class='fa "+icone+"' style='color:"+cor+"'></i> "+acao+" Solicitação";
+    document.getElementById("confirmarInfo").innerHTML="<strong>"+nome+"</strong><br>Tipo: "+(s?.tipo||"—")+"<br>Período: "+de+" → "+ate+"<br>Justificativa: "+(s?.justificativa||"—");
+    const btn=document.getElementById("confirmarBtn");
+    btn.style.background=cor; btn.innerHTML="<i class='fa "+icone+"'></i> "+acao;
+    const nomeLogado=(window.usuarioLogado&&window.usuarioLogado.nome)||"";
+    document.getElementById("confirmarNomeTexto").textContent="Registrado por: "+(nomeLogado||"Usuário");
+    document.getElementById("modalConfirmar").style.display="flex";
+  };
 
-window.excluir=async function(id,arquivoUrl){
-  if(!confirm("Excluir esta solicitação?")) return;
-  if(arquivoUrl){
-    const path=arquivoUrl.split("/storage/v1/object/public/documentos/")[1];
-    if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
-  }
-  await client.from("solicitacoes").delete().eq("id",id);
-  carregar();
-};
+  window.fecharConfirmar=function(){document.getElementById("modalConfirmar").style.display="none";};
+  window.confirmarStatus=async function(){
+    const nome=(window.usuarioLogado&&window.usuarioLogado.nome)||"Usuário";
+    await alterarStatus(_confirmarId,_confirmarStatus,nome);
+    fecharConfirmar();
+  };
 
-window.limparFiltros=function(){
-  document.getElementById("buscaNome").value="";
-  document.getElementById("filtroStatus").value="";
-  document.getElementById("filtroTipo").value="";
-  render();
-};
+  window.excluir=async function(id,arquivoUrl){
+    if(!confirm("Excluir esta solicitação?")) return;
+    if(arquivoUrl){
+      const path=arquivoUrl.split("/storage/v1/object/public/documentos/")[1];
+      if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
+    }
+    await client.from("solicitacoes").delete().eq("id",id);
+    carregar();
+  };
 
-document.getElementById("buscaNome").addEventListener("input",render);
-document.getElementById("filtroStatus").addEventListener("change",render);
-document.getElementById("filtroTipo").addEventListener("change",render);
+  window.limparFiltros=function(){
+    document.getElementById("buscaNome").value="";
+    document.getElementById("filtroStatus").value="";
+    document.getElementById("filtroTipo").value="";
+    render();
+  };
 
-carregarTerapeutas().then(carregar);
+  document.getElementById("buscaNome").addEventListener("input",render);
+  document.getElementById("filtroStatus").addEventListener("change",render);
+  document.getElementById("filtroTipo").addEventListener("change",render);
+
+  carregarTerapeutas().then(carregar);
 });
 </script>
 </body>

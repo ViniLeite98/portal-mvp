@@ -1,6 +1,5 @@
 (function() {
   const paginaAtual = window.location.pathname.split("/").pop();
-
   function renderSidebar() {
     if(!window.usuarioLogado){ setTimeout(renderSidebar, 100); return; }
     const u = window.usuarioLogado;
@@ -62,6 +61,10 @@
     <i class="fa-solid fa-boxes-stacked"></i>
     <span>Estoque</span>
   </a>
+  <a href="folha_pagamento.html" class="menu-item ${paginaAtual === 'folha_pagamento.html' ? 'active' : ''}">
+    <i class="fa-solid fa-money-check-dollar"></i>
+    <span>Folha de Pagamento</span>
+  </a>
   <hr style="border-color:#374151; margin:18px 0;">
   <div class="menu-title">CONFIGURAÇÕES</div>
   <a href="parametros.html" class="menu-item ${paginaAtual === 'parametros.html' ? 'active' : ''}">
@@ -76,9 +79,7 @@
 </div>
 `;
   }
-
   renderSidebar();
-
   window.sairDoCaixa = function() {
     if (typeof client !== 'undefined') {
       client.auth.signOut().finally(function() {

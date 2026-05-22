@@ -47,38 +47,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;d
 .msg{padding:11px 14px;border-radius:8px;font-size:13px;margin-bottom:20px;display:none;}
 .msg.e{background:#fdf2f0;border:1px solid #f5c4b8;color:#a0402a;display:block;}
 .msg.s{background:#f0faf5;border:1px solid #b8dfc8;color:#2a6644;display:block;}
-.divider{display:flex;align-items:center;gap:12px;margin:24px 0;color:#c8bfb8;font-size:12px;}
-.divider::before,.divider::after{content:"";flex:1;height:1px;background:#ede8e3;}
+.senha-padrao-info{background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:16px;display:flex;align-items:center;gap:8px;line-height:1.5;}
+.senha-padrao-info i{flex-shrink:0;font-size:14px;}
 @media(max-width:1366px){
-  .left{width:45%;padding:36px 40px;}
-  .left-tagline{font-size:34px;}
-  .right{padding:32px;}
-  .form-wrap{max-width:340px;}
-  .form-title{font-size:24px;}
-  .field input{padding:11px 14px;font-size:13px;}
-  .btn-main{padding:12px;font-size:13px;}
-  .stat-num{font-size:22px;}
-}
-@media(min-width:1367px) and (max-width:1920px){
-  .left{width:52%;}
-  .left-tagline{font-size:42px;}
-  .form-wrap{max-width:380px;}
+  .left{width:45%;padding:36px 40px;}.left-tagline{font-size:34px;}.right{padding:32px;}
+  .form-wrap{max-width:340px;}.form-title{font-size:24px;}.field input{padding:11px 14px;font-size:13px;}
+  .btn-main{padding:12px;font-size:13px;}.stat-num{font-size:22px;}
 }
 @media(min-width:1921px){
-  .left{width:55%;padding:60px 72px;}
-  .left-tagline{font-size:54px;}
-  .right{padding:60px;}
-  .form-wrap{max-width:440px;}
-  .form-title{font-size:34px;}
-  .field input{padding:16px 18px;font-size:15px;}
-  .btn-main{padding:16px;font-size:15px;}
-  .stat-num{font-size:32px;}
+  .left{width:55%;padding:60px 72px;}.left-tagline{font-size:54px;}.right{padding:60px;}
+  .form-wrap{max-width:440px;}.form-title{font-size:34px;}.field input{padding:16px 18px;font-size:15px;}
+  .btn-main{padding:16px;font-size:15px;}.stat-num{font-size:32px;}
 }
-@media(max-width:768px){
-  .left{display:none;}
-  .right{padding:32px 24px;}
-  .form-wrap{max-width:100%;}
-}
+@media(max-width:768px){.left{display:none;}.right{padding:32px 24px;}.form-wrap{max-width:100%;}}
 </style>
 </head>
 <body>
@@ -135,6 +116,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;d
 
     <!-- CADASTRAR -->
     <div id="fCad" style="display:none">
+
+      <!-- aviso senha padrão -->
+      <div class="senha-padrao-info">
+        <i class="fa fa-lock" style="color:#d97706"></i>
+        <span>Por ser um portal interno, a senha padrão de acesso é <strong>hara2026</strong>. Você pode alterá-la depois em "Esqueci a senha".</span>
+      </div>
+
       <div class="field">
         <label>Nome Completo</label>
         <input type="text" id="cNome" placeholder="Seu nome completo">
@@ -149,24 +137,34 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;d
         <input type="email" id="cEmail" placeholder="seu@email.com" oninput="validarEmail('cEmail','hintCEmail')">
         <div class="field-hint" id="hintCEmail"></div>
       </div>
-      <div class="field">
-        <label>Senha</label>
-        <div style="position:relative">
-          <input type="password" id="cSenha" placeholder="Mínimo 6 caracteres" style="padding-right:44px">
-          <button type="button" onclick="toggleSenha('cSenha','eyeCad1')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#c8bfb8;padding:4px;display:flex">
-            <svg id="eyeCad1" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-          </button>
+
+      <!-- aviso cadastro interno -->
+      <div id="avisoSenhaPadrao" style="display:none;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:16px;line-height:1.5;">
+        🔒 Você foi cadastrado internamente. Sua senha de acesso é <strong>hara2026</strong>. Você pode alterá-la depois em "Esqueci a senha".
+      </div>
+
+      <!-- campos de senha (só para cadastro externo) -->
+      <div id="camposSenha">
+        <div class="field">
+          <label>Senha</label>
+          <div style="position:relative">
+            <input type="password" id="cSenha" placeholder="Mínimo 6 caracteres" style="padding-right:44px">
+            <button type="button" onclick="toggleSenha('cSenha','eyeCad1')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#c8bfb8;padding:4px;display:flex">
+              <svg id="eyeCad1" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Confirmar Senha</label>
+          <div style="position:relative">
+            <input type="password" id="cSenha2" placeholder="Repita a senha" style="padding-right:44px">
+            <button type="button" onclick="toggleSenha('cSenha2','eyeCad2')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#c8bfb8;padding:4px;display:flex">
+              <svg id="eyeCad2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
-      <div class="field">
-        <label>Confirmar Senha</label>
-        <div style="position:relative">
-          <input type="password" id="cSenha2" placeholder="Repita a senha" style="padding-right:44px">
-          <button type="button" onclick="toggleSenha('cSenha2','eyeCad2')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#c8bfb8;padding:4px;display:flex">
-            <svg id="eyeCad2" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-          </button>
-        </div>
-      </div>
+
       <button class="btn-main" id="bCad" onclick="cad()">Criar Conta</button>
     </div>
 
@@ -186,208 +184,211 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;d
   </div>
 </div>
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script>
-
 function validarEmail(inputId, hintId) {
-  var el   = document.getElementById(inputId);
-  var hint = document.getElementById(hintId);
-  if(!el || !hint) return false;
-  var val = el.value.trim();
-  if(!val){ el.className=""; hint.className="field-hint"; return false; }
-  var re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  var ok = re.test(val);
-  el.className   = ok ? "success" : "error";
-  hint.className = ok ? "field-hint success" : "field-hint error";
-  hint.textContent = ok ? "✓ Email válido" : "Digite um email válido (ex: nome@dominio.com)";
+  var el=document.getElementById(inputId),hint=document.getElementById(hintId);
+  if(!el||!hint)return false;
+  var val=el.value.trim();
+  if(!val){el.className="";hint.className="field-hint";return false;}
+  var ok=/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val);
+  el.className=ok?"success":"error";
+  hint.className=ok?"field-hint success":"field-hint error";
+  hint.textContent=ok?"✓ Email válido":"Digite um email válido (ex: nome@dominio.com)";
   return ok;
 }
 
 function validarCPF(cpf) {
-  cpf = cpf.replace(/\D/g,'');
-  if(cpf.length !== 11) return false;
-  if(/^(\d)\1{10}$/.test(cpf)) return false;
-  var soma = 0, resto;
-  for(var i=1; i<=9; i++) soma += parseInt(cpf[i-1]) * (11-i);
-  resto = (soma*10) % 11;
-  if(resto === 10 || resto === 11) resto = 0;
-  if(resto !== parseInt(cpf[9])) return false;
-  soma = 0;
-  for(var i=1; i<=10; i++) soma += parseInt(cpf[i-1]) * (12-i);
-  resto = (soma*10) % 11;
-  if(resto === 10 || resto === 11) resto = 0;
-  return resto === parseInt(cpf[10]);
+  cpf=cpf.replace(/\D/g,'');
+  if(cpf.length!==11)return false;
+  if(/^(\d)\1{10}$/.test(cpf))return false;
+  var soma=0,resto;
+  for(var i=1;i<=9;i++)soma+=parseInt(cpf[i-1])*(11-i);
+  resto=(soma*10)%11;if(resto===10||resto===11)resto=0;
+  if(resto!==parseInt(cpf[9]))return false;
+  soma=0;
+  for(var i=1;i<=10;i++)soma+=parseInt(cpf[i-1])*(12-i);
+  resto=(soma*10)%11;if(resto===10||resto===11)resto=0;
+  return resto===parseInt(cpf[10]);
 }
 
 function fmtCPF(v) {
-  v = v.replace(/\D/g,'').substring(0,11);
-  if(v.length <= 3) return v;
-  if(v.length <= 6) return v.slice(0,3)+'.'+v.slice(3);
-  if(v.length <= 9) return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
+  v=v.replace(/\D/g,'').substring(0,11);
+  if(v.length<=3)return v;if(v.length<=6)return v.slice(0,3)+'.'+v.slice(3);
+  if(v.length<=9)return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);
   return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);
 }
 
 function onCpfInput() {
-  var el   = document.getElementById("cCpf");
-  var hint = document.getElementById("hintCpf");
-  el.value = fmtCPF(el.value);
-  var digits = el.value.replace(/\D/g,'');
-  if(digits.length < 11){ el.className=""; hint.className="field-hint"; return; }
-  var ok = validarCPF(digits);
-  el.className   = ok ? "success" : "error";
-  hint.className = ok ? "field-hint success" : "field-hint error";
-  hint.textContent = ok ? "✓ CPF válido" : "CPF inválido. Verifique os dígitos.";
+  var el=document.getElementById("cCpf"),hint=document.getElementById("hintCpf");
+  el.value=fmtCPF(el.value);
+  var digits=el.value.replace(/\D/g,'');
+  if(digits.length<11){el.className="";hint.className="field-hint";return;}
+  var ok=validarCPF(digits);
+  el.className=ok?"success":"error";
+  hint.className=ok?"field-hint success":"field-hint error";
+  hint.textContent=ok?"✓ CPF válido":"CPF inválido. Verifique os dígitos.";
+  if(ok) verificarCpfInterno(digits);
+}
+
+async function verificarCpfInterno(cpfDigits) {
+  var res = await client.from("terapeutas").select("cpf,nome_completo").eq("cpf", cpfDigits).limit(1);
+  var ehInterno = res.data && res.data.length > 0;
+  document.getElementById("camposSenha").style.display = ehInterno ? "none" : "";
+  document.getElementById("avisoSenhaPadrao").style.display = ehInterno ? "block" : "none";
+  if(ehInterno && res.data[0].nome_completo) {
+    var nomeEl = document.getElementById("cNome");
+    if(nomeEl && !nomeEl.value) nomeEl.value = res.data[0].nome_completo;
+  }
 }
 
 function aba(t) {
-  document.getElementById("t1").classList.toggle("active", t==="entrar");
-  document.getElementById("t2").classList.toggle("active", t==="cad");
-  document.getElementById("t3").classList.toggle("active", t==="reset");
-  document.getElementById("fEntrar").style.display = t==="entrar" ? "" : "none";
-  document.getElementById("fCad").style.display    = t==="cad"    ? "" : "none";
-  document.getElementById("fReset").style.display  = t==="reset"  ? "" : "none";
-  document.getElementById("msg").className = "msg";
+  document.getElementById("t1").classList.toggle("active",t==="entrar");
+  document.getElementById("t2").classList.toggle("active",t==="cad");
+  document.getElementById("t3").classList.toggle("active",t==="reset");
+  document.getElementById("fEntrar").style.display=t==="entrar"?"":"none";
+  document.getElementById("fCad").style.display=t==="cad"?"":"none";
+  document.getElementById("fReset").style.display=t==="reset"?"":"none";
+  document.getElementById("msg").className="msg";
 }
 
-function showMsg(txt, tipo) {
-  var el = document.getElementById("msg");
-  el.textContent = txt;
-  el.className = "msg " + tipo;
-}
-
-function btn(id, loading, label) {
-  var b = document.getElementById(id);
-  b.disabled = loading;
-  b.textContent = loading ? "Aguarde..." : label;
-}
-
-function traduzir(m) {
-  if(m.indexOf("Invalid login") >= 0)       return "Email ou senha incorretos.";
-  if(m.indexOf("Email not confirmed") >= 0) return "Confirme seu email antes de entrar.";
-  if(m.indexOf("already registered") >= 0)  return "Este email já está cadastrado.";
+function showMsg(txt,tipo){var el=document.getElementById("msg");el.textContent=txt;el.className="msg "+tipo;}
+function btn(id,loading,label){var b=document.getElementById(id);b.disabled=loading;b.textContent=loading?"Aguarde...":label;}
+function traduzir(m){
+  if(m.indexOf("Invalid login")>=0)return"Email ou senha incorretos.";
+  if(m.indexOf("Email not confirmed")>=0)return"Confirme seu email antes de entrar.";
+  if(m.indexOf("already registered")>=0)return"Este email já está cadastrado.";
   return m;
 }
 
-function buscarPerfil(uid, tentativas, cb) {
-  tentativas = tentativas || 0;
-  client.from("perfis").select("role").eq("id", uid).single().then(function(res) {
-    if(res.data){ cb(res.data); return; }
-    if(tentativas < 5){ setTimeout(function(){ buscarPerfil(uid, tentativas+1, cb); }, 500); }
-    else { cb({ role: "usuario" }); }
+function buscarPerfil(uid,tentativas,cb){
+  tentativas=tentativas||0;
+  client.from("perfis").select("role").eq("id",uid).single().then(function(res){
+    if(res.data){cb(res.data);return;}
+    if(tentativas<5){setTimeout(function(){buscarPerfil(uid,tentativas+1,cb);},500);}
+    else{cb({role:"usuario"});}
   });
 }
 
-function irPara(role) {
-  window.location.href = "equipe.html";
-}
+function irPara(role){window.location.href="equipe.html";}
 
 function entrar() {
-  var email = document.getElementById("lEmail").value.trim();
-  var senha = document.getElementById("lSenha").value;
-  if(!email || !senha){ showMsg("Preencha email e senha.", "e"); return; }
-  var re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  if(!re.test(email)){ showMsg("Digite um email válido.", "e"); return; }
-  btn("bEntrar", true, "Entrar");
-  document.getElementById("msg").className = "msg";
-  client.auth.signInWithPassword({ email: email, password: senha }).then(function(res) {
-    if(res.error){ showMsg(traduzir(res.error.message), "e"); btn("bEntrar", false, "Entrar"); return; }
-    buscarPerfil(res.data.user.id, 0, function(perfil){ irPara(perfil.role); });
+  var email=document.getElementById("lEmail").value.trim();
+  var senha=document.getElementById("lSenha").value;
+  if(!email||!senha){showMsg("Preencha email e senha.","e");return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){showMsg("Digite um email válido.","e");return;}
+  btn("bEntrar",true,"Entrar");
+  document.getElementById("msg").className="msg";
+  client.auth.signInWithPassword({email:email,password:senha}).then(function(res){
+    if(res.error){showMsg(traduzir(res.error.message),"e");btn("bEntrar",false,"Entrar");return;}
+    buscarPerfil(res.data.user.id,0,function(perfil){irPara(perfil.role);});
   });
 }
 
 async function cad() {
-  var nome   = document.getElementById("cNome").value.trim();
-  var cpf    = document.getElementById("cCpf").value.trim();
-  var email  = document.getElementById("cEmail").value.trim();
-  var senha  = document.getElementById("cSenha").value;
-  var senha2 = document.getElementById("cSenha2").value;
+  var nome  =document.getElementById("cNome").value.trim();
+  var cpf   =document.getElementById("cCpf").value.trim();
+  var email =document.getElementById("cEmail").value.trim();
+  var ehInterno = document.getElementById("camposSenha").style.display === "none";
 
-  if(!nome){ showMsg("Informe seu nome completo.", "e"); return; }
+  if(!nome){showMsg("Informe seu nome completo.","e");return;}
 
-  var cpfDigits = cpf.replace(/\D/g,'');
-  if(cpfDigits.length !== 11 || !validarCPF(cpfDigits)){
-    showMsg("CPF inválido. Verifique os dígitos informados.", "e");
-    document.getElementById("cCpf").className = "error";
-    return;
+  var cpfDigits=cpf.replace(/\D/g,'');
+  if(cpfDigits.length!==11||!validarCPF(cpfDigits)){
+    showMsg("CPF inválido. Verifique os dígitos informados.","e");
+    document.getElementById("cCpf").className="error";return;
   }
 
-  var reEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  if(!email || !reEmail.test(email)){
-    showMsg("Digite um email válido.", "e");
-    document.getElementById("cEmail").className = "error";
-    return;
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){
+    showMsg("Digite um email válido.","e");
+    document.getElementById("cEmail").className="error";return;
   }
 
-  if(senha.length < 6){ showMsg("Senha: mínimo 6 caracteres.", "e"); return; }
-  if(senha !== senha2){ showMsg("As senhas não coincidem.", "e"); return; }
-
-  btn("bCad", true, "Criar Conta");
-  document.getElementById("msg").className = "msg";
-
-  // Verificar CPF em terapeutas e perfis
-  var cpfTer = await client.from("terapeutas").select("cpf").eq("cpf", cpfDigits).limit(1);
-  var cpfPer = await client.from("perfis").select("id").eq("cpf_terapeuta", cpfDigits).limit(1);
-  if((cpfTer.data && cpfTer.data.length > 0) || (cpfPer.data && cpfPer.data.length > 0)){
-    showMsg("CPF já cadastrado. Entre em contato com o administrador.", "e");
-    document.getElementById("cCpf").className = "error";
-    btn("bCad", false, "Criar Conta");
-    return;
+  var senha;
+  if(ehInterno){
+    // cadastro interno: senha padrão
+    senha = "hara2026";
+  } else {
+    // cadastro externo: valida campos de senha
+    senha = document.getElementById("cSenha").value;
+    var senha2 = document.getElementById("cSenha2").value;
+    if(senha.length < 6){showMsg("Senha: mínimo 6 caracteres.","e");return;}
+    if(senha !== senha2){showMsg("As senhas não coincidem.","e");return;}
   }
 
-  var res = await client.auth.signUp({
-    email: email,
-    password: senha,
-    options: { data: { nome: nome } }
+  btn("bCad",true,"Criar Conta");
+  document.getElementById("msg").className="msg";
+
+  // Se externo, verificar se CPF já existe
+  if(!ehInterno){
+    var cpfPer=await client.from("perfis").select("id").eq("cpf_terapeuta",cpfDigits).limit(1);
+    if(cpfPer.data&&cpfPer.data.length>0){
+      showMsg("CPF já possui acesso. Tente entrar ou use \"Esqueci a senha\".","e");
+      btn("bCad",false,"Criar Conta");return;
+    }
+  }
+
+  var res=await client.auth.signUp({
+    email:email,
+    password:senha,
+    options:{data:{nome:nome}}
   });
 
-  if(res.error){ showMsg(traduzir(res.error.message), "e"); btn("bCad", false, "Criar Conta"); return; }
+  if(res.error){showMsg(traduzir(res.error.message),"e");btn("bCad",false,"Criar Conta");return;}
 
-  if(res.data && res.data.user){
-    var userId = res.data.user.id;
-    await client.from("perfis").upsert({ id: userId, email: email, nome: nome, role: "usuario", cpf_terapeuta: cpfDigits });
-    await client.from("terapeutas").upsert({ cpf: cpfDigits, nome_completo: nome, nome_profissional: nome.split(" ")[0], email: email, status: "Ativo" }, { onConflict: "cpf" });
+  if(res.data&&res.data.user){
+    var userId=res.data.user.id;
+    await client.from("perfis").upsert({id:userId,email:email,nome:nome,role:"usuario",cpf_terapeuta:cpfDigits});
+    if(!ehInterno){
+      await client.from("terapeutas").upsert({cpf:cpfDigits,nome_completo:nome,nome_profissional:nome.split(" ")[0],email:email,status:"Ativo"},{onConflict:"cpf"});
+    }
   }
 
-  if(res.data && res.data.session){ irPara("usuario"); }
-  else { showMsg("Conta criada! Verifique seu email para confirmar.", "s"); btn("bCad", false, "Criar Conta"); }
+  if(res.data&&res.data.session){irPara("usuario");}
+  else{
+    var msgFinal = ehInterno
+      ? "Acesso criado! Entre com o email e a senha hara2026."
+      : "Conta criada! Verifique seu email para confirmar.";
+    showMsg(msgFinal,"s");
+    btn("bCad",false,"Criar Conta");
+  }
 }
 
-function toggleSenha(inputId, eyeId) {
-  var input = document.getElementById(inputId);
-  var eye   = document.getElementById(eyeId);
-  var show  = input.type === "password";
-  input.type = show ? "text" : "password";
-  eye.innerHTML = show
-    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>'
-    : '<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+function toggleSenha(inputId,eyeId){
+  var input=document.getElementById(inputId),eye=document.getElementById(eyeId);
+  var show=input.type==="password";
+  input.type=show?"text":"password";
+  eye.innerHTML=show
+    ?'<path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>'
+    :'<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
 }
 
-async function resetSenha() {
-  var email = document.getElementById("rEmail").value.trim();
-  if(!email){ showMsg("Informe seu email.", "e"); return; }
-  var re = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  if(!re.test(email)){ showMsg("Digite um email válido.", "e"); return; }
-  btn("bReset", true, "Enviar link de redefinição");
-  document.getElementById("msg").className = "msg";
-  var res = await client.auth.resetPasswordForEmail(email, {
-    redirectTo: "https://portal-mvp-ten.vercel.app/reset-senha.html"
+async function resetSenha(){
+  var email=document.getElementById("rEmail").value.trim();
+  if(!email){showMsg("Informe seu email.","e");return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){showMsg("Digite um email válido.","e");return;}
+  btn("bReset",true,"Enviar link de redefinição");
+  document.getElementById("msg").className="msg";
+  var res=await client.auth.resetPasswordForEmail(email,{
+    redirectTo:"https://portal-mvp-ten.vercel.app/reset-senha.html"
   });
-  if(res.error){ showMsg(traduzir(res.error.message), "e"); btn("bReset", false, "Enviar link de redefinição"); return; }
-  showMsg("Link enviado! Verifique seu email.", "s");
-  btn("bReset", false, "Enviar link de redefinição");
+  if(res.error){showMsg(traduzir(res.error.message),"e");btn("bReset",false,"Enviar link de redefinição");return;}
+  showMsg("Link enviado! Verifique seu email.","s");
+  btn("bReset",false,"Enviar link de redefinição");
 }
 
-client.auth.getSession().then(function(res) {
-  if(res.data && res.data.session){
-    buscarPerfil(res.data.session.user.id, 0, function(perfil){ irPara(perfil.role); });
+client.auth.getSession().then(function(res){
+  if(res.data&&res.data.session){
+    buscarPerfil(res.data.session.user.id,0,function(perfil){irPara(perfil.role);});
   }
 });
 
-document.addEventListener("keydown", function(e) {
-  if(e.key !== "Enter") return;
-  if(document.getElementById("t1").classList.contains("active")) entrar();
-  else if(document.getElementById("t2").classList.contains("active")) cad();
+document.addEventListener("keydown",function(e){
+  if(e.key!=="Enter")return;
+  if(document.getElementById("t1").classList.contains("active"))entrar();
+  else if(document.getElementById("t2").classList.contains("active"))cad();
 });
 </script>
 </body>

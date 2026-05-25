@@ -479,7 +479,7 @@ async function adicionarColuna(){
   var cor=cores[Math.floor(Math.random()*cores.length)];
   var ordem=COLUNAS.length;
   var {data,error}=await client.from('parametros').insert({
-    tipo:'kanban_colunas', valor:nome.trim(), icone:cor, ordem, ativo:true
+    tipo:'kanban_colunas', valor:nome.trim(), icone:cor, ativo:true
   }).select().single();
   if(error){alert('Erro ao criar coluna: '+error.message);return;}
   COLUNAS.push({id:data.id, nome:data.valor, cor:data.icone, ordem:data.ordem});
@@ -507,35 +507,44 @@ async function init(){
   waitUser(async function(u){
 
     // 1. Carregar colunas do banco (tipo = kanban_colunas)
+    // Não usamos .order('ordem') pois a coluna pode não existir — ordenamos em JS
     var {data:colData, error:colErr} = await client
       .from('parametros')
-      .select('id,valor,icone,ordem')
+      .select('*')
       .eq('tipo','kanban_colunas')
-      .eq('ativo', true)
-      .order('ordem');
+      .eq('ativo', true);
 
-    if (colErr) { console.error('Erro ao carregar colunas:', colErr); }
+    if (colErr) { console.error('Erro ao carregar colunas:', colErr); colData = []; }
 
     if (!colData || colData.length === 0) {
-      // Seed: inserir colunas padrão
-      var seedRows = COLUNAS_SEED.map(s => ({
-        tipo: 'kanban_colunas',
-        valor: s.valor,
-        icone: s.icone,
-        ordem: s.ordem,
-        ativo: true
-      }));
+      // Seed: inserir colunas padrão sem depender de colunas opcionais
+      var seedRows = COLUNAS_SEED.map(function(s) {
+        var row = { tipo:'kanban_colunas', valor:s.valor, icone:s.icone, ativo:true };
+        // só inclui 'ordem' se o campo existir (evita 400 em tabelas sem a coluna)
+        try { row.ordem = s.ordem; } catch(e){}
+        return row;
+      });
       var {data:seeded, error:seedErr} = await client
         .from('parametros')
         .insert(seedRows)
-        .select('id,valor,icone,ordem');
-      if (seedErr) { console.error('Erro no seed:', seedErr); }
+        .select('*');
+      if (seedErr) {
+        console.error('Erro no seed:', seedErr);
+        // Tenta sem o campo ordem
+        var seedRowsSemOrdem = COLUNAS_SEED.map(s => ({ tipo:'kanban_colunas', valor:s.valor, icone:s.icone, ativo:true }));
+        var {data:seeded2} = await client.from('parametros').insert(seedRowsSemOrdem).select('*');
+        seeded = seeded2;
+      }
       colData = seeded || [];
     }
 
-    // Montar array COLUNAS
+    // Montar array COLUNAS — ordena por 'ordem' se existir, senão mantém a ordem do banco
     COLUNAS = (colData || [])
-      .sort((a,b) => a.ordem - b.ordem)
+      .sort(function(a,b){
+        var oa = (a.ordem != null) ? a.ordem : 9999;
+        var ob = (b.ordem != null) ? b.ordem : 9999;
+        return oa - ob;
+      })
       .map(c => ({ id: c.id, nome: c.valor, cor: c.icone || '#6b7280', ordem: c.ordem }));
 
     // 2. Carregar terapeutas ativos

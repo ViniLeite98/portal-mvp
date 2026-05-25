@@ -14,8 +14,11 @@
 <style>
 :root{--bg:#0f1117;--surface:#181b23;--surface2:#1e2230;--surface3:#252a3a;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#e8eaf0;--text2:#8b90a0;--text3:#565d72;--accent:#6366f1;--accent2:#818cf8;}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
-.topbar{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+/* Layout raiz — sem overflow:hidden em lugar nenhum */
+.app{display:flex;min-height:100vh;}
+.main-col{flex:1;display:flex;flex-direction:column;min-width:0;}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;flex-shrink:0;}
 .topbar-logo{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;}
 .topbar-logo i{color:var(--accent2);font-size:16px;}
 .topbar-divider{width:1px;height:20px;background:var(--border2);}
@@ -26,7 +29,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .btn-ghost:hover{background:var(--surface2);color:var(--text);}
 .btn-primary{background:var(--accent);color:#fff;}
 .btn-primary:hover{background:#4f52e0;}
-.toolbar{display:flex;align-items:center;gap:10px;padding:10px 24px;background:var(--surface);border-bottom:1px solid var(--border);}
+.toolbar{display:flex;align-items:center;gap:10px;padding:10px 24px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
 .search-wrap{position:relative;flex:1;max-width:280px;}
 .search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;}
 .search-wrap input{width:100%;padding:7px 10px 7px 30px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;}
@@ -34,8 +37,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .search-wrap input:focus{border-color:var(--accent);}
 .filter-select{padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:7px;color:var(--text2);font-size:13px;font-family:inherit;outline:none;cursor:pointer;}
 .filter-select:focus{border-color:var(--accent);}
-.board-wrap{padding:20px 24px;overflow-x:auto;min-height:calc(100vh - 110px);}
-.board{display:flex;gap:14px;min-width:max-content;align-items:flex-start;}
+/* Board: scroll horizontal real */
+.board-wrap{
+  flex:1;
+  padding:20px 24px;
+  overflow-x:auto;
+  overflow-y:visible;
+}
+.board{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  width:max-content;
+  min-height:calc(100vh - 160px);
+  padding-bottom:24px;
+}
 .col{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;}
 .col-header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);position:relative;overflow:hidden;}
 .col-header::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--col-color);}
@@ -113,9 +129,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </style>
 </head>
 <body>
-<div class="app" style="display:flex;min-height:100vh;">
+<div class="app">
 <aside id="sidebar"></aside>
-<div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+<div class="main-col">
 
 <div class="topbar">
   <div class="topbar-logo"><i class="fa fa-leaf"></i>Hara Spa</div>
@@ -150,6 +166,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="board-loading"><i class="fa fa-circle-notch"></i> Carregando colunas...</div>
   </div>
 </div>
+
+</div><!-- /main-col -->
 
 <!-- MODAL NOVO CARD -->
 <div class="modal-overlay" id="modalNovo">
@@ -229,54 +247,47 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 <div class="toast" id="toast"><i class="fa fa-check-circle"></i> <span id="toastMsg"></span></div>
-</div>
-</div>
 
 <script>
-// ── Schema real da tabela parametros:
-// id, tipo, valor, descricao, ativo, ordem, negativo, created_at
-// Para kanban_colunas: valor = nome da coluna, descricao = cor hex, ordem = posição
-
+// Schema: valor=nome, descricao=cor hex, ordem=posição
 const COLUNAS_SEED = [
-  { valor:'Aberto',       descricao:'#3b82f6', ordem:0 },
-  { valor:'Análise',      descricao:'#f59e0b', ordem:1 },
-  { valor:'Impedimento',  descricao:'#ef4444', ordem:2 },
-  { valor:'Em andamento', descricao:'#8b5cf6', ordem:3 },
-  { valor:'Verificação',  descricao:'#10b981', ordem:4 },
-  { valor:'Concluído',    descricao:'#6b7280', ordem:5 },
+  {valor:'Aberto',       descricao:'#3b82f6', ordem:0},
+  {valor:'Análise',      descricao:'#f59e0b', ordem:1},
+  {valor:'Impedimento',  descricao:'#ef4444', ordem:2},
+  {valor:'Em andamento', descricao:'#8b5cf6', ordem:3},
+  {valor:'Verificação',  descricao:'#10b981', ordem:4},
+  {valor:'Concluído',    descricao:'#6b7280', ordem:5},
 ];
 
-let COLUNAS = [];
-let cards = [], pessoas = [], nextNum = 1, cardAtivo = null, editandoId = null, draggingId = null;
+let COLUNAS=[], cards=[], pessoas=[], nextNum=1, cardAtivo=null, editandoId=null, draggingId=null;
 
-function getColuna(id) { return COLUNAS.find(c => c.id === id); }
-function getPessoa(id) { return pessoas.find(p => p.id === id); }
-function prioClass(p)  { return ({Alta:'priority-alta',Media:'priority-media',Baixa:'priority-baixa',Critica:'priority-critica'})[p]||'priority-baixa'; }
+function getColuna(id){return COLUNAS.find(c=>c.id===id);}
+function getPessoa(id){return pessoas.find(p=>p.id===id);}
+function prioClass(p){return({Alta:'priority-alta',Media:'priority-media',Baixa:'priority-baixa',Critica:'priority-critica'})[p]||'priority-baixa';}
 
-function renderAvatar(pessoaId) {
-  const p = getPessoa(pessoaId);
-  if (!p) return '<div class="card-avatar" style="background:#444">?</div>';
-  const ini = p.nome.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
-  return '<div class="card-avatar" style="background:'+p.cor+'" title="'+p.nome+'">'+ini+'</div>';
+function renderAvatar(pessoaId){
+  const p=getPessoa(pessoaId);
+  if(!p)return'<div class="card-avatar" style="background:#444">?</div>';
+  const ini=p.nome.split(' ').slice(0,2).map(n=>n[0]).join('').toUpperCase();
+  return'<div class="card-avatar" style="background:'+p.cor+'" title="'+p.nome+'">'+ini+'</div>';
 }
-function renderTags(tags) {
-  if (!tags||!tags.length) return '';
+function renderTags(tags){
+  if(!tags||!tags.length)return'';
   return tags.map(t=>'<span class="tag tag-'+t+'">'+t+'</span>').join('');
 }
-
-function popularSelectsColunas() {
-  const opts = COLUNAS.map(c=>'<option value="'+c.id+'">'+c.nome+'</option>').join('');
-  const s1 = document.getElementById('novaColuna');
-  const s2 = document.getElementById('detalheMoverColuna');
-  if (s1) s1.innerHTML = opts;
-  if (s2) s2.innerHTML = opts;
+function popularSelectsColunas(){
+  const opts=COLUNAS.map(c=>'<option value="'+c.id+'">'+c.nome+'</option>').join('');
+  const s1=document.getElementById('novaColuna');
+  const s2=document.getElementById('detalheMoverColuna');
+  if(s1)s1.innerHTML=opts;
+  if(s2)s2.innerHTML=opts;
 }
 
-function renderCard(card) {
-  const p       = getPessoa(card.responsavel);
-  const col     = getColuna(card.coluna);
-  const dataFmt = card.data ? new Date(card.data+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '';
-  return '<div class="card" id="card-'+card.id+'" draggable="true"'+
+function renderCard(card){
+  const p=getPessoa(card.responsavel);
+  const col=getColuna(card.coluna);
+  const dataFmt=card.data?new Date(card.data+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'';
+  return'<div class="card" id="card-'+card.id+'" draggable="true"'+
     ' style="--card-color:'+(col?.cor||'#555')+'"'+
     ' ondragstart="dragStart(event,\''+card.id+'\')"'+
     ' ondragend="dragEnd(event)"'+
@@ -299,19 +310,19 @@ function renderCard(card) {
   '</div>';
 }
 
-function renderBoard(filtrados) {
-  const board = document.getElementById('board');
-  const lista = filtrados || cards;
-  board.innerHTML = '';
-  COLUNAS.forEach(function(col) {
-    const colCards = lista.filter(c => c.coluna === col.id);
-    const urgentes = colCards.filter(c => c.prioridade === 'Critica');
-    const normais  = colCards.filter(c => c.prioridade !== 'Critica');
-    let bodyHTML = '';
-    if (urgentes.length) { bodyHTML += '<div class="swimlane-label"><i class="fa fa-fire"></i> Urgente / Crítica</div>'; bodyHTML += urgentes.map(renderCard).join(''); }
-    if (normais.length)  bodyHTML += normais.map(renderCard).join('');
-    if (!colCards.length) bodyHTML = '<div class="col-empty"><i class="fa fa-inbox"></i><br>Sem itens</div>';
-    board.innerHTML +=
+function renderBoard(filtrados){
+  const board=document.getElementById('board');
+  const lista=filtrados||cards;
+  board.innerHTML='';
+  COLUNAS.forEach(function(col){
+    const colCards=lista.filter(c=>c.coluna===col.id);
+    const urgentes=colCards.filter(c=>c.prioridade==='Critica');
+    const normais=colCards.filter(c=>c.prioridade!=='Critica');
+    let bodyHTML='';
+    if(urgentes.length){bodyHTML+='<div class="swimlane-label"><i class="fa fa-fire"></i> Urgente / Crítica</div>';bodyHTML+=urgentes.map(renderCard).join('');}
+    if(normais.length)bodyHTML+=normais.map(renderCard).join('');
+    if(!colCards.length)bodyHTML='<div class="col-empty"><i class="fa fa-inbox"></i><br>Sem itens</div>';
+    board.innerHTML+=
       '<div class="col">'+
         '<div class="col-header" style="--col-color:'+col.cor+'">'+
           '<div class="col-name">'+col.nome+'</div>'+
@@ -325,58 +336,51 @@ function renderBoard(filtrados) {
         '>'+bodyHTML+'</div>'+
       '</div>';
   });
-  board.innerHTML += '<div class="col-add-new"><button class="btn-add-col" onclick="adicionarColuna()"><i class="fa fa-plus"></i> Nova coluna</button></div>';
+  board.innerHTML+='<div class="col-add-new"><button class="btn-add-col" onclick="adicionarColuna()"><i class="fa fa-plus"></i> Nova coluna</button></div>';
 }
 
-// ── Drag & drop ──────────────────────────────────────────────────────────────
-function dragStart(e,id){ draggingId=id; setTimeout(function(){var el=document.getElementById('card-'+id);if(el)el.classList.add('dragging');},0); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',id); }
-function dragEnd(e){ if(draggingId){var el=document.getElementById('card-'+draggingId);if(el)el.classList.remove('dragging');} }
-function dragOver(e){ e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect='move'; e.currentTarget.classList.add('drag-over'); }
-function dragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+function dragStart(e,id){draggingId=id;setTimeout(function(){var el=document.getElementById('card-'+id);if(el)el.classList.add('dragging');},0);e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',id);}
+function dragEnd(e){if(draggingId){var el=document.getElementById('card-'+draggingId);if(el)el.classList.remove('dragging');}}
+function dragOver(e){e.preventDefault();e.stopPropagation();e.dataTransfer.dropEffect='move';e.currentTarget.classList.add('drag-over');}
+function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
 function drop(e,colunaId){
-  e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('drag-over');
-  var id=draggingId||e.dataTransfer.getData('text/plain'); if(!id)return;
-  var card=cards.find(c=>c.id===id); if(!card||card.coluna===colunaId)return;
-  var anterior=card.coluna; card.coluna=colunaId;
+  e.preventDefault();e.stopPropagation();e.currentTarget.classList.remove('drag-over');
+  var id=draggingId||e.dataTransfer.getData('text/plain');if(!id)return;
+  var card=cards.find(c=>c.id===id);if(!card||card.coluna===colunaId)return;
+  var anterior=card.coluna;card.coluna=colunaId;
   var ts=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-  var p=getPessoa(card.responsavel);
   card.historico=card.historico||[];
-  card.historico.push(ts+' — '+(p?p.nome:'Sistema')+' moveu de "'+getColuna(anterior)?.nome+'" para "'+getColuna(colunaId)?.nome+'"');
-  draggingId=null; renderBoard(); toast('Card movido para "'+getColuna(colunaId)?.nome+'"');
+  card.historico.push(ts+' — '+(getPessoa(card.responsavel)?.nome||'Sistema')+' moveu de "'+getColuna(anterior)?.nome+'" para "'+getColuna(colunaId)?.nome+'"');
+  draggingId=null;renderBoard();toast('Card movido para "'+getColuna(colunaId)?.nome+'"');
 }
 
-// ── Filtro ───────────────────────────────────────────────────────────────────
 function filtrar(){
   var busca=document.getElementById('busca').value.toLowerCase();
   var resp=document.getElementById('filtroResponsavel').value;
   var area=document.getElementById('filtroArea').value;
   var prio=document.getElementById('filtroPrioridade').value;
-  var filtrados=cards.filter(function(c){
+  renderBoard(cards.filter(function(c){
     if(busca&&!c.titulo.toLowerCase().includes(busca))return false;
     if(resp&&c.responsavel!==resp)return false;
     if(area&&c.area!==area)return false;
     if(prio&&c.prioridade!==prio)return false;
     return true;
-  });
-  renderBoard(filtrados);
+  }));
 }
 
-// ── Modal Novo Card ──────────────────────────────────────────────────────────
 function abrirModalNovo(colunaPreset){
   editandoId=null;
   document.getElementById('modalNovoTitulo').textContent='Novo Card';
-  document.getElementById('novoTitulo').value='';
-  document.getElementById('novaDescricao').value='';
-  document.getElementById('novaData').value='';
+  ['novoTitulo','novaDescricao','novaData'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('novaArea').value='';
   document.getElementById('novaPrioridade').value='Media';
   document.getElementById('novoResponsavel').value='';
   document.getElementById('novaTag').value='';
   popularSelectsColunas();
-  if(colunaPreset) document.getElementById('novaColuna').value=colunaPreset;
+  if(colunaPreset)document.getElementById('novaColuna').value=colunaPreset;
   document.getElementById('modalNovo').classList.add('open');
 }
-function fecharModalNovo(){ document.getElementById('modalNovo').classList.remove('open'); editandoId=null; }
+function fecharModalNovo(){document.getElementById('modalNovo').classList.remove('open');editandoId=null;}
 
 function salvarCard(){
   var titulo=document.getElementById('novoTitulo').value.trim();
@@ -386,7 +390,7 @@ function salvarCard(){
   if(editandoId){
     var card=cards.find(c=>c.id===editandoId);
     if(card){
-      card.titulo=titulo; card.area=document.getElementById('novaArea').value;
+      card.titulo=titulo;card.area=document.getElementById('novaArea').value;
       card.prioridade=document.getElementById('novaPrioridade').value;
       card.responsavel=document.getElementById('novoResponsavel').value;
       card.coluna=document.getElementById('novaColuna').value;
@@ -401,13 +405,12 @@ function salvarCard(){
     cards.push({id,titulo,coluna:document.getElementById('novaColuna').value,area:document.getElementById('novaArea').value,prioridade:document.getElementById('novaPrioridade').value,responsavel:document.getElementById('novoResponsavel').value,tags:tag?[tag]:[],descricao:document.getElementById('novaDescricao').value,data:document.getElementById('novaData').value,historico:[ts+' — Card criado']});
     toast('Card criado!');
   }
-  fecharModalNovo(); renderBoard();
+  fecharModalNovo();renderBoard();
 }
 
-// ── Modal Detalhe ────────────────────────────────────────────────────────────
 function abrirDetalhe(id){
   cardAtivo=id;
-  var card=cards.find(c=>c.id===id); if(!card)return;
+  var card=cards.find(c=>c.id===id);if(!card)return;
   document.getElementById('detalheId').textContent=card.id;
   document.getElementById('detalheTitulo').textContent=card.titulo;
   document.getElementById('detalheDesc').textContent=card.descricao||'Sem descrição.';
@@ -424,32 +427,30 @@ function abrirDetalhe(id){
   document.getElementById('detalheHistorico').innerHTML=hist.length?hist.slice().reverse().map(h=>'<div class="history-item"><div class="history-dot"></div><div class="history-text">'+h+'</div></div>').join(''):'<div style="font-size:12px;color:var(--text3)">Sem histórico.</div>';
   document.getElementById('modalDetalhe').classList.add('open');
 }
-function fecharModalDetalhe(){ document.getElementById('modalDetalhe').classList.remove('open'); cardAtivo=null; }
+function fecharModalDetalhe(){document.getElementById('modalDetalhe').classList.remove('open');cardAtivo=null;}
 
 function moverCardModal(){
   if(!cardAtivo)return;
-  var card=cards.find(c=>c.id===cardAtivo); if(!card)return;
+  var card=cards.find(c=>c.id===cardAtivo);if(!card)return;
   var novaCol=document.getElementById('detalheMoverColuna').value;
-  var anterior=card.coluna; card.coluna=novaCol;
+  var anterior=card.coluna;card.coluna=novaCol;
   var ts=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   card.historico.push(ts+' — Movido de "'+getColuna(anterior)?.nome+'" para "'+getColuna(novaCol)?.nome+'"');
-  renderBoard(); abrirDetalhe(cardAtivo); toast('Movido para "'+getColuna(novaCol)?.nome+'"');
+  renderBoard();abrirDetalhe(cardAtivo);toast('Movido para "'+getColuna(novaCol)?.nome+'"');
 }
-
 function atualizarResponsavelModal(){
   if(!cardAtivo)return;
-  var card=cards.find(c=>c.id===cardAtivo); if(!card)return;
+  var card=cards.find(c=>c.id===cardAtivo);if(!card)return;
   card.responsavel=document.getElementById('detalheResponsavel').value;
   var p=getPessoa(card.responsavel);
   var ts=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   card.historico.push(ts+' — Responsável alterado para '+(p?p.nome:'Nenhum'));
-  renderBoard(); toast('Responsável atualizado!');
+  renderBoard();toast('Responsável atualizado!');
 }
-
 function editarCardModal(){
   if(!cardAtivo)return;
-  var card=cards.find(c=>c.id===cardAtivo); if(!card)return;
-  fecharModalDetalhe(); editandoId=card.id;
+  var card=cards.find(c=>c.id===cardAtivo);if(!card)return;
+  fecharModalDetalhe();editandoId=card.id;
   document.getElementById('modalNovoTitulo').textContent='Editar Card';
   document.getElementById('novoTitulo').value=card.titulo;
   document.getElementById('novaDescricao').value=card.descricao||'';
@@ -462,32 +463,23 @@ function editarCardModal(){
   document.getElementById('novaColuna').value=card.coluna;
   document.getElementById('modalNovo').classList.add('open');
 }
-
 function excluirCardModal(){
   if(!cardAtivo)return;
   if(!confirm('Excluir este card?'))return;
   cards=cards.filter(c=>c.id!==cardAtivo);
-  fecharModalDetalhe(); renderBoard(); toast('Card excluído.');
+  fecharModalDetalhe();renderBoard();toast('Card excluído.');
 }
 
-// ── Nova coluna → persiste no Supabase ──────────────────────────────────────
-// cor guardada em 'descricao', ordem em 'ordem'
 async function adicionarColuna(){
-  var nome=prompt('Nome da nova coluna:'); if(!nome?.trim())return;
+  var nome=prompt('Nome da nova coluna:');if(!nome?.trim())return;
   var cores=['#06b6d4','#d946ef','#f43f5e','#84cc16','#f97316','#14b8a6'];
   var cor=cores[Math.floor(Math.random()*cores.length)];
   var {data,error}=await client.from('parametros').insert({
-    tipo:'kanban_colunas',
-    valor:nome.trim(),
-    descricao:cor,
-    ordem:COLUNAS.length,
-    ativo:true
+    tipo:'kanban_colunas',valor:nome.trim(),descricao:cor,ordem:COLUNAS.length,ativo:true
   }).select('id,valor,descricao,ordem').single();
   if(error){alert('Erro ao criar coluna: '+error.message);return;}
-  COLUNAS.push({id:data.id, nome:data.valor, cor:data.descricao||'#6b7280', ordem:data.ordem});
-  popularSelectsColunas();
-  renderBoard();
-  toast('Coluna "'+nome.trim()+'" criada!');
+  COLUNAS.push({id:data.id,nome:data.valor,cor:data.descricao||'#6b7280',ordem:data.ordem});
+  popularSelectsColunas();renderBoard();toast('Coluna "'+nome.trim()+'" criada!');
 }
 
 function toast(msg){
@@ -497,7 +489,6 @@ function toast(msg){
   setTimeout(function(){el.classList.remove('show');},2500);
 }
 
-// ── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
   function waitUser(cb,n){
     if(n===undefined)n=30;
@@ -505,51 +496,37 @@ async function init(){
     if(n<=0)return cb(null);
     setTimeout(function(){waitUser(cb,n-1);},100);
   }
-
   waitUser(async function(u){
-
-    // 1. Carregar colunas — cor em 'descricao', ordenado por 'ordem'
-    var {data:colData, error:colErr} = await client
+    // 1. Colunas — cor em descricao
+    var {data:colData,error:colErr}=await client
       .from('parametros')
       .select('id,valor,descricao,ordem')
       .eq('tipo','kanban_colunas')
       .eq('ativo',true)
       .order('ordem');
+    if(colErr){console.error('Erro colunas:',colErr);colData=[];}
 
-    if (colErr) { console.error('Erro ao carregar colunas:', colErr); colData = []; }
-
-    // Seed automático se vazio
-    if (!colData || colData.length === 0) {
-      var seedRows = COLUNAS_SEED.map(function(s) {
-        return { tipo:'kanban_colunas', valor:s.valor, descricao:s.descricao, ordem:s.ordem, ativo:true };
+    if(!colData||!colData.length){
+      var seedRows=COLUNAS_SEED.map(function(s){
+        return{tipo:'kanban_colunas',valor:s.valor,descricao:s.descricao,ordem:s.ordem,ativo:true};
       });
-      var {data:seeded, error:seedErr} = await client
-        .from('parametros')
-        .insert(seedRows)
-        .select('id,valor,descricao,ordem');
-      if (seedErr) { console.error('Erro no seed:', seedErr); }
-      colData = seeded || [];
+      var{data:seeded,error:seedErr}=await client.from('parametros').insert(seedRows).select('id,valor,descricao,ordem');
+      if(seedErr)console.error('Seed erro:',seedErr);
+      colData=seeded||[];
     }
 
-    // Montar COLUNAS: valor=nome, descricao=cor
-    COLUNAS = (colData||[])
-      .sort(function(a,b){ return (a.ordem??9999)-(b.ordem??9999); })
-      .map(function(c){ return {id:c.id, nome:c.valor, cor:c.descricao||'#6b7280', ordem:c.ordem}; });
+    COLUNAS=(colData||[])
+      .sort(function(a,b){return(a.ordem??9999)-(b.ordem??9999);})
+      .map(function(c){return{id:c.id,nome:c.valor,cor:c.descricao||'#6b7280',ordem:c.ordem};});
 
-    // 2. Carregar terapeutas ativos
-    var {data:ter} = await client
-      .from('terapeutas')
-      .select('cpf,nome_profissional,cargo')
-      .eq('status','Ativo')
-      .order('nome_profissional');
-
-    pessoas = (ter||[]).map(function(t){
+    // 2. Terapeutas
+    var{data:ter}=await client.from('terapeutas').select('cpf,nome_profissional,cargo').eq('status','Ativo').order('nome_profissional');
+    pessoas=(ter||[]).map(function(t){
       var cores=['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#d946ef'];
-      var cor=cores[t.nome_profissional.charCodeAt(0)%cores.length];
-      return {id:t.cpf, nome:t.nome_profissional, cargo:t.cargo, cor};
+      return{id:t.cpf,nome:t.nome_profissional,cargo:t.cargo,cor:cores[t.nome_profissional.charCodeAt(0)%cores.length]};
     });
 
-    // 3. Popular selects de responsável
+    // 3. Selects responsável
     var selFiltro=document.getElementById('filtroResponsavel');
     var selNovo=document.getElementById('novoResponsavel');
     pessoas.forEach(function(p){

@@ -107,7 +107,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px;z-index:1100;transform:translateY(60px);opacity:0;transition:all .3s;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
 .toast.show{transform:translateY(0);opacity:1;}
 .toast i{color:#10b981;}
-/* Loading state */
 .board-loading{display:flex;align-items:center;justify-content:center;padding:60px;color:var(--text3);font-size:13px;gap:10px;}
 .board-loading i{animation:spin 1s linear infinite;}
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
@@ -234,24 +233,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 <script>
-// ── SEED padrão das colunas caso o banco esteja vazio ──────────────────────
+// ── Schema real da tabela parametros:
+// id, tipo, valor, descricao, ativo, ordem, negativo, created_at
+// Para kanban_colunas: valor = nome da coluna, descricao = cor hex, ordem = posição
+
 const COLUNAS_SEED = [
-  { valor:'Aberto',      icone:'#3b82f6', ordem:0 },
-  { valor:'Análise',     icone:'#f59e0b', ordem:1 },
-  { valor:'Impedimento', icone:'#ef4444', ordem:2 },
-  { valor:'Em andamento',icone:'#8b5cf6', ordem:3 },
-  { valor:'Verificação', icone:'#10b981', ordem:4 },
-  { valor:'Concluído',   icone:'#6b7280', ordem:5 },
+  { valor:'Aberto',       descricao:'#3b82f6', ordem:0 },
+  { valor:'Análise',      descricao:'#f59e0b', ordem:1 },
+  { valor:'Impedimento',  descricao:'#ef4444', ordem:2 },
+  { valor:'Em andamento', descricao:'#8b5cf6', ordem:3 },
+  { valor:'Verificação',  descricao:'#10b981', ordem:4 },
+  { valor:'Concluído',    descricao:'#6b7280', ordem:5 },
 ];
 
-// Estado global
-let COLUNAS = [];   // carregadas do Supabase: [{id, nome, cor, ordem}]
+let COLUNAS = [];
 let cards = [], pessoas = [], nextNum = 1, cardAtivo = null, editandoId = null, draggingId = null;
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-function getColuna(id)  { return COLUNAS.find(c => c.id === id); }
-function getPessoa(id)  { return pessoas.find(p => p.id === id); }
-function prioClass(p)   { return ({Alta:'priority-alta',Media:'priority-media',Baixa:'priority-baixa',Critica:'priority-critica'})[p]||'priority-baixa'; }
+function getColuna(id) { return COLUNAS.find(c => c.id === id); }
+function getPessoa(id) { return pessoas.find(p => p.id === id); }
+function prioClass(p)  { return ({Alta:'priority-alta',Media:'priority-media',Baixa:'priority-baixa',Critica:'priority-critica'})[p]||'priority-baixa'; }
 
 function renderAvatar(pessoaId) {
   const p = getPessoa(pessoaId);
@@ -264,19 +264,17 @@ function renderTags(tags) {
   return tags.map(t=>'<span class="tag tag-'+t+'">'+t+'</span>').join('');
 }
 
-// ── Popula selects de coluna ────────────────────────────────────────────────
 function popularSelectsColunas() {
   const opts = COLUNAS.map(c=>'<option value="'+c.id+'">'+c.nome+'</option>').join('');
-  const selNova  = document.getElementById('novaColuna');
-  const selMove  = document.getElementById('detalheMoverColuna');
-  if (selNova) selNova.innerHTML = opts;
-  if (selMove) selMove.innerHTML = opts;
+  const s1 = document.getElementById('novaColuna');
+  const s2 = document.getElementById('detalheMoverColuna');
+  if (s1) s1.innerHTML = opts;
+  if (s2) s2.innerHTML = opts;
 }
 
-// ── Renderizar board ────────────────────────────────────────────────────────
 function renderCard(card) {
-  const p      = getPessoa(card.responsavel);
-  const col    = getColuna(card.coluna);
+  const p       = getPessoa(card.responsavel);
+  const col     = getColuna(card.coluna);
   const dataFmt = card.data ? new Date(card.data+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '';
   return '<div class="card" id="card-'+card.id+'" draggable="true"'+
     ' style="--card-color:'+(col?.cor||'#555')+'"'+
@@ -330,7 +328,7 @@ function renderBoard(filtrados) {
   board.innerHTML += '<div class="col-add-new"><button class="btn-add-col" onclick="adicionarColuna()"><i class="fa fa-plus"></i> Nova coluna</button></div>';
 }
 
-// ── Drag & drop ─────────────────────────────────────────────────────────────
+// ── Drag & drop ──────────────────────────────────────────────────────────────
 function dragStart(e,id){ draggingId=id; setTimeout(function(){var el=document.getElementById('card-'+id);if(el)el.classList.add('dragging');},0); e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain',id); }
 function dragEnd(e){ if(draggingId){var el=document.getElementById('card-'+draggingId);if(el)el.classList.remove('dragging');} }
 function dragOver(e){ e.preventDefault(); e.stopPropagation(); e.dataTransfer.dropEffect='move'; e.currentTarget.classList.add('drag-over'); }
@@ -347,7 +345,7 @@ function drop(e,colunaId){
   draggingId=null; renderBoard(); toast('Card movido para "'+getColuna(colunaId)?.nome+'"');
 }
 
-// ── Filtro ──────────────────────────────────────────────────────────────────
+// ── Filtro ───────────────────────────────────────────────────────────────────
 function filtrar(){
   var busca=document.getElementById('busca').value.toLowerCase();
   var resp=document.getElementById('filtroResponsavel').value;
@@ -363,7 +361,7 @@ function filtrar(){
   renderBoard(filtrados);
 }
 
-// ── Modal Novo Card ─────────────────────────────────────────────────────────
+// ── Modal Novo Card ──────────────────────────────────────────────────────────
 function abrirModalNovo(colunaPreset){
   editandoId=null;
   document.getElementById('modalNovoTitulo').textContent='Novo Card';
@@ -406,7 +404,7 @@ function salvarCard(){
   fecharModalNovo(); renderBoard();
 }
 
-// ── Modal Detalhe ───────────────────────────────────────────────────────────
+// ── Modal Detalhe ────────────────────────────────────────────────────────────
 function abrirDetalhe(id){
   cardAtivo=id;
   var card=cards.find(c=>c.id===id); if(!card)return;
@@ -472,17 +470,21 @@ function excluirCardModal(){
   fecharModalDetalhe(); renderBoard(); toast('Card excluído.');
 }
 
-// ── Nova coluna → persiste no Supabase ─────────────────────────────────────
+// ── Nova coluna → persiste no Supabase ──────────────────────────────────────
+// cor guardada em 'descricao', ordem em 'ordem'
 async function adicionarColuna(){
   var nome=prompt('Nome da nova coluna:'); if(!nome?.trim())return;
   var cores=['#06b6d4','#d946ef','#f43f5e','#84cc16','#f97316','#14b8a6'];
   var cor=cores[Math.floor(Math.random()*cores.length)];
-  var ordem=COLUNAS.length;
   var {data,error}=await client.from('parametros').insert({
-    tipo:'kanban_colunas', valor:nome.trim(), icone:cor, ativo:true
-  }).select().single();
+    tipo:'kanban_colunas',
+    valor:nome.trim(),
+    descricao:cor,
+    ordem:COLUNAS.length,
+    ativo:true
+  }).select('id,valor,descricao,ordem').single();
   if(error){alert('Erro ao criar coluna: '+error.message);return;}
-  COLUNAS.push({id:data.id, nome:data.valor, cor:data.icone, ordem:data.ordem});
+  COLUNAS.push({id:data.id, nome:data.valor, cor:data.descricao||'#6b7280', ordem:data.ordem});
   popularSelectsColunas();
   renderBoard();
   toast('Coluna "'+nome.trim()+'" criada!');
@@ -495,7 +497,7 @@ function toast(msg){
   setTimeout(function(){el.classList.remove('show');},2500);
 }
 
-// ── INIT ────────────────────────────────────────────────────────────────────
+// ── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
   function waitUser(cb,n){
     if(n===undefined)n=30;
@@ -506,46 +508,33 @@ async function init(){
 
   waitUser(async function(u){
 
-    // 1. Carregar colunas do banco (tipo = kanban_colunas)
-    // Não usamos .order('ordem') pois a coluna pode não existir — ordenamos em JS
+    // 1. Carregar colunas — cor em 'descricao', ordenado por 'ordem'
     var {data:colData, error:colErr} = await client
       .from('parametros')
-      .select('*')
+      .select('id,valor,descricao,ordem')
       .eq('tipo','kanban_colunas')
-      .eq('ativo', true);
+      .eq('ativo',true)
+      .order('ordem');
 
     if (colErr) { console.error('Erro ao carregar colunas:', colErr); colData = []; }
 
+    // Seed automático se vazio
     if (!colData || colData.length === 0) {
-      // Seed: inserir colunas padrão sem depender de colunas opcionais
       var seedRows = COLUNAS_SEED.map(function(s) {
-        var row = { tipo:'kanban_colunas', valor:s.valor, icone:s.icone, ativo:true };
-        // só inclui 'ordem' se o campo existir (evita 400 em tabelas sem a coluna)
-        try { row.ordem = s.ordem; } catch(e){}
-        return row;
+        return { tipo:'kanban_colunas', valor:s.valor, descricao:s.descricao, ordem:s.ordem, ativo:true };
       });
       var {data:seeded, error:seedErr} = await client
         .from('parametros')
         .insert(seedRows)
-        .select('*');
-      if (seedErr) {
-        console.error('Erro no seed:', seedErr);
-        // Tenta sem o campo ordem
-        var seedRowsSemOrdem = COLUNAS_SEED.map(s => ({ tipo:'kanban_colunas', valor:s.valor, icone:s.icone, ativo:true }));
-        var {data:seeded2} = await client.from('parametros').insert(seedRowsSemOrdem).select('*');
-        seeded = seeded2;
-      }
+        .select('id,valor,descricao,ordem');
+      if (seedErr) { console.error('Erro no seed:', seedErr); }
       colData = seeded || [];
     }
 
-    // Montar array COLUNAS — ordena por 'ordem' se existir, senão mantém a ordem do banco
-    COLUNAS = (colData || [])
-      .sort(function(a,b){
-        var oa = (a.ordem != null) ? a.ordem : 9999;
-        var ob = (b.ordem != null) ? b.ordem : 9999;
-        return oa - ob;
-      })
-      .map(c => ({ id: c.id, nome: c.valor, cor: c.icone || '#6b7280', ordem: c.ordem }));
+    // Montar COLUNAS: valor=nome, descricao=cor
+    COLUNAS = (colData||[])
+      .sort(function(a,b){ return (a.ordem??9999)-(b.ordem??9999); })
+      .map(function(c){ return {id:c.id, nome:c.valor, cor:c.descricao||'#6b7280', ordem:c.ordem}; });
 
     // 2. Carregar terapeutas ativos
     var {data:ter} = await client
@@ -556,25 +545,24 @@ async function init(){
 
     pessoas = (ter||[]).map(function(t){
       var cores=['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#d946ef'];
-      var cor = cores[t.nome_profissional.charCodeAt(0) % cores.length];
-      return { id:t.cpf, nome:t.nome_profissional, cargo:t.cargo, cor };
+      var cor=cores[t.nome_profissional.charCodeAt(0)%cores.length];
+      return {id:t.cpf, nome:t.nome_profissional, cargo:t.cargo, cor};
     });
 
-    // 3. Popular select de responsável no filtro e modal
-    var selFiltro = document.getElementById('filtroResponsavel');
-    var selNovo   = document.getElementById('novoResponsavel');
+    // 3. Popular selects de responsável
+    var selFiltro=document.getElementById('filtroResponsavel');
+    var selNovo=document.getElementById('novoResponsavel');
     pessoas.forEach(function(p){
-      selFiltro.innerHTML += '<option value="'+p.id+'">'+p.nome+'</option>';
-      selNovo.innerHTML   += '<option value="'+p.id+'">'+p.nome+'</option>';
+      selFiltro.innerHTML+='<option value="'+p.id+'">'+p.nome+'</option>';
+      selNovo.innerHTML+='<option value="'+p.id+'">'+p.nome+'</option>';
     });
 
-    // 4. Render
     popularSelectsColunas();
     renderBoard();
   });
 }
 
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('modalNovo').addEventListener('click',function(e){if(e.target===this)fecharModalNovo();});
   document.getElementById('modalDetalhe').addEventListener('click',function(e){if(e.target===this)fecharModalDetalhe();});
   init();

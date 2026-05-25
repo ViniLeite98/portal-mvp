@@ -39,6 +39,8 @@ button.btn-ghost:hover{background:#f9fafb;color:#111827;}
 .param-item-cod{font-family:monospace;font-size:11px;font-weight:800;background:#eff6ff;color:#2563eb;border-radius:6px;padding:2px 8px;}
 .param-item-actions{display:flex;gap:6px;}
 .param-item-actions button{padding:5px 10px;font-size:12px;}
+/* swatch de cor inline */
+.color-swatch{width:18px;height:18px;border-radius:4px;flex-shrink:0;border:1px solid rgba(0,0,0,.1);}
 .toggle-ativo{width:36px;height:20px;border-radius:99px;background:#d1d5db;border:none;cursor:pointer;position:relative;transition:background .2s;padding:0;}
 .toggle-ativo.on{background:#22c55e;}
 .toggle-ativo::after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .2s;}
@@ -64,6 +66,15 @@ button.btn-ghost:hover{background:#f9fafb;color:#111827;}
 .field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
 input,select{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
 input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+/* color picker row */
+.color-picker-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:6px;}
+.color-opt{width:28px;height:28px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0;}
+.color-opt:hover{transform:scale(1.1);}
+.color-opt.selected{border-color:#111;box-shadow:0 0 0 2px #fff,0 0 0 4px #111;}
+.color-custom-wrap{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.color-custom-wrap input[type=color]{width:36px;height:36px;padding:0;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;}
+.color-custom-wrap input[type=text]{width:100px;font-family:monospace;font-size:12px;}
+/* icone picker (existente) */
 .icone-picker-wrap{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;margin-top:6px;}
 .icone-preview-bar{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;cursor:pointer;}
 .icone-preview-box{width:40px;height:40px;border-radius:10px;background:#fff;border:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-size:20px;overflow:hidden;flex-shrink:0;}
@@ -115,6 +126,8 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
       <div class="param-menu-item" onclick="mudarSecao('origens_lead',this)"><i class="fa fa-bullhorn"></i> Origens de Lead</div>
       <div class="param-menu-item" onclick="mudarSecao('formas_pagamento',this)"><i class="fa fa-credit-card"></i> Formas de Pagamento</div>
       <div class="param-menu-item" onclick="mudarSecao('motivos_movimentacao',this)"><i class="fa fa-exchange-alt"></i> Motivos de Movimentação</div>
+      <!-- KANBAN -->
+      <div class="param-menu-item" onclick="mudarSecao('kanban_colunas',this)"><i class="fa fa-columns"></i> Colunas do Kanban</div>
       <div class="param-menu-sep">Folha de Pagamento</div>
       <div class="param-menu-item" onclick="mudarSecao('tipos_pagamento',this)"><i class="fa fa-money-check-dollar"></i> Tipos de Pagamento</div>
     </nav>
@@ -155,6 +168,19 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
         <option value="true">Desconto (valor negativo automático)</option>
       </select>
     </div>
+
+    <!-- CAMPO COR — exclusivo para kanban_colunas -->
+    <div class="field" id="campoCor" style="display:none">
+      <label>Cor da coluna</label>
+      <div class="color-picker-row" id="colorPaletteRow"></div>
+      <div class="color-custom-wrap">
+        <input type="color" id="editCorPicker" value="#6366f1" oninput="onColorPickerChange(this.value)">
+        <input type="text"  id="editCorHex"    value="#6366f1" placeholder="#rrggbb" oninput="onColorHexChange(this.value)">
+        <span style="font-size:11px;color:#9ca3af">ou escolha acima</span>
+      </div>
+    </div>
+
+    <!-- CAMPO ÍCONE — exclusivo para certificacoes -->
     <div class="field" id="campoIcone" style="display:none">
       <label>Ícone</label>
       <input type="hidden" id="editIcone" value="fa-certificate">
@@ -209,118 +235,296 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <script src="assets/js/auth.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 <script>
-const SECOES={certificacoes:{label:"Certificações",desc:"Certificações disponíveis para vincular aos profissionais.",icon:"fa-certificate"},categorias_produto:{label:"Categorias de Produto",desc:"Categorias para organizar os produtos do estoque.",icon:"fa-box"},cargos:{label:"Cargos",desc:"Cargos disponíveis para os profissionais da equipe.",icon:"fa-briefcase"},grupos_servico:{label:"Grupos de Serviço",desc:"Grupos para organizar os serviços oferecidos.",icon:"fa-spa"},tipos_solicitacao:{label:"Tipos de Solicitação",desc:"Tipos disponíveis ao criar solicitações de ausência.",icon:"fa-file-alt"},origens_lead:{label:"Origens de Lead",desc:"De onde os clientes chegam (Instagram, Google, etc).",icon:"fa-bullhorn"},formas_pagamento:{label:"Formas de Pagamento",desc:"Formas de pagamento aceitas nos atendimentos.",icon:"fa-credit-card"},motivos_movimentacao:{label:"Motivos de Movimentação",desc:"Motivos disponíveis nas entradas e saídas do estoque.",icon:"fa-exchange-alt"},tipos_pagamento:{label:"Tipos de Pagamento",desc:"Tipos de lançamento da Folha de Pagamento. O código é exibido no holerite.",icon:"fa-money-check-dollar",info:"Os tipos aqui cadastrados aparecem automaticamente no modal de lançamento da Folha de Pagamento. Defina o código (ex: 001) e se o tipo é Provento ou Desconto."}};
-const SECOES_COM_ICONE=["certificacoes"];
-const SECOES_TIPOS_PGTO=["tipos_pagamento"];
-const FA_ICONES=[{i:"fa-certificate",l:"Certificado"},{i:"fa-person-dress",l:"Feminina"},{i:"fa-user-group",l:"Casais"},{i:"fa-droplet",l:"Nuru"},{i:"fa-spa",l:"Vivência"},{i:"fa-shoe-prints",l:"Podologia"},{i:"fa-star",l:"Estrela"},{i:"fa-heart",l:"Coração"},{i:"fa-hands",l:"Mãos"},{i:"fa-leaf",l:"Folha"},{i:"fa-fire",l:"Fogo"},{i:"fa-snowflake",l:"Neve"},{i:"fa-sun",l:"Sol"},{i:"fa-moon",l:"Lua"},{i:"fa-bolt",l:"Raio"},{i:"fa-gem",l:"Gema"},{i:"fa-ribbon",l:"Fita"},{i:"fa-award",l:"Prêmio"},{i:"fa-flag",l:"Bandeira"},{i:"fa-globe",l:"Globo"},{i:"fa-language",l:"Idioma"},{i:"fa-graduation-cap",l:"Formatura"},{i:"fa-book",l:"Livro"},{i:"fa-music",l:"Música"},{i:"fa-dumbbell",l:"Fitness"},{i:"fa-seedling",l:"Planta"},{i:"fa-wind",l:"Vento"},{i:"fa-water",l:"Água"},{i:"fa-feather",l:"Pena"},{i:"fa-infinity",l:"Infinito"},{i:"fa-yin-yang",l:"Yin Yang"},{i:"fa-peace",l:"Paz"},{i:"fa-hand-holding-heart",l:"Cuidado"},{i:"fa-hand-sparkles",l:"Mágica"},{i:"fa-brain",l:"Mente"},{i:"fa-eye",l:"Olho"}];
+// ── Configuração das seções ─────────────────────────────────────────────────
+const SECOES = {
+  certificacoes:      {label:"Certificações",        desc:"Certificações disponíveis para vincular aos profissionais.",     icon:"fa-certificate"},
+  categorias_produto: {label:"Categorias de Produto", desc:"Categorias para organizar os produtos do estoque.",              icon:"fa-box"},
+  cargos:             {label:"Cargos",                desc:"Cargos disponíveis para os profissionais da equipe.",            icon:"fa-briefcase"},
+  grupos_servico:     {label:"Grupos de Serviço",     desc:"Grupos para organizar os serviços oferecidos.",                  icon:"fa-spa"},
+  tipos_solicitacao:  {label:"Tipos de Solicitação",  desc:"Tipos disponíveis ao criar solicitações de ausência.",          icon:"fa-file-alt"},
+  origens_lead:       {label:"Origens de Lead",        desc:"De onde os clientes chegam (Instagram, Google, etc).",          icon:"fa-bullhorn"},
+  formas_pagamento:   {label:"Formas de Pagamento",   desc:"Formas de pagamento aceitas nos atendimentos.",                 icon:"fa-credit-card"},
+  motivos_movimentacao:{label:"Motivos de Movimentação",desc:"Motivos disponíveis nas entradas e saídas do estoque.",       icon:"fa-exchange-alt"},
+  kanban_colunas:     {label:"Colunas do Kanban",     desc:"Status (colunas) exibidos no quadro Kanban. A ordem e a cor são configuráveis.",icon:"fa-columns",
+                       info:"Cada coluna aqui vira um status no Kanban. Edite o nome e a cor. A ordem é controlada pelo campo 'ordem' (menor = mais à esquerda)."},
+  tipos_pagamento:    {label:"Tipos de Pagamento",    desc:"Tipos de lançamento da Folha de Pagamento. O código é exibido no holerite.", icon:"fa-money-check-dollar",
+                       info:"Os tipos aqui cadastrados aparecem automaticamente no modal de lançamento da Folha de Pagamento. Defina o código (ex: 001) e se o tipo é Provento ou Desconto."},
+};
+
+const SECOES_COM_ICONE  = ["certificacoes"];
+const SECOES_TIPOS_PGTO = ["tipos_pagamento"];
+const SECOES_KANBAN     = ["kanban_colunas"];
+
+// Paleta de cores sugerida para o Kanban
+const COR_PALETA = [
+  '#3b82f6','#f59e0b','#ef4444','#8b5cf6',
+  '#10b981','#6b7280','#06b6d4','#d946ef',
+  '#f43f5e','#84cc16','#f97316','#14b8a6',
+];
+
 const TIPOS_PGTO_DEFAULT=[{valor:"Remuneração",codigo:"001",negativo:false},{valor:"Vale Transporte",codigo:"002",negativo:false},{valor:"Hora Extra",codigo:"003",negativo:false},{valor:"Comissão",codigo:"004",negativo:false},{valor:"Bônus de Garantia",codigo:"005",negativo:false},{valor:"Bônus de Natal",codigo:"006",negativo:false},{valor:"Adicional Férias",codigo:"007",negativo:false},{valor:"Desconto",codigo:"008",negativo:true},{valor:"Adiantamento",codigo:"009",negativo:true},{valor:"Outros",codigo:"010",negativo:false}];
+const FA_ICONES=[{i:"fa-certificate",l:"Certificado"},{i:"fa-person-dress",l:"Feminina"},{i:"fa-user-group",l:"Casais"},{i:"fa-droplet",l:"Nuru"},{i:"fa-spa",l:"Vivência"},{i:"fa-shoe-prints",l:"Podologia"},{i:"fa-star",l:"Estrela"},{i:"fa-heart",l:"Coração"},{i:"fa-hands",l:"Mãos"},{i:"fa-leaf",l:"Folha"},{i:"fa-fire",l:"Fogo"},{i:"fa-snowflake",l:"Neve"},{i:"fa-sun",l:"Sol"},{i:"fa-moon",l:"Lua"},{i:"fa-bolt",l:"Raio"},{i:"fa-gem",l:"Gema"},{i:"fa-ribbon",l:"Fita"},{i:"fa-award",l:"Prêmio"},{i:"fa-flag",l:"Bandeira"},{i:"fa-globe",l:"Globo"},{i:"fa-language",l:"Idioma"},{i:"fa-graduation-cap",l:"Formatura"},{i:"fa-book",l:"Livro"},{i:"fa-music",l:"Música"},{i:"fa-dumbbell",l:"Fitness"},{i:"fa-seedling",l:"Planta"},{i:"fa-wind",l:"Vento"},{i:"fa-water",l:"Água"},{i:"fa-feather",l:"Pena"},{i:"fa-infinity",l:"Infinito"},{i:"fa-yin-yang",l:"Yin Yang"},{i:"fa-peace",l:"Paz"},{i:"fa-hand-holding-heart",l:"Cuidado"},{i:"fa-hand-sparkles",l:"Mágica"},{i:"fa-brain",l:"Mente"},{i:"fa-eye",l:"Olho"}];
 
-let secaoAtual="certificacoes",itens=[],editandoId=null,adicionando=false,pickerAberto=false;
+let secaoAtual="certificacoes", itens=[], editandoId=null, adicionando=false, pickerAberto=false;
 
-function mudarSecao(secao,el){secaoAtual=secao;document.querySelectorAll(".param-menu-item").forEach(i=>i.classList.remove("active"));el.classList.add("active");document.getElementById("panelTitulo").textContent=SECOES[secao].label;document.getElementById("panelDesc").textContent=SECOES[secao].desc;const infoBox=document.getElementById("panelInfoBox");const infoTxt=document.getElementById("panelInfoTexto");const info=SECOES[secao].info;if(info){infoBox.style.display="flex";infoTxt.textContent=info;}else{infoBox.style.display="none";}carregar();}
+// ── Navegação ────────────────────────────────────────────────────────────────
+function mudarSecao(secao, el){
+  secaoAtual = secao;
+  document.querySelectorAll(".param-menu-item").forEach(i => i.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("panelTitulo").textContent = SECOES[secao].label;
+  document.getElementById("panelDesc").textContent   = SECOES[secao].desc;
+  const infoBox = document.getElementById("panelInfoBox");
+  const infoTxt = document.getElementById("panelInfoTexto");
+  const info    = SECOES[secao].info;
+  if (info){ infoBox.style.display="flex"; infoTxt.textContent=info; }
+  else       infoBox.style.display="none";
+  carregar();
+}
 
+// ── Carregar ─────────────────────────────────────────────────────────────────
 async function carregar(){
-  if(SECOES_COM_ICONE.includes(secaoAtual)){const {data,error}=await client.from("certificacoes").select("id,nome,icone").order("nome");if(error){console.error(error);return;}itens=(data||[]).map(c=>({id:c.id,valor:c.nome,icone:c.icone,ativo:true,descricao:null}));}
-  else{const {data,error}=await client.from("parametros").select("*").eq("tipo",secaoAtual).order("ordem").order("valor");if(error){console.error(error);return;}itens=data||[];if(SECOES_TIPOS_PGTO.includes(secaoAtual)&&!itens.length){await seedTiposPagamento();return;}}
+  if (SECOES_COM_ICONE.includes(secaoAtual)){
+    const {data,error} = await client.from("certificacoes").select("id,nome,icone").order("nome");
+    if (error){ console.error(error); return; }
+    itens = (data||[]).map(c => ({id:c.id, valor:c.nome, icone:c.icone, ativo:true, descricao:null}));
+  } else {
+    const {data,error} = await client.from("parametros").select("*").eq("tipo",secaoAtual).order("ordem").order("valor");
+    if (error){ console.error(error); return; }
+    itens = data || [];
+    if (SECOES_TIPOS_PGTO.includes(secaoAtual) && !itens.length){ await seedTiposPagamento(); return; }
+  }
   render();
 }
 
-async function seedTiposPagamento(){const rows=TIPOS_PGTO_DEFAULT.map((t,i)=>({tipo:"tipos_pagamento",valor:t.valor,descricao:t.codigo,ativo:true,ordem:i,icone:t.negativo?"negativo":"positivo"}));await client.from("parametros").insert(rows);carregar();}
+async function seedTiposPagamento(){
+  const rows = TIPOS_PGTO_DEFAULT.map((t,i) => ({tipo:"tipos_pagamento",valor:t.valor,descricao:t.codigo,ativo:true,ordem:i,icone:t.negativo?"negativo":"positivo"}));
+  await client.from("parametros").insert(rows);
+  carregar();
+}
 
+// ── Renderizar lista ─────────────────────────────────────────────────────────
 function render(){
-  const lista=document.getElementById("paramLista");
-  const temIcone=SECOES_COM_ICONE.includes(secaoAtual);
-  const tipoPgto=SECOES_TIPOS_PGTO.includes(secaoAtual);
-  if(!itens.length&&!adicionando){lista.innerHTML='<div class="empty-state"><i class="fa '+SECOES[secaoAtual].icon+'"></i>Nenhum item cadastrado ainda.<br>Clique em <strong>Adicionar</strong> para começar.</div>';return;}
-  lista.innerHTML=itens.map(function(item){
-    var iconeHtml="";
-    if(temIcone){var v=item.icone||"fa-certificate";if(v.trim().startsWith("<svg"))iconeHtml='<div style="width:22px;height:22px;overflow:hidden;border-radius:4px;flex-shrink:0">'+v+'</div>';else if(v.startsWith("data:")||v.startsWith("http"))iconeHtml='<img src="'+v+'" style="width:22px;height:22px;border-radius:4px;object-fit:cover;flex-shrink:0">';else iconeHtml='<i class="fa-solid '+v+'" style="font-size:16px;width:20px;text-align:center;color:#6b7280;flex-shrink:0"></i>';}
-    var codHtml="",negBadge="";
-    if(tipoPgto){var cod=item.descricao||"—";var neg=item.icone==="negativo";codHtml='<span class="param-item-cod">'+cod+'</span>';negBadge='<span class="param-item-badge" style="'+(neg?"color:#dc2626;background:#fee2e2":"color:#16a34a;background:#dcfce7")+'">'+(neg?"Desconto":"Provento")+'</span>';}
+  const lista    = document.getElementById("paramLista");
+  const temIcone = SECOES_COM_ICONE.includes(secaoAtual);
+  const tipoPgto = SECOES_TIPOS_PGTO.includes(secaoAtual);
+  const isKanban = SECOES_KANBAN.includes(secaoAtual);
+
+  if (!itens.length && !adicionando){
+    lista.innerHTML = '<div class="empty-state"><i class="fa '+SECOES[secaoAtual].icon+'"></i>Nenhum item cadastrado ainda.<br>Clique em <strong>Adicionar</strong> para começar.</div>';
+    return;
+  }
+
+  lista.innerHTML = itens.map(function(item){
+    // Ícone/certificação
+    var iconeHtml = "";
+    if (temIcone){
+      var v = item.icone||"fa-certificate";
+      if (v.trim().startsWith("<svg"))       iconeHtml = '<div style="width:22px;height:22px;overflow:hidden;border-radius:4px;flex-shrink:0">'+v+'</div>';
+      else if (v.startsWith("data:")||v.startsWith("http")) iconeHtml = '<img src="'+v+'" style="width:22px;height:22px;border-radius:4px;object-fit:cover;flex-shrink:0">';
+      else                                   iconeHtml = '<i class="fa-solid '+v+'" style="font-size:16px;width:20px;text-align:center;color:#6b7280;flex-shrink:0"></i>';
+    }
+
+    // Swatch de cor para kanban
+    var swatchHtml = "";
+    if (isKanban){
+      var cor = item.icone || "#6b7280";
+      swatchHtml = '<div class="color-swatch" style="background:'+cor+'" title="'+cor+'"></div>';
+    }
+
+    // Código / negativo para tipos_pagamento
+    var codHtml = "", negBadge = "";
+    if (tipoPgto){
+      var cod = item.descricao || "—";
+      var neg = item.icone === "negativo";
+      codHtml  = '<span class="param-item-cod">'+cod+'</span>';
+      negBadge = '<span class="param-item-badge" style="'+(neg?"color:#dc2626;background:#fee2e2":"color:#16a34a;background:#dcfce7")+'">'+(neg?"Desconto":"Provento")+'</span>';
+    }
+
+    // Badge de ordem para kanban
+    var ordemBadge = "";
+    if (isKanban){
+      ordemBadge = '<span class="param-item-badge" title="Ordem">#'+(item.ordem ?? '—')+'</span>';
+    }
+
     return '<div class="param-item" id="item-'+item.id+'">'+
       '<span class="param-item-drag"><i class="fa fa-grip-vertical"></i></span>'+
-      iconeHtml+codHtml+
+      iconeHtml + swatchHtml + codHtml +
       '<span class="param-item-nome">'+item.valor+'</span>'+
-      (!tipoPgto&&item.descricao?'<span class="param-item-badge">'+item.descricao+'</span>':'')+
-      negBadge+
+      (!tipoPgto && !isKanban && item.descricao ? '<span class="param-item-badge">'+item.descricao+'</span>' : '')+
+      negBadge + ordemBadge +
       '<div class="param-item-actions">'+
-        (!temIcone&&!tipoPgto?'<button class="btn-toggle toggle-ativo '+(item.ativo?'on':'')+'" onclick="toggleAtivo(\''+item.id+'\','+item.ativo+')" title="'+(item.ativo?'Desativar':'Ativar')+'"></button>':'')+
+        (!temIcone && !tipoPgto && !isKanban ? '<button class="btn-toggle toggle-ativo '+(item.ativo?'on':'')+'" onclick="toggleAtivo(\''+item.id+'\','+item.ativo+')" title="'+(item.ativo?'Desativar':'Ativar')+'"></button>' : '')+
         '<button class="btn-ghost" onclick="abrirEditar(\''+item.id+'\')"><i class="fa fa-pencil"></i></button>'+
-        '<button class="btn-red" onclick="excluir(\''+item.id+'\')"><i class="fa fa-trash"></i></button>'+
+        '<button class="btn-red"   onclick="excluir(\''+item.id+'\')"><i class="fa fa-trash"></i></button>'+
       '</div>'+
     '</div>';
   }).join("");
-  if(adicionando){
-    lista.innerHTML+='<div class="add-row">'+
-      '<input id="addNome" placeholder="Nome do tipo... ex: Gratificação">'+
-      (tipoPgto?'<input id="addCodigo" placeholder="Cód. ex: 011" style="max-width:90px;font-family:monospace;font-weight:700">':'<input id="addDescricao" placeholder="Descrição (opcional)" style="max-width:200px">')+
-      '<button class="btn-blue" onclick="confirmarAdicionar()"><i class="fa fa-check"></i></button>'+
-      '<button class="btn-ghost" onclick="cancelarAdicionar()"><i class="fa fa-times"></i></button>'+
-    '</div>';
-    setTimeout(function(){var el=document.getElementById("addNome");if(el){el.focus();el.addEventListener("keydown",function(e){if(e.key==="Enter")confirmarAdicionar();if(e.key==="Escape")cancelarAdicionar();});}},50);
+
+  if (adicionando){
+    lista.innerHTML +=
+      '<div class="add-row">'+
+        '<input id="addNome" placeholder="Nome da coluna... ex: Revisão">'+
+        (isKanban ?
+          '<input type="color" id="addCor" value="#6366f1" title="Cor" style="width:44px;height:34px;padding:0;border:1px solid #d1d5db;border-radius:8px;cursor:pointer">' :
+          (tipoPgto ? '<input id="addCodigo" placeholder="Cód. ex: 011" style="max-width:90px;font-family:monospace;font-weight:700">' :
+                      '<input id="addDescricao" placeholder="Descrição (opcional)" style="max-width:200px">')
+        )+
+        '<button class="btn-blue" onclick="confirmarAdicionar()"><i class="fa fa-check"></i></button>'+
+        '<button class="btn-ghost" onclick="cancelarAdicionar()"><i class="fa fa-times"></i></button>'+
+      '</div>';
+    setTimeout(function(){
+      var el = document.getElementById("addNome");
+      if (el){ el.focus(); el.addEventListener("keydown",function(e){if(e.key==="Enter")confirmarAdicionar();if(e.key==="Escape")cancelarAdicionar();}); }
+    },50);
   }
 }
 
-function abrirAdicionar(){adicionando=true;render();}
-function cancelarAdicionar(){adicionando=false;render();}
+// ── Adicionar ────────────────────────────────────────────────────────────────
+function abrirAdicionar(){ adicionando=true; render(); }
+function cancelarAdicionar(){ adicionando=false; render(); }
 
 async function confirmarAdicionar(){
-  var nome=(document.getElementById("addNome")?.value||"").trim();if(!nome){alert("Digite o nome.");return;}
+  var nome = (document.getElementById("addNome")?.value||"").trim();
+  if (!nome){ alert("Digite o nome."); return; }
   var error;
-  if(SECOES_COM_ICONE.includes(secaoAtual)){({error}=await client.from("certificacoes").insert({nome,icone:"fa-certificate"}));}
-  else if(SECOES_TIPOS_PGTO.includes(secaoAtual)){var cod=(document.getElementById("addCodigo")?.value||"").trim();({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:cod||null,ativo:true,ordem:itens.length,icone:"positivo"}));}
-  else{var desc=(document.getElementById("addDescricao")?.value||"").trim();({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:desc||null,ativo:true,ordem:itens.length}));}
-  if(error){alert("Erro: "+error.message);return;}
-  adicionando=false;carregar();
+  if (SECOES_COM_ICONE.includes(secaoAtual)){
+    ({error} = await client.from("certificacoes").insert({nome, icone:"fa-certificate"}));
+  } else if (SECOES_KANBAN.includes(secaoAtual)){
+    var cor = document.getElementById("addCor")?.value || "#6366f1";
+    var ordem = itens.length;
+    ({error} = await client.from("parametros").insert({tipo:secaoAtual, valor:nome, icone:cor, ordem, ativo:true}));
+  } else if (SECOES_TIPOS_PGTO.includes(secaoAtual)){
+    var cod = (document.getElementById("addCodigo")?.value||"").trim();
+    ({error} = await client.from("parametros").insert({tipo:secaoAtual, valor:nome, descricao:cod||null, ativo:true, ordem:itens.length, icone:"positivo"}));
+  } else {
+    var desc = (document.getElementById("addDescricao")?.value||"").trim();
+    ({error} = await client.from("parametros").insert({tipo:secaoAtual, valor:nome, descricao:desc||null, ativo:true, ordem:itens.length}));
+  }
+  if (error){ alert("Erro: "+error.message); return; }
+  adicionando=false; carregar();
 }
 
+// ── Editar ───────────────────────────────────────────────────────────────────
 function abrirEditar(id){
-  var item=itens.find(i=>i.id===id);if(!item)return;editandoId=id;
-  document.getElementById("editNome").value=item.valor||"";document.getElementById("editDesc").value=item.descricao||"";
-  var temIcone=SECOES_COM_ICONE.includes(secaoAtual);var tipoPgto=SECOES_TIPOS_PGTO.includes(secaoAtual);
-  document.getElementById("campoIcone").style.display=temIcone?"":"none";
-  document.getElementById("campoCodigo").style.display=tipoPgto?"":"none";
-  document.getElementById("campoNegativo").style.display=tipoPgto?"":"none";
-  document.getElementById("campoDesc").style.display=tipoPgto?"none":"";
-  if(tipoPgto){document.getElementById("editCodigo").value=item.descricao||"";document.getElementById("editNegativo").value=item.icone==="negativo"?"true":"false";}
-  if(temIcone){setPickerValor(item.icone||"fa-certificate");renderFaGrid("");}
+  var item = itens.find(i => i.id === id); if (!item) return;
+  editandoId = id;
+  document.getElementById("editNome").value = item.valor || "";
+  document.getElementById("editDesc").value = item.descricao || "";
+
+  var temIcone = SECOES_COM_ICONE.includes(secaoAtual);
+  var tipoPgto = SECOES_TIPOS_PGTO.includes(secaoAtual);
+  var isKanban = SECOES_KANBAN.includes(secaoAtual);
+
+  // Mostrar/ocultar campos
+  document.getElementById("campoIcone").style.display   = temIcone ? "" : "none";
+  document.getElementById("campoCodigo").style.display  = tipoPgto ? "" : "none";
+  document.getElementById("campoNegativo").style.display= tipoPgto ? "" : "none";
+  document.getElementById("campoCor").style.display     = isKanban ? "" : "none";
+  document.getElementById("campoDesc").style.display    = (tipoPgto||isKanban) ? "none" : "";
+
+  if (tipoPgto){
+    document.getElementById("editCodigo").value  = item.descricao || "";
+    document.getElementById("editNegativo").value= item.icone === "negativo" ? "true" : "false";
+  }
+  if (temIcone){ setPickerValor(item.icone||"fa-certificate"); renderFaGrid(""); }
+  if (isKanban){
+    var cor = item.icone || "#6366f1";
+    setCorAtual(cor);
+    renderCorPaleta(cor);
+  }
+
   fecharPickerBody();
-  document.getElementById("modalTitulo").textContent="Editar — "+SECOES[secaoAtual].label;
-  document.getElementById("modalEditar").style.display="flex";
+  document.getElementById("modalTitulo").textContent = "Editar — "+SECOES[secaoAtual].label;
+  document.getElementById("modalEditar").style.display = "flex";
 }
 
-function fecharModal(){document.getElementById("modalEditar").style.display="none";fecharPickerBody();}
+function fecharModal(){ document.getElementById("modalEditar").style.display="none"; fecharPickerBody(); }
 
 async function salvarEdicao(){
-  var nome=document.getElementById("editNome").value.trim();if(!nome){alert("Nome obrigatório.");return;}
+  var nome = document.getElementById("editNome").value.trim(); if (!nome){ alert("Nome obrigatório."); return; }
   var error;
-  if(SECOES_COM_ICONE.includes(secaoAtual)){var icone=document.getElementById("editIcone").value||"fa-certificate";({error}=await client.from("certificacoes").update({nome,icone}).eq("id",editandoId));}
-  else if(SECOES_TIPOS_PGTO.includes(secaoAtual)){var codigo=document.getElementById("editCodigo").value.trim()||null;var negativo=document.getElementById("editNegativo").value==="true";({error}=await client.from("parametros").update({valor:nome,descricao:codigo,icone:negativo?"negativo":"positivo"}).eq("id",editandoId));}
-  else{({error}=await client.from("parametros").update({valor:nome,descricao:document.getElementById("editDesc").value.trim()||null}).eq("id",editandoId));}
-  if(error){alert("Erro: "+error.message);return;}
-  fecharModal();carregar();
+  if (SECOES_COM_ICONE.includes(secaoAtual)){
+    var icone = document.getElementById("editIcone").value || "fa-certificate";
+    ({error} = await client.from("certificacoes").update({nome, icone}).eq("id", editandoId));
+  } else if (SECOES_KANBAN.includes(secaoAtual)){
+    var cor = document.getElementById("editCorHex").value.trim() || "#6366f1";
+    ({error} = await client.from("parametros").update({valor:nome, icone:cor}).eq("id", editandoId));
+  } else if (SECOES_TIPOS_PGTO.includes(secaoAtual)){
+    var codigo   = document.getElementById("editCodigo").value.trim() || null;
+    var negativo = document.getElementById("editNegativo").value === "true";
+    ({error} = await client.from("parametros").update({valor:nome, descricao:codigo, icone:negativo?"negativo":"positivo"}).eq("id", editandoId));
+  } else {
+    ({error} = await client.from("parametros").update({valor:nome, descricao:document.getElementById("editDesc").value.trim()||null}).eq("id", editandoId));
+  }
+  if (error){ alert("Erro: "+error.message); return; }
+  fecharModal(); carregar();
 }
 
-function togglePicker(){pickerAberto=!pickerAberto;document.getElementById("pickerBody").style.display=pickerAberto?"block":"none";document.getElementById("pickerChevron").className="fa fa-chevron-"+(pickerAberto?"up":"down")+" icone-picker-toggle";}
-function fecharPickerBody(){pickerAberto=false;var b=document.getElementById("pickerBody");var ch=document.getElementById("pickerChevron");if(b)b.style.display="none";if(ch)ch.className="fa fa-chevron-down icone-picker-toggle";}
-function mudarPickerTab(tab,btn){document.querySelectorAll(".picker-tab").forEach(b=>b.classList.remove("active"));document.querySelectorAll(".picker-panel").forEach(p=>p.classList.remove("active"));btn.classList.add("active");document.getElementById("pickerPanel-"+tab).classList.add("active");}
-function setPickerValor(valor){document.getElementById("editIcone").value=valor;var box=document.getElementById("pickerPreviewBox");var lbl=document.getElementById("pickerPreviewLabel");if(valor.trim().startsWith("<svg")){box.innerHTML=valor;var s=box.querySelector("svg");if(s){s.style.width="36px";s.style.height="36px";}lbl.textContent="SVG";}else if(valor.startsWith("data:")||valor.startsWith("http")){box.innerHTML='<img src="'+valor+'" alt="">';lbl.textContent="Imagem enviada";}else{box.innerHTML='<i class="fa-solid '+valor+'" style="font-size:22px;color:#7c3aed"></i>';lbl.textContent=valor;}}
-function renderFaGrid(filtro){var lista=filtro?FA_ICONES.filter(x=>x.l.toLowerCase().includes(filtro)||x.i.includes(filtro)):FA_ICONES;var atual=document.getElementById("editIcone").value;document.getElementById("faGrid").innerHTML=lista.map(x=>'<div class="fa-opt '+(atual===x.i?'selected':'')+'" onclick="selecionarFa(\''+x.i+'\')"><i class="fa-solid '+x.i+'"></i><span>'+x.l+'</span></div>').join("");}
-function selecionarFa(icone){setPickerValor(icone);renderFaGrid(document.getElementById("faBusca").value);}
-function aplicarFaManual(){var v=document.getElementById("faManual").value.trim();if(!v)return;if(!v.startsWith("fa-"))v="fa-"+v;selecionarFa(v);document.getElementById("faManual").value="";}
-function handleUpload(input){var file=input.files[0];if(!file)return;if(file.size>2*1024*1024){alert("Máximo 2MB.");return;}var reader=new FileReader();reader.onload=function(e){var url=e.target.result;setPickerValor(url);document.getElementById("uploadThumbWrap").style.display="block";document.getElementById("uploadThumbImg").src=url;document.getElementById("uploadThumbNome").textContent=file.name;};reader.readAsDataURL(file);}
-async function toggleAtivo(id,ativoAtual){var{error}=await client.from("parametros").update({ativo:!ativoAtual}).eq("id",id);if(error){alert("Erro: "+error.message);return;}carregar();}
+// ── Color picker (kanban) ────────────────────────────────────────────────────
+function renderCorPaleta(corAtual){
+  const row = document.getElementById("colorPaletteRow");
+  row.innerHTML = COR_PALETA.map(c =>
+    '<div class="color-opt'+(c===corAtual?' selected':'')+'" style="background:'+c+'" title="'+c+'" onclick="selecionarCor(\''+c+'\')"></div>'
+  ).join('');
+}
+function selecionarCor(cor){
+  setCorAtual(cor);
+  renderCorPaleta(cor);
+}
+function setCorAtual(cor){
+  document.getElementById("editCorHex").value    = cor;
+  document.getElementById("editCorPicker").value = cor;
+}
+function onColorPickerChange(cor){
+  setCorAtual(cor);
+  renderCorPaleta(cor);
+}
+function onColorHexChange(val){
+  if (/^#[0-9a-fA-F]{6}$/.test(val)){
+    document.getElementById("editCorPicker").value = val;
+    renderCorPaleta(val);
+  }
+}
+
+// ── Ícone picker (certificações) ─────────────────────────────────────────────
+function togglePicker(){ pickerAberto=!pickerAberto; document.getElementById("pickerBody").style.display=pickerAberto?"block":"none"; document.getElementById("pickerChevron").className="fa fa-chevron-"+(pickerAberto?"up":"down")+" icone-picker-toggle"; }
+function fecharPickerBody(){ pickerAberto=false; var b=document.getElementById("pickerBody"); var ch=document.getElementById("pickerChevron"); if(b)b.style.display="none"; if(ch)ch.className="fa fa-chevron-down icone-picker-toggle"; }
+function mudarPickerTab(tab,btn){ document.querySelectorAll(".picker-tab").forEach(b=>b.classList.remove("active")); document.querySelectorAll(".picker-panel").forEach(p=>p.classList.remove("active")); btn.classList.add("active"); document.getElementById("pickerPanel-"+tab).classList.add("active"); }
+function setPickerValor(valor){ document.getElementById("editIcone").value=valor; var box=document.getElementById("pickerPreviewBox"); var lbl=document.getElementById("pickerPreviewLabel"); if(valor.trim().startsWith("<svg")){box.innerHTML=valor;var s=box.querySelector("svg");if(s){s.style.width="36px";s.style.height="36px";}lbl.textContent="SVG";}else if(valor.startsWith("data:")||valor.startsWith("http")){box.innerHTML='<img src="'+valor+'" alt="">';lbl.textContent="Imagem enviada";}else{box.innerHTML='<i class="fa-solid '+valor+'" style="font-size:22px;color:#7c3aed"></i>';lbl.textContent=valor;} }
+function renderFaGrid(filtro){ var lista=filtro?FA_ICONES.filter(x=>x.l.toLowerCase().includes(filtro)||x.i.includes(filtro)):FA_ICONES; var atual=document.getElementById("editIcone").value; document.getElementById("faGrid").innerHTML=lista.map(x=>'<div class="fa-opt '+(atual===x.i?'selected':'')+'" onclick="selecionarFa(\''+x.i+'\')"><i class="fa-solid '+x.i+'"></i><span>'+x.l+'</span></div>').join(""); }
+function selecionarFa(icone){ setPickerValor(icone); renderFaGrid(document.getElementById("faBusca").value); }
+function aplicarFaManual(){ var v=document.getElementById("faManual").value.trim(); if(!v)return; if(!v.startsWith("fa-"))v="fa-"+v; selecionarFa(v); document.getElementById("faManual").value=""; }
+function handleUpload(input){ var file=input.files[0]; if(!file)return; if(file.size>2*1024*1024){alert("Máximo 2MB.");return;} var reader=new FileReader(); reader.onload=function(e){var url=e.target.result; setPickerValor(url); document.getElementById("uploadThumbWrap").style.display="block"; document.getElementById("uploadThumbImg").src=url; document.getElementById("uploadThumbNome").textContent=file.name;}; reader.readAsDataURL(file); }
+
+// ── Toggle / excluir ──────────────────────────────────────────────────────────
+async function toggleAtivo(id, ativoAtual){
+  var {error} = await client.from("parametros").update({ativo:!ativoAtual}).eq("id",id);
+  if (error){ alert("Erro: "+error.message); return; }
+  carregar();
+}
 async function excluir(id){
-  if(!confirm("Excluir este item?"))return;
+  if (!confirm("Excluir este item?")) return;
   var error;
-  if(SECOES_COM_ICONE.includes(secaoAtual)){var{data:vinculos}=await client.from("terapeuta_certificacoes").select("id").eq("certificacao_id",id);if(vinculos&&vinculos.length>0){var ok=confirm("Esta certificação está vinculada a "+vinculos.length+" profissional(is).\nDeseja excluir e remover todos os vínculos?");if(!ok)return;await client.from("terapeuta_certificacoes").delete().eq("certificacao_id",id);}({error}=await client.from("certificacoes").delete().eq("id",id));}
-  else{({error}=await client.from("parametros").delete().eq("id",id));}
-  if(error){alert("Erro: "+error.message);return;}carregar();
+  if (SECOES_COM_ICONE.includes(secaoAtual)){
+    var {data:vinculos} = await client.from("terapeuta_certificacoes").select("id").eq("certificacao_id",id);
+    if (vinculos && vinculos.length > 0){
+      var ok = confirm("Esta certificação está vinculada a "+vinculos.length+" profissional(is).\nDeseja excluir e remover todos os vínculos?");
+      if (!ok) return;
+      await client.from("terapeuta_certificacoes").delete().eq("certificacao_id",id);
+    }
+    ({error} = await client.from("certificacoes").delete().eq("id",id));
+  } else {
+    ({error} = await client.from("parametros").delete().eq("id",id));
+  }
+  if (error){ alert("Erro: "+error.message); return; }
+  carregar();
 }
 
-document.addEventListener('DOMContentLoaded',function(){
-  document.getElementById("faBusca").addEventListener("input",function(e){renderFaGrid(e.target.value);});
-  document.getElementById("faManual").addEventListener("keydown",function(e){if(e.key==="Enter")aplicarFaManual();});
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById("faBusca").addEventListener("input", function(e){ renderFaGrid(e.target.value); });
+  document.getElementById("faManual").addEventListener("keydown", function(e){ if(e.key==="Enter") aplicarFaManual(); });
   carregar();
 });
 </script>

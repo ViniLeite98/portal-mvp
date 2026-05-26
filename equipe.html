@@ -74,7 +74,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .doc-upload-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
 .doc-upload-row .field{flex:1;min-width:140px;}
 .btn-upload{height:38px;padding:0 16px;white-space:nowrap;background:#2563eb;font-size:13px;align-self:flex-end;border-radius:6px;}
-.upload-status{font-size:13px;color:#2563eb;margin-top:8px;display:none;}
 .fila-upload{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
 .fila-item{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px;}
 .fila-item-tipo{font-size:12px;font-weight:600;color:#2563eb;background:#eff6ff;border-radius:6px;padding:2px 8px;white-space:nowrap;}
@@ -97,6 +96,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
 .pix-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px;}
 .pix-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.doc-aviso-fila{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1d4ed8;margin-bottom:12px;display:none;}
 @media (max-width: 1366px) {
   .content{padding:24px;}h1{font-size:20px;}th,td{padding:10px;font-size:13px;}
   .left-tools input{width:200px;font-size:13px;}.modal-content{width:98vw;}.side-nav{width:160px;}
@@ -263,8 +263,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
           <div class="field">
             <label>Tipo de Conta</label>
             <select id="banco_tipo">
-              <option value="">Selecione</option>
-              <option>Corrente</option><option>Poupança</option>
+              <option value="">Selecione</option><option>Corrente</option><option>Poupança</option>
             </select>
           </div>
         </div>
@@ -336,10 +335,11 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
                 <option>Diploma / Certificado</option><option>Outro</option>
               </select>
             </div>
-            <div class="field" style="flex:2"><label>Arquivo(s)</label>
+            <div class="field" style="flex:2">
+              <label>Arquivo(s)</label>
               <input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx" multiple onchange="adicionarFilaUpload()">
             </div>
-            <button class="btn-upload" onclick="adicionarFilaUpload()" style="white-space:nowrap"><i class="fa fa-plus"></i> Adicionar</button>
+            <button class="btn-upload" onclick="adicionarFilaUpload()"><i class="fa fa-plus"></i> Adicionar</button>
           </div>
           <div class="fila-upload" id="filaUpload"></div>
           <div style="display:flex;justify-content:flex-end;margin-top:10px">
@@ -348,7 +348,10 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             </button>
           </div>
         </div>
-        <div id="docAviso" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1d4ed8;margin-bottom:12px;display:block"><i class="fa fa-info-circle"></i> Adicione arquivos à fila — eles serão enviados automaticamente ao salvar o cadastro.</div>
+        <!-- Aviso: azul informativo para cadastro novo, some em edição -->
+        <div id="docAviso" class="doc-aviso-fila">
+          <i class="fa fa-info-circle"></i> Os arquivos na fila serão enviados automaticamente ao salvar o cadastro.
+        </div>
         <div id="docLista" class="doc-list"><div class="doc-empty">Nenhum documento anexado.</div></div>
       </div>
 
@@ -364,6 +367,8 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <script>
 let cpfAtual = null;
 let cpfEdicaoHabilitada = false;
+var filaItems = [];
+var filaCounter = 0;
 
 const campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
@@ -436,9 +441,12 @@ function filtrarTabela(){const filtro=document.getElementById("pesquisaNome").va
 
 function resetModal(){
   campos.forEach(c=>{const el=document.getElementById(c);if(el)el.value="";});
-  filaItems=[];document.getElementById("filaUpload").innerHTML="";atualizarBtnEnviar();
   document.getElementById("hora_entrada").value="09:00";
   document.getElementById("hora_saida").value="18:00";
+  // Limpar fila de documentos
+  filaItems=[];
+  document.getElementById("filaUpload").innerHTML="";
+  document.getElementById("btnEnviarTodos").style.display="none";
   const campoRole=document.getElementById("campo_role");
   const roleEl=document.getElementById("role_usuario");
   const isAdmin=window.usuarioLogado?.role==="admin";
@@ -448,7 +456,8 @@ function resetModal(){
 }
 
 function abrirNovo(){
-  cpfAtual=null;cpfEdicaoHabilitada=false;resetModal();desbloquearCPF();
+  cpfAtual=null;cpfEdicaoHabilitada=false;
+  resetModal();desbloquearCPF();
   const isAdm=window.usuarioLogado?.role==="admin";
   document.getElementById("campo_role").style.display=isAdm?"":"none";
   document.getElementById("role_usuario").disabled=!isAdm;
@@ -456,8 +465,10 @@ function abrirNovo(){
   document.getElementById("modalTitulo").textContent="Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display="";
   document.getElementById("progressWrap").style.display="inline-flex";
-  document.getElementById("btnEnviarTodos").style.display="none";
+  // Mostrar aviso azul (upload automático ao salvar)
   document.getElementById("docAviso").style.display="block";
+  document.getElementById("docLista").innerHTML='<div class="doc-empty">Nenhum documento anexado.</div>';
+  document.getElementById("docBadge").style.display="none";
   abaAtiva="pessoais";atualizarProgresso();
   document.getElementById("modal").style.display="flex";
 }
@@ -470,6 +481,7 @@ async function editar(cpf){
   document.getElementById("modalTitulo").textContent=data.nome_profissional||"Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display="";
   document.getElementById("progressWrap").style.display="inline-flex";
+  // Em edição: esconder aviso azul, botão enviar aparece normalmente via atualizarBtnEnviar
   document.getElementById("docAviso").style.display="none";
   abaAtiva="pessoais";setTimeout(atualizarProgresso,50);carregarDocs(cpf);
   const u=window.usuarioLogado;
@@ -493,13 +505,17 @@ async function salvar(){
   const u=window.usuarioLogado;const payload=getPayload();
   if(!payload.nome_completo||!payload.nome_profissional||!payload.email){alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");return;}
   if(!cpfAtual){
+    // ── NOVO CADASTRO ──
     if(!payload.cpf){alert("CPF é obrigatório.");return;}
     const cpfNovo=limparCPF(payload.cpf);
     const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
     if(existente&&existente.length>0){alert("CPF já cadastrado.");return;}
     const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});
     if(error){alert("Erro ao salvar: "+error.message);return;}
-    cpfAtual=cpfNovo;document.getElementById("tabDocsBtn").style.display="";carregarDocs(cpfAtual);
+    cpfAtual=cpfNovo;
+    document.getElementById("tabDocsBtn").style.display="";
+
+    // Criar acesso automático
     if(payload.email){
       const {data:perfilExist}=await client.from("perfis").select("id").eq("email",payload.email.trim().toLowerCase()).limit(1);
       if(!perfilExist||perfilExist.length===0){
@@ -521,7 +537,17 @@ async function salvar(){
         await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("email",payload.email.trim().toLowerCase());
       }
     }
+
+    // Enviar arquivos na fila automaticamente após INSERT
+    const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
+    if(pendentes.length>0){
+      await enviarTodos();
+    } else {
+      carregarDocs(cpfAtual);
+    }
+
   } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
+    // ── TROCA DE CPF ──
     const cpfAntigo=limparCPF(cpfAtual);const cpfNovo=limparCPF(payload.cpf);
     if(!cpfNovo||cpfNovo.length!==11){alert("CPF inválido.");return;}
     const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
@@ -537,11 +563,14 @@ async function salvar(){
     if(errDel){alert("Erro ao remover registro antigo: "+errDel.message);return;}
     cpfAtual=cpfNovo;cpfEdicaoHabilitada=false;bloquearCPF();document.getElementById("cpf").value=fmtCPF(cpfNovo);
   } else {
+    // ── EDIÇÃO NORMAL ──
     if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){alert("Sem permissão.");return;}
     const updatePayload={...payload};delete updatePayload.cpf;
     const {error}=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);
     if(error){alert("Erro ao salvar: "+error.message);return;}
   }
+
+  // Vincular perfil/role
   const cpfParaVincular=cpfAtual;
   const isAdminU=u&&u.role==="admin";
   const roleManual=isAdminU&&!document.getElementById("role_usuario")?.disabled?(document.getElementById("role_usuario")?.value||null):null;
@@ -556,11 +585,7 @@ async function salvar(){
     if(!perfilId&&payload.email){const {data:p2}=await client.from("perfis").select("id,role,email").eq("email",payload.email.trim().toLowerCase()).limit(1);if(p2&&p2.length>0)perfilId=p2[0].id;}
     if(perfilId){await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId);}
   }
-  // Enviar arquivos na fila se houver pendentes (novo cadastro já tem cpfAtual definido)
-  const pendentesNaSaida = filaItems.filter(function(i){return i.status==="pendente";});
-  if(pendentesNaSaida.length > 0){
-    await enviarTodos();
-  }
+
   carregar();fecharModal();
 }
 
@@ -589,15 +614,7 @@ async function carregarDocs(cpf){
   lista.innerHTML=data.map(d=>'<div class="doc-item" id="doc-'+d.id+'"><div class="doc-item-left"><div class="doc-icon"><i class="fa '+iconeDoc(d.nome_arquivo)+'"></i></div><div><div class="doc-name">'+d.nome_arquivo+'</div><div class="doc-tipo">'+d.tipo+' · '+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div></div></div><div class="doc-item-right"><a href="'+d.url+'" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc(\''+d.id+'\',\''+d.url+'\')"><i class="fa fa-trash"></i></button></div></div>').join("");
 }
 
-var filaItems=[];var filaCounter=0;
-
 function adicionarFilaUpload(){
-  // Atualiza aviso azul com contagem se for cadastro novo
-  if(!cpfAtual){
-    const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
-    const aviso=document.getElementById("docAviso");
-    if(aviso) aviso.innerHTML='<i class="fa fa-info-circle"></i> <strong>'+(pendentes.length+1)+'</strong> arquivo(s) na fila — serão enviados automaticamente ao salvar o cadastro.';
-  }
   const tipo=document.getElementById("doc_tipo").value;
   const files=document.getElementById("doc_arquivo").files;
   if(!files||!files.length)return;
@@ -618,13 +635,13 @@ function removerFilaItem(id){filaItems=filaItems.filter(function(i){return i.id!
 function atualizarBtnEnviar(){
   const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
   const btn=document.getElementById("btnEnviarTodos");
-  // Só mostra botão manual se já existe cpfAtual (edição); em novo cadastro o envio é automático no Salvar
+  // Botão manual só aparece em edição (cpfAtual já existe); em novo cadastro é automático no Salvar
   if(btn)btn.style.display=(pendentes.length&&cpfAtual)?"inline-flex":"none";
   if(btn)btn.innerHTML='<i class="fa fa-upload"></i> Enviar '+pendentes.length+' arquivo'+(pendentes.length!==1?"s":"");
 }
 
 async function enviarTodos(){
-  if(!cpfAtual){alert("Salve os dados pessoais primeiro.");return;}
+  if(!cpfAtual){return;}
   const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
   if(!pendentes.length)return;
   const btn=document.getElementById("btnEnviarTodos");
@@ -640,7 +657,12 @@ async function enviarTodos(){
     if(dbErr){item.status="erro";if(stEl){stEl.textContent="Erro!";stEl.className="fila-item-status err";}}
     else{item.status="ok";if(stEl){stEl.textContent="✓ Enviado";stEl.className="fila-item-status ok";}setTimeout((function(iid){return function(){const el=document.getElementById(iid);if(el)el.remove();};})(item.id),1500);}
   }
-  setTimeout(function(){filaItems=filaItems.filter(function(i){return i.status!=="ok";});atualizarBtnEnviar();carregarDocs(cpfAtual);if(btn){btn.disabled=false;}},1600);
+  setTimeout(function(){
+    filaItems=filaItems.filter(function(i){return i.status!=="ok";});
+    atualizarBtnEnviar();
+    carregarDocs(cpfAtual);
+    if(btn){btn.disabled=false;}
+  },1600);
 }
 
 async function excluirDoc(id,url){
@@ -688,7 +710,7 @@ function atualizarProgresso(){
   }
 }
 
-document.addEventListener('DOMContentLoaded',()=>{
+document.addEventListener('DOMContentLoaded',function(){
   aplicarMascaras();
   TODOS_CAMPOS.forEach(c=>{const el=document.getElementById(c.id);if(el){el.addEventListener("input",atualizarProgresso);el.addEventListener("change",atualizarProgresso);}});
   document.getElementById("filtroStatus").addEventListener("change",carregar);

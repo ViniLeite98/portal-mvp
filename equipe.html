@@ -8,6 +8,7 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
@@ -249,26 +250,12 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             <label>Banco</label>
             <select id="banco">
               <option value="">Selecione o banco</option>
-              <option>Nubank</option>
-              <option>Itaú</option>
-              <option>Bradesco</option>
-              <option>Santander</option>
-              <option>Caixa Econômica Federal</option>
-              <option>Banco do Brasil</option>
-              <option>Inter</option>
-              <option>C6 Bank</option>
-              <option>PicPay</option>
-              <option>Mercado Pago</option>
-              <option>PagBank</option>
-              <option>Sicredi</option>
-              <option>Sicoob</option>
-              <option>BTG Pactual</option>
-              <option>XP</option>
-              <option>Original</option>
-              <option>Neon</option>
-              <option>Ágora</option>
-              <option>Safra</option>
-              <option>Outro</option>
+              <option>Nubank</option><option>Itaú</option><option>Bradesco</option><option>Santander</option>
+              <option>Caixa Econômica Federal</option><option>Banco do Brasil</option><option>Inter</option>
+              <option>C6 Bank</option><option>PicPay</option><option>Mercado Pago</option>
+              <option>PagBank</option><option>Sicredi</option><option>Sicoob</option>
+              <option>BTG Pactual</option><option>XP</option><option>Original</option>
+              <option>Neon</option><option>Ágora</option><option>Safra</option><option>Outro</option>
             </select>
           </div>
           <div class="field"><label>Agência</label><input id="banco_agencia" placeholder="Ex: 0001"></div>
@@ -277,8 +264,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             <label>Tipo de Conta</label>
             <select id="banco_tipo">
               <option value="">Selecione</option>
-              <option>Corrente</option>
-              <option>Poupança</option>
+              <option>Corrente</option><option>Poupança</option>
             </select>
           </div>
         </div>
@@ -379,7 +365,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 let cpfAtual = null;
 let cpfEdicaoHabilitada = false;
 
-// ── campos salvos no Supabase ──
 const campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
   "tipo_sanguineo","telefone","telefone_emergencia","cep","rua","numero",
@@ -440,7 +425,7 @@ async function carregar(){
   data.forEach(t=>{
     const podeExcluir=u&&(u.role==="admin"||u.role==="apoio");
     const acoes=podeExcluir
-      ? '<button onclick="editar(\''+t.cpf+'\')">Editar</button><button class="excluir" onclick="excluir(\''+t.cpf+'\')">Excluir</button>'
+      ? '<button onclick="editar(\''+t.cpf+'\')">Editar</button> <button class="excluir" onclick="excluir(\''+t.cpf+'\')">Excluir</button>'
       : '<button onclick="editar(\''+t.cpf+'\')">Ver / Editar</button>';
     tbody.innerHTML+='<tr><td>'+(t.nome_profissional||"")+'</td><td>'+(t.cargo||"")+'</td><td>'+fmtCPFDisplay(t.cpf)+'</td><td>'+(t.status||"")+'</td><td>'+acoes+'</td></tr>';
   });
@@ -511,8 +496,6 @@ async function salvar(){
     const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});
     if(error){alert("Erro ao salvar: "+error.message);return;}
     cpfAtual=cpfNovo;document.getElementById("tabDocsBtn").style.display="";carregarDocs(cpfAtual);
-
-    // Criar acesso automático com senha padrão hara2026
     if(payload.email){
       const {data:perfilExist}=await client.from("perfis").select("id").eq("email",payload.email.trim().toLowerCase()).limit(1);
       if(!perfilExist||perfilExist.length===0){
@@ -520,17 +503,14 @@ async function salvar(){
         let roleNovo="usuario";
         if(cargo==="Recepcionista"||cargo==="Gerente"||cargo==="Analista"||cargo==="Atendente")roleNovo="apoio";
         const {data:signUpData,error:signUpErr}=await client.auth.signUp({
-          email:payload.email.trim(),
-          password:"hara2026",
+          email:payload.email.trim(),password:"hara2026",
           options:{data:{nome:payload.nome_profissional||payload.nome_completo}}
         });
         if(!signUpErr&&signUpData&&signUpData.user){
           await client.from("perfis").upsert({
-            id:signUpData.user.id,
-            email:payload.email.trim().toLowerCase(),
+            id:signUpData.user.id,email:payload.email.trim().toLowerCase(),
             nome:payload.nome_profissional||payload.nome_completo,
-            role:roleNovo,
-            cpf_terapeuta:cpfNovo
+            role:roleNovo,cpf_terapeuta:cpfNovo
           });
         }
       } else {
@@ -600,107 +580,52 @@ async function carregarDocs(cpf){
   lista.innerHTML=data.map(d=>'<div class="doc-item" id="doc-'+d.id+'"><div class="doc-item-left"><div class="doc-icon"><i class="fa '+iconeDoc(d.nome_arquivo)+'"></i></div><div><div class="doc-name">'+d.nome_arquivo+'</div><div class="doc-tipo">'+d.tipo+' · '+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div></div></div><div class="doc-item-right"><a href="'+d.url+'" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc(\''+d.id+'\',\''+d.url+'\')"><i class="fa fa-trash"></i></button></div></div>').join("");
 }
 
-// fila de arquivos pendentes: [{tipo, file, id}]
-var filaItems = [];
-var filaCounter = 0;
+var filaItems=[];var filaCounter=0;
 
 function adicionarFilaUpload(){
-  if(!cpfAtual){
-    document.getElementById("docAviso").style.display="block";
-    document.getElementById("doc_arquivo").value="";
-    return;
-  }
-  const tipo = document.getElementById("doc_tipo").value;
-  const files = document.getElementById("doc_arquivo").files;
-  if(!files||!files.length) return;
-
+  if(!cpfAtual){document.getElementById("docAviso").style.display="block";document.getElementById("doc_arquivo").value="";return;}
+  const tipo=document.getElementById("doc_tipo").value;
+  const files=document.getElementById("doc_arquivo").files;
+  if(!files||!files.length)return;
   Array.from(files).forEach(function(file){
-    const id = "fila-"+(++filaCounter);
-    filaItems.push({id, tipo, file, status:"pendente"});
-    renderFilaItem({id, tipo, file, status:"pendente"});
+    const id="fila-"+(++filaCounter);
+    filaItems.push({id,tipo,file,status:"pendente"});
+    const fila=document.getElementById("filaUpload");
+    const div=document.createElement("div");div.className="fila-item";div.id=id;
+    div.innerHTML='<span class="fila-item-tipo">'+tipo+'</span><span class="fila-item-nome" title="'+file.name+'">'+file.name+'</span><span class="fila-item-status" id="st-'+id+'">Pendente</span><button class="fila-item-remove" onclick="removerFilaItem(\''+id+'\')" title="Remover"><i class="fa fa-times"></i></button>';
+    fila.appendChild(div);
   });
-
   document.getElementById("doc_arquivo").value="";
   atualizarBtnEnviar();
 }
 
-function renderFilaItem(item){
-  const fila = document.getElementById("filaUpload");
-  const div = document.createElement("div");
-  div.className = "fila-item";
-  div.id = item.id;
-  div.innerHTML =
-    '<span class="fila-item-tipo">'+item.tipo+'</span>'+
-    '<span class="fila-item-nome" title="'+item.file.name+'">'+item.file.name+'</span>'+
-    '<span class="fila-item-status" id="st-'+item.id+'">Pendente</span>'+
-    '<button class="fila-item-remove" onclick="removerFilaItem(\''+item.id+'\')" title="Remover"><i class="fa fa-times"></i></button>';
-  fila.appendChild(div);
-}
-
-function removerFilaItem(id){
-  filaItems = filaItems.filter(function(i){return i.id!==id;});
-  const el = document.getElementById(id);
-  if(el) el.remove();
-  atualizarBtnEnviar();
-}
+function removerFilaItem(id){filaItems=filaItems.filter(function(i){return i.id!==id;});const el=document.getElementById(id);if(el)el.remove();atualizarBtnEnviar();}
 
 function atualizarBtnEnviar(){
-  const pendentes = filaItems.filter(function(i){return i.status==="pendente";});
-  const btn = document.getElementById("btnEnviarTodos");
-  if(btn) btn.style.display = pendentes.length ? "inline-flex" : "none";
-  if(btn) btn.innerHTML = '<i class="fa fa-upload"></i> Enviar '+pendentes.length+' arquivo'+(pendentes.length!==1?"s":"");
+  const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
+  const btn=document.getElementById("btnEnviarTodos");
+  if(btn)btn.style.display=pendentes.length?"inline-flex":"none";
+  if(btn)btn.innerHTML='<i class="fa fa-upload"></i> Enviar '+pendentes.length+' arquivo'+(pendentes.length!==1?"s":"");
 }
 
 async function enviarTodos(){
   if(!cpfAtual){alert("Salve os dados pessoais primeiro.");return;}
-  const pendentes = filaItems.filter(function(i){return i.status==="pendente";});
-  if(!pendentes.length) return;
-
-  const btn = document.getElementById("btnEnviarTodos");
+  const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
+  if(!pendentes.length)return;
+  const btn=document.getElementById("btnEnviarTodos");
   if(btn){btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i> Enviando...';}
-
   for(var i=0;i<pendentes.length;i++){
-    const item = pendentes[i];
-    const stEl = document.getElementById("st-"+item.id);
+    const item=pendentes[i];const stEl=document.getElementById("st-"+item.id);
     if(stEl){stEl.textContent="Enviando...";stEl.className="fila-item-status sending";}
-
-    const fileName = cpfAtual+"/"+Date.now()+"_"+limparNome(item.file.name);
-    const {error:upErr} = await client.storage.from("documentos").upload(fileName, item.file);
-    if(upErr){
-      item.status="erro";
-      if(stEl){stEl.textContent="Erro!";stEl.className="fila-item-status err";}
-      continue;
-    }
-    const {data:urlData} = client.storage.from("documentos").getPublicUrl(fileName);
-    const {error:dbErr} = await client.from("documentos").insert({
-      equipe_id:cpfAtual, tipo:item.tipo,
-      nome_arquivo:item.file.name, url:urlData.publicUrl
-    });
-    if(dbErr){
-      item.status="erro";
-      if(stEl){stEl.textContent="Erro!";stEl.className="fila-item-status err";}
-    } else {
-      item.status="ok";
-      if(stEl){stEl.textContent="✓ Enviado";stEl.className="fila-item-status ok";}
-      // remove da fila visual após 1.5s
-      setTimeout((function(iid){return function(){
-        const el=document.getElementById(iid);if(el)el.remove();
-      };})(item.id), 1500);
-    }
+    const fileName=cpfAtual+"/"+Date.now()+"_"+limparNome(item.file.name);
+    const {error:upErr}=await client.storage.from("documentos").upload(fileName,item.file);
+    if(upErr){item.status="erro";if(stEl){stEl.textContent="Erro!";stEl.className="fila-item-status err";}continue;}
+    const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
+    const {error:dbErr}=await client.from("documentos").insert({equipe_id:cpfAtual,tipo:item.tipo,nome_arquivo:item.file.name,url:urlData.publicUrl});
+    if(dbErr){item.status="erro";if(stEl){stEl.textContent="Erro!";stEl.className="fila-item-status err";}}
+    else{item.status="ok";if(stEl){stEl.textContent="✓ Enviado";stEl.className="fila-item-status ok";}setTimeout((function(iid){return function(){const el=document.getElementById(iid);if(el)el.remove();};})(item.id),1500);}
   }
-
-  // limpa itens ok da array
-  setTimeout(function(){
-    filaItems = filaItems.filter(function(i){return i.status!=="ok";});
-    atualizarBtnEnviar();
-    carregarDocs(cpfAtual);
-    if(btn){btn.disabled=false;}
-  }, 1600);
-}
-
-async function uploadDoc(){
-  // mantido para compatibilidade mas agora usa novo fluxo
-  adicionarFilaUpload();
+  setTimeout(function(){filaItems=filaItems.filter(function(i){return i.status!=="ok";});atualizarBtnEnviar();carregarDocs(cpfAtual);if(btn){btn.disabled=false;}},1600);
 }
 
 async function excluirDoc(id,url){

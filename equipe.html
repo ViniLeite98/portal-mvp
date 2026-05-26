@@ -456,6 +456,8 @@ function abrirNovo(){
   document.getElementById("modalTitulo").textContent="Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display="";
   document.getElementById("progressWrap").style.display="inline-flex";
+  document.getElementById("btnEnviarTodos").style.display="none";
+  document.getElementById("docAviso").style.display="block";
   abaAtiva="pessoais";atualizarProgresso();
   document.getElementById("modal").style.display="flex";
 }
@@ -468,6 +470,7 @@ async function editar(cpf){
   document.getElementById("modalTitulo").textContent=data.nome_profissional||"Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display="";
   document.getElementById("progressWrap").style.display="inline-flex";
+  document.getElementById("docAviso").style.display="none";
   abaAtiva="pessoais";setTimeout(atualizarProgresso,50);carregarDocs(cpf);
   const u=window.usuarioLogado;
   if(u&&u.role==="admin"){
@@ -589,6 +592,12 @@ async function carregarDocs(cpf){
 var filaItems=[];var filaCounter=0;
 
 function adicionarFilaUpload(){
+  // Atualiza aviso azul com contagem se for cadastro novo
+  if(!cpfAtual){
+    const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
+    const aviso=document.getElementById("docAviso");
+    if(aviso) aviso.innerHTML='<i class="fa fa-info-circle"></i> <strong>'+(pendentes.length+1)+'</strong> arquivo(s) na fila — serão enviados automaticamente ao salvar o cadastro.';
+  }
   const tipo=document.getElementById("doc_tipo").value;
   const files=document.getElementById("doc_arquivo").files;
   if(!files||!files.length)return;
@@ -609,7 +618,8 @@ function removerFilaItem(id){filaItems=filaItems.filter(function(i){return i.id!
 function atualizarBtnEnviar(){
   const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
   const btn=document.getElementById("btnEnviarTodos");
-  if(btn)btn.style.display=pendentes.length?"inline-flex":"none";
+  // Só mostra botão manual se já existe cpfAtual (edição); em novo cadastro o envio é automático no Salvar
+  if(btn)btn.style.display=(pendentes.length&&cpfAtual)?"inline-flex":"none";
   if(btn)btn.innerHTML='<i class="fa fa-upload"></i> Enviar '+pendentes.length+' arquivo'+(pendentes.length!==1?"s":"");
 }
 

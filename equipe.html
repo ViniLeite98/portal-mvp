@@ -96,7 +96,8 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .doc-empty{text-align:center;color:#9ca3af;font-size:13px;padding:28px 0;}
 .pix-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px;}
 .pix-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-.doc-aviso-fila{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1d4ed8;margin-bottom:12px;display:none;}
+.salario-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+.salario-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 @media (max-width: 1366px) {
   .content{padding:24px;}h1{font-size:20px;}th,td{padding:10px;font-size:13px;}
   .left-tools input{width:200px;font-size:13px;}.modal-content{width:98vw;}.side-nav{width:160px;}
@@ -275,7 +276,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
         <div class="grid">
           <div class="field">
             <label>Cargo</label>
-            <select id="cargo">
+            <select id="cargo" onchange="aoMudarCargo()">
               <option value="">Selecione</option>
               <option>Terapeuta Feminina</option><option>Terapeuta Masculino</option>
               <option>Gerente</option><option>Atendente</option>
@@ -320,6 +321,25 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             </select>
           </div>
         </div>
+
+        <!-- SALÁRIO BASE — só para cargos fixos -->
+        <div id="campoSalarioBase" style="display:none">
+          <div class="salario-box">
+            <div class="salario-box-label"><i class="fa fa-money-bill-wave"></i> Remuneração Fixa</div>
+            <div class="grid-2" style="margin-bottom:0">
+              <div class="field">
+                <label>Salário Base (R$)</label>
+                <input type="number" id="salario_base" placeholder="Ex: 2500.00" step="0.01" min="0">
+              </div>
+              <div class="field" style="align-self:flex-end">
+                <div style="font-size:11px;color:#6b7280;padding-bottom:4px">
+                  <i class="fa fa-info-circle" style="color:#2563eb"></i>
+                  Valor pré-preenchido automaticamente na Folha de Pagamento.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- DOCUMENTOS -->
@@ -335,8 +355,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
                 <option>Diploma / Certificado</option><option>Outro</option>
               </select>
             </div>
-            <div class="field" style="flex:2">
-              <label>Arquivo(s)</label>
+            <div class="field" style="flex:2"><label>Arquivo(s)</label>
               <input type="file" id="doc_arquivo" accept="image/*,.pdf,.doc,.docx" multiple onchange="adicionarFilaUpload()">
             </div>
             <button class="btn-upload" onclick="adicionarFilaUpload()"><i class="fa fa-plus"></i> Adicionar</button>
@@ -348,8 +367,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             </button>
           </div>
         </div>
-        <!-- Aviso: azul informativo para cadastro novo, some em edição -->
-        <div id="docAviso" class="doc-aviso-fila">
+        <div id="docAviso" class="doc-aviso-fila" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1d4ed8;margin-bottom:12px;display:none">
           <i class="fa fa-info-circle"></i> Os arquivos na fila serão enviados automaticamente ao salvar o cadastro.
         </div>
         <div id="docLista" class="doc-list"><div class="doc-empty">Nenhum documento anexado.</div></div>
@@ -367,8 +385,10 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <script>
 let cpfAtual = null;
 let cpfEdicaoHabilitada = false;
-var filaItems = [];
-var filaCounter = 0;
+var filaItems = [], filaCounter = 0;
+
+// Cargos que têm salário fixo
+const CARGOS_FIXOS = ["Gerente","Atendente","Recepcionista","Faxineira","Analista"];
 
 const campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
@@ -377,7 +397,7 @@ const campos = [
   "pix_tipo","pix_chave","pix_favorecido",
   "banco","banco_agencia","banco_conta","banco_tipo",
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio",
-  "status","data_inativacao","peso","altura","cor_cabelo"
+  "status","data_inativacao","peso","altura","cor_cabelo","salario_base"
 ];
 
 function mascara(id,fn){const el=document.getElementById(id);if(!el)return;el.addEventListener('input',function(){const pos=this.selectionStart,prev=this.value;this.value=fn(this.value);if(this.value.length===prev.length)this.setSelectionRange(pos,pos);});}
@@ -399,6 +419,15 @@ function bloquearCPF(){document.getElementById("cpf").readOnly=true;document.get
 function habilitarEdicaoCPF(){if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?"))return;const el=document.getElementById("cpf");el.readOnly=false;el.focus();el.select();document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=true;}
 function desbloquearCPF(){document.getElementById("cpf").readOnly=false;document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=false;}
 
+// Mostra/oculta salário base conforme cargo selecionado
+function aoMudarCargo(){
+  const cargo = document.getElementById("cargo").value;
+  const isFixo = CARGOS_FIXOS.includes(cargo);
+  document.getElementById("campoSalarioBase").style.display = isFixo ? "" : "none";
+  if(!isFixo) document.getElementById("salario_base").value = "";
+  atualizarProgresso();
+}
+
 function mudarTab(tab,btn){
   document.querySelectorAll(".tab-panel").forEach(el=>el.classList.remove("active"));
   document.querySelectorAll(".side-nav .side-btn").forEach(el=>el.classList.remove("active"));
@@ -406,12 +435,32 @@ function mudarTab(tab,btn){
   btn.classList.add("active");abaAtiva=tab;atualizarProgresso();
 }
 
-function getPayload(){const obj={};campos.forEach(c=>{const el=document.getElementById(c);if(el&&el.value!=="")obj[c]=el.value;});return obj;}
+function getPayload(){
+  const obj={};
+  campos.forEach(c=>{
+    const el=document.getElementById(c);
+    if(!el)return;
+    if(c==="salario_base"){
+      const v=parseFloat(el.value);
+      obj[c]=(!isNaN(v)&&el.value!="")?v:null;
+    } else {
+      if(el.value!=="")obj[c]=el.value;
+    }
+  });
+  return obj;
+}
 
 function setForm(data){
-  campos.forEach(c=>{const el=document.getElementById(c);if(!el)return;el.value=(c==="hora_entrada"||c==="hora_saida")?(data[c]?data[c].substring(0,5):""):(data[c]||"");});
+  campos.forEach(c=>{
+    const el=document.getElementById(c);if(!el)return;
+    if(c==="hora_entrada"||c==="hora_saida"){el.value=data[c]?data[c].substring(0,5):"";}
+    else if(c==="salario_base"){el.value=data[c]!=null?data[c]:"";}
+    else{el.value=data[c]||"";}
+  });
   const campo=document.getElementById("campo_data_inativacao");if(campo)campo.style.display=data.status==="Inativo"?"":"none";
   ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id=>{const el=document.getElementById(id);if(el&&el.value)el.dispatchEvent(new Event('input'));});
+  // Mostrar/ocultar salário base
+  aoMudarCargo();
 }
 
 async function carregar(){
@@ -443,7 +492,7 @@ function resetModal(){
   campos.forEach(c=>{const el=document.getElementById(c);if(el)el.value="";});
   document.getElementById("hora_entrada").value="09:00";
   document.getElementById("hora_saida").value="18:00";
-  // Limpar fila de documentos
+  document.getElementById("campoSalarioBase").style.display="none";
   filaItems=[];
   document.getElementById("filaUpload").innerHTML="";
   document.getElementById("btnEnviarTodos").style.display="none";
@@ -456,8 +505,7 @@ function resetModal(){
 }
 
 function abrirNovo(){
-  cpfAtual=null;cpfEdicaoHabilitada=false;
-  resetModal();desbloquearCPF();
+  cpfAtual=null;cpfEdicaoHabilitada=false;resetModal();desbloquearCPF();
   const isAdm=window.usuarioLogado?.role==="admin";
   document.getElementById("campo_role").style.display=isAdm?"":"none";
   document.getElementById("role_usuario").disabled=!isAdm;
@@ -465,7 +513,6 @@ function abrirNovo(){
   document.getElementById("modalTitulo").textContent="Novo Cadastro";
   document.getElementById("tabDocsBtn").style.display="";
   document.getElementById("progressWrap").style.display="inline-flex";
-  // Mostrar aviso azul (upload automático ao salvar)
   document.getElementById("docAviso").style.display="block";
   document.getElementById("docLista").innerHTML='<div class="doc-empty">Nenhum documento anexado.</div>';
   document.getElementById("docBadge").style.display="none";
@@ -481,7 +528,6 @@ async function editar(cpf){
   document.getElementById("modalTitulo").textContent=data.nome_profissional||"Editar Cadastro";
   document.getElementById("tabDocsBtn").style.display="";
   document.getElementById("progressWrap").style.display="inline-flex";
-  // Em edição: esconder aviso azul, botão enviar aparece normalmente via atualizarBtnEnviar
   document.getElementById("docAviso").style.display="none";
   abaAtiva="pessoais";setTimeout(atualizarProgresso,50);carregarDocs(cpf);
   const u=window.usuarioLogado;
@@ -505,22 +551,17 @@ async function salvar(){
   const u=window.usuarioLogado;const payload=getPayload();
   if(!payload.nome_completo||!payload.nome_profissional||!payload.email){alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");return;}
   if(!cpfAtual){
-    // ── NOVO CADASTRO ──
     if(!payload.cpf){alert("CPF é obrigatório.");return;}
     const cpfNovo=limparCPF(payload.cpf);
     const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
     if(existente&&existente.length>0){alert("CPF já cadastrado.");return;}
     const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});
     if(error){alert("Erro ao salvar: "+error.message);return;}
-    cpfAtual=cpfNovo;
-    document.getElementById("tabDocsBtn").style.display="";
-
-    // Criar acesso automático
+    cpfAtual=cpfNovo;document.getElementById("tabDocsBtn").style.display="";
     if(payload.email){
       const {data:perfilExist}=await client.from("perfis").select("id").eq("email",payload.email.trim().toLowerCase()).limit(1);
       if(!perfilExist||perfilExist.length===0){
-        const cargo=payload.cargo||"";
-        let roleNovo="usuario";
+        const cargo=payload.cargo||"";let roleNovo="usuario";
         if(cargo==="Recepcionista"||cargo==="Gerente"||cargo==="Analista"||cargo==="Atendente")roleNovo="apoio";
         const {data:signUpData,error:signUpErr}=await client.auth.signUp({
           email:payload.email.trim(),password:"hara2026",
@@ -537,17 +578,9 @@ async function salvar(){
         await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("email",payload.email.trim().toLowerCase());
       }
     }
-
-    // Enviar arquivos na fila automaticamente após INSERT
-    const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
-    if(pendentes.length>0){
-      await enviarTodos();
-    } else {
-      carregarDocs(cpfAtual);
-    }
-
+    const pendentes=filaItems.filter(i=>i.status==="pendente");
+    if(pendentes.length>0){await enviarTodos();}else{carregarDocs(cpfAtual);}
   } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
-    // ── TROCA DE CPF ──
     const cpfAntigo=limparCPF(cpfAtual);const cpfNovo=limparCPF(payload.cpf);
     if(!cpfNovo||cpfNovo.length!==11){alert("CPF inválido.");return;}
     const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
@@ -563,14 +596,11 @@ async function salvar(){
     if(errDel){alert("Erro ao remover registro antigo: "+errDel.message);return;}
     cpfAtual=cpfNovo;cpfEdicaoHabilitada=false;bloquearCPF();document.getElementById("cpf").value=fmtCPF(cpfNovo);
   } else {
-    // ── EDIÇÃO NORMAL ──
     if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){alert("Sem permissão.");return;}
     const updatePayload={...payload};delete updatePayload.cpf;
     const {error}=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);
     if(error){alert("Erro ao salvar: "+error.message);return;}
   }
-
-  // Vincular perfil/role
   const cpfParaVincular=cpfAtual;
   const isAdminU=u&&u.role==="admin";
   const roleManual=isAdminU&&!document.getElementById("role_usuario")?.disabled?(document.getElementById("role_usuario")?.value||null):null;
@@ -585,7 +615,6 @@ async function salvar(){
     if(!perfilId&&payload.email){const {data:p2}=await client.from("perfis").select("id,role,email").eq("email",payload.email.trim().toLowerCase()).limit(1);if(p2&&p2.length>0)perfilId=p2[0].id;}
     if(perfilId){await client.from("perfis").update({cpf_terapeuta:cpfParaVincular,role:novoRole}).eq("id",perfilId);}
   }
-
   carregar();fecharModal();
 }
 
@@ -630,19 +659,18 @@ function adicionarFilaUpload(){
   atualizarBtnEnviar();
 }
 
-function removerFilaItem(id){filaItems=filaItems.filter(function(i){return i.id!==id;});const el=document.getElementById(id);if(el)el.remove();atualizarBtnEnviar();}
+function removerFilaItem(id){filaItems=filaItems.filter(i=>i.id!==id);const el=document.getElementById(id);if(el)el.remove();atualizarBtnEnviar();}
 
 function atualizarBtnEnviar(){
-  const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
+  const pendentes=filaItems.filter(i=>i.status==="pendente");
   const btn=document.getElementById("btnEnviarTodos");
-  // Botão manual só aparece em edição (cpfAtual já existe); em novo cadastro é automático no Salvar
   if(btn)btn.style.display=(pendentes.length&&cpfAtual)?"inline-flex":"none";
   if(btn)btn.innerHTML='<i class="fa fa-upload"></i> Enviar '+pendentes.length+' arquivo'+(pendentes.length!==1?"s":"");
 }
 
 async function enviarTodos(){
-  if(!cpfAtual){return;}
-  const pendentes=filaItems.filter(function(i){return i.status==="pendente";});
+  if(!cpfAtual)return;
+  const pendentes=filaItems.filter(i=>i.status==="pendente");
   if(!pendentes.length)return;
   const btn=document.getElementById("btnEnviarTodos");
   if(btn){btn.disabled=true;btn.innerHTML='<i class="fa fa-spinner fa-spin"></i> Enviando...';}
@@ -655,14 +683,9 @@ async function enviarTodos(){
     const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
     const {error:dbErr}=await client.from("documentos").insert({equipe_id:cpfAtual,tipo:item.tipo,nome_arquivo:item.file.name,url:urlData.publicUrl});
     if(dbErr){item.status="erro";if(stEl){stEl.textContent="Erro!";stEl.className="fila-item-status err";}}
-    else{item.status="ok";if(stEl){stEl.textContent="✓ Enviado";stEl.className="fila-item-status ok";}setTimeout((function(iid){return function(){const el=document.getElementById(iid);if(el)el.remove();};})(item.id),1500);}
+    else{item.status="ok";if(stEl){stEl.textContent="✓ Enviado";stEl.className="fila-item-status ok";}setTimeout((iid=>()=>{const el=document.getElementById(iid);if(el)el.remove();})(item.id),1500);}
   }
-  setTimeout(function(){
-    filaItems=filaItems.filter(function(i){return i.status!=="ok";});
-    atualizarBtnEnviar();
-    carregarDocs(cpfAtual);
-    if(btn){btn.disabled=false;}
-  },1600);
+  setTimeout(()=>{filaItems=filaItems.filter(i=>i.status!=="ok");atualizarBtnEnviar();carregarDocs(cpfAtual);if(btn)btn.disabled=false;},1600);
 }
 
 async function excluirDoc(id,url){
@@ -710,7 +733,7 @@ function atualizarProgresso(){
   }
 }
 
-document.addEventListener('DOMContentLoaded',function(){
+document.addEventListener('DOMContentLoaded',()=>{
   aplicarMascaras();
   TODOS_CAMPOS.forEach(c=>{const el=document.getElementById(c.id);if(el){el.addEventListener("input",atualizarProgresso);el.addEventListener("change",atualizarProgresso);}});
   document.getElementById("filtroStatus").addEventListener("change",carregar);

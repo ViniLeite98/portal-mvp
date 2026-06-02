@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard | Hara Spa</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
@@ -14,20 +15,59 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 </script>
 <style>
+/* ─── RESET ─────────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
+
+/* ─── LAYOUT BASE ───────────────────────────────────────── */
 .app{display:flex;min-height:100vh;}
 #sidebar{flex-shrink:0;}
-.content{flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.content{flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;}
+
+/* ─── MOBILE HAMBURGER ──────────────────────────────────── */
+.mobile-header{
+  display:none;
+  align-items:center;
+  gap:12px;
+  padding:12px 16px;
+  background:#1f2937;
+  position:sticky;
+  top:0;
+  z-index:200;
+}
+.mobile-header .brand{color:#fff;font-size:15px;font-weight:700;flex:1;}
+.hamburger{
+  background:none;border:none;cursor:pointer;
+  display:flex;flex-direction:column;gap:5px;padding:4px;
+}
+.hamburger span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;transition:all .25s;}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
+.hamburger.open span:nth-child(2){opacity:0;}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
+
+/* Overlay escurecimento quando sidebar aberto no mobile */
+.sidebar-overlay{
+  display:none;
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.45);
+  z-index:149;
+}
+.sidebar-overlay.active{display:block;}
+
+/* ─── KPI BAR ───────────────────────────────────────────── */
 .kpi-bar{display:grid;grid-template-columns:repeat(6,1fr);background:#1f2937;gap:1px;}
 .kpi-cell{padding:10px 14px;background:#1f2937;text-align:center;}
 .kpi-cell-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:4px;}
 .kpi-cell-value{font-size:22px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1;}
 .kpi-cell.highlight .kpi-cell-value{color:#34d399;}
-.sub-nav{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;padding:0 24px;}
-.sub-btn{padding:10px 14px;border:none;border-bottom:3px solid transparent;background:none;font-size:12px;font-weight:600;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:5px;}
+
+/* ─── SUB NAV ───────────────────────────────────────────── */
+.sub-nav{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;padding:0 24px;overflow-x:auto;}
+.sub-btn{padding:10px 14px;border:none;border-bottom:3px solid transparent;background:none;font-size:12px;font-weight:600;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0;}
 .sub-btn:hover{color:#111827;border-bottom-color:#d1d5db;}
 .sub-btn.active{color:#2563eb;border-bottom-color:#2563eb;}
+
+/* ─── FILTROS ───────────────────────────────────────────── */
 .filtros-bar{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:nowrap;overflow-x:auto;}
 .filtros-bar::-webkit-scrollbar{height:3px;}
 .filtros-bar::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px;}
@@ -38,6 +78,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .fonte-badge.legado{background:#fef3c7;color:#92400e;}
 .fonte-badge.novo{background:#dcfce7;color:#166534;}
 .fonte-badge.ambos{background:#eff6ff;color:#1e40af;}
+
+/* ─── MAIN / GRID ───────────────────────────────────────── */
 .main{flex:1;padding:10px 14px;display:flex;flex-direction:column;gap:10px;}
 .page{display:none;flex-direction:column;gap:14px;}
 .page.active{display:flex;}
@@ -46,10 +88,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .col-4{flex:1.4!important;}
 .col-3{flex:1!important;}
 .col-2{flex:.7!important;}
+
+/* ─── CARDS ─────────────────────────────────────────────── */
 .card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;}
-.card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f3f4f6;}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f3f4f6;gap:8px;flex-wrap:wrap;}
 .card-header h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#374151;display:flex;align-items:center;gap:6px;}
 .card-body{padding:0;}
+
+/* ─── TABELAS ───────────────────────────────────────────── */
 .dt{width:100%;border-collapse:collapse;font-size:12px;}
 .dt thead th{background:#f9fafb;padding:7px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;border-bottom:1px solid #e5e7eb;white-space:nowrap;}
 .dt tbody td{padding:6px 12px;border-bottom:1px solid #f3f4f6;color:#374151;}
@@ -58,10 +104,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .dt .num{text-align:right;font-variant-numeric:tabular-nums;}
 .dt .red{color:#dc2626;}
 .dt .green{color:#16a34a;}
-.dt-scroll{max-height:280px;overflow-y:auto;}
+.dt-scroll{max-height:280px;overflow-y:auto;overflow-x:auto;}
+
+/* ─── PCT BAR ───────────────────────────────────────────── */
 .pct-bar{display:flex;align-items:center;gap:6px;}
-.pct-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;}
+.pct-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;min-width:40px;}
 .pct-bar-fill{height:100%;border-radius:2px;background:#2563eb;}
+
+/* ─── CHARTS ────────────────────────────────────────────── */
 .chart-wrap{padding:12px 14px;}
 .hora-grid{display:grid;grid-template-columns:50px 1fr;gap:4px;padding:10px 14px;}
 .hora-label{font-size:10px;color:#9ca3af;display:flex;align-items:center;}
@@ -69,15 +119,26 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .hora-bar-bg{flex:1;height:12px;background:#e5e7eb;border-radius:3px;overflow:hidden;}
 .hora-bar-fill{height:100%;border-radius:3px;background:#bfdbfe;}
 .hora-count{font-size:10px;color:#6b7280;min-width:32px;text-align:right;}
-.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.7);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:12px;font-size:13px;color:#6b7280;}
+
+/* ─── LOADING ───────────────────────────────────────────── */
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px;font-size:13px;color:#6b7280;}
 .loading-overlay.hidden{display:none;}
 .spinner{width:36px;height:36px;border:4px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* Barra de progresso do carregamento */
+.load-progress{width:240px;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;}
+.load-progress-fill{height:100%;background:#2563eb;border-radius:2px;transition:width .3s ease;width:0%;}
+.load-stage{font-size:11px;color:#9ca3af;}
+
+/* ─── BADGE SELEÇÃO ─────────────────────────────────────── */
 .dt tbody tr.selecionado td{background:#eff6ff!important;color:#1d4ed8;font-weight:700;}
 .dt tbody tr.clicavel{cursor:pointer;}
 .dt tbody tr.clicavel:hover td{background:#f0f9ff;}
-.filtro-ativo-badge{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:12px;cursor:pointer;}
+.filtro-ativo-badge{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:12px;cursor:pointer;flex-shrink:0;}
 .filtro-ativo-badge:hover{background:#dbeafe;}
+
+/* ─── KPI GRIDS (PROFISSIONAL) ──────────────────────────── */
 .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
 .kpi-grid-2{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-bottom:14px;}
 .kpi-box{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:center;}
@@ -86,12 +147,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .kpi-box .kb-val.green{color:#16a34a;}
 .kpi-box .kb-val.blue{color:#2563eb;}
 .kpi-box .kb-val.purple{color:#7c3aed;}
-.heatmap-wrap{display:grid;grid-template-columns:40px repeat(6,1fr);gap:2px;font-size:10px;}
+.heatmap-wrap{display:grid;grid-template-columns:40px repeat(6,1fr);gap:2px;font-size:10px;overflow-x:auto;}
 .hm-header{background:#f9fafb;text-align:center;padding:4px 2px;font-weight:700;color:#6b7280;border-radius:4px;}
 .hm-label{display:flex;align-items:center;color:#9ca3af;font-size:10px;}
 .hm-cell{border-radius:4px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;}
 .sem-prof{text-align:center;padding:60px;color:#9ca3af;font-size:14px;}
 .sem-prof i{font-size:40px;display:block;margin-bottom:12px;color:#e5e7eb;}
+
+/* ─── VALUATION ─────────────────────────────────────────── */
 .val-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
 .val-card{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
 .val-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:6px;}
@@ -105,6 +168,29 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .multiplo-slider{display:flex;align-items:center;gap:10px;margin-top:8px;}
 .multiplo-slider input[type=range]{flex:1;accent-color:#2563eb;}
 .multiplo-val{font-size:13px;font-weight:700;color:#2563eb;min-width:28px;}
+
+/* ─── BANNER CARREGANDO HISTÓRICO ────────────────────────── */
+.bg-load-banner{
+  display:none;
+  align-items:center;
+  gap:10px;
+  padding:8px 16px;
+  background:#fffbeb;
+  border-bottom:1px solid #fde68a;
+  font-size:12px;
+  color:#92400e;
+}
+.bg-load-banner.visible{display:flex;}
+.bg-load-banner .mini-spin{
+  width:14px;height:14px;
+  border:2px solid #fde68a;
+  border-top-color:#d97706;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  flex-shrink:0;
+}
+
+/* ─── RESPONSIVO 1366px ──────────────────────────────────── */
 @media(max-width:1366px){
   .kpi-cell{padding:10px 14px;}.kpi-cell-value{font-size:22px;}.kpi-cell-label{font-size:10px;}
   .sub-btn{padding:10px 12px;font-size:12px;}.filtros-bar{gap:6px;padding:8px 14px;}
@@ -112,6 +198,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   .main{padding:10px 12px;gap:10px;}.row{gap:10px;}
   .card-header h3{font-size:10px;}.dt thead th{font-size:9px;padding:6px 8px;}.dt tbody td{font-size:11px;padding:5px 8px;}
 }
+
+/* ─── RESPONSIVO 1367–1920px ─────────────────────────────── */
 @media(min-width:1367px) and (max-width:1920px){
   .kpi-cell{padding:14px 20px;}.kpi-cell-value{font-size:28px;}.kpi-cell-label{font-size:11px;}
   .sub-btn{padding:12px 18px;font-size:13px;}.filtros-bar{gap:10px;padding:10px 20px;}
@@ -119,6 +207,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   .main{padding:14px 18px;gap:12px;}.row{gap:12px;}
   .card-header h3{font-size:11px;}.dt thead th{font-size:10px;padding:7px 12px;}.dt tbody td{font-size:12px;padding:6px 12px;}
 }
+
+/* ─── RESPONSIVO 1920px+ ─────────────────────────────────── */
 @media(min-width:1921px){
   .kpi-cell{padding:18px 28px;}.kpi-cell-value{font-size:36px;}.kpi-cell-label{font-size:13px;}
   .sub-btn{padding:14px 22px;font-size:14px;}.filtros-bar{gap:14px;padding:12px 28px;}
@@ -126,18 +216,124 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   .main{padding:18px 24px;gap:16px;}.row{gap:16px;}
   .card-header h3{font-size:12px;}.dt thead th{font-size:11px;padding:9px 14px;}.dt tbody td{font-size:13px;padding:8px 14px;}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE — max-width: 768px
+   ═══════════════════════════════════════════════════════════ */
+@media(max-width:768px){
+
+  /* Header móvel visível */
+  .mobile-header{display:flex;}
+
+  /* Sidebar: escondida por padrão, abre como drawer */
+  #sidebar{
+    position:fixed;
+    top:0;left:0;
+    height:100vh;
+    width:240px;
+    z-index:150;
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+    overflow-y:auto;
+  }
+  #sidebar.open{transform:translateX(0);}
+
+  /* KPI bar: 2 colunas */
+  .kpi-bar{grid-template-columns:repeat(2,1fr);}
+  .kpi-cell{padding:10px 8px;}
+  .kpi-cell-value{font-size:18px;}
+  .kpi-cell-label{font-size:9px;}
+
+  /* Sub nav scroll horizontal */
+  .sub-nav{padding:0 12px;}
+  .sub-btn{padding:9px 10px;font-size:11px;}
+
+  /* Filtros: scroll horizontal já existe, só reduz gap */
+  .filtros-bar{gap:6px;padding:8px 12px;}
+  .filtros-bar select{max-width:90px;font-size:11px;}
+
+  /* Main */
+  .main{padding:10px 10px;gap:10px;}
+
+  /* ROWS viram colunas */
+  .row{flex-direction:column;}
+  .row>*{flex:none!important;width:100%!important;max-width:100%!important;}
+
+  /* Coluna "Por Hora" ocupa full width */
+  .card[style*="max-width:260px"]{max-width:100%!important;flex:none!important;}
+
+  /* KPI grids profissional */
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .kpi-grid-2{grid-template-columns:repeat(3,1fr);}
+  .kpi-box .kb-val{font-size:15px;}
+
+  /* Valuation grid */
+  .val-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .val-value{font-size:18px;}
+
+  /* Tabelas: scroll horizontal */
+  .dt-scroll{overflow-x:auto;}
+  .dt{min-width:480px;}
+
+  /* Heatmap */
+  .heatmap-wrap{min-width:340px;}
+
+  /* Esconde pct-bar em mobile pra não quebrar */
+  .pct-bar-bg{display:none;}
+
+  /* Card headers */
+  .card-header{padding:8px 12px;}
+  .card-header h3{font-size:10px;}
+
+  /* Filtros bar: permite quebrar em 2 linhas no mobile */
+  .filtros-bar{flex-wrap:wrap;}
+  .filtros-bar .sep{display:none;}
+
+  /* Banner bg-load */
+  .bg-load-banner{font-size:11px;padding:6px 12px;}
+}
+
+/* Tablets */
+@media(min-width:769px) and (max-width:1024px){
+  .kpi-bar{grid-template-columns:repeat(3,1fr);}
+  .row{flex-wrap:wrap;}
+  .row>*{min-width:calc(50% - 5px);}
+  .kpi-grid{grid-template-columns:repeat(3,1fr);}
+  .kpi-grid-2{grid-template-columns:repeat(5,1fr);}
+  .val-grid{grid-template-columns:repeat(2,1fr);}
+}
 </style>
 </head>
 <body>
+
+<!-- ── MOBILE HEADER ─────────────────────────────────────── -->
+<div class="mobile-header">
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <span class="brand">Hara Spa</span>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <div class="app">
 <aside id="sidebar"></aside>
 <main class="content">
 
+  <!-- Loading inicial -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <span id="loadingMsg">Carregando dados...</span>
+    <span id="loadingMsg">Carregando dados recentes...</span>
+    <div class="load-progress"><div class="load-progress-fill" id="loadProgressFill"></div></div>
+    <span class="load-stage" id="loadStage"></span>
   </div>
 
+  <!-- Banner: histórico carregando em background -->
+  <div class="bg-load-banner" id="bgLoadBanner">
+    <div class="mini-spin"></div>
+    <span id="bgLoadMsg">Carregando histórico completo em background...</span>
+  </div>
+
+  <!-- KPI BAR -->
   <div class="kpi-bar">
     <div class="kpi-cell"><div class="kpi-cell-label">Atendimentos</div><div class="kpi-cell-value" id="kAtend">—</div></div>
     <div class="kpi-cell"><div class="kpi-cell-label">Receita</div><div class="kpi-cell-value" id="kReceita">—</div></div>
@@ -147,12 +343,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     <div class="kpi-cell highlight"><div class="kpi-cell-label">Retornos</div><div class="kpi-cell-value" id="kRetornos">—</div></div>
   </div>
 
+  <!-- SUB NAV -->
   <div class="sub-nav">
     <button class="sub-btn active" onclick="mudarPag('geral',this)"><i class="fa fa-chart-bar"></i> Geral</button>
     <button class="sub-btn" onclick="mudarPag('profissional',this)"><i class="fa fa-user-tie"></i> Profissional</button>
     <button class="sub-btn" onclick="mudarPag('valuation',this)"><i class="fa fa-dollar-sign"></i> Valuation</button>
   </div>
 
+  <!-- FILTROS -->
   <div class="filtros-bar" id="filtrosBar">
     <label>Fonte</label>
     <select id="fFonte" onchange="aplicarFiltros()">
@@ -198,7 +396,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 
   <div class="main">
 
-  <!-- GERAL -->
+  <!-- ── GERAL ─────────────────────────────────────────── -->
   <div class="page active" id="page-geral">
     <div class="row">
       <div class="card col-4">
@@ -264,7 +462,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     </div>
   </div>
 
-  <!-- PROFISSIONAL -->
+  <!-- ── PROFISSIONAL ───────────────────────────────────── -->
   <div class="page" id="page-profissional">
     <div id="profSemSelecao" class="card">
       <div class="sem-prof"><i class="fa fa-user-tie"></i>Selecione um profissional no filtro acima para ver os dados individuais.</div>
@@ -300,7 +498,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
         </div>
         <div class="card col-2">
           <div class="card-header"><h3><i class="fa fa-th"></i> Heatmap Hora × Dia</h3></div>
-          <div class="card-body" style="padding:12px 14px"><div class="heatmap-wrap" id="atHeatmap"></div></div>
+          <div class="card-body" style="padding:12px 14px;overflow-x:auto"><div class="heatmap-wrap" id="atHeatmap"></div></div>
         </div>
       </div>
       <div class="card">
@@ -310,7 +508,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     </div>
   </div>
 
-  <!-- VALUATION -->
+  <!-- ── VALUATION ─────────────────────────────────────── -->
   <div class="page" id="page-valuation">
     <div style="background:#fff;border-radius:8px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;align-items:center;gap:20px;flex-wrap:wrap">
       <div>
@@ -406,37 +604,142 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     </div>
   </div>
 
-  </div>
+  </div><!-- /main -->
 </main>
-</div>
+</div><!-- /app -->
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js" data-role="admin"></script>
 <script src="assets/sidebar/sidebar.js"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 <script>
+
+/* ════════════════════════════════════════════════════════════
+   MOBILE SIDEBAR
+   ════════════════════════════════════════════════════════════ */
+function toggleSidebar(){
+  const sb=document.getElementById("sidebar");
+  const ov=document.getElementById("sidebarOverlay");
+  const btn=document.getElementById("hamburgerBtn");
+  const open=sb.classList.toggle("open");
+  ov.classList.toggle("active",open);
+  btn.classList.toggle("open",open);
+}
+function closeSidebar(){
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("active");
+  document.getElementById("hamburgerBtn").classList.remove("open");
+}
+
+/* ════════════════════════════════════════════════════════════
+   CACHE LOCAL (localStorage) — TTL 60 minutos
+   ════════════════════════════════════════════════════════════ */
+const CACHE_KEY_LEGADO = "hara_legado_v2";
+const CACHE_KEY_NOVO   = "hara_novo_v2";
+const CACHE_TTL        = 60 * 60 * 1000; // 1 hora em ms
+
+function salvarCache(key, data){
+  try{
+    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
+  }catch(e){ /* quota exceeded — ignora */ }
+}
+
+function lerCache(key){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return null;
+    const obj = JSON.parse(raw);
+    if(Date.now() - obj.ts > CACHE_TTL) return null; // expirado
+    return obj.data;
+  }catch(e){ return null; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   ESTADO GLOBAL
+   ════════════════════════════════════════════════════════════ */
 const MESES      = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const MESES_FULL = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-let cacheCompleto = [];
-let allData       = [];
+let cacheCompleto = [];   // todos os dados (legado + novos)
+let allData       = [];   // dados após filtros
 let selecao       = {tipo:null, valor:null};
 let charts        = {};
 let _modoAnoMes   = "atend";
 let _modoServ     = "atend";
+let _historicoCarregado = false; // flag: histórico completo já veio?
 
+/* ════════════════════════════════════════════════════════════
+   UTILITÁRIOS
+   ════════════════════════════════════════════════════════════ */
 const fmtM = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const fmtN = v => Number(v||0).toLocaleString("pt-BR");
 const fmtP = v => Number(v||0).toFixed(1)+"%";
 const fmtD = v => v ? new Date(v+"T12:00:00").toLocaleDateString("pt-BR") : "—";
 
-function setLoading(msg){ document.getElementById("loadingOverlay").classList.remove("hidden"); document.getElementById("loadingMsg").textContent=msg||"Carregando..."; }
+function setProgress(pct, stage){
+  document.getElementById("loadProgressFill").style.width = pct+"%";
+  if(stage) document.getElementById("loadStage").textContent = stage;
+}
+function setLoading(msg){
+  document.getElementById("loadingOverlay").classList.remove("hidden");
+  document.getElementById("loadingMsg").textContent = msg||"Carregando...";
+}
 function stopLoading(){ document.getElementById("loadingOverlay").classList.add("hidden"); }
 function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
 function mkChart(id, cfg){ destroyChart(id); const el=document.getElementById(id); if(!el)return; charts[id]=new Chart(el,cfg); }
 
+function setBgBanner(msg, visible){
+  const b = document.getElementById("bgLoadBanner");
+  b.classList.toggle("visible", visible);
+  if(msg) document.getElementById("bgLoadMsg").textContent = msg;
+}
+
+/* ════════════════════════════════════════════════════════════
+   FETCH — MÊS/ANO ATUAL (rápido, ~50 registros)
+   ════════════════════════════════════════════════════════════ */
+function mesAtualStr(){
+  const hoje = new Date();
+  return String(hoje.getMonth()+1).padStart(2,"0");
+}
+function anoAtualStr(){ return String(new Date().getFullYear()); }
+
+async function fetchLegadoRecente(){
+  // Só o ano atual para aparecer rápido
+  const ano = anoAtualStr();
+  const { data, error } = await client
+    .from("legado_atendimentos")
+    .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
+    .gte("data", ano+"-01-01")
+    .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
+  if(error || !data) return [];
+  return data.map(r=>({...r, valor:r.valor||0, comissao:r.comissao||0, _fonte:"legado"}));
+}
+
+async function fetchNovosRecente(){
+  const ano = anoAtualStr();
+  const { data, error } = await client
+    .from("atendimentos")
+    .select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`)
+    .eq("status","Confirmado")
+    .gte("data", ano+"-01-01");
+  if(error || !data) return [];
+  return data.map(r=>({
+    profissional: r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—",
+    data: r.data, hora_inicio: r.hora_inicio,
+    cliente: r.clientes?.nome||null,
+    servico: r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",
+    valor: r.valor_final||0, comissao: r.comissao_total||0, _fonte:"novo"
+  }));
+}
+
+/* ════════════════════════════════════════════════════════════
+   FETCH — HISTÓRICO COMPLETO (em background)
+   ════════════════════════════════════════════════════════════ */
 async function fetchLegadoCompleto(){
+  // Verifica cache
+  const cached = lerCache(CACHE_KEY_LEGADO);
+  if(cached){ return cached; }
+
   let todos=[], from=0;
   while(true){
     const{data,error}=await client.from("legado_atendimentos")
@@ -448,10 +751,14 @@ async function fetchLegadoCompleto(){
     if(data.length<1000) break;
     from+=1000;
   }
+  salvarCache(CACHE_KEY_LEGADO, todos);
   return todos;
 }
 
 async function fetchNovosCompleto(){
+  const cached = lerCache(CACHE_KEY_NOVO);
+  if(cached){ return cached; }
+
   let todos=[], from=0;
   while(true){
     const{data,error}=await client.from("atendimentos")
@@ -462,9 +769,13 @@ async function fetchNovosCompleto(){
     if(data.length<1000) break;
     from+=1000;
   }
+  salvarCache(CACHE_KEY_NOVO, todos);
   return todos;
 }
 
+/* ════════════════════════════════════════════════════════════
+   FILTROS
+   ════════════════════════════════════════════════════════════ */
 function aplicarFiltros(){
   selecao={tipo:null,valor:null};
   const badge=document.getElementById("selecaoBadge"); if(badge) badge.remove();
@@ -543,8 +854,13 @@ function mudarPag(p, btn){
   document.querySelectorAll(".sub-btn").forEach(b=>b.classList.remove("active"));
   document.getElementById("page-"+p).classList.add("active");
   btn.classList.add("active");
+  // Fechar sidebar no mobile ao trocar de aba
+  if(window.innerWidth<=768) closeSidebar();
 }
 
+/* ════════════════════════════════════════════════════════════
+   RENDERS
+   ════════════════════════════════════════════════════════════ */
 function renderKPIs(rows){
   const cliCount={};
   rows.forEach(r=>{ if(r.cliente) cliCount[r.cliente]=(cliCount[r.cliente]||0)+1; });
@@ -898,18 +1214,62 @@ async function initFiltros(){
   const servs=[...new Set(cacheCompleto.map(r=>r.servico).filter(Boolean))].sort();
   const selP=document.getElementById("fProf");
   const selS=document.getElementById("fServ");
+  // Limpa antes de repopular (evita duplicatas se chamar 2x)
+  selP.innerHTML='<option value="">Todos</option>';
+  selS.innerHTML='<option value="">Todos</option>';
   profs.forEach(p=>selP.innerHTML+=`<option>${p}</option>`);
   servs.forEach(s=>selS.innerHTML+=`<option>${s}</option>`);
 }
 
-document.addEventListener("DOMContentLoaded",async()=>{
-  setLoading("Carregando dados...");
-  const [legado, novos] = await Promise.all([fetchLegadoCompleto(), fetchNovosCompleto()]);
-  cacheCompleto=[...legado,...novos];
-  setLoading("Montando filtros...");
+/* ════════════════════════════════════════════════════════════
+   INIT — CARREGAMENTO EM 2 FASES
+   ════════════════════════════════════════════════════════════
+   FASE 1 (rápida): só ano atual → mostra dashboard em ~1s
+   FASE 2 (background): histórico completo → atualiza silenciosamente
+   ════════════════════════════════════════════════════════════ */
+document.addEventListener("DOMContentLoaded", async () => {
+
+  /* ── FASE 1: dados recentes ── */
+  setLoading("Carregando dados recentes...");
+  setProgress(10, "Conectando...");
+
+  const [legadoRec, novosRec] = await Promise.all([
+    fetchLegadoRecente(),
+    fetchNovosRecente()
+  ]);
+
+  setProgress(60, "Montando dashboard...");
+  cacheCompleto = [...legadoRec, ...novosRec];
+
   await initFiltros();
-  stopLoading();
+  setProgress(90, "Renderizando...");
   aplicarFiltros();
+
+  setProgress(100);
+  stopLoading();
+
+  /* ── FASE 2: histórico completo em background ── */
+  // Só busca se não tiver cache válido
+  const temCacheLegado = lerCache(CACHE_KEY_LEGADO);
+  const temCacheNovo   = lerCache(CACHE_KEY_NOVO);
+
+  if(!temCacheLegado || !temCacheNovo){
+    setBgBanner("Carregando histórico completo em background...", true);
+
+    const [legadoFull, novosFull] = await Promise.all([
+      fetchLegadoCompleto(),
+      fetchNovosCompleto()
+    ]);
+
+    // Substitui cache com dados completos e re-renderiza
+    cacheCompleto = [...legadoFull, ...novosFull];
+    await initFiltros();
+    aplicarFiltros();
+
+    setBgBanner("Histórico carregado! ✓", true);
+    setTimeout(() => setBgBanner("", false), 3000);
+  }
+  // Se tinha cache, já estava completo desde o início
 });
 </script>
 </body>

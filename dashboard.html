@@ -9,65 +9,31 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded",()=>{
-  if(window.Chart && window.ChartZoom) Chart.register(window.ChartZoom);
-});
-</script>
+<script>document.addEventListener("DOMContentLoaded",()=>{if(window.Chart&&window.ChartZoom)Chart.register(window.ChartZoom);});</script>
 <style>
-/* ─── RESET ─────────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
-
-/* ─── LAYOUT BASE ───────────────────────────────────────── */
 .app{display:flex;min-height:100vh;}
 #sidebar{flex-shrink:0;}
 .content{flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;}
-
-/* ─── MOBILE HAMBURGER ──────────────────────────────────── */
-.mobile-header{
-  display:none;
-  align-items:center;
-  gap:12px;
-  padding:12px 16px;
-  background:#1f2937;
-  position:sticky;
-  top:0;
-  z-index:200;
-}
+.mobile-header{display:none;align-items:center;gap:12px;padding:12px 16px;background:#1f2937;position:sticky;top:0;z-index:200;}
 .mobile-header .brand{color:#fff;font-size:15px;font-weight:700;flex:1;}
-.hamburger{
-  background:none;border:none;cursor:pointer;
-  display:flex;flex-direction:column;gap:5px;padding:4px;
-}
+.hamburger{background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:5px;padding:4px;}
 .hamburger span{display:block;width:22px;height:2px;background:#fff;border-radius:2px;transition:all .25s;}
 .hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
 .hamburger.open span:nth-child(2){opacity:0;}
 .hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
-
-/* Overlay escurecimento quando sidebar aberto no mobile */
-.sidebar-overlay{
-  display:none;
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.45);
-  z-index:149;
-}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:149;}
 .sidebar-overlay.active{display:block;}
-
-/* ─── KPI BAR ───────────────────────────────────────────── */
 .kpi-bar{display:grid;grid-template-columns:repeat(6,1fr);background:#1f2937;gap:1px;}
 .kpi-cell{padding:10px 14px;background:#1f2937;text-align:center;}
 .kpi-cell-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:4px;}
 .kpi-cell-value{font-size:22px;font-weight:900;color:#fff;letter-spacing:-1px;line-height:1;}
 .kpi-cell.highlight .kpi-cell-value{color:#34d399;}
-
-/* ─── SUB NAV ───────────────────────────────────────────── */
-.sub-nav{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;padding:0 24px;overflow-x:auto;}
+.sub-nav{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;padding:0 16px;overflow-x:auto;}
 .sub-btn{padding:10px 14px;border:none;border-bottom:3px solid transparent;background:none;font-size:12px;font-weight:600;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0;}
 .sub-btn:hover{color:#111827;border-bottom-color:#d1d5db;}
 .sub-btn.active{color:#2563eb;border-bottom-color:#2563eb;}
-
-/* ─── FILTROS ───────────────────────────────────────────── */
 .filtros-bar{display:flex;align-items:center;gap:6px;padding:8px 16px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:nowrap;overflow-x:auto;}
 .filtros-bar::-webkit-scrollbar{height:3px;}
 .filtros-bar::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:2px;}
@@ -78,8 +44,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .fonte-badge.legado{background:#fef3c7;color:#92400e;}
 .fonte-badge.novo{background:#dcfce7;color:#166534;}
 .fonte-badge.ambos{background:#eff6ff;color:#1e40af;}
-
-/* ─── MAIN / GRID ───────────────────────────────────────── */
 .main{flex:1;padding:10px 14px;display:flex;flex-direction:column;gap:10px;}
 .page{display:none;flex-direction:column;gap:14px;}
 .page.active{display:flex;}
@@ -88,14 +52,9 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .col-4{flex:1.4!important;}
 .col-3{flex:1!important;}
 .col-2{flex:.7!important;}
-
-/* ─── CARDS ─────────────────────────────────────────────── */
 .card{background:#fff;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:hidden;}
 .card-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #f3f4f6;gap:8px;flex-wrap:wrap;}
 .card-header h3{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#374151;display:flex;align-items:center;gap:6px;}
-.card-body{padding:0;}
-
-/* ─── TABELAS ───────────────────────────────────────────── */
 .dt{width:100%;border-collapse:collapse;font-size:12px;}
 .dt thead th{background:#f9fafb;padding:7px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;border-bottom:1px solid #e5e7eb;white-space:nowrap;}
 .dt tbody td{padding:6px 12px;border-bottom:1px solid #f3f4f6;color:#374151;}
@@ -104,14 +63,10 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .dt .num{text-align:right;font-variant-numeric:tabular-nums;}
 .dt .red{color:#dc2626;}
 .dt .green{color:#16a34a;}
-.dt-scroll{max-height:280px;overflow-y:auto;overflow-x:auto;}
-
-/* ─── PCT BAR ───────────────────────────────────────────── */
+.dt-scroll{max-height:320px;overflow-y:auto;overflow-x:auto;}
 .pct-bar{display:flex;align-items:center;gap:6px;}
 .pct-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;min-width:40px;}
 .pct-bar-fill{height:100%;border-radius:2px;background:#2563eb;}
-
-/* ─── CHARTS ────────────────────────────────────────────── */
 .chart-wrap{padding:12px 14px;}
 .hora-grid{display:grid;grid-template-columns:50px 1fr;gap:4px;padding:10px 14px;}
 .hora-label{font-size:10px;color:#9ca3af;display:flex;align-items:center;}
@@ -119,42 +74,34 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .hora-bar-bg{flex:1;height:12px;background:#e5e7eb;border-radius:3px;overflow:hidden;}
 .hora-bar-fill{height:100%;border-radius:3px;background:#bfdbfe;}
 .hora-count{font-size:10px;color:#6b7280;min-width:32px;text-align:right;}
-
-/* ─── LOADING ───────────────────────────────────────────── */
 .loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px;font-size:13px;color:#6b7280;}
 .loading-overlay.hidden{display:none;}
 .spinner{width:36px;height:36px;border:4px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-/* Barra de progresso do carregamento */
 .load-progress{width:240px;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;}
 .load-progress-fill{height:100%;background:#2563eb;border-radius:2px;transition:width .3s ease;width:0%;}
 .load-stage{font-size:11px;color:#9ca3af;}
-
-/* ─── BADGE SELEÇÃO ─────────────────────────────────────── */
 .dt tbody tr.selecionado td{background:#eff6ff!important;color:#1d4ed8;font-weight:700;}
 .dt tbody tr.clicavel{cursor:pointer;}
 .dt tbody tr.clicavel:hover td{background:#f0f9ff;}
 .filtro-ativo-badge{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:12px;cursor:pointer;flex-shrink:0;}
-.filtro-ativo-badge:hover{background:#dbeafe;}
-
-/* ─── KPI GRIDS (PROFISSIONAL) ──────────────────────────── */
 .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
 .kpi-grid-2{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-bottom:14px;}
+.kpi-grid-3{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;}
+.kpi-grid-4{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
 .kpi-box{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.08);text-align:center;}
 .kpi-box .kb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;margin-bottom:6px;}
 .kpi-box .kb-val{font-size:18px;font-weight:800;color:#111827;line-height:1.2;}
 .kpi-box .kb-val.green{color:#16a34a;}
 .kpi-box .kb-val.blue{color:#2563eb;}
 .kpi-box .kb-val.purple{color:#7c3aed;}
+.kpi-box .kb-val.orange{color:#d97706;}
 .heatmap-wrap{display:grid;grid-template-columns:40px repeat(6,1fr);gap:2px;font-size:10px;overflow-x:auto;}
 .hm-header{background:#f9fafb;text-align:center;padding:4px 2px;font-weight:700;color:#6b7280;border-radius:4px;}
 .hm-label{display:flex;align-items:center;color:#9ca3af;font-size:10px;}
 .hm-cell{border-radius:4px;height:20px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;}
-.sem-prof{text-align:center;padding:60px;color:#9ca3af;font-size:14px;}
-.sem-prof i{font-size:40px;display:block;margin-bottom:12px;color:#e5e7eb;}
-
-/* ─── VALUATION ─────────────────────────────────────────── */
+.sem-sel{text-align:center;padding:60px;color:#9ca3af;font-size:14px;}
+.sem-sel i{font-size:40px;display:block;margin-bottom:12px;color:#e5e7eb;}
 .val-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;}
 .val-card{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
 .val-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:6px;}
@@ -168,172 +115,64 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .multiplo-slider{display:flex;align-items:center;gap:10px;margin-top:8px;}
 .multiplo-slider input[type=range]{flex:1;accent-color:#2563eb;}
 .multiplo-val{font-size:13px;font-weight:700;color:#2563eb;min-width:28px;}
-
-/* ─── BANNER CARREGANDO HISTÓRICO ────────────────────────── */
-.bg-load-banner{
-  display:none;
-  align-items:center;
-  gap:10px;
-  padding:8px 16px;
-  background:#fffbeb;
-  border-bottom:1px solid #fde68a;
-  font-size:12px;
-  color:#92400e;
-}
+.bg-load-banner{display:none;align-items:center;gap:10px;padding:8px 16px;background:#fffbeb;border-bottom:1px solid #fde68a;font-size:12px;color:#92400e;}
 .bg-load-banner.visible{display:flex;}
-.bg-load-banner .mini-spin{
-  width:14px;height:14px;
-  border:2px solid #fde68a;
-  border-top-color:#d97706;
-  border-radius:50%;
-  animation:spin .7s linear infinite;
-  flex-shrink:0;
+.bg-load-banner .mini-spin{width:14px;height:14px;border:2px solid #fde68a;border-top-color:#d97706;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+.tg{display:flex;gap:4px;background:#f3f4f6;border-radius:6px;padding:3px;}
+.tg button{padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;border:none;cursor:pointer;background:none;color:#6b7280;}
+.tg button.on{background:#1f2937;color:#fff;}
+@media(max-width:1200px){
+  .kpi-bar{grid-template-columns:repeat(3,1fr);}
+  .kpi-cell{padding:8px 10px;}.kpi-cell-value{font-size:18px;}.kpi-cell-label{font-size:9px;}
+  .filtros-bar{flex-wrap:wrap;gap:5px;padding:7px 12px;}.filtros-bar select{max-width:90px;font-size:10px;}.filtros-bar .sep{display:none;}
+  .main{padding:8px 10px;gap:8px;}.row{flex-wrap:wrap;gap:8px;}
+  .row>.card.col-4,.row>.card.col-3{flex:1 1 calc(50% - 4px);}
+  .kpi-grid{grid-template-columns:repeat(3,1fr);}.kpi-grid-2{grid-template-columns:repeat(4,1fr);}
+  .kpi-grid-3{grid-template-columns:repeat(2,1fr);}.kpi-grid-4{grid-template-columns:repeat(3,1fr);}
+  .val-grid{grid-template-columns:repeat(2,1fr);}.pct-bar-bg{display:none;}
 }
-
-/* ─── RESPONSIVO 1366px ──────────────────────────────────── */
-@media(max-width:1366px){
-  .kpi-cell{padding:10px 14px;}.kpi-cell-value{font-size:22px;}.kpi-cell-label{font-size:10px;}
-  .sub-btn{padding:10px 12px;font-size:12px;}.filtros-bar{gap:6px;padding:8px 14px;}
-  .filtros-bar select{font-size:11px;padding:5px 6px;max-width:110px;}.filtros-bar label{font-size:10px;}
-  .main{padding:10px 12px;gap:10px;}.row{gap:10px;}
-  .card-header h3{font-size:10px;}.dt thead th{font-size:9px;padding:6px 8px;}.dt tbody td{font-size:11px;padding:5px 8px;}
+@media(max-width:768px){
+  .mobile-header{display:flex;}
+  #sidebar{position:fixed;top:0;left:0;height:100vh;width:240px;z-index:150;transform:translateX(-100%);transition:transform .25s ease;overflow-y:auto;}
+  #sidebar.open{transform:translateX(0);}
+  .kpi-bar{grid-template-columns:repeat(2,1fr);}.kpi-cell{padding:9px 6px;}.kpi-cell-value{font-size:15px;}.kpi-cell-label{font-size:8px;}
+  .sub-nav{padding:0 8px;}.sub-btn{padding:8px 8px;font-size:11px;}
+  .filtros-bar{flex-wrap:wrap;gap:5px;padding:6px 10px;}.filtros-bar select{max-width:80px;font-size:10px;}.filtros-bar .sep{display:none;}
+  .main{padding:8px;gap:8px;}.row{flex-direction:column;gap:8px;}
+  .row>*{flex:none!important;width:100%!important;max-width:100%!important;}
+  .card[style*="max-width:260px"]{max-width:100%!important;flex:none!important;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}.kpi-grid-2{grid-template-columns:repeat(3,1fr);}
+  .kpi-grid-3{grid-template-columns:repeat(2,1fr);}.kpi-grid-4{grid-template-columns:repeat(2,1fr);}
+  .val-grid{grid-template-columns:repeat(2,1fr);gap:8px;}.val-value{font-size:16px;}
+  .dt-scroll{overflow-x:auto;}.dt{min-width:420px;}.heatmap-wrap{min-width:340px;}.pct-bar-bg{display:none;}
 }
-
-/* ─── RESPONSIVO 1367–1920px ─────────────────────────────── */
 @media(min-width:1367px) and (max-width:1920px){
   .kpi-cell{padding:14px 20px;}.kpi-cell-value{font-size:28px;}.kpi-cell-label{font-size:11px;}
-  .sub-btn{padding:12px 18px;font-size:13px;}.filtros-bar{gap:10px;padding:10px 20px;}
-  .filtros-bar select{font-size:12px;padding:6px 10px;max-width:140px;}.filtros-bar label{font-size:11px;}
   .main{padding:14px 18px;gap:12px;}.row{gap:12px;}
-  .card-header h3{font-size:11px;}.dt thead th{font-size:10px;padding:7px 12px;}.dt tbody td{font-size:12px;padding:6px 12px;}
 }
-
-/* ─── RESPONSIVO 1920px+ ─────────────────────────────────── */
 @media(min-width:1921px){
   .kpi-cell{padding:18px 28px;}.kpi-cell-value{font-size:36px;}.kpi-cell-label{font-size:13px;}
-  .sub-btn{padding:14px 22px;font-size:14px;}.filtros-bar{gap:14px;padding:12px 28px;}
-  .filtros-bar select{font-size:13px;padding:8px 12px;max-width:180px;}.filtros-bar label{font-size:12px;}
   .main{padding:18px 24px;gap:16px;}.row{gap:16px;}
-  .card-header h3{font-size:12px;}.dt thead th{font-size:11px;padding:9px 14px;}.dt tbody td{font-size:13px;padding:8px 14px;}
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MOBILE — max-width: 768px
-   ═══════════════════════════════════════════════════════════ */
-@media(max-width:768px){
-
-  /* Header móvel visível */
-  .mobile-header{display:flex;}
-
-  /* Sidebar: escondida por padrão, abre como drawer */
-  #sidebar{
-    position:fixed;
-    top:0;left:0;
-    height:100vh;
-    width:240px;
-    z-index:150;
-    transform:translateX(-100%);
-    transition:transform .25s ease;
-    overflow-y:auto;
-  }
-  #sidebar.open{transform:translateX(0);}
-
-  /* KPI bar: 2 colunas */
-  .kpi-bar{grid-template-columns:repeat(2,1fr);}
-  .kpi-cell{padding:10px 8px;}
-  .kpi-cell-value{font-size:18px;}
-  .kpi-cell-label{font-size:9px;}
-
-  /* Sub nav scroll horizontal */
-  .sub-nav{padding:0 12px;}
-  .sub-btn{padding:9px 10px;font-size:11px;}
-
-  /* Filtros: scroll horizontal já existe, só reduz gap */
-  .filtros-bar{gap:6px;padding:8px 12px;}
-  .filtros-bar select{max-width:90px;font-size:11px;}
-
-  /* Main */
-  .main{padding:10px 10px;gap:10px;}
-
-  /* ROWS viram colunas */
-  .row{flex-direction:column;}
-  .row>*{flex:none!important;width:100%!important;max-width:100%!important;}
-
-  /* Coluna "Por Hora" ocupa full width */
-  .card[style*="max-width:260px"]{max-width:100%!important;flex:none!important;}
-
-  /* KPI grids profissional */
-  .kpi-grid{grid-template-columns:repeat(2,1fr);}
-  .kpi-grid-2{grid-template-columns:repeat(3,1fr);}
-  .kpi-box .kb-val{font-size:15px;}
-
-  /* Valuation grid */
-  .val-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
-  .val-value{font-size:18px;}
-
-  /* Tabelas: scroll horizontal */
-  .dt-scroll{overflow-x:auto;}
-  .dt{min-width:480px;}
-
-  /* Heatmap */
-  .heatmap-wrap{min-width:340px;}
-
-  /* Esconde pct-bar em mobile pra não quebrar */
-  .pct-bar-bg{display:none;}
-
-  /* Card headers */
-  .card-header{padding:8px 12px;}
-  .card-header h3{font-size:10px;}
-
-  /* Filtros bar: permite quebrar em 2 linhas no mobile */
-  .filtros-bar{flex-wrap:wrap;}
-  .filtros-bar .sep{display:none;}
-
-  /* Banner bg-load */
-  .bg-load-banner{font-size:11px;padding:6px 12px;}
-}
-
-/* Tablets */
-@media(min-width:769px) and (max-width:1024px){
-  .kpi-bar{grid-template-columns:repeat(3,1fr);}
-  .row{flex-wrap:wrap;}
-  .row>*{min-width:calc(50% - 5px);}
-  .kpi-grid{grid-template-columns:repeat(3,1fr);}
-  .kpi-grid-2{grid-template-columns:repeat(5,1fr);}
-  .val-grid{grid-template-columns:repeat(2,1fr);}
 }
 </style>
 </head>
 <body>
-
-<!-- ── MOBILE HEADER ─────────────────────────────────────── -->
 <div class="mobile-header">
-  <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()" aria-label="Menu"><span></span><span></span><span></span></button>
   <span class="brand">Hara Spa</span>
 </div>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
 <div class="app">
 <aside id="sidebar"></aside>
 <main class="content">
-
-  <!-- Loading inicial -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <span id="loadingMsg">Carregando dados recentes...</span>
     <div class="load-progress"><div class="load-progress-fill" id="loadProgressFill"></div></div>
     <span class="load-stage" id="loadStage"></span>
   </div>
+  <div class="bg-load-banner" id="bgLoadBanner"><div class="mini-spin"></div><span id="bgLoadMsg">Carregando histórico...</span></div>
 
-  <!-- Banner: histórico carregando em background -->
-  <div class="bg-load-banner" id="bgLoadBanner">
-    <div class="mini-spin"></div>
-    <span id="bgLoadMsg">Carregando histórico completo em background...</span>
-  </div>
-
-  <!-- KPI BAR -->
   <div class="kpi-bar">
     <div class="kpi-cell"><div class="kpi-cell-label">Atendimentos</div><div class="kpi-cell-value" id="kAtend">—</div></div>
     <div class="kpi-cell"><div class="kpi-cell-label">Receita</div><div class="kpi-cell-value" id="kReceita">—</div></div>
@@ -343,141 +182,87 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     <div class="kpi-cell highlight"><div class="kpi-cell-label">Retornos</div><div class="kpi-cell-value" id="kRetornos">—</div></div>
   </div>
 
-  <!-- SUB NAV -->
   <div class="sub-nav">
     <button class="sub-btn active" onclick="mudarPag('geral',this)"><i class="fa fa-chart-bar"></i> Geral</button>
-    <button class="sub-btn" onclick="mudarPag('profissional',this)"><i class="fa fa-user-tie"></i> Profissional</button>
+    <button class="sub-btn" onclick="mudarPag('terapeutas',this)"><i class="fa fa-user-tie"></i> Terapeutas</button>
+    <button class="sub-btn" onclick="mudarPag('servicos',this)"><i class="fa fa-spa"></i> Serviços</button>
+    <button class="sub-btn" onclick="mudarPag('clientes',this)"><i class="fa fa-users"></i> Clientes</button>
     <button class="sub-btn" onclick="mudarPag('valuation',this)"><i class="fa fa-dollar-sign"></i> Valuation</button>
   </div>
 
-  <!-- FILTROS -->
   <div class="filtros-bar" id="filtrosBar">
     <label>Fonte</label>
-    <select id="fFonte" onchange="aplicarFiltros()">
-      <option value="">Ambas</option>
-      <option value="legado">Legado</option>
-      <option value="novo">Novos</option>
-    </select>
-    <div class="sep"></div>
-    <label>Ano</label>
+    <select id="fFonte" onchange="aplicarFiltros()"><option value="">Ambas</option><option value="legado">Legado</option><option value="novo">Novos</option></select>
+    <div class="sep"></div><label>Ano</label>
     <select id="fAno" onchange="aplicarFiltros()">
-      <option value="">Todos</option>
-      <option value="2026" selected>2026</option>
-      <option value="2025">2025</option><option value="2024">2024</option>
-      <option value="2023">2023</option><option value="2022">2022</option>
-      <option value="2021">2021</option>
+      <option value="">Todos</option><option value="2026" selected>2026</option><option value="2025">2025</option>
+      <option value="2024">2024</option><option value="2023">2023</option><option value="2022">2022</option><option value="2021">2021</option>
     </select>
-    <div class="sep"></div>
-    <label>Mês</label>
+    <div class="sep"></div><label>Mês</label>
     <select id="fMes" onchange="aplicarFiltros()">
-      <option value="">Todos</option>
-      <option value="01">Janeiro</option><option value="02">Fevereiro</option>
-      <option value="03">Março</option><option value="04">Abril</option>
-      <option value="05">Maio</option><option value="06">Junho</option>
-      <option value="07">Julho</option><option value="08">Agosto</option>
-      <option value="09">Setembro</option><option value="10">Outubro</option>
-      <option value="11">Novembro</option><option value="12">Dezembro</option>
+      <option value="">Todos</option><option value="01">Janeiro</option><option value="02">Fevereiro</option><option value="03">Março</option>
+      <option value="04">Abril</option><option value="05">Maio</option><option value="06">Junho</option><option value="07">Julho</option>
+      <option value="08">Agosto</option><option value="09">Setembro</option><option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
     </select>
-    <div class="sep"></div>
-    <label>Quinzena</label>
-    <select id="fQuinz" onchange="aplicarFiltros()">
-      <option value="">Todas</option>
-      <option value="1">1ª (1–15)</option>
-      <option value="2">2ª (16–fim)</option>
-    </select>
-    <div class="sep"></div>
-    <label>Profissional</label>
+    <div class="sep"></div><label>Quinzena</label>
+    <select id="fQuinz" onchange="aplicarFiltros()"><option value="">Todas</option><option value="1">1ª (1–15)</option><option value="2">2ª (16–fim)</option></select>
+    <div class="sep"></div><label>Profissional</label>
     <select id="fProf" onchange="aplicarFiltros()"><option value="">Todos</option></select>
-    <div class="sep"></div>
-    <label>Serviço</label>
+    <div class="sep"></div><label>Serviço</label>
     <select id="fServ" onchange="aplicarFiltros()"><option value="">Todos</option></select>
     <span id="fonteInfo"></span>
   </div>
 
   <div class="main">
 
-  <!-- ── GERAL ─────────────────────────────────────────── -->
+  <!-- GERAL -->
   <div class="page active" id="page-geral">
     <div class="row">
       <div class="card col-4">
         <div class="card-header"><h3><i class="fa fa-user-tie"></i> Por Profissional</h3></div>
-        <div class="dt-scroll">
-          <table class="dt" id="tblProf">
-            <thead><tr><th>Profissional</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">% Atend.</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="dt-scroll"><table class="dt" id="tblProf"><thead><tr><th>Profissional</th><th class="num">Atend.</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">% Atend.</th></tr></thead><tbody></tbody></table></div>
       </div>
       <div class="card col-3">
         <div class="card-header">
           <h3><i class="fa fa-spa"></i> Por Serviço</h3>
-          <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:6px;padding:3px">
-            <button id="togServAtend" onclick="setModoServ('atend')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:#1f2937;color:#fff;border:none;cursor:pointer">Atend.</button>
-            <button id="togServRec" onclick="setModoServ('receita')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:none;color:#6b7280;border:none;cursor:pointer">Receita</button>
-          </div>
+          <div class="tg"><button id="togServAtend" class="on" onclick="setModoServ('atend')">Atend.</button><button id="togServRec" onclick="setModoServ('receita')">Receita</button></div>
         </div>
-        <div class="dt-scroll">
-          <table class="dt" id="tblServ">
-            <thead><tr><th>Serviço</th><th class="num" id="thServVal">Atend.</th><th class="num">%</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="dt-scroll"><table class="dt" id="tblServ"><thead><tr><th>Serviço</th><th class="num" id="thServVal">Atend.</th><th class="num">%</th></tr></thead><tbody></tbody></table></div>
       </div>
       <div class="card col-4">
         <div class="card-header">
           <h3><i class="fa fa-calendar"></i> Por Ano / Mês</h3>
-          <div style="display:flex;gap:4px;background:#f3f4f6;border-radius:6px;padding:3px">
-            <button id="toggleAtend" onclick="setModoAnoMes('atend')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:#1f2937;color:#fff;border:none;cursor:pointer">Atend.</button>
-            <button id="toggleRec" onclick="setModoAnoMes('receita')" style="padding:4px 10px;border-radius:4px;font-size:11px;font-weight:700;background:none;color:#6b7280;border:none;cursor:pointer">Receita</button>
-          </div>
+          <div class="tg"><button id="toggleAtend" class="on" onclick="setModoAnoMes('atend')">Atend.</button><button id="toggleRec" onclick="setModoAnoMes('receita')">Receita</button></div>
         </div>
-        <div class="dt-scroll">
-          <table class="dt ano-table" id="tblAnoMes">
-            <thead><tr><th>Ano</th><th class="num" id="thValor">Atend.</th><th class="num" id="thLY">Atend. LY</th><th class="num">YoY %</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="dt-scroll"><table class="dt" id="tblAnoMes"><thead><tr><th>Ano</th><th class="num" id="thValor">Atend.</th><th class="num" id="thLY">Atend. LY</th><th class="num">YoY %</th></tr></thead><tbody></tbody></table></div>
       </div>
     </div>
     <div class="row">
-      <div class="card">
-        <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Receita vs Comissão por Mês</h3></div>
-        <div class="chart-wrap"><canvas id="chartRecMes" height="130"></canvas></div>
-      </div>
-      <div class="card col-2" style="max-width:260px;flex:0 0 260px">
-        <div class="card-header"><h3><i class="fa fa-clock"></i> Por Hora</h3></div>
-        <div class="hora-grid" id="horaGrid"></div>
-      </div>
+      <div class="card"><div class="card-header"><h3><i class="fa fa-chart-bar"></i> Receita vs Comissão por Mês</h3></div><div class="chart-wrap"><canvas id="chartRecMes" height="130"></canvas></div></div>
+      <div class="card col-2" style="max-width:260px;flex:0 0 260px"><div class="card-header"><h3><i class="fa fa-clock"></i> Por Hora</h3></div><div class="hora-grid" id="horaGrid"></div></div>
     </div>
     <div class="row">
       <div class="card">
         <div class="card-header"><h3><i class="fa fa-users"></i> Top Clientes</h3></div>
-        <div class="dt-scroll">
-          <table class="dt" id="tblCli">
-            <thead><tr><th>Cliente</th><th class="num">Atend.</th><th class="num">Retornos</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket Médio</th><th class="num">% Atend.</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="dt-scroll"><table class="dt" id="tblCli"><thead><tr><th>Cliente</th><th class="num">Atend.</th><th class="num">Retornos</th><th class="num">Receita</th><th class="num">Comissão</th><th class="num">Ticket Médio</th><th class="num">% Atend.</th></tr></thead><tbody></tbody></table></div>
       </div>
     </div>
   </div>
 
-  <!-- ── PROFISSIONAL ───────────────────────────────────── -->
-  <div class="page" id="page-profissional">
-    <div id="profSemSelecao" class="card">
-      <div class="sem-prof"><i class="fa fa-user-tie"></i>Selecione um profissional no filtro acima para ver os dados individuais.</div>
-    </div>
-    <div id="profContent" style="display:none">
+  <!-- TERAPEUTAS -->
+  <div class="page" id="page-terapeutas">
+    <div id="terSemSelecao" class="card"><div class="sem-sel"><i class="fa fa-user-tie"></i>Selecione um profissional no filtro acima para ver os dados individuais.</div></div>
+    <div id="terContent" style="display:none">
       <div class="kpi-grid">
         <div class="kpi-box"><div class="kb-label">Profissional</div><div class="kb-val blue" id="at_nome">—</div></div>
-        <div class="kpi-box"><div class="kb-label">Retornos</div><div class="kb-val" id="at_retornos">—</div></div>
         <div class="kpi-box"><div class="kb-label">Atendimentos</div><div class="kb-val" id="at_total">—</div></div>
         <div class="kpi-box"><div class="kb-label">Ganho no Período</div><div class="kb-val green" id="at_ganho">—</div></div>
         <div class="kpi-box"><div class="kb-label">Ganho Histórico</div><div class="kb-val green" id="at_ganho_total">—</div></div>
+        <div class="kpi-box"><div class="kb-label">% Retornos</div><div class="kb-val purple" id="at_pct_ret">—</div></div>
       </div>
       <div class="kpi-grid-2">
         <div class="kpi-box"><div class="kb-label">1º Atendimento</div><div class="kb-val" id="at_primeiro" style="font-size:13px">—</div></div>
-        <div class="kpi-box"><div class="kb-label">% Retornos</div><div class="kb-val purple" id="at_pct_ret">—</div></div>
+        <div class="kpi-box"><div class="kb-label">Retornos</div><div class="kb-val" id="at_retornos">—</div></div>
         <div class="kpi-box"><div class="kb-label">1ª Quinzena</div><div class="kb-val" id="at_q1">—</div></div>
         <div class="kpi-box"><div class="kb-label">2ª Quinzena</div><div class="kb-val" id="at_q2">—</div></div>
         <div class="kpi-box"><div class="kb-label">1ª Quinzena R$</div><div class="kb-val green" id="at_q1r">—</div></div>
@@ -489,787 +274,406 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       <div class="row">
         <div class="card">
           <div class="card-header"><h3><i class="fa fa-clock"></i> Por Horário</h3></div>
-          <div class="dt-scroll">
-            <table class="dt" id="tblAtHora">
-              <thead><tr><th>Hora</th><th class="num">Atend.</th><th class="num">Comissão</th><th class="num">Dias Trab.</th><th class="num">Dias Úteis</th><th class="num">Média/Dia</th><th class="num">Ticket Médio</th></tr></thead>
-              <tbody></tbody>
-            </table>
-          </div>
+          <div class="dt-scroll"><table class="dt" id="tblAtHora"><thead><tr><th>Hora</th><th class="num">Atend.</th><th class="num">Comissão</th><th class="num">Dias Trab.</th><th class="num">Dias Úteis</th><th class="num">Média/Dia</th><th class="num">Ticket Médio</th></tr></thead><tbody></tbody></table></div>
         </div>
-        <div class="card col-2">
-          <div class="card-header"><h3><i class="fa fa-th"></i> Heatmap Hora × Dia</h3></div>
-          <div class="card-body" style="padding:12px 14px;overflow-x:auto"><div class="heatmap-wrap" id="atHeatmap"></div></div>
-        </div>
+        <div class="card col-2"><div class="card-header"><h3><i class="fa fa-th"></i> Heatmap Hora × Dia</h3></div><div style="padding:12px 14px;overflow-x:auto"><div class="heatmap-wrap" id="atHeatmap"></div></div></div>
       </div>
+      <div class="card"><div class="card-header"><h3><i class="fa fa-chart-bar"></i> Atendimentos por Dia</h3></div><div class="chart-wrap"><canvas id="chartAtDia" height="100"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- SERVIÇOS -->
+  <div class="page" id="page-servicos">
+    <div class="kpi-grid-3">
+      <div class="kpi-box"><div class="kb-label">Total de Tipos</div><div class="kb-val blue" id="sv_total_tipos">—</div></div>
+      <div class="kpi-box"><div class="kb-label">Serviço Top (Atend.)</div><div class="kb-val" id="sv_top_nome" style="font-size:12px">—</div></div>
+      <div class="kpi-box"><div class="kb-label">Atend. do Top</div><div class="kb-val green" id="sv_top_atend">—</div></div>
+      <div class="kpi-box"><div class="kb-label">Receita do Top</div><div class="kb-val green" id="sv_top_rec">—</div></div>
+    </div>
+    <div class="row">
+      <div class="card col-4">
+        <div class="card-header">
+          <h3><i class="fa fa-spa"></i> Ranking de Serviços</h3>
+          <div class="tg"><button id="svTogAtend" class="on" onclick="setSvModo('atend')">Atend.</button><button id="svTogRec" onclick="setSvModo('receita')">Receita</button></div>
+        </div>
+        <div class="dt-scroll"><table class="dt" id="tblSvRank"><thead><tr><th>Serviço</th><th class="num" id="thSvVal">Atend.</th><th class="num">Receita</th><th class="num">Ticket Médio</th><th class="num">%</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card col-3">
+        <div class="card-header"><h3><i class="fa fa-chart-line"></i> Evolução Mensal — Top 5</h3></div>
+        <div class="chart-wrap"><canvas id="chartSvEvolucao" height="220"></canvas></div>
+      </div>
+    </div>
+    <div class="row">
       <div class="card">
-        <div class="card-header"><h3><i class="fa fa-chart-bar"></i> Atendimentos por Dia</h3></div>
-        <div class="chart-wrap"><canvas id="chartAtDia" height="100"></canvas></div>
+        <div class="card-header"><h3><i class="fa fa-table"></i> Profissional × Serviço</h3></div>
+        <div class="dt-scroll"><table class="dt" id="tblSvProf"><thead><tr><th>Profissional</th><th>Serviço Principal</th><th class="num">Atend.</th><th>2º Serviço</th><th class="num">Atend.</th></tr></thead><tbody></tbody></table></div>
+      </div>
+      <div class="card col-2" style="max-width:260px;flex:0 0 260px"><div class="card-header"><h3><i class="fa fa-clock"></i> Por Hora</h3></div><div class="hora-grid" id="svHoraGrid"></div></div>
+    </div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div class="page" id="page-clientes">
+    <div class="kpi-grid-4">
+      <div class="kpi-box"><div class="kb-label">Clientes Únicos</div><div class="kb-val blue" id="cl_unicos">—</div></div>
+      <div class="kpi-box"><div class="kb-label">Clientes Novos</div><div class="kb-val" id="cl_novos">—</div></div>
+      <div class="kpi-box"><div class="kb-label">Recorrentes</div><div class="kb-val green" id="cl_recorrentes">—</div></div>
+      <div class="kpi-box"><div class="kb-label">Taxa de Retorno</div><div class="kb-val purple" id="cl_taxa_ret">—</div></div>
+      <div class="kpi-box"><div class="kb-label">LTV Médio</div><div class="kb-val orange" id="cl_ltv">—</div></div>
+    </div>
+    <div class="row">
+      <div class="card">
+        <div class="card-header">
+          <h3><i class="fa fa-trophy"></i> Top Clientes</h3>
+          <div class="tg"><button id="clTogAtend" class="on" onclick="setClModo('atend')">Atend.</button><button id="clTogRec" onclick="setClModo('receita')">Receita</button></div>
+        </div>
+        <div class="dt-scroll"><table class="dt" id="tblClTop"><thead><tr><th>Cliente</th><th class="num">Atend.</th><th class="num">Retornos</th><th class="num">Receita</th><th class="num">Ticket Médio</th><th class="num">Último Atend.</th><th class="num">% Atend.</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="card"><div class="card-header"><h3><i class="fa fa-chart-bar"></i> Novos vs Recorrentes por Mês</h3></div><div class="chart-wrap"><canvas id="chartClNovosRec" height="130"></canvas></div></div>
+      <div class="card col-2"><div class="card-header"><h3><i class="fa fa-chart-pie"></i> Frequência de Visitas</h3></div><div class="chart-wrap"><canvas id="chartClFreq" height="200"></canvas></div></div>
+    </div>
+    <div class="row">
+      <div class="card">
+        <div class="card-header"><h3><i class="fa fa-redo"></i> Clientes com Mais Retornos</h3></div>
+        <div class="dt-scroll"><table class="dt" id="tblClRetornos"><thead><tr><th>Cliente</th><th class="num">Total Visitas</th><th class="num">Retornos</th><th class="num">Taxa Retorno</th><th class="num">Receita Total</th><th class="num">Ticket Médio</th></tr></thead><tbody></tbody></table></div>
       </div>
     </div>
   </div>
 
-  <!-- ── VALUATION ─────────────────────────────────────── -->
+  <!-- VALUATION -->
   <div class="page" id="page-valuation">
     <div style="background:#fff;border-radius:8px;padding:14px 18px;box-shadow:0 1px 3px rgba(0,0,0,.08);display:flex;align-items:center;gap:20px;flex-wrap:wrap">
       <div>
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;margin-bottom:6px">Múltiplo de Receita</div>
-        <div class="multiplo-slider">
-          <input type="range" id="sliderMultiplo" min="1" max="6" step="0.5" value="3" oninput="atualizarValuation()">
-          <span class="multiplo-val" id="lblMultiplo">3×</span>
-        </div>
+        <div class="multiplo-slider"><input type="range" id="sliderMultiplo" min="1" max="6" step="0.5" value="3" oninput="atualizarValuation()"><span class="multiplo-val" id="lblMultiplo">3×</span></div>
         <div style="font-size:10px;color:#9ca3af;margin-top:3px">Padrão: 2–4× para serviços</div>
       </div>
       <div>
         <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;margin-bottom:6px">Janela MRR</div>
         <select id="selJanelaMRR" onchange="atualizarValuation()" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px">
-          <option value="3">Últimos 3 meses</option>
-          <option value="6" selected>Últimos 6 meses</option>
-          <option value="12">Últimos 12 meses</option>
+          <option value="3">Últimos 3 meses</option><option value="6" selected>Últimos 6 meses</option><option value="12">Últimos 12 meses</option>
         </select>
       </div>
-      <div style="margin-left:auto;font-size:11px;color:#9ca3af">Baseado nos dados históricos carregados · Apenas receita operacional</div>
+      <div style="margin-left:auto;font-size:11px;color:#9ca3af">Baseado nos dados históricos · Apenas receita operacional</div>
     </div>
     <div class="val-grid">
-      <div class="val-card" style="border-left:4px solid #2563eb">
-        <div class="val-label">MRR — Receita Mensal Recorrente</div>
-        <div class="val-value" id="vMRR">—</div>
-        <div class="val-sub" id="vMRRsub">Média dos últimos N meses</div>
-        <div class="val-badge blue" id="vMRRbadge">—</div>
-      </div>
-      <div class="val-card" style="border-left:4px solid #16a34a">
-        <div class="val-label">ARR — Receita Anual Recorrente</div>
-        <div class="val-value" id="vARR">—</div>
-        <div class="val-sub">MRR × 12</div>
-        <div class="val-badge green">Projetado</div>
-      </div>
-      <div class="val-card" style="border-left:4px solid #7c3aed">
-        <div class="val-label">Valuation Estimado</div>
-        <div class="val-value" id="vValuation">—</div>
-        <div class="val-sub" id="vValuationSub">ARR × múltiplo</div>
-        <div class="val-badge purple" id="vMultiploBadge">3×</div>
-      </div>
-      <div class="val-card" style="border-left:4px solid #d97706">
-        <div class="val-label">Crescimento YoY</div>
-        <div class="val-value" id="vYoY">—</div>
-        <div class="val-sub" id="vYoYsub">Receita ano atual vs anterior</div>
-        <div class="val-badge green" id="vYoYbadge">—</div>
-      </div>
+      <div class="val-card" style="border-left:4px solid #2563eb"><div class="val-label">MRR — Receita Mensal Recorrente</div><div class="val-value" id="vMRR">—</div><div class="val-sub" id="vMRRsub">Média dos últimos N meses</div><div class="val-badge blue" id="vMRRbadge">—</div></div>
+      <div class="val-card" style="border-left:4px solid #16a34a"><div class="val-label">ARR — Receita Anual Recorrente</div><div class="val-value" id="vARR">—</div><div class="val-sub">MRR × 12</div><div class="val-badge green">Projetado</div></div>
+      <div class="val-card" style="border-left:4px solid #7c3aed"><div class="val-label">Valuation Estimado</div><div class="val-value" id="vValuation">—</div><div class="val-sub" id="vValuationSub">ARR × múltiplo</div><div class="val-badge purple" id="vMultiploBadge">3×</div></div>
+      <div class="val-card" style="border-left:4px solid #d97706"><div class="val-label">Crescimento YoY</div><div class="val-value" id="vYoY">—</div><div class="val-sub" id="vYoYsub">Receita ano atual vs anterior</div><div class="val-badge green" id="vYoYbadge">—</div></div>
     </div>
     <div class="val-grid">
-      <div class="val-card">
-        <div class="val-label">LTV Médio por Cliente</div>
-        <div class="val-value" id="vLTV">—</div>
-        <div class="val-sub">Receita total ÷ clientes únicos</div>
-      </div>
-      <div class="val-card">
-        <div class="val-label">Taxa de Retenção</div>
-        <div class="val-value" id="vRetencao">—</div>
-        <div class="val-sub">Clientes que retornaram</div>
-        <div class="val-badge green" id="vRetencaoBadge">—</div>
-      </div>
-      <div class="val-card">
-        <div class="val-label">Ticket Médio</div>
-        <div class="val-value" id="vTicket">—</div>
-        <div class="val-sub">Receita ÷ atendimentos</div>
-      </div>
-      <div class="val-card">
-        <div class="val-label">Melhor Mês</div>
-        <div class="val-value" id="vMelhorMes" style="font-size:16px">—</div>
-        <div class="val-sub" id="vMelhorMesSub">—</div>
-      </div>
+      <div class="val-card"><div class="val-label">LTV Médio por Cliente</div><div class="val-value" id="vLTV">—</div><div class="val-sub">Receita total ÷ clientes únicos</div></div>
+      <div class="val-card"><div class="val-label">Taxa de Retenção</div><div class="val-value" id="vRetencao">—</div><div class="val-sub">Clientes que retornaram</div><div class="val-badge green" id="vRetencaoBadge">—</div></div>
+      <div class="val-card"><div class="val-label">Ticket Médio</div><div class="val-value" id="vTicket">—</div><div class="val-sub">Receita ÷ atendimentos</div></div>
+      <div class="val-card"><div class="val-label">Melhor Mês</div><div class="val-value" id="vMelhorMes" style="font-size:16px">—</div><div class="val-sub" id="vMelhorMesSub">—</div></div>
     </div>
     <div class="row">
       <div class="card">
         <div class="card-header">
           <h3><i class="fa fa-chart-line"></i> Receita Mensal + Projeção 6 meses</h3>
           <div style="display:flex;gap:6px">
-            <button onclick="resetZoomProj()" style="padding:4px 10px;font-size:11px;font-weight:600;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer">↺ Reset Zoom</button>
+            <button onclick="resetZoomProj()" style="padding:4px 10px;font-size:11px;font-weight:600;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer">↺ Reset</button>
             <button onclick="verTudoProj()" style="padding:4px 10px;font-size:11px;font-weight:600;background:#1f2937;color:#fff;border:none;border-radius:6px;cursor:pointer">Ver tudo</button>
           </div>
         </div>
         <div class="chart-wrap"><canvas id="chartValProj" height="140"></canvas></div>
       </div>
       <div class="card col-2">
-        <div class="card-header"><h3><i class="fa fa-info-circle"></i> Premissas do Valuation</h3></div>
+        <div class="card-header"><h3><i class="fa fa-info-circle"></i> Premissas</h3></div>
         <div style="padding:16px;font-size:12px;color:#6b7280;line-height:1.8">
-          <p><strong style="color:#111827">MRR</strong>: média da receita mensal dos últimos N meses selecionados.</p>
+          <p><strong style="color:#111827">MRR</strong>: média da receita mensal dos últimos N meses.</p>
           <p><strong style="color:#111827">ARR</strong>: MRR × 12 — receita anual projetada.</p>
           <p><strong style="color:#111827">Valuation</strong>: ARR × múltiplo. Para serviços físicos o padrão é 2–4×.</p>
-          <p><strong style="color:#111827">YoY</strong>: compara Jan→hoje deste ano com o mesmo período do ano anterior.</p>
-          <p><strong style="color:#111827">LTV</strong>: receita total histórica ÷ número de clientes únicos.</p>
-          <p><strong style="color:#111827">Retenção</strong>: % de clientes que fizeram mais de 1 atendimento.</p>
-          <p style="margin-top:10px;padding:8px 10px;background:#fef3c7;border-radius:6px;font-size:11px">⚠️ Estimativa orientativa. Valuation real depende de auditoria e outros fatores.</p>
+          <p><strong style="color:#111827">YoY</strong>: compara Jan→hoje deste ano com mesmo período do ano anterior.</p>
+          <p><strong style="color:#111827">LTV</strong>: receita total histórica ÷ clientes únicos.</p>
+          <p><strong style="color:#111827">Retenção</strong>: % de clientes com mais de 1 atendimento.</p>
+          <p style="margin-top:10px;padding:8px 10px;background:#fef3c7;border-radius:6px;font-size:11px">⚠️ Estimativa orientativa. Valuation real depende de auditoria.</p>
         </div>
       </div>
     </div>
   </div>
 
-  </div><!-- /main -->
+  </div>
 </main>
-</div><!-- /app -->
+</div>
 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js" data-role="admin"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 <script>
+/* SIDEBAR */
+function toggleSidebar(){const sb=document.getElementById("sidebar"),ov=document.getElementById("sidebarOverlay"),btn=document.getElementById("hamburgerBtn"),open=sb.classList.toggle("open");ov.classList.toggle("active",open);btn.classList.toggle("open",open);}
+function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sidebarOverlay").classList.remove("active");document.getElementById("hamburgerBtn").classList.remove("open");}
 
-/* ════════════════════════════════════════════════════════════
-   MOBILE SIDEBAR
-   ════════════════════════════════════════════════════════════ */
-function toggleSidebar(){
-  const sb=document.getElementById("sidebar");
-  const ov=document.getElementById("sidebarOverlay");
-  const btn=document.getElementById("hamburgerBtn");
-  const open=sb.classList.toggle("open");
-  ov.classList.toggle("active",open);
-  btn.classList.toggle("open",open);
-}
-function closeSidebar(){
-  document.getElementById("sidebar").classList.remove("open");
-  document.getElementById("sidebarOverlay").classList.remove("active");
-  document.getElementById("hamburgerBtn").classList.remove("open");
-}
+/* CACHE */
+const CACHE_KEY_LEGADO="hara_legado_v2",CACHE_KEY_NOVO="hara_novo_v2",CACHE_TTL=3600000;
+function salvarCache(k,d){try{localStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}}
+function lerCache(k){try{const r=localStorage.getItem(k);if(!r)return null;const o=JSON.parse(r);return Date.now()-o.ts>CACHE_TTL?null:o.data;}catch(e){return null;}}
 
-/* ════════════════════════════════════════════════════════════
-   CACHE LOCAL (localStorage) — TTL 60 minutos
-   ════════════════════════════════════════════════════════════ */
-const CACHE_KEY_LEGADO = "hara_legado_v2";
-const CACHE_KEY_NOVO   = "hara_novo_v2";
-const CACHE_TTL        = 60 * 60 * 1000; // 1 hora em ms
+/* ESTADO */
+const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const MESES_FULL=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const CORES=["#2563eb","#16a34a","#d97706","#7c3aed","#dc2626","#0891b2","#65a30d","#9333ea","#ea580c","#0284c7"];
+let cacheCompleto=[],allData=[],selecao={tipo:null,valor:null},charts={};
+let _modoAnoMes="atend",_modoServ="atend",_svModo="atend",_clModo="atend";
 
-function salvarCache(key, data){
-  try{
-    localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data }));
-  }catch(e){ /* quota exceeded — ignora */ }
-}
+const fmtM=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const fmtN=v=>Number(v||0).toLocaleString("pt-BR");
+const fmtP=v=>Number(v||0).toFixed(1)+"%";
+const fmtD=v=>v?new Date(v+"T12:00:00").toLocaleDateString("pt-BR"):"—";
 
-function lerCache(key){
-  try{
-    const raw = localStorage.getItem(key);
-    if(!raw) return null;
-    const obj = JSON.parse(raw);
-    if(Date.now() - obj.ts > CACHE_TTL) return null; // expirado
-    return obj.data;
-  }catch(e){ return null; }
-}
+function setProgress(p,s){document.getElementById("loadProgressFill").style.width=p+"%";if(s)document.getElementById("loadStage").textContent=s;}
+function setLoading(m){document.getElementById("loadingOverlay").classList.remove("hidden");document.getElementById("loadingMsg").textContent=m||"Carregando...";}
+function stopLoading(){document.getElementById("loadingOverlay").classList.add("hidden");}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function mkChart(id,cfg){destroyChart(id);const el=document.getElementById(id);if(!el)return;charts[id]=new Chart(el,cfg);}
+function setBgBanner(m,v){const b=document.getElementById("bgLoadBanner");b.classList.toggle("visible",v);if(m)document.getElementById("bgLoadMsg").textContent=m;}
+function anoAtualStr(){return String(new Date().getFullYear());}
 
-/* ════════════════════════════════════════════════════════════
-   ESTADO GLOBAL
-   ════════════════════════════════════════════════════════════ */
-const MESES      = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-const MESES_FULL = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-
-let cacheCompleto = [];   // todos os dados (legado + novos)
-let allData       = [];   // dados após filtros
-let selecao       = {tipo:null, valor:null};
-let charts        = {};
-let _modoAnoMes   = "atend";
-let _modoServ     = "atend";
-let _historicoCarregado = false; // flag: histórico completo já veio?
-
-/* ════════════════════════════════════════════════════════════
-   UTILITÁRIOS
-   ════════════════════════════════════════════════════════════ */
-const fmtM = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const fmtN = v => Number(v||0).toLocaleString("pt-BR");
-const fmtP = v => Number(v||0).toFixed(1)+"%";
-const fmtD = v => v ? new Date(v+"T12:00:00").toLocaleDateString("pt-BR") : "—";
-
-function setProgress(pct, stage){
-  document.getElementById("loadProgressFill").style.width = pct+"%";
-  if(stage) document.getElementById("loadStage").textContent = stage;
-}
-function setLoading(msg){
-  document.getElementById("loadingOverlay").classList.remove("hidden");
-  document.getElementById("loadingMsg").textContent = msg||"Carregando...";
-}
-function stopLoading(){ document.getElementById("loadingOverlay").classList.add("hidden"); }
-function destroyChart(id){ if(charts[id]){charts[id].destroy();delete charts[id];} }
-function mkChart(id, cfg){ destroyChart(id); const el=document.getElementById(id); if(!el)return; charts[id]=new Chart(el,cfg); }
-
-function setBgBanner(msg, visible){
-  const b = document.getElementById("bgLoadBanner");
-  b.classList.toggle("visible", visible);
-  if(msg) document.getElementById("bgLoadMsg").textContent = msg;
-}
-
-/* ════════════════════════════════════════════════════════════
-   FETCH — MÊS/ANO ATUAL (rápido, ~50 registros)
-   ════════════════════════════════════════════════════════════ */
-function mesAtualStr(){
-  const hoje = new Date();
-  return String(hoje.getMonth()+1).padStart(2,"0");
-}
-function anoAtualStr(){ return String(new Date().getFullYear()); }
-
+/* FETCH */
 async function fetchLegadoRecente(){
-  // Só o ano atual para aparecer rápido
-  const ano = anoAtualStr();
-  const { data, error } = await client
-    .from("legado_atendimentos")
-    .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
-    .gte("data", ano+"-01-01")
-    .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
-  if(error || !data) return [];
-  return data.map(r=>({...r, valor:r.valor||0, comissao:r.comissao||0, _fonte:"legado"}));
+  const ano=anoAtualStr();
+  const{data,error}=await client.from("legado_atendimentos").select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao").gte("data",ano+"-01-01").or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
+  if(error||!data)return[];return data.map(r=>({...r,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"}));
 }
-
 async function fetchNovosRecente(){
-  const ano = anoAtualStr();
-  const { data, error } = await client
-    .from("atendimentos")
-    .select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`)
-    .eq("status","Confirmado")
-    .gte("data", ano+"-01-01");
-  if(error || !data) return [];
-  return data.map(r=>({
-    profissional: r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—",
-    data: r.data, hora_inicio: r.hora_inicio,
-    cliente: r.clientes?.nome||null,
-    servico: r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",
-    valor: r.valor_final||0, comissao: r.comissao_total||0, _fonte:"novo"
-  }));
+  const ano=anoAtualStr();
+  const{data,error}=await client.from("atendimentos").select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`).eq("status","Confirmado").gte("data",ano+"-01-01");
+  if(error||!data)return[];return data.map(r=>({profissional:r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—",data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo"}));
 }
-
-/* ════════════════════════════════════════════════════════════
-   FETCH — HISTÓRICO COMPLETO (em background)
-   ════════════════════════════════════════════════════════════ */
 async function fetchLegadoCompleto(){
-  // Verifica cache
-  const cached = lerCache(CACHE_KEY_LEGADO);
-  if(cached){ return cached; }
-
-  let todos=[], from=0;
-  while(true){
-    const{data,error}=await client.from("legado_atendimentos")
-      .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
-      .or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum")
-      .range(from,from+999);
-    if(error||!data||!data.length) break;
-    todos=todos.concat(data.map(r=>({profissional:r.profissional,data:r.data,hora_inicio:r.hora_inicio,cliente:r.cliente,servico:r.servico,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"})));
-    if(data.length<1000) break;
-    from+=1000;
-  }
-  salvarCache(CACHE_KEY_LEGADO, todos);
-  return todos;
+  const cached=lerCache(CACHE_KEY_LEGADO);if(cached)return cached;
+  let todos=[],from=0;
+  while(true){const{data,error}=await client.from("legado_atendimentos").select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao").or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum").range(from,from+999);if(error||!data||!data.length)break;todos=todos.concat(data.map(r=>({profissional:r.profissional,data:r.data,hora_inicio:r.hora_inicio,cliente:r.cliente,servico:r.servico,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"})));if(data.length<1000)break;from+=1000;}
+  salvarCache(CACHE_KEY_LEGADO,todos);return todos;
 }
-
 async function fetchNovosCompleto(){
-  const cached = lerCache(CACHE_KEY_NOVO);
-  if(cached){ return cached; }
-
-  let todos=[], from=0;
-  while(true){
-    const{data,error}=await client.from("atendimentos")
-      .select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`)
-      .eq("status","Confirmado").range(from,from+999);
-    if(error||!data||!data.length) break;
-    todos=todos.concat(data.map(r=>({profissional:r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—",data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo"})));
-    if(data.length<1000) break;
-    from+=1000;
-  }
-  salvarCache(CACHE_KEY_NOVO, todos);
-  return todos;
+  const cached=lerCache(CACHE_KEY_NOVO);if(cached)return cached;
+  let todos=[],from=0;
+  while(true){const{data,error}=await client.from("atendimentos").select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`).eq("status","Confirmado").range(from,from+999);if(error||!data||!data.length)break;todos=todos.concat(data.map(r=>({profissional:r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—",data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo"})));if(data.length<1000)break;from+=1000;}
+  salvarCache(CACHE_KEY_NOVO,todos);return todos;
 }
 
-/* ════════════════════════════════════════════════════════════
-   FILTROS
-   ════════════════════════════════════════════════════════════ */
+/* FILTROS */
 function aplicarFiltros(){
-  selecao={tipo:null,valor:null};
-  const badge=document.getElementById("selecaoBadge"); if(badge) badge.remove();
-  const ano=document.getElementById("fAno").value;
-  const mes=document.getElementById("fMes").value;
-  const quinz=document.getElementById("fQuinz").value;
-  const prof=document.getElementById("fProf").value;
-  const serv=document.getElementById("fServ").value;
-  const fonte=document.getElementById("fFonte").value;
-  allData=cacheCompleto.filter(r=>{
-    if(!r.data) return false;
-    const[y,m,d]=r.data.split("-");
-    if(ano && y!==ano) return false;
-    if(mes && m!==mes) return false;
-    if(quinz==="1" && parseInt(d)>15) return false;
-    if(quinz==="2" && parseInt(d)<=15) return false;
-    if(prof && r.profissional!==prof) return false;
-    if(serv && r.servico!==serv) return false;
-    if(fonte && r._fonte!==fonte) return false;
-    return true;
-  });
-  const legados=allData.filter(r=>r._fonte==="legado").length;
-  const novos  =allData.filter(r=>r._fonte==="novo").length;
+  selecao={tipo:null,valor:null};const badge=document.getElementById("selecaoBadge");if(badge)badge.remove();
+  const ano=document.getElementById("fAno").value,mes=document.getElementById("fMes").value,quinz=document.getElementById("fQuinz").value,prof=document.getElementById("fProf").value,serv=document.getElementById("fServ").value,fonte=document.getElementById("fFonte").value;
+  allData=cacheCompleto.filter(r=>{if(!r.data)return false;const[y,m,d]=r.data.split("-");if(ano&&y!==ano)return false;if(mes&&m!==mes)return false;if(quinz==="1"&&parseInt(d)>15)return false;if(quinz==="2"&&parseInt(d)<=15)return false;if(prof&&r.profissional!==prof)return false;if(serv&&r.servico!==serv)return false;if(fonte&&r._fonte!==fonte)return false;return true;});
+  const legados=allData.filter(r=>r._fonte==="legado").length,novos=allData.filter(r=>r._fonte==="novo").length;
   const info=document.getElementById("fonteInfo");
-  info.innerHTML=legados&&novos
-    ?`<span class="fonte-badge ambos"><i class="fa fa-database"></i> ${fmtN(legados)} legado + ${fmtN(novos)} novos</span>`
-    :legados?`<span class="fonte-badge legado"><i class="fa fa-database"></i> ${fmtN(legados)} do legado</span>`
-    :`<span class="fonte-badge novo"><i class="fa fa-star"></i> ${fmtN(novos)} novos</span>`;
+  info.innerHTML=legados&&novos?`<span class="fonte-badge ambos"><i class="fa fa-database"></i> ${fmtN(legados)} legado + ${fmtN(novos)} novos</span>`:legados?`<span class="fonte-badge legado"><i class="fa fa-database"></i> ${fmtN(legados)} do legado</span>`:`<span class="fonte-badge novo"><i class="fa fa-star"></i> ${fmtN(novos)} novos</span>`;
   renderTudo(allData);
 }
 
-function filtrarPor(tipo, valor, trEl){
+function renderTudo(rows){renderKPIs(rows);renderGeral(rows);renderTerapeutas(rows);renderServicos(rows);renderClientes(rows);atualizarValuation();}
+
+function mudarPag(p,btn){document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));document.querySelectorAll(".sub-btn").forEach(b=>b.classList.remove("active"));document.getElementById("page-"+p).classList.add("active");btn.classList.add("active");if(window.innerWidth<=768)closeSidebar();}
+
+function filtrarPor(tipo,valor,trEl){
   if(selecao.tipo===tipo&&selecao.valor===valor){limparSelecao();return;}
-  selecao={tipo,valor};
-  document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
-  if(trEl) trEl.classList.add("selecionado");
-  renderBadge();
-  const filtrado=allData.filter(r=>{
-    if(tipo==="prof") return r.profissional===valor;
-    if(tipo==="serv") return r.servico===valor;
-    if(tipo==="cli")  return r.cliente===valor;
-    if(tipo==="hora") return r.hora_inicio&&parseInt(r.hora_inicio.split(":")[0])===parseInt(valor);
-    return true;
-  });
-  renderTudo(filtrado);
+  selecao={tipo,valor};document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));if(trEl)trEl.classList.add("selecionado");
+  const ex=document.getElementById("selecaoBadge");if(ex)ex.remove();
+  const icons={prof:"👤",serv:"💆",cli:"🧑"};const badge=document.createElement("div");badge.id="selecaoBadge";badge.className="filtro-ativo-badge";badge.innerHTML=`${icons[tipo]||""} ${valor} <span style="font-size:14px">×</span>`;badge.onclick=limparSelecao;document.getElementById("filtrosBar").appendChild(badge);
+  renderTudo(allData.filter(r=>{if(tipo==="prof")return r.profissional===valor;if(tipo==="serv")return r.servico===valor;if(tipo==="cli")return r.cliente===valor;return true;}));
 }
+function limparSelecao(){selecao={tipo:null,valor:null};document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));const b=document.getElementById("selecaoBadge");if(b)b.remove();renderTudo(allData);}
 
-function limparSelecao(){
-  selecao={tipo:null,valor:null};
-  document.querySelectorAll(".dt tbody tr.selecionado").forEach(r=>r.classList.remove("selecionado"));
-  const b=document.getElementById("selecaoBadge"); if(b) b.remove();
-  renderTudo(allData);
-}
-
-function renderBadge(){
-  const existing=document.getElementById("selecaoBadge"); if(existing) existing.remove();
-  if(!selecao.tipo) return;
-  const icons={prof:"👤",serv:"💆",cli:"🧑",hora:"🕐"};
-  const sufixo=selecao.tipo==="hora"?`${selecao.valor}:00h`:selecao.valor;
-  const badge=document.createElement("div");
-  badge.id="selecaoBadge"; badge.className="filtro-ativo-badge";
-  badge.innerHTML=`${icons[selecao.tipo]||""} ${sufixo} <span style="font-size:14px">×</span>`;
-  badge.onclick=limparSelecao;
-  document.getElementById("filtrosBar").appendChild(badge);
-}
-
-function renderTudo(rows){
-  renderKPIs(rows);
-  renderGeral(rows);
-  renderProfissional(rows);
-  atualizarValuation();
-}
-
-function mudarPag(p, btn){
-  document.querySelectorAll(".page").forEach(el=>el.classList.remove("active"));
-  document.querySelectorAll(".sub-btn").forEach(b=>b.classList.remove("active"));
-  document.getElementById("page-"+p).classList.add("active");
-  btn.classList.add("active");
-  // Fechar sidebar no mobile ao trocar de aba
-  if(window.innerWidth<=768) closeSidebar();
-}
-
-/* ════════════════════════════════════════════════════════════
-   RENDERS
-   ════════════════════════════════════════════════════════════ */
+/* KPIs GLOBAIS */
 function renderKPIs(rows){
-  const cliCount={};
-  rows.forEach(r=>{ if(r.cliente) cliCount[r.cliente]=(cliCount[r.cliente]||0)+1; });
-  const totalCli=Object.keys(cliCount).length;
-  const retornos=Object.values(cliCount).filter(v=>v>1).length;
-  const receita=rows.reduce((s,r)=>s+(r.valor||0),0);
-  const comissao=rows.reduce((s,r)=>s+(r.comissao||0),0);
-  const ticket=rows.length?receita/rows.length:0;
-  document.getElementById("kAtend").textContent=fmtN(rows.length);
-  document.getElementById("kReceita").textContent=fmtM(receita);
-  document.getElementById("kComissao").textContent=fmtM(comissao);
-  document.getElementById("kTicket").textContent=fmtM(ticket);
-  document.getElementById("kClientes").textContent=fmtN(totalCli);
-  document.getElementById("kRetornos").textContent=fmtN(retornos);
+  const cliCount={};rows.forEach(r=>{if(r.cliente)cliCount[r.cliente]=(cliCount[r.cliente]||0)+1;});
+  const totalCli=Object.keys(cliCount).length,retornos=Object.values(cliCount).filter(v=>v>1).length;
+  const receita=rows.reduce((s,r)=>s+(r.valor||0),0),comissao=rows.reduce((s,r)=>s+(r.comissao||0),0);
+  document.getElementById("kAtend").textContent=fmtN(rows.length);document.getElementById("kReceita").textContent=fmtM(receita);document.getElementById("kComissao").textContent=fmtM(comissao);
+  document.getElementById("kTicket").textContent=fmtM(rows.length?receita/rows.length:0);document.getElementById("kClientes").textContent=fmtN(totalCli);document.getElementById("kRetornos").textContent=fmtN(retornos);
 }
 
-let _rowsGeral = [];
+/* GERAL */
+let _rowsGeral=[];
 function renderGeral(rows){
-  _rowsGeral = rows;
-  const totAtend=rows.length||1;
-  const profMap={};
-  rows.forEach(r=>{ if(!r.profissional)return; if(!profMap[r.profissional])profMap[r.profissional]={n:0,rec:0,com:0}; profMap[r.profissional].n++;profMap[r.profissional].rec+=(r.valor||0);profMap[r.profissional].com+=(r.comissao||0); });
-  const rankProf=Object.entries(profMap).sort((a,b)=>b[1].n-a[1].n);
-  document.querySelector("#tblProf tbody").innerHTML=
-    rankProf.map(([p,v])=>`<tr class="clicavel${selecao.tipo==="prof"&&selecao.valor===p?" selecionado":""}" onclick="filtrarPor('prof','${p.replace(/'/g,"\\'")}',this)">
-      <td>${p}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td>
-      <td class="num"><div class="pct-bar"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(v.n/totAtend*100).toFixed(1)}%"></div></div><span style="min-width:38px">${fmtP(v.n/totAtend*100)}</span></div></td>
-    </tr>`).join("")+
-    `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">100%</td></tr>`;
-  renderServTabela(rows);
-  renderAnoMesTabelaFull(rows);
-  renderRecMesChart(rows);
-  renderHoraGrid(rows, totAtend);
-  renderTopClientes(rows, totAtend);
+  _rowsGeral=rows;const totAtend=rows.length||1,profMap={};
+  rows.forEach(r=>{if(!r.profissional)return;if(!profMap[r.profissional])profMap[r.profissional]={n:0,rec:0,com:0};profMap[r.profissional].n++;profMap[r.profissional].rec+=(r.valor||0);profMap[r.profissional].com+=(r.comissao||0);});
+  document.querySelector("#tblProf tbody").innerHTML=Object.entries(profMap).sort((a,b)=>b[1].n-a[1].n).map(([p,v])=>`<tr class="clicavel" onclick="filtrarPor('prof','${p.replace(/'/g,"\\'")}',this)"><td>${p}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num"><div class="pct-bar"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(v.n/totAtend*100).toFixed(1)}%"></div></div><span>${fmtP(v.n/totAtend*100)}</span></div></td></tr>`).join("")+`<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">100%</td></tr>`;
+  renderServTabela(rows);renderAnoMesTabelaFull(rows);
+  const recMes=Array(12).fill(0),comMes=Array(12).fill(0);rows.forEach(r=>{if(!r.data)return;const m=parseInt(r.data.split("-")[1])-1;recMes[m]+=(r.valor||0);comMes[m]+=(r.comissao||0);});
+  mkChart("chartRecMes",{type:"bar",data:{labels:MESES,datasets:[{label:"Receita",data:recMes,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1},{label:"Comissão",data:comMes,backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1}]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
+  renderHoraGrid(rows,"horaGrid");
+  const cliMap={};rows.forEach(r=>{if(!r.cliente)return;if(!cliMap[r.cliente])cliMap[r.cliente]={n:0,val:0,com:0};cliMap[r.cliente].n++;cliMap[r.cliente].val+=(r.valor||0);cliMap[r.cliente].com+=(r.comissao||0);});
+  document.querySelector("#tblCli tbody").innerHTML=Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30).map(([c,v])=>`<tr class="clicavel" onclick="filtrarPor('cli','${c.replace(/'/g,"\\'")}',this)"><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${fmtP(v.n/totAtend*100)}</td></tr>`).join("")+`<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num"></td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0)/totAtend)}</td><td class="num">100%</td></tr>`;
 }
 
-function setModoServ(modo){
-  _modoServ=modo;
-  document.getElementById("togServAtend").style.background=modo==="atend"?"#1f2937":"none";
-  document.getElementById("togServAtend").style.color=modo==="atend"?"#fff":"#6b7280";
-  document.getElementById("togServRec").style.background=modo==="receita"?"#1f2937":"none";
-  document.getElementById("togServRec").style.color=modo==="receita"?"#fff":"#6b7280";
-  document.getElementById("thServVal").textContent=modo==="atend"?"Atend.":"Receita";
-  renderServTabela(_rowsGeral);
+function renderHoraGrid(rows,gridId){
+  const horaMap={};rows.forEach(r=>{if(!r.hora_inicio)return;const h=parseInt(r.hora_inicio.split(":")[0]);if(h>=7&&h<=23)horaMap[h]=(horaMap[h]||0)+1;});
+  const maxH=Math.max(...Object.values(horaMap),1),el=document.getElementById(gridId);if(!el)return;
+  el.innerHTML=Array.from({length:17},(_,i)=>i+7).map(h=>{const n=horaMap[h]||0;return`<div class="hora-label">${h}:00</div><div class="hora-bar-wrap"><div class="hora-bar-bg"><div class="hora-bar-fill" style="width:${(n/maxH*100).toFixed(0)}%"></div></div><span class="hora-count">${fmtN(n)}</span></div>`;}).join("");
 }
 
+function setModoServ(modo){_modoServ=modo;document.getElementById("togServAtend").className=modo==="atend"?"on":"";document.getElementById("togServRec").className=modo==="receita"?"on":"";document.getElementById("thServVal").textContent=modo==="atend"?"Atend.":"Receita";renderServTabela(_rowsGeral);}
 function renderServTabela(rows){
-  const totAtend=rows.length||1;
-  const servMap={};
-  rows.forEach(r=>{ if(!r.servico)return; if(!servMap[r.servico])servMap[r.servico]={n:0,rec:0}; servMap[r.servico].n++;servMap[r.servico].rec+=(r.valor||0); });
-  const rank=Object.entries(servMap).sort((a,b)=>_modoServ==="atend"?b[1].n-a[1].n:b[1].rec-a[1].rec);
-  const totRec=rows.reduce((s,r)=>s+(r.valor||0),0)||1;
-  document.querySelector("#tblServ tbody").innerHTML=
-    rank.map(([s,v])=>`<tr class="clicavel${selecao.tipo==="serv"&&selecao.valor===s?" selecionado":""}" onclick="filtrarPor('serv','${s.replace(/'/g,"\\'")}',this)">
-      <td>${s}</td>
-      <td class="num">${_modoServ==="atend"?fmtN(v.n):fmtM(v.rec)}</td>
-      <td class="num"><div class="pct-bar"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(_modoServ==="atend"?v.n/totAtend:v.rec/totRec)*100}%;background:#7c3aed"></div></div><span style="min-width:38px">${fmtP((_modoServ==="atend"?v.n/totAtend:v.rec/totRec)*100)}</span></div></td>
-    </tr>`).join("")+
-    `<tr><td>Total</td><td class="num">${_modoServ==="atend"?fmtN(totAtend):fmtM(totRec)}</td><td class="num">100%</td></tr>`;
+  const totAtend=rows.length||1,servMap={};rows.forEach(r=>{if(!r.servico)return;if(!servMap[r.servico])servMap[r.servico]={n:0,rec:0};servMap[r.servico].n++;servMap[r.servico].rec+=(r.valor||0);});
+  const rank=Object.entries(servMap).sort((a,b)=>_modoServ==="atend"?b[1].n-a[1].n:b[1].rec-a[1].rec),totRec=rows.reduce((s,r)=>s+(r.valor||0),0)||1;
+  document.querySelector("#tblServ tbody").innerHTML=rank.map(([s,v])=>`<tr class="clicavel" onclick="filtrarPor('serv','${s.replace(/'/g,"\\'")}',this)"><td>${s}</td><td class="num">${_modoServ==="atend"?fmtN(v.n):fmtM(v.rec)}</td><td class="num"><div class="pct-bar"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(_modoServ==="atend"?v.n/totAtend:v.rec/totRec)*100}%;background:#7c3aed"></div></div><span>${fmtP((_modoServ==="atend"?v.n/totAtend:v.rec/totRec)*100)}</span></div></td></tr>`).join("")+`<tr><td>Total</td><td class="num">${_modoServ==="atend"?fmtN(totAtend):fmtM(totRec)}</td><td class="num">100%</td></tr>`;
 }
 
-function renderRecMesChart(rows){
-  const recMes=Array(12).fill(0), comMes=Array(12).fill(0);
-  rows.forEach(r=>{ if(!r.data)return; const m=parseInt(r.data.split("-")[1])-1; recMes[m]+=(r.valor||0);comMes[m]+=(r.comissao||0); });
-  mkChart("chartRecMes",{type:"bar",data:{labels:MESES,datasets:[
-    {label:"Receita",data:recMes,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1},
-    {label:"Comissão",data:comMes,backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1},
-  ]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
-}
-
-function renderHoraGrid(rows, totAtend){
-  const horaMap={};
-  rows.forEach(r=>{ if(!r.hora_inicio)return; const h=parseInt(r.hora_inicio.split(":")[0]); if(h>=7&&h<=23) horaMap[h]=(horaMap[h]||0)+1; });
-  const maxH=Math.max(...Object.values(horaMap),1);
-  document.getElementById("horaGrid").innerHTML=
-    Array.from({length:17},(_,i)=>i+7).map(h=>{
-      const n=horaMap[h]||0;
-      const isSel=selecao.tipo==="hora"&&parseInt(selecao.valor)===h;
-      return`<div class="hora-label" style="cursor:pointer;font-weight:${isSel?"700":"400"};color:${isSel?"#2563eb":"#9ca3af"}" onclick="filtrarPor('hora','${h}',null)">${h}:00</div>
-      <div class="hora-bar-wrap" style="cursor:pointer" onclick="filtrarPor('hora','${h}',null)">
-        <div class="hora-bar-bg"><div class="hora-bar-fill" style="width:${(n/maxH*100).toFixed(0)}%;background:${isSel?"#2563eb":"#bfdbfe"}"></div></div>
-        <span class="hora-count">${fmtN(n)}</span>
-      </div>`;
-    }).join("");
-}
-
-function renderTopClientes(rows, totAtend){
-  const cliMap={};
-  rows.forEach(r=>{ if(!r.cliente)return; if(!cliMap[r.cliente])cliMap[r.cliente]={n:0,val:0,com:0}; cliMap[r.cliente].n++;cliMap[r.cliente].val+=(r.valor||0);cliMap[r.cliente].com+=(r.comissao||0); });
-  const topCli=Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30);
-  document.querySelector("#tblCli tbody").innerHTML=
-    topCli.map(([c,v])=>`<tr class="clicavel${selecao.tipo==="cli"&&selecao.valor===c?" selecionado":""}" onclick="filtrarPor('cli','${c.replace(/'/g,"\\'")}',this)">
-      <td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${fmtP(v.n/totAtend*100)}</td>
-    </tr>`).join("")+
-    `<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num"></td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0)/totAtend)}</td><td class="num">100%</td></tr>`;
-}
-
-function setModoAnoMes(modo){
-  _modoAnoMes=modo;
-  document.getElementById("toggleAtend").style.background=modo==="atend"?"#1f2937":"none";
-  document.getElementById("toggleAtend").style.color=modo==="atend"?"#fff":"#6b7280";
-  document.getElementById("toggleRec").style.background=modo==="receita"?"#1f2937":"none";
-  document.getElementById("toggleRec").style.color=modo==="receita"?"#fff":"#6b7280";
-  document.getElementById("thValor").textContent=modo==="atend"?"Atend.":"Receita";
-  document.getElementById("thLY").textContent=modo==="atend"?"Atend. LY":"Receita LY";
-  renderAnoMesTabelaFull(_rowsGeral);
-}
-
+function setModoAnoMes(modo){_modoAnoMes=modo;document.getElementById("toggleAtend").className=modo==="atend"?"on":"";document.getElementById("toggleRec").className=modo==="receita"?"on":"";document.getElementById("thValor").textContent=modo==="atend"?"Atend.":"Receita";document.getElementById("thLY").textContent=modo==="atend"?"Atend. LY":"Receita LY";renderAnoMesTabelaFull(_rowsGeral);}
 function renderAnoMesTabelaFull(rows){
-  const quinzAM=document.getElementById("fQuinz").value;
-  const prof=document.getElementById("fProf").value;
-  const serv=document.getElementById("fServ").value;
-  const fonte=document.getElementById("fFonte").value;
-  const anoMesData=cacheCompleto.filter(r=>{
-    if(!r.data) return false;
-    const dNum=parseInt(r.data.split("-")[2]);
-    if(quinzAM==="1"&&dNum>15) return false;
-    if(quinzAM==="2"&&dNum<=15) return false;
-    if(prof&&r.profissional!==prof) return false;
-    if(serv&&r.servico!==serv) return false;
-    if(fonte&&r._fonte!==fonte) return false;
-    if(selecao.tipo==="prof"&&r.profissional!==selecao.valor) return false;
-    if(selecao.tipo==="serv"&&r.servico!==selecao.valor) return false;
-    return true;
-  });
-  const anoMap={};
-  anoMesData.forEach(r=>{
-    const[y,m]=r.data.split("-");
-    if(!anoMap[y]) anoMap[y]={total:0,rec:0,meses:{},mesRec:{}};
-    anoMap[y].total++;anoMap[y].rec+=(r.valor||0);
-    anoMap[y].meses[m]=(anoMap[y].meses[m]||0)+1;
-    anoMap[y].mesRec[m]=(anoMap[y].mesRec[m]||0)+(r.valor||0);
-  });
-  window._anoMapGlobal=anoMap;
-  const tbody=document.querySelector("#tblAnoMes tbody");
-  tbody.innerHTML="";
-  const anos=Object.keys(anoMap).sort().reverse();
-  const anoAtual=anos[0];
-  const hoje=new Date();
-  const mesAtualStr=String(hoje.getMonth()+1).padStart(2,"0");
+  const quinzAM=document.getElementById("fQuinz").value,prof=document.getElementById("fProf").value,serv=document.getElementById("fServ").value,fonte=document.getElementById("fFonte").value;
+  const anoMesData=cacheCompleto.filter(r=>{if(!r.data)return false;const dNum=parseInt(r.data.split("-")[2]);if(quinzAM==="1"&&dNum>15)return false;if(quinzAM==="2"&&dNum<=15)return false;if(prof&&r.profissional!==prof)return false;if(serv&&r.servico!==serv)return false;if(fonte&&r._fonte!==fonte)return false;if(selecao.tipo==="prof"&&r.profissional!==selecao.valor)return false;if(selecao.tipo==="serv"&&r.servico!==selecao.valor)return false;return true;});
+  const anoMap={};anoMesData.forEach(r=>{const[y,m]=r.data.split("-");if(!anoMap[y])anoMap[y]={total:0,rec:0,meses:{},mesRec:{}};anoMap[y].total++;anoMap[y].rec+=(r.valor||0);anoMap[y].meses[m]=(anoMap[y].meses[m]||0)+1;anoMap[y].mesRec[m]=(anoMap[y].mesRec[m]||0)+(r.valor||0);});
+  const tbody=document.querySelector("#tblAnoMes tbody");tbody.innerHTML="";
+  const anos=Object.keys(anoMap).sort().reverse(),anoAtual=anos[0],hoje=new Date(),mesAtualStr=String(hoje.getMonth()+1).padStart(2,"0");
   const fmtVal=v=>_modoAnoMes==="atend"?fmtN(Math.round(v)):fmtM(v);
   anos.forEach(a=>{
-    const ly=String(parseInt(a)-1);
-    const isAnoAtual=a===anoAtual;
-    const totA=_modoAnoMes==="atend"?anoMap[a].total:anoMap[a].rec;
-    let totLY=0;
-    if(isAnoAtual&&anoMap[ly]){
-      const mesMap=_modoAnoMes==="atend"?anoMap[ly].meses:anoMap[ly].mesRec;
-      Object.entries(mesMap||{}).forEach(([m,mTotal])=>{
-        if(m<mesAtualStr) totLY+=mTotal;
-        else if(m===mesAtualStr){ const dias=new Date(parseInt(ly),parseInt(m),0).getDate(); totLY+=mTotal*hoje.getDate()/dias; }
-      });
-    } else { totLY=_modoAnoMes==="atend"?(anoMap[ly]?.total||0):(anoMap[ly]?.rec||0); }
-    const yoy=totLY?((totA-totLY)/totLY*100):null;
-    const yoyStr=yoy!==null?`<span class="${yoy>=0?"green":"red"}">${yoy>=0?"+":""}${yoy.toFixed(2)}%</span>`:"—";
-    const trAno=document.createElement("tr");
-    trAno.style.cursor="pointer";
-    trAno.innerHTML=`<td><span id="ico-${a}">⊕</span> <strong>${a}</strong></td><td class="num">${fmtVal(totA)}</td><td class="num">${totLY?fmtVal(totLY):"—"}</td><td class="num">${yoyStr}</td>`;
-    trAno.addEventListener("click",()=>toggleMesRows(a));
-    tbody.appendChild(trAno);
-    const mesData=_modoAnoMes==="atend"?anoMap[a].meses:anoMap[a].mesRec;
-    const mesDataLY=_modoAnoMes==="atend"?anoMap[ly]?.meses:anoMap[ly]?.mesRec;
-    Object.entries(mesData||{}).sort().forEach(([m,n])=>{
-      if(isAnoAtual&&m>mesAtualStr) return;
-      const lyM=mesDataLY?.[m]||0;
-      const yoyM=lyM?((n-lyM)/lyM*100):null;
-      const trMes=document.createElement("tr");
-      trMes.className=`mes-row mes-${a}`;
-      trMes.style.display="none";trMes.style.background="#fafafa";
-      trMes.innerHTML=`<td style="padding-left:28px;color:#6b7280;font-weight:normal">${MESES_FULL[parseInt(m)-1]}</td><td class="num" style="font-weight:normal">${fmtVal(n)}</td><td class="num" style="font-weight:normal">${lyM?fmtVal(lyM):"—"}</td><td class="num">${yoyM!==null?`<span class="${yoyM>=0?"green":"red"}">${yoyM>=0?"+":""}${yoyM.toFixed(2)}%</span>`:"—"}</td>`;
-      tbody.appendChild(trMes);
-    });
+    const ly=String(parseInt(a)-1),isAnoAtual=a===anoAtual,totA=_modoAnoMes==="atend"?anoMap[a].total:anoMap[a].rec;
+    let totLY=0;if(isAnoAtual&&anoMap[ly]){const mm=_modoAnoMes==="atend"?anoMap[ly].meses:anoMap[ly].mesRec;Object.entries(mm||{}).forEach(([m,v])=>{if(m<mesAtualStr)totLY+=v;else if(m===mesAtualStr){const dias=new Date(parseInt(ly),parseInt(m),0).getDate();totLY+=v*hoje.getDate()/dias;}});}else{totLY=_modoAnoMes==="atend"?(anoMap[ly]?.total||0):(anoMap[ly]?.rec||0);}
+    const yoy=totLY?((totA-totLY)/totLY*100):null,yoyStr=yoy!==null?`<span class="${yoy>=0?"green":"red"}">${yoy>=0?"+":""}${yoy.toFixed(2)}%</span>`:"—";
+    const trAno=document.createElement("tr");trAno.style.cursor="pointer";trAno.innerHTML=`<td><span id="ico-${a}">⊕</span> <strong>${a}</strong></td><td class="num">${fmtVal(totA)}</td><td class="num">${totLY?fmtVal(totLY):"—"}</td><td class="num">${yoyStr}</td>`;trAno.addEventListener("click",()=>toggleMesRows(a));tbody.appendChild(trAno);
+    const mesData=_modoAnoMes==="atend"?anoMap[a].meses:anoMap[a].mesRec,mesDataLY=_modoAnoMes==="atend"?anoMap[ly]?.meses:anoMap[ly]?.mesRec;
+    Object.entries(mesData||{}).sort().forEach(([m,n])=>{if(isAnoAtual&&m>mesAtualStr)return;const lyM=mesDataLY?.[m]||0,yoyM=lyM?((n-lyM)/lyM*100):null;const trMes=document.createElement("tr");trMes.className=`mes-row mes-${a}`;trMes.style.display="none";trMes.style.background="#fafafa";trMes.innerHTML=`<td style="padding-left:28px;color:#6b7280;font-weight:normal">${MESES_FULL[parseInt(m)-1]}</td><td class="num" style="font-weight:normal">${fmtVal(n)}</td><td class="num" style="font-weight:normal">${lyM?fmtVal(lyM):"—"}</td><td class="num">${yoyM!==null?`<span class="${yoyM>=0?"green":"red"}">${yoyM>=0?"+":""}${yoyM.toFixed(2)}%</span>`:"—"}</td>`;tbody.appendChild(trMes);});
   });
 }
+function toggleMesRows(ano){const rows=document.querySelectorAll(`.mes-${ano}`),ico=document.getElementById(`ico-${ano}`),hidden=rows.length&&rows[0].style.display==="none";rows.forEach(r=>r.style.display=hidden?"":"none");if(ico)ico.textContent=hidden?"⊖":"⊕";}
 
-function toggleMesRows(ano){
-  const rows=document.querySelectorAll(`.mes-${ano}`);
-  const ico=document.getElementById(`ico-${ano}`);
-  const hidden=rows.length&&rows[0].style.display==="none";
-  rows.forEach(r=>r.style.display=hidden?"":"none");
-  if(ico) ico.textContent=hidden?"⊖":"⊕";
-}
-
-function renderProfissional(rows){
+/* TERAPEUTAS */
+function renderTerapeutas(rows){
   const prof=document.getElementById("fProf").value;
-  if(!prof){
-    document.getElementById("profSemSelecao").style.display="";
-    document.getElementById("profContent").style.display="none";
-    return;
-  }
-  document.getElementById("profSemSelecao").style.display="none";
-  document.getElementById("profContent").style.display="";
-  const rowsProf=rows.filter(r=>r.profissional===prof);
-  const total=rowsProf.length;
-  const cliMap={};
-  rowsProf.forEach(r=>{ if(r.cliente) cliMap[r.cliente]=(cliMap[r.cliente]||0)+1; });
-  const totalCli=Object.keys(cliMap).length;
-  const retornos=Object.values(cliMap).filter(v=>v>1).length;
-  const pctRet=totalCli?(retornos/totalCli*100).toFixed(2)+"%" : "0%";
+  if(!prof){document.getElementById("terSemSelecao").style.display="";document.getElementById("terContent").style.display="none";return;}
+  document.getElementById("terSemSelecao").style.display="none";document.getElementById("terContent").style.display="";
+  const rowsProf=rows.filter(r=>r.profissional===prof),total=rowsProf.length;
+  const cliMap={};rowsProf.forEach(r=>{if(r.cliente)cliMap[r.cliente]=(cliMap[r.cliente]||0)+1;});
+  const totalCli=Object.keys(cliMap).length,retornos=Object.values(cliMap).filter(v=>v>1).length;
   const ganho=rowsProf.reduce((s,r)=>s+(r.comissao||0),0);
-  const rowsProfTotal=cacheCompleto.filter(r=>r.profissional===prof);
-  const ganhoTotal=rowsProfTotal.reduce((s,r)=>s+(r.comissao||0),0);
-  const datas=rowsProfTotal.map(r=>r.data).filter(Boolean).sort();
-  const primeiro=datas[0]?fmtD(datas[0]):"—";
-  let q1=0,q2=0,q1r=0,q2r=0;
-  rowsProf.forEach(r=>{ if(!r.data)return; const d=parseInt(r.data.split("-")[2]); if(d<=15){q1++;q1r+=(r.comissao||0);}else{q2++;q2r+=(r.comissao||0);} });
-  const diasSet=new Set(rowsProf.map(r=>r.data).filter(Boolean));
-  const diasTrab=diasSet.size;
-  const diasSem=[...diasSet].filter(d=>{const dow=new Date(d+"T12:00:00").getDay();return dow>=1&&dow<=5;}).length;
+  const rowsPT=cacheCompleto.filter(r=>r.profissional===prof),ganhoTotal=rowsPT.reduce((s,r)=>s+(r.comissao||0),0);
+  const datas=rowsPT.map(r=>r.data).filter(Boolean).sort(),primeiro=datas[0]?fmtD(datas[0]):"—";
+  let q1=0,q2=0,q1r=0,q2r=0;rowsProf.forEach(r=>{if(!r.data)return;const d=parseInt(r.data.split("-")[2]);if(d<=15){q1++;q1r+=(r.comissao||0);}else{q2++;q2r+=(r.comissao||0);}});
+  const diasSet=new Set(rowsProf.map(r=>r.data).filter(Boolean)),diasTrab=diasSet.size;
+  const diasSem=[...diasSet].filter(d=>{const dw=new Date(d+"T12:00:00").getDay();return dw>=1&&dw<=5;}).length;
   const diasSab=[...diasSet].filter(d=>new Date(d+"T12:00:00").getDay()===6).length;
-  document.getElementById("at_nome").textContent=prof;
-  document.getElementById("at_retornos").textContent=fmtN(retornos);
-  document.getElementById("at_total").textContent=fmtN(total);
-  document.getElementById("at_ganho").textContent=fmtM(ganho);
-  document.getElementById("at_ganho_total").textContent=fmtM(ganhoTotal);
-  document.getElementById("at_primeiro").textContent=primeiro;
-  document.getElementById("at_pct_ret").textContent=pctRet;
-  document.getElementById("at_q1").textContent=fmtN(q1);
-  document.getElementById("at_q2").textContent=fmtN(q2);
-  document.getElementById("at_q1r").textContent=fmtM(q1r);
-  document.getElementById("at_q2r").textContent=fmtM(q2r);
-  document.getElementById("at_dias").textContent=fmtN(diasTrab);
-  document.getElementById("at_diasem").textContent=fmtN(diasSem);
-  document.getElementById("at_sab").textContent=fmtN(diasSab);
-  const horaMap={};
-  rowsProf.forEach(r=>{ if(!r.hora_inicio)return; const h=parseInt(r.hora_inicio.split(":")[0]); if(h<7||h>23)return; if(!horaMap[h])horaMap[h]={n:0,com:0,dias:new Set()}; horaMap[h].n++;horaMap[h].com+=(r.comissao||0); if(r.data)horaMap[h].dias.add(r.data); });
-  const DIAS_UTEIS=[1,2,3,4,5];
-  Object.keys(horaMap).forEach(h=>{ horaMap[h].diasUteis=new Set([...horaMap[h].dias].filter(d=>DIAS_UTEIS.includes(new Date(d+"T12:00:00").getDay()))); });
+  document.getElementById("at_nome").textContent=prof;document.getElementById("at_total").textContent=fmtN(total);document.getElementById("at_ganho").textContent=fmtM(ganho);document.getElementById("at_ganho_total").textContent=fmtM(ganhoTotal);
+  document.getElementById("at_pct_ret").textContent=totalCli?(retornos/totalCli*100).toFixed(2)+"%":"0%";document.getElementById("at_primeiro").textContent=primeiro;document.getElementById("at_retornos").textContent=fmtN(retornos);
+  document.getElementById("at_q1").textContent=fmtN(q1);document.getElementById("at_q2").textContent=fmtN(q2);document.getElementById("at_q1r").textContent=fmtM(q1r);document.getElementById("at_q2r").textContent=fmtM(q2r);
+  document.getElementById("at_dias").textContent=fmtN(diasTrab);document.getElementById("at_diasem").textContent=fmtN(diasSem);document.getElementById("at_sab").textContent=fmtN(diasSab);
+  const horaMap={};rowsProf.forEach(r=>{if(!r.hora_inicio)return;const h=parseInt(r.hora_inicio.split(":")[0]);if(h<7||h>23)return;if(!horaMap[h])horaMap[h]={n:0,com:0,dias:new Set()};horaMap[h].n++;horaMap[h].com+=(r.comissao||0);if(r.data)horaMap[h].dias.add(r.data);});
+  Object.keys(horaMap).forEach(h=>{horaMap[h].diasUteis=new Set([...horaMap[h].dias].filter(d=>[1,2,3,4,5].includes(new Date(d+"T12:00:00").getDay())));});
   const horas=Object.keys(horaMap).map(Number).sort((a,b)=>a-b);
-  document.querySelector("#tblAtHora tbody").innerHTML=horas.map(h=>{
-    const v=horaMap[h];
-    return`<tr><td><strong>${h}:00</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtN(v.dias.size)}</td><td class="num">${fmtN(v.diasUteis.size)}</td><td class="num">${fmtM(v.dias.size?v.com/v.dias.size:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td></tr>`;
-  }).join("")+`<tr><td>Total</td><td class="num">${fmtN(total)}</td><td class="num">${fmtM(ganho)}</td><td class="num">${fmtN(diasTrab)}</td><td class="num">${fmtN([...new Set(rowsProf.filter(r=>r.data&&[1,2,3,4,5].includes(new Date(r.data+"T12:00:00").getDay())).map(r=>r.data))].length)}</td><td class="num">${fmtM(diasTrab?ganho/diasTrab:0)}</td><td class="num">${fmtM(total?ganho/total:0)}</td></tr>`;
-  const DIAS_HM=["Seg","Ter","Qua","Qui","Sex","Sáb"];
-  const heatMap={};
-  rowsProf.forEach(r=>{ if(!r.hora_inicio||!r.data)return; const h=parseInt(r.hora_inicio.split(":")[0]); const dow=new Date(r.data+"T12:00:00").getDay(); if(h<9||h>20||dow===0)return; const key=`${h}-${dow}`; heatMap[key]=(heatMap[key]||0)+1; });
+  document.querySelector("#tblAtHora tbody").innerHTML=horas.map(h=>{const v=horaMap[h];return`<tr><td><strong>${h}:00</strong></td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtN(v.dias.size)}</td><td class="num">${fmtN(v.diasUteis.size)}</td><td class="num">${fmtM(v.dias.size?v.com/v.dias.size:0)}</td><td class="num">${fmtM(v.n?v.com/v.n:0)}</td></tr>`;}).join("")+`<tr><td>Total</td><td class="num">${fmtN(total)}</td><td class="num">${fmtM(ganho)}</td><td class="num">${fmtN(diasTrab)}</td><td class="num">${fmtN([...new Set(rowsProf.filter(r=>r.data&&[1,2,3,4,5].includes(new Date(r.data+"T12:00:00").getDay())).map(r=>r.data))].length)}</td><td class="num">${fmtM(diasTrab?ganho/diasTrab:0)}</td><td class="num">${fmtM(total?ganho/total:0)}</td></tr>`;
+  const DIAS_HM=["Seg","Ter","Qua","Qui","Sex","Sáb"],heatMap={};
+  rowsProf.forEach(r=>{if(!r.hora_inicio||!r.data)return;const h=parseInt(r.hora_inicio.split(":")[0]),dow=new Date(r.data+"T12:00:00").getDay();if(h<9||h>20||dow===0)return;heatMap[`${h}-${dow}`]=(heatMap[`${h}-${dow}`]||0)+1;});
   const maxHM=Math.max(...Object.values(heatMap),1);
-  let heatHTML='<div></div>'+DIAS_HM.map(d=>`<div class="hm-header">${d}</div>`).join("");
-  for(let h=9;h<=20;h++){
-    heatHTML+=`<div class="hm-label">${h}h</div>`;
-    for(let dow=1;dow<=6;dow++){
-      const n=heatMap[`${h}-${dow}`]||0;
-      const pct=n/maxHM;
-      const bg=n===0?"#f3f4f6":`rgba(37,99,235,${(0.15+pct*0.85).toFixed(2)})`;
-      heatHTML+=`<div class="hm-cell" style="background:${bg}">${n||""}</div>`;
-    }
-  }
-  document.getElementById("atHeatmap").innerHTML=heatHTML;
-  const diaMap={};
-  rowsProf.forEach(r=>{ if(r.data) diaMap[r.data]=(diaMap[r.data]||0)+1; });
-  const diasOrd=Object.keys(diaMap).sort();
-  const vals=diasOrd.map(d=>diaMap[d]);
-  const cores=vals.map(v=>v>=6?"rgba(22,163,74,.8)":v>=4?"rgba(234,179,8,.8)":v>=2?"rgba(249,115,22,.8)":"rgba(220,38,38,.8)");
-  mkChart("chartAtDia",{type:"bar",data:{labels:diasOrd.map(d=>{const[,m,dd]=d.split("-");return`${dd}/${m}`;}),datasets:[{data:vals,backgroundColor:cores,borderWidth:0}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  let hHTML='<div></div>'+DIAS_HM.map(d=>`<div class="hm-header">${d}</div>`).join("");
+  for(let h=9;h<=20;h++){hHTML+=`<div class="hm-label">${h}h</div>`;for(let dow=1;dow<=6;dow++){const n=heatMap[`${h}-${dow}`]||0,bg=n===0?"#f3f4f6":`rgba(37,99,235,${(0.15+n/maxHM*0.85).toFixed(2)})`;hHTML+=`<div class="hm-cell" style="background:${bg}">${n||""}</div>`;}}
+  document.getElementById("atHeatmap").innerHTML=hHTML;
+  const diaMap={};rowsProf.forEach(r=>{if(r.data)diaMap[r.data]=(diaMap[r.data]||0)+1;});
+  const diasOrd=Object.keys(diaMap).sort(),vals=diasOrd.map(d=>diaMap[d]);
+  mkChart("chartAtDia",{type:"bar",data:{labels:diasOrd.map(d=>{const[,m,dd]=d.split("-");return`${dd}/${m}`;}),datasets:[{data:vals,backgroundColor:vals.map(v=>v>=6?"rgba(22,163,74,.8)":v>=4?"rgba(234,179,8,.8)":v>=2?"rgba(249,115,22,.8)":"rgba(220,38,38,.8)"),borderWidth:0}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
 }
 
+/* SERVIÇOS */
+let _svRows=[];
+function setSvModo(modo){_svModo=modo;document.getElementById("svTogAtend").className=modo==="atend"?"on":"";document.getElementById("svTogRec").className=modo==="receita"?"on":"";document.getElementById("thSvVal").textContent=modo==="atend"?"Atend.":"Receita";renderSvTabela(_svRows);}
+function renderServicos(rows){
+  _svRows=rows;
+  const servMap={};rows.forEach(r=>{if(!r.servico)return;if(!servMap[r.servico])servMap[r.servico]={n:0,rec:0};servMap[r.servico].n++;servMap[r.servico].rec+=(r.valor||0);});
+  const rank=Object.entries(servMap).sort((a,b)=>b[1].n-a[1].n);
+  document.getElementById("sv_total_tipos").textContent=fmtN(rank.length);
+  if(rank.length){const[topNome,topVal]=rank[0];document.getElementById("sv_top_nome").textContent=topNome;document.getElementById("sv_top_atend").textContent=fmtN(topVal.n);document.getElementById("sv_top_rec").textContent=fmtM(topVal.rec);}
+  renderSvTabela(rows);
+  const top5=rank.slice(0,5).map(([n])=>n),svMesMap={};
+  rows.forEach(r=>{if(!r.data||!r.servico||!top5.includes(r.servico))return;const[,m]=r.data.split("-");const k=`${r.servico}__${m}`;svMesMap[k]=(svMesMap[k]||0)+1;});
+  mkChart("chartSvEvolucao",{type:"line",data:{labels:MESES,datasets:top5.map((nome,i)=>({label:nome,data:MESES.map((_,mi)=>svMesMap[`${nome}__${String(mi+1).padStart(2,"0")}`]||0),borderColor:CORES[i],backgroundColor:CORES[i]+"22",tension:.3,fill:false,pointRadius:3}))},options:{plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  const profServMap={};rows.forEach(r=>{if(!r.profissional||!r.servico)return;if(!profServMap[r.profissional])profServMap[r.profissional]={};profServMap[r.profissional][r.servico]=(profServMap[r.profissional][r.servico]||0)+1;});
+  document.querySelector("#tblSvProf tbody").innerHTML=Object.entries(profServMap).sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0)-Object.values(a[1]).reduce((s,v)=>s+v,0)).map(([prof,servs])=>{const sorted=Object.entries(servs).sort((a,b)=>b[1]-a[1]);const s1=sorted[0]||["—",0],s2=sorted[1]||["—","—"];return`<tr><td>${prof}</td><td>${s1[0]}</td><td class="num">${fmtN(s1[1])}</td><td>${s2[0]}</td><td class="num">${typeof s2[1]==="number"?fmtN(s2[1]):"—"}</td></tr>`;}).join("");
+  renderHoraGrid(rows,"svHoraGrid");
+}
+function renderSvTabela(rows){
+  const servMap={};rows.forEach(r=>{if(!r.servico)return;if(!servMap[r.servico])servMap[r.servico]={n:0,rec:0};servMap[r.servico].n++;servMap[r.servico].rec+=(r.valor||0);});
+  const rank=Object.entries(servMap).sort((a,b)=>_svModo==="atend"?b[1].n-a[1].n:b[1].rec-a[1].rec);
+  const totAtend=rows.length||1,totRec=rows.reduce((s,r)=>s+(r.valor||0),0)||1;
+  document.querySelector("#tblSvRank tbody").innerHTML=rank.map(([s,v])=>`<tr><td>${s}</td><td class="num">${_svModo==="atend"?fmtN(v.n):fmtM(v.rec)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.n?v.rec/v.n:0)}</td><td class="num"><div class="pct-bar"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(_svModo==="atend"?v.n/totAtend:v.rec/totRec)*100}%;background:#7c3aed"></div></div><span>${fmtP((_svModo==="atend"?v.n/totAtend:v.rec/totRec)*100)}</span></div></td></tr>`).join("")+`<tr><td>Total</td><td class="num">${_svModo==="atend"?fmtN(totAtend):fmtM(totRec)}</td><td class="num">${fmtM(totRec)}</td><td class="num">${fmtM(totAtend?totRec/totAtend:0)}</td><td class="num">100%</td></tr>`;
+}
+
+/* CLIENTES */
+let _clRows=[];
+function setClModo(modo){_clModo=modo;document.getElementById("clTogAtend").className=modo==="atend"?"on":"";document.getElementById("clTogRec").className=modo==="receita"?"on":"";renderClTabela(_clRows);}
+function renderClientes(rows){
+  _clRows=rows;
+  const cliMap={};rows.forEach(r=>{if(!r.cliente)return;if(!cliMap[r.cliente])cliMap[r.cliente]={n:0,val:0,datas:[]};cliMap[r.cliente].n++;cliMap[r.cliente].val+=(r.valor||0);if(r.data)cliMap[r.cliente].datas.push(r.data);});
+  const totalUniq=Object.keys(cliMap).length,recorrentes=Object.values(cliMap).filter(v=>v.n>1).length,novos=totalUniq-recorrentes;
+  const totalRec=Object.values(cliMap).reduce((s,v)=>s+v.val,0);
+  document.getElementById("cl_unicos").textContent=fmtN(totalUniq);document.getElementById("cl_novos").textContent=fmtN(novos);document.getElementById("cl_recorrentes").textContent=fmtN(recorrentes);
+  document.getElementById("cl_taxa_ret").textContent=totalUniq?(recorrentes/totalUniq*100).toFixed(1)+"%":"0%";document.getElementById("cl_ltv").textContent=fmtM(totalUniq?totalRec/totalUniq:0);
+  renderClTabela(rows);
+  const cliHist={};cacheCompleto.forEach(r=>{if(!r.cliente||!r.data)return;if(!cliHist[r.cliente])cliHist[r.cliente]=[];cliHist[r.cliente].push(r.data);});
+  const novosM=Array(12).fill(0),recM=Array(12).fill(0);
+  rows.forEach(r=>{if(!r.cliente||!r.data)return;const m=parseInt(r.data.split("-")[1])-1;const ant=(cliHist[r.cliente]||[]).filter(d=>d<r.data);if(ant.length===0)novosM[m]++;else recM[m]++;});
+  mkChart("chartClNovosRec",{type:"bar",data:{labels:MESES,datasets:[{label:"Novos",data:novosM,backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1},{label:"Recorrentes",data:recM,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1}]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  const freqMap={1:0,2:0,3:0,4:0,5:0,6:0};Object.values(cliMap).forEach(v=>{freqMap[Math.min(v.n,6)]++;});
+  mkChart("chartClFreq",{type:"doughnut",data:{labels:["1 visita","2 visitas","3 visitas","4 visitas","5 visitas","6+ visitas"],datasets:[{data:Object.values(freqMap),backgroundColor:["#e5e7eb","#bfdbfe","#93c5fd","#60a5fa","#3b82f6","#1d4ed8"],borderWidth:0}]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:12}}}}});
+  document.querySelector("#tblClRetornos tbody").innerHTML=Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30).map(([c,v])=>`<tr><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtP((v.n-1)/v.n*100)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td></tr>`).join("");
+}
+function renderClTabela(rows){
+  const totAtend=rows.length||1,cliMap={};rows.forEach(r=>{if(!r.cliente)return;if(!cliMap[r.cliente])cliMap[r.cliente]={n:0,val:0,datas:[]};cliMap[r.cliente].n++;cliMap[r.cliente].val+=(r.valor||0);if(r.data)cliMap[r.cliente].datas.push(r.data);});
+  document.querySelector("#tblClTop tbody").innerHTML=Object.entries(cliMap).sort((a,b)=>_clModo==="atend"?b[1].n-a[1].n:b[1].val-a[1].val).slice(0,50).map(([c,v])=>{const ultima=v.datas.sort().slice(-1)[0];return`<tr><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${ultima?fmtD(ultima):"—"}</td><td class="num">${fmtP(v.n/totAtend*100)}</td></tr>`;}).join("");
+}
+
+/* VALUATION */
 function atualizarValuation(){
-  const janela=parseInt(document.getElementById("selJanelaMRR")?.value||6);
-  const multiplo=parseFloat(document.getElementById("sliderMultiplo")?.value||3);
-  document.getElementById("lblMultiplo").textContent=multiplo+"×";
-  document.getElementById("vMultiploBadge").textContent=multiplo+"×";
-  document.getElementById("vValuationSub").textContent=`ARR × ${multiplo}×`;
-  const mesMap={};
-  cacheCompleto.forEach(r=>{ if(!r.data)return; const[y,m]=r.data.split("-"); mesMap[`${y}-${m}`]=(mesMap[`${y}-${m}`]||0)+(r.valor||0); });
-  const mesesOrdenados=Object.entries(mesMap).sort((a,b)=>a[0].localeCompare(b[0]));
-  const ultimos=mesesOrdenados.slice(-janela);
-  const mrr=ultimos.length?ultimos.reduce((s,[,v])=>s+v,0)/ultimos.length:0;
-  const arr=mrr*12;
-  const valuation=arr*multiplo;
-  document.getElementById("vMRR").textContent=fmtM(mrr);
-  document.getElementById("vMRRsub").textContent=`Média dos últimos ${janela} meses`;
-  document.getElementById("vMRRbadge").textContent=`${janela} meses`;
-  document.getElementById("vARR").textContent=fmtM(arr);
-  document.getElementById("vValuation").textContent=fmtM(valuation);
-  const hoje=new Date();
-  const anoAtual=hoje.getFullYear();
-  const anoAnt=anoAtual-1;
-  const mesHoje=String(hoje.getMonth()+1).padStart(2,"0");
-  const diaHoje=String(hoje.getDate()).padStart(2,"0");
-  const corteAtual=`${anoAtual}-${mesHoje}-${diaHoje}`;
-  const corteAnt=`${anoAnt}-${mesHoje}-${diaHoje}`;
-  const recAtual=cacheCompleto.filter(r=>r.data&&r.data>=`${anoAtual}-01-01`&&r.data<=corteAtual).reduce((s,r)=>s+(r.valor||0),0);
-  const recAnt=cacheCompleto.filter(r=>r.data&&r.data>=`${anoAnt}-01-01`&&r.data<=corteAnt).reduce((s,r)=>s+(r.valor||0),0);
+  const janela=parseInt(document.getElementById("selJanelaMRR")?.value||6),multiplo=parseFloat(document.getElementById("sliderMultiplo")?.value||3);
+  document.getElementById("lblMultiplo").textContent=multiplo+"×";document.getElementById("vMultiploBadge").textContent=multiplo+"×";document.getElementById("vValuationSub").textContent=`ARR × ${multiplo}×`;
+  const mesMap={};cacheCompleto.forEach(r=>{if(!r.data)return;const[y,m]=r.data.split("-");mesMap[`${y}-${m}`]=(mesMap[`${y}-${m}`]||0)+(r.valor||0);});
+  const mesesOrdenados=Object.entries(mesMap).sort((a,b)=>a[0].localeCompare(b[0])),ultimos=mesesOrdenados.slice(-janela);
+  const mrr=ultimos.length?ultimos.reduce((s,[,v])=>s+v,0)/ultimos.length:0,arr=mrr*12,valuation=arr*multiplo;
+  document.getElementById("vMRR").textContent=fmtM(mrr);document.getElementById("vMRRsub").textContent=`Média dos últimos ${janela} meses`;document.getElementById("vMRRbadge").textContent=`${janela} meses`;document.getElementById("vARR").textContent=fmtM(arr);document.getElementById("vValuation").textContent=fmtM(valuation);
+  const hoje=new Date(),anoAtual=hoje.getFullYear(),anoAnt=anoAtual-1,mesHoje=String(hoje.getMonth()+1).padStart(2,"0"),diaHoje=String(hoje.getDate()).padStart(2,"0");
+  const recAtual=cacheCompleto.filter(r=>r.data&&r.data>=`${anoAtual}-01-01`&&r.data<=`${anoAtual}-${mesHoje}-${diaHoje}`).reduce((s,r)=>s+(r.valor||0),0);
+  const recAnt=cacheCompleto.filter(r=>r.data&&r.data>=`${anoAnt}-01-01`&&r.data<=`${anoAnt}-${mesHoje}-${diaHoje}`).reduce((s,r)=>s+(r.valor||0),0);
   const yoy=recAnt?((recAtual-recAnt)/recAnt*100):null;
-  document.getElementById("vYoY").textContent=yoy!==null?(yoy>=0?"+":"")+yoy.toFixed(1)+"%":"—";
-  document.getElementById("vYoYsub").textContent=`${fmtM(recAnt)} → ${fmtM(recAtual)}`;
-  const yoyBadge=document.getElementById("vYoYbadge");
-  yoyBadge.textContent=yoy!==null?(yoy>=0?"▲ Crescimento":"▼ Queda"):"—";
-  yoyBadge.className="val-badge "+(yoy===null?"blue":yoy>=0?"green":"red");
-  const cliRec={};
-  cacheCompleto.forEach(r=>{ if(!r.cliente)return; cliRec[r.cliente]=(cliRec[r.cliente]||0)+(r.valor||0); });
-  const totalCli=Object.keys(cliRec).length||1;
-  const totalRec=Object.values(cliRec).reduce((s,v)=>s+v,0);
-  document.getElementById("vLTV").textContent=fmtM(totalRec/totalCli);
-  document.getElementById("vTicket").textContent=fmtM(cacheCompleto.length?totalRec/cacheCompleto.length:0);
-  const cliCount={};
-  cacheCompleto.forEach(r=>{ if(r.cliente) cliCount[r.cliente]=(cliCount[r.cliente]||0)+1; });
-  const totalUniq=Object.keys(cliCount).length||1;
-  const retornaram=Object.values(cliCount).filter(v=>v>1).length;
-  document.getElementById("vRetencao").textContent=(retornaram/totalUniq*100).toFixed(1)+"%";
-  document.getElementById("vRetencaoBadge").textContent=`${fmtN(retornaram)} de ${fmtN(totalUniq)} clientes`;
-  if(mesesOrdenados.length){
-    const [mk,mv]=mesesOrdenados.reduce((a,b)=>b[1]>a[1]?b:a);
-    const[my,mm]=mk.split("-");
-    document.getElementById("vMelhorMes").textContent=MESES_FULL[parseInt(mm)-1]+" "+my;
-    document.getElementById("vMelhorMesSub").textContent=fmtM(mv);
-  }
-  const mrrGlobal=mesesOrdenados.reduce((s,[,v])=>s+v,0)/(mesesOrdenados.length||1);
-  const sazoMap={};
-  mesesOrdenados.forEach(([k,v])=>{ const m=k.split("-")[1]; if(!sazoMap[m])sazoMap[m]=[]; sazoMap[m].push(v); });
-  const sazoFator={};
-  Object.entries(sazoMap).forEach(([m,vals])=>{ const med=vals.reduce((s,v)=>s+v,0)/vals.length; sazoFator[m]=mrrGlobal>0?med/mrrGlobal:1; });
-  const bVals=mesesOrdenados.slice(-janela).map(([,v])=>v);
-  const bMed=bVals.reduce((s,v)=>s+v,0)/(bVals.length||1);
-  const desvioReal=Math.sqrt(bVals.reduce((s,v)=>s+(v-bMed)**2,0)/(bVals.length||1));
-  const projLabels=[]; const projVals=[];
-  if(mesesOrdenados.length){
-    let[py,pm]=mesesOrdenados[mesesOrdenados.length-1][0].split("-").map(Number);
-    for(let i=1;i<=6;i++){
-      pm++; if(pm>12){pm=1;py++;}
-      const ms=String(pm).padStart(2,"0");
-      projLabels.push(MESES[pm-1]+"/"+String(py).slice(2));
-      const fSazo=sazoFator[ms]||1;
-      const oscil=desvioReal*0.5*Math.sin(i*1.9+0.7);
-      projVals.push(Math.max(mrr*0.5, mrr*fSazo+oscil));
-    }
-  }
-  const todosLabels=mesesOrdenados.map(([k])=>{ const[y,m]=k.split("-"); return MESES[parseInt(m)-1]+"/"+y.slice(2); });
-  const todosVals=mesesOrdenados.map(([,v])=>v);
-  const allLabels=[...todosLabels,...projLabels];
-  const allReais=[...todosVals,...Array(projLabels.length).fill(null)];
-  const allProj=[...Array(todosLabels.length-1).fill(null),todosVals[todosVals.length-1],...projVals];
-  const allMRR=allLabels.map(()=>mrr);
-  mkChart("chartValProj",{
-    type:"line",
-    data:{labels:allLabels,datasets:[
-      {label:"Receita Real",data:allReais,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.1)",tension:.3,fill:true,pointRadius:2,pointHoverRadius:5},
-      {label:"Projeção",data:allProj,borderColor:"#16a34a",borderDash:[6,4],backgroundColor:"rgba(22,163,74,.05)",tension:.3,fill:true,pointRadius:3},
-      {label:"MRR",data:allMRR,borderColor:"#d97706",borderDash:[3,3],pointRadius:0,borderWidth:1.5},
-    ]},
-    options:{responsive:true,plugins:{legend:{position:"bottom",labels:{font:{size:11}}},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"},pan:{enabled:true,mode:"x"}},tooltip:{callbacks:{label:ctx=>" "+fmtM(ctx.parsed.y)}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}
-  });
-  setTimeout(()=>{ const ch=charts["chartValProj"]; if(!ch)return; const total=allLabels.length; if(total>18) ch.zoomScale("x",{min:total-18,max:total-1},"none"); },100);
+  document.getElementById("vYoY").textContent=yoy!==null?(yoy>=0?"+":"")+yoy.toFixed(1)+"%":"—";document.getElementById("vYoYsub").textContent=`${fmtM(recAnt)} → ${fmtM(recAtual)}`;
+  const yoyBadge=document.getElementById("vYoYbadge");yoyBadge.textContent=yoy!==null?(yoy>=0?"▲ Crescimento":"▼ Queda"):"—";yoyBadge.className="val-badge "+(yoy===null?"blue":yoy>=0?"green":"red");
+  const cliRec={};cacheCompleto.forEach(r=>{if(!r.cliente)return;cliRec[r.cliente]=(cliRec[r.cliente]||0)+(r.valor||0);});
+  const totalCli=Object.keys(cliRec).length||1,totalRec=Object.values(cliRec).reduce((s,v)=>s+v,0);
+  document.getElementById("vLTV").textContent=fmtM(totalRec/totalCli);document.getElementById("vTicket").textContent=fmtM(cacheCompleto.length?totalRec/cacheCompleto.length:0);
+  const cliCount={};cacheCompleto.forEach(r=>{if(r.cliente)cliCount[r.cliente]=(cliCount[r.cliente]||0)+1;});
+  const totalUniq=Object.keys(cliCount).length||1,retornaram=Object.values(cliCount).filter(v=>v>1).length;
+  document.getElementById("vRetencao").textContent=(retornaram/totalUniq*100).toFixed(1)+"%";document.getElementById("vRetencaoBadge").textContent=`${fmtN(retornaram)} de ${fmtN(totalUniq)} clientes`;
+  if(mesesOrdenados.length){const[mk,mv]=mesesOrdenados.reduce((a,b)=>b[1]>a[1]?b:a);const[my,mm]=mk.split("-");document.getElementById("vMelhorMes").textContent=MESES_FULL[parseInt(mm)-1]+" "+my;document.getElementById("vMelhorMesSub").textContent=fmtM(mv);}
+  const mrrGlobal=mesesOrdenados.reduce((s,[,v])=>s+v,0)/(mesesOrdenados.length||1),sazoMap={};
+  mesesOrdenados.forEach(([k,v])=>{const m=k.split("-")[1];if(!sazoMap[m])sazoMap[m]=[];sazoMap[m].push(v);});
+  const sazoFator={};Object.entries(sazoMap).forEach(([m,vals])=>{const med=vals.reduce((s,v)=>s+v,0)/vals.length;sazoFator[m]=mrrGlobal>0?med/mrrGlobal:1;});
+  const bVals=mesesOrdenados.slice(-janela).map(([,v])=>v),bMed=bVals.reduce((s,v)=>s+v,0)/(bVals.length||1),desvio=Math.sqrt(bVals.reduce((s,v)=>s+(v-bMed)**2,0)/(bVals.length||1));
+  const projLabels=[],projVals=[];
+  if(mesesOrdenados.length){let[py,pm]=mesesOrdenados[mesesOrdenados.length-1][0].split("-").map(Number);for(let i=1;i<=6;i++){pm++;if(pm>12){pm=1;py++;}const ms=String(pm).padStart(2,"0");projLabels.push(MESES[pm-1]+"/"+String(py).slice(2));projVals.push(Math.max(mrr*0.5,mrr*(sazoFator[ms]||1)+desvio*0.5*Math.sin(i*1.9+0.7)));}}
+  const todosLabels=mesesOrdenados.map(([k])=>{const[y,m]=k.split("-");return MESES[parseInt(m)-1]+"/"+y.slice(2);}),todosVals=mesesOrdenados.map(([,v])=>v);
+  const allLabels=[...todosLabels,...projLabels],allReais=[...todosVals,...Array(projLabels.length).fill(null)],allProj=[...Array(todosLabels.length-1).fill(null),todosVals[todosVals.length-1],...projVals],allMRR=allLabels.map(()=>mrr);
+  mkChart("chartValProj",{type:"line",data:{labels:allLabels,datasets:[{label:"Receita Real",data:allReais,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.1)",tension:.3,fill:true,pointRadius:2},{label:"Projeção",data:allProj,borderColor:"#16a34a",borderDash:[6,4],backgroundColor:"rgba(22,163,74,.05)",tension:.3,fill:true,pointRadius:3},{label:"MRR",data:allMRR,borderColor:"#d97706",borderDash:[3,3],pointRadius:0,borderWidth:1.5}]},options:{responsive:true,plugins:{legend:{position:"bottom",labels:{font:{size:11}}},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"},pan:{enabled:true,mode:"x"}},tooltip:{callbacks:{label:ctx=>" "+fmtM(ctx.parsed.y)}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
+  setTimeout(()=>{const ch=charts["chartValProj"];if(!ch)return;const tot=allLabels.length;if(tot>18)ch.zoomScale("x",{min:tot-18,max:tot-1},"none");},100);
 }
+function resetZoomProj(){const ch=charts["chartValProj"];if(ch){ch.resetZoom();setTimeout(()=>{const tot=ch.data.labels.length;if(tot>18)ch.zoomScale("x",{min:tot-18,max:tot-1},"none");},50);}}
+function verTudoProj(){const ch=charts["chartValProj"];if(ch)ch.resetZoom();}
 
-function resetZoomProj(){ const ch=charts["chartValProj"]; if(ch){ ch.resetZoom(); setTimeout(()=>{ const total=ch.data.labels.length; if(total>18) ch.zoomScale("x",{min:total-18,max:total-1},"none"); },50); } }
-function verTudoProj(){ const ch=charts["chartValProj"]; if(ch) ch.resetZoom(); }
-
+/* INIT */
 async function initFiltros(){
-  const profs=[...new Set(cacheCompleto.map(r=>r.profissional).filter(Boolean))].sort();
-  const servs=[...new Set(cacheCompleto.map(r=>r.servico).filter(Boolean))].sort();
-  const selP=document.getElementById("fProf");
-  const selS=document.getElementById("fServ");
-  // Limpa antes de repopular (evita duplicatas se chamar 2x)
-  selP.innerHTML='<option value="">Todos</option>';
-  selS.innerHTML='<option value="">Todos</option>';
-  profs.forEach(p=>selP.innerHTML+=`<option>${p}</option>`);
-  servs.forEach(s=>selS.innerHTML+=`<option>${s}</option>`);
+  const profs=[...new Set(cacheCompleto.map(r=>r.profissional).filter(Boolean))].sort(),servs=[...new Set(cacheCompleto.map(r=>r.servico).filter(Boolean))].sort();
+  const selP=document.getElementById("fProf"),selS=document.getElementById("fServ");
+  selP.innerHTML='<option value="">Todos</option>';selS.innerHTML='<option value="">Todos</option>';
+  profs.forEach(p=>selP.innerHTML+=`<option>${p}</option>`);servs.forEach(s=>selS.innerHTML+=`<option>${s}</option>`);
 }
 
-/* ════════════════════════════════════════════════════════════
-   INIT — CARREGAMENTO EM 2 FASES
-   ════════════════════════════════════════════════════════════
-   FASE 1 (rápida): só ano atual → mostra dashboard em ~1s
-   FASE 2 (background): histórico completo → atualiza silenciosamente
-   ════════════════════════════════════════════════════════════ */
-document.addEventListener("DOMContentLoaded", async () => {
-
-  /* ── FASE 1: dados recentes ── */
-  setLoading("Carregando dados recentes...");
-  setProgress(10, "Conectando...");
-
-  const [legadoRec, novosRec] = await Promise.all([
-    fetchLegadoRecente(),
-    fetchNovosRecente()
-  ]);
-
-  setProgress(60, "Montando dashboard...");
-  cacheCompleto = [...legadoRec, ...novosRec];
-
-  await initFiltros();
-  setProgress(90, "Renderizando...");
-  aplicarFiltros();
-
-  setProgress(100);
-  stopLoading();
-
-  /* ── FASE 2: histórico completo em background ── */
-  // Só busca se não tiver cache válido
-  const temCacheLegado = lerCache(CACHE_KEY_LEGADO);
-  const temCacheNovo   = lerCache(CACHE_KEY_NOVO);
-
-  if(!temCacheLegado || !temCacheNovo){
-    setBgBanner("Carregando histórico completo em background...", true);
-
-    const [legadoFull, novosFull] = await Promise.all([
-      fetchLegadoCompleto(),
-      fetchNovosCompleto()
-    ]);
-
-    // Substitui cache com dados completos e re-renderiza
-    cacheCompleto = [...legadoFull, ...novosFull];
-    await initFiltros();
-    aplicarFiltros();
-
-    setBgBanner("Histórico carregado! ✓", true);
-    setTimeout(() => setBgBanner("", false), 3000);
+document.addEventListener("DOMContentLoaded",async()=>{
+  setLoading("Carregando dados recentes...");setProgress(10,"Conectando...");
+  const[legadoRec,novosRec]=await Promise.all([fetchLegadoRecente(),fetchNovosRecente()]);
+  setProgress(60,"Montando dashboard...");cacheCompleto=[...legadoRec,...novosRec];
+  await initFiltros();setProgress(90,"Renderizando...");aplicarFiltros();setProgress(100);stopLoading();
+  const temCacheLegado=lerCache(CACHE_KEY_LEGADO),temCacheNovo=lerCache(CACHE_KEY_NOVO);
+  if(!temCacheLegado||!temCacheNovo){
+    setBgBanner("Carregando histórico completo em background...",true);
+    const[legadoFull,novosFull]=await Promise.all([fetchLegadoCompleto(),fetchNovosCompleto()]);
+    cacheCompleto=[...legadoFull,...novosFull];await initFiltros();aplicarFiltros();
+    setBgBanner("Histórico carregado! ✓",true);setTimeout(()=>setBgBanner("",false),3000);
   }
-  // Se tinha cache, já estava completo desde o início
 });
 </script>
 </body>

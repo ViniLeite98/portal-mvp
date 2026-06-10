@@ -77,16 +77,15 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#2563eb;box-sh
 .bloqueado-info i{font-size:24px;color:#d1d5db;display:block;margin-bottom:8px;}
 
 /* gráfico de concentração */
-.grafico-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
-.grafico-header h3{margin:0;font-size:15px;font-weight:700;color:#111827;}
-.grafico-barras{display:flex;align-items:flex-end;gap:3px;height:120px;border-bottom:2px solid #e5e7eb;}
-.barra-col{display:flex;flex-direction:column;align-items:center;flex:1;height:100%;justify-content:flex-end;position:relative;}
-.barra{width:100%;border-radius:5px 5px 0 0;transition:opacity .2s;cursor:default;min-height:4px;position:relative;}
-.barra:hover::after{content:attr(data-tip);position:absolute;top:-32px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px;white-space:nowrap;z-index:10;}
-.barra-hora{font-size:10px;color:#9ca3af;text-align:center;font-weight:600;width:100%;margin-top:4px;}
-.grafico-eixo-y{position:absolute;top:0;left:0;height:120px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;}
-.grafico-eixo-y span{font-size:10px;color:#d1d5db;font-weight:600;line-height:1;}
-.grafico-container{padding-left:32px;position:relative;}
+.grafico-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.grafico-header h3{margin:0;font-size:14px;font-weight:700;color:#111827;display:flex;align-items:center;gap:8px;}
+.grafico-wrap{position:relative;width:100%;}
+#graficoCanvas{width:100%;display:block;border-radius:8px;}
+.grafico-tooltip{position:fixed;background:#1f2937;color:#fff;font-size:12px;font-weight:600;border-radius:8px;padding:6px 12px;pointer-events:none;display:none;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.25);}
+.grafico-tooltip::after{content:"";position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-bottom:none;border-top-color:#1f2937;}
+.grafico-legenda{display:flex;gap:16px;margin-top:12px;font-size:11px;color:#6b7280;flex-wrap:wrap;}
+.grafico-legenda span{display:flex;align-items:center;gap:5px;}
+.leg-g{width:10px;height:10px;border-radius:3px;}
 </style>
 </head>
 <body>
@@ -131,18 +130,17 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#2563eb;box-sh
   <!-- GRÁFICO DE CONCENTRAÇÃO POR HORÁRIO -->
   <div class="card" id="cardGrafico" style="display:none;margin-top:20px;">
     <div class="grafico-header">
-      <h3><i class="fa fa-chart-bar" style="color:#2563eb;margin-right:7px"></i>Concentração por Horário</h3>
-      <span id="graficoSubtitulo" style="font-size:12px;color:#6b7280"></span>
+      <h3><i class="fa fa-chart-column" style="color:#2563eb"></i>Concentração por Horário</h3>
+      <span id="graficoSubtitulo" style="font-size:12px;color:#9ca3af;font-weight:600"></span>
     </div>
-    <div class="grafico-container">
-      <div class="grafico-eixo-y" id="eixoY"></div>
-      <div class="grafico-barras" id="graficoBarras"></div>
-      <div style="display:flex;gap:4px;margin-top:2px" id="graficoHoras"></div>
+    <div class="grafico-wrap">
+      <canvas id="graficoCanvas" height="160"></canvas>
     </div>
-    <div style="display:flex;gap:16px;margin-top:14px;font-size:11px;color:#6b7280;flex-wrap:wrap">
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#22c55e;margin-right:4px"></span>Alta disponibilidade</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#eab308;margin-right:4px"></span>Média</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#ef4444;margin-right:4px"></span>Baixa</span>
+    <div class="grafico-tooltip" id="graficoTooltip"></div>
+    <div class="grafico-legenda">
+      <span><span class="leg-g" style="background:linear-gradient(to top,#16a34a,#4ade80)"></span>Alta disponibilidade</span>
+      <span><span class="leg-g" style="background:linear-gradient(to top,#d97706,#fbbf24)"></span>Média</span>
+      <span><span class="leg-g" style="background:linear-gradient(to top,#dc2626,#f87171)"></span>Baixa / Vazio</span>
     </div>
   </div>
 </main>
@@ -233,7 +231,8 @@ function ehFeminina(t){ return t.cargo==="Terapeuta Feminina"; }
 function eTerapeuta(u){ return u&&u.role==="usuario"; }
 function getUser(cb,tentativas=20){ if(window.usuarioLogado)return cb(window.usuarioLogado); if(tentativas<=0)return cb(null); setTimeout(()=>getUser(cb,tentativas-1),100); }
 
-async function carregarDados(){
+function carregarDados(){
+  return new Promise(resolve=>{
   getUser(async u=>{
     const btnBloq=document.getElementById("btnBloquearDia");
     if(u&&(u.role==="admin"||u.role==="apoio")) btnBloq.style.display="flex";
@@ -252,6 +251,8 @@ async function carregarDados(){
         '<span><span class="leg-dot" style="background:#d1d5db"></span> Fechado / Bloqueado</span>';
     }
     renderCalendar();
+    resolve();
+  });
   });
 }
 
@@ -475,84 +476,147 @@ function horaParaMinutos(h){
 
 function renderGrafico(data){
   const card=document.getElementById("cardGrafico");
-  const barrasEl=document.getElementById("graficoBarras");
-  const horasEl=document.getElementById("graficoHoras");
-  const eixoEl=document.getElementById("eixoY");
+  const canvas=document.getElementById("graficoCanvas");
+  const tooltip=document.getElementById("graficoTooltip");
   const subtitulo=document.getElementById("graficoSubtitulo");
 
-  // Só mostra para admin/apoio
   const u=window.usuarioLogado;
   if(eTerapeuta(u)||!data){card.style.display="none";return;}
   const bloq=getBloqueado(data);
-  const domingo=data.getDay()===0;
-  const feriado=ehFeriado(data);
-  if(bloq||domingo||feriado){card.style.display="none";return;}
+  if(bloq||data.getDay()===0||ehFeriado(data)){card.style.display="none";return;}
 
   card.style.display="block";
-  const dataStr=String(data.getDate()).padStart(2,"0")+"/"+String(data.getMonth()+1).padStart(2,"0")+"/"+data.getFullYear();
-  subtitulo.textContent=dataStr;
+  const ds=data.getDate().toString().padStart(2,"0")+"/"+(data.getMonth()+1).toString().padStart(2,"0")+"/"+data.getFullYear();
+  subtitulo.textContent=ds;
 
-  // Faixas horárias de 30 em 30min das 08h às 22h
+  // slots de 30min das 08h às 22h
   const INICIO=8*60, FIM=22*60, PASSO=30;
   const slots=[];
   for(let m=INICIO;m<FIM;m+=PASSO) slots.push(m);
 
-  // Para cada slot, conta quantas terapeutas estão disponíveis nesse horário
-  const total=terapeutas.length||1;
-  const contagens=slots.map(slot=>{
-    return terapeutas.filter(t=>{
+  const contagens=slots.map(slot=>
+    terapeutas.filter(t=>{
       if(estaIndisponivel(t,data)) return false;
-      // horário do dia (pode ser alterado)
-      const solHor=solicitacaoHorario(t,data);
-      const entrada=horaParaMinutos(solHor?solHor.hora_inicio:t.hora_entrada);
-      const saida=horaParaMinutos(solHor?solHor.hora_fim:t.hora_saida);
-      if(entrada===null||saida===null) return false;
-      return slot>=entrada && slot<saida;
-    }).length;
-  });
+      const s=solicitacaoHorario(t,data);
+      const en=horaParaMinutos(s?s.hora_inicio:t.hora_entrada);
+      const sa=horaParaMinutos(s?s.hora_fim:t.hora_saida);
+      if(en===null||sa===null) return false;
+      return slot>=en && slot<sa;
+    }).length
+  );
 
   const maxVal=Math.max(...contagens,1);
+  const W=canvas.offsetWidth||canvas.parentElement.offsetWidth||900;
+  const H=160;
+  canvas.width=W; canvas.height=H;
+  const ctx=canvas.getContext("2d");
+  ctx.clearRect(0,0,W,H);
 
-  barrasEl.innerHTML="";
-  horasEl.innerHTML="";
+  const PAD_LEFT=36, PAD_RIGHT=8, PAD_TOP=12, PAD_BOTTOM=32;
+  const chartW=W-PAD_LEFT-PAD_RIGHT;
+  const chartH=H-PAD_TOP-PAD_BOTTOM;
+  const barW=chartW/slots.length;
+  const GAP=Math.max(2, barW*0.18);
+  const bW=barW-GAP;
+  const RADIUS=Math.min(5, bW/2);
 
+  // grid lines
+  ctx.strokeStyle="#f3f4f6";
+  ctx.lineWidth=1;
+  [0.25,0.5,0.75,1].forEach(f=>{
+    const y=PAD_TOP+chartH*(1-f);
+    ctx.beginPath(); ctx.moveTo(PAD_LEFT,y); ctx.lineTo(W-PAD_RIGHT,y); ctx.stroke();
+  });
+
+  // eixo Y labels
+  ctx.fillStyle="#d1d5db"; ctx.font="600 10px 'Segoe UI',sans-serif"; ctx.textAlign="right";
+  [0,Math.round(maxVal/2),maxVal].forEach((v,i)=>{
+    const f=[0,0.5,1][i];
+    const y=PAD_TOP+chartH*(1-f)+3;
+    ctx.fillText(v, PAD_LEFT-6, y);
+  });
+
+  // barras
   contagens.forEach((count,i)=>{
     const pct=count/maxVal;
-    let cor;
-    if(pct>=0.7) cor="#22c55e";
-    else if(pct>=0.35) cor="#eab308";
-    else cor="#ef4444";
-    if(count===0) cor="#e5e7eb";
+    const x=PAD_LEFT+i*barW+GAP/2;
+    const barH=Math.max(pct*chartH, count>0?6:2);
+    const y=PAD_TOP+chartH-barH;
 
-    const altura=Math.max(pct*100,count>0?6:2);
-    const minStr=String(slots[i]%60).padStart(2,"0");
-    const label=String(Math.floor(slots[i]/60)).padStart(2,"0")+":"+minStr;
+    // gradiente por nível
+    const grad=ctx.createLinearGradient(0,y,0,y+barH);
+    if(count===0){
+      grad.addColorStop(0,"#e5e7eb"); grad.addColorStop(1,"#f3f4f6");
+    } else if(pct>=0.65){
+      grad.addColorStop(0,"#4ade80"); grad.addColorStop(1,"#16a34a");
+    } else if(pct>=0.35){
+      grad.addColorStop(0,"#fbbf24"); grad.addColorStop(1,"#d97706");
+    } else {
+      grad.addColorStop(0,"#f87171"); grad.addColorStop(1,"#dc2626");
+    }
 
-    const col=document.createElement("div");
-    col.className="barra-col";
-    col.innerHTML='<div class="barra" style="height:'+altura+'%;background:'+cor+'" data-tip="'+label+' — '+count+' terapeuta'+(count!==1?"s":"")+'"></div>';
-    barrasEl.appendChild(col);
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    ctx.moveTo(x+RADIUS, y);
+    ctx.lineTo(x+bW-RADIUS, y);
+    ctx.quadraticCurveTo(x+bW, y, x+bW, y+RADIUS);
+    ctx.lineTo(x+bW, y+barH);
+    ctx.lineTo(x, y+barH);
+    ctx.lineTo(x, y+RADIUS);
+    ctx.quadraticCurveTo(x, y, x+RADIUS, y);
+    ctx.closePath();
+    ctx.fill();
 
-    // rótulo a cada hora cheia
-    const horaEl=document.createElement("div");
-    horaEl.className="barra-hora";
-    horaEl.style.flex="1";
-    horaEl.textContent=(slots[i]%60===0)?String(Math.floor(slots[i]/60)).padStart(2,"0")+"h":"";
-    horasEl.appendChild(horaEl);
+    // label hora cheia
+    if(slots[i]%60===0){
+      const h=Math.floor(slots[i]/60).toString().padStart(2,"0")+"h";
+      ctx.fillStyle="#9ca3af"; ctx.font="600 10px 'Segoe UI',sans-serif"; ctx.textAlign="center";
+      ctx.fillText(h, x+bW/2, H-8);
+    }
   });
 
-  // eixo Y
-  eixoEl.innerHTML="";
-  [maxVal, Math.round(maxVal/2), 0].forEach(v=>{
-    const s=document.createElement("span");
-    s.textContent=v;
-    eixoEl.appendChild(s);
-  });
+  // linha de base
+  ctx.strokeStyle="#e5e7eb"; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(PAD_LEFT,PAD_TOP+chartH); ctx.lineTo(W-PAD_RIGHT,PAD_TOP+chartH); ctx.stroke();
+
+  // tooltip via mouse
+  canvas._slots=slots; canvas._contagens=contagens;
+  canvas._meta={PAD_LEFT,PAD_RIGHT,PAD_TOP,PAD_BOTTOM,chartW,chartH,barW,bW,GAP,W,H};
+
+  canvas.onmousemove=function(e){
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const meta=canvas._meta;
+    const i=Math.floor((mx-meta.PAD_LEFT)/meta.barW);
+    if(i>=0&&i<canvas._slots.length){
+      const slot=canvas._slots[i];
+      const count=canvas._contagens[i];
+      const hh=Math.floor(slot/60).toString().padStart(2,"0");
+      const mm=(slot%60).toString().padStart(2,"0");
+      const hh2=Math.floor((slot+30)/60).toString().padStart(2,"0");
+      const mm2=((slot+30)%60).toString().padStart(2,"0");
+      tooltip.textContent=hh+":"+mm+"–"+hh2+":"+mm2+"  •  "+count+" terapeuta"+(count!==1?"s":"");
+      tooltip.style.display="block";
+      tooltip.style.left=(e.clientX-tooltip.offsetWidth/2)+"px";
+      tooltip.style.top=(e.clientY-44)+"px";
+    } else {
+      tooltip.style.display="none";
+    }
+  };
+  canvas.onmouseleave=function(){ tooltip.style.display="none"; };
+}
 }
 
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById("inputDataBloquear").addEventListener("change",verificarBloqueio);
-  carregarDados();
+  carregarDados().then(()=>{
+    // seleciona o dia atual automaticamente se for dia útil
+    const d=hoje.getDay();
+    const ehUtil=d!==0&&!ehFeriado(hoje)&&!getBloqueado(hoje);
+    if(ano===hoje.getFullYear()&&mes===hoje.getMonth()&&ehUtil){
+      mostrarDia(hoje.getDate());
+    }
+  });
 });
 </script>
 </body>

@@ -54,6 +54,8 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .t-nome{font-size:13px;font-weight:600;color:#111827;}
 .t-detalhe{font-size:11px;color:#6b7280;margin-top:1px;}
 .badge-motivo{font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px;background:#fee2e2;color:#991b1b;}
+/* badge especial para horário alterado */
+.badge-horario{font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px;background:#eff6ff;color:#1d4ed8;}
 .empty-state{text-align:center;color:#9ca3af;padding:40px 0;font-size:13px;}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:1000;padding:30px 20px;}
 .modal-content{background:#fff;width:440px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
@@ -166,7 +168,37 @@ function ehFeriado(data){ const md=String(data.getMonth()+1).padStart(2,"0")+"-"
 function getBloqueado(data){ return diasBloqueados.find(d=>d.data===isoDate(data)); }
 function diaSemana(date){ return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][date.getDay()]; }
 function folgaSemanal(t,data){ return t.tem_folga==="Sim"&&diaSemana(data)===(t.dia_folga||"").toLowerCase(); }
-function folgaAprovada(t,data){ return solicitacoes.some(s=>s.terapeuta_cpf===t.cpf&&data>=new Date(s.data_inicio)&&data<=new Date(s.data_fim)); }
+function fmtHora(v){ if(!v)return""; return v.slice(0,5); }
+
+// Retorna a solicitação aprovada de ausência para a terapeuta naquela data (Falta, Férias, Atestado etc.)
+function solicitacaoAusencia(t,data){
+  const iso=isoDate(data);
+  return solicitacoes.find(s=>
+    s.terapeuta_cpf===t.cpf &&
+    s.status==="Acordado" &&
+    s.tipo!=="Alteração de Horário" &&
+    iso>=s.data_inicio &&
+    iso<=s.data_fim
+  )||null;
+}
+
+// Retorna a solicitação de Alteração de Horário aprovada para a terapeuta naquela data
+function solicitacaoHorario(t,data){
+  const iso=isoDate(data);
+  return solicitacoes.find(s=>
+    s.terapeuta_cpf===t.cpf &&
+    s.status==="Acordado" &&
+    s.tipo==="Alteração de Horário" &&
+    iso>=s.data_inicio &&
+    iso<=s.data_fim
+  )||null;
+}
+
+// Terapeuta está indisponível (folga semanal ou ausência aprovada)
+function estaIndisponivel(t,data){
+  return folgaSemanal(t,data)||!!solicitacaoAusencia(t,data);
+}
+
 function ehFeminina(t){ return t.cargo==="Terapeuta Feminina"; }
 function eTerapeuta(u){ return u&&u.role==="usuario"; }
 function getUser(cb,tentativas=20){ if(window.usuarioLogado)return cb(window.usuarioLogado); if(tentativas<=0)return cb(null); setTimeout(()=>getUser(cb,tentativas-1),100); }
@@ -185,6 +217,7 @@ async function carregarDados(){
       minhaTerapeuta=terapeutas.find(t=>t.cpf===u.cpf)||null;
       document.getElementById("legendaWrap").innerHTML=
         '<span><span class="leg-dot" style="background:#22c55e"></span> Disponível</span>'+
+        '<span><span class="leg-dot" style="background:#3b82f6"></span> Horário alterado</span>'+
         '<span><span class="leg-dot" style="background:#ef4444"></span> Ausente</span>'+
         '<span><span class="leg-dot" style="background:#d1d5db"></span> Fechado / Bloqueado</span>';
     }
@@ -227,11 +260,18 @@ function renderCalendar(){
     }
     if(diaSelecionado===d) div.classList.add("selected");
     if(eTerapeuta(u)&&minhaTerapeuta){
-      const ausente=folgaSemanal(minhaTerapeuta,data)||folgaAprovada(minhaTerapeuta,data);
-      div.classList.add(ausente?"day-vermelho":"day-verde");
-      div.innerHTML='<div class="day-number">'+d+'</div><small>'+(ausente?"Ausente":"Disponível")+'</small>';
+      const t=minhaTerapeuta;
+      const ausente=estaIndisponivel(t,data);
+      const solHor=!ausente?solicitacaoHorario(t,data):null;
+      let cor,label;
+      if(ausente){cor="day-vermelho";label="Ausente";}
+      else if(solHor){cor="day-azul";label="Horário alterado";}
+      else{cor="day-verde";label="Disponível";}
+      div.classList.add(ausente?"day-vermelho":solHor?"":"day-verde");
+      if(solHor){div.style.background="#eff6ff";div.style.borderColor="#3b82f6";}
+      div.innerHTML='<div class="day-number">'+d+'</div><small>'+label+'</small>';
     } else {
-      const disponiveis=terapeutas.filter(t=>!folgaSemanal(t,data)&&!folgaAprovada(t,data));
+      const disponiveis=terapeutas.filter(t=>!estaIndisponivel(t,data));
       const ausentes=terapeutas.length-disponiveis.length;
       if(ausentes===0) div.classList.add("day-verde");
       else if(ausentes<4) div.classList.add("day-amarelo");
@@ -271,27 +311,46 @@ function mostrarDia(dia){
     return;
   }
 
+  // ---- VISÃO DA PRÓPRIA TERAPEUTA ----
   if(eTerapeuta(u)&&minhaTerapeuta){
     const t=minhaTerapeuta;
-    const ausente=folgaSemanal(t,data)||folgaAprovada(t,data);
-    const motivo=folgaSemanal(t,data)?"Folga ("+t.dia_folga+")":"Ausência acordada";
-    const corBadge=ausente?"background:#fee2e2;color:#991b1b":"background:#dcfce7;color:#16a34a";
+    const ausente=estaIndisponivel(t,data);
+    const solAus=solicitacaoAusencia(t,data);
+    const solHor=!ausente?solicitacaoHorario(t,data):null;
     const avatarClass=ehFeminina(t)?"fem":"masc";
     const iconClass=ehFeminina(t)?"fa-person-dress":"fa-person";
+
+    let badgeHtml,detalheHtml;
+    if(ausente){
+      const motivo=folgaSemanal(t,data)?"Folga ("+t.dia_folga+")":(solAus?solAus.tipo:"Ausência acordada");
+      badgeHtml='<span class="dia-badge" style="background:#fee2e2;color:#991b1b">Ausente</span>';
+      detalheHtml='<span class="badge-motivo">'+motivo+'</span>';
+    } else if(solHor){
+      const hi=fmtHora(solHor.hora_inicio),hf=fmtHora(solHor.hora_fim);
+      badgeHtml='<span class="dia-badge" style="background:#eff6ff;color:#1d4ed8">Horário alterado</span>';
+      detalheHtml='<span class="badge-horario"><i class="fa fa-clock"></i> '+hi+' – '+hf+'</span>';
+    } else {
+      badgeHtml='<span class="dia-badge" style="background:#dcfce7;color:#16a34a">Disponível</span>';
+      detalheHtml=(t.hora_entrada||"")+" – "+(t.hora_saida||"");
+    }
+
     painel.innerHTML=
-      '<div class="dia-header"><h3>'+dataStr+'</h3><span class="dia-badge" style="'+corBadge+'">'+(ausente?"Ausente":"Disponível")+'</span></div>'+
+      '<div class="dia-header"><h3>'+dataStr+'</h3>'+badgeHtml+'</div>'+
       '<div class="terapeuta-item" style="border:none">'+
         '<div class="t-avatar '+avatarClass+'"><i class="fa '+iconClass+'"></i></div>'+
         '<div class="t-info">'+
           '<div class="t-nome">'+t.nome_profissional+'</div>'+
-          '<div class="t-detalhe">'+(ausente?'<span class="badge-motivo">'+motivo+'</span>':(t.hora_entrada||"")+" – "+(t.hora_saida||""))+'</div>'+
+          '<div class="t-detalhe">'+detalheHtml+'</div>'+
         '</div>'+
       '</div>';
     return;
   }
 
-  const disponiveis=terapeutas.filter(t=>!folgaSemanal(t,data)&&!folgaAprovada(t,data));
-  const indisponiveis=terapeutas.filter(t=>folgaSemanal(t,data)||folgaAprovada(t,data));
+  // ---- VISÃO ADMIN/APOIO ----
+  const disponiveis=terapeutas.filter(t=>!estaIndisponivel(t,data));
+  const indisponiveis=terapeutas.filter(t=>estaIndisponivel(t,data));
+  // terapeutas com horário alterado (estão disponíveis, mas com horário diferente)
+  const comHorarioAlterado=disponiveis.filter(t=>!!solicitacaoHorario(t,data));
   const fem=disponiveis.filter(t=>ehFeminina(t)).length;
   const masc=disponiveis.filter(t=>!ehFeminina(t)).length;
 
@@ -305,9 +364,18 @@ function mostrarDia(dia){
 
   if(disponiveis.length){
     disponiveis.forEach(function(t){
+      const solHor=solicitacaoHorario(t,data);
+      let detalhe;
+      if(solHor){
+        // horário alterado aprovado — mostra o novo horário com badge
+        const hi=fmtHora(solHor.hora_inicio),hf=fmtHora(solHor.hora_fim);
+        detalhe='<span class="badge-horario"><i class="fa fa-clock"></i> '+hi+' – '+hf+'</span>';
+      } else {
+        detalhe=(t.hora_entrada||"")+" – "+(t.hora_saida||"");
+      }
       html+='<div class="terapeuta-item">'+
         '<div class="t-avatar '+(ehFeminina(t)?"fem":"masc")+'"><i class="fa '+(ehFeminina(t)?"fa-person-dress":"fa-person")+'"></i></div>'+
-        '<div class="t-info"><div class="t-nome">'+t.nome_profissional+'</div><div class="t-detalhe">'+(t.hora_entrada||"")+" – "+(t.hora_saida||"")+'</div></div>'+
+        '<div class="t-info"><div class="t-nome">'+t.nome_profissional+'</div><div class="t-detalhe">'+detalhe+'</div></div>'+
       '</div>';
     });
   } else {
@@ -317,7 +385,8 @@ function mostrarDia(dia){
   if(indisponiveis.length){
     html+='<div class="section-label">Indisponíveis ('+indisponiveis.length+')</div>';
     indisponiveis.forEach(function(t){
-      const motivo=folgaSemanal(t,data)?"Folga ("+t.dia_folga+")":"Ausência acordada";
+      const solAus=solicitacaoAusencia(t,data);
+      const motivo=folgaSemanal(t,data)?"Folga ("+t.dia_folga+")":(solAus?solAus.tipo:"Ausência acordada");
       html+='<div class="terapeuta-item">'+
         '<div class="t-avatar '+(ehFeminina(t)?"fem":"masc")+'"><i class="fa '+(ehFeminina(t)?"fa-person-dress":"fa-person")+'"></i></div>'+
         '<div class="t-info"><div class="t-nome">'+t.nome_profissional+'</div><div class="t-detalhe"><span class="badge-motivo">'+motivo+'</span></div></div>'+

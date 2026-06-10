@@ -61,6 +61,10 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .arquivo-atual button{background:none;color:#dc2626;border:none;cursor:pointer;padding:2px 6px;font-size:12px;}
 .upload-status{font-size:12px;color:#2563eb;margin-top:6px;display:none;}
 .empty-row td{text-align:center;color:#9ca3af;padding:32px;}
+/* campos de horário alterado */
+#blocoHorario{display:none;grid-column:span 2;}
+#blocoHorario .grid-hora{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.horario-banner{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;font-size:12px;color:#1d4ed8;display:flex;align-items:center;gap:8px;margin-bottom:14px;}
 </style>
 </head>
 <body>
@@ -89,7 +93,7 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <table>
   <thead>
     <tr>
-      <th>Profissional</th><th>Tipo</th><th>Período</th><th>Status</th>
+      <th>Profissional</th><th>Tipo</th><th>Período</th><th>Horário Alterado</th><th>Status</th>
       <th>Acordado / Rejeitado por</th><th>Atestado</th><th>Ações</th>
     </tr>
   </thead>
@@ -129,7 +133,7 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
   <div class="modal-body">
     <div class="grid-2">
       <div class="field span2"><label>Profissional *</label><select id="terapeuta"></select></div>
-      <div class="field"><label>Tipo *</label><select id="tipo"></select></div>
+      <div class="field"><label>Tipo *</label><select id="tipo" onchange="onTipoChange()"></select></div>
       <div class="field">
         <label>Status</label>
         <select id="status">
@@ -140,6 +144,25 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
       </div>
       <div class="field"><label>Data Início *</label><input type="date" id="data_inicio"></div>
       <div class="field"><label>Data Fim *</label><input type="date" id="data_fim"></div>
+
+      <!-- Bloco horário alterado — só aparece para tipo Alteração de Horário -->
+      <div id="blocoHorario">
+        <div class="horario-banner">
+          <i class="fa fa-clock"></i>
+          Informe o horário que a terapeuta ficará disponível nesse período
+        </div>
+        <div class="grid-hora">
+          <div class="field" style="margin-bottom:0">
+            <label>Hora Início *</label>
+            <input type="time" id="hora_inicio">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Hora Fim *</label>
+            <input type="time" id="hora_fim">
+          </div>
+        </div>
+      </div>
+
       <div class="field span2"><label>Justificativa</label><textarea id="justificativa" placeholder="Descreva o motivo..."></textarea></div>
       <div class="field span2">
         <label>Atestado / Documento <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
@@ -168,12 +191,24 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 function getUser(cb,tentativas=20){if(window.usuarioLogado)return cb(window.usuarioLogado);if(tentativas<=0)return cb(null);setTimeout(()=>getUser(cb,tentativas-1),100);}
 function podeVerTudo(u){return u&&(u.role==="admin"||u.role==="apoio");}
 function eUsuario(u){return u&&u.role==="usuario";}
+function fmtHora(v){if(!v)return null;return v.slice(0,5);} // "HH:MM"
 
 document.addEventListener("DOMContentLoaded",function(){
   let idEdicao=null,arquivoAtualUrl=null,arquivoAtualNome=null,mapaTerapeutas={},todasSolicitacoes=[];
 
   function fmtData(v){if(!v)return"—";const[y,m,d]=v.split("-");return d+"/"+m+"/"+y;}
   function limparNome(nome){return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");}
+
+  // Mostra/esconde bloco de horário conforme tipo selecionado
+  window.onTipoChange=function(){
+    const tipo=document.getElementById("tipo").value;
+    const bloco=document.getElementById("blocoHorario");
+    bloco.style.display=(tipo==="Alteração de Horário")?"block":"none";
+    if(tipo!=="Alteração de Horário"){
+      document.getElementById("hora_inicio").value="";
+      document.getElementById("hora_fim").value="";
+    }
+  };
 
   async function carregarTerapeutas(){
     const {data}=await client.from("terapeutas").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
@@ -184,7 +219,7 @@ document.addEventListener("DOMContentLoaded",function(){
     (data||[]).forEach(t=>{sel.innerHTML+="<option value='"+t.cpf+"'>"+t.nome_profissional+"</option>";});
     const {data:params}=await client.from("parametros").select("valor").eq("tipo","tipos_solicitacao").eq("ativo",true).order("valor");
     const tipos=(params||[]).map(p=>p.valor);
-    const listaTipos=tipos.length?tipos:["Falta","Férias","Atestado","Viagem"];
+    const listaTipos=tipos.length?tipos:["Alteração de Horário","Atestado","Falta","Férias","Viagem"];
     const selTipo=document.getElementById("tipo");
     selTipo.innerHTML=listaTipos.map(t=>"<option value='"+t+"'>"+t+"</option>").join("");
     const selFiltro=document.getElementById("filtroTipo");
@@ -214,7 +249,7 @@ document.addEventListener("DOMContentLoaded",function(){
     });
     const tbody=document.getElementById("lista");
     tbody.innerHTML="";
-    if(!lista.length){tbody.innerHTML="<tr class='empty-row'><td colspan='7'>Nenhuma solicitação encontrada.</td></tr>";return;}
+    if(!lista.length){tbody.innerHTML="<tr class='empty-row'><td colspan='8'>Nenhuma solicitação encontrada.</td></tr>";return;}
     const podeGerenciar=window._podeGerenciar;
     lista.forEach(s=>{
       const nome=mapaTerapeutas[s.terapeuta_cpf]||s.terapeuta_cpf;
@@ -222,6 +257,10 @@ document.addEventListener("DOMContentLoaded",function(){
       const iconeStatus=s.status==="Acordado"?"fa-check":s.status==="Não Acordado"?"fa-times":"fa-clock";
       const arquivoCol=s.arquivo_url
         ?"<a class='arquivo-link' href='"+s.arquivo_url+"' target='_blank'><i class='fa fa-paperclip'></i> Ver</a>"
+        :"<span style='color:#d1d5db;font-size:12px'>—</span>";
+      // coluna de horário alterado
+      const horarioCol=(s.tipo==="Alteração de Horário"&&s.hora_inicio&&s.hora_fim)
+        ?"<span style='font-size:12px;background:#eff6ff;color:#1d4ed8;border-radius:6px;padding:2px 8px;font-weight:600'><i class='fa fa-clock'></i> "+fmtHora(s.hora_inicio)+" – "+fmtHora(s.hora_fim)+"</span>"
         :"<span style='color:#d1d5db;font-size:12px'>—</span>";
       const btnAprovar=(podeGerenciar&&s.status!=="Acordado")
         ?"<button class='btn-aprovar' onclick=\"abrirConfirmar('"+s.id+"','Acordado')\"><i class='fa fa-check'></i></button>":"";
@@ -233,6 +272,7 @@ document.addEventListener("DOMContentLoaded",function(){
         "<td><strong>"+nome+"</strong></td>"+
         "<td>"+s.tipo+"</td>"+
         "<td style='white-space:nowrap'>"+fmtData(s.data_inicio)+" → "+fmtData(s.data_fim)+"</td>"+
+        "<td>"+horarioCol+"</td>"+
         "<td><span class='badge "+badgeClass+"'><i class='fa "+iconeStatus+"'></i> "+s.status+"</span></td>"+
         "<td style='font-size:12px;color:#6b7280'>"+(s.aprovado_por?"<i class='fa fa-user'></i> "+s.aprovado_por:"—")+"</td>"+
         "<td>"+arquivoCol+"</td>"+
@@ -249,7 +289,10 @@ document.addEventListener("DOMContentLoaded",function(){
     set("terapeuta",""); document.getElementById("terapeuta").disabled=false;
     const tipoEl=document.getElementById("tipo");if(tipoEl)tipoEl.value=tipoEl.options[0]?.value||"";
     set("status","Pendente"); document.getElementById("status").disabled=false;
-    set("data_inicio",""); set("data_fim",""); set("justificativa","");
+    set("data_inicio",""); set("data_fim","");
+    set("hora_inicio",""); set("hora_fim","");
+    set("justificativa","");
+    document.getElementById("blocoHorario").style.display="none";
     const arqEl=document.getElementById("arquivo");if(arqEl){try{arqEl.value="";}catch(e){}}
     arquivoAtualUrl=null; arquivoAtualNome=null;
     document.getElementById("arquivoAtual").style.display="none";
@@ -274,11 +317,17 @@ document.addEventListener("DOMContentLoaded",function(){
     if(!s) return;
     resetModal();
     document.getElementById("terapeuta").value=s.terapeuta_cpf||"";
-    document.getElementById("tipo").value=s.tipo||"Falta";
+    document.getElementById("tipo").value=s.tipo||"";
     document.getElementById("status").value=s.status||"Pendente";
     document.getElementById("data_inicio").value=s.data_inicio||"";
     document.getElementById("data_fim").value=s.data_fim||"";
     document.getElementById("justificativa").value=s.justificativa||"";
+    // horário alterado
+    if(s.tipo==="Alteração de Horário"){
+      document.getElementById("blocoHorario").style.display="block";
+      document.getElementById("hora_inicio").value=fmtHora(s.hora_inicio)||"";
+      document.getElementById("hora_fim").value=fmtHora(s.hora_fim)||"";
+    }
     if(s.arquivo_url){
       arquivoAtualUrl=s.arquivo_url; arquivoAtualNome=s.arquivo_nome||"Ver arquivo";
       const el=document.getElementById("arquivoAtual"); el.style.display="flex";
@@ -305,10 +354,18 @@ document.addEventListener("DOMContentLoaded",function(){
     const dataInicio=document.getElementById("data_inicio").value;
     const dataFim=document.getElementById("data_fim").value;
     const justif=document.getElementById("justificativa").value.trim();
+    const horaInicio=document.getElementById("hora_inicio").value||null;
+    const horaFim=document.getElementById("hora_fim").value||null;
     const file=document.getElementById("arquivo").files[0];
+
     if(!terapeuta){alert("Selecione o profissional.");return;}
     if(!dataInicio||!dataFim){alert("Preencha as datas.");return;}
     if(dataFim<dataInicio){alert("Data fim não pode ser menor que data início.");return;}
+    if(tipo==="Alteração de Horário"){
+      if(!horaInicio||!horaFim){alert("Informe o horário alterado.");return;}
+      if(horaFim<=horaInicio){alert("Hora fim deve ser maior que hora início.");return;}
+    }
+
     let query=client.from("solicitacoes").select("id,tipo,data_inicio,data_fim,status").eq("terapeuta_cpf",terapeuta).neq("status","Não Acordado").lte("data_inicio",dataFim).gte("data_fim",dataInicio);
     if(idEdicao) query=query.neq("id",idEdicao);
     const {data:conflitos}=await query;
@@ -317,6 +374,7 @@ document.addEventListener("DOMContentLoaded",function(){
       alert("⚠️ Já existe uma solicitação de \""+c.tipo+"\" para este profissional no período "+fmtData(c.data_inicio)+" → "+fmtData(c.data_fim)+" ("+c.status+").\nRevise as datas antes de continuar.");
       return;
     }
+
     const statusOriginal=idEdicao?(todasSolicitacoes.find(s=>s.id===idEdicao)||{}).status:"Pendente";
     const statusMudou=status!==statusOriginal;
     const nomeLogado=(window.usuarioLogado&&window.usuarioLogado.nome)||"Usuário";
@@ -326,10 +384,13 @@ document.addEventListener("DOMContentLoaded",function(){
       justificativa:justif||null,
       arquivo_url:arquivoAtualUrl||null,
       arquivo_nome:arquivoAtualNome||null,
-      aprovado_por:statusMudou?nomeLogado:undefined
+      aprovado_por:statusMudou?nomeLogado:undefined,
+      hora_inicio:(tipo==="Alteração de Horário"?horaInicio:null),
+      hora_fim:(tipo==="Alteração de Horário"?horaFim:null)
     };
     if(status==="Pendente") payload.aprovado_por=null;
     Object.keys(payload).forEach(k=>payload[k]===undefined&&delete payload[k]);
+
     if(file){
       const statusEl=document.getElementById("uploadStatus");
       statusEl.style.display="block";
@@ -340,6 +401,7 @@ document.addEventListener("DOMContentLoaded",function(){
       payload.arquivo_url=urlData.publicUrl; payload.arquivo_nome=file.name;
       statusEl.style.display="none";
     }
+
     let error;
     if(idEdicao){({error}=await client.from("solicitacoes").update(payload).eq("id",idEdicao));}
     else{({error}=await client.from("solicitacoes").insert(payload));}
@@ -362,8 +424,12 @@ document.addEventListener("DOMContentLoaded",function(){
     const cor=novoStatus==="Acordado"?"#16a34a":"#dc2626";
     const icone=novoStatus==="Acordado"?"fa-check-circle":"fa-times-circle";
     const acao=novoStatus==="Acordado"?"Aprovar":"Reprovar";
+    let horarioInfo="";
+    if(s&&s.tipo==="Alteração de Horário"&&s.hora_inicio&&s.hora_fim){
+      horarioInfo="<br>Horário: "+fmtHora(s.hora_inicio)+" – "+fmtHora(s.hora_fim);
+    }
     document.getElementById("confirmarTitulo").innerHTML="<i class='fa "+icone+"' style='color:"+cor+"'></i> "+acao+" Solicitação";
-    document.getElementById("confirmarInfo").innerHTML="<strong>"+nome+"</strong><br>Tipo: "+(s?.tipo||"—")+"<br>Período: "+de+" → "+ate+"<br>Justificativa: "+(s?.justificativa||"—");
+    document.getElementById("confirmarInfo").innerHTML="<strong>"+nome+"</strong><br>Tipo: "+(s?.tipo||"—")+"<br>Período: "+de+" → "+ate+horarioInfo+"<br>Justificativa: "+(s?.justificativa||"—");
     const btn=document.getElementById("confirmarBtn");
     btn.style.background=cor; btn.innerHTML="<i class='fa "+icone+"'></i> "+acao;
     const nomeLogado=(window.usuarioLogado&&window.usuarioLogado.nome)||"";

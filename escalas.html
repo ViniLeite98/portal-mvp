@@ -231,28 +231,28 @@ function ehFeminina(t){ return t.cargo==="Terapeuta Feminina"; }
 function eTerapeuta(u){ return u&&u.role==="usuario"; }
 function getUser(cb,tentativas=20){ if(window.usuarioLogado)return cb(window.usuarioLogado); if(tentativas<=0)return cb(null); setTimeout(()=>getUser(cb,tentativas-1),100); }
 
-function carregarDados(){
+async function carregarDados(){
   return new Promise(resolve=>{
-  getUser(async u=>{
-    const btnBloq=document.getElementById("btnBloquearDia");
-    if(u&&(u.role==="admin"||u.role==="apoio")) btnBloq.style.display="flex";
-    const [{data:ter},{data:sol},{data:bloq}]=await Promise.all([
-      client.from("terapeutas").select("*").eq("status","Ativo").in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]),
-      client.from("solicitacoes").select("*").eq("status","Acordado"),
-      client.from("dias_bloqueados").select("data,motivo")
-    ]);
-    terapeutas=ter||[]; solicitacoes=sol||[]; diasBloqueados=bloq||[];
-    if(eTerapeuta(u)&&u.cpf){
-      minhaTerapeuta=terapeutas.find(t=>t.cpf===u.cpf)||null;
-      document.getElementById("legendaWrap").innerHTML=
-        '<span><span class="leg-dot" style="background:#22c55e"></span> Disponível</span>'+
-        '<span><span class="leg-dot" style="background:#3b82f6"></span> Horário alterado</span>'+
-        '<span><span class="leg-dot" style="background:#ef4444"></span> Ausente</span>'+
-        '<span><span class="leg-dot" style="background:#d1d5db"></span> Fechado / Bloqueado</span>';
-    }
-    renderCalendar();
-    resolve();
-  });
+    getUser(async u=>{
+      const btnBloq=document.getElementById("btnBloquearDia");
+      if(u&&(u.role==="admin"||u.role==="apoio")) btnBloq.style.display="flex";
+      const [{data:ter},{data:sol},{data:bloq}]=await Promise.all([
+        client.from("terapeutas").select("*").eq("status","Ativo").in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]),
+        client.from("solicitacoes").select("*").eq("status","Acordado"),
+        client.from("dias_bloqueados").select("data,motivo")
+      ]);
+      terapeutas=ter||[]; solicitacoes=sol||[]; diasBloqueados=bloq||[];
+      if(eTerapeuta(u)&&u.cpf){
+        minhaTerapeuta=terapeutas.find(t=>t.cpf===u.cpf)||null;
+        document.getElementById("legendaWrap").innerHTML=
+          '<span><span class="leg-dot" style="background:#22c55e"></span> Disponível</span>'+
+          '<span><span class="leg-dot" style="background:#3b82f6"></span> Horário alterado</span>'+
+          '<span><span class="leg-dot" style="background:#ef4444"></span> Ausente</span>'+
+          '<span><span class="leg-dot" style="background:#d1d5db"></span> Fechado / Bloqueado</span>';
+      }
+      renderCalendar();
+      resolve();
+    });
   });
 }
 
@@ -609,14 +609,19 @@ function renderGrafico(data){
 
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById("inputDataBloquear").addEventListener("change",verificarBloqueio);
-  carregarDados().then(()=>{
-    // seleciona o dia atual automaticamente se for dia útil
+  // auto-seleciona hoje após dados carregarem — aguarda getUser via polling
+  function tentarSelecionarHoje(tentativas){
+    if(tentativas<=0) return;
+    if(!window.usuarioLogado){ setTimeout(()=>tentarSelecionarHoje(tentativas-1),150); return; }
+    if(terapeutas.length===0){ setTimeout(()=>tentarSelecionarHoje(tentativas-1),150); return; }
     const d=hoje.getDay();
     const ehUtil=d!==0&&!ehFeriado(hoje)&&!getBloqueado(hoje);
     if(ano===hoje.getFullYear()&&mes===hoje.getMonth()&&ehUtil){
       mostrarDia(hoje.getDate());
     }
-  });
+  }
+  carregarDados();
+  setTimeout(()=>tentarSelecionarHoje(20),300);
 });
 </script>
 </body>

@@ -53,6 +53,14 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .t-info{flex:1;}
 .t-nome{font-size:13px;font-weight:600;color:#111827;}
 .t-detalhe{font-size:11px;color:#6b7280;margin-top:1px;}
+.terapeutas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;}
+.t-card{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#f9fafb;border:1px solid #f3f4f6;min-width:0;}
+.t-card.indisp{background:#fef2f2;border-color:#fee2e2;}
+.t-card .t-avatar{width:26px;height:26px;font-size:11px;flex-shrink:0;}
+.t-card .t-info{flex:1;min-width:0;}
+.t-card .t-nome{font-size:12px;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-card .t-detalhe{font-size:10px;color:#6b7280;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-card .badge-motivo,.t-card .badge-horario{font-size:9px;padding:1px 5px;}
 .badge-motivo{font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px;background:#fee2e2;color:#991b1b;}
 /* badge especial para horário alterado */
 .badge-horario{font-size:10px;font-weight:700;border-radius:6px;padding:2px 7px;background:#eff6ff;color:#1d4ed8;}
@@ -395,35 +403,39 @@ function mostrarDia(dia){
     '<div class="section-label">Disponíveis ('+disponiveis.length+')</div>';
 
   if(disponiveis.length){
+    html+='<div class="terapeutas-grid">';
     disponiveis.forEach(function(t){
       const solHor=solicitacaoHorario(t,data);
       let detalhe;
       if(solHor){
         // horário alterado aprovado — mostra o novo horário com badge
         const hi=fmtHora(solHor.hora_inicio),hf=fmtHora(solHor.hora_fim);
-        detalhe='<span class="badge-horario"><i class="fa fa-clock"></i> '+hi+' – '+hf+'</span>';
+        detalhe='<span class="badge-horario"><i class="fa fa-clock"></i> '+hi+'–'+hf+'</span>';
       } else {
         detalhe=(t.hora_entrada||"")+" – "+(t.hora_saida||"");
       }
-      html+='<div class="terapeuta-item">'+
+      html+='<div class="t-card">'+
         '<div class="t-avatar '+(ehFeminina(t)?"fem":"masc")+'"><i class="fa '+(ehFeminina(t)?"fa-person-dress":"fa-person")+'"></i></div>'+
-        '<div class="t-info"><div class="t-nome">'+t.nome_profissional+'</div><div class="t-detalhe">'+detalhe+'</div></div>'+
+        '<div class="t-info"><div class="t-nome" title="'+t.nome_profissional+'">'+t.nome_profissional+'</div><div class="t-detalhe">'+detalhe+'</div></div>'+
       '</div>';
     });
+    html+='</div>';
   } else {
     html+='<div style="color:#9ca3af;font-size:13px">Nenhum disponível</div>';
   }
 
   if(indisponiveis.length){
     html+='<div class="section-label">Indisponíveis ('+indisponiveis.length+')</div>';
+    html+='<div class="terapeutas-grid">';
     indisponiveis.forEach(function(t){
       const solAus=solicitacaoAusencia(t,data);
       const motivo=folgaSemanal(t,data)?"Folga ("+t.dia_folga+")":(solAus?solAus.tipo:"Ausência acordada");
-      html+='<div class="terapeuta-item">'+
+      html+='<div class="t-card indisp">'+
         '<div class="t-avatar '+(ehFeminina(t)?"fem":"masc")+'"><i class="fa '+(ehFeminina(t)?"fa-person-dress":"fa-person")+'"></i></div>'+
-        '<div class="t-info"><div class="t-nome">'+t.nome_profissional+'</div><div class="t-detalhe"><span class="badge-motivo">'+motivo+'</span></div></div>'+
+        '<div class="t-info"><div class="t-nome" title="'+t.nome_profissional+'">'+t.nome_profissional+'</div><div class="t-detalhe"><span class="badge-motivo">'+motivo+'</span></div></div>'+
       '</div>';
     });
+    html+='</div>';
   }
 
   painel.innerHTML=html;
@@ -490,7 +502,7 @@ function renderGrafico(data){
   subtitulo.textContent=ds;
 
   // slots de 30min das 08h às 22h
-  const INICIO=8*60, FIM=22*60, PASSO=30;
+  const INICIO=8*60, FIM=22*60, PASSO=60;
   const slots=[];
   for(let m=INICIO;m<FIM;m+=PASSO) slots.push(m);
 
@@ -593,8 +605,8 @@ function renderGrafico(data){
       const count=canvas._contagens[i];
       const hh=Math.floor(slot/60).toString().padStart(2,"0");
       const mm=(slot%60).toString().padStart(2,"0");
-      const hh2=Math.floor((slot+30)/60).toString().padStart(2,"0");
-      const mm2=((slot+30)%60).toString().padStart(2,"0");
+      const hh2=Math.floor((slot+60)/60).toString().padStart(2,"0");
+      const mm2=((slot+60)%60).toString().padStart(2,"0");
       tooltip.textContent=hh+":"+mm+"–"+hh2+":"+mm2+"  •  "+count+" terapeuta"+(count!==1?"s":"");
       tooltip.style.display="block";
       tooltip.style.left=(e.clientX-tooltip.offsetWidth/2)+"px";

@@ -102,9 +102,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#2563eb;box-sh
 <main class="content">
   <div class="topbar">
     <h1>Escalas</h1>
-    <button id="btnBloquearDia" onclick="abrirBloquear()" style="display:none">
-      <i class="fa fa-lock"></i> Bloquear / Desbloquear Dia
-    </button>
+    <div style="display:flex;gap:10px;align-items:center">
+      <select id="filtroCorCabelo" style="display:none;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#374151;background:#fff;">
+        <option value="">Todas as cores de cabelo</option>
+      </select>
+      <button id="btnBloquearDia" onclick="abrirBloquear()" style="display:none">
+        <i class="fa fa-lock"></i> Bloquear / Desbloquear Dia
+      </button>
+    </div>
   </div>
   <div class="layout">
     <div class="card">
@@ -195,6 +200,7 @@ let hoje = new Date();
 let ano = hoje.getFullYear();
 let mes = hoje.getMonth();
 let diaSelecionado = null;
+let filtroCorCabelo = "";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 const FERIADOS = ["01-01","04-21","05-01","09-07","10-12","11-02","11-15","12-25"];
@@ -237,19 +243,35 @@ function estaIndisponivel(t,data){
 
 function ehFeminina(t){ return t.cargo==="Terapeuta Feminina"; }
 function eTerapeuta(u){ return u&&u.role==="usuario"; }
+function terapeutasFiltradas(){
+  if(!filtroCorCabelo) return terapeutas;
+  return terapeutas.filter(t=>t.cor_cabelo===filtroCorCabelo);
+}
 function getUser(cb,tentativas=20){ if(window.usuarioLogado)return cb(window.usuarioLogado); if(tentativas<=0)return cb(null); setTimeout(()=>getUser(cb,tentativas-1),100); }
 
 async function carregarDados(){
   return new Promise(resolve=>{
     getUser(async u=>{
       const btnBloq=document.getElementById("btnBloquearDia");
-      if(u&&(u.role==="admin"||u.role==="apoio")) btnBloq.style.display="flex";
+      const selCor=document.getElementById("filtroCorCabelo");
+      if(u&&(u.role==="admin"||u.role==="apoio")){
+        btnBloq.style.display="flex";
+        selCor.style.display="inline-block";
+      }
       const [{data:ter},{data:sol},{data:bloq}]=await Promise.all([
         client.from("terapeutas").select("*").eq("status","Ativo").in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]),
         client.from("solicitacoes").select("*").eq("status","Acordado"),
         client.from("dias_bloqueados").select("data,motivo")
       ]);
       terapeutas=ter||[]; solicitacoes=sol||[]; diasBloqueados=bloq||[];
+
+      // popula o filtro de cor de cabelo com valores únicos existentes
+      if(u&&(u.role==="admin"||u.role==="apoio")){
+        const cores=[...new Set(terapeutas.map(t=>t.cor_cabelo).filter(Boolean))].sort();
+        selCor.innerHTML='<option value="">Todas as cores de cabelo</option>'+
+          cores.map(c=>'<option value="'+c+'">'+c+'</option>').join("");
+      }
+
       if(eTerapeuta(u)&&u.cpf){
         minhaTerapeuta=terapeutas.find(t=>t.cpf===u.cpf)||null;
         document.getElementById("legendaWrap").innerHTML=
@@ -310,8 +332,9 @@ function renderCalendar(){
       if(solHor){div.style.background="#eff6ff";div.style.borderColor="#3b82f6";}
       div.innerHTML='<div class="day-number">'+d+'</div><small>'+label+'</small>';
     } else {
-      const disponiveis=terapeutas.filter(t=>!estaIndisponivel(t,data));
-      const ausentes=terapeutas.length-disponiveis.length;
+      const baseT=terapeutasFiltradas();
+      const disponiveis=baseT.filter(t=>!estaIndisponivel(t,data));
+      const ausentes=baseT.length-disponiveis.length;
       if(ausentes===0) div.classList.add("day-verde");
       else if(ausentes<4) div.classList.add("day-amarelo");
       else div.classList.add("day-vermelho");
@@ -387,8 +410,9 @@ function mostrarDia(dia){
   }
 
   // ---- VISÃO ADMIN/APOIO ----
-  const disponiveis=terapeutas.filter(t=>!estaIndisponivel(t,data));
-  const indisponiveis=terapeutas.filter(t=>estaIndisponivel(t,data));
+  const baseT=terapeutasFiltradas();
+  const disponiveis=baseT.filter(t=>!estaIndisponivel(t,data));
+  const indisponiveis=baseT.filter(t=>estaIndisponivel(t,data));
   // terapeutas com horário alterado (estão disponíveis, mas com horário diferente)
   const comHorarioAlterado=disponiveis.filter(t=>!!solicitacaoHorario(t,data));
   const fem=disponiveis.filter(t=>ehFeminina(t)).length;
@@ -506,8 +530,9 @@ function renderGrafico(data){
   const slots=[];
   for(let m=INICIO;m<FIM;m+=PASSO) slots.push(m);
 
+  const baseGrafico=terapeutasFiltradas();
   const contagens=slots.map(slot=>
-    terapeutas.filter(t=>{
+    baseGrafico.filter(t=>{
       if(estaIndisponivel(t,data)) return false;
       const s=solicitacaoHorario(t,data);
       const en=horaParaMinutos(s?s.hora_inicio:t.hora_entrada);
@@ -620,6 +645,11 @@ function renderGrafico(data){
 
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById("inputDataBloquear").addEventListener("change",verificarBloqueio);
+  document.getElementById("filtroCorCabelo").addEventListener("change",function(){
+    filtroCorCabelo=this.value;
+    renderCalendar();
+    if(diaSelecionado) mostrarDia(diaSelecionado);
+  });
   // auto-seleciona hoje após dados carregarem — aguarda getUser via polling
   function tentarSelecionarHoje(tentativas){
     if(tentativas<=0) return;

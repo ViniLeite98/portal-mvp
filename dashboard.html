@@ -410,7 +410,7 @@ function toggleSidebar(){const sb=document.getElementById("sidebar"),ov=document
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sidebarOverlay").classList.remove("active");document.getElementById("hamburgerBtn").classList.remove("open");}
 
 /* CACHE */
-const CACHE_KEY_LEGADO="hara_legado_v2",CACHE_KEY_NOVO="hara_novo_v2",CACHE_TTL=3600000;
+const CACHE_KEY_LEGADO="hara_legado_v3",CACHE_KEY_NOVO="hara_novo_v3",CACHE_TTL=3600000;
 function salvarCache(k,d){try{localStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}}
 function lerCache(k){try{const r=localStorage.getItem(k);if(!r)return null;const o=JSON.parse(r);return Date.now()-o.ts>CACHE_TTL?null:o.data;}catch(e){return null;}}
 
@@ -434,21 +434,32 @@ function mkChart(id,cfg){destroyChart(id);const el=document.getElementById(id);i
 function setBgBanner(m,v){const b=document.getElementById("bgLoadBanner");b.classList.toggle("visible",v);if(m)document.getElementById("bgLoadMsg").textContent=m;}
 function anoAtualStr(){return String(new Date().getFullYear());}
 
-/* FETCH */
+/* FETCH — sem filtro de situacao */
 async function fetchLegadoRecente(){
   const ano=anoAtualStr();
-  const{data,error}=await client.from("legado_atendimentos").select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao").gte("data",ano+"-01-01").or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum");
-  if(error||!data)return[];return data.map(r=>({...r,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"}));
+  const{data,error}=await client.from("legado_atendimentos")
+    .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
+    .gte("data",ano+"-01-01");
+  if(error||!data)return[];
+  return data.map(r=>({...r,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"}));
 }
 async function fetchNovosRecente(){
   const ano=anoAtualStr();
   const{data,error}=await client.from("atendimentos").select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`).eq("status","Confirmado").gte("data",ano+"-01-01");
-  if(error||!data)return[];return data.map(r=>({profissional:r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—",data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo"}));
+  if(error||!data)return[];
+  return data.map(r=>({profissional:r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—",data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo"}));
 }
 async function fetchLegadoCompleto(){
   const cached=lerCache(CACHE_KEY_LEGADO);if(cached)return cached;
   let todos=[],from=0;
-  while(true){const{data,error}=await client.from("legado_atendimentos").select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao").or("situacao.is.null,situacao.eq.-,situacao.eq.Confirmado,situacao.eq.Nenhum").range(from,from+999);if(error||!data||!data.length)break;todos=todos.concat(data.map(r=>({profissional:r.profissional,data:r.data,hora_inicio:r.hora_inicio,cliente:r.cliente,servico:r.servico,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"})));if(data.length<1000)break;from+=1000;}
+  while(true){
+    const{data,error}=await client.from("legado_atendimentos")
+      .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
+      .range(from,from+999);
+    if(error||!data||!data.length)break;
+    todos=todos.concat(data.map(r=>({profissional:r.profissional,data:r.data,hora_inicio:r.hora_inicio,cliente:r.cliente,servico:r.servico,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"})));
+    if(data.length<1000)break;from+=1000;
+  }
   salvarCache(CACHE_KEY_LEGADO,todos);return todos;
 }
 async function fetchNovosCompleto(){
@@ -619,62 +630,57 @@ function renderClTabela(rows){
   document.querySelector("#tblClTop tbody").innerHTML=Object.entries(cliMap).sort((a,b)=>_clModo==="atend"?b[1].n-a[1].n:b[1].val-a[1].val).slice(0,50).map(([c,v])=>{const ultima=v.datas.sort().slice(-1)[0];return`<tr><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${ultima?fmtD(ultima):"—"}</td><td class="num">${fmtP(v.n/totAtend*100)}</td></tr>`;}).join("");
 }
 
-/* VALUATION */
+/* VALUATION — com guard para cacheCompleto vazio */
 function atualizarValuation(){
-  const janela=parseInt(document.getElementById("selJanelaMRR")?.value||6),multiplo=parseFloat(document.getElementById("sliderMultiplo")?.value||3);
-  document.getElementById("lblMultiplo").textContent=multiplo+"×";document.getElementById("vMultiploBadge").textContent=multiplo+"×";document.getElementById("vValuationSub").textContent=`ARR × ${multiplo}×`;
-  const mesMap={};cacheCompleto.forEach(r=>{if(!r.data)return;const[y,m]=r.data.split("-");mesMap[`${y}-${m}`]=(mesMap[`${y}-${m}`]||0)+(r.valor||0);});
-  const mesesOrdenados=Object.entries(mesMap).sort((a,b)=>a[0].localeCompare(b[0])),ultimos=mesesOrdenados.slice(-janela);
-  const mrr=ultimos.length?ultimos.reduce((s,[,v])=>s+v,0)/ultimos.length:0,arr=mrr*12,valuation=arr*multiplo;
-  document.getElementById("vMRR").textContent=fmtM(mrr);document.getElementById("vMRRsub").textContent=`Média dos últimos ${janela} meses`;document.getElementById("vMRRbadge").textContent=`${janela} meses`;document.getElementById("vARR").textContent=fmtM(arr);document.getElementById("vValuation").textContent=fmtM(valuation);
-  const hoje=new Date(),anoAtual=hoje.getFullYear(),anoAnt=anoAtual-1,mesHoje=String(hoje.getMonth()+1).padStart(2,"0"),diaHoje=String(hoje.getDate()).padStart(2,"0");
+  if(!cacheCompleto||cacheCompleto.length===0)return;
+  const janela=parseInt(document.getElementById("selJanelaMRR")?.value||6)||6;
+  const multiplo=parseFloat(document.getElementById("sliderMultiplo")?.value||3)||3;
+  document.getElementById("lblMultiplo").textContent=multiplo+"×";
+  document.getElementById("vMultiploBadge").textContent=multiplo+"×";
+  document.getElementById("vValuationSub").textContent=`ARR × ${multiplo}×`;
+  const mesMap={};
+  cacheCompleto.forEach(r=>{if(!r.data)return;const[y,m]=r.data.split("-");mesMap[`${y}-${m}`]=(mesMap[`${y}-${m}`]||0)+(r.valor||0);});
+  const mesesOrdenados=Object.entries(mesMap).sort((a,b)=>a[0].localeCompare(b[0]));
+  if(mesesOrdenados.length===0)return;
+  const ultimos=mesesOrdenados.slice(-janela);
+  const mrr=ultimos.length?ultimos.reduce((s,[,v])=>s+v,0)/ultimos.length:0;
+  const arr=mrr*12,valuation=arr*multiplo;
+  document.getElementById("vMRR").textContent=fmtM(mrr);
+  document.getElementById("vMRRsub").textContent=`Média dos últimos ${janela} meses`;
+  document.getElementById("vMRRbadge").textContent=`${janela} meses`;
+  document.getElementById("vARR").textContent=fmtM(arr);
+  document.getElementById("vValuation").textContent=fmtM(valuation);
+  const hoje=new Date(),anoAtual=hoje.getFullYear(),anoAnt=anoAtual-1;
+  const mesHoje=String(hoje.getMonth()+1).padStart(2,"0"),diaHoje=String(hoje.getDate()).padStart(2,"0");
   const recAtual=cacheCompleto.filter(r=>r.data&&r.data>=`${anoAtual}-01-01`&&r.data<=`${anoAtual}-${mesHoje}-${diaHoje}`).reduce((s,r)=>s+(r.valor||0),0);
   const recAnt=cacheCompleto.filter(r=>r.data&&r.data>=`${anoAnt}-01-01`&&r.data<=`${anoAnt}-${mesHoje}-${diaHoje}`).reduce((s,r)=>s+(r.valor||0),0);
   const yoy=recAnt?((recAtual-recAnt)/recAnt*100):null;
-  document.getElementById("vYoY").textContent=yoy!==null?(yoy>=0?"+":"")+yoy.toFixed(1)+"%":"—";document.getElementById("vYoYsub").textContent=`${fmtM(recAnt)} → ${fmtM(recAtual)}`;
-  const yoyBadge=document.getElementById("vYoYbadge");yoyBadge.textContent=yoy!==null?(yoy>=0?"▲ Crescimento":"▼ Queda"):"—";yoyBadge.className="val-badge "+(yoy===null?"blue":yoy>=0?"green":"red");
+  document.getElementById("vYoY").textContent=yoy!==null?(yoy>=0?"+":"")+yoy.toFixed(1)+"%":"—";
+  document.getElementById("vYoYsub").textContent=`${fmtM(recAnt)} → ${fmtM(recAtual)}`;
+  const yoyBadge=document.getElementById("vYoYbadge");
+  yoyBadge.textContent=yoy!==null?(yoy>=0?"▲ Crescimento":"▼ Queda"):"—";
+  yoyBadge.className="val-badge "+(yoy===null?"blue":yoy>=0?"green":"red");
   const cliRec={};cacheCompleto.forEach(r=>{if(!r.cliente)return;cliRec[r.cliente]=(cliRec[r.cliente]||0)+(r.valor||0);});
-  const totalCli=Object.keys(cliRec).length||1,totalRec=Object.values(cliRec).reduce((s,v)=>s+v,0);
-  document.getElementById("vLTV").textContent=fmtM(totalRec/totalCli);document.getElementById("vTicket").textContent=fmtM(cacheCompleto.length?totalRec/cacheCompleto.length:0);
+  const totalCli=Object.keys(cliRec).length||1,totalRecVal=Object.values(cliRec).reduce((s,v)=>s+v,0);
+  document.getElementById("vLTV").textContent=fmtM(totalRecVal/totalCli);
+  document.getElementById("vTicket").textContent=fmtM(cacheCompleto.length?totalRecVal/cacheCompleto.length:0);
   const cliCount={};cacheCompleto.forEach(r=>{if(r.cliente)cliCount[r.cliente]=(cliCount[r.cliente]||0)+1;});
   const totalUniq=Object.keys(cliCount).length||1,retornaram=Object.values(cliCount).filter(v=>v>1).length;
-  document.getElementById("vRetencao").textContent=(retornaram/totalUniq*100).toFixed(1)+"%";document.getElementById("vRetencaoBadge").textContent=`${fmtN(retornaram)} de ${fmtN(totalUniq)} clientes`;
+  document.getElementById("vRetencao").textContent=(retornaram/totalUniq*100).toFixed(1)+"%";
+  document.getElementById("vRetencaoBadge").textContent=`${fmtN(retornaram)} de ${fmtN(totalUniq)} clientes`;
   if(mesesOrdenados.length){const[mk,mv]=mesesOrdenados.reduce((a,b)=>b[1]>a[1]?b:a);const[my,mm]=mk.split("-");document.getElementById("vMelhorMes").textContent=MESES_FULL[parseInt(mm)-1]+" "+my;document.getElementById("vMelhorMesSub").textContent=fmtM(mv);}
   const mrrGlobal=mesesOrdenados.reduce((s,[,v])=>s+v,0)/(mesesOrdenados.length||1),sazoMap={};
   mesesOrdenados.forEach(([k,v])=>{const m=k.split("-")[1];if(!sazoMap[m])sazoMap[m]=[];sazoMap[m].push(v);});
   const sazoFator={};Object.entries(sazoMap).forEach(([m,vals])=>{const med=vals.reduce((s,v)=>s+v,0)/vals.length;sazoFator[m]=mrrGlobal>0?med/mrrGlobal:1;});
-  const bVals=mesesOrdenados.slice(-janela).map(([,v])=>v),bMed=bVals.reduce((s,v)=>s+v,0)/(bVals.length||1),desvio=Math.sqrt(bVals.reduce((s,v)=>s+(v-bMed)**2,0)/(bVals.length||1));
+  const bVals=ultimos.map(([,v])=>v);
+  const bMed=bVals.reduce((s,v)=>s+v,0)/(bVals.length||1);
+  const desvio=bVals.length>1?Math.sqrt(bVals.reduce((s,v)=>s+(v-bMed)**2,0)/(bVals.length)):0;
   const projLabels=[],projVals=[];
-  if(mesesOrdenados.length){let[py,pm]=mesesOrdenados[mesesOrdenados.length-1][0].split("-").map(Number);for(let i=1;i<=6;i++){pm++;if(pm>12){pm=1;py++;}const ms=String(pm).padStart(2,"0");projLabels.push(MESES[pm-1]+"/"+String(py).slice(2));projVals.push(Math.max(mrr*0.5,mrr*(sazoFator[ms]||1)+desvio*0.5*Math.sin(i*1.9+0.7)));}}
+  let[py,pm]=mesesOrdenados[mesesOrdenados.length-1][0].split("-").map(Number);
+  for(let i=1;i<=6;i++){pm++;if(pm>12){pm=1;py++;}const ms=String(pm).padStart(2,"0");projLabels.push(MESES[pm-1]+"/"+String(py).slice(2));projVals.push(Math.max(mrr*0.5,mrr*(sazoFator[ms]||1)+desvio*0.5*Math.sin(i*1.9+0.7)));}
   const todosLabels=mesesOrdenados.map(([k])=>{const[y,m]=k.split("-");return MESES[parseInt(m)-1]+"/"+y.slice(2);}),todosVals=mesesOrdenados.map(([,v])=>v);
-  const allLabels=[...todosLabels,...projLabels],allReais=[...todosVals,...Array(projLabels.length).fill(null)],allProj=[...Array(todosLabels.length-1).fill(null),todosVals[todosVals.length-1],...projVals],allMRR=allLabels.map(()=>mrr);
-  mkChart("chartValProj",{type:"line",data:{labels:allLabels,datasets:[{label:"Receita Real",data:allReais,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.1)",tension:.3,fill:true,pointRadius:2},{label:"Projeção",data:allProj,borderColor:"#16a34a",borderDash:[6,4],backgroundColor:"rgba(22,163,74,.05)",tension:.3,fill:true,pointRadius:3},{label:"MRR",data:allMRR,borderColor:"#d97706",borderDash:[3,3],pointRadius:0,borderWidth:1.5}]},options:{responsive:true,plugins:{legend:{position:"bottom",labels:{font:{size:11}}},zoom:{zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"},pan:{enabled:true,mode:"x"}},tooltip:{callbacks:{label:ctx=>" "+fmtM(ctx.parsed.y)}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
-  setTimeout(()=>{const ch=charts["chartValProj"];if(!ch)return;const tot=allLabels.length;if(tot>18)ch.zoomScale("x",{min:tot-18,max:tot-1},"none");},100);
-}
-function resetZoomProj(){const ch=charts["chartValProj"];if(ch){ch.resetZoom();setTimeout(()=>{const tot=ch.data.labels.length;if(tot>18)ch.zoomScale("x",{min:tot-18,max:tot-1},"none");},50);}}
-function verTudoProj(){const ch=charts["chartValProj"];if(ch)ch.resetZoom();}
-
-/* INIT */
-async function initFiltros(){
-  const profs=[...new Set(cacheCompleto.map(r=>r.profissional).filter(Boolean))].sort(),servs=[...new Set(cacheCompleto.map(r=>r.servico).filter(Boolean))].sort();
-  const selP=document.getElementById("fProf"),selS=document.getElementById("fServ");
-  selP.innerHTML='<option value="">Todos</option>';selS.innerHTML='<option value="">Todos</option>';
-  profs.forEach(p=>selP.innerHTML+=`<option>${p}</option>`);servs.forEach(s=>selS.innerHTML+=`<option>${s}</option>`);
-}
-
-document.addEventListener("DOMContentLoaded",async()=>{
-  setLoading("Carregando dados recentes...");setProgress(10,"Conectando...");
-  const[legadoRec,novosRec]=await Promise.all([fetchLegadoRecente(),fetchNovosRecente()]);
-  setProgress(60,"Montando dashboard...");cacheCompleto=[...legadoRec,...novosRec];
-  await initFiltros();setProgress(90,"Renderizando...");aplicarFiltros();setProgress(100);stopLoading();
-  const temCacheLegado=lerCache(CACHE_KEY_LEGADO),temCacheNovo=lerCache(CACHE_KEY_NOVO);
-  if(!temCacheLegado||!temCacheNovo){
-    setBgBanner("Carregando histórico completo em background...",true);
-    const[legadoFull,novosFull]=await Promise.all([fetchLegadoCompleto(),fetchNovosCompleto()]);
-    cacheCompleto=[...legadoFull,...novosFull];await initFiltros();aplicarFiltros();
-    setBgBanner("Histórico carregado! ✓",true);setTimeout(()=>setBgBanner("",false),3000);
-  }
-});
-</script>
-</body>
-</html>
+  const allLabels=[...todosLabels,...projLabels];
+  const allReais=[...todosVals,...Array(Math.max(0,projLabels.length)).fill(null)];
+  const allProj=[...Array(Math.max(0,todosLabels.length-1)).fill(null),todosVals[todosVals.length-1],...projVals];
+  const allMRR=allLabels.map(()=>mrr);
+  mkChart("chartVa

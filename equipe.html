@@ -20,11 +20,34 @@ th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:lef
 th{background:#f9fafb;font-weight:600;}
 button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
 button.excluir{background:#dc2626}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.left-tools{display:flex;gap:10px;align-items:center;}
-.left-tools input{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;width:260px;font-size:14px;}
-.left-tools input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.left-tools select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;}
+
+/* ── TOPBAR ── */
+.topbar{margin-bottom:20px;}
+.topbar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+
+/* Contador de colaboradores */
+.collab-counter{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:7px 16px;font-size:13px;color:#374151;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.collab-counter i{color:#2563eb;font-size:13px;}
+.collab-counter .count{font-weight:700;color:#111827;font-size:16px;}
+.collab-counter .label{color:#6b7280;font-size:12px;}
+
+/* Filtros com label descritivo */
+.filters-row{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;}
+.filter-group{display:flex;flex-direction:column;gap:4px;}
+.filter-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;}
+.filter-group input,
+.filter-group select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;}
+.filter-group input{width:240px;}
+.filter-group input:focus,
+.filter-group select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.filter-group select{min-width:160px;}
+
+/* Botão limpar filtros */
+.btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
+.btn-limpar:hover{background:#f3f4f6;color:#374151;}
+.btn-limpar.visible{display:inline-flex;}
+
+/* Modal e resto idêntico ao original */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:1000;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:860px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px 0;}
@@ -100,7 +123,7 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .salario-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 @media (max-width: 1366px) {
   .content{padding:24px;}h1{font-size:20px;}th,td{padding:10px;font-size:13px;}
-  .left-tools input{width:200px;font-size:13px;}.modal-content{width:98vw;}.side-nav{width:160px;}
+  .filter-group input{width:180px;font-size:13px;}.modal-content{width:98vw;}.side-nav{width:160px;}
   .side-btn{font-size:12px;padding:9px 14px;}.tab-panel{padding:18px 20px;}.grid{gap:10px;}.grid-2{gap:10px;}
   input,select{padding:8px 10px;font-size:12px;}.modal-header h2{font-size:16px;}.modal-footer button{padding:8px 16px;font-size:12px;}
 }
@@ -118,15 +141,49 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <main class="content">
 <h1>Cadastro de Pessoal</h1>
 <div class="topbar">
-  <div class="left-tools">
-    <input type="text" id="pesquisaNome" placeholder="🔍  Pesquisar profissional..." onkeyup="filtrarTabela()">
-    <select id="filtroStatus">
-      <option value="">Todos os status</option>
-      <option value="Ativo" selected>Ativo</option>
-      <option value="Inativo">Inativo</option>
-    </select>
+
+  <!-- Linha 1: contador de colaboradores + botão Novo Cadastro -->
+  <div class="topbar-top">
+    <div class="collab-counter" id="collabCounter">
+      <i class="fa fa-users"></i>
+      <span class="count" id="collabCount">—</span>
+      <span class="label" id="collabLabel">colaboradores</span>
+    </div>
+    <button id="btnNovoCadastro" onclick="abrirNovo()" style="display:none"><i class="fa fa-plus"></i> Novo Cadastro</button>
   </div>
-  <button id="btnNovoCadastro" onclick="abrirNovo()" style="display:none"><i class="fa fa-plus"></i> Novo Cadastro</button>
+
+  <!-- Linha 2: filtros com labels descritivos -->
+  <div class="filters-row">
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-search" style="margin-right:3px"></i> Busca</span>
+      <input type="text" id="pesquisaNome" placeholder="Pesquisar profissional..." oninput="filtrarTabela()">
+    </div>
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-circle-dot" style="margin-right:3px"></i> Status</span>
+      <select id="filtroStatus" onchange="carregar()">
+        <option value="">Todos os status</option>
+        <option value="Ativo" selected>Ativo</option>
+        <option value="Inativo">Inativo</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-briefcase" style="margin-right:3px"></i> Cargo</span>
+      <select id="filtroCargo" onchange="filtrarTabela()">
+        <option value="">Todos os cargos</option>
+        <option>Terapeuta Feminina</option>
+        <option>Terapeuta Masculino</option>
+        <option>Gerente</option>
+        <option>Atendente</option>
+        <option>Recepcionista</option>
+        <option>Faxineira</option>
+        <option>Analista</option>
+      </select>
+    </div>
+    <button class="btn-limpar" id="btnLimparFiltros" onclick="limparFiltros()">
+      <i class="fa fa-times"></i> Limpar filtros
+    </button>
+  </div>
+
 </div>
 <table>
   <thead><tr><th>Nome Profissional</th><th>Cargo</th><th>CPF</th><th>Status</th><th>Ações</th></tr></thead>
@@ -321,8 +378,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
             </select>
           </div>
         </div>
-
-        <!-- SALÁRIO BASE — só para cargos fixos -->
         <div id="campoSalarioBase" style="display:none">
           <div class="salario-box">
             <div class="salario-box-label"><i class="fa fa-money-bill-wave"></i> Remuneração Fixa</div>
@@ -392,7 +447,6 @@ let cpfAtual = null;
 let cpfEdicaoHabilitada = false;
 var filaItems = [], filaCounter = 0;
 
-// Cargos que têm salário fixo
 const CARGOS_FIXOS = ["Gerente","Atendente","Recepcionista","Faxineira","Analista"];
 
 const campos = [
@@ -424,12 +478,11 @@ function bloquearCPF(){document.getElementById("cpf").readOnly=true;document.get
 function habilitarEdicaoCPF(){if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?"))return;const el=document.getElementById("cpf");el.readOnly=false;el.focus();el.select();document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=true;}
 function desbloquearCPF(){document.getElementById("cpf").readOnly=false;document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=false;}
 
-// Mostra/oculta salário base conforme cargo selecionado
 function aoMudarCargo(){
-  const cargo = document.getElementById("cargo").value;
-  const isFixo = CARGOS_FIXOS.includes(cargo);
-  document.getElementById("campoSalarioBase").style.display = isFixo ? "" : "none";
-  if(!isFixo) document.getElementById("salario_base").value = "";
+  const cargo=document.getElementById("cargo").value;
+  const isFixo=CARGOS_FIXOS.includes(cargo);
+  document.getElementById("campoSalarioBase").style.display=isFixo?"":"none";
+  if(!isFixo)document.getElementById("salario_base").value="";
   atualizarProgresso();
 }
 
@@ -445,12 +498,8 @@ function getPayload(){
   campos.forEach(c=>{
     const el=document.getElementById(c);
     if(!el)return;
-    if(c==="salario_base"){
-      const v=parseFloat(el.value);
-      obj[c]=(!isNaN(v)&&el.value!="")?v:null;
-    } else {
-      if(el.value!=="")obj[c]=el.value;
-    }
+    if(c==="salario_base"){const v=parseFloat(el.value);obj[c]=(!isNaN(v)&&el.value!="")?v:null;}
+    else{if(el.value!=="")obj[c]=el.value;}
   });
   return obj;
 }
@@ -464,8 +513,37 @@ function setForm(data){
   });
   const campo=document.getElementById("campo_data_inativacao");if(campo)campo.style.display=data.status==="Inativo"?"":"none";
   ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id=>{const el=document.getElementById(id);if(el&&el.value)el.dispatchEvent(new Event('input'));});
-  // Mostrar/ocultar salário base
   aoMudarCargo();
+}
+
+// ── CONTADOR DE COLABORADORES ──
+function atualizarContador(total, statusFiltro, cargoFiltro) {
+  const countEl = document.getElementById("collabCount");
+  const labelEl = document.getElementById("collabLabel");
+  if(!countEl) return;
+  countEl.textContent = total;
+  let sufixo = total === 1 ? "colaborador" : "colaboradores";
+  let partes = [];
+  if(statusFiltro === "Ativo") partes.push("ativos");
+  else if(statusFiltro === "Inativo") partes.push("inativos");
+  if(cargoFiltro) partes.push("· " + cargoFiltro);
+  labelEl.textContent = sufixo + (partes.length ? " " + partes.join(" ") : "");
+}
+
+// ── LÓGICA DOS FILTROS ──
+function limparFiltros(){
+  document.getElementById("pesquisaNome").value = "";
+  document.getElementById("filtroStatus").value = "Ativo";
+  document.getElementById("filtroCargo").value = "";
+  carregar();
+}
+
+function checarBtnLimpar(){
+  const nome = document.getElementById("pesquisaNome").value;
+  const status = document.getElementById("filtroStatus").value;
+  const cargo = document.getElementById("filtroCargo").value;
+  const ativo = nome || status !== "Ativo" || cargo;
+  document.getElementById("btnLimparFiltros").classList.toggle("visible", !!ativo);
 }
 
 async function carregar(){
@@ -484,14 +562,31 @@ async function carregar(){
   data.forEach(t=>{
     const podeExcluir=u&&(u.role==="admin"||u.role==="apoio");
     const acoes=podeExcluir
-      ? '<button onclick="editar(\''+t.cpf+'\')">Editar</button> <button class="excluir" onclick="excluir(\''+t.cpf+'\')">Excluir</button>'
-      : '<button onclick="editar(\''+t.cpf+'\')">Ver / Editar</button>';
-    tbody.innerHTML+='<tr><td>'+(t.nome_profissional||"")+'</td><td>'+(t.cargo||"")+'</td><td>'+fmtCPFDisplay(t.cpf)+'</td><td>'+(t.status||"")+'</td><td>'+acoes+'</td></tr>';
+      ?'<button onclick="editar(\''+t.cpf+'\')">Editar</button> <button class="excluir" onclick="excluir(\''+t.cpf+'\')">Excluir</button>'
+      :'<button onclick="editar(\''+t.cpf+'\')">Ver / Editar</button>';
+    // data-cargo usado para filtro client-side
+    tbody.innerHTML+='<tr data-cargo="'+(t.cargo||"")+'"><td>'+(t.nome_profissional||"")+'</td><td>'+(t.cargo||"")+'</td><td>'+fmtCPFDisplay(t.cpf)+'</td><td>'+(t.status||"")+'</td><td>'+acoes+'</td></tr>';
   });
   filtrarTabela();
+  checarBtnLimpar();
 }
 
-function filtrarTabela(){const filtro=document.getElementById("pesquisaNome").value.toLowerCase();document.querySelectorAll("#lista tr").forEach(linha=>{linha.style.display=linha.children[0].innerText.toLowerCase().includes(filtro)?"":"none";});}
+function filtrarTabela(){
+  const filtroNome=document.getElementById("pesquisaNome").value.toLowerCase();
+  const filtroCargo=document.getElementById("filtroCargo").value;
+  let visiveis=0;
+  document.querySelectorAll("#lista tr").forEach(linha=>{
+    const nomeOk=linha.children[0].innerText.toLowerCase().includes(filtroNome);
+    const cargoOk=!filtroCargo||linha.dataset.cargo===filtroCargo;
+    const visivel=nomeOk&&cargoOk;
+    linha.style.display=visivel?"":"none";
+    if(visivel)visiveis++;
+  });
+  const statusFiltro=document.getElementById("filtroStatus").value;
+  const cargoFiltro=document.getElementById("filtroCargo").value;
+  atualizarContador(visiveis, statusFiltro, cargoFiltro);
+  checarBtnLimpar();
+}
 
 function resetModal(){
   campos.forEach(c=>{const el=document.getElementById(c);if(el)el.value="";});
@@ -741,7 +836,10 @@ function atualizarProgresso(){
 document.addEventListener('DOMContentLoaded',()=>{
   aplicarMascaras();
   TODOS_CAMPOS.forEach(c=>{const el=document.getElementById(c.id);if(el){el.addEventListener("input",atualizarProgresso);el.addEventListener("change",atualizarProgresso);}});
-  document.getElementById("filtroStatus").addEventListener("change",carregar);
+  // Checar btn limpar ao interagir com os filtros
+  document.getElementById("pesquisaNome").addEventListener("input", checarBtnLimpar);
+  document.getElementById("filtroStatus").addEventListener("change", checarBtnLimpar);
+  document.getElementById("filtroCargo").addEventListener("change", checarBtnLimpar);
   carregar();
 });
 </script>

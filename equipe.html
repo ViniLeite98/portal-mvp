@@ -18,8 +18,26 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
 th{background:#f9fafb;font-weight:600;}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+th.sortable:hover{background:#f3f4f6;color:#1d4ed8;}
+th.sortable .sort-icon{margin-left:5px;font-size:11px;color:#9ca3af;transition:color .15s;}
+th.sortable.asc .sort-icon,th.sortable.desc .sort-icon{color:#2563eb;}
 button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;}
 button.excluir{background:#dc2626}
+
+/* Paginação */
+.paginacao{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px;}
+.paginacao-info{font-size:13px;color:#6b7280;}
+.paginacao-info strong{color:#111827;}
+.paginacao-controles{display:flex;align-items:center;gap:6px;}
+.pag-btn{background:#fff;color:#374151;border:1px solid #d1d5db;border-radius:7px;padding:6px 11px;font-size:13px;cursor:pointer;min-width:34px;text-align:center;transition:all .15s;}
+.pag-btn:hover:not(:disabled){background:#f3f4f6;border-color:#9ca3af;}
+.pag-btn:disabled{opacity:.4;cursor:default;}
+.pag-btn.ativo{background:#1f2937;color:#fff;border-color:#1f2937;font-weight:700;}
+.pag-btn.ellipsis{border:none;background:none;cursor:default;color:#9ca3af;min-width:20px;padding:6px 4px;}
+.pag-btn.ellipsis:hover{background:none;}
+.por-pagina-wrap{display:flex;align-items:center;gap:7px;font-size:13px;color:#6b7280;}
+.por-pagina-wrap select{padding:5px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;background:#fff;color:#111827;}
 
 /* ── TOPBAR ── */
 .topbar{margin-bottom:20px;}
@@ -186,9 +204,31 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 
 </div>
 <table>
-  <thead><tr><th>Nome Profissional</th><th>Cargo</th><th>CPF</th><th>Status</th><th>Ações</th></tr></thead>
+  <thead>
+    <tr>
+      <th class="sortable" onclick="ordenarPor('nome')" id="th-nome">Nome Profissional <i class="fa fa-sort sort-icon"></i></th>
+      <th class="sortable" onclick="ordenarPor('cargo')" id="th-cargo">Cargo <i class="fa fa-sort sort-icon"></i></th>
+      <th>CPF</th>
+      <th>Status</th>
+      <th>Ações</th>
+    </tr>
+  </thead>
   <tbody id="lista"></tbody>
 </table>
+<div class="paginacao" id="paginacao">
+  <div class="por-pagina-wrap">
+    Exibir
+    <select id="porPagina" onchange="paginaAtual=1;renderTabela()">
+      <option value="10" selected>10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="9999">Todos</option>
+    </select>
+    por página
+  </div>
+  <div class="paginacao-info" id="paginacaoInfo"></div>
+  <div class="paginacao-controles" id="paginacaoControles"></div>
+</div>
 </main>
 </div>
 
@@ -516,7 +556,14 @@ function setForm(data){
   aoMudarCargo();
 }
 
-// ── CONTADOR DE COLABORADORES ──
+// ── ESTADO GLOBAL ──
+let todosRegistros = [];    // todos os dados brutos do banco
+let registrosFiltrados = []; // após filtro
+let ordemCol = 'nome';       // coluna ativa
+let ordemDir = 'asc';        // 'asc' | 'desc'
+let paginaAtual = 1;
+
+// ── CONTADOR ──
 function atualizarContador(total, statusFiltro, cargoFiltro) {
   const countEl = document.getElementById("collabCount");
   const labelEl = document.getElementById("collabLabel");
@@ -530,7 +577,7 @@ function atualizarContador(total, statusFiltro, cargoFiltro) {
   labelEl.textContent = sufixo + (partes.length ? " " + partes.join(" ") : "");
 }
 
-// ── LÓGICA DOS FILTROS ──
+// ── FILTROS ──
 function limparFiltros(){
   document.getElementById("pesquisaNome").value = "";
   document.getElementById("filtroStatus").value = "Ativo";
@@ -542,10 +589,38 @@ function checarBtnLimpar(){
   const nome = document.getElementById("pesquisaNome").value;
   const status = document.getElementById("filtroStatus").value;
   const cargo = document.getElementById("filtroCargo").value;
-  const ativo = nome || status !== "Ativo" || cargo;
-  document.getElementById("btnLimparFiltros").classList.toggle("visible", !!ativo);
+  document.getElementById("btnLimparFiltros").classList.toggle("visible", !!(nome || status !== "Ativo" || cargo));
 }
 
+// ── ORDENAÇÃO ──
+function ordenarPor(col) {
+  if(ordemCol === col) {
+    ordemDir = ordemDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    ordemCol = col;
+    ordemDir = 'asc';
+  }
+  atualizarIconesOrdem();
+  paginaAtual = 1;
+  aplicarOrdemEFiltro();
+}
+
+function atualizarIconesOrdem() {
+  ['nome','cargo'].forEach(c => {
+    const th = document.getElementById('th-' + c);
+    if(!th) return;
+    const icon = th.querySelector('.sort-icon');
+    th.classList.remove('asc','desc');
+    if(ordemCol === c) {
+      th.classList.add(ordemDir);
+      icon.className = 'fa sort-icon ' + (ordemDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
+    } else {
+      icon.className = 'fa fa-sort sort-icon';
+    }
+  });
+}
+
+// ── CARREGAMENTO (banco) ──
 async function carregar(){
   if(!window.usuarioLogado){setTimeout(carregar,100);return;}
   const u=window.usuarioLogado;
@@ -558,34 +633,95 @@ async function carregar(){
   if(u&&u.role==="usuario"&&u.cpf)query=query.eq("cpf",u.cpf.replace(/\D/g,''));
   const {data,error}=await query;
   if(error){console.error(error);return;}
-  const tbody=document.getElementById("lista");tbody.innerHTML="";
-  data.forEach(t=>{
-    const podeExcluir=u&&(u.role==="admin"||u.role==="apoio");
-    const acoes=podeExcluir
-      ?'<button onclick="editar(\''+t.cpf+'\')">Editar</button> <button class="excluir" onclick="excluir(\''+t.cpf+'\')">Excluir</button>'
-      :'<button onclick="editar(\''+t.cpf+'\')">Ver / Editar</button>';
-    // data-cargo usado para filtro client-side
-    tbody.innerHTML+='<tr data-cargo="'+(t.cargo||"")+'"><td>'+(t.nome_profissional||"")+'</td><td>'+(t.cargo||"")+'</td><td>'+fmtCPFDisplay(t.cpf)+'</td><td>'+(t.status||"")+'</td><td>'+acoes+'</td></tr>';
-  });
-  filtrarTabela();
+  todosRegistros = data || [];
+  paginaAtual = 1;
+  aplicarOrdemEFiltro();
   checarBtnLimpar();
 }
 
+// ── FILTRO + ORDEM + RENDER ──
 function filtrarTabela(){
-  const filtroNome=document.getElementById("pesquisaNome").value.toLowerCase();
-  const filtroCargo=document.getElementById("filtroCargo").value;
-  let visiveis=0;
-  document.querySelectorAll("#lista tr").forEach(linha=>{
-    const nomeOk=linha.children[0].innerText.toLowerCase().includes(filtroNome);
-    const cargoOk=!filtroCargo||linha.dataset.cargo===filtroCargo;
-    const visivel=nomeOk&&cargoOk;
-    linha.style.display=visivel?"":"none";
-    if(visivel)visiveis++;
+  paginaAtual = 1;
+  aplicarOrdemEFiltro();
+}
+
+function aplicarOrdemEFiltro(){
+  const filtroNome = document.getElementById("pesquisaNome").value.toLowerCase();
+  const filtroCargo = document.getElementById("filtroCargo").value;
+  // 1. Filtrar
+  registrosFiltrados = todosRegistros.filter(t => {
+    const nomeOk = (t.nome_profissional||"").toLowerCase().includes(filtroNome);
+    const cargoOk = !filtroCargo || t.cargo === filtroCargo;
+    return nomeOk && cargoOk;
   });
-  const statusFiltro=document.getElementById("filtroStatus").value;
-  const cargoFiltro=document.getElementById("filtroCargo").value;
-  atualizarContador(visiveis, statusFiltro, cargoFiltro);
+  // 2. Ordenar
+  registrosFiltrados.sort((a, b) => {
+    let va = '', vb = '';
+    if(ordemCol === 'nome') { va = (a.nome_profissional||"").toLowerCase(); vb = (b.nome_profissional||"").toLowerCase(); }
+    if(ordemCol === 'cargo') { va = (a.cargo||"").toLowerCase(); vb = (b.cargo||"").toLowerCase(); }
+    if(va < vb) return ordemDir === 'asc' ? -1 : 1;
+    if(va > vb) return ordemDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  // 3. Atualizar contador
+  const statusFiltro = document.getElementById("filtroStatus").value;
+  const cargoFiltro = document.getElementById("filtroCargo").value;
+  atualizarContador(registrosFiltrados.length, statusFiltro, cargoFiltro);
   checarBtnLimpar();
+  renderTabela();
+}
+
+// ── RENDER COM PAGINAÇÃO ──
+function renderTabela(){
+  const porPag = parseInt(document.getElementById("porPagina").value) || 10;
+  const total = registrosFiltrados.length;
+  const totalPags = porPag >= 9999 ? 1 : Math.max(1, Math.ceil(total / porPag));
+  if(paginaAtual > totalPags) paginaAtual = totalPags;
+  const inicio = porPag >= 9999 ? 0 : (paginaAtual - 1) * porPag;
+  const fim = porPag >= 9999 ? total : Math.min(inicio + porPag, total);
+  const pagina = registrosFiltrados.slice(inicio, fim);
+  const u = window.usuarioLogado;
+  const tbody = document.getElementById("lista"); tbody.innerHTML = "";
+  pagina.forEach(t => {
+    const podeExcluir = u && (u.role === "admin" || u.role === "apoio");
+    const acoes = podeExcluir
+      ? '<button onclick="editar(\''+t.cpf+'\')">Editar</button> <button class="excluir" onclick="excluir(\''+t.cpf+'\')">Excluir</button>'
+      : '<button onclick="editar(\''+t.cpf+'\')">Ver / Editar</button>';
+    tbody.innerHTML += '<tr><td>'+(t.nome_profissional||"")+'</td><td>'+(t.cargo||"")+'</td><td>'+fmtCPFDisplay(t.cpf)+'</td><td>'+(t.status||"")+'</td><td>'+acoes+'</td></tr>';
+  });
+  // Info de paginação
+  const infoEl = document.getElementById("paginacaoInfo");
+  if(total === 0) {
+    infoEl.innerHTML = "Nenhum resultado encontrado.";
+  } else if(porPag >= 9999) {
+    infoEl.innerHTML = "Exibindo <strong>todos os "+total+"</strong> registros";
+  } else {
+    infoEl.innerHTML = "Exibindo <strong>"+(inicio+1)+"–"+fim+"</strong> de <strong>"+total+"</strong>";
+  }
+  // Botões de página
+  const ctrlEl = document.getElementById("paginacaoControles"); ctrlEl.innerHTML = "";
+  if(totalPags <= 1 && porPag < 9999) { ctrlEl.style.display = "none"; return; }
+  ctrlEl.style.display = "flex";
+  function addBtn(label, pg, ativo, desabilitado, ellipsis) {
+    const b = document.createElement("button");
+    b.className = "pag-btn" + (ativo?" ativo":"") + (ellipsis?" ellipsis":"");
+    b.innerHTML = label;
+    b.disabled = desabilitado;
+    if(!desabilitado && !ellipsis) b.onclick = () => { paginaAtual = pg; renderTabela(); };
+    ctrlEl.appendChild(b);
+  }
+  addBtn('<i class="fa fa-chevron-left"></i>', paginaAtual-1, false, paginaAtual===1);
+  // Números de página com elipsis
+  const pages = [];
+  for(let i=1;i<=totalPags;i++){
+    if(i===1||i===totalPags||Math.abs(i-paginaAtual)<=1) pages.push(i);
+    else if(pages[pages.length-1]!=='...') pages.push('...');
+  }
+  pages.forEach(p => {
+    if(p==='...') addBtn('…', null, false, false, true);
+    else addBtn(p, p, p===paginaAtual, false);
+  });
+  addBtn('<i class="fa fa-chevron-right"></i>', paginaAtual+1, false, paginaAtual===totalPags);
 }
 
 function resetModal(){
@@ -835,6 +971,7 @@ function atualizarProgresso(){
 
 document.addEventListener('DOMContentLoaded',()=>{
   aplicarMascaras();
+  atualizarIconesOrdem();
   TODOS_CAMPOS.forEach(c=>{const el=document.getElementById(c.id);if(el){el.addEventListener("input",atualizarProgresso);el.addEventListener("change",atualizarProgresso);}});
   // Checar btn limpar ao interagir com os filtros
   document.getElementById("pesquisaNome").addEventListener("input", checarBtnLimpar);

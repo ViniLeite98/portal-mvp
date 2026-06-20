@@ -398,7 +398,8 @@ function render(){
     '</div>';
   }).join("");
 
-  if(adicionando){
+  // add-row só para seções simples (ícone e campos ricos usam o modal)
+  if(adicionando && !temIcone){
     lista.innerHTML+=
       '<div class="add-row">'+
         '<input id="addNome" placeholder="'+(isKanban?'Nome da coluna...':tipoPgto?'Nome do tipo...':'Nome...')+'">'+
@@ -415,16 +416,44 @@ function render(){
   }
 }
 
-function abrirAdicionar(){adicionando=true;render();}
+function abrirAdicionar(){
+  // Seções com ícone ou campos ricos: abre o modal completo para inserção
+  editandoId=null; // null = modo inserção
+  var temIcone=SECOES_COM_ICONE.includes(secaoAtual);
+  var tipoPgto=SECOES_TIPOS_PGTO.includes(secaoAtual);
+  var isKanban=SECOES_KANBAN.includes(secaoAtual);
+
+  if(temIcone || tipoPgto || isKanban){
+    // Limpa campos do modal
+    document.getElementById("editNome").value="";
+    document.getElementById("editDesc").value="";
+    document.getElementById("campoIcone").style.display   =temIcone?"":"none";
+    document.getElementById("campoCodigo").style.display  =tipoPgto?"":"none";
+    document.getElementById("campoNegativo").style.display=tipoPgto?"":"none";
+    document.getElementById("campoCor").style.display     =isKanban?"":"none";
+    document.getElementById("campoDesc").style.display    =(tipoPgto||isKanban)?"none":"";
+    if(tipoPgto){
+      document.getElementById("editCodigo").value="";
+      document.getElementById("editNegativo").value="false";
+    }
+    if(temIcone){ setPickerValor("fa-certificate"); renderFaGrid(""); }
+    if(isKanban){ setCorAtual("#6366f1"); renderCorPaleta("#6366f1"); }
+    fecharPickerBody();
+    document.getElementById("modalTitulo").textContent="Novo — "+SECOES[secaoAtual].label;
+    document.getElementById("modalEditar").style.display="flex";
+    setTimeout(()=>document.getElementById("editNome").focus(), 80);
+  } else {
+    // Seções simples: linha inline como antes
+    adicionando=true; render();
+  }
+}
 function cancelarAdicionar(){adicionando=false;render();}
 
 async function confirmarAdicionar(){
   var nome=(document.getElementById("addNome")?.value||"").trim();
   if(!nome){alert("Digite o nome.");return;}
   var error;
-  if(SECOES_COM_ICONE.includes(secaoAtual)){
-    ({error}=await client.from("certificacoes").insert({nome,icone:"fa-certificate"}));
-  } else if(SECOES_KANBAN.includes(secaoAtual)){
+  if(SECOES_KANBAN.includes(secaoAtual)){
     var cor=document.getElementById("addCor")?.value||"#6366f1";
     ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:cor,ordem:itens.length,ativo:true}));
   } else if(SECOES_TIPOS_PGTO.includes(secaoAtual)){
@@ -471,18 +500,33 @@ async function salvarEdicao(){
   var nome=document.getElementById("editNome").value.trim();
   if(!nome){alert("Nome obrigatório.");return;}
   var error;
+  var inserindo = (editandoId === null);
+
   if(SECOES_COM_ICONE.includes(secaoAtual)){
     var icone=document.getElementById("editIcone").value||"fa-certificate";
-    ({error}=await client.from("certificacoes").update({nome,icone}).eq("id",editandoId));
+    if(inserindo){
+      ({error}=await client.from("certificacoes").insert({nome,icone}));
+    } else {
+      ({error}=await client.from("certificacoes").update({nome,icone}).eq("id",editandoId));
+    }
   } else if(SECOES_KANBAN.includes(secaoAtual)){
     var cor=document.getElementById("editCorHex").value.trim()||"#6366f1";
-    ({error}=await client.from("parametros").update({valor:nome,descricao:cor}).eq("id",editandoId));
+    if(inserindo){
+      ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:cor,ordem:itens.length,ativo:true}));
+    } else {
+      ({error}=await client.from("parametros").update({valor:nome,descricao:cor}).eq("id",editandoId));
+    }
   } else if(SECOES_TIPOS_PGTO.includes(secaoAtual)){
     var codigo=document.getElementById("editCodigo").value.trim()||null;
     var negativo=document.getElementById("editNegativo").value==="true";
-    ({error}=await client.from("parametros").update({valor:nome,descricao:codigo,negativo}).eq("id",editandoId));
+    if(inserindo){
+      ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:codigo,ativo:true,ordem:itens.length,negativo}));
+    } else {
+      ({error}=await client.from("parametros").update({valor:nome,descricao:codigo,negativo}).eq("id",editandoId));
+    }
   } else {
-    ({error}=await client.from("parametros").update({valor:nome,descricao:document.getElementById("editDesc").value.trim()||null}).eq("id",editandoId));
+    var desc=document.getElementById("editDesc").value.trim()||null;
+    ({error}=await client.from("parametros").update({valor:nome,descricao:desc}).eq("id",editandoId));
   }
   if(error){alert("Erro: "+error.message);return;}
   fecharModal();carregar();

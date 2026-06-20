@@ -285,33 +285,33 @@ let secaoAtual="certificacoes", itens=[], editandoId=null, adicionando=false, pi
 function verificarHash(){
   const hash = window.location.hash.replace('#','');
   if(hash && SECOES[hash]){
-    // Encontra o item do menu e ativa
     const menuItem = document.querySelector('.param-menu-item[data-secao="'+hash+'"]');
     if(menuItem){
-      mudarSecao(hash, menuItem);
-      // Pulsa o item para destacar visualmente
+      mudarSecao(hash, menuItem, true);
       menuItem.classList.add('highlight-pulse');
       setTimeout(()=>menuItem.classList.remove('highlight-pulse'), 1400);
-      // Mostra botão voltar se veio de equipe
-      if(document.referrer.includes('equipe.html') || sessionStorage.getItem('voltarEquipe')){
-        mostrarBtnVoltar();
-      }
     }
-  }
-  // Mostra botão voltar se flag na sessão
-  if(sessionStorage.getItem('voltarEquipe')){
-    mostrarBtnVoltar();
+    // Só mostra botão voltar se realmente veio de equipe.html nesta navegação
+    if(document.referrer.includes('equipe.html')){
+      mostrarBtnVoltar();
+    }
+  } else {
+    carregar(); // sem hash, carrega seção padrão normalmente
   }
 }
 
 function mostrarBtnVoltar(){
   const btn = document.getElementById('btnVoltarEquipe');
   if(btn) btn.style.display = 'inline-flex';
-  sessionStorage.setItem('voltarEquipe','1');
+}
+
+function esconderBtnVoltar(){
+  const btn = document.getElementById('btnVoltarEquipe');
+  if(btn) btn.style.display = 'none';
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-function mudarSecao(secao,el){
+function mudarSecao(secao,el,viaHash){
   secaoAtual=secao;
   document.querySelectorAll(".param-menu-item").forEach(i=>i.classList.remove("active"));
   el.classList.add("active");
@@ -321,7 +321,8 @@ function mudarSecao(secao,el){
   const infoBox=document.getElementById("panelInfoBox");
   if(info){infoBox.style.display="flex";document.getElementById("panelInfoTexto").textContent=info;}
   else infoBox.style.display="none";
-  // Atualiza hash sem recarregar
+  // Se o usuário clicou manualmente no menu (não via hash inicial), esconde o botão voltar
+  if(!viaHash) esconderBtnVoltar();
   history.replaceState(null,'','#'+secao);
   carregar();
 }
@@ -528,25 +529,10 @@ async function excluir(id){
   carregar();
 }
 
-// Limpa a flag de voltar quando sair da página normalmente pelo menu lateral
-window.addEventListener('beforeunload', function(){
-  // Só limpa se NÃO for voltar para equipe
-  if(!document.activeElement?.href?.includes('equipe.html')){
-    sessionStorage.removeItem('voltarEquipe');
-  }
-});
-
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById("faBusca").addEventListener("input",function(e){renderFaGrid(e.target.value);});
   document.getElementById("faManual").addEventListener("keydown",function(e){if(e.key==="Enter")aplicarFaManual();});
-
-  // Detecta se veio via link #cargos da equipe
   verificarHash();
-
-  // Se não tem hash, carrega normalmente
-  if(!window.location.hash){
-    carregar();
-  }
 });
 </script>
 </body>

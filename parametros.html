@@ -104,28 +104,43 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .upload-thumb{display:none;margin-top:10px;text-align:center;}
 .upload-thumb img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #e5e7eb;}
 .upload-thumb span{display:block;font-size:11px;color:#6b7280;margin-top:4px;}
+
+/* Botão voltar */
+.btn-voltar{display:none;align-items:center;gap:6px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:#374151;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:all .15s;}
+.btn-voltar:hover{background:#f3f4f6;border-color:#d1d5db;}
+.btn-voltar i{font-size:11px;color:#6b7280;}
+/* Highlight temporário na seção cargos vinda do link */
+.param-menu-item.highlight-pulse{animation:pulse-blue 1.2s ease;}
+@keyframes pulse-blue{0%,100%{background:transparent}40%{background:#dbeafe;color:#1d4ed8;}}
 </style>
 </head>
 <body>
 <div class="app">
 <aside id="sidebar"></aside>
 <main class="content">
-  <div class="topbar"><h1>Parâmetros</h1></div>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <a id="btnVoltarEquipe" href="equipe.html" class="btn-voltar">
+        <i class="fa fa-arrow-left"></i> Voltar para Equipe
+      </a>
+      <h1>Parâmetros</h1>
+    </div>
+  </div>
   <div class="layout">
     <nav class="param-menu">
       <div class="param-menu-sep">Cadastros</div>
-      <div class="param-menu-item active" onclick="mudarSecao('certificacoes',this)"><i class="fa fa-certificate"></i> Certificações</div>
-      <div class="param-menu-item" onclick="mudarSecao('categorias_produto',this)"><i class="fa fa-box"></i> Categorias de Produto</div>
-      <div class="param-menu-item" onclick="mudarSecao('cargos',this)"><i class="fa fa-briefcase"></i> Cargos</div>
-      <div class="param-menu-item" onclick="mudarSecao('grupos_servico',this)"><i class="fa fa-spa"></i> Grupos de Serviço</div>
+      <div class="param-menu-item active" data-secao="certificacoes" onclick="mudarSecao('certificacoes',this)"><i class="fa fa-certificate"></i> Certificações</div>
+      <div class="param-menu-item" data-secao="categorias_produto" onclick="mudarSecao('categorias_produto',this)"><i class="fa fa-box"></i> Categorias de Produto</div>
+      <div class="param-menu-item" data-secao="cargos" onclick="mudarSecao('cargos',this)"><i class="fa fa-briefcase"></i> Cargos</div>
+      <div class="param-menu-item" data-secao="grupos_servico" onclick="mudarSecao('grupos_servico',this)"><i class="fa fa-spa"></i> Grupos de Serviço</div>
       <div class="param-menu-sep">Operacional</div>
-      <div class="param-menu-item" onclick="mudarSecao('tipos_solicitacao',this)"><i class="fa fa-file-alt"></i> Tipos de Solicitação</div>
-      <div class="param-menu-item" onclick="mudarSecao('origens_lead',this)"><i class="fa fa-bullhorn"></i> Origens de Lead</div>
-      <div class="param-menu-item" onclick="mudarSecao('formas_pagamento',this)"><i class="fa fa-credit-card"></i> Formas de Pagamento</div>
-      <div class="param-menu-item" onclick="mudarSecao('motivos_movimentacao',this)"><i class="fa fa-exchange-alt"></i> Motivos de Movimentação</div>
-      <div class="param-menu-item" onclick="mudarSecao('kanban_colunas',this)"><i class="fa fa-columns"></i> Colunas do Kanban</div>
+      <div class="param-menu-item" data-secao="tipos_solicitacao" onclick="mudarSecao('tipos_solicitacao',this)"><i class="fa fa-file-alt"></i> Tipos de Solicitação</div>
+      <div class="param-menu-item" data-secao="origens_lead" onclick="mudarSecao('origens_lead',this)"><i class="fa fa-bullhorn"></i> Origens de Lead</div>
+      <div class="param-menu-item" data-secao="formas_pagamento" onclick="mudarSecao('formas_pagamento',this)"><i class="fa fa-credit-card"></i> Formas de Pagamento</div>
+      <div class="param-menu-item" data-secao="motivos_movimentacao" onclick="mudarSecao('motivos_movimentacao',this)"><i class="fa fa-exchange-alt"></i> Motivos de Movimentação</div>
+      <div class="param-menu-item" data-secao="kanban_colunas" onclick="mudarSecao('kanban_colunas',this)"><i class="fa fa-columns"></i> Colunas do Kanban</div>
       <div class="param-menu-sep">Folha de Pagamento</div>
-      <div class="param-menu-item" onclick="mudarSecao('tipos_pagamento',this)"><i class="fa fa-money-check-dollar"></i> Tipos de Pagamento</div>
+      <div class="param-menu-item" data-secao="tipos_pagamento" onclick="mudarSecao('tipos_pagamento',this)"><i class="fa fa-money-check-dollar"></i> Tipos de Pagamento</div>
     </nav>
     <div class="param-panel">
       <div class="panel-header">
@@ -152,20 +167,14 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
   </div>
   <div class="modal-body">
     <div class="field"><label>Nome *</label><input id="editNome" placeholder="Nome do parâmetro"></div>
-
-    <!-- Descrição — oculto para kanban e tipos_pagamento -->
     <div class="field" id="campoDesc">
       <label>Descrição <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
       <input id="editDesc" placeholder="Descrição ou detalhe">
     </div>
-
-    <!-- Código — só tipos_pagamento -->
     <div class="field" id="campoCodigo" style="display:none">
       <label>Código <span style="color:#9ca3af;font-weight:400">— ex: 001</span></label>
       <input id="editCodigo" placeholder="001" maxlength="3" style="font-family:monospace;font-weight:700;letter-spacing:.1em">
     </div>
-
-    <!-- Negativo — só tipos_pagamento (coluna boolean real) -->
     <div class="field" id="campoNegativo" style="display:none">
       <label>Comportamento</label>
       <select id="editNegativo">
@@ -173,8 +182,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
         <option value="true">Desconto (valor negativo automático)</option>
       </select>
     </div>
-
-    <!-- Cor — só kanban_colunas; guardada em 'descricao' -->
     <div class="field" id="campoCor" style="display:none">
       <label>Cor da coluna</label>
       <div class="color-picker-row" id="colorPaletteRow"></div>
@@ -184,8 +191,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
         <span style="font-size:11px;color:#9ca3af">personalizada</span>
       </div>
     </div>
-
-    <!-- Ícone — só certificacoes (tabela própria com coluna icone) -->
     <div class="field" id="campoIcone" style="display:none">
       <label>Ícone</label>
       <input type="hidden" id="editIcone" value="fa-certificate">
@@ -238,13 +243,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <script src="assets/js/auth.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 <script>
-// Schema real de 'parametros':
-// id, tipo, valor, descricao, ativo, ordem, negativo (boolean), created_at
-// NÃO existe coluna 'icone' em parametros.
-// Para kanban_colunas: valor=nome, descricao=cor hex, ordem=posição
-// Para tipos_pagamento: valor=nome, descricao=código, negativo=boolean
-// Para demais: valor=nome, descricao=detalhe opcional, ativo=toggle
-
 const SECOES = {
   certificacoes:       {label:"Certificações",         desc:"Certificações disponíveis para vincular aos profissionais.",   icon:"fa-certificate"},
   categorias_produto:  {label:"Categorias de Produto",  desc:"Categorias para organizar os produtos do estoque.",            icon:"fa-box"},
@@ -260,9 +258,9 @@ const SECOES = {
                         info:"O código aparece no holerite. Marque como Desconto para que o valor seja subtraído automaticamente."},
 };
 
-const SECOES_COM_ICONE  = ["certificacoes"];   // usa tabela 'certificacoes' com coluna icone
-const SECOES_TIPOS_PGTO = ["tipos_pagamento"]; // usa coluna negativo (boolean)
-const SECOES_KANBAN     = ["kanban_colunas"];  // cor em descricao, sem toggle ativo
+const SECOES_COM_ICONE  = ["certificacoes"];
+const SECOES_TIPOS_PGTO = ["tipos_pagamento"];
+const SECOES_KANBAN     = ["kanban_colunas"];
 
 const COR_PALETA = ['#3b82f6','#f59e0b','#ef4444','#8b5cf6','#10b981','#6b7280','#06b6d4','#d946ef','#f43f5e','#84cc16','#f97316','#14b8a6'];
 
@@ -283,6 +281,36 @@ const FA_ICONES = [{i:"fa-certificate",l:"Certificado"},{i:"fa-person-dress",l:"
 
 let secaoAtual="certificacoes", itens=[], editandoId=null, adicionando=false, pickerAberto=false;
 
+// ── NAVEGAÇÃO POR HASH ────────────────────────────────────────────────────────
+function verificarHash(){
+  const hash = window.location.hash.replace('#','');
+  if(hash && SECOES[hash]){
+    // Encontra o item do menu e ativa
+    const menuItem = document.querySelector('.param-menu-item[data-secao="'+hash+'"]');
+    if(menuItem){
+      mudarSecao(hash, menuItem);
+      // Pulsa o item para destacar visualmente
+      menuItem.classList.add('highlight-pulse');
+      setTimeout(()=>menuItem.classList.remove('highlight-pulse'), 1400);
+      // Mostra botão voltar se veio de equipe
+      if(document.referrer.includes('equipe.html') || sessionStorage.getItem('voltarEquipe')){
+        mostrarBtnVoltar();
+      }
+    }
+  }
+  // Mostra botão voltar se flag na sessão
+  if(sessionStorage.getItem('voltarEquipe')){
+    mostrarBtnVoltar();
+  }
+}
+
+function mostrarBtnVoltar(){
+  const btn = document.getElementById('btnVoltarEquipe');
+  if(btn) btn.style.display = 'inline-flex';
+  sessionStorage.setItem('voltarEquipe','1');
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 function mudarSecao(secao,el){
   secaoAtual=secao;
   document.querySelectorAll(".param-menu-item").forEach(i=>i.classList.remove("active"));
@@ -293,17 +321,17 @@ function mudarSecao(secao,el){
   const infoBox=document.getElementById("panelInfoBox");
   if(info){infoBox.style.display="flex";document.getElementById("panelInfoTexto").textContent=info;}
   else infoBox.style.display="none";
+  // Atualiza hash sem recarregar
+  history.replaceState(null,'','#'+secao);
   carregar();
 }
 
 async function carregar(){
   if(SECOES_COM_ICONE.includes(secaoAtual)){
-    // certificacoes tem tabela e coluna icone próprias
     const {data,error}=await client.from("certificacoes").select("id,nome,icone").order("nome");
     if(error){console.error(error);return;}
     itens=(data||[]).map(c=>({id:c.id,valor:c.nome,icone:c.icone,ativo:true,descricao:null,negativo:false,ordem:0}));
   } else {
-    // parametros: id, tipo, valor, descricao, ativo, ordem, negativo
     const {data,error}=await client.from("parametros")
       .select("id,tipo,valor,descricao,ativo,ordem,negativo")
       .eq("tipo",secaoAtual)
@@ -338,7 +366,6 @@ function render(){
   }
 
   lista.innerHTML=itens.map(function(item){
-    // Ícone (só certificacoes)
     var iconeHtml="";
     if(temIcone){
       var v=item.icone||"fa-certificate";
@@ -346,19 +373,16 @@ function render(){
       else if(v.startsWith("data:")||v.startsWith("http")) iconeHtml='<img src="'+v+'" style="width:22px;height:22px;border-radius:4px;object-fit:cover;flex-shrink:0">';
       else iconeHtml='<i class="fa-solid '+v+'" style="font-size:16px;width:20px;text-align:center;color:#6b7280;flex-shrink:0"></i>';
     }
-    // Swatch cor (kanban) — cor vem de descricao
     var swatchHtml="";
     if(isKanban){
       var cor=item.descricao||"#6b7280";
       swatchHtml='<div class="color-swatch" style="background:'+cor+'" title="'+cor+'"></div>';
     }
-    // Código + badge provento/desconto (tipos_pagamento)
     var codHtml="",negBadge="";
     if(tipoPgto){
       codHtml='<span class="param-item-cod">'+(item.descricao||"—")+'</span>';
       negBadge='<span class="param-item-badge" style="'+(item.negativo?"color:#dc2626;background:#fee2e2":"color:#16a34a;background:#dcfce7")+'">'+(item.negativo?"Desconto":"Provento")+'</span>';
     }
-
     return '<div class="param-item" id="item-'+item.id+'">'+
       '<span class="param-item-drag"><i class="fa fa-grip-vertical"></i></span>'+
       iconeHtml+swatchHtml+codHtml+
@@ -418,17 +442,14 @@ function abrirEditar(id){
   editandoId=id;
   document.getElementById("editNome").value=item.valor||"";
   document.getElementById("editDesc").value=item.descricao||"";
-
   var temIcone=SECOES_COM_ICONE.includes(secaoAtual);
   var tipoPgto=SECOES_TIPOS_PGTO.includes(secaoAtual);
   var isKanban=SECOES_KANBAN.includes(secaoAtual);
-
   document.getElementById("campoIcone").style.display   =temIcone?"":"none";
   document.getElementById("campoCodigo").style.display  =tipoPgto?"":"none";
   document.getElementById("campoNegativo").style.display=tipoPgto?"":"none";
   document.getElementById("campoCor").style.display     =isKanban?"":"none";
   document.getElementById("campoDesc").style.display    =(tipoPgto||isKanban)?"none":"";
-
   if(tipoPgto){
     document.getElementById("editCodigo").value=item.descricao||"";
     document.getElementById("editNegativo").value=item.negativo?"true":"false";
@@ -453,7 +474,6 @@ async function salvarEdicao(){
     var icone=document.getElementById("editIcone").value||"fa-certificate";
     ({error}=await client.from("certificacoes").update({nome,icone}).eq("id",editandoId));
   } else if(SECOES_KANBAN.includes(secaoAtual)){
-    // cor salva em descricao
     var cor=document.getElementById("editCorHex").value.trim()||"#6366f1";
     ({error}=await client.from("parametros").update({valor:nome,descricao:cor}).eq("id",editandoId));
   } else if(SECOES_TIPOS_PGTO.includes(secaoAtual)){
@@ -467,7 +487,6 @@ async function salvarEdicao(){
   fecharModal();carregar();
 }
 
-// ── Color picker ─────────────────────────────────────────────────────────────
 function renderCorPaleta(corAtual){
   document.getElementById("colorPaletteRow").innerHTML=COR_PALETA.map(c=>
     '<div class="color-opt'+(c===corAtual?' selected':'')+'" style="background:'+c+'" title="'+c+'" onclick="selecionarCor(\''+c+'\')"></div>'
@@ -478,7 +497,6 @@ function setCorAtual(cor){document.getElementById("editCorHex").value=cor;docume
 function onColorPickerChange(cor){setCorAtual(cor);renderCorPaleta(cor);}
 function onColorHexChange(val){if(/^#[0-9a-fA-F]{6}$/.test(val)){document.getElementById("editCorPicker").value=val;renderCorPaleta(val);}}
 
-// ── Ícone picker ──────────────────────────────────────────────────────────────
 function togglePicker(){pickerAberto=!pickerAberto;document.getElementById("pickerBody").style.display=pickerAberto?"block":"none";document.getElementById("pickerChevron").className="fa fa-chevron-"+(pickerAberto?"up":"down")+" icone-picker-toggle";}
 function fecharPickerBody(){pickerAberto=false;var b=document.getElementById("pickerBody");var ch=document.getElementById("pickerChevron");if(b)b.style.display="none";if(ch)ch.className="fa fa-chevron-down icone-picker-toggle";}
 function mudarPickerTab(tab,btn){document.querySelectorAll(".picker-tab").forEach(b=>b.classList.remove("active"));document.querySelectorAll(".picker-panel").forEach(p=>p.classList.remove("active"));btn.classList.add("active");document.getElementById("pickerPanel-"+tab).classList.add("active");}
@@ -488,7 +506,6 @@ function selecionarFa(icone){setPickerValor(icone);renderFaGrid(document.getElem
 function aplicarFaManual(){var v=document.getElementById("faManual").value.trim();if(!v)return;if(!v.startsWith("fa-"))v="fa-"+v;selecionarFa(v);document.getElementById("faManual").value="";}
 function handleUpload(input){var file=input.files[0];if(!file)return;if(file.size>2*1024*1024){alert("Máximo 2MB.");return;}var reader=new FileReader();reader.onload=function(e){var url=e.target.result;setPickerValor(url);document.getElementById("uploadThumbWrap").style.display="block";document.getElementById("uploadThumbImg").src=url;document.getElementById("uploadThumbNome").textContent=file.name;};reader.readAsDataURL(file);}
 
-// ── Toggle / excluir ──────────────────────────────────────────────────────────
 async function toggleAtivo(id,ativoAtual){
   var {error}=await client.from("parametros").update({ativo:!ativoAtual}).eq("id",id);
   if(error){alert("Erro: "+error.message);return;}
@@ -511,10 +528,25 @@ async function excluir(id){
   carregar();
 }
 
+// Limpa a flag de voltar quando sair da página normalmente pelo menu lateral
+window.addEventListener('beforeunload', function(){
+  // Só limpa se NÃO for voltar para equipe
+  if(!document.activeElement?.href?.includes('equipe.html')){
+    sessionStorage.removeItem('voltarEquipe');
+  }
+});
+
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById("faBusca").addEventListener("input",function(e){renderFaGrid(e.target.value);});
   document.getElementById("faManual").addEventListener("keydown",function(e){if(e.key==="Enter")aplicarFaManual();});
-  carregar();
+
+  // Detecta se veio via link #cargos da equipe
+  verificarHash();
+
+  // Se não tem hash, carrega normalmente
+  if(!window.location.hash){
+    carregar();
+  }
 });
 </script>
 </body>

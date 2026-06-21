@@ -507,9 +507,9 @@ async function fetchNovosCompleto(){
 /* FILTROS */
 function aplicarFiltros(){
   selecao={tipo:null,valor:null};const badge=document.getElementById("selecaoBadge");if(badge)badge.remove();
-  const ano=document.getElementById("fAno").value,mes=document.getElementById("fMes").value,quinz=document.getElementById("fQuinz").value,prof=document.getElementById("fProf").value,serv=document.getElementById("fServ").value,fonte=document.getElementById("fFonte").value;
-  const statusFiltro=document.getElementById("fStatus")?.value||"";
-  allData=cacheCompleto.filter(r=>{if(!r.data)return false;const[y,m,d]=r.data.split("-");if(ano&&y!==ano)return false;if(mes&&m!==mes)return false;if(quinz==="1"&&parseInt(d)>15)return false;if(quinz==="2"&&parseInt(d)<=15)return false;if(prof&&r.profissional!==prof)return false;if(serv&&r.servico!==serv)return false;if(fonte&&r._fonte!==fonte)return false;if(statusFiltro&&r._status!==statusFiltro)return false;return true;});
+  // Atualiza opções dos selects dinamicamente
+  if(cacheCompleto.length) _atualizarSelects(cacheCompleto);
+  allData=cacheCompleto.filter(r=>_matchFiltros(r,{}));
   const legados=allData.filter(r=>r._fonte==="legado").length,novos=allData.filter(r=>r._fonte==="novo").length;
   const info=document.getElementById("fonteInfo");
   info.innerHTML=legados&&novos?`<span class="fonte-badge ambos"><i class="fa fa-database"></i> ${fmtN(legados)} legado + ${fmtN(novos)} novos</span>`:legados?`<span class="fonte-badge legado"><i class="fa fa-database"></i> ${fmtN(legados)} do legado</span>`:`<span class="fonte-badge novo"><i class="fa fa-star"></i> ${fmtN(novos)} novos</span>`;
@@ -728,14 +728,54 @@ function atualizarValuation(){
 function resetZoomProj(){if(charts["chartValProj"])charts["chartValProj"].resetZoom();}
 function verTudoProj(){if(charts["chartValProj"])charts["chartValProj"].resetZoom();}
 
-/* POPULAR SELECTS DE FILTRO */
+/* POPULAR SELECTS DE FILTRO — dinâmicos entre si */
 function popularFiltros(){
-  const profs=[...new Set(cacheCompleto.map(r=>r.profissional).filter(Boolean))].sort();
-  const sel=document.getElementById("fProf");sel.innerHTML='<option value="">Todos</option>';
-  profs.forEach(p=>sel.innerHTML+=`<option value="${p}">${p}</option>`);
-  const servs=[...new Set(cacheCompleto.map(r=>r.servico).filter(Boolean))].sort();
-  const selS=document.getElementById("fServ");selS.innerHTML='<option value="">Todos</option>';
-  servs.forEach(s=>selS.innerHTML+=`<option value="${s}">${s}</option>`);
+  // Popula profissional e serviço com TODOS os dados (inicial)
+  _atualizarSelects(cacheCompleto);
+}
+
+function _setSelect(id, vals, label){
+  const el=document.getElementById(id); if(!el)return;
+  const cur=el.value;
+  el.innerHTML=`<option value="">${label}</option>`;
+  vals.forEach(v=>el.innerHTML+=`<option value="${v}"${v===cur?' selected':''}>${v}</option>`);
+  // Se valor anterior ainda existe, mantém; caso contrário reset
+  if(!vals.includes(cur)) el.value="";
+}
+
+function _atualizarSelects(base){
+  // Profissional — filtrado por tudo exceto profissional
+  const semProf=base.filter(r=>_matchFiltros(r,{skip:"prof"}));
+  const profs=[...new Set(semProf.map(r=>r.profissional).filter(Boolean))].sort();
+  _setSelect("fProf", profs, "Todos");
+
+  // Serviço — filtrado por tudo exceto serviço
+  const semServ=base.filter(r=>_matchFiltros(r,{skip:"serv"}));
+  const servs=[...new Set(semServ.map(r=>r.servico).filter(Boolean))].sort();
+  _setSelect("fServ", servs, "Todos");
+}
+
+// Verifica se um registro passa em todos os filtros ativos, opcionalmente ignorando um
+function _matchFiltros(r, opts){
+  const skip=opts?.skip||"";
+  const ano=document.getElementById("fAno")?.value||"";
+  const mes=document.getElementById("fMes")?.value||"";
+  const quinz=document.getElementById("fQuinz")?.value||"";
+  const prof=document.getElementById("fProf")?.value||"";
+  const serv=document.getElementById("fServ")?.value||"";
+  const fonte=document.getElementById("fFonte")?.value||"";
+  const status=document.getElementById("fStatus")?.value||"";
+  if(!r.data)return false;
+  const[y,m,d]=r.data.split("-");
+  if(ano&&y!==ano)return false;
+  if(mes&&m!==mes)return false;
+  if(quinz==="1"&&parseInt(d)>15)return false;
+  if(quinz==="2"&&parseInt(d)<=15)return false;
+  if(skip!=="prof"&&prof&&r.profissional!==prof)return false;
+  if(skip!=="serv"&&serv&&r.servico!==serv)return false;
+  if(fonte&&r._fonte!==fonte)return false;
+  if(status&&r._status!==status)return false;
+  return true;
 }
 
 /* INIT */

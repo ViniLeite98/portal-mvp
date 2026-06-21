@@ -628,16 +628,20 @@ async function buscarIconify(){
         return {name, svg};
       } catch(e){ return {name, svg:null}; }
     }));
-    const atual = document.getElementById('editIcone').value;
-    grid.innerHTML = svgs.filter(x=>x.svg).map(x =>
-      '<div class="iconify-opt'+(atual===x.svg?' selected':'')+'" onclick="selecionarIconify(this,''+x.name+'')" title="'+x.name+'">'+
-        x.svg+
-        '<span>'+x.name.split(':')[1]+'</span>'+
-      '</div>'
-    ).join('');
     // Guarda SVGs para acesso rápido
     window._iconifySvgMap = {};
     svgs.forEach(x=>{ if(x.svg) window._iconifySvgMap[x.name]=x.svg; });
+    // Renderiza via DOM (evita quebra de aspas no onclick inline)
+    grid.innerHTML = '';
+    svgs.filter(x=>x.svg).forEach(x => {
+      const div = document.createElement('div');
+      div.className = 'iconify-opt';
+      div.title = x.name;
+      div.dataset.name = x.name;
+      div.innerHTML = x.svg + '<span>' + x.name.split(':')[1] + '</span>';
+      div.addEventListener('click', function(){ selecionarIconify(div, x.name); });
+      grid.appendChild(div);
+    });
   } catch(e){
     grid.innerHTML = '<div class="iconify-loading" style="color:#dc2626">Erro ao buscar. Tente novamente.</div>';
   }

@@ -683,4 +683,56 @@ function atualizarValuation(){
   const allReais=[...todosVals,...Array(Math.max(0,projLabels.length)).fill(null)];
   const allProj=[...Array(Math.max(0,todosLabels.length-1)).fill(null),todosVals[todosVals.length-1],...projVals];
   const allMRR=allLabels.map(()=>mrr);
-  mkChart("chartVa
+  mkChart("chartValProj",{type:"line",data:{labels:allLabels,datasets:[
+    {label:"Receita Real",data:allReais,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.08)",fill:true,tension:.3,pointRadius:3,borderWidth:2},
+    {label:"Projeção",data:allProj,borderColor:"#d97706",backgroundColor:"rgba(217,119,6,.06)",fill:false,tension:.3,pointRadius:3,borderWidth:2,borderDash:[6,3]},
+    {label:"MRR",data:allMRR,borderColor:"#16a34a",backgroundColor:"transparent",fill:false,tension:0,pointRadius:0,borderWidth:1.5,borderDash:[4,4]}
+  ]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11},boxWidth:12}},zoom:{pan:{enabled:true,mode:"x"},zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
+}
+function resetZoomProj(){if(charts["chartValProj"])charts["chartValProj"].resetZoom();}
+function verTudoProj(){if(charts["chartValProj"])charts["chartValProj"].resetZoom();}
+
+/* POPULAR SELECTS DE FILTRO */
+function popularFiltros(){
+  const profs=[...new Set(cacheCompleto.map(r=>r.profissional).filter(Boolean))].sort();
+  const sel=document.getElementById("fProf");sel.innerHTML='<option value="">Todos</option>';
+  profs.forEach(p=>sel.innerHTML+=`<option value="${p}">${p}</option>`);
+  const servs=[...new Set(cacheCompleto.map(r=>r.servico).filter(Boolean))].sort();
+  const selS=document.getElementById("fServ");selS.innerHTML='<option value="">Todos</option>';
+  servs.forEach(s=>selS.innerHTML+=`<option value="${s}">${s}</option>`);
+}
+
+/* INIT */
+document.addEventListener("DOMContentLoaded",async()=>{
+  setLoading("Carregando dados recentes...");
+  setProgress(10,"Buscando atendimentos do ano atual...");
+  try{
+    const[legRec,novRec]=await Promise.all([fetchLegadoRecente(),fetchNovosRecente()]);
+    setProgress(50,"Processando dados recentes...");
+    const recente=[...legRec,...novRec];
+    cacheCompleto=recente;
+    allData=recente;
+    popularFiltros();
+    aplicarFiltros();
+    stopLoading();
+    setProgress(100);
+
+    // Background: load full historical data
+    setBgBanner("Carregando histórico completo...",true);
+    setProgress(60,"Carregando histórico...");
+    const[legFull,novFull]=await Promise.all([fetchLegadoCompleto(),fetchNovosCompleto()]);
+    setProgress(90,"Mesclando dados históricos...");
+    cacheCompleto=[...legFull,...novFull];
+    popularFiltros();
+    aplicarFiltros();
+    setBgBanner("",false);
+    setProgress(100,"Concluído");
+  }catch(e){
+    console.error("Erro ao carregar dashboard:",e);
+    stopLoading();
+    setBgBanner("Erro ao carregar dados. Recarregue a página.",true);
+  }
+});
+</script>
+</body>
+</html>

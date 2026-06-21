@@ -28,6 +28,8 @@ button.exportar{background:#16a34a;}
 button.vincular-btn{background:#2563eb;display:inline-flex !important;align-items:center;gap:6px;}
 .cert-icones{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .cert-icones i{font-size:15px;}
+.cert-icones .icone-svg{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cert-icones .icone-svg svg{width:18px;height:18px;}
 .badge-count{background:#f3f4f6;color:#374151;font-size:11px;font-weight:700;border-radius:99px;padding:2px 8px;margin-left:4px;}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:560px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
@@ -65,6 +67,10 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .upload-ing{font-size:11px;color:#2563eb;display:none;}
 .legenda{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px;color:#6b7280;margin-bottom:16px;}
 .legenda span{display:flex;align-items:center;gap:5px;}
+.legenda .icone-svg{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.legenda .icone-svg svg{width:16px;height:16px;}
+.icone-modal{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.icone-modal svg{width:22px;height:22px;}
 </style>
 </head>
 <body>
@@ -161,8 +167,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
-<script src="assets/sidebar/sidebar.js" defer></script>
-<script src="assets/sidebar/sidebar.js" defer></script>
+<script src="assets/sidebar/sidebar.js"></script>
 <script>
 
 let dados = [];
@@ -171,9 +176,23 @@ let certificacoes = [];
 
 function podeVerTudo(u){ return u && (u.role === "admin" || u.role === "apoio"); }
 
-function iconeParaCert(certId){
-  const c = certificacoes.find(x => x.id === certId || x.nome === certId);
-  return c?.icone || "fa-certificate";
+// ── RENDERIZAÇÃO DE ÍCONES (suporta FA, SVG do Iconify e imagens) ─────────────
+function renderIcone(icone, cor, tamanho, titulo){
+  tamanho = tamanho || 18;
+  titulo = titulo ? ' title="'+titulo+'"' : '';
+  if(!icone) icone = 'fa-certificate';
+
+  if(icone.trim().startsWith('<svg')){
+    // SVG inline (Iconify ou upload SVG)
+    const coloredSvg = icone.replace(/currentColor/g, cor || '#6b7280');
+    return '<span class="icone-svg" style="width:'+tamanho+'px;height:'+tamanho+'px"'+titulo+'>'+coloredSvg+'</span>';
+  }
+  if(icone.startsWith('data:') || icone.startsWith('http')){
+    // Imagem (upload)
+    return '<img src="'+icone+'" style="width:'+tamanho+'px;height:'+tamanho+'px;border-radius:3px;object-fit:cover"'+titulo+'>';
+  }
+  // Font Awesome
+  return '<i class="fa-solid '+icone+'" style="font-size:'+tamanho+'px;color:'+(cor||'#6b7280')+'"'+titulo+'></i>';
 }
 
 function corIcone(icone){
@@ -185,16 +204,21 @@ function corIcone(icone){
     "fa-hands":"#6366f1","fa-leaf":"#22c55e",
     "fa-fire":"#f97316","fa-snowflake":"#38bdf8",
   };
+  // SVG e imagens usam cor neutra
+  if(!icone || icone.trim().startsWith('<svg') || icone.startsWith('data:') || icone.startsWith('http'))
+    return '#6b7280';
   return cores[icone] || "#6b7280";
 }
 
 function renderLegenda(){
   const legEl = document.getElementById("legenda");
   if(!certificacoes.length){ legEl.innerHTML = ""; return; }
-  legEl.innerHTML = `<strong>Legenda:</strong> ` +
-    certificacoes.map(c =>
-      `<span><i class="fa-solid ${c.icone||'fa-certificate'}" style="color:${corIcone(c.icone)}"></i> ${c.nome}</span>`
-    ).join("");
+  legEl.innerHTML = '<strong>Legenda:</strong> ' +
+    certificacoes.map(c => {
+      const icone = c.icone || 'fa-certificate';
+      const cor = corIcone(icone);
+      return '<span>' + renderIcone(icone, cor, 16, c.nome) + ' ' + c.nome + '</span>';
+    }).join('');
 }
 
 async function carregarSelects(){
@@ -205,7 +229,7 @@ async function carregarSelects(){
   const selTer = document.getElementById("cpf_terapeuta");
   selTer.innerHTML = "<option value=''>Selecione o profissional</option>";
   (terapeutas||[]).forEach(t =>
-    selTer.innerHTML += `<option value="${t.cpf}">${t.nome_profissional}</option>`
+    selTer.innerHTML += '<option value="'+t.cpf+'">'+t.nome_profissional+'</option>'
   );
 
   const {data: certs} = await client.from("certificacoes").select("id,nome,icone").order("nome");
@@ -214,7 +238,7 @@ async function carregarSelects(){
   const selCert = document.getElementById("certificacao_id");
   selCert.innerHTML = "<option value=''>Selecione a certificação</option>";
   certificacoes.forEach(c =>
-    selCert.innerHTML += `<option value="${c.id}">${c.nome}</option>`
+    selCert.innerHTML += '<option value="'+c.id+'">'+c.nome+'</option>'
   );
 
   renderLegenda();
@@ -222,16 +246,12 @@ async function carregarSelects(){
 
 async function carregarLista(){
   if(!window.usuarioLogado){ setTimeout(carregarLista, 100); return; }
-
   const u = window.usuarioLogado;
-
   let q = client
     .from("terapeuta_certificacoes")
-    .select(`id, data_obtencao, arquivo_url, arquivo_nome, cpf_terapeuta, certificacoes(id,nome,icone), terapeutas(nome_profissional)`)
+    .select('id, data_obtencao, arquivo_url, arquivo_nome, cpf_terapeuta, certificacoes(id,nome,icone), terapeutas(nome_profissional)')
     .order("id");
-
   if(!podeVerTudo(u) && u && u.cpf) q = q.eq("cpf_terapeuta", u.cpf);
-
   const {data} = await q;
   dados = data || [];
   render();
@@ -257,7 +277,7 @@ function render(){
   tbody.innerHTML = "";
 
   if(!Object.keys(agrupado).length){
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:32px">Nenhum resultado encontrado.</td></tr>`;
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:32px">Nenhum resultado encontrado.</td></tr>';
     return;
   }
 
@@ -267,22 +287,22 @@ function render(){
     ).values()];
 
     const iconesHtml = iconesUnicos.map(i =>
-      `<i class="fa-solid ${i.icone}" style="color:${corIcone(i.icone)}" title="${i.nome}"></i>`
-    ).join("");
+      renderIcone(i.icone, corIcone(i.icone), 18, i.nome)
+    ).join('');
 
-    tbody.innerHTML += `<tr>
-      <td><strong>${t.nome}</strong></td>
-      <td><div class="cert-icones">${iconesHtml}</div></td>
-      <td><span class="badge-count">${t.certs.length}</span></td>
-      <td><button onclick="abrirModal('${t.nome.replace(/'/g,"\\'")}')"><i class="fa fa-eye"></i> Ver / Editar</button></td>
-    </tr>`;
+    tbody.innerHTML += '<tr>'
+      + '<td><strong>'+t.nome+'</strong></td>'
+      + '<td><div class="cert-icones">'+iconesHtml+'</div></td>'
+      + '<td><span class="badge-count">'+t.certs.length+'</span></td>'
+      + '<td><button onclick="abrirModal(\''+t.nome.replace(/'/g,"\\'")+'\')">'
+      + '<i class="fa fa-eye"></i> Ver / Editar</button></td>'
+      + '</tr>';
   });
 }
 
 function abrirVincular(){
   const u = window.usuarioLogado;
   const selTer = document.getElementById("cpf_terapeuta");
-
   if(!podeVerTudo(u) && u && u.cpf){
     selTer.value = u.cpf;
     selTer.disabled = true;
@@ -290,7 +310,6 @@ function abrirVincular(){
     selTer.value = "";
     selTer.disabled = false;
   }
-
   document.getElementById("certificacao_id").value = "";
   document.getElementById("data_obtencao").value   = "";
   if(document.getElementById("arquivo_vincular"))
@@ -315,7 +334,7 @@ async function vincular(){
   if(file && inserted?.id){
     const statusEl = document.getElementById("uploading_vincular");
     statusEl.style.display = "block";
-    const fileName = `certificados/${inserted.id}/${Date.now()}_${limparNome(file.name)}`;
+    const fileName = 'certificados/'+inserted.id+'/'+Date.now()+'_'+limparNome(file.name);
     const {error: upErr} = await client.storage.from("documentos").upload(fileName, file);
     if(!upErr){
       const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
@@ -342,46 +361,45 @@ function abrirModal(nome){
       ? new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR")
       : "Sem data";
 
+    const iconeHtml = renderIcone(icone, cor, 20);
+
     const arquivoHtml = r.arquivo_url
-      ? `<div class="cert-arquivo">
-           <i class="fa fa-paperclip"></i>
-           <a class="btn-ver-cert" href="${r.arquivo_url}" target="_blank">
-             <i class="fa fa-eye"></i> ${r.arquivo_nome||"Ver certificado"}
-           </a>
-           ${podeVerTudo(u) ? `<button class="excluir" style="padding:2px 8px;font-size:11px"
-             onclick="excluirArquivo('${r.id}','${(r.arquivo_url||"").replace(/'/g,"\\'")}','${nome.replace(/'/g,"\\'")}')">
-             <i class="fa fa-times"></i> Remover
-           </button>` : ""}
-         </div>`
-      : `<div class="cert-upload">
-           <input type="file" id="file_${r.id}" accept="image/*,.pdf,.doc,.docx">
-           <button class="btn-upload-cert" onclick="uploadCert('${r.id}','${nome.replace(/'/g,"\\'")}')">
-             <i class="fa fa-upload"></i> Anexar certificado
-           </button>
-           <span class="upload-ing" id="uploading_${r.id}"><i class="fa fa-spinner fa-spin"></i></span>
-         </div>`;
+      ? '<div class="cert-arquivo">'
+          + '<i class="fa fa-paperclip"></i>'
+          + '<a class="btn-ver-cert" href="'+r.arquivo_url+'" target="_blank">'
+          + '<i class="fa fa-eye"></i> '+(r.arquivo_nome||"Ver certificado")+'</a>'
+          + (podeVerTudo(u)
+            ? '<button class="excluir" style="padding:2px 8px;font-size:11px"'
+              + ' onclick="excluirArquivo(\''+r.id+'\',\''+((r.arquivo_url||"").replace(/'/g,"\\'"))+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-times"></i> Remover</button>'
+            : '')
+          + '</div>'
+      : '<div class="cert-upload">'
+          + '<input type="file" id="file_'+r.id+'" accept="image/*,.pdf,.doc,.docx">'
+          + '<button class="btn-upload-cert" onclick="uploadCert(\''+r.id+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-upload"></i> Anexar certificado</button>'
+          + '<span class="upload-ing" id="uploading_'+r.id+'"><i class="fa fa-spinner fa-spin"></i></span>'
+          + '</div>';
 
     const botoesAcao = podeVerTudo(u)
-      ? `<button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>
-         <button class="excluir" onclick="excluir('${r.id}','${nome.replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>`
-      : `<button onclick="editarCert('${r.id}','${r.data_obtencao||""}')"><i class="fa fa-pencil"></i></button>`;
+      ? '<button onclick="editarCert(\''+r.id+'\',\''+( r.data_obtencao||"")+'\')"><i class="fa fa-pencil"></i></button>'
+        + '<button class="excluir" onclick="excluir(\''+r.id+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-trash"></i></button>'
+      : '<button onclick="editarCert(\''+r.id+'\',\''+( r.data_obtencao||"")+'\')"><i class="fa fa-pencil"></i></button>';
 
-    return `<div class="cert-row" id="cert-row-${r.id}">
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-        <div class="cert-row-left">
-          <i class="fa-solid ${icone}" style="font-size:18px;color:${cor}"></i>
-          <div class="cert-info">
-            <span class="cert-nome">${r.certificacoes?.nome||""}</span>
-            <span class="cert-data"><i class="fa fa-calendar-alt"></i> ${dataFmt}</span>
-          </div>
-        </div>
-        <div class="cert-row-right">${botoesAcao}</div>
-      </div>
-      ${arquivoHtml}
-    </div>`;
+    return '<div class="cert-row" id="cert-row-'+r.id+'">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;width:100%">'
+        + '<div class="cert-row-left">'
+          + iconeHtml
+          + '<div class="cert-info">'
+            + '<span class="cert-nome">'+(r.certificacoes?.nome||"")+'</span>'
+            + '<span class="cert-data"><i class="fa fa-calendar-alt"></i> '+dataFmt+'</span>'
+          + '</div>'
+        + '</div>'
+        + '<div class="cert-row-right">'+botoesAcao+'</div>'
+      + '</div>'
+      + arquivoHtml
+      + '</div>';
   }).join("");
 
-  document.getElementById("listaCerts").innerHTML = html || `<p style="color:#9ca3af;text-align:center">Nenhuma certificação.</p>`;
+  document.getElementById("listaCerts").innerHTML = html || '<p style="color:#9ca3af;text-align:center">Nenhuma certificação.</p>';
   document.getElementById("modalCerts").style.display = "flex";
 }
 
@@ -424,7 +442,7 @@ async function uploadCert(id, nomeTerapeuta){
   if(!file){ alert("Selecione um arquivo."); return; }
   const statusEl = document.getElementById("uploading_"+id);
   if(statusEl) statusEl.style.display = "inline";
-  const fileName = `certificados/${id}/${Date.now()}_${limparNome(file.name)}`;
+  const fileName = 'certificados/'+id+'/'+Date.now()+'_'+limparNome(file.name);
   const {error: upErr} = await client.storage.from("documentos").upload(fileName, file);
   if(upErr){ if(statusEl) statusEl.style.display="none"; alert("Erro: "+upErr.message); return; }
   const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);

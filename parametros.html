@@ -105,6 +105,34 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .upload-thumb img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #e5e7eb;}
 .upload-thumb span{display:block;font-size:11px;color:#6b7280;margin-top:4px;}
 
+/* Iconify panel */
+.iconify-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:180px;overflow-y:auto;margin-top:8px;}
+.iconify-opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:10px;color:#6b7280;transition:all .12s;text-align:center;line-height:1.2;}
+.iconify-opt:hover{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
+.iconify-opt.selected{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
+.iconify-opt svg{width:22px;height:22px;flex-shrink:0;}
+.iconify-loading{text-align:center;color:#9ca3af;font-size:12px;padding:20px;grid-column:1/-1;}
+
+/* IA generator panel */
+.ia-wrap{padding:4px 0;}
+.ia-prompt-row{display:flex;gap:8px;margin-bottom:10px;}
+.ia-prompt-row input{flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;}
+.ia-prompt-row input:focus{outline:none;border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1);}
+.ia-prompt-row button{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.ia-prompt-row button:hover{background:#6d28d9;}
+.ia-prompt-row button:disabled{opacity:.5;cursor:default;}
+.ia-result-wrap{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;}
+.ia-preview{width:72px;height:72px;border:2px solid #e5e7eb;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#faf5ff;}
+.ia-preview svg{width:56px;height:56px;}
+.ia-actions{display:flex;flex-direction:column;gap:6px;justify-content:center;}
+.ia-use-btn{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.ia-use-btn:hover{background:#6d28d9;}
+.ia-regen-btn{background:#fff;color:#374151;border:1px solid #d1d5db;border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.ia-regen-btn:hover{background:#f3f4f6;}
+.ia-status{font-size:12px;color:#9ca3af;padding:16px 0;text-align:center;}
+.ia-status i{display:block;font-size:20px;margin-bottom:6px;color:#d1d5db;}
+.ia-error{font-size:12px;color:#dc2626;padding:8px;background:#fee2e2;border-radius:8px;}
+
 /* Botão voltar */
 .btn-voltar{display:none;align-items:center;gap:6px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:#374151;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:all .15s;}
 .btn-voltar:hover{background:#f3f4f6;border-color:#d1d5db;}
@@ -206,6 +234,8 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
         <div id="pickerBody" style="display:none">
           <div class="picker-tabs">
             <button class="picker-tab active" onclick="mudarPickerTab('fa',this)"><i class="fa fa-icons"></i> Font Awesome</button>
+            <button class="picker-tab" onclick="mudarPickerTab('iconify',this)"><i class="fa fa-magnifying-glass"></i> Iconify</button>
+            <button class="picker-tab" onclick="mudarPickerTab('ia',this)"><i class="fa fa-wand-magic-sparkles"></i> IA</button>
             <button class="picker-tab" onclick="mudarPickerTab('upload',this)"><i class="fa fa-upload"></i> Upload</button>
           </div>
           <div class="picker-panel active" id="pickerPanel-fa">
@@ -214,6 +244,26 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
             <div class="fa-manual">
               <span>Manual:</span><input id="faManual" placeholder="fa-flag-usa">
               <button class="btn-ghost" onclick="aplicarFaManual()">Aplicar</button>
+            </div>
+          </div>
+          <div class="picker-panel" id="pickerPanel-iconify">
+            <div class="picker-search">
+              <input id="iconifyBusca" placeholder="Buscar em 200k+ ícones... ex: dog, spa, heart">
+              <button class="btn-blue" onclick="buscarIconify()" style="padding:7px 12px;font-size:12px;">Buscar</button>
+            </div>
+            <div class="iconify-grid" id="iconifyGrid">
+              <div class="iconify-loading"><i class="fa fa-search" style="font-size:20px;margin-bottom:6px;display:block;color:#d1d5db"></i>Digite algo para buscar</div>
+            </div>
+          </div>
+          <div class="picker-panel" id="pickerPanel-ia">
+            <div class="ia-wrap">
+              <div class="ia-prompt-row">
+                <input id="iaPrompt" placeholder="Descreva o ícone... ex: cachorro brincando, folha de bambu">
+                <button id="iaBtnGerar" onclick="gerarIconeIA()"><i class="fa fa-wand-magic-sparkles"></i> Gerar</button>
+              </div>
+              <div id="iaResult">
+                <div class="ia-status"><i class="fa fa-wand-magic-sparkles"></i>Descreva o ícone que deseja e clique em Gerar</div>
+              </div>
             </div>
           </div>
           <div class="picker-panel" id="pickerPanel-upload">
@@ -551,6 +601,116 @@ function selecionarFa(icone){setPickerValor(icone);renderFaGrid(document.getElem
 function aplicarFaManual(){var v=document.getElementById("faManual").value.trim();if(!v)return;if(!v.startsWith("fa-"))v="fa-"+v;selecionarFa(v);document.getElementById("faManual").value="";}
 function handleUpload(input){var file=input.files[0];if(!file)return;if(file.size>2*1024*1024){alert("Máximo 2MB.");return;}var reader=new FileReader();reader.onload=function(e){var url=e.target.result;setPickerValor(url);document.getElementById("uploadThumbWrap").style.display="block";document.getElementById("uploadThumbImg").src=url;document.getElementById("uploadThumbNome").textContent=file.name;};reader.readAsDataURL(file);}
 
+// ── ICONIFY SEARCH ───────────────────────────────────────────────────────────
+let iconifyDebounce = null;
+// listeners de teclado registrados no DOMContentLoaded principal abaixo
+
+async function buscarIconify(){
+  const q = (document.getElementById('iconifyBusca').value||'').trim();
+  if(!q) return;
+  const grid = document.getElementById('iconifyGrid');
+  grid.innerHTML = '<div class="iconify-loading"><i class="fa fa-spinner fa-spin" style="font-size:18px;display:block;margin-bottom:6px"></i>Buscando...</div>';
+  try {
+    const res = await fetch('https://api.iconify.design/search?query='+encodeURIComponent(q)+'&limit=48');
+    const data = await res.json();
+    if(!data.icons || !data.icons.length){
+      grid.innerHTML = '<div class="iconify-loading">Nenhum ícone encontrado para "'+q+'"</div>';
+      return;
+    }
+    // Busca SVGs em paralelo (lotes de 12)
+    grid.innerHTML = '<div class="iconify-loading"><i class="fa fa-spinner fa-spin" style="font-size:18px;display:block;margin-bottom:6px"></i>Carregando ícones...</div>';
+    const icons = data.icons.slice(0, 36);
+    const svgs = await Promise.all(icons.map(async name => {
+      try {
+        const [prefix, iconName] = name.split(':');
+        const r = await fetch('https://api.iconify.design/'+prefix+'/'+iconName+'.svg?color=%236b7280&width=24&height=24');
+        const svg = await r.text();
+        return {name, svg};
+      } catch(e){ return {name, svg:null}; }
+    }));
+    const atual = document.getElementById('editIcone').value;
+    grid.innerHTML = svgs.filter(x=>x.svg).map(x =>
+      '<div class="iconify-opt'+(atual===x.svg?' selected':'')+'" onclick="selecionarIconify(this,''+x.name+'')" title="'+x.name+'">'+
+        x.svg+
+        '<span>'+x.name.split(':')[1]+'</span>'+
+      '</div>'
+    ).join('');
+    // Guarda SVGs para acesso rápido
+    window._iconifySvgMap = {};
+    svgs.forEach(x=>{ if(x.svg) window._iconifySvgMap[x.name]=x.svg; });
+  } catch(e){
+    grid.innerHTML = '<div class="iconify-loading" style="color:#dc2626">Erro ao buscar. Tente novamente.</div>';
+  }
+}
+
+function selecionarIconify(el, name){
+  const svg = window._iconifySvgMap?.[name];
+  if(!svg) return;
+  // Colore o SVG selecionado para #7c3aed no preview
+  const svgColored = svg.replace(/currentColor|#6b7280/g, '#7c3aed');
+  setPickerValor(svgColored);
+  document.querySelectorAll('.iconify-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ── IA SVG GENERATOR ─────────────────────────────────────────────────────────
+let iaGerandoAtual = null;
+
+async function gerarIconeIA(){
+  const prompt = (document.getElementById('iaPrompt').value||'').trim();
+  if(!prompt){ document.getElementById('iaPrompt').focus(); return; }
+  const btn = document.getElementById('iaBtnGerar');
+  const result = document.getElementById('iaResult');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Gerando...';
+  result.innerHTML = '<div class="ia-status"><i class="fa fa-spinner fa-spin"></i>Criando seu ícone com IA...</div>';
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        system: `Você é um designer de ícones SVG minimalistas. 
+Gere APENAS o código SVG — sem explicação, sem markdown, sem backticks.
+O SVG deve ter viewBox="0 0 24 24", usar stroke="currentColor", fill="none", stroke-width="1.5", stroke-linecap="round", stroke-linejoin="round".
+Estilo: linha limpa, moderno, similar ao Heroicons ou Lucide.
+Responda SOMENTE com o SVG, começando com <svg e terminando com </svg>.`,
+        messages: [{role:'user', content:'Crie um ícone SVG de: '+prompt}]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content||[]).map(b=>b.text||'').join('').trim();
+    // Extrai SVG mesmo se vier com texto ao redor
+    const match = text.match(/<svg[\s\S]*?<\/svg>/i);
+    const svg = match ? match[0] : null;
+    if(!svg){ throw new Error('SVG não gerado'); }
+
+    iaGerandoAtual = svg;
+    const svgPreview = svg.replace(/currentColor/g,'#7c3aed').replace(/width="[^"]*"/,'width="56"').replace(/height="[^"]*"/,'height="56"');
+    result.innerHTML =
+      '<div class="ia-result-wrap">'+
+        '<div class="ia-preview">'+svgPreview+'</div>'+
+        '<div class="ia-actions">'+
+          '<button class="ia-use-btn" onclick="usarIconeIA()"><i class="fa fa-check"></i> Usar este ícone</button>'+
+          '<button class="ia-regen-btn" onclick="gerarIconeIA()"><i class="fa fa-rotate"></i> Gerar outro</button>'+
+        '</div>'+
+      '</div>';
+  } catch(e){
+    result.innerHTML = '<div class="ia-error"><i class="fa fa-triangle-exclamation"></i> Erro ao gerar: '+e.message+'</div>';
+  }
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa fa-wand-magic-sparkles"></i> Gerar';
+}
+
+function usarIconeIA(){
+  if(!iaGerandoAtual) return;
+  const svgFinal = iaGerandoAtual.replace(/currentColor/g,'#7c3aed');
+  setPickerValor(svgFinal);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function toggleAtivo(id,ativoAtual){
   var {error}=await client.from("parametros").update({ativo:!ativoAtual}).eq("id",id);
   if(error){alert("Erro: "+error.message);return;}
@@ -576,6 +736,8 @@ async function excluir(id){
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById("faBusca").addEventListener("input",function(e){renderFaGrid(e.target.value);});
   document.getElementById("faManual").addEventListener("keydown",function(e){if(e.key==="Enter")aplicarFaManual();});
+  document.getElementById("iconifyBusca").addEventListener("keydown",function(e){if(e.key==="Enter")buscarIconify();});
+  document.getElementById("iaPrompt").addEventListener("keydown",function(e){if(e.key==="Enter")gerarIconeIA();});
   verificarHash();
 });
 </script>

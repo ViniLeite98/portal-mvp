@@ -8,36 +8,58 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
-<script src="assets/sidebar/sidebar.js" defer></script>
+<script src="assets/sidebar/sidebar.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:36px 40px;}
-.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px;}
-.page-header h1{font-size:26px;font-weight:800;color:#111827;}
-.btn{border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:7px;transition:all .15s;}
-.btn:hover{opacity:.88;transform:translateY(-1px);}
-.btn-dark{background:#1f2937;color:#fff;}
-.btn-red{background:#dc2626;color:#fff;}
-.btn-green{background:#16a34a;color:#fff;}
-.btn-ghost{background:#fff;color:#374151;border:1px solid #e5e7eb;}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;}
+
+/* ── TOPBAR padrão equipe ── */
+.topbar{margin-bottom:24px;}
+.topbar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+
+/* Contador */
+.collab-counter{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:7px 16px;font-size:13px;color:#374151;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.collab-counter i{color:#2563eb;font-size:13px;}
+.collab-counter .count{font-weight:700;color:#111827;font-size:16px;}
+.collab-counter .label{color:#6b7280;font-size:12px;}
+
+/* Filtros com labels */
+.filters-row{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;}
+.filter-group{display:flex;flex-direction:column;gap:4px;}
+.filter-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;}
+.filter-group input,.filter-group select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;}
+.filter-group input{width:260px;}
+.filter-group input:focus,.filter-group select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.filter-group select{min-width:160px;}
+.btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
+.btn-limpar:hover{background:#f3f4f6;color:#374151;}
+.btn-limpar.visible{display:inline-flex;}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
 .stat-card{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f3f4f6;}
 .stat-card .num{font-size:28px;font-weight:800;color:#111827;line-height:1;}
 .stat-card .lbl{font-size:12px;color:#6b7280;margin-top:4px;font-weight:500;}
 .stat-card .icon{float:right;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;}
-.toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
-.search-wrap{position:relative;flex:1;min-width:240px;max-width:360px;}
-.search-wrap input{width:100%;padding:10px 14px 10px 38px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px;background:#fff;transition:.2s;}
-.search-wrap input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.search-wrap i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:14px;}
-.toolbar select{padding:10px 14px;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;background:#fff;color:#374151;cursor:pointer;}
-.toolbar select:focus{outline:none;border-color:#2563eb;}
+
+/* Buttons */
+.btn{border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:7px;transition:all .15s;}
+.btn:hover{opacity:.88;transform:translateY(-1px);}
+.btn-dark{background:#1f2937;color:#fff;}
+.btn-red{background:#dc2626;color:#fff;}
+.btn-ghost{background:#fff;color:#374151;border:1px solid #e5e7eb;}
+
+/* Table */
 .table-wrap{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #f3f4f6;}
 table{width:100%;border-collapse:collapse;}
-thead th{background:#f9fafb;padding:12px 18px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;text-align:left;border-bottom:1px solid #f3f4f6;}
+thead th{background:#f9fafb;padding:12px 18px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b7280;text-align:left;border-bottom:1px solid #f3f4f6;white-space:nowrap;}
+thead th.sortable{cursor:pointer;user-select:none;}
+thead th.sortable:hover{background:#f3f4f6;color:#1d4ed8;}
+thead th .sort-icon{margin-left:4px;font-size:10px;color:#9ca3af;}
+thead th.asc .sort-icon,thead th.desc .sort-icon{color:#2563eb;}
 tbody tr{cursor:pointer;transition:background .12s;}
 tbody tr:hover td{background:#f8faff;}
 tbody tr:last-child td{border-bottom:none;}
@@ -56,6 +78,23 @@ tr:hover .acoes{opacity:1;}
 .btn-icon.del{background:#fef2f2;color:#dc2626;}
 .empty{text-align:center;padding:60px;color:#9ca3af;}
 .empty i{font-size:40px;display:block;margin-bottom:12px;color:#e5e7eb;}
+.loading-row td{text-align:center;padding:40px;color:#9ca3af;}
+
+/* Paginação padrão equipe */
+.paginacao{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px;}
+.paginacao-info{font-size:13px;color:#6b7280;}
+.paginacao-info strong{color:#111827;}
+.paginacao-controles{display:flex;align-items:center;gap:6px;}
+.pag-btn{background:#fff;color:#374151;border:1px solid #d1d5db;border-radius:7px;padding:6px 11px;font-size:13px;cursor:pointer;min-width:34px;text-align:center;transition:all .15s;}
+.pag-btn:hover:not(:disabled){background:#f3f4f6;border-color:#9ca3af;}
+.pag-btn:disabled{opacity:.4;cursor:default;}
+.pag-btn.ativo{background:#1f2937;color:#fff;border-color:#1f2937;font-weight:700;}
+.pag-btn.ellipsis{border:none;background:none;cursor:default;color:#9ca3af;min-width:20px;padding:6px 4px;}
+.pag-btn.ellipsis:hover{background:none;}
+.por-pagina-wrap{display:flex;align-items:center;gap:7px;font-size:13px;color:#6b7280;}
+.por-pagina-wrap select{padding:5px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;background:#fff;color:#111827;}
+
+/* Modal */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-start;justify-content:center;z-index:100;padding:30px 20px;overflow-y:auto;backdrop-filter:blur(4px);}
 .modal.open{display:flex;}
 .modal-box{background:#fff;width:680px;max-width:100%;border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.2);animation:slideUp .25s ease;}
@@ -93,25 +132,16 @@ tr:hover .acoes{opacity:1;}
 .modal-tab.active{color:#2563eb;border-bottom-color:#2563eb;}
 .tab-panel{display:none;padding:20px 28px;}
 .tab-panel.active{display:block;}
-.loading-row td{text-align:center;padding:40px;color:#9ca3af;}
-.paginacao{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-top:1px solid #f3f4f6;background:#f9fafb;font-size:13px;color:#6b7280;}
-.paginacao-btns{display:flex;gap:6px;}
-.paginacao-btns button{padding:6px 14px;border:1px solid #e5e7eb;border-radius:8px;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#374151;}
-.paginacao-btns button:hover{background:#f3f4f6;}
-.paginacao-btns button:disabled{opacity:.4;cursor:not-allowed;}
 </style>
 </head>
 <body>
 <div class="app">
 <aside id="sidebar"></aside>
 <main class="content">
-  <div class="page-header">
-    <h1>Clientes</h1>
-    <button class="btn btn-dark" id="btnNovo" style="display:none" onclick="abrirNovo()">
-      <i class="fa fa-plus"></i> Novo Cliente
-    </button>
-  </div>
-  <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+  <h1 style="margin-bottom:20px">Clientes</h1>
+
+  <!-- Stats -->
+  <div class="stats">
     <div class="stat-card">
       <div class="icon" style="background:#eff6ff;color:#2563eb"><i class="fa fa-users"></i></div>
       <div class="num" id="statTotal">—</div>
@@ -128,33 +158,57 @@ tr:hover .acoes{opacity:1;}
       <div class="lbl">Sumidos +60 dias</div>
     </div>
   </div>
-  <div class="toolbar">
-    <div class="search-wrap">
-      <i class="fa fa-search"></i>
-      <input type="text" id="busca" placeholder="Buscar por nome, telefone ou email...">
+
+  <!-- Topbar padrão equipe -->
+  <div class="topbar">
+    <div class="topbar-top">
+      <div class="collab-counter">
+        <i class="fa fa-users"></i>
+        <span class="count" id="collabCount">—</span>
+        <span class="label" id="collabLabel">clientes</span>
+      </div>
+      <button class="btn btn-dark" id="btnNovo" style="display:none" onclick="abrirNovo()">
+        <i class="fa fa-plus"></i> Novo Cliente
+      </button>
     </div>
-    <select id="filtroVisita">
-      <option value="">Todos</option>
-      <option value="sumidos">Sumidos +60 dias</option>
-    </select>
-    <select id="filtroOrdem">
-      <option value="nome">Ordenar por nome</option>
-      <option value="visitas">Mais visitas</option>
-      <option value="valor">Maior valor</option>
-      <option value="recente">Última visita</option>
-    </select>
-    <button class="btn btn-ghost" onclick="carregar()"><i class="fa fa-rotate-right"></i> Atualizar</button>
+    <div class="filters-row">
+      <div class="filter-group">
+        <span class="filter-label"><i class="fa fa-search" style="margin-right:3px"></i> Busca</span>
+        <input type="text" id="busca" placeholder="Nome, telefone ou email...">
+      </div>
+      <div class="filter-group">
+        <span class="filter-label"><i class="fa fa-filter" style="margin-right:3px"></i> Situação</span>
+        <select id="filtroVisita">
+          <option value="">Todos</option>
+          <option value="sumidos">Sumidos +60 dias</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label"><i class="fa fa-sort" style="margin-right:3px"></i> Ordenar</span>
+        <select id="filtroOrdem">
+          <option value="nome">Nome A→Z</option>
+          <option value="visitas">Mais visitas</option>
+          <option value="valor">Maior valor</option>
+          <option value="recente">Última visita</option>
+        </select>
+      </div>
+      <button class="btn-limpar" id="btnLimparFiltros" onclick="limparFiltros()">
+        <i class="fa fa-times"></i> Limpar filtros
+      </button>
+    </div>
   </div>
+
+  <!-- Tabela -->
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
           <th style="width:44px"></th>
-          <th>Cliente</th>
+          <th class="sortable" onclick="ordenarPor('nome')" id="th-nome">Cliente <i class="fa fa-sort sort-icon"></i></th>
           <th>Telefone</th>
-          <th>Última Visita</th>
-          <th>Atendimentos</th>
-          <th>Valor Total</th>
+          <th class="sortable" onclick="ordenarPor('recente')" id="th-recente">Última Visita <i class="fa fa-sort sort-icon"></i></th>
+          <th class="sortable" onclick="ordenarPor('visitas')" id="th-visitas">Atendimentos <i class="fa fa-sort sort-icon"></i></th>
+          <th class="sortable" onclick="ordenarPor('valor')" id="th-valor">Valor Total <i class="fa fa-sort sort-icon"></i></th>
           <th style="width:80px">Ações</th>
         </tr>
       </thead>
@@ -162,14 +216,24 @@ tr:hover .acoes{opacity:1;}
         <tr class="loading-row"><td colspan="7"><i class="fa fa-spinner fa-spin"></i> Carregando...</td></tr>
       </tbody>
     </table>
-    <div class="paginacao" id="paginacao" style="display:none">
-      <span id="paginacaoInfo"></span>
-      <div class="paginacao-btns">
-        <button id="btnAnterior" onclick="mudarPagina(-1)"><i class="fa fa-chevron-left"></i> Anterior</button>
-        <button id="btnProxima"  onclick="mudarPagina(1)">Próxima <i class="fa fa-chevron-right"></i></button>
-      </div>
-    </div>
   </div>
+
+  <!-- Paginação padrão equipe -->
+  <div class="paginacao" id="paginacao">
+    <div class="por-pagina-wrap">
+      Exibir
+      <select id="porPagina" onchange="paginaAtual=0;carregarPagina()">
+        <option value="10" selected>10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+        <option value="9999">Todos</option>
+      </select>
+      por página
+    </div>
+    <div class="paginacao-info" id="paginacaoInfo"></div>
+    <div class="paginacao-controles" id="paginacaoControles"></div>
+  </div>
+
 </main>
 </div>
 
@@ -216,15 +280,17 @@ tr:hover .acoes{opacity:1;}
 <script>
 let dados = [];
 let clienteAtual = null;
-let paginaClientes = 0;
-const POR_PAGINA = 10;
+let paginaAtual = 0;
 let totalFiltrado = 0;
-const fmtM = v => v != null ? `R$\u00a0${Number(v).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0})}` : "—";
+let ordemCol = 'nome';
+let ordemDir = 'asc';
+
+const fmtM = v => v != null ? 'R$\u00a0'+Number(v).toLocaleString("pt-BR",{minimumFractionDigits:0,maximumFractionDigits:0}) : "—";
 const fmtD = v => v ? new Date(v+"T00:00:00").toLocaleDateString("pt-BR") : "—";
 const fmtTel = v => {
   const d = (v||"").replace(/\D/g,"");
-  if(d.length===11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
-  if(d.length===10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  if(d.length===11) return '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7);
+  if(d.length===10) return '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6);
   return v||"—";
 };
 const CORES = ["#2563eb","#7c3aed","#db2777","#059669","#d97706","#dc2626","#0891b2"];
@@ -235,10 +301,63 @@ function diasAtras(data){
   return Math.floor((new Date() - new Date(data+"T00:00:00")) / 86400000);
 }
 
+// ── FILTROS ──
+function limparFiltros(){
+  document.getElementById("busca").value = "";
+  document.getElementById("filtroVisita").value = "";
+  document.getElementById("filtroOrdem").value = "nome";
+  ordemCol = 'nome'; ordemDir = 'asc';
+  atualizarIconesOrdem();
+  paginaAtual = 0;
+  carregarPagina();
+}
+
+function checarBtnLimpar(){
+  const busca = document.getElementById("busca").value;
+  const visita = document.getElementById("filtroVisita").value;
+  const ordem = document.getElementById("filtroOrdem").value;
+  const ativo = busca || visita || ordem !== 'nome';
+  document.getElementById("btnLimparFiltros").classList.toggle("visible", !!ativo);
+}
+
+// ── ORDENAÇÃO ──
+function ordenarPor(col){
+  if(ordemCol === col){ ordemDir = ordemDir === 'asc' ? 'desc' : 'asc'; }
+  else { ordemCol = col; ordemDir = col === 'recente' ? 'desc' : 'asc'; }
+  // Sincroniza o select de ordem
+  document.getElementById("filtroOrdem").value = col;
+  atualizarIconesOrdem();
+  paginaAtual = 0;
+  carregarPagina();
+}
+
+function atualizarIconesOrdem(){
+  ['nome','recente','visitas','valor'].forEach(c => {
+    const th = document.getElementById('th-'+c);
+    if(!th) return;
+    const icon = th.querySelector('.sort-icon');
+    th.classList.remove('asc','desc');
+    if(ordemCol === c){
+      th.classList.add(ordemDir);
+      icon.className = 'fa sort-icon ' + (ordemDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
+    } else {
+      icon.className = 'fa fa-sort sort-icon';
+    }
+  });
+}
+
+// ── CONTADOR ──
+function atualizarContador(total, visita){
+  document.getElementById("collabCount").textContent = total;
+  let label = total === 1 ? "cliente" : "clientes";
+  if(visita === "sumidos") label += " sumidos";
+  document.getElementById("collabLabel").textContent = label;
+}
+
 async function carregar(){
   if(!window.usuarioLogado){ setTimeout(carregar,100); return; }
   const u = window.usuarioLogado;
-  const isAdmin = u && (u.role==="admin"||u.role==="recepcionista");
+  const isAdmin = u && (u.role==="admin"||u.role==="recepcionista"||u.role==="apoio");
   const btnNovo = document.getElementById("btnNovo");
   if(btnNovo) btnNovo.style.display = isAdmin ? "" : "none";
 
@@ -254,52 +373,47 @@ async function carregar(){
   document.getElementById("statTicket").textContent    = fmtM(ticketMed);
   document.getElementById("statSemVisita").textContent = sumidosCount ?? "—";
 
-  paginaClientes = 0;
+  paginaAtual = 0;
   await carregarPagina();
 }
 
 async function carregarPagina(){
-  const busca  = (document.getElementById("busca").value||"").toLowerCase();
-  const filtro = document.getElementById("filtroVisita").value;
-  const ordem  = document.getElementById("filtroOrdem").value;
-  const inicio = paginaClientes * POR_PAGINA;
-  const fim    = inicio + POR_PAGINA - 1;
+  const busca   = (document.getElementById("busca").value||"").toLowerCase();
+  const filtro  = document.getElementById("filtroVisita").value;
+  const porPag  = parseInt(document.getElementById("porPagina").value) || 10;
+  const inicio  = porPag >= 9999 ? 0 : paginaAtual * porPag;
+  const fim     = porPag >= 9999 ? 99999 : inicio + porPag - 1;
 
   let q = client.from("clientes")
     .select("id,nome,telefone_1,telefone_2,email,dt_nasc,total_atendimentos,valor_total,ultimo_atendimento",{count:"exact"});
 
-  if(busca)              q = q.or(`nome.ilike.%${busca}%,telefone_1.ilike.%${busca}%,email.ilike.%${busca}%`);
+  if(busca)              q = q.or('nome.ilike.%'+busca+'%,telefone_1.ilike.%'+busca+'%,email.ilike.%'+busca+'%');
   if(filtro==="sumidos") q = q.not("ultimo_atendimento","is",null).lt("ultimo_atendimento", new Date(Date.now()-60*86400000).toISOString().split("T")[0]);
-  if(ordem==="visitas")  q = q.order("total_atendimentos",{ascending:false});
-  else if(ordem==="valor")   q = q.order("valor_total",{ascending:false});
-  else if(ordem==="recente") q = q.order("ultimo_atendimento",{ascending:false,nullsFirst:false});
-  else                       q = q.order("nome");
-  q = q.range(inicio, fim);
+
+  const colMap = { nome:'nome', visitas:'total_atendimentos', valor:'valor_total', recente:'ultimo_atendimento' };
+  const col = colMap[ordemCol] || 'nome';
+  const asc = ordemDir === 'asc';
+  if(ordemCol === 'recente') q = q.order(col, {ascending:asc, nullsFirst:false});
+  else q = q.order(col, {ascending:asc});
+
+  if(porPag < 9999) q = q.range(inicio, fim);
 
   const {data, count, error} = await q;
   if(error){ console.error(error); return; }
   dados = data || [];
   totalFiltrado = count || 0;
+
+  atualizarContador(totalFiltrado, filtro);
+  checarBtnLimpar();
   render();
+  renderPaginacao(porPag);
 }
 
 function render(){
   const tbody = document.getElementById("lista");
   if(!dados.length){
-    tbody.innerHTML=`<tr><td colspan="7"><div class="empty"><i class="fa fa-users"></i>Nenhum cliente encontrado</div></td></tr>`;
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty"><i class="fa fa-users"></i>Nenhum cliente encontrado</div></td></tr>';
     return;
-  }
-  const paginacaoEl = document.getElementById("paginacao");
-  const totalPags = Math.ceil(totalFiltrado / POR_PAGINA);
-  if(totalFiltrado > POR_PAGINA){
-    paginacaoEl.style.display = "flex";
-    const inicio = paginaClientes * POR_PAGINA + 1;
-    const fim    = Math.min((paginaClientes+1)*POR_PAGINA, totalFiltrado);
-    document.getElementById("paginacaoInfo").textContent = `Exibindo ${inicio}–${fim} de ${totalFiltrado} clientes`;
-    document.getElementById("btnAnterior").disabled = paginaClientes === 0;
-    document.getElementById("btnProxima").disabled  = paginaClientes >= totalPags-1;
-  } else {
-    paginacaoEl.style.display = "none";
   }
   tbody.innerHTML = dados.map(c => {
     const cor  = corAvatar(c.nome);
@@ -308,26 +422,64 @@ function render(){
     let ultimaLabel = "—";
     if(dias===0) ultimaLabel="Hoje";
     else if(dias===1) ultimaLabel="Ontem";
-    else if(dias!=null) ultimaLabel=`${dias}d atrás`;
+    else if(dias!=null) ultimaLabel=dias+'d atrás';
     const visitBadge = c.total_atendimentos
-      ? `<span class="badge-visits"><i class="fa fa-calendar-check"></i>${c.total_atendimentos}</span>`
-      : `<span class="badge-nunca">Nenhum</span>`;
+      ? '<span class="badge-visits"><i class="fa fa-calendar-check"></i>'+c.total_atendimentos+'</span>'
+      : '<span class="badge-nunca">Nenhum</span>';
     const valBadge = c.valor_total
-      ? `<span class="badge-valor">${fmtM(c.valor_total)}</span>`
-      : `<span class="badge-nunca">—</span>`;
-    return `<tr onclick="abrirDetalhe('${c.id}')">
-      <td><div class="avatar" style="background:${cor}">${ini}</div></td>
-      <td><div class="cliente-nome">${c.nome||"—"}</div><div class="cliente-email">${c.email||""}</div></td>
-      <td>${fmtTel(c.telefone_1)}</td>
-      <td style="color:${dias>60?'#dc2626':dias!=null?'#374151':'#9ca3af'}">${ultimaLabel}</td>
-      <td>${visitBadge}</td>
-      <td>${valBadge}</td>
-      <td><div class="acoes">
-        <button class="btn-icon edit" onclick="event.stopPropagation();abrirDetalhe('${c.id}','editar')" title="Editar"><i class="fa fa-pencil"></i></button>
-        <button class="btn-icon del"  onclick="event.stopPropagation();confirmarExcluir('${c.id}')" title="Excluir"><i class="fa fa-trash"></i></button>
-      </div></td>
-    </tr>`;
+      ? '<span class="badge-valor">'+fmtM(c.valor_total)+'</span>'
+      : '<span class="badge-nunca">—</span>';
+    return '<tr onclick="abrirDetalhe(\''+c.id+'\')">'
+      +'<td><div class="avatar" style="background:'+cor+'">'+ini+'</div></td>'
+      +'<td><div class="cliente-nome">'+(c.nome||"—")+'</div><div class="cliente-email">'+(c.email||"")+'</div></td>'
+      +'<td>'+fmtTel(c.telefone_1)+'</td>'
+      +'<td style="color:'+(dias>60?'#dc2626':dias!=null?'#374151':'#9ca3af')+'">'+ultimaLabel+'</td>'
+      +'<td>'+visitBadge+'</td>'
+      +'<td>'+valBadge+'</td>'
+      +'<td><div class="acoes">'
+        +'<button class="btn-icon edit" onclick="event.stopPropagation();abrirDetalhe(\''+c.id+'\',\'editar\')" title="Editar"><i class="fa fa-pencil"></i></button>'
+        +'<button class="btn-icon del" onclick="event.stopPropagation();confirmarExcluir(\''+c.id+'\')" title="Excluir"><i class="fa fa-trash"></i></button>'
+      +'</div></td>'
+    +'</tr>';
   }).join("");
+}
+
+function renderPaginacao(porPag){
+  const total = totalFiltrado;
+  const infoEl = document.getElementById("paginacaoInfo");
+  const ctrlEl = document.getElementById("paginacaoControles");
+
+  if(total === 0){ infoEl.innerHTML = "Nenhum resultado."; ctrlEl.innerHTML = ""; return; }
+
+  if(porPag >= 9999){
+    infoEl.innerHTML = "Exibindo <strong>todos os "+total+"</strong> clientes";
+    ctrlEl.innerHTML = ""; return;
+  }
+
+  const totalPags = Math.max(1, Math.ceil(total / porPag));
+  const inicio = paginaAtual * porPag + 1;
+  const fim = Math.min((paginaAtual+1)*porPag, total);
+  infoEl.innerHTML = "Exibindo <strong>"+inicio+"–"+fim+"</strong> de <strong>"+total+"</strong>";
+
+  ctrlEl.innerHTML = "";
+  function addBtn(label, pg, ativo, desabilitado, ellipsis){
+    const b = document.createElement("button");
+    b.className = "pag-btn"+(ativo?" ativo":"")+(ellipsis?" ellipsis":"");
+    b.innerHTML = label; b.disabled = desabilitado;
+    if(!desabilitado && !ellipsis) b.onclick = ()=>{ paginaAtual=pg; carregarPagina(); window.scrollTo({top:0,behavior:"smooth"}); };
+    ctrlEl.appendChild(b);
+  }
+  addBtn('<i class="fa fa-chevron-left"></i>', paginaAtual-1, false, paginaAtual===0);
+  const pages = [];
+  for(let i=0;i<totalPags;i++){
+    if(i===0||i===totalPags-1||Math.abs(i-paginaAtual)<=1) pages.push(i);
+    else if(pages[pages.length-1]!=='...') pages.push('...');
+  }
+  pages.forEach(p => {
+    if(p==='...') addBtn('…', null, false, false, true);
+    else addBtn(p+1, p, p===paginaAtual, false);
+  });
+  addBtn('<i class="fa fa-chevron-right"></i>', paginaAtual+1, false, paginaAtual>=totalPags-1);
 }
 
 function mudarTab(tab, btn){
@@ -337,25 +489,26 @@ function mudarTab(tab, btn){
   document.getElementById("tab-"+tab).classList.add("active");
 }
 
-async function abrirDetalhe(id, tabInicial="perfil"){
+async function abrirDetalhe(id, tabInicial){
+  tabInicial = tabInicial || "perfil";
   clienteAtual = dados.find(c=>c.id===id) || null;
   if(!clienteAtual){
     const {data} = await client.from("clientes").select("*").eq("id",id).single();
     clienteAtual = data;
   }
   if(!clienteAtual) return;
-  const c   = clienteAtual;
+  const c = clienteAtual;
   const cor = corAvatar(c.nome);
   const ini = iniciais(c.nome);
   document.getElementById("heroAvatar").style.background = cor;
   document.getElementById("heroAvatar").textContent = ini;
-  document.getElementById("heroNome").textContent   = c.nome||"—";
-  document.getElementById("heroSub").textContent    = c.email || fmtTel(c.telefone_1) || "Sem contato";
+  document.getElementById("heroNome").textContent = c.nome||"—";
+  document.getElementById("heroSub").textContent  = c.email || fmtTel(c.telefone_1) || "Sem contato";
   const dias = diasAtras(c.ultimo_atendimento);
   const badges = [];
-  if(c.total_atendimentos) badges.push(`<span class="hero-badge"><i class="fa fa-calendar-check"></i>${c.total_atendimentos} atendimentos</span>`);
-  if(c.valor_total)        badges.push(`<span class="hero-badge"><i class="fa fa-dollar-sign"></i>${fmtM(c.valor_total)}</span>`);
-  if(dias!=null)           badges.push(`<span class="hero-badge"><i class="fa fa-clock"></i>Última visita: ${dias===0?"hoje":dias+"d atrás"}</span>`);
+  if(c.total_atendimentos) badges.push('<span class="hero-badge"><i class="fa fa-calendar-check"></i>'+c.total_atendimentos+' atendimentos</span>');
+  if(c.valor_total)        badges.push('<span class="hero-badge"><i class="fa fa-dollar-sign"></i>'+fmtM(c.valor_total)+'</span>');
+  if(dias!=null)           badges.push('<span class="hero-badge"><i class="fa fa-clock"></i>Última: '+(dias===0?"hoje":dias+"d atrás")+'</span>');
   document.getElementById("heroBadges").innerHTML = badges.join("");
   const ticket = c.total_atendimentos ? (c.valor_total||0)/c.total_atendimentos : 0;
   document.getElementById("detVisitas").textContent = c.total_atendimentos||0;
@@ -364,19 +517,19 @@ async function abrirDetalhe(id, tabInicial="perfil"){
   document.getElementById("detInfo").innerHTML = [
     {k:"Telefone",v:fmtTel(c.telefone_1)},{k:"Email",v:c.email||"—"},
     {k:"Nascimento",v:fmtD(c.dt_nasc)},{k:"Tel. 2",v:fmtTel(c.telefone_2)||"—"},
-    {k:"Última visita",v:fmtD(c.ultimo_atendimento)},{k:"ID",v:`<span style="font-size:11px;color:#9ca3af">#${c.id}</span>`},
-  ].map(i=>`<div class="info-item"><div class="key">${i.k}</div><div class="val">${i.v}</div></div>`).join("");
+    {k:"Última visita",v:fmtD(c.ultimo_atendimento)},{k:"ID",v:'<span style="font-size:11px;color:#9ca3af">#'+c.id+'</span>'},
+  ].map(i=>'<div class="info-item"><div class="key">'+i.k+'</div><div class="val">'+i.v+'</div></div>').join("");
   document.getElementById("eNome").value  = c.nome||"";
   document.getElementById("eTel").value   = c.telefone_1||"";
   document.getElementById("eEmail").value = c.email||"";
   document.getElementById("eNasc").value  = c.dt_nasc||"";
   document.getElementById("eTel2").value  = c.telefone_2||"";
-  document.querySelectorAll(".modal-tab").forEach((t,i)=>{
-    const tabs=["perfil","historico","editar"];
-    t.classList.toggle("active", tabs[i]===tabInicial);
-  });
+  document.querySelectorAll(".modal-tab").forEach(t=>t.classList.remove("active"));
   document.querySelectorAll(".tab-panel").forEach(t=>t.classList.remove("active"));
+  // encontra a tab certa
+  document.querySelectorAll(".modal-tab").forEach(t=>{ if(t.textContent.trim().toLowerCase().includes(tabInicial==="editar"?"editar":"perfil")) t.classList.add("active"); });
   document.getElementById("tab-"+tabInicial).classList.add("active");
+  document.getElementById("btnExcluir").style.display = "";
   document.getElementById("modal").classList.add("open");
 }
 
@@ -394,7 +547,7 @@ function abrirNovo(){
   document.getElementById("detTicket").textContent="—";
   document.getElementById("detInfo").innerHTML="";
   ["eNome","eTel","eEmail","eNasc","eTel2"].forEach(id=>document.getElementById(id).value="");
-  document.querySelectorAll(".modal-tab").forEach((t,i)=>t.classList.toggle("active",i===2));
+  document.querySelectorAll(".modal-tab").forEach((t,i)=>t.classList.toggle("active",i===1));
   document.querySelectorAll(".tab-panel").forEach(t=>t.classList.remove("active"));
   document.getElementById("tab-editar").classList.add("active");
   document.getElementById("btnExcluir").style.display="none";
@@ -434,13 +587,17 @@ async function excluirCliente(){
   fecharModal(); carregar();
 }
 
-function mudarPagina(delta){ paginaClientes += delta; carregarPagina(); window.scrollTo({top:0,behavior:"smooth"}); }
-
 document.addEventListener("DOMContentLoaded",()=>{
-  const resetPagina = () => { paginaClientes = 0; carregarPagina(); };
-  document.getElementById("busca").addEventListener("input", resetPagina);
-  document.getElementById("filtroVisita").addEventListener("change", resetPagina);
-  document.getElementById("filtroOrdem").addEventListener("change", resetPagina);
+  atualizarIconesOrdem();
+  const reset = () => { paginaAtual=0; carregarPagina(); checarBtnLimpar(); };
+  document.getElementById("busca").addEventListener("input", reset);
+  document.getElementById("filtroVisita").addEventListener("change", reset);
+  document.getElementById("filtroOrdem").addEventListener("change", ()=>{
+    ordemCol = document.getElementById("filtroOrdem").value;
+    ordemDir = ordemCol === 'recente' ? 'desc' : 'asc';
+    atualizarIconesOrdem();
+    paginaAtual=0; carregarPagina(); checarBtnLimpar();
+  });
   document.getElementById("modal").addEventListener("click", e=>{ if(e.target===document.getElementById("modal")) fecharModal(); });
   carregar();
 });

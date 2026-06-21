@@ -447,10 +447,13 @@ function anoAtualStr(){return String(new Date().getFullYear());}
 /* FETCH — sem filtro de situacao */
 async function fetchLegadoRecente(){
   const ano=anoAtualStr();
+  console.log("[Dashboard] fetchLegadoRecente: buscando ano", ano);
   const{data,error}=await client.from("legado_atendimentos")
     .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
     .gte("data",ano+"-01-01");
-  if(error||!data)return[];
+  console.log("[Dashboard] legado recente:", data?.length, "registros, erro:", error?.message);
+  if(error){console.error("[Dashboard] ERRO legado:", error);return[];}
+  if(!data||!data.length){console.warn("[Dashboard] legado retornou vazio");return[];}
   return data.map(r=>({...r,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"}));
 }
 async function fetchNovosRecente(){
@@ -717,9 +720,12 @@ document.addEventListener("DOMContentLoaded",async()=>{
   setLoading("Carregando dados recentes...");
   setProgress(10,"Buscando atendimentos do ano atual...");
   try{
+    console.log("[Dashboard] Iniciando fetch...");
     const[legRec,novRec]=await Promise.all([fetchLegadoRecente(),fetchNovosRecente()]);
+    console.log("[Dashboard] legRec:", legRec.length, "novRec:", novRec.length);
     setProgress(50,"Processando dados recentes...");
     const recente=[...legRec,...novRec];
+    console.log("[Dashboard] total recente:", recente.length);
     cacheCompleto=recente;
     allData=recente;
     popularFiltros();

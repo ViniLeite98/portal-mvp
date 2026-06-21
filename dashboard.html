@@ -410,9 +410,19 @@ function toggleSidebar(){const sb=document.getElementById("sidebar"),ov=document
 function closeSidebar(){document.getElementById("sidebar").classList.remove("open");document.getElementById("sidebarOverlay").classList.remove("active");document.getElementById("hamburgerBtn").classList.remove("open");}
 
 /* CACHE */
-const CACHE_KEY_LEGADO="hara_legado_v3",CACHE_KEY_NOVO="hara_novo_v3",CACHE_TTL=3600000;
+const CACHE_KEY_LEGADO="hara_legado_v4",CACHE_KEY_NOVO="hara_novo_v4",CACHE_TTL=3600000;
+// Limpa versões antigas do cache
+["hara_legado_v1","hara_legado_v2","hara_legado_v3","hara_novo_v1","hara_novo_v2","hara_novo_v3"].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
 function salvarCache(k,d){try{localStorage.setItem(k,JSON.stringify({ts:Date.now(),data:d}));}catch(e){}}
-function lerCache(k){try{const r=localStorage.getItem(k);if(!r)return null;const o=JSON.parse(r);return Date.now()-o.ts>CACHE_TTL?null:o.data;}catch(e){return null;}}
+function lerCache(k){
+  try{
+    const r=localStorage.getItem(k);if(!r)return null;
+    const o=JSON.parse(r);
+    if(Date.now()-o.ts>CACHE_TTL)return null;
+    if(!o.data||!Array.isArray(o.data)||o.data.length===0)return null; // nunca usa cache vazio
+    return o.data;
+  }catch(e){return null;}
+}
 
 /* ESTADO */
 const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];

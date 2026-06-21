@@ -6,20 +6,39 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.left-tools{display:flex;gap:10px;align-items:center;}
-.left-tools input{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;width:280px;font-size:14px;}
-.left-tools input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.right-tools{display:flex;gap:10px;}
+.topbar{margin-bottom:20px;}
+.topbar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.collab-counter{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:7px 16px;font-size:13px;color:#374151;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.collab-counter i{color:#2563eb;font-size:13px;}
+.collab-counter .count{font-weight:700;color:#111827;font-size:16px;}
+.collab-counter .label{color:#6b7280;font-size:12px;}
+.filters-row{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;}
+.filter-group{display:flex;flex-direction:column;gap:4px;}
+.filter-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;}
+.filter-group input,.filter-group select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;}
+.filter-group input{width:260px;}
+.filter-group input:focus,.filter-group select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.filter-group select{min-width:180px;}
+.btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
+.btn-limpar:hover{background:#f3f4f6;color:#374151;}
+.btn-limpar.visible{display:inline-flex;}
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
 th{background:#f9fafb;font-weight:600;}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+th.sortable:hover{background:#f3f4f6;color:#1d4ed8;}
+th.sortable .sort-icon{margin-left:5px;font-size:11px;color:#9ca3af;}
+th.sortable.asc .sort-icon,th.sortable.desc .sort-icon{color:#2563eb;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#f9fafb;}
 button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;}
@@ -27,10 +46,25 @@ button.excluir{background:#dc2626;}
 button.exportar{background:#16a34a;}
 button.vincular-btn{background:#2563eb;display:inline-flex !important;align-items:center;gap:6px;}
 .cert-icones{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.cert-icones i{font-size:15px;}
 .cert-icones .icone-svg{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
 .cert-icones .icone-svg svg{width:18px;height:18px;}
 .badge-count{background:#f3f4f6;color:#374151;font-size:11px;font-weight:700;border-radius:99px;padding:2px 8px;margin-left:4px;}
+.paginacao{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px;}
+.paginacao-info{font-size:13px;color:#6b7280;}
+.paginacao-info strong{color:#111827;}
+.paginacao-controles{display:flex;align-items:center;gap:6px;}
+.pag-btn{background:#fff;color:#374151;border:1px solid #d1d5db;border-radius:7px;padding:6px 11px;font-size:13px;cursor:pointer;min-width:34px;text-align:center;transition:all .15s;}
+.pag-btn:hover:not(:disabled){background:#f3f4f6;border-color:#9ca3af;}
+.pag-btn:disabled{opacity:.4;cursor:default;}
+.pag-btn.ativo{background:#1f2937;color:#fff;border-color:#1f2937;font-weight:700;}
+.pag-btn.ellipsis{border:none;background:none;cursor:default;color:#9ca3af;min-width:20px;padding:6px 4px;}
+.pag-btn.ellipsis:hover{background:none;}
+.por-pagina-wrap{display:flex;align-items:center;gap:7px;font-size:13px;color:#6b7280;}
+.por-pagina-wrap select{padding:5px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;background:#fff;color:#111827;}
+.legenda{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px;color:#6b7280;margin-bottom:16px;}
+.legenda span{display:flex;align-items:center;gap:5px;}
+.legenda .icone-svg{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.legenda .icone-svg svg{width:16px;height:16px;}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:560px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .modal-content.sm{width:420px;}
@@ -65,12 +99,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .cert-arquivo{display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;margin-top:4px;}
 .cert-arquivo i{color:#2563eb;}
 .upload-ing{font-size:11px;color:#2563eb;display:none;}
-.legenda{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px;color:#6b7280;margin-bottom:16px;}
-.legenda span{display:flex;align-items:center;gap:5px;}
-.legenda .icone-svg{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
-.legenda .icone-svg svg{width:16px;height:16px;}
-.icone-modal{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
-.icone-modal svg{width:22px;height:22px;}
 </style>
 </head>
 <body>
@@ -80,12 +108,29 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <h1>Certificações</h1>
 
 <div class="topbar">
-  <div class="left-tools">
-    <input id="buscaTerapeuta" placeholder="🔍  Buscar profissional ou certificação...">
+  <div class="topbar-top">
+    <div class="collab-counter">
+      <i class="fa fa-certificate"></i>
+      <span class="count" id="collabCount">—</span>
+      <span class="label" id="collabLabel">profissionais certificados</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="exportar" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+      <button class="vincular-btn" onclick="abrirVincular()"><i class="fa fa-plus"></i> Vincular Certificação</button>
+    </div>
   </div>
-  <div class="right-tools">
-    <button class="exportar" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
-    <button class="vincular-btn" onclick="abrirVincular()"><i class="fa fa-plus"></i> Vincular Certificação</button>
+  <div class="filters-row">
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-search" style="margin-right:3px"></i> Busca</span>
+      <input id="buscaTerapeuta" placeholder="Buscar profissional ou certificação...">
+    </div>
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-certificate" style="margin-right:3px"></i> Certificação</span>
+      <select id="filtroCert"><option value="">Todas as certificações</option></select>
+    </div>
+    <button class="btn-limpar" id="btnLimparFiltros" onclick="limparFiltros()">
+      <i class="fa fa-times"></i> Limpar filtros
+    </button>
   </div>
 </div>
 
@@ -94,14 +139,30 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <table>
   <thead>
     <tr>
-      <th>Profissional</th>
+      <th class="sortable" onclick="ordenar('nome')" id="th-nome">Profissional <i class="fa fa-sort sort-icon"></i></th>
       <th>Certificações</th>
-      <th>Qtd</th>
+      <th class="sortable" onclick="ordenar('qtd')" id="th-qtd">Qtd <i class="fa fa-sort sort-icon"></i></th>
       <th>Ações</th>
     </tr>
   </thead>
   <tbody id="lista"></tbody>
 </table>
+
+<div class="paginacao">
+  <div class="por-pagina-wrap">
+    Exibir
+    <select id="porPagina" onchange="paginaAtual=0;renderTabela()">
+      <option value="10" selected>10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="9999">Todos</option>
+    </select>
+    por página
+  </div>
+  <div class="paginacao-info" id="paginacaoInfo"></div>
+  <div class="paginacao-controles" id="paginacaoControles"></div>
+</div>
+
 <div style="margin-top:24px;text-align:center;font-size:12px;color:#9ca3af;">
   Não encontrou a certificação que procura?
   <a href="parametros.html#certificacoes" style="color:#2563eb;text-decoration:none;font-weight:600;">
@@ -170,327 +231,230 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </div>
 </div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
-<script src="assets/js/auth.js"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 <script>
+let dados=[],editandoId=null,certificacoes=[];
+let ordemCol='nome',ordemDir='asc',paginaAtual=0;
+let agrupados=[];
 
-let dados = [];
-let editandoId = null;
-let certificacoes = [];
+function podeVerTudo(u){return u&&(u.role==="admin"||u.role==="apoio");}
 
-function podeVerTudo(u){ return u && (u.role === "admin" || u.role === "apoio"); }
-
-// ── RENDERIZAÇÃO DE ÍCONES (suporta FA, SVG do Iconify e imagens) ─────────────
-function renderIcone(icone, cor, tamanho, titulo){
-  tamanho = tamanho || 18;
-  titulo = titulo ? ' title="'+titulo+'"' : '';
-  if(!icone) icone = 'fa-certificate';
-
-  if(icone.trim().startsWith('<svg')){
-    // SVG inline (Iconify ou upload SVG)
-    const coloredSvg = icone.replace(/currentColor/g, cor || '#6b7280');
-    return '<span class="icone-svg" style="width:'+tamanho+'px;height:'+tamanho+'px"'+titulo+'>'+coloredSvg+'</span>';
-  }
-  if(icone.startsWith('data:') || icone.startsWith('http')){
-    // Imagem (upload)
-    return '<img src="'+icone+'" style="width:'+tamanho+'px;height:'+tamanho+'px;border-radius:3px;object-fit:cover"'+titulo+'>';
-  }
-  // Font Awesome
+function renderIcone(icone,cor,tamanho,titulo){
+  tamanho=tamanho||18;titulo=titulo?' title="'+titulo+'"':'';
+  if(!icone)icone='fa-certificate';
+  if(icone.trim().startsWith('<svg')){const svg=icone.replace(/currentColor/g,cor||'#6b7280');return '<span class="icone-svg" style="width:'+tamanho+'px;height:'+tamanho+'px"'+titulo+'>'+svg+'</span>';}
+  if(icone.startsWith('data:')||icone.startsWith('http'))return '<img src="'+icone+'" style="width:'+tamanho+'px;height:'+tamanho+'px;border-radius:3px;object-fit:cover"'+titulo+'>';
   return '<i class="fa-solid '+icone+'" style="font-size:'+tamanho+'px;color:'+(cor||'#6b7280')+'"'+titulo+'></i>';
 }
 
 function corIcone(icone){
-  const cores = {
-    "fa-person-dress":"#ec4899","fa-user-group":"#3b82f6",
-    "fa-droplet":"#06b6d4","fa-spa":"#10b981",
-    "fa-shoe-prints":"#f59e0b","fa-certificate":"#8b5cf6",
-    "fa-star":"#f59e0b","fa-heart":"#ef4444",
-    "fa-hands":"#6366f1","fa-leaf":"#22c55e",
-    "fa-fire":"#f97316","fa-snowflake":"#38bdf8",
-  };
-  // SVG e imagens usam cor neutra
-  if(!icone || icone.trim().startsWith('<svg') || icone.startsWith('data:') || icone.startsWith('http'))
-    return '#6b7280';
-  return cores[icone] || "#6b7280";
+  const cores={"fa-person-dress":"#ec4899","fa-user-group":"#3b82f6","fa-droplet":"#06b6d4","fa-spa":"#10b981","fa-shoe-prints":"#f59e0b","fa-certificate":"#8b5cf6","fa-star":"#f59e0b","fa-heart":"#ef4444","fa-hands":"#6366f1","fa-leaf":"#22c55e","fa-fire":"#f97316","fa-snowflake":"#38bdf8"};
+  if(!icone||icone.trim().startsWith('<svg')||icone.startsWith('data:')||icone.startsWith('http'))return '#6b7280';
+  return cores[icone]||"#6b7280";
 }
 
 function renderLegenda(){
-  const legEl = document.getElementById("legenda");
-  if(!certificacoes.length){ legEl.innerHTML = ""; return; }
-  legEl.innerHTML = '<strong>Legenda:</strong> ' +
-    certificacoes.map(c => {
-      const icone = c.icone || 'fa-certificate';
-      const cor = corIcone(icone);
-      return '<span>' + renderIcone(icone, cor, 16, c.nome) + ' ' + c.nome + '</span>';
-    }).join('');
+  const legEl=document.getElementById("legenda");
+  if(!certificacoes.length){legEl.innerHTML="";return;}
+  legEl.innerHTML='<strong>Legenda:</strong> '+certificacoes.map(c=>'<span>'+renderIcone(c.icone||'fa-certificate',corIcone(c.icone),16,c.nome)+' '+c.nome+'</span>').join('');
+}
+
+function limparFiltros(){
+  document.getElementById("buscaTerapeuta").value="";
+  document.getElementById("filtroCert").value="";
+  checarBtnLimpar();paginaAtual=0;aplicarFiltroEOrdem();
+}
+
+function checarBtnLimpar(){
+  const busca=document.getElementById("buscaTerapeuta").value;
+  const cert=document.getElementById("filtroCert").value;
+  document.getElementById("btnLimparFiltros").classList.toggle("visible",!!(busca||cert));
+}
+
+function ordenar(col){
+  if(ordemCol===col){ordemDir=ordemDir==='asc'?'desc':'asc';}else{ordemCol=col;ordemDir='asc';}
+  atualizarIconesOrdem();paginaAtual=0;aplicarFiltroEOrdem();
+}
+
+function atualizarIconesOrdem(){
+  ['nome','qtd'].forEach(c=>{
+    const th=document.getElementById('th-'+c);if(!th)return;
+    const icon=th.querySelector('.sort-icon');
+    th.classList.remove('asc','desc');
+    if(ordemCol===c){th.classList.add(ordemDir);icon.className='fa sort-icon '+(ordemDir==='asc'?'fa-sort-up':'fa-sort-down');}
+    else icon.className='fa fa-sort sort-icon';
+  });
+}
+
+function aplicarFiltroEOrdem(){
+  const termo=(document.getElementById("buscaTerapeuta").value||"").toLowerCase();
+  const certFiltro=document.getElementById("filtroCert").value;
+  const filtrado=dados.filter(d=>{
+    const nome=(d.terapeutas?.nome_profissional||"").toLowerCase();
+    const cert=(d.certificacoes?.nome||"").toLowerCase();
+    const termoOk=nome.includes(termo)||cert.includes(termo);
+    const certOk=!certFiltro||d.certificacoes?.id===certFiltro;
+    return termoOk&&certOk;
+  });
+  const mapa={};
+  filtrado.forEach(r=>{
+    const nome=r.terapeutas?.nome_profissional||"Sem nome";
+    if(!mapa[nome])mapa[nome]={nome,certs:[]};
+    mapa[nome].certs.push(r);
+  });
+  agrupados=Object.values(mapa).sort((a,b)=>{
+    if(ordemCol==='qtd'){const diff=(ordemDir==='asc'?1:-1)*(a.certs.length-b.certs.length);return diff||a.nome.localeCompare(b.nome);}
+    return(ordemDir==='asc'?1:-1)*a.nome.localeCompare(b.nome);
+  });
+  document.getElementById("collabCount").textContent=agrupados.length;
+  const cert=certificacoes.find(c=>c.id===certFiltro);
+  document.getElementById("collabLabel").textContent=(agrupados.length===1?"profissional certificado":"profissionais certificados")+(cert?" · "+cert.nome:"");
+  checarBtnLimpar();renderTabela();
+}
+
+function renderTabela(){
+  const porPag=parseInt(document.getElementById("porPagina").value)||10;
+  const total=agrupados.length;
+  const totalPags=porPag>=9999?1:Math.max(1,Math.ceil(total/porPag));
+  if(paginaAtual>=totalPags)paginaAtual=totalPags-1;
+  const inicio=porPag>=9999?0:paginaAtual*porPag;
+  const fim=porPag>=9999?total:Math.min(inicio+porPag,total);
+  const pagina=agrupados.slice(inicio,fim);
+  const tbody=document.getElementById("lista");tbody.innerHTML="";
+  if(!pagina.length){
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:32px">Nenhum resultado encontrado.</td></tr>';
+  } else {
+    pagina.forEach(t=>{
+      const iconesUnicos=[...new Map(t.certs.map(c=>[c.certificacoes?.id,{icone:c.certificacoes?.icone||"fa-certificate",nome:c.certificacoes?.nome}])).values()];
+      const iconesHtml=iconesUnicos.map(i=>renderIcone(i.icone,corIcone(i.icone),18,i.nome)).join('');
+      tbody.innerHTML+='<tr><td><strong>'+t.nome+'</strong></td><td><div class="cert-icones">'+iconesHtml+'</div></td><td><span class="badge-count">'+t.certs.length+'</span></td><td><button onclick="abrirModal(\''+t.nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-eye"></i> Ver / Editar</button></td></tr>';
+    });
+  }
+  const infoEl=document.getElementById("paginacaoInfo"),ctrlEl=document.getElementById("paginacaoControles");
+  if(total===0){infoEl.innerHTML="Nenhum resultado.";ctrlEl.innerHTML="";return;}
+  if(porPag>=9999){infoEl.innerHTML="Exibindo <strong>todos os "+total+"</strong>";ctrlEl.innerHTML="";return;}
+  infoEl.innerHTML="Exibindo <strong>"+(inicio+1)+"–"+fim+"</strong> de <strong>"+total+"</strong>";
+  ctrlEl.innerHTML="";
+  function addBtn(label,pg,ativo,desabilitado,ellipsis){
+    const b=document.createElement("button");b.className="pag-btn"+(ativo?" ativo":"")+(ellipsis?" ellipsis":"");b.innerHTML=label;b.disabled=desabilitado;
+    if(!desabilitado&&!ellipsis)b.onclick=()=>{paginaAtual=pg;renderTabela();};ctrlEl.appendChild(b);
+  }
+  addBtn('<i class="fa fa-chevron-left"></i>',paginaAtual-1,false,paginaAtual===0);
+  const pages=[];for(let i=0;i<totalPags;i++){if(i===0||i===totalPags-1||Math.abs(i-paginaAtual)<=1)pages.push(i);else if(pages[pages.length-1]!=='...')pages.push('...');}
+  pages.forEach(p=>{if(p==='...')addBtn('…',null,false,false,true);else addBtn(p+1,p,p===paginaAtual,false);});
+  addBtn('<i class="fa fa-chevron-right"></i>',paginaAtual+1,false,paginaAtual>=totalPags-1);
 }
 
 async function carregarSelects(){
-  const {data: terapeutas} = await client
-    .from("terapeutas").select("cpf,nome_profissional")
-    .eq("status","Ativo").order("nome_profissional");
-
-  const selTer = document.getElementById("cpf_terapeuta");
-  selTer.innerHTML = "<option value=''>Selecione o profissional</option>";
-  (terapeutas||[]).forEach(t =>
-    selTer.innerHTML += '<option value="'+t.cpf+'">'+t.nome_profissional+'</option>'
-  );
-
-  const {data: certs} = await client.from("certificacoes").select("id,nome,icone").order("nome");
-  certificacoes = certs || [];
-
-  const selCert = document.getElementById("certificacao_id");
-  selCert.innerHTML = "<option value=''>Selecione a certificação</option>";
-  certificacoes.forEach(c =>
-    selCert.innerHTML += '<option value="'+c.id+'">'+c.nome+'</option>'
-  );
-
+  const {data:terapeutas}=await client.from("terapeutas").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
+  const selTer=document.getElementById("cpf_terapeuta");selTer.innerHTML="<option value=''>Selecione o profissional</option>";
+  (terapeutas||[]).forEach(t=>selTer.innerHTML+='<option value="'+t.cpf+'">'+t.nome_profissional+'</option>');
+  const {data:certs}=await client.from("certificacoes").select("id,nome,icone").order("nome");
+  certificacoes=certs||[];
+  const selCert=document.getElementById("certificacao_id");selCert.innerHTML="<option value=''>Selecione a certificação</option>";
+  certificacoes.forEach(c=>selCert.innerHTML+='<option value="'+c.id+'">'+c.nome+'</option>');
+  const filtro=document.getElementById("filtroCert");filtro.innerHTML="<option value=''>Todas as certificações</option>";
+  certificacoes.forEach(c=>filtro.innerHTML+='<option value="'+c.id+'">'+c.nome+'</option>');
   renderLegenda();
 }
 
 async function carregarLista(){
-  if(!window.usuarioLogado){ setTimeout(carregarLista, 100); return; }
-  const u = window.usuarioLogado;
-  let q = client
-    .from("terapeuta_certificacoes")
-    .select('id, data_obtencao, arquivo_url, arquivo_nome, cpf_terapeuta, certificacoes(id,nome,icone), terapeutas(nome_profissional)')
-    .order("id");
-  if(!podeVerTudo(u) && u && u.cpf) q = q.eq("cpf_terapeuta", u.cpf);
-  const {data} = await q;
-  dados = data || [];
-  render();
-}
-
-function render(){
-  const u = window.usuarioLogado;
-  const termo = (document.getElementById("buscaTerapeuta").value||"").toLowerCase();
-  const filtrado = dados.filter(d => {
-    const nome = (d.terapeutas?.nome_profissional||"").toLowerCase();
-    const cert = (d.certificacoes?.nome||"").toLowerCase();
-    return nome.includes(termo) || cert.includes(termo);
-  });
-
-  const agrupado = {};
-  filtrado.forEach(r => {
-    const nome = r.terapeutas?.nome_profissional || "Sem nome";
-    if(!agrupado[nome]) agrupado[nome] = {nome, certs:[]};
-    agrupado[nome].certs.push(r);
-  });
-
-  const tbody = document.getElementById("lista");
-  tbody.innerHTML = "";
-
-  if(!Object.keys(agrupado).length){
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:32px">Nenhum resultado encontrado.</td></tr>';
-    return;
-  }
-
-  Object.values(agrupado).sort((a,b) => a.nome.localeCompare(b.nome)).forEach(t => {
-    const iconesUnicos = [...new Map(
-      t.certs.map(c => [c.certificacoes?.id, {icone: c.certificacoes?.icone||"fa-certificate", nome: c.certificacoes?.nome}])
-    ).values()];
-
-    const iconesHtml = iconesUnicos.map(i =>
-      renderIcone(i.icone, corIcone(i.icone), 18, i.nome)
-    ).join('');
-
-    tbody.innerHTML += '<tr>'
-      + '<td><strong>'+t.nome+'</strong></td>'
-      + '<td><div class="cert-icones">'+iconesHtml+'</div></td>'
-      + '<td><span class="badge-count">'+t.certs.length+'</span></td>'
-      + '<td><button onclick="abrirModal(\''+t.nome.replace(/'/g,"\\'")+'\')">'
-      + '<i class="fa fa-eye"></i> Ver / Editar</button></td>'
-      + '</tr>';
-  });
+  if(!window.usuarioLogado){setTimeout(carregarLista,100);return;}
+  const u=window.usuarioLogado;
+  let q=client.from("terapeuta_certificacoes").select('id,data_obtencao,arquivo_url,arquivo_nome,cpf_terapeuta,certificacoes(id,nome,icone),terapeutas(nome_profissional)').order("id");
+  if(!podeVerTudo(u)&&u&&u.cpf)q=q.eq("cpf_terapeuta",u.cpf);
+  const {data}=await q;dados=data||[];paginaAtual=0;aplicarFiltroEOrdem();
 }
 
 function abrirVincular(){
-  const u = window.usuarioLogado;
-  const selTer = document.getElementById("cpf_terapeuta");
-  if(!podeVerTudo(u) && u && u.cpf){
-    selTer.value = u.cpf;
-    selTer.disabled = true;
-  } else {
-    selTer.value = "";
-    selTer.disabled = false;
-  }
-  document.getElementById("certificacao_id").value = "";
-  document.getElementById("data_obtencao").value   = "";
-  if(document.getElementById("arquivo_vincular"))
-    document.getElementById("arquivo_vincular").value = "";
-  document.getElementById("modalVincular").style.display = "flex";
+  const u=window.usuarioLogado;const selTer=document.getElementById("cpf_terapeuta");
+  if(!podeVerTudo(u)&&u&&u.cpf){selTer.value=u.cpf;selTer.disabled=true;}else{selTer.value="";selTer.disabled=false;}
+  document.getElementById("certificacao_id").value="";document.getElementById("data_obtencao").value="";
+  if(document.getElementById("arquivo_vincular"))document.getElementById("arquivo_vincular").value="";
+  document.getElementById("modalVincular").style.display="flex";
 }
-function fecharVincular(){ document.getElementById("modalVincular").style.display = "none"; }
+function fecharVincular(){document.getElementById("modalVincular").style.display="none";}
 
 async function vincular(){
-  const cpf  = document.getElementById("cpf_terapeuta").value;
-  const cert = document.getElementById("certificacao_id").value;
-  const data = document.getElementById("data_obtencao").value;
-  const file = document.getElementById("arquivo_vincular").files[0];
-  if(!cpf || !cert){ alert("Selecione o profissional e a certificação."); return; }
-
-  const {data: inserted, error} = await client
-    .from("terapeuta_certificacoes")
-    .insert({cpf_terapeuta: cpf, certificacao_id: cert, data_obtencao: data || null})
-    .select().single();
-  if(error){ alert("Erro ao vincular: " + error.message); return; }
-
-  if(file && inserted?.id){
-    const statusEl = document.getElementById("uploading_vincular");
-    statusEl.style.display = "block";
-    const fileName = 'certificados/'+inserted.id+'/'+Date.now()+'_'+limparNome(file.name);
-    const {error: upErr} = await client.storage.from("documentos").upload(fileName, file);
-    if(!upErr){
-      const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
-      await client.from("terapeuta_certificacoes").update({
-        arquivo_url: urlData.publicUrl, arquivo_nome: file.name
-      }).eq("id", inserted.id);
-    }
-    statusEl.style.display = "none";
+  const cpf=document.getElementById("cpf_terapeuta").value,cert=document.getElementById("certificacao_id").value,data=document.getElementById("data_obtencao").value,file=document.getElementById("arquivo_vincular").files[0];
+  if(!cpf||!cert){alert("Selecione o profissional e a certificação.");return;}
+  const {data:inserted,error}=await client.from("terapeuta_certificacoes").insert({cpf_terapeuta:cpf,certificacao_id:cert,data_obtencao:data||null}).select().single();
+  if(error){alert("Erro ao vincular: "+error.message);return;}
+  if(file&&inserted?.id){
+    const statusEl=document.getElementById("uploading_vincular");statusEl.style.display="block";
+    const fileName='certificados/'+inserted.id+'/'+Date.now()+'_'+limparNome(file.name);
+    const {error:upErr}=await client.storage.from("documentos").upload(fileName,file);
+    if(!upErr){const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);await client.from("terapeuta_certificacoes").update({arquivo_url:urlData.publicUrl,arquivo_nome:file.name}).eq("id",inserted.id);}
+    statusEl.style.display="none";
   }
-
-  fecharVincular();
-  carregarLista();
+  fecharVincular();carregarLista();
 }
 
 function abrirModal(nome){
-  const u = window.usuarioLogado;
-  const registros = dados.filter(d => d.terapeutas?.nome_profissional === nome);
-  document.getElementById("tituloModal").textContent = nome;
-
-  const html = registros.map(r => {
-    const icone   = r.certificacoes?.icone || "fa-certificate";
-    const cor     = corIcone(icone);
-    const dataFmt = r.data_obtencao
-      ? new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR")
-      : "Sem data";
-
-    const iconeHtml = renderIcone(icone, cor, 20);
-
-    const arquivoHtml = r.arquivo_url
-      ? '<div class="cert-arquivo">'
-          + '<i class="fa fa-paperclip"></i>'
-          + '<a class="btn-ver-cert" href="'+r.arquivo_url+'" target="_blank">'
-          + '<i class="fa fa-eye"></i> '+(r.arquivo_nome||"Ver certificado")+'</a>'
-          + (podeVerTudo(u)
-            ? '<button class="excluir" style="padding:2px 8px;font-size:11px"'
-              + ' onclick="excluirArquivo(\''+r.id+'\',\''+((r.arquivo_url||"").replace(/'/g,"\\'"))+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-times"></i> Remover</button>'
-            : '')
-          + '</div>'
-      : '<div class="cert-upload">'
-          + '<input type="file" id="file_'+r.id+'" accept="image/*,.pdf,.doc,.docx">'
-          + '<button class="btn-upload-cert" onclick="uploadCert(\''+r.id+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-upload"></i> Anexar certificado</button>'
-          + '<span class="upload-ing" id="uploading_'+r.id+'"><i class="fa fa-spinner fa-spin"></i></span>'
-          + '</div>';
-
-    const botoesAcao = podeVerTudo(u)
-      ? '<button onclick="editarCert(\''+r.id+'\',\''+( r.data_obtencao||"")+'\')"><i class="fa fa-pencil"></i></button>'
-        + '<button class="excluir" onclick="excluir(\''+r.id+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-trash"></i></button>'
-      : '<button onclick="editarCert(\''+r.id+'\',\''+( r.data_obtencao||"")+'\')"><i class="fa fa-pencil"></i></button>';
-
-    return '<div class="cert-row" id="cert-row-'+r.id+'">'
-      + '<div style="display:flex;align-items:center;justify-content:space-between;width:100%">'
-        + '<div class="cert-row-left">'
-          + iconeHtml
-          + '<div class="cert-info">'
-            + '<span class="cert-nome">'+(r.certificacoes?.nome||"")+'</span>'
-            + '<span class="cert-data"><i class="fa fa-calendar-alt"></i> '+dataFmt+'</span>'
-          + '</div>'
-        + '</div>'
-        + '<div class="cert-row-right">'+botoesAcao+'</div>'
-      + '</div>'
-      + arquivoHtml
-      + '</div>';
+  const u=window.usuarioLogado;const registros=dados.filter(d=>d.terapeutas?.nome_profissional===nome);
+  document.getElementById("tituloModal").textContent=nome;
+  const html=registros.map(r=>{
+    const icone=r.certificacoes?.icone||"fa-certificate",cor=corIcone(icone);
+    const dataFmt=r.data_obtencao?new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR"):"Sem data";
+    const iconeHtml=renderIcone(icone,cor,20);
+    const arquivoHtml=r.arquivo_url
+      ?'<div class="cert-arquivo"><i class="fa fa-paperclip"></i><a class="btn-ver-cert" href="'+r.arquivo_url+'" target="_blank"><i class="fa fa-eye"></i> '+(r.arquivo_nome||"Ver certificado")+'</a>'+(podeVerTudo(u)?'<button class="excluir" style="padding:2px 8px;font-size:11px" onclick="excluirArquivo(\''+r.id+'\',\''+(r.arquivo_url||"").replace(/'/g,"\\'")+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-times"></i> Remover</button>':'')+'</div>'
+      :'<div class="cert-upload"><input type="file" id="file_'+r.id+'" accept="image/*,.pdf,.doc,.docx"><button class="btn-upload-cert" onclick="uploadCert(\''+r.id+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-upload"></i> Anexar certificado</button><span class="upload-ing" id="uploading_'+r.id+'"><i class="fa fa-spinner fa-spin"></i></span></div>';
+    const botoesAcao=podeVerTudo(u)
+      ?'<button onclick="editarCert(\''+r.id+'\',\''+(r.data_obtencao||"")+'\')"><i class="fa fa-pencil"></i></button><button class="excluir" onclick="excluir(\''+r.id+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-trash"></i></button>'
+      :'<button onclick="editarCert(\''+r.id+'\',\''+(r.data_obtencao||"")+'\')"><i class="fa fa-pencil"></i></button>';
+    return '<div class="cert-row"><div style="display:flex;align-items:center;justify-content:space-between;width:100%"><div class="cert-row-left">'+iconeHtml+'<div class="cert-info"><span class="cert-nome">'+(r.certificacoes?.nome||"")+'</span><span class="cert-data"><i class="fa fa-calendar-alt"></i> '+dataFmt+'</span></div></div><div class="cert-row-right">'+botoesAcao+'</div></div>'+arquivoHtml+'</div>';
   }).join("");
-
-  document.getElementById("listaCerts").innerHTML = html || '<p style="color:#9ca3af;text-align:center">Nenhuma certificação.</p>';
-  document.getElementById("modalCerts").style.display = "flex";
+  document.getElementById("listaCerts").innerHTML=html||'<p style="color:#9ca3af;text-align:center">Nenhuma certificação.</p>';
+  document.getElementById("modalCerts").style.display="flex";
 }
-
-function fecharModal(){ document.getElementById("modalCerts").style.display = "none"; }
-
-function editarCert(id, dataAtual){
-  editandoId = id;
-  document.getElementById("novaDataInput").value = dataAtual || "";
-  document.getElementById("modalEditarData").style.display = "flex";
-}
-function fecharModalData(){ document.getElementById("modalEditarData").style.display = "none"; }
-
+function fecharModal(){document.getElementById("modalCerts").style.display="none";}
+function editarCert(id,dataAtual){editandoId=id;document.getElementById("novaDataInput").value=dataAtual||"";document.getElementById("modalEditarData").style.display="flex";}
+function fecharModalData(){document.getElementById("modalEditarData").style.display="none";}
 async function salvarNovaData(){
-  const novaData = document.getElementById("novaDataInput").value;
-  if(!novaData){ alert("Selecione uma data."); return; }
-  const {error} = await client.from("terapeuta_certificacoes")
-    .update({data_obtencao: novaData}).eq("id", editandoId);
-  if(error){ alert("Erro: " + error.message); return; }
-  fecharModalData();
-  await carregarLista();
-  const r = dados.find(d => d.id == editandoId);
-  if(r) abrirModal(r.terapeutas?.nome_profissional);
+  const novaData=document.getElementById("novaDataInput").value;if(!novaData){alert("Selecione uma data.");return;}
+  const {error}=await client.from("terapeuta_certificacoes").update({data_obtencao:novaData}).eq("id",editandoId);
+  if(error){alert("Erro: "+error.message);return;}
+  fecharModalData();await carregarLista();const r=dados.find(d=>d.id==editandoId);if(r)abrirModal(r.terapeutas?.nome_profissional);
 }
-
-async function excluir(id, nome){
-  if(!confirm("Excluir este vínculo?")) return;
-  const {error} = await client.from("terapeuta_certificacoes").delete().eq("id", id);
-  if(error){ alert("Erro: " + error.message); return; }
-  await carregarLista();
-  const ainda = dados.filter(d => d.terapeutas?.nome_profissional === nome);
-  if(ainda.length) abrirModal(nome); else fecharModal();
+async function excluir(id,nome){
+  if(!confirm("Excluir este vínculo?"))return;
+  const {error}=await client.from("terapeuta_certificacoes").delete().eq("id",id);
+  if(error){alert("Erro: "+error.message);return;}
+  await carregarLista();const ainda=dados.filter(d=>d.terapeutas?.nome_profissional===nome);
+  if(ainda.length)abrirModal(nome);else fecharModal();
 }
-
-function limparNome(nome){
-  return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");
+function limparNome(nome){return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");}
+async function uploadCert(id,nomeTerapeuta){
+  const file=document.getElementById("file_"+id)?.files[0];if(!file){alert("Selecione um arquivo.");return;}
+  const statusEl=document.getElementById("uploading_"+id);if(statusEl)statusEl.style.display="inline";
+  const fileName='certificados/'+id+'/'+Date.now()+'_'+limparNome(file.name);
+  const {error:upErr}=await client.storage.from("documentos").upload(fileName,file);
+  if(upErr){if(statusEl)statusEl.style.display="none";alert("Erro: "+upErr.message);return;}
+  const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
+  const {error}=await client.from("terapeuta_certificacoes").update({arquivo_url:urlData.publicUrl,arquivo_nome:file.name}).eq("id",id);
+  if(statusEl)statusEl.style.display="none";if(error){alert("Erro: "+error.message);return;}
+  await carregarLista();abrirModal(nomeTerapeuta);
 }
-
-async function uploadCert(id, nomeTerapeuta){
-  const file = document.getElementById("file_"+id)?.files[0];
-  if(!file){ alert("Selecione um arquivo."); return; }
-  const statusEl = document.getElementById("uploading_"+id);
-  if(statusEl) statusEl.style.display = "inline";
-  const fileName = 'certificados/'+id+'/'+Date.now()+'_'+limparNome(file.name);
-  const {error: upErr} = await client.storage.from("documentos").upload(fileName, file);
-  if(upErr){ if(statusEl) statusEl.style.display="none"; alert("Erro: "+upErr.message); return; }
-  const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
-  const {error} = await client.from("terapeuta_certificacoes").update({
-    arquivo_url: urlData.publicUrl, arquivo_nome: file.name
-  }).eq("id", id);
-  if(statusEl) statusEl.style.display = "none";
-  if(error){ alert("Erro: "+error.message); return; }
-  await carregarLista();
-  abrirModal(nomeTerapeuta);
-}
-
-async function excluirArquivo(id, url, nomeTerapeuta){
-  if(!confirm("Remover o arquivo?")) return;
-  const path = url.split("/storage/v1/object/public/documentos/")[1];
-  if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
+async function excluirArquivo(id,url,nomeTerapeuta){
+  if(!confirm("Remover o arquivo?"))return;
+  const path=url.split("/storage/v1/object/public/documentos/")[1];
+  if(path)await client.storage.from("documentos").remove([decodeURIComponent(path)]);
   await client.from("terapeuta_certificacoes").update({arquivo_url:null,arquivo_nome:null}).eq("id",id);
-  await carregarLista();
-  abrirModal(nomeTerapeuta);
+  await carregarLista();abrirModal(nomeTerapeuta);
 }
-
 function exportarExcel(){
-  const exportData = dados.map(r => ({
-    "Profissional": r.terapeutas?.nome_profissional||"",
-    "Certificação": r.certificacoes?.nome||"",
-    "Data Obtenção": r.data_obtencao
-      ? new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR") : ""
-  }));
-  const ws = XLSX.utils.json_to_sheet(exportData);
-  const colunas = ["Profissional","Certificação","Data Obtenção"];
-  ws["!cols"] = colunas.map(col => ({
-    wch: Math.max(col.length, ...exportData.map(r => String(r[col]||"").length)) + 2
-  }));
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Certificações");
-  XLSX.writeFile(wb, "certificacoes.xlsx");
+  const exportData=dados.map(r=>({"Profissional":r.terapeutas?.nome_profissional||"","Certificação":r.certificacoes?.nome||"","Data Obtenção":r.data_obtencao?new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR"):""}));
+  const ws=XLSX.utils.json_to_sheet(exportData);const colunas=["Profissional","Certificação","Data Obtenção"];
+  ws["!cols"]=colunas.map(col=>({wch:Math.max(col.length,...exportData.map(r=>String(r[col]||"").length))+2}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Certificações");XLSX.writeFile(wb,"certificacoes.xlsx");
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById("buscaTerapeuta").addEventListener("input", render);
-  carregarSelects();
-  carregarLista();
+document.addEventListener('DOMContentLoaded',()=>{
+  atualizarIconesOrdem();
+  const reset=()=>{paginaAtual=0;aplicarFiltroEOrdem();};
+  document.getElementById("buscaTerapeuta").addEventListener("input",()=>{checarBtnLimpar();reset();});
+  document.getElementById("filtroCert").addEventListener("change",()=>{checarBtnLimpar();reset();});
+  carregarSelects();carregarLista();
 });
 </script>
 </body>

@@ -210,6 +210,12 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     <select id="fProf" onchange="aplicarFiltros()"><option value="">Todos</option></select>
     <div class="sep"></div><label>Serviço</label>
     <select id="fServ" onchange="aplicarFiltros()"><option value="">Todos</option></select>
+    <div class="sep"></div><label>Status</label>
+    <select id="fStatus" onchange="aplicarFiltros()">
+      <option value="">Todos</option>
+      <option value="Ativo">Ativos</option>
+      <option value="Inativo">Inativos</option>
+    </select>
     <span id="fonteInfo"></span>
   </div>
 
@@ -444,6 +450,22 @@ function mkChart(id,cfg){destroyChart(id);const el=document.getElementById(id);i
 function setBgBanner(m,v){const b=document.getElementById("bgLoadBanner");b.classList.toggle("visible",v);if(m)document.getElementById("bgLoadMsg").textContent=m;}
 function anoAtualStr(){return String(new Date().getFullYear());}
 
+/* EQUIPE — mapa de status por nome profissional */
+let equipeStatusMap = {}; // nome_profissional -> "Ativo" | "Inativo"
+
+async function fetchEquipe(){
+  const {data} = await client.from("terapeutas").select("nome_profissional,status");
+  if(!data) return;
+  equipeStatusMap = {};
+  data.forEach(t => { equipeStatusMap[t.nome_profissional] = t.status || "Ativo"; });
+}
+
+function statusProf(nome){
+  if(!nome || nome === "—") return "Inativo";
+  if(Object.keys(equipeStatusMap).length === 0) return "Ativo"; // antes de carregar equipe, não filtra
+  return equipeStatusMap[nome] || "Inativo"; // não encontrado = inativo
+}
+
 /* FETCH — sem filtro de situacao */
 async function fetchLegadoRecente(){
   const ano=anoAtualStr();
@@ -454,13 +476,13 @@ async function fetchLegadoRecente(){
   console.log("[Dashboard] legado recente:", data?.length, "registros, erro:", error?.message);
   if(error){console.error("[Dashboard] ERRO legado:", error);return[];}
   if(!data||!data.length){console.warn("[Dashboard] legado retornou vazio");return[];}
-  return data.map(r=>({...r,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"}));
+  return data.map(r=>({...r,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado",_status:statusProf(r.profissional)}));
 }
 async function fetchNovosRecente(){
   const ano=anoAtualStr();
   const{data,error}=await client.from("atendimentos").select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`).eq("status","Confirmado").gte("data",ano+"-01-01");
   if(error||!data)return[];
-  return data.map(r=>({profissional:r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—",data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo"}));
+  return data.map(r=>{const prof=r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—";return{profissional:prof,data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo",_status:statusProf(prof)};});
 }
 async function fetchLegadoCompleto(){
   const cached=lerCache(CACHE_KEY_LEGADO);if(cached)return cached;
@@ -470,7 +492,7 @@ async function fetchLegadoCompleto(){
       .select("profissional,data,hora_inicio,cliente,servico,situacao,valor,comissao")
       .range(from,from+999);
     if(error||!data||!data.length)break;
-    todos=todos.concat(data.map(r=>({profissional:r.profissional,data:r.data,hora_inicio:r.hora_inicio,cliente:r.cliente,servico:r.servico,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado"})));
+    todos=todos.concat(data.map(r=>({profissional:r.profissional,data:r.data,hora_inicio:r.hora_inicio,cliente:r.cliente,servico:r.servico,valor:r.valor||0,comissao:r.comissao||0,_fonte:"legado",_status:statusProf(r.profissional)})));
     if(data.length<1000)break;from+=1000;
   }
   salvarCache(CACHE_KEY_LEGADO,todos);return todos;
@@ -478,7 +500,7 @@ async function fetchLegadoCompleto(){
 async function fetchNovosCompleto(){
   const cached=lerCache(CACHE_KEY_NOVO);if(cached)return cached;
   let todos=[],from=0;
-  while(true){const{data,error}=await client.from("atendimentos").select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`).eq("status","Confirmado").range(from,from+999);if(error||!data||!data.length)break;todos=todos.concat(data.map(r=>({profissional:r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—",data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo"})));if(data.length<1000)break;from+=1000;}
+  while(true){const{data,error}=await client.from("atendimentos").select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`).eq("status","Confirmado").range(from,from+999);if(error||!data||!data.length)break;todos=todos.concat(data.map(r=>{const prof=r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—";return{profissional:prof,data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo",_status:statusProf(prof)};}));if(data.length<1000)break;from+=1000;}
   salvarCache(CACHE_KEY_NOVO,todos);return todos;
 }
 
@@ -486,7 +508,8 @@ async function fetchNovosCompleto(){
 function aplicarFiltros(){
   selecao={tipo:null,valor:null};const badge=document.getElementById("selecaoBadge");if(badge)badge.remove();
   const ano=document.getElementById("fAno").value,mes=document.getElementById("fMes").value,quinz=document.getElementById("fQuinz").value,prof=document.getElementById("fProf").value,serv=document.getElementById("fServ").value,fonte=document.getElementById("fFonte").value;
-  allData=cacheCompleto.filter(r=>{if(!r.data)return false;const[y,m,d]=r.data.split("-");if(ano&&y!==ano)return false;if(mes&&m!==mes)return false;if(quinz==="1"&&parseInt(d)>15)return false;if(quinz==="2"&&parseInt(d)<=15)return false;if(prof&&r.profissional!==prof)return false;if(serv&&r.servico!==serv)return false;if(fonte&&r._fonte!==fonte)return false;return true;});
+  const statusFiltro=document.getElementById("fStatus")?.value||"";
+  allData=cacheCompleto.filter(r=>{if(!r.data)return false;const[y,m,d]=r.data.split("-");if(ano&&y!==ano)return false;if(mes&&m!==mes)return false;if(quinz==="1"&&parseInt(d)>15)return false;if(quinz==="2"&&parseInt(d)<=15)return false;if(prof&&r.profissional!==prof)return false;if(serv&&r.servico!==serv)return false;if(fonte&&r._fonte!==fonte)return false;if(statusFiltro&&r._status!==statusFiltro)return false;return true;});
   const legados=allData.filter(r=>r._fonte==="legado").length,novos=allData.filter(r=>r._fonte==="novo").length;
   const info=document.getElementById("fonteInfo");
   info.innerHTML=legados&&novos?`<span class="fonte-badge ambos"><i class="fa fa-database"></i> ${fmtN(legados)} legado + ${fmtN(novos)} novos</span>`:legados?`<span class="fonte-badge legado"><i class="fa fa-database"></i> ${fmtN(legados)} do legado</span>`:`<span class="fonte-badge novo"><i class="fa fa-star"></i> ${fmtN(novos)} novos</span>`;
@@ -721,6 +744,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
   setProgress(10,"Buscando atendimentos do ano atual...");
   try{
     console.log("[Dashboard] Iniciando fetch...");
+    await fetchEquipe(); // carrega status da equipe primeiro
     const[legRec,novRec]=await Promise.all([fetchLegadoRecente(),fetchNovosRecente()]);
     console.log("[Dashboard] legRec:", legRec.length, "novRec:", novRec.length);
     setProgress(50,"Processando dados recentes...");
@@ -738,7 +762,9 @@ document.addEventListener("DOMContentLoaded",async()=>{
     setProgress(60,"Carregando histórico...");
     const[legFull,novFull]=await Promise.all([fetchLegadoCompleto(),fetchNovosCompleto()]);
     setProgress(90,"Mesclando dados históricos...");
-    cacheCompleto=[...legFull,...novFull];
+    // Re-aplica status com mapa de equipe já carregado (re-enrich)
+    const enrich=r=>({...r,_status:statusProf(r.profissional)});
+    cacheCompleto=[...legFull.map(enrich),...novFull.map(enrich)];
     popularFiltros();
     aplicarFiltros();
     setBgBanner("",false);

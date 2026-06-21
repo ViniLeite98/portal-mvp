@@ -6,31 +6,73 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
-.left-tools{display:flex;gap:10px;align-items:center;}
-.left-tools input{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;width:260px;font-size:14px;}
-.left-tools input:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.left-tools select{padding:9px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;}
-.right-tools{display:flex;gap:10px;align-items:center;}
+
+/* ── TOPBAR padrão equipe ── */
+.topbar{margin-bottom:20px;}
+.topbar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+
+/* Contador */
+.collab-counter{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:7px 16px;font-size:13px;color:#374151;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.collab-counter i{color:#2563eb;font-size:13px;}
+.collab-counter .count{font-weight:700;color:#111827;font-size:16px;}
+.collab-counter .label{color:#6b7280;font-size:12px;}
+
+/* Filtros com labels */
+.filters-row{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;}
+.filter-group{display:flex;flex-direction:column;gap:4px;}
+.filter-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;}
+.filter-group input,.filter-group select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;}
+.filter-group input{width:220px;}
+.filter-group input:focus,.filter-group select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.filter-group select{min-width:150px;}
+.btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
+.btn-limpar:hover{background:#f3f4f6;color:#374151;}
+.btn-limpar.visible{display:inline-flex;}
+
+/* Table */
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
-th{background:#f9fafb;font-weight:600;cursor:pointer;user-select:none;}
-th:hover{background:#f3f4f6;}
+th{background:#f9fafb;font-weight:600;}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+th.sortable:hover{background:#f3f4f6;color:#1d4ed8;}
+th.sortable .sort-icon{margin-left:5px;font-size:11px;color:#9ca3af;transition:color .15s;}
+th.sortable.asc .sort-icon,th.sortable.desc .sort-icon{color:#2563eb;}
+td:nth-child(2),td:nth-child(3),td:nth-child(4),td:nth-child(5){text-align:center;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#f9fafb;}
-td:nth-child(2),td:nth-child(3),td:nth-child(4),td:nth-child(5){text-align:center;}
 button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;}
 button.excluir{background:#dc2626;}
 button.exportar{background:#16a34a;}
 .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
 .badge-ativo{background:#dcfce7;color:#16a34a;}
 .badge-inativo{background:#fee2e2;color:#dc2626;}
+.empty-row td{text-align:center;color:#9ca3af;padding:32px;}
+
+/* Paginação padrão equipe */
+.paginacao{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px;}
+.paginacao-info{font-size:13px;color:#6b7280;}
+.paginacao-info strong{color:#111827;}
+.paginacao-controles{display:flex;align-items:center;gap:6px;}
+.pag-btn{background:#fff;color:#374151;border:1px solid #d1d5db;border-radius:7px;padding:6px 11px;font-size:13px;cursor:pointer;min-width:34px;text-align:center;transition:all .15s;}
+.pag-btn:hover:not(:disabled){background:#f3f4f6;border-color:#9ca3af;}
+.pag-btn:disabled{opacity:.4;cursor:default;}
+.pag-btn.ativo{background:#1f2937;color:#fff;border-color:#1f2937;font-weight:700;}
+.pag-btn.ellipsis{border:none;background:none;cursor:default;color:#9ca3af;min-width:20px;padding:6px 4px;}
+.pag-btn.ellipsis:hover{background:none;}
+.por-pagina-wrap{display:flex;align-items:center;gap:7px;font-size:13px;color:#6b7280;}
+.por-pagina-wrap select{padding:5px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;background:#fff;color:#111827;}
+
+/* Modal */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:1000;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:560px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
@@ -50,7 +92,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .btn-cancel:hover{background:#f3f4f6;}
 .btn-save{background:#1f2937;}
 .btn-save:hover{background:#111827;}
-.empty-row td{text-align:center;color:#9ca3af;padding:32px;}
 </style>
 </head>
 <body>
@@ -58,40 +99,73 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <aside id="sidebar"></aside>
 <main class="content">
 <h1>Serviços</h1>
+
+<!-- Topbar padrão equipe -->
 <div class="topbar">
-  <div class="left-tools">
-    <input id="buscaServico" placeholder="🔍  Buscar serviço...">
-    <select id="filtroStatus">
-      <option value="">Todos os status</option>
-      <option value="ativo">Ativo</option>
-      <option value="inativo">Inativo</option>
-    </select>
-    <select id="filtroGrupo"><option value="">Todos os grupos</option></select>
-    <select id="porPaginaSelect">
-      <option value="10" selected>10 por página</option>
-      <option value="20">20 por página</option>
-      <option value="50">50 por página</option>
-      <option value="todos">Todos</option>
-    </select>
+  <div class="topbar-top">
+    <div class="collab-counter">
+      <i class="fa fa-spa"></i>
+      <span class="count" id="collabCount">—</span>
+      <span class="label" id="collabLabel">serviços</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="exportar" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+      <button onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Serviço</button>
+    </div>
   </div>
-  <div class="right-tools">
-    <button class="exportar" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
-    <button onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Serviço</button>
+  <div class="filters-row">
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-search" style="margin-right:3px"></i> Busca</span>
+      <input id="buscaServico" placeholder="Buscar serviço...">
+    </div>
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-circle-dot" style="margin-right:3px"></i> Status</span>
+      <select id="filtroStatus">
+        <option value="">Todos os status</option>
+        <option value="ativo">Ativo</option>
+        <option value="inativo">Inativo</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-layer-group" style="margin-right:3px"></i> Grupo</span>
+      <select id="filtroGrupo"><option value="">Todos os grupos</option></select>
+    </div>
+    <button class="btn-limpar" id="btnLimparFiltros" onclick="limparFiltros()">
+      <i class="fa fa-times"></i> Limpar filtros
+    </button>
   </div>
 </div>
+
 <table>
   <thead>
     <tr>
-      <th onclick="ordenar('servico')">Serviço <span id="ord_servico"></span></th>
-      <th onclick="ordenar('tempo')">Tempo <span id="ord_tempo"></span></th>
-      <th onclick="ordenar('valor')">Valor <span id="ord_valor"></span></th>
-      <th onclick="ordenar('comissao')">Comissão <span id="ord_comissao"></span></th>
+      <th class="sortable" onclick="ordenar('servico')" id="th-servico">Serviço <i class="fa fa-sort sort-icon"></i></th>
+      <th class="sortable" onclick="ordenar('tempo')"   id="th-tempo">Tempo <i class="fa fa-sort sort-icon"></i></th>
+      <th class="sortable" onclick="ordenar('valor')"   id="th-valor">Valor <i class="fa fa-sort sort-icon"></i></th>
+      <th class="sortable" onclick="ordenar('comissao')" id="th-comissao">Comissão <i class="fa fa-sort sort-icon"></i></th>
       <th>Status</th>
       <th>Ações</th>
     </tr>
   </thead>
   <tbody id="lista"></tbody>
 </table>
+
+<!-- Paginação padrão equipe -->
+<div class="paginacao" id="paginacao">
+  <div class="por-pagina-wrap">
+    Exibir
+    <select id="porPagina" onchange="paginaAtual=0;renderTabela()">
+      <option value="10" selected>10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="9999">Todos</option>
+    </select>
+    por página
+  </div>
+  <div class="paginacao-info" id="paginacaoInfo"></div>
+  <div class="paginacao-controles" id="paginacaoControles"></div>
+</div>
+
 </main>
 </div>
 
@@ -129,107 +203,221 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </div>
 </div>
 
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
-<script src="assets/js/auth.js"></script>
-<script src="assets/sidebar/sidebar.js"></script>
-<script src="assets/sidebar/sidebar.js"></script>
 <script>
-let dados=[], idAtual=null, ordemColuna=null, ordemAsc=true;
-const GRUPOS_DEFAULT=["Nuru","Vivencia","Four Hands","Podolatria"];
+let dados = [], idAtual = null;
+let ordemCol = 'servico', ordemDir = 'asc';
+let paginaAtual = 0;
+let dadosFiltrados = [];
+
+const GRUPOS_DEFAULT = ["Nuru","Vivencia","Four Hands","Podolatria"];
 
 async function carregarParametros(){
-  const {data}=await client.from("parametros").select("valor").eq("tipo","grupos_servico").eq("ativo",true).order("valor");
-  const lista=data?.length?data.map(p=>p.valor):GRUPOS_DEFAULT;
-  const selGrupo=document.getElementById("grupo");
-  selGrupo.innerHTML="<option value=''>Selecione</option>";
-  lista.forEach(g=>selGrupo.innerHTML+="<option>"+g+"</option>");
-  const selFiltro=document.getElementById("filtroGrupo");
-  selFiltro.innerHTML="<option value=''>Todos os grupos</option>";
-  lista.forEach(g=>selFiltro.innerHTML+="<option value='"+g+"'>"+g+"</option>");
+  const {data} = await client.from("parametros").select("valor").eq("tipo","grupos_servico").eq("ativo",true).order("valor");
+  const lista = data?.length ? data.map(p=>p.valor) : GRUPOS_DEFAULT;
+  const selGrupo = document.getElementById("grupo");
+  selGrupo.innerHTML = "<option value=''>Selecione</option>";
+  lista.forEach(g => selGrupo.innerHTML += "<option>"+g+"</option>");
+  const selFiltro = document.getElementById("filtroGrupo");
+  selFiltro.innerHTML = "<option value=''>Todos os grupos</option>";
+  lista.forEach(g => selFiltro.innerHTML += "<option value='"+g+"'>"+g+"</option>");
 }
 
-function nomeServico(s){return[s.grupo,s.subgrupo,s.tempo?s.tempo+" min":""].filter(Boolean).join(" ");}
-function moeda(v){return Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2});}
-function parseMoeda(v){return parseFloat((v||"0").replace(/\./g,"").replace(",","."))||0;}
+function nomeServico(s){ return [s.grupo, s.subgrupo, s.tempo ? s.tempo+" min" : ""].filter(Boolean).join(" "); }
+function moeda(v){ return Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2}); }
+function parseMoeda(v){ return parseFloat((v||"0").replace(/\./g,"").replace(",","."))||0; }
 
 async function carregar(){
-  const {data,error}=await client.from("servicos").select("*");
-  if(error){console.error(error);return;}
-  dados=data||[];render();
+  const {data,error} = await client.from("servicos").select("*");
+  if(error){ console.error(error); return; }
+  dados = data || [];
+  paginaAtual = 0;
+  aplicarFiltroEOrdem();
 }
 
-function render(){
-  const termo=(document.getElementById("buscaServico").value||"").toLowerCase();
-  const statusFiltro=document.getElementById("filtroStatus").value;
-  const grupoFiltro=document.getElementById("filtroGrupo").value;
-  const porPaginaVal=document.getElementById("porPaginaSelect").value;
-  const porPagina=porPaginaVal==="todos"?Infinity:parseInt(porPaginaVal);
-  let lista=dados.filter(s=>{
-    const nomeOk=nomeServico(s).toLowerCase().includes(termo);
-    const statusOk=!statusFiltro||s.status===statusFiltro;
-    const grupoOk=!grupoFiltro||s.grupo===grupoFiltro;
-    return nomeOk&&statusOk&&grupoOk;
+// ── FILTROS ──
+function limparFiltros(){
+  document.getElementById("buscaServico").value = "";
+  document.getElementById("filtroStatus").value = "";
+  document.getElementById("filtroGrupo").value = "";
+  checarBtnLimpar();
+  paginaAtual = 0;
+  aplicarFiltroEOrdem();
+}
+
+function checarBtnLimpar(){
+  const busca  = document.getElementById("buscaServico").value;
+  const status = document.getElementById("filtroStatus").value;
+  const grupo  = document.getElementById("filtroGrupo").value;
+  document.getElementById("btnLimparFiltros").classList.toggle("visible", !!(busca||status||grupo));
+}
+
+// ── ORDENAÇÃO ──
+function ordenar(col){
+  if(ordemCol === col){ ordemDir = ordemDir === 'asc' ? 'desc' : 'asc'; }
+  else { ordemCol = col; ordemDir = 'asc'; }
+  atualizarIconesOrdem();
+  paginaAtual = 0;
+  aplicarFiltroEOrdem();
+}
+
+function atualizarIconesOrdem(){
+  ['servico','tempo','valor','comissao'].forEach(c => {
+    const th = document.getElementById('th-'+c);
+    if(!th) return;
+    const icon = th.querySelector('.sort-icon');
+    th.classList.remove('asc','desc');
+    if(ordemCol === c){
+      th.classList.add(ordemDir);
+      icon.className = 'fa sort-icon ' + (ordemDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
+    } else {
+      icon.className = 'fa fa-sort sort-icon';
+    }
   });
-  if(ordemColuna){
-    lista.sort((a,b)=>{
-      let va,vb;
-      if(ordemColuna==="servico"){va=nomeServico(a);vb=nomeServico(b);}
-      if(ordemColuna==="tempo"){va=Number(a.tempo||0);vb=Number(b.tempo||0);}
-      if(ordemColuna==="valor"){va=Number(a.valor||0);vb=Number(b.valor||0);}
-      if(ordemColuna==="comissao"){va=Number(a.comissao||0);vb=Number(b.comissao||0);}
-      return ordemAsc?(va>vb?1:-1):(va<vb?1:-1);
+}
+
+// ── CONTADOR ──
+function atualizarContador(total, status, grupo){
+  document.getElementById("collabCount").textContent = total;
+  let label = total === 1 ? "serviço" : "serviços";
+  const partes = [];
+  if(status === "ativo") partes.push("ativos");
+  else if(status === "inativo") partes.push("inativos");
+  if(grupo) partes.push("· "+grupo);
+  document.getElementById("collabLabel").textContent = label + (partes.length ? " "+partes.join(" ") : "");
+}
+
+function aplicarFiltroEOrdem(){
+  const termo  = (document.getElementById("buscaServico").value||"").toLowerCase();
+  const status = document.getElementById("filtroStatus").value;
+  const grupo  = document.getElementById("filtroGrupo").value;
+
+  dadosFiltrados = dados.filter(s => {
+    const nomeOk   = nomeServico(s).toLowerCase().includes(termo);
+    const statusOk = !status || s.status === status;
+    const grupoOk  = !grupo  || s.grupo  === grupo;
+    return nomeOk && statusOk && grupoOk;
+  });
+
+  dadosFiltrados.sort((a,b) => {
+    let va, vb;
+    if(ordemCol==="servico")  { va=nomeServico(a).toLowerCase(); vb=nomeServico(b).toLowerCase(); }
+    if(ordemCol==="tempo")    { va=Number(a.tempo||0);  vb=Number(b.tempo||0); }
+    if(ordemCol==="valor")    { va=Number(a.valor||0);  vb=Number(b.valor||0); }
+    if(ordemCol==="comissao") { va=Number(a.comissao||0); vb=Number(b.comissao||0); }
+    if(va < vb) return ordemDir==='asc' ? -1 : 1;
+    if(va > vb) return ordemDir==='asc' ?  1 : -1;
+    return 0;
+  });
+
+  atualizarContador(dadosFiltrados.length, status, grupo);
+  checarBtnLimpar();
+  renderTabela();
+}
+
+function renderTabela(){
+  const porPag = parseInt(document.getElementById("porPagina").value) || 10;
+  const total  = dadosFiltrados.length;
+  const totalPags = porPag >= 9999 ? 1 : Math.max(1, Math.ceil(total/porPag));
+  if(paginaAtual >= totalPags) paginaAtual = totalPags - 1;
+  const inicio = porPag >= 9999 ? 0 : paginaAtual * porPag;
+  const fim    = porPag >= 9999 ? total : Math.min(inicio + porPag, total);
+  const pagina = dadosFiltrados.slice(inicio, fim);
+
+  const tbody = document.getElementById("lista");
+  tbody.innerHTML = "";
+  if(!pagina.length){
+    tbody.innerHTML = "<tr class='empty-row'><td colspan='6'>Nenhum serviço encontrado.</td></tr>";
+  } else {
+    pagina.forEach(s => {
+      const badge = s.status==="ativo"
+        ? "<span class='badge badge-ativo'>Ativo</span>"
+        : "<span class='badge badge-inativo'>Inativo</span>";
+      tbody.innerHTML += "<tr>"
+        +"<td>"+nomeServico(s)+"</td>"
+        +"<td>"+(s.tempo?s.tempo+" min":"-")+"</td>"
+        +"<td>R$ "+moeda(s.valor)+"</td>"
+        +"<td>R$ "+moeda(s.comissao)+"</td>"
+        +"<td>"+badge+"</td>"
+        +"<td><button onclick=\"editar('"+s.id+"')\">Editar</button> <button class='excluir' onclick=\"excluir('"+s.id+"')\">Excluir</button></td>"
+        +"</tr>";
     });
   }
-  const tbody=document.getElementById("lista");tbody.innerHTML="";
-  if(!lista.length){tbody.innerHTML="<tr class='empty-row'><td colspan='6'>Nenhum serviço encontrado.</td></tr>";return;}
-  lista.slice(0,porPagina).forEach(s=>{
-    const badge=s.status==="ativo"?"<span class='badge badge-ativo'>Ativo</span>":"<span class='badge badge-inativo'>Inativo</span>";
-    tbody.innerHTML+="<tr><td>"+nomeServico(s)+"</td><td>"+(s.tempo?s.tempo+" min":"-")+"</td><td>R$ "+moeda(s.valor)+"</td><td>R$ "+moeda(s.comissao)+"</td><td>"+badge+"</td><td><button onclick=\"editar('"+s.id+"')\">Editar</button> <button class='excluir' onclick=\"excluir('"+s.id+"')\">Excluir</button></td></tr>";
+
+  // Paginação
+  const infoEl = document.getElementById("paginacaoInfo");
+  const ctrlEl = document.getElementById("paginacaoControles");
+  if(total === 0){ infoEl.innerHTML="Nenhum resultado."; ctrlEl.innerHTML=""; return; }
+  if(porPag >= 9999){ infoEl.innerHTML="Exibindo <strong>todos os "+total+"</strong> serviços"; ctrlEl.innerHTML=""; return; }
+  infoEl.innerHTML="Exibindo <strong>"+(inicio+1)+"–"+fim+"</strong> de <strong>"+total+"</strong>";
+  ctrlEl.innerHTML="";
+  function addBtn(label, pg, ativo, desabilitado, ellipsis){
+    const b=document.createElement("button");
+    b.className="pag-btn"+(ativo?" ativo":"")+(ellipsis?" ellipsis":"");
+    b.innerHTML=label; b.disabled=desabilitado;
+    if(!desabilitado&&!ellipsis) b.onclick=()=>{ paginaAtual=pg; renderTabela(); };
+    ctrlEl.appendChild(b);
+  }
+  addBtn('<i class="fa fa-chevron-left"></i>', paginaAtual-1, false, paginaAtual===0);
+  const pages=[];
+  for(let i=0;i<totalPags;i++){
+    if(i===0||i===totalPags-1||Math.abs(i-paginaAtual)<=1) pages.push(i);
+    else if(pages[pages.length-1]!=='...') pages.push('...');
+  }
+  pages.forEach(p=>{
+    if(p==='...') addBtn('…',null,false,false,true);
+    else addBtn(p+1,p,p===paginaAtual,false);
   });
+  addBtn('<i class="fa fa-chevron-right"></i>', paginaAtual+1, false, paginaAtual>=totalPags-1);
 }
 
-function ordenar(col){
-  ordemColuna===col?ordemAsc=!ordemAsc:(ordemColuna=col,ordemAsc=true);
-  ["servico","tempo","valor","comissao"].forEach(c=>document.getElementById("ord_"+c).textContent="");
-  document.getElementById("ord_"+col).textContent=ordemAsc?" ↑":" ↓";
-  render();
+function resetModal(){
+  document.getElementById("grupo").value="";document.getElementById("subgrupo").value="";
+  document.getElementById("tempo").value="";document.getElementById("valor").value="";
+  document.getElementById("comissao").value="";document.getElementById("status").value="ativo";
 }
 
-function resetModal(){document.getElementById("grupo").value="";document.getElementById("subgrupo").value="";document.getElementById("tempo").value="";document.getElementById("valor").value="";document.getElementById("comissao").value="";document.getElementById("status").value="ativo";}
-
-function abrirNovo(){idAtual=null;resetModal();document.getElementById("modalTitulo").textContent="Novo Serviço";document.getElementById("modal").style.display="flex";}
+function abrirNovo(){ idAtual=null; resetModal(); document.getElementById("modalTitulo").textContent="Novo Serviço"; document.getElementById("modal").style.display="flex"; }
 
 async function editar(id){
-  idAtual=id;const s=dados.find(d=>d.id===id);if(!s)return;
-  document.getElementById("grupo").value=s.grupo||"";document.getElementById("subgrupo").value=s.subgrupo||"";
-  document.getElementById("tempo").value=s.tempo||"";document.getElementById("valor").value=s.valor?moeda(s.valor):"";
-  document.getElementById("comissao").value=s.comissao?moeda(s.comissao):"";document.getElementById("status").value=s.status||"ativo";
+  idAtual=id; const s=dados.find(d=>d.id===id); if(!s)return;
+  document.getElementById("grupo").value=s.grupo||"";
+  document.getElementById("subgrupo").value=s.subgrupo||"";
+  document.getElementById("tempo").value=s.tempo||"";
+  document.getElementById("valor").value=s.valor?moeda(s.valor):"";
+  document.getElementById("comissao").value=s.comissao?moeda(s.comissao):"";
+  document.getElementById("status").value=s.status||"ativo";
   document.getElementById("modalTitulo").textContent=nomeServico(s)||"Editar Serviço";
   document.getElementById("modal").style.display="flex";
 }
 
-function fecharModal(){document.getElementById("modal").style.display="none";}
+function fecharModal(){ document.getElementById("modal").style.display="none"; }
 
 async function salvar(){
-  const payload={grupo:document.getElementById("grupo").value,subgrupo:document.getElementById("subgrupo").value||null,tempo:document.getElementById("tempo").value||null,valor:parseMoeda(document.getElementById("valor").value),comissao:parseMoeda(document.getElementById("comissao").value),status:document.getElementById("status").value};
-  if(!payload.grupo){alert("Selecione o grupo do serviço.");return;}
+  const payload={
+    grupo:document.getElementById("grupo").value,
+    subgrupo:document.getElementById("subgrupo").value||null,
+    tempo:document.getElementById("tempo").value||null,
+    valor:parseMoeda(document.getElementById("valor").value),
+    comissao:parseMoeda(document.getElementById("comissao").value),
+    status:document.getElementById("status").value
+  };
+  if(!payload.grupo){ alert("Selecione o grupo do serviço."); return; }
   let error;
-  if(idAtual){({error}=await client.from("servicos").update(payload).eq("id",idAtual));}
-  else{({error}=await client.from("servicos").insert(payload));}
-  if(error){alert("Erro ao salvar: "+error.message);return;}
-  fecharModal();carregar();
+  if(idAtual){ ({error}=await client.from("servicos").update(payload).eq("id",idAtual)); }
+  else        { ({error}=await client.from("servicos").insert(payload)); }
+  if(error){ alert("Erro ao salvar: "+error.message); return; }
+  fecharModal(); carregar();
 }
 
 async function excluir(id){
-  if(!confirm("Excluir este serviço?"))return;
+  if(!confirm("Excluir este serviço?")) return;
   const {error}=await client.from("servicos").delete().eq("id",id);
-  if(error){alert("Erro ao excluir: "+error.message);return;}
+  if(error){ alert("Erro ao excluir: "+error.message); return; }
   carregar();
 }
 
 function exportarExcel(){
-  const exportData=dados.map(s=({"Serviço":nomeServico(s),"Grupo":s.grupo||"","Subgrupo":s.subgrupo||"","Tempo (min)":s.tempo?Number(s.tempo):"","Valor (R$)":Number(s.valor||0),"Comissão (R$)":Number(s.comissao||0),"Status":s.status||""}));
+  const exportData=dados.map(s=>({"Serviço":nomeServico(s),"Grupo":s.grupo||"","Subgrupo":s.subgrupo||"","Tempo (min)":s.tempo?Number(s.tempo):"","Valor (R$)":Number(s.valor||0),"Comissão (R$)":Number(s.comissao||0),"Status":s.status||""}));
   const ws=XLSX.utils.json_to_sheet(exportData);
   const colunas=["Serviço","Grupo","Subgrupo","Tempo (min)","Valor (R$)","Comissão (R$)","Status"];
   ws["!cols"]=colunas.map(col=>({wch:Math.max(col.length,...exportData.map(row=>String(row[col]??"").length))+2}));
@@ -238,10 +426,11 @@ function exportarExcel(){
 
 document.addEventListener("DOMContentLoaded",()=>{
   carregarParametros();
-  document.getElementById("buscaServico").addEventListener("input",render);
-  document.getElementById("filtroStatus").addEventListener("change",render);
-  document.getElementById("filtroGrupo").addEventListener("change",render);
-  document.getElementById("porPaginaSelect").addEventListener("change",render);
+  atualizarIconesOrdem();
+  const reset = () => { paginaAtual=0; aplicarFiltroEOrdem(); };
+  document.getElementById("buscaServico").addEventListener("input", reset);
+  document.getElementById("filtroStatus").addEventListener("change", reset);
+  document.getElementById("filtroGrupo").addEventListener("change", reset);
   carregar();
 });
 </script>

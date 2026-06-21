@@ -128,8 +128,8 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <main class="content">
   <div class="topbar">
     <div style="display:flex;align-items:center;gap:12px;">
-      <a id="btnVoltarEquipe" href="equipe.html" class="btn-voltar">
-        <i class="fa fa-arrow-left"></i> Voltar para Equipe
+      <a id="btnVoltar" href="equipe.html" class="btn-voltar">
+        <i class="fa fa-arrow-left"></i> <span id="btnVoltarLabel">Voltar</span>
       </a>
       <h1>Parâmetros</h1>
     </div>
@@ -309,22 +309,27 @@ function verificarHash(){
       menuItem.classList.add('highlight-pulse');
       setTimeout(()=>menuItem.classList.remove('highlight-pulse'), 1400);
     }
-    // Só mostra botão voltar se realmente veio de equipe.html nesta navegação
-    if(document.referrer.includes('equipe.html')){
-      mostrarBtnVoltar();
+    // Detecta origem e configura botão voltar
+    const ref = document.referrer;
+    if(ref.includes('equipe.html')){
+      mostrarBtnVoltar('equipe.html', 'Voltar para Equipe');
+    } else if(ref.includes('certificacoes.html')){
+      mostrarBtnVoltar('certificacoes.html', 'Voltar para Certificações');
     }
   } else {
     carregar(); // sem hash, carrega seção padrão normalmente
   }
 }
 
-function mostrarBtnVoltar(){
-  const btn = document.getElementById('btnVoltarEquipe');
-  if(btn) btn.style.display = 'inline-flex';
+function mostrarBtnVoltar(href, label){
+  const btn = document.getElementById('btnVoltar');
+  const lbl = document.getElementById('btnVoltarLabel');
+  if(btn){ btn.href = href; btn.style.display = 'inline-flex'; }
+  if(lbl) lbl.textContent = label;
 }
 
 function esconderBtnVoltar(){
-  const btn = document.getElementById('btnVoltarEquipe');
+  const btn = document.getElementById('btnVoltar');
   if(btn) btn.style.display = 'none';
 }
 // ─────────────────────────────────────────────────────────────────────────────

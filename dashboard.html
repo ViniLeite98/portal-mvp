@@ -855,14 +855,14 @@ function _setSelect(id, vals, label){
 }
 
 function _atualizarSelects(base){
-  // Profissional — filtrado por tudo exceto profissional
-  const semProf=base.filter(r=>_matchFiltros(r,{skip:"prof"}));
-  _profOpcoes=[...new Set(semProf.map(r=>r.profissional).filter(Boolean))].sort();
-  // Remove selecionados que não existem mais nas opções
-  [..._profSelecionados].forEach(p=>{ if(!_profOpcoes.includes(p)) _profSelecionados.delete(p); });
+  // Profissional — sempre mostra TODAS as profissionais do cache completo
+  // (não remove opções por filtro de mês/ano para não deselecionar indevidamente)
+  const todasProfs=[...new Set(cacheCompleto.map(r=>r.profissional).filter(Boolean))].sort();
+  _profOpcoes=todasProfs;
+  // Nunca remove selecionados — a profissional pode não ter dado no período mas continua selecionada
   filtrarMS(); atualizarMSLabel();
 
-  // Serviço — filtrado por tudo exceto serviço
+  // Serviço — filtrado por tudo exceto serviço (dinâmico normal)
   const semServ=base.filter(r=>_matchFiltros(r,{skip:"serv"}));
   const servs=[...new Set(semServ.map(r=>r.servico).filter(Boolean))].sort();
   _setSelect("fServ", servs, "Todos");

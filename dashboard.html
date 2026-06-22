@@ -631,14 +631,15 @@ function toggleMesRows(ano){const rows=document.querySelectorAll(`.mes-${ano}`),
 /* TERAPEUTAS */
 function renderTerapeutas(rows){
   const profsSel=[..._profSelecionados];
-  const prof=profsSel.length===1?profsSel[0]:"";
-  if(!prof){document.getElementById("terSemSelecao").style.display="";document.getElementById("terContent").style.display="none";return;}
+  if(profsSel.length===0){document.getElementById("terSemSelecao").style.display="";document.getElementById("terContent").style.display="none";return;}
   document.getElementById("terSemSelecao").style.display="none";document.getElementById("terContent").style.display="";
-  const rowsProf=rows.filter(r=>r.profissional===prof),total=rowsProf.length;
+  // Filtra pelos selecionados (1 ou mais)
+  const prof=profsSel.length===1?profsSel[0]:profsSel.join(" + ");
+  const rowsProf=rows.filter(r=>profsSel.includes(r.profissional)),total=rowsProf.length;
   const cliMap={};rowsProf.forEach(r=>{if(r.cliente)cliMap[r.cliente]=(cliMap[r.cliente]||0)+1;});
   const totalCli=Object.keys(cliMap).length,retornos=Object.values(cliMap).filter(v=>v>1).length;
   const ganho=rowsProf.reduce((s,r)=>s+(r.comissao||0),0);
-  const rowsPT=cacheCompleto.filter(r=>r.profissional===prof),ganhoTotal=rowsPT.reduce((s,r)=>s+(r.comissao||0),0);
+  const rowsPT=cacheCompleto.filter(r=>profsSel.includes(r.profissional)),ganhoTotal=rowsPT.reduce((s,r)=>s+(r.comissao||0),0);
   const datas=rowsPT.map(r=>r.data).filter(Boolean).sort(),primeiro=datas[0]?fmtD(datas[0]):"—";
   let q1=0,q2=0,q1r=0,q2r=0;rowsProf.forEach(r=>{if(!r.data)return;const d=parseInt(r.data.split("-")[2]);if(d<=15){q1++;q1r+=(r.comissao||0);}else{q2++;q2r+=(r.comissao||0);}});
   const diasSet=new Set(rowsProf.map(r=>r.data).filter(Boolean)),diasTrab=diasSet.size;

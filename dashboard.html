@@ -66,7 +66,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .pct-bar{display:flex;align-items:center;gap:6px;}
 .pct-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;min-width:40px;}
 .pct-bar-fill{height:100%;border-radius:2px;background:#2563eb;}
-.chart-wrap{padding:12px 14px;}
+.chart-wrap{padding:12px 14px;position:relative;width:100%;}
+.chart-wrap canvas{max-width:100%;}
 .hora-grid{display:grid;grid-template-columns:50px 1fr;gap:4px;padding:10px 14px;}
 .hora-label{font-size:10px;color:#9ca3af;display:flex;align-items:center;}
 .hora-bar-wrap{display:flex;align-items:center;gap:6px;}
@@ -285,7 +286,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
     </div>
     <div class="row">
-      <div class="card"><div class="card-header"><h3><i class="fa fa-chart-bar"></i> Receita vs Comissão por Mês</h3></div><div class="chart-wrap"><canvas id="chartRecMes" height="130"></canvas></div></div>
+      <div class="card"><div class="card-header"><h3><i class="fa fa-chart-bar"></i> Receita vs Comissão por Mês</h3></div><div class="chart-wrap"><canvas id="chartRecMes"></canvas></div></div>
       <div class="card col-2" style="max-width:260px;flex:0 0 260px"><div class="card-header"><h3><i class="fa fa-clock"></i> Por Hora</h3></div><div class="hora-grid" id="horaGrid"></div></div>
     </div>
     <div class="row">
@@ -325,7 +326,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
         </div>
         <div class="card col-2"><div class="card-header"><h3><i class="fa fa-th"></i> Heatmap Hora × Dia</h3></div><div style="padding:12px 14px;overflow-x:auto"><div class="heatmap-wrap" id="atHeatmap"></div></div></div>
       </div>
-      <div class="card"><div class="card-header"><h3><i class="fa fa-chart-bar"></i> Atendimentos por Dia</h3></div><div class="chart-wrap"><canvas id="chartAtDia" height="100"></canvas></div></div>
+      <div class="card"><div class="card-header"><h3><i class="fa fa-chart-bar"></i> Atendimentos por Dia</h3></div><div class="chart-wrap"><canvas id="chartAtDia"></canvas></div></div>
     </div>
   </div>
 
@@ -347,7 +348,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
       <div class="card col-3">
         <div class="card-header"><h3><i class="fa fa-chart-line"></i> Evolução Mensal — Top 5</h3></div>
-        <div class="chart-wrap"><canvas id="chartSvEvolucao" height="220"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartSvEvolucao"></canvas></div>
       </div>
     </div>
     <div class="row">
@@ -378,8 +379,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
     </div>
     <div class="row">
-      <div class="card"><div class="card-header"><h3><i class="fa fa-chart-bar"></i> Novos vs Recorrentes por Mês</h3></div><div class="chart-wrap"><canvas id="chartClNovosRec" height="130"></canvas></div></div>
-      <div class="card col-2"><div class="card-header"><h3><i class="fa fa-chart-pie"></i> Frequência de Visitas</h3></div><div class="chart-wrap"><canvas id="chartClFreq" height="200"></canvas></div></div>
+      <div class="card"><div class="card-header"><h3><i class="fa fa-chart-bar"></i> Novos vs Recorrentes por Mês</h3></div><div class="chart-wrap"><canvas id="chartClNovosRec"></canvas></div></div>
+      <div class="card col-2"><div class="card-header"><h3><i class="fa fa-chart-pie"></i> Frequência de Visitas</h3></div><div class="chart-wrap"><canvas id="chartClFreq"></canvas></div></div>
     </div>
     <div class="row">
       <div class="card">
@@ -426,7 +427,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
             <button onclick="verTudoProj()" style="padding:4px 10px;font-size:11px;font-weight:600;background:#1f2937;color:#fff;border:none;border-radius:6px;cursor:pointer">Ver tudo</button>
           </div>
         </div>
-        <div class="chart-wrap"><canvas id="chartValProj" height="140"></canvas></div>
+        <div class="chart-wrap"><canvas id="chartValProj"></canvas></div>
       </div>
       <div class="card col-2">
         <div class="card-header"><h3><i class="fa fa-info-circle"></i> Premissas</h3></div>
@@ -589,7 +590,7 @@ function renderGeral(rows){
   document.querySelector("#tblProf tbody").innerHTML=Object.entries(profMap).sort((a,b)=>b[1].n-a[1].n).map(([p,v])=>`<tr class="clicavel" onclick="filtrarPor('prof','${p.replace(/'/g,"\\'")}',this)"><td>${p}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtM(v.rec)}</td><td class="num">${fmtM(v.com)}</td><td class="num"><div class="pct-bar"><div class="pct-bar-bg"><div class="pct-bar-fill" style="width:${(v.n/totAtend*100).toFixed(1)}%"></div></div><span>${fmtP(v.n/totAtend*100)}</span></div></td></tr>`).join("")+`<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">100%</td></tr>`;
   renderServTabela(rows);renderAnoMesTabelaFull(rows);
   const recMes=Array(12).fill(0),comMes=Array(12).fill(0);rows.forEach(r=>{if(!r.data)return;const m=parseInt(r.data.split("-")[1])-1;recMes[m]+=(r.valor||0);comMes[m]+=(r.comissao||0);});
-  mkChart("chartRecMes",{type:"bar",data:{labels:MESES,datasets:[{label:"Receita",data:recMes,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1},{label:"Comissão",data:comMes,backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1}]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
+  mkChart("chartRecMes",{type:"bar",data:{labels:MESES,datasets:[{label:"Receita",data:recMes,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1},{label:"Comissão",data:comMes,backgroundColor:"rgba(124,58,237,.7)",borderColor:"#7c3aed",borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:3,plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
   renderHoraGrid(rows,"horaGrid");
   const cliMap={};rows.forEach(r=>{if(!r.cliente)return;if(!cliMap[r.cliente])cliMap[r.cliente]={n:0,val:0,com:0};cliMap[r.cliente].n++;cliMap[r.cliente].val+=(r.valor||0);cliMap[r.cliente].com+=(r.comissao||0);});
   document.querySelector("#tblCli tbody").innerHTML=Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30).map(([c,v])=>`<tr class="clicavel" onclick="filtrarPor('cli','${c.replace(/'/g,"\\'")}',this)"><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.com)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td><td class="num">${fmtP(v.n/totAtend*100)}</td></tr>`).join("")+`<tr><td>Total</td><td class="num">${fmtN(totAtend)}</td><td class="num"></td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.comissao||0),0))}</td><td class="num">${fmtM(rows.reduce((s,r)=>s+(r.valor||0),0)/totAtend)}</td><td class="num">100%</td></tr>`;
@@ -659,7 +660,7 @@ function renderTerapeutas(rows){
   document.getElementById("atHeatmap").innerHTML=hHTML;
   const diaMap={};rowsProf.forEach(r=>{if(r.data)diaMap[r.data]=(diaMap[r.data]||0)+1;});
   const diasOrd=Object.keys(diaMap).sort(),vals=diasOrd.map(d=>diaMap[d]);
-  mkChart("chartAtDia",{type:"bar",data:{labels:diasOrd.map(d=>{const[,m,dd]=d.split("-");return`${dd}/${m}`;}),datasets:[{data:vals,backgroundColor:vals.map(v=>v>=6?"rgba(22,163,74,.8)":v>=4?"rgba(234,179,8,.8)":v>=2?"rgba(249,115,22,.8)":"rgba(220,38,38,.8)"),borderWidth:0}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  mkChart("chartAtDia",{type:"bar",data:{labels:diasOrd.map(d=>{const[,m,dd]=d.split("-");return`${dd}/${m}`;}),datasets:[{data:vals,backgroundColor:vals.map(v=>v>=6?"rgba(22,163,74,.8)":v>=4?"rgba(234,179,8,.8)":v>=2?"rgba(249,115,22,.8)":"rgba(220,38,38,.8)"),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:4,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
 }
 
 /* SERVIÇOS */
@@ -674,7 +675,7 @@ function renderServicos(rows){
   renderSvTabela(rows);
   const top5=rank.slice(0,5).map(([n])=>n),svMesMap={};
   rows.forEach(r=>{if(!r.data||!r.servico||!top5.includes(r.servico))return;const[,m]=r.data.split("-");const k=`${r.servico}__${m}`;svMesMap[k]=(svMesMap[k]||0)+1;});
-  mkChart("chartSvEvolucao",{type:"line",data:{labels:MESES,datasets:top5.map((nome,i)=>({label:nome,data:MESES.map((_,mi)=>svMesMap[`${nome}__${String(mi+1).padStart(2,"0")}`]||0),borderColor:CORES[i],backgroundColor:CORES[i]+"22",tension:.3,fill:false,pointRadius:3}))},options:{plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  mkChart("chartSvEvolucao",{type:"line",data:{labels:MESES,datasets:top5.map((nome,i)=>({label:nome,data:MESES.map((_,mi)=>svMesMap[`${nome}__${String(mi+1).padStart(2,"0")}`]||0),borderColor:CORES[i],backgroundColor:CORES[i]+"22",tension:.3,fill:false,pointRadius:3}))},options:{responsive:true,maintainAspectRatio:true,aspectRatio:2,plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:12}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
   const profServMap={};rows.forEach(r=>{if(!r.profissional||!r.servico)return;if(!profServMap[r.profissional])profServMap[r.profissional]={};profServMap[r.profissional][r.servico]=(profServMap[r.profissional][r.servico]||0)+1;});
   document.querySelector("#tblSvProf tbody").innerHTML=Object.entries(profServMap).sort((a,b)=>Object.values(b[1]).reduce((s,v)=>s+v,0)-Object.values(a[1]).reduce((s,v)=>s+v,0)).map(([prof,servs])=>{const sorted=Object.entries(servs).sort((a,b)=>b[1]-a[1]);const s1=sorted[0]||["—",0],s2=sorted[1]||["—","—"];return`<tr><td>${prof}</td><td>${s1[0]}</td><td class="num">${fmtN(s1[1])}</td><td>${s2[0]}</td><td class="num">${typeof s2[1]==="number"?fmtN(s2[1]):"—"}</td></tr>`;}).join("");
   renderHoraGrid(rows,"svHoraGrid");
@@ -700,9 +701,9 @@ function renderClientes(rows){
   const cliHist={};cacheCompleto.forEach(r=>{if(!r.cliente||!r.data)return;if(!cliHist[r.cliente])cliHist[r.cliente]=[];cliHist[r.cliente].push(r.data);});
   const novosM=Array(12).fill(0),recM=Array(12).fill(0);
   rows.forEach(r=>{if(!r.cliente||!r.data)return;const m=parseInt(r.data.split("-")[1])-1;const ant=(cliHist[r.cliente]||[]).filter(d=>d<r.data);if(ant.length===0)novosM[m]++;else recM[m]++;});
-  mkChart("chartClNovosRec",{type:"bar",data:{labels:MESES,datasets:[{label:"Novos",data:novosM,backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1},{label:"Recorrentes",data:recM,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1}]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
+  mkChart("chartClNovosRec",{type:"bar",data:{labels:MESES,datasets:[{label:"Novos",data:novosM,backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1},{label:"Recorrentes",data:recM,backgroundColor:"rgba(22,163,74,.7)",borderColor:"#16a34a",borderWidth:1}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:3,plugins:{legend:{position:"bottom",labels:{font:{size:11}}}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
   const freqMap={1:0,2:0,3:0,4:0,5:0,6:0};Object.values(cliMap).forEach(v=>{freqMap[Math.min(v.n,6)]++;});
-  mkChart("chartClFreq",{type:"doughnut",data:{labels:["1 visita","2 visitas","3 visitas","4 visitas","5 visitas","6+ visitas"],datasets:[{data:Object.values(freqMap),backgroundColor:["#e5e7eb","#bfdbfe","#93c5fd","#60a5fa","#3b82f6","#1d4ed8"],borderWidth:0}]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:12}}}}});
+  mkChart("chartClFreq",{type:"doughnut",data:{labels:["1 visita","2 visitas","3 visitas","4 visitas","5 visitas","6+ visitas"],datasets:[{data:Object.values(freqMap),backgroundColor:["#e5e7eb","#bfdbfe","#93c5fd","#60a5fa","#3b82f6","#1d4ed8"],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:1.5,plugins:{legend:{position:"bottom",labels:{font:{size:10},boxWidth:12}}}}});
   document.querySelector("#tblClRetornos tbody").innerHTML=Object.entries(cliMap).sort((a,b)=>b[1].n-a[1].n).slice(0,30).map(([c,v])=>`<tr><td>${c}</td><td class="num">${fmtN(v.n)}</td><td class="num">${fmtN(v.n-1)}</td><td class="num">${fmtP((v.n-1)/v.n*100)}</td><td class="num">${fmtM(v.val)}</td><td class="num">${fmtM(v.n?v.val/v.n:0)}</td></tr>`).join("");
 }
 function renderClTabela(rows){
@@ -767,7 +768,7 @@ function atualizarValuation(){
     {label:"Receita Real",data:allReais,borderColor:"#2563eb",backgroundColor:"rgba(37,99,235,.08)",fill:true,tension:.3,pointRadius:3,borderWidth:2},
     {label:"Projeção",data:allProj,borderColor:"#d97706",backgroundColor:"rgba(217,119,6,.06)",fill:false,tension:.3,pointRadius:3,borderWidth:2,borderDash:[6,3]},
     {label:"MRR",data:allMRR,borderColor:"#16a34a",backgroundColor:"transparent",fill:false,tension:0,pointRadius:0,borderWidth:1.5,borderDash:[4,4]}
-  ]},options:{plugins:{legend:{position:"bottom",labels:{font:{size:11},boxWidth:12}},zoom:{pan:{enabled:true,mode:"x"},zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
+  ]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:3,plugins:{legend:{position:"bottom",labels:{font:{size:11},boxWidth:12}},zoom:{pan:{enabled:true,mode:"x"},zoom:{wheel:{enabled:true},pinch:{enabled:true},mode:"x"}}},scales:{y:{ticks:{callback:v=>"R$"+fmtN(v)}}}}});
 }
 function resetZoomProj(){if(charts["chartValProj"])charts["chartValProj"].resetZoom();}
 function verTudoProj(){if(charts["chartValProj"])charts["chartValProj"].resetZoom();}

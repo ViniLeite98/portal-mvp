@@ -498,16 +498,18 @@ let equipeStatusMap = {}; // nome_profissional -> "Ativo" | "Inativo"
 async function fetchEquipe(){
   const {data} = await client.from("terapeutas")
     .select("nome_profissional,status,cargo");
-  if(!data) return;
+  if(!data){ console.warn("[Equipe] sem dados"); return; }
   equipeStatusMap = {};
   data.forEach(t => {
     const isTerapeuta = t.cargo === "Terapeuta Feminina" || t.cargo === "Terapeuta Masculino";
-    if(!isTerapeuta) return; // ignora outros cargos
+    if(!isTerapeuta) return;
     const nome = t.nome_profissional;
-    // Se já existe com Ativo, mantém Ativo (prioridade)
     if(equipeStatusMap[nome] === "Ativo") return;
     equipeStatusMap[nome] = t.status || "Ativo";
   });
+  const ativos=Object.entries(equipeStatusMap).filter(([,s])=>s==="Ativo").map(([n])=>n);
+  console.log("[Equipe] terapeutas ativos:", ativos);
+  console.log("[Equipe] mapa completo:", equipeStatusMap);
 }
 
 function statusProf(nome){

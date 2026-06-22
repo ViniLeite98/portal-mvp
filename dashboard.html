@@ -83,6 +83,29 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .dt tbody tr.selecionado td{background:#eff6ff!important;color:#1d4ed8;font-weight:700;}
 .dt tbody tr.clicavel{cursor:pointer;}
 .dt tbody tr.clicavel:hover td{background:#f0f9ff;}
+/* Multi-select profissional */
+.ms-wrap{position:relative;display:inline-block;}
+.ms-btn{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;background:#fff;color:#111827;cursor:pointer;white-space:nowrap;min-width:80px;max-width:160px;user-select:none;}
+.ms-btn:hover{border-color:#9ca3af;}
+.ms-btn.active{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.15);}
+.ms-btn .ms-label{flex:1;overflow:hidden;text-overflow:ellipsis;}
+.ms-btn .ms-arrow{font-size:9px;color:#9ca3af;flex-shrink:0;}
+.ms-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #d1d5db;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.12);z-index:500;min-width:180px;max-width:240px;padding:6px 0;}
+.ms-dropdown.open{display:block;}
+.ms-search{padding:6px 10px;border-bottom:1px solid #f3f4f6;}
+.ms-search input{width:100%;padding:5px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:11px;outline:none;}
+.ms-search input:focus{border-color:#2563eb;}
+.ms-list{max-height:200px;overflow-y:auto;}
+.ms-item{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:12px;color:#374151;cursor:pointer;transition:background .1s;}
+.ms-item:hover{background:#f3f4f6;}
+.ms-item.selected{background:#eff6ff;color:#1d4ed8;font-weight:600;}
+.ms-item input[type=checkbox]{accent-color:#2563eb;width:13px;height:13px;flex-shrink:0;}
+.ms-footer{display:flex;gap:6px;padding:6px 10px;border-top:1px solid #f3f4f6;}
+.ms-footer button{flex:1;padding:4px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;}
+.ms-clear{background:#f3f4f6;color:#374151;}
+.ms-clear:hover{background:#e5e7eb;}
+.ms-apply{background:#2563eb;color:#fff;}
+.ms-apply:hover{background:#1d4ed8;}
 .filtro-ativo-badge{display:inline-flex;align-items:center;gap:6px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:99px;padding:3px 12px;font-size:11px;font-weight:700;margin-left:12px;cursor:pointer;flex-shrink:0;}
 .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
 .kpi-grid-2{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-bottom:14px;}
@@ -210,7 +233,20 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     <select id="fQuinz" onchange="aplicarFiltros()"><option value="">Todas</option><option value="1">1ª</option><option value="2">2ª</option></select></span>
     <div class="sep"></div>
     <span class="filter-pair"><label>Profissional</label>
-    <select id="fProf" onchange="aplicarFiltros()"><option value="">Todos</option></select></span>
+    <div class="ms-wrap" id="msWrap">
+      <div class="ms-btn" id="msBtn" onclick="toggleMS()">
+        <span class="ms-label" id="msLabel">Todos</span>
+        <span class="ms-arrow">▼</span>
+      </div>
+      <div class="ms-dropdown" id="msDropdown">
+        <div class="ms-search"><input type="text" id="msBusca" placeholder="Buscar..." oninput="filtrarMS()"></div>
+        <div class="ms-list" id="msList"></div>
+        <div class="ms-footer">
+          <button class="ms-clear" onclick="limparMS()">Limpar</button>
+          <button class="ms-apply" onclick="aplicarMS()">Aplicar</button>
+        </div>
+      </div>
+    </div></span>
     <div class="sep"></div>
     <span class="filter-pair"><label>Serviço</label>
     <select id="fServ" onchange="aplicarFiltros()"><option value="">Todos</option></select></span>
@@ -591,7 +627,8 @@ function toggleMesRows(ano){const rows=document.querySelectorAll(`.mes-${ano}`),
 
 /* TERAPEUTAS */
 function renderTerapeutas(rows){
-  const prof=document.getElementById("fProf").value;
+  const profsSel=[..._profSelecionados];
+  const prof=profsSel.length===1?profsSel[0]:"";
   if(!prof){document.getElementById("terSemSelecao").style.display="";document.getElementById("terContent").style.display="none";return;}
   document.getElementById("terSemSelecao").style.display="none";document.getElementById("terContent").style.display="";
   const rowsProf=rows.filter(r=>r.profissional===prof),total=rowsProf.length;
@@ -733,6 +770,62 @@ function atualizarValuation(){
 function resetZoomProj(){if(charts["chartValProj"])charts["chartValProj"].resetZoom();}
 function verTudoProj(){if(charts["chartValProj"])charts["chartValProj"].resetZoom();}
 
+/* MULTI-SELECT PROFISSIONAL */
+let _profSelecionados = new Set(); // conjunto de profissionais selecionados
+let _profOpcoes = []; // lista completa de opções disponíveis
+
+function toggleMS(){
+  const dd=document.getElementById("msDropdown");
+  const btn=document.getElementById("msBtn");
+  const isOpen=dd.classList.toggle("open");
+  btn.classList.toggle("active",isOpen);
+  if(isOpen){ document.getElementById("msBusca").value=""; filtrarMS(); document.getElementById("msBusca").focus(); }
+}
+
+function fecharMS(){
+  document.getElementById("msDropdown").classList.remove("open");
+  document.getElementById("msBtn").classList.remove("active");
+}
+
+function filtrarMS(){
+  const busca=document.getElementById("msBusca").value.toLowerCase();
+  const lista=document.getElementById("msList"); lista.innerHTML="";
+  _profOpcoes.filter(p=>!busca||p.toLowerCase().includes(busca)).forEach(p=>{
+    const div=document.createElement("div");
+    div.className="ms-item"+(_profSelecionados.has(p)?" selected":"");
+    div.innerHTML='<input type="checkbox" '+(  _profSelecionados.has(p)?"checked":"")+' onchange="toggleProfItem(''+p.replace(/'/g,"\'")+'')" onclick="event.stopPropagation()"> '+p;
+    div.onclick=()=>toggleProfItem(p);
+    lista.appendChild(div);
+  });
+}
+
+function toggleProfItem(p){
+  if(_profSelecionados.has(p)) _profSelecionados.delete(p);
+  else _profSelecionados.add(p);
+  filtrarMS(); atualizarMSLabel();
+}
+
+function limparMS(){
+  _profSelecionados.clear(); filtrarMS(); atualizarMSLabel();
+}
+
+function aplicarMS(){
+  fecharMS(); aplicarFiltros();
+}
+
+function atualizarMSLabel(){
+  const lbl=document.getElementById("msLabel");
+  if(_profSelecionados.size===0) lbl.textContent="Todos";
+  else if(_profSelecionados.size===1) lbl.textContent=[..._profSelecionados][0];
+  else lbl.textContent=_profSelecionados.size+" selecionados";
+}
+
+// Fecha dropdown ao clicar fora
+document.addEventListener("click",e=>{
+  const wrap=document.getElementById("msWrap");
+  if(wrap&&!wrap.contains(e.target)) fecharMS();
+});
+
 /* POPULAR SELECTS DE FILTRO — dinâmicos entre si */
 function popularFiltros(){
   // Popula profissional e serviço com TODOS os dados (inicial)
@@ -751,8 +844,10 @@ function _setSelect(id, vals, label){
 function _atualizarSelects(base){
   // Profissional — filtrado por tudo exceto profissional
   const semProf=base.filter(r=>_matchFiltros(r,{skip:"prof"}));
-  const profs=[...new Set(semProf.map(r=>r.profissional).filter(Boolean))].sort();
-  _setSelect("fProf", profs, "Todos");
+  _profOpcoes=[...new Set(semProf.map(r=>r.profissional).filter(Boolean))].sort();
+  // Remove selecionados que não existem mais nas opções
+  [..._profSelecionados].forEach(p=>{ if(!_profOpcoes.includes(p)) _profSelecionados.delete(p); });
+  filtrarMS(); atualizarMSLabel();
 
   // Serviço — filtrado por tudo exceto serviço
   const semServ=base.filter(r=>_matchFiltros(r,{skip:"serv"}));
@@ -766,7 +861,7 @@ function _matchFiltros(r, opts){
   const ano=document.getElementById("fAno")?.value||"";
   const mes=document.getElementById("fMes")?.value||"";
   const quinz=document.getElementById("fQuinz")?.value||"";
-  const prof=document.getElementById("fProf")?.value||"";
+  // prof agora vem do Set _profSelecionados, não do select
   const serv=document.getElementById("fServ")?.value||"";
   const fonte=document.getElementById("fFonte")?.value||"";
   const status=document.getElementById("fStatus")?.value||"";
@@ -776,7 +871,7 @@ function _matchFiltros(r, opts){
   if(mes&&m!==mes)return false;
   if(quinz==="1"&&parseInt(d)>15)return false;
   if(quinz==="2"&&parseInt(d)<=15)return false;
-  if(skip!=="prof"&&prof&&r.profissional!==prof)return false;
+  if(skip!=="prof"&&_profSelecionados.size>0&&!_profSelecionados.has(r.profissional))return false;
   if(skip!=="serv"&&serv&&r.servico!==serv)return false;
   if(fonte&&r._fonte!==fonte)return false;
   if(status&&r._status!==status)return false;

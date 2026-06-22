@@ -496,16 +496,25 @@ function anoAtualStr(){return String(new Date().getFullYear());}
 let equipeStatusMap = {}; // nome_profissional -> "Ativo" | "Inativo"
 
 async function fetchEquipe(){
-  const {data} = await client.from("terapeutas").select("nome_profissional,status");
+  const {data} = await client.from("terapeutas")
+    .select("nome_profissional,status,cargo");
   if(!data) return;
   equipeStatusMap = {};
-  data.forEach(t => { equipeStatusMap[t.nome_profissional] = t.status || "Ativo"; });
+  data.forEach(t => {
+    const isTerapeuta = t.cargo === "Terapeuta Feminina" || t.cargo === "Terapeuta Masculino";
+    if(!isTerapeuta) return; // ignora outros cargos
+    const nome = t.nome_profissional;
+    // Se já existe com Ativo, mantém Ativo (prioridade)
+    if(equipeStatusMap[nome] === "Ativo") return;
+    equipeStatusMap[nome] = t.status || "Ativo";
+  });
 }
 
 function statusProf(nome){
   if(!nome || nome === "—") return "Inativo";
   if(Object.keys(equipeStatusMap).length === 0) return "Ativo"; // antes de carregar equipe, não filtra
-  return equipeStatusMap[nome] || "Inativo"; // não encontrado = inativo
+  // Só é Ativo se está cadastrada como terapeuta com status Ativo
+  return equipeStatusMap[nome] === "Ativo" ? "Ativo" : "Inativo";
 }
 
 /* FETCH — sem filtro de situacao */

@@ -26,6 +26,13 @@ button.btn-yellow{background:#d97706;}
 button.btn-ghost{background:#fff;color:#374151;border:1px solid #d1d5db;}
 button.btn-ghost:hover{background:#f3f4f6;}
 
+/* ── CARDS RESUMO DO DIA ── */
+.resumo-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.resumo-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:12px;border-left:4px solid transparent;}
+.resumo-card .rc-num{font-size:26px;font-weight:800;line-height:1;color:#111827;}
+.resumo-card .rc-label{font-size:11px;font-weight:600;color:#6b7280;margin-top:2px;}
+.resumo-card .rc-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+
 /* ── BARRA DE CONTROLES ── */
 .agenda-controls{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px;flex-wrap:wrap;}
 
@@ -147,8 +154,34 @@ tr:hover td{background:#f9fafb;}
   <div class="topbar">
     <h1>Atendimentos</h1>
     <div class="topbar-right">
+      <a href="servicos.html" style="text-decoration:none"><button class="btn-ghost"><i class="fa fa-spa"></i> Serviços</button></a>
       <button class="btn-ghost" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
       <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Agendamento</button>
+    </div>
+  </div>
+
+
+  <!-- RESUMO DO DIA -->
+  <div class="resumo-bar" id="resumoBar">
+    <div class="resumo-card" style="border-left-color:#f59e0b">
+      <div class="rc-icon" style="background:#fef3c7;color:#d97706"><i class="fa fa-calendar-day"></i></div>
+      <div><div class="rc-num" id="rsAgendado">—</div><div class="rc-label">Agendados</div></div>
+    </div>
+    <div class="resumo-card" style="border-left-color:#22c55e">
+      <div class="rc-icon" style="background:#dcfce7;color:#16a34a"><i class="fa fa-check-circle"></i></div>
+      <div><div class="rc-num" id="rsConfirmado">—</div><div class="rc-label">Confirmados</div></div>
+    </div>
+    <div class="resumo-card" style="border-left-color:#8E2440">
+      <div class="rc-icon" style="background:#ffe4ec;color:#8E2440"><i class="fa fa-clock"></i></div>
+      <div><div class="rc-num" id="rsNaoConf">—</div><div class="rc-label">Não confirmou</div></div>
+    </div>
+    <div class="resumo-card" style="border-left-color:#9ca3af">
+      <div class="rc-icon" style="background:#f3f4f6;color:#6b7280"><i class="fa fa-ban"></i></div>
+      <div><div class="rc-num" id="rsCancelado">—</div><div class="rc-label">Cancelados</div></div>
+    </div>
+    <div class="resumo-card" style="border-left-color:#a855f7">
+      <div class="rc-icon" style="background:#f3e8ff;color:#7c3aed"><i class="fa fa-file-invoice-dollar"></i></div>
+      <div><div class="rc-num" id="rsFaturado">—</div><div class="rc-label">Faturados</div></div>
     </div>
   </div>
 
@@ -494,8 +527,23 @@ async function carregar(){
 /* ══════ VISÃO ══════ */
 function renderAtual(){
   atualizarLabel();
+  renderResumo();
   if(viewAtual==="lista") renderLista();
   else renderCal();
+}
+
+/* ══════ RESUMO DO DIA ══════ */
+function renderResumo(){
+  // Sempre mostra o resumo do dia de hoje, independente da visão
+  const hojeStr=hoje();
+  const filtroTer=document.getElementById("filtroTer").value;
+  const doDia=dados.filter(r=>r.data===hojeStr&&(!filtroTer||r.terapeuta1_cpf===filtroTer||r.terapeuta2_cpf===filtroTer));
+  const conta=s=>doDia.filter(r=>r.status===s).length;
+  document.getElementById("rsAgendado").textContent=conta("Agendado");
+  document.getElementById("rsConfirmado").textContent=conta("Confirmado");
+  document.getElementById("rsNaoConf").textContent=conta("Nao Confirmado");
+  document.getElementById("rsCancelado").textContent=conta("Cancelado");
+  document.getElementById("rsFaturado").textContent=conta("Faturado");
 }
 
 function diasParaRender(){

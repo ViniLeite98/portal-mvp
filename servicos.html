@@ -306,8 +306,15 @@ function rgbToHex(rgb){
 
 /* ══════ PARAMS ══════ */
 async function carregarParametros(){
-  const{data}=await client.from("parametros").select("valor").eq("tipo","grupos_servico").eq("ativo",true).order("valor");
-  const lista=data?.length?data.map(p=>p.valor):GRUPOS_DEFAULT;
+  // Grupos: derivados dos próprios serviços cadastrados (sempre sincronizado)
+  // + fallback com os grupos default caso a tabela esteja vazia
+  const{data}=await client.from("servicos").select("grupo");
+  const fromDB=[...new Set((data||[]).map(s=>s.grupo).filter(Boolean))].sort();
+  const lista=fromDB.length?fromDB:GRUPOS_DEFAULT;
+  popularGrupos(lista);
+}
+
+function popularGrupos(lista){
   const selGrupo=document.getElementById("grupo");
   selGrupo.innerHTML="<option value=''>Selecione</option>";
   lista.forEach(g=>selGrupo.innerHTML+="<option>"+g+"</option>");
@@ -508,7 +515,10 @@ async function salvar(){
   if(idAtual){({error}=await client.from("servicos").update(payload).eq("id",idAtual));}
   else{({error}=await client.from("servicos").insert(payload));}
   if(error){alert("Erro ao salvar: "+error.message);return;}
-  fecharModal();carregar();
+  fecharModal();await carregar();
+  // Atualiza lista de grupos caso tenha sido adicionado um grupo novo
+  const grupos=[...new Set(dados.map(s=>s.grupo).filter(Boolean))].sort();
+  popularGrupos(grupos);
 }
 
 async function excluir(id){

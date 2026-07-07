@@ -391,17 +391,17 @@ const BADGE_CSS = {
 
 function corServico(s) {
   if (!s) return { bg:"#e5e7eb", txt:"#374151" };
+  // Prioriza a cor cadastrada diretamente no serviço (campo `cor` no Supabase)
+  if (s.cor) return { bg: s.cor, txt: corTexto(s.cor) };
+  // Fallback por grupo — enquanto o serviço não tiver cor cadastrada
   const grupo = (s.grupo||"").toLowerCase().trim();
   const subgrupo = (s.subgrupo||"").toLowerCase().trim();
-  // four hands — detecta pelo grupo ou subgrupo
   if (grupo.includes("four hands") || subgrupo.includes("four hands")) {
     if (grupo.includes("vivenc") || subgrupo.includes("vivenc"))
       return COR_SERVICO["four hands vivência"];
     return COR_SERVICO["four hands nuru"];
   }
-  // busca direta pelo grupo
   if (COR_SERVICO[grupo]) return COR_SERVICO[grupo];
-  // fallbacks por palavra-chave
   if (grupo.includes("vivenc") || subgrupo.includes("vivenc")) return COR_SERVICO["vivência"];
   if (grupo.includes("nuru") || subgrupo.includes("nuru"))     return COR_SERVICO["nuru"];
   if (grupo.includes("podo"))  return COR_SERVICO["podolatria"];

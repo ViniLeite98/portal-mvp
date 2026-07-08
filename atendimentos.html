@@ -219,22 +219,8 @@ tr:hover td{background:#f9fafb;}
   </div>
 
   <!-- LEGENDA -->
-  <div class="legenda-bar">
-    <span class="legenda-titulo">Serviços:</span>
-    <div class="leg"><div class="leg-dot" style="background:#29B6F6"></div>Nuru</div>
-    <div class="leg"><div class="leg-dot" style="background:#8BE000"></div>Vivência</div>
-    <div class="leg"><div class="leg-dot" style="background:#8E44AD"></div>Four Hands Nuru</div>
-    <div class="leg"><div class="leg-dot" style="background:#69C5A0"></div>Four Hands Vivência</div>
-    <div class="leg"><div class="leg-dot" style="background:#FB8C00"></div>Podolatria</div>
-    <div class="leg"><div class="leg-dot" style="background:#F48FB1"></div>P-Spot</div>
-    <div class="leg"><div class="leg-dot" style="background:#E53935"></div>Casal</div>
-    <div class="leg-sep"></div>
-    <span class="legenda-titulo">Status:</span>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#22c55e"></div>Confirmado</div>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#f59e0b"></div>Agendado</div>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#8E2440"></div>Não confirmou</div>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#9ca3af"></div>Cancelado</div>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#a855f7"></div>Faturado</div>
+  <div class="legenda-bar" id="legendaBar">
+    <!-- preenchida dinamicamente por renderLegenda() após carregar grupos do Supabase -->
   </div>
 
   <div id="viewCal" class="cal-wrap"></div>
@@ -360,6 +346,30 @@ tr:hover td{background:#f9fafb;}
    CORES POR GRUPO — carregadas do Supabase (parametros.cor)
 ══════════════════════════════════════════ */
 let gruposCorMap = {}; // grupo -> hex  (preenchido em carregarDados)
+
+function renderLegenda(){
+  const bar = document.getElementById("legendaBar");
+  if(!bar) return;
+  // Grupos com cor cadastrada, ordenados alfabeticamente
+  const grupos = Object.keys(gruposCorMap).sort();
+  let html = '<span class="legenda-titulo">Serviços:</span>';
+  if(grupos.length){
+    grupos.forEach(g=>{
+      const cor = gruposCorMap[g];
+      html += `<div class="leg"><div class="leg-dot" style="background:${cor}"></div>${g}</div>`;
+    });
+  } else {
+    html += '<span style="font-size:11px;color:#9ca3af">Configure as cores em Serviços → Cores dos Grupos</span>';
+  }
+  html += `<div class="leg-sep"></div>
+    <span class="legenda-titulo">Status:</span>
+    <div class="leg-status"><div class="leg-status-dot" style="background:#22c55e"></div>Confirmado</div>
+    <div class="leg-status"><div class="leg-status-dot" style="background:#f59e0b"></div>Agendado</div>
+    <div class="leg-status"><div class="leg-status-dot" style="background:#8E2440"></div>Não confirmou</div>
+    <div class="leg-status"><div class="leg-status-dot" style="background:#9ca3af"></div>Cancelado</div>
+    <div class="leg-status"><div class="leg-status-dot" style="background:#a855f7"></div>Faturado</div>`;
+  bar.innerHTML = html;
+}
 
 function corTexto(hex){
   if(!hex) return "#374151";
@@ -487,6 +497,7 @@ async function carregarDados(){
   // Mapa grupo -> cor para o calendário
   gruposCorMap={};
   (params||[]).filter(p=>p.tipo==="grupos_servico"&&p.cor).forEach(p=>{gruposCorMap[p.valor]=p.cor;});
+  renderLegenda();
   if(!origens.length) origens.push("Instagram","Google","Indicação","WhatsApp","Outro");
   if(!formasPgto.length) formasPgto.push("Dinheiro","PIX","Cartão Débito","Cartão Crédito");
   origens.forEach(o=>document.getElementById("agOrigem").innerHTML+=`<option>${o}</option>`);

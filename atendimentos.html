@@ -357,21 +357,9 @@ tr:hover td{background:#f9fafb;}
 <script>
 
 /* ══════════════════════════════════════════
-   CORES POR GRUPO DE SERVIÇO
-   Validado com a atendente (WhatsApp)
+   CORES POR GRUPO — carregadas do Supabase (parametros.cor)
 ══════════════════════════════════════════ */
-const COR_SERVICO = {
-  "nuru":               { bg:"#29B6F6", txt:"#0c3a52" },
-  "vivencia":           { bg:"#8BE000", txt:"#2a4600" },
-  "vivência":           { bg:"#8BE000", txt:"#2a4600" },
-  "four hands nuru":    { bg:"#8E44AD", txt:"#fff"    },
-  "four hands vivencia":{ bg:"#69C5A0", txt:"#0f3a28" },
-  "four hands vivência":{ bg:"#69C5A0", txt:"#0f3a28" },
-  "four hands":         { bg:"#8E44AD", txt:"#fff"    }, // fallback four hands genérico
-  "podolatria":         { bg:"#FB8C00", txt:"#fff"    },
-  "p-spot":             { bg:"#F48FB1", txt:"#5a1630" },
-  "casal":              { bg:"#E53935", txt:"#fff"    },
-};
+let gruposCorMap = {}; // grupo -> hex  (preenchido em carregarDados)
 
 const STATUS_DOT = {
   "Agendado":       "#f59e0b",
@@ -391,22 +379,9 @@ const BADGE_CSS = {
 
 function corServico(s) {
   if (!s) return { bg:"#e5e7eb", txt:"#374151" };
-  // Prioriza a cor cadastrada diretamente no serviço (campo `cor` no Supabase)
-  if (s.cor) return { bg: s.cor, txt: corTexto(s.cor) };
-  // Fallback por grupo — enquanto o serviço não tiver cor cadastrada
-  const grupo = (s.grupo||"").toLowerCase().trim();
-  const subgrupo = (s.subgrupo||"").toLowerCase().trim();
-  if (grupo.includes("four hands") || subgrupo.includes("four hands")) {
-    if (grupo.includes("vivenc") || subgrupo.includes("vivenc"))
-      return COR_SERVICO["four hands vivência"];
-    return COR_SERVICO["four hands nuru"];
-  }
-  if (COR_SERVICO[grupo]) return COR_SERVICO[grupo];
-  if (grupo.includes("vivenc") || subgrupo.includes("vivenc")) return COR_SERVICO["vivência"];
-  if (grupo.includes("nuru") || subgrupo.includes("nuru"))     return COR_SERVICO["nuru"];
-  if (grupo.includes("podo"))  return COR_SERVICO["podolatria"];
-  if (grupo.includes("spot"))  return COR_SERVICO["p-spot"];
-  if (grupo.includes("casal")) return COR_SERVICO["casal"];
+  // Busca cor do grupo no mapa carregado do Supabase
+  const hex = gruposCorMap[s.grupo] || null;
+  if (hex) return { bg: hex, txt: corTexto(hex) };
   return { bg:"#e2e8f0", txt:"#374151" };
 }
 
@@ -500,9 +475,12 @@ async function carregarDados(){
   const{data:prods}=await client.from("produtos").select("id,nome").order("nome");
   dadosProd=prods||[];
 
-  const{data:params}=await client.from("parametros").select("tipo,valor").in("tipo",["origens_lead","formas_pagamento"]).eq("ativo",true).order("valor");
+  const{data:params}=await client.from("parametros").select("tipo,valor,cor").in("tipo",["origens_lead","formas_pagamento","grupos_servico"]).eq("ativo",true).order("valor");
   const origens=(params||[]).filter(p=>p.tipo==="origens_lead").map(p=>p.valor);
   formasPgto=(params||[]).filter(p=>p.tipo==="formas_pagamento").map(p=>p.valor);
+  // Mapa grupo -> cor para o calendário
+  gruposCorMap={};
+  (params||[]).filter(p=>p.tipo==="grupos_servico"&&p.cor).forEach(p=>{gruposCorMap[p.valor]=p.cor;});
   if(!origens.length) origens.push("Instagram","Google","Indicação","WhatsApp","Outro");
   if(!formasPgto.length) formasPgto.push("Dinheiro","PIX","Cartão Débito","Cartão Crédito");
   origens.forEach(o=>document.getElementById("agOrigem").innerHTML+=`<option>${o}</option>`);

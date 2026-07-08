@@ -29,9 +29,11 @@ button.btn-ghost:hover{background:#f3f4f6;}
 /* ── CARDS RESUMO DO DIA ── */
 .resumo-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
 .resumo-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:12px;border-left:4px solid transparent;}
-.resumo-card .rc-num{font-size:26px;font-weight:800;line-height:1;color:#111827;}
-.resumo-card .rc-label{font-size:11px;font-weight:600;color:#6b7280;margin-top:2px;}
-.resumo-card .rc-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.resumo-card .rc-num{font-size:32px;font-weight:800;line-height:1;color:#111827;}
+.resumo-card .rc-label{font-size:12px;font-weight:700;color:#6b7280;margin-top:4px;text-transform:uppercase;letter-spacing:.04em;}
+.resumo-card .rc-periodo{font-size:10px;color:#9ca3af;margin-top:2px;font-weight:500;}
+.resumo-card .rc-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.resumo-card{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;border-left:4px solid transparent;}
 
 /* ── BARRA DE CONTROLES ── */
 .agenda-controls{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px;flex-wrap:wrap;}
@@ -165,23 +167,23 @@ tr:hover td{background:#f9fafb;}
   <div class="resumo-bar" id="resumoBar">
     <div class="resumo-card" style="border-left-color:#f59e0b">
       <div class="rc-icon" style="background:#fef3c7;color:#d97706"><i class="fa fa-calendar-day"></i></div>
-      <div><div class="rc-num" id="rsAgendado">—</div><div class="rc-label">Agendados</div></div>
+      <div><div class="rc-num" id="rsAgendado">—</div><div class="rc-label">Agendados</div><div class="rc-periodo" id="rsPeriodo1"></div></div>
     </div>
     <div class="resumo-card" style="border-left-color:#22c55e">
       <div class="rc-icon" style="background:#dcfce7;color:#16a34a"><i class="fa fa-check-circle"></i></div>
-      <div><div class="rc-num" id="rsConfirmado">—</div><div class="rc-label">Confirmados</div></div>
+      <div><div class="rc-num" id="rsConfirmado">—</div><div class="rc-label">Confirmados</div><div class="rc-periodo" id="rsPeriodo2"></div></div>
     </div>
     <div class="resumo-card" style="border-left-color:#8E2440">
       <div class="rc-icon" style="background:#ffe4ec;color:#8E2440"><i class="fa fa-clock"></i></div>
-      <div><div class="rc-num" id="rsNaoConf">—</div><div class="rc-label">Não confirmou</div></div>
+      <div><div class="rc-num" id="rsNaoConf">—</div><div class="rc-label">Não confirmou</div><div class="rc-periodo" id="rsPeriodo3"></div></div>
     </div>
     <div class="resumo-card" style="border-left-color:#9ca3af">
       <div class="rc-icon" style="background:#f3f4f6;color:#6b7280"><i class="fa fa-ban"></i></div>
-      <div><div class="rc-num" id="rsCancelado">—</div><div class="rc-label">Cancelados</div></div>
+      <div><div class="rc-num" id="rsCancelado">—</div><div class="rc-label">Cancelados</div><div class="rc-periodo" id="rsPeriodo4"></div></div>
     </div>
     <div class="resumo-card" style="border-left-color:#a855f7">
       <div class="rc-icon" style="background:#f3e8ff;color:#7c3aed"><i class="fa fa-file-invoice-dollar"></i></div>
-      <div><div class="rc-num" id="rsFaturado">—</div><div class="rc-label">Faturados</div></div>
+      <div><div class="rc-num" id="rsFaturado">—</div><div class="rc-label">Faturados</div><div class="rc-periodo" id="rsPeriodo5"></div></div>
     </div>
   </div>
 
@@ -529,16 +531,29 @@ function renderAtual(){
 
 /* ══════ RESUMO DO DIA ══════ */
 function renderResumo(){
-  // Sempre mostra o resumo do dia de hoje, independente da visão
-  const hojeStr=hoje();
   const filtroTer=document.getElementById("filtroTer").value;
-  const doDia=dados.filter(r=>r.data===hojeStr&&(!filtroTer||r.terapeuta1_cpf===filtroTer||r.terapeuta2_cpf===filtroTer));
-  const conta=s=>doDia.filter(r=>r.status===s).length;
+  const dias=diasParaRender();
+  const datas=new Set(dias.map(d=>isoDate(d)));
+  const doPeriodo=dados.filter(r=>datas.has(r.data)&&(!filtroTer||r.terapeuta1_cpf===filtroTer||r.terapeuta2_cpf===filtroTer));
+  const conta=s=>doPeriodo.filter(r=>r.status===s).length;
   document.getElementById("rsAgendado").textContent=conta("Agendado");
   document.getElementById("rsConfirmado").textContent=conta("Confirmado");
   document.getElementById("rsNaoConf").textContent=conta("Nao Confirmado");
   document.getElementById("rsCancelado").textContent=conta("Cancelado");
   document.getElementById("rsFaturado").textContent=conta("Faturado");
+  // Label do período exibido nos cards
+  let periodoLabel="";
+  if(viewAtual==="lista") periodoLabel="";
+  else if(dias.length===1) periodoLabel=fmtDiaCurto(dias[0]);
+  else periodoLabel=fmtDiaCurto(dias[0])+" – "+fmtDiaCurto(dias[dias.length-1]);
+  ["rsPeriodo1","rsPeriodo2","rsPeriodo3","rsPeriodo4","rsPeriodo5"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=periodoLabel;
+  });
+}
+
+function fmtDiaCurto(d){
+  return d.getDate()+"/"+String(d.getMonth()+1).padStart(2,"0");
 }
 
 function diasParaRender(){

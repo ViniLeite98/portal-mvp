@@ -91,6 +91,26 @@ button.btn-ghost:hover{background:#f3f4f6;}
 /* Indicador de status no canto do card */
 .ag-status-dot{width:7px;height:7px;border-radius:50%;position:absolute;top:5px;right:5px;border:1.5px solid rgba(255,255,255,.6);}
 
+/* ── MODAL FECHAR TURNO ── */
+.turno-resumo{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
+.turno-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 16px;}
+.turno-card .tc-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;}
+.turno-card .tc-valor{font-size:20px;font-weight:800;color:#111827;}
+.turno-card .tc-sub{font-size:11px;color:#6b7280;margin-top:2px;}
+.turno-lista{max-height:220px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:14px;}
+.turno-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #f3f4f6;font-size:12px;}
+.turno-item:last-child{border-bottom:none;}
+.turno-item .ti-hora{font-weight:700;color:#374151;white-space:nowrap;width:90px;flex-shrink:0;}
+.turno-item .ti-nome{flex:1;color:#111827;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.turno-item .ti-serv{color:#6b7280;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
+.turno-item .ti-val{font-weight:700;color:#16a34a;white-space:nowrap;margin-left:auto;}
+.turno-item .ti-pgto{font-size:10px;color:#9ca3af;white-space:nowrap;}
+.turno-pgto{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.turno-pgto-linha{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f9fafb;border-radius:8px;font-size:13px;}
+.turno-pgto-linha .tpl-label{display:flex;align-items:center;gap:8px;color:#374151;font-weight:500;}
+.turno-pgto-linha .tpl-valor{font-weight:700;color:#111827;}
+.turno-empty{text-align:center;padding:24px;color:#9ca3af;font-size:13px;}
+
 /* ── LISTA ── */
 .lista-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 table{width:100%;border-collapse:collapse;}
@@ -158,6 +178,7 @@ tr:hover td{background:#f9fafb;}
     <div class="topbar-right">
       <a href="servicos.html" style="text-decoration:none"><button class="btn-ghost"><i class="fa fa-spa"></i> Serviços</button></a>
       <button class="btn-ghost" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+      <button class="btn-yellow" onclick="abrirFecharTurno()"><i class="fa fa-cash-register"></i> Fechar Turno</button>
       <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Agendamento</button>
     </div>
   </div>
@@ -334,6 +355,73 @@ tr:hover td{background:#f9fafb;}
   <div class="modal-footer">
     <button class="btn-cancel" onclick="fecharNC()">Cancelar</button>
     <button class="btn-blue" onclick="salvarNC()"><i class="fa fa-user-plus"></i> Cadastrar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL FECHAR TURNO -->
+<div class="modal" id="modalTurno">
+<div class="modal-content" style="width:560px">
+  <div class="modal-header">
+    <h2><i class="fa fa-cash-register" style="color:#d97706;margin-right:8px"></i>Fechar Turno</h2>
+    <button class="btn-fechar" onclick="fecharTurno()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <!-- Seleção de turno -->
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="mfield" style="margin-bottom:0">
+        <label>Recepcionista</label>
+        <select id="turnoOp" onchange="calcTurno()"><option value="">Todas</option></select>
+      </div>
+      <div class="mfield" style="margin-bottom:0">
+        <label>Data</label>
+        <input type="date" id="turnoData" onchange="calcTurno()">
+      </div>
+      <div class="mfield" style="margin-bottom:0">
+        <label>Hora início do turno</label>
+        <input type="time" id="turnoHoraIni">
+      </div>
+      <div class="mfield" style="margin-bottom:0">
+        <label>Hora fim do turno</label>
+        <input type="time" id="turnoHoraFim">
+      </div>
+    </div>
+
+    <!-- Cards resumo -->
+    <div class="turno-resumo">
+      <div class="turno-card" style="border-left:3px solid #22c55e">
+        <div class="tc-label"><i class="fa fa-check-circle"></i> Atendimentos</div>
+        <div class="tc-valor" id="turnoQtd">0</div>
+        <div class="tc-sub">confirmados no dia</div>
+      </div>
+      <div class="turno-card" style="border-left:3px solid #2563eb">
+        <div class="tc-label"><i class="fa fa-dollar-sign"></i> Total arrecadado</div>
+        <div class="tc-valor" id="turnoTotal">R$ 0,00</div>
+        <div class="tc-sub">soma dos atendimentos</div>
+      </div>
+    </div>
+
+    <!-- Breakdown por forma de pagamento -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:8px">Por forma de pagamento</div>
+    <div class="turno-pgto" id="turnoPgtoBreakdown"></div>
+
+    <!-- Lista de atendimentos -->
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:8px">Atendimentos do dia</div>
+    <div class="turno-lista" id="turnoLista"></div>
+
+    <!-- Observação -->
+    <div class="mfield" style="margin-bottom:0">
+      <label><i class="fa fa-comment" style="margin-right:4px;color:#9ca3af"></i>Recado para próxima recepcionista</label>
+      <textarea id="turnoObs" rows="2" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;resize:none" placeholder="Ex: Cliente X ligou, caixa com R$ 50 de troco..."></textarea>
+    </div>
+  </div>
+  <div class="modal-footer" style="justify-content:space-between">
+    <span style="font-size:12px;color:#9ca3af" id="turnoUltimoFech"></span>
+    <div style="display:flex;gap:10px">
+      <button class="btn-cancel" onclick="fecharTurno()">Cancelar</button>
+      <button class="btn-yellow" onclick="irParaFluxo()"><i class="fa fa-arrow-right"></i> Ir para Fluxo de Caixa</button>
+      <button class="btn-green" onclick="salvarFechamentoTurno()"><i class="fa fa-check"></i> Confirmar Fechamento</button>
+    </div>
   </div>
 </div>
 </div>
@@ -926,6 +1014,190 @@ async function salvarNC(){
   if(!nome){alert("Nome obrigatório.");return;}if(!tel){alert("Telefone obrigatório.");return;}
   const{data:novo,error}=await client.from("clientes").insert({nome,telefone_1:tel,email:document.getElementById("ncEmail").value.trim()||null}).select().single();
   if(error){alert("Erro: "+error.message);return;}fecharNC();ssAg?.setValue(novo);
+}
+
+/* ══════ FECHAR TURNO ══════ */
+let recepcionistasMap = {};
+
+async function carregarRecepcionistas(){
+  const{data}=await client.from("terapeutas")
+    .select("cpf,nome_profissional")
+    .eq("status","Ativo")
+    .in("cargo",["Atendente","Recepcionista","Gerente","Analista"])
+    .order("nome_profissional");
+  recepcionistasMap={};
+  const sel=document.getElementById("turnoOp");
+  sel.innerHTML='<option value="">Todas</option>';
+  (data||[]).forEach(r=>{
+    recepcionistasMap[r.cpf]=r.nome_profissional;
+    sel.innerHTML+=`<option value="${r.cpf}">${r.nome_profissional}</option>`;
+  });
+}
+
+async function abrirFecharTurno(){
+  await carregarRecepcionistas();
+  document.getElementById("turnoData").value=hoje();
+  document.getElementById("turnoHoraIni").value="";
+  document.getElementById("turnoHoraFim").value="";
+  document.getElementById("turnoObs").value="";
+  // pré-seleciona operador logado se for recepcionista
+  getUser(u=>{
+    if(u&&u.cpf&&recepcionistasMap[u.cpf])
+      document.getElementById("turnoOp").value=u.cpf;
+  });
+  await calcTurno();
+  document.getElementById("modalTurno").style.display="flex";
+}
+function fecharTurno(){ document.getElementById("modalTurno").style.display="none"; }
+
+function classifPgtoTurno(forma){
+  if(!forma)return"outros";
+  const f=forma.toLowerCase();
+  if(f.includes("dinheiro")||f.includes("espécie"))return"dinheiro";
+  if(f.includes("débito")||f.includes("debito"))return"debito";
+  if(f.includes("crédito")||f.includes("credito"))return"credito";
+  if(f.includes("pix"))return"pix";
+  return"outros";
+}
+
+const PGTO_ICONS={
+  dinheiro:{icon:"fa-money-bill-wave",color:"#16a34a",label:"Dinheiro"},
+  pix:{icon:"fa-qrcode",color:"#06b6d4",label:"PIX"},
+  debito:{icon:"fa-credit-card",color:"#2563eb",label:"Débito"},
+  credito:{icon:"fa-credit-card",color:"#7c3aed",label:"Crédito"},
+  outros:{icon:"fa-ellipsis-h",color:"#9ca3af",label:"Outros"},
+};
+
+async function calcTurno(){
+  const dataFiltro=document.getElementById("turnoData").value;
+  // Usa os dados já carregados em memória (filtra por data)
+  const dodia=dados.filter(r=>r.data===dataFiltro&&(r.status==="Confirmado"||r.status==="Faturado"));
+  
+  // totais
+  const total=dodia.reduce((s,r)=>s+(r.valor_final||0),0);
+  document.getElementById("turnoQtd").textContent=dodia.length;
+  document.getElementById("turnoTotal").textContent=fmtM(total);
+
+  // breakdown por forma de pagamento — usa forma_pagamento do atendimento
+  const pgtoMap={};
+  dodia.forEach(r=>{
+    if(!r.forma_pagamento)return;
+    const k=classifPgtoTurno(r.forma_pagamento);
+    pgtoMap[k]=(pgtoMap[k]||0)+(r.valor_final||0);
+  });
+  const breakdown=document.getElementById("turnoPgtoBreakdown");
+  if(!Object.keys(pgtoMap).length){
+    breakdown.innerHTML='<div style="color:#9ca3af;font-size:12px;padding:4px 0">Nenhuma forma de pagamento registrada</div>';
+  } else {
+    breakdown.innerHTML=Object.entries(pgtoMap).map(([k,v])=>{
+      const p=PGTO_ICONS[k]||PGTO_ICONS.outros;
+      return`<div class="turno-pgto-linha">
+        <span class="tpl-label"><i class="fa ${p.icon}" style="color:${p.color}"></i>${p.label}</span>
+        <span class="tpl-valor">${fmtM(v)}</span>
+      </div>`;
+    }).join("");
+  }
+
+  // lista de atendimentos
+  const lista=document.getElementById("turnoLista");
+  if(!dodia.length){
+    lista.innerHTML='<div class="turno-empty"><i class="fa fa-calendar-check" style="font-size:22px;display:block;margin-bottom:8px;color:#d1d5db"></i>Nenhum atendimento confirmado hoje</div>';
+  } else {
+    const sorted=[...dodia].sort((a,b)=>( a.hora_inicio||"").localeCompare(b.hora_inicio||""));
+    lista.innerHTML=sorted.map(r=>{
+      const cor=corServico(r.servicos);
+      return`<div class="turno-item">
+        <span class="ti-hora">${fmtH(r.hora_inicio)}${r.hora_fim?"–"+fmtH(r.hora_fim):""}</span>
+        <span style="width:8px;height:8px;border-radius:3px;background:${cor.bg};flex-shrink:0"></span>
+        <span class="ti-nome">${nomeC(r.clientes)}</span>
+        <span class="ti-serv">${nomeS(r.servicos)}</span>
+        <span class="ti-pgto">${r.forma_pagamento||"—"}</span>
+        <span class="ti-val">${fmtM(r.valor_final)}</span>
+      </div>`;
+    }).join("");
+  }
+
+  // último fechamento
+  const{data:fechs}=await client.from("fechamentos_caixa")
+    .select("created_at,operador_cpf,hora_fim")
+    .eq("data",dataFiltro)
+    .order("created_at",{ascending:false})
+    .limit(1);
+  const uf=fechs?.[0];
+  const el=document.getElementById("turnoUltimoFech");
+  if(uf){
+    const nome=recepcionistasMap[uf.operador_cpf]||"—";
+    const hora=uf.hora_fim||new Date(uf.created_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    el.textContent=`Último fechamento: ${nome} às ${hora}`;
+  } else {
+    el.textContent="Nenhum fechamento registrado hoje";
+  }
+}
+
+function irParaFluxo(){
+  const op=document.getElementById("turnoOp").value;
+  const data=document.getElementById("turnoData").value;
+  const hi=document.getElementById("turnoHoraIni").value;
+  const hf=document.getElementById("turnoHoraFim").value;
+  const obs=encodeURIComponent(document.getElementById("turnoObs").value);
+  const params=new URLSearchParams({abrirFechamento:"1"});
+  if(op)params.set("op",op);
+  if(data)params.set("data",data);
+  if(hi)params.set("hi",hi);
+  if(hf)params.set("hf",hf);
+  if(obs)params.set("obs",obs);
+  window.location.href="fluxo_caixa.html?"+params.toString();
+}
+
+async function salvarFechamentoTurno(){
+  const dataFiltro=document.getElementById("turnoData").value;
+  if(!dataFiltro){alert("Informe a data.");return;}
+  const opCpf=document.getElementById("turnoOp").value||null;
+  const hi=document.getElementById("turnoHoraIni").value||null;
+  const hf=document.getElementById("turnoHoraFim").value||null;
+  const obs=document.getElementById("turnoObs").value.trim()||null;
+
+  const dodia=dados.filter(r=>r.data===dataFiltro&&(r.status==="Confirmado"||r.status==="Faturado"));
+  
+  // Calcula totais por forma de pagamento
+  const pgtoMap={dinheiro:0,pix:0,debito:0,credito:0,outros:0};
+  let trocos=0;
+  dodia.forEach(r=>{
+    if(r.forma_pagamento){
+      const k=classifPgtoTurno(r.forma_pagamento);
+      pgtoMap[k]+=(r.valor_final||0);
+    }
+  });
+  const totalGeral=Object.values(pgtoMap).reduce((s,v)=>s+v,0);
+
+  const payload={
+    data:dataFiltro,
+    operador_cpf:opCpf,
+    hora_inicio:hi,
+    hora_fim:hf,
+    fundo_inicial:0,
+    total_dinheiro:pgtoMap.dinheiro,
+    total_debito:pgtoMap.debito,
+    total_credito:pgtoMap.credito,
+    total_pix:pgtoMap.pix,
+    total_outros:pgtoMap.outros,
+    total_trocos:trocos,
+    troco_caixa:pgtoMap.dinheiro,
+    total_geral:totalGeral,
+    observacao:obs
+  };
+
+  const{data:novo,error}=await client.from("fechamentos_caixa").insert(payload).select().single();
+  if(error){alert("Erro ao salvar: "+error.message);return;}
+
+  // Marca atendimentos como faturados/fechados vinculando ao fechamento
+  if(novo?.id&&dodia.length){
+    await client.from("atendimentos").update({status:"Faturado"}).in("id",dodia.map(r=>r.id));
+  }
+
+  alert(`Turno fechado! ${dodia.length} atendimento${dodia.length!==1?"s":""} · ${fmtM(totalGeral)}`);
+  fecharTurno();
+  carregar();
 }
 
 /* ══════ EXCLUIR / EXPORTAR ══════ */

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Atendimentos | Hara Spa</title>
+<title>Fluxo de Caixa | Hara Spa</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -11,119 +11,76 @@
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:30px;display:flex;flex-direction:column;min-height:100vh;}
-
-/* ── TOPBAR ── */
-.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
-.topbar h1{margin:0;font-size:22px;}
-.topbar-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.content{flex:1;padding:40px;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.topbar h1{margin:0;}
+.topbar-btns{display:flex;gap:10px;}
 button{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
-button:hover{opacity:.85;}
+button:hover{opacity:.9;}
 button.btn-green{background:#16a34a;}
 button.btn-red{background:#dc2626;}
 button.btn-blue{background:#2563eb;}
 button.btn-yellow{background:#d97706;}
 button.btn-ghost{background:#fff;color:#374151;border:1px solid #d1d5db;}
-button.btn-ghost:hover{background:#f3f4f6;}
+button.btn-ghost:hover{background:#f9fafb;}
 
-/* ── CARDS RESUMO DO DIA ── */
-.resumo-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
-.resumo-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:12px;border-left:4px solid transparent;}
-.resumo-card .rc-num{font-size:32px;font-weight:800;line-height:1;color:#111827;}
-.resumo-card .rc-label{font-size:12px;font-weight:700;color:#6b7280;margin-top:4px;text-transform:uppercase;letter-spacing:.04em;}
-.resumo-card .rc-periodo{font-size:10px;color:#9ca3af;margin-top:2px;font-weight:500;}
-.resumo-card .rc-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
-.resumo-card{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;border-left:4px solid transparent;}
+.filtros-card{background:#fff;border-radius:14px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:20px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;font-weight:600;color:#374151;}
+.field input,.field select{padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#111827;background:#fff;}
+.field input:focus,.field select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 
-/* ── BARRA DE CONTROLES ── */
-.agenda-controls{display:flex;align-items:center;gap:10px;background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px;flex-wrap:wrap;}
+/* Turno ativo */
+.turno-ativo-bar{background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1px solid #fde68a;border-radius:12px;padding:14px 20px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.turno-ativo-bar .ta-info{display:flex;align-items:center;gap:10px;}
+.turno-ativo-bar .ta-icon{width:38px;height:38px;border-radius:9px;background:#fef3c7;border:1px solid #fde68a;display:flex;align-items:center;justify-content:center;color:#d97706;font-size:16px;}
+.turno-ativo-bar .ta-texto{font-size:13px;font-weight:600;color:#92400e;}
+.turno-ativo-bar .ta-sub{font-size:11px;color:#b45309;margin-top:2px;}
 
-/* Seletor de visão */
-.view-tabs{display:flex;gap:3px;background:#f3f4f6;border-radius:8px;padding:3px;}
-.view-tab{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:#6b7280;border:none;background:none;}
-.view-tab.active{background:#fff;color:#111827;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.totais{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;}
+.total-card{background:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 2px 8px rgba(0,0,0,.07);position:relative;overflow:hidden;}
+.total-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;}
+.total-card.c-gray::before{background:#9ca3af;}
+.total-card.c-blue::before{background:#2563eb;}
+.total-card.c-red::before{background:#dc2626;}
+.total-card.c-purple::before{background:#7c3aed;}
+.total-card.c-green::before{background:#16a34a;}
+.t-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#9ca3af;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.t-valor{font-size:32px;font-weight:900;color:#111827;line-height:1;letter-spacing:-1px;}
+.t-valor.green{color:#16a34a;}
+.t-valor.blue{color:#2563eb;}
+.t-valor.purple{color:#7c3aed;}
+.t-valor.red{color:#dc2626;}
+.t-sub{font-size:11px;color:#9ca3af;margin-top:8px;}
 
-/* Navegação de data */
-.semana-nav{display:flex;align-items:center;gap:6px;}
-.semana-nav button{padding:6px 10px;}
-.semana-label{font-size:14px;font-weight:700;color:#111827;min-width:190px;text-align:center;}
-
-/* Seletor de profissional — DESTAQUE */
-.prof-selector{display:flex;align-items:center;gap:0;background:#f0f4ff;border:2px solid #2563eb;border-radius:10px;padding:0;overflow:hidden;margin-left:4px;}
-.prof-selector-label{padding:0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#2563eb;white-space:nowrap;background:#dbeafe;height:100%;display:flex;align-items:center;}
-.prof-selector select{background:#f0f4ff;color:#1e40af;border:none;font-size:13px;font-weight:600;padding:8px 10px;cursor:pointer;min-width:160px;outline:none;}
-
-/* ── LEGENDA ── */
-.legenda-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:#fff;border-radius:10px;padding:8px 14px;box-shadow:0 1px 4px rgba(0,0,0,.04);margin-bottom:14px;}
-.legenda-titulo{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-right:4px;}
-.leg{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#374151;}
-.leg-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
-.leg-sep{width:1px;height:16px;background:#e5e7eb;margin:0 4px;}
-.leg-status{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#374151;}
-.leg-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-
-/* ── CALENDÁRIO ── */
-.cal-wrap{background:#fff;border-radius:14px;overflow:auto;box-shadow:0 1px 4px rgba(0,0,0,.06);flex:1;}
-.cal-corner{background:#f9fafb;border-bottom:2px solid #e5e7eb;border-right:1px solid #e5e7eb;position:sticky;top:0;z-index:3;height:52px;}
-.cal-day-hdr{background:#f9fafb;border-bottom:2px solid #e5e7eb;border-right:1px solid #f3f4f6;padding:8px 6px;text-align:center;position:sticky;top:0;z-index:2;}
-.cal-day-hdr.hoje{background:#eff6ff;}
-.cal-day-hdr .ds{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;}
-.cal-day-hdr .dn{font-size:18px;font-weight:800;line-height:1.2;color:#111827;}
-.cal-day-hdr.hoje .dn{color:#2563eb;}
-.time-cell{border-right:1px solid #e5e7eb;display:flex;align-items:flex-start;padding:2px 4px 0 0;font-size:9px;color:#9ca3af;justify-content:flex-end;}
-.day-col{border-right:1px solid #f3f4f6;position:relative;}
-.day-col.hoje-col{background:#fafcff;}
-.slot-line{border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .1s;}
-.slot-line:hover{background:#f0f9ff;}
-.slot-line.hora-cheia{border-bottom:1px solid #e5e7eb;}
-
-/* ── LINHA DO AGORA ── */
-.linha-agora{position:absolute;left:0;right:0;border-top:2px solid #ef4444;z-index:4;pointer-events:none;}
-.linha-agora::before{content:'';position:absolute;left:-1px;top:-5px;width:8px;height:8px;border-radius:50%;background:#ef4444;}
-
-/* ── CARDS DE AGENDAMENTO ── */
-.ag-card{position:absolute;left:2px;right:2px;border-radius:7px;padding:4px 6px;font-size:11px;cursor:pointer;overflow:hidden;z-index:1;box-shadow:0 1px 3px rgba(0,0,0,.12);transition:filter .1s,box-shadow .1s;}
-.ag-card:hover{filter:brightness(.92);box-shadow:0 3px 10px rgba(0,0,0,.2);z-index:2;}
-.ag-hora{font-weight:700;font-size:9.5px;opacity:.85;}
-.ag-nome{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ag-serv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px;opacity:.9;}
-
-/* Indicador de status no canto do card */
-.ag-status-dot{width:7px;height:7px;border-radius:50%;position:absolute;top:5px;right:5px;border:1.5px solid rgba(255,255,255,.6);}
-
-/* ── MODAL FECHAR TURNO ── */
-.turno-resumo{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
-.turno-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 16px;}
-.turno-card .tc-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:4px;}
-.turno-card .tc-valor{font-size:20px;font-weight:800;color:#111827;}
-.turno-card .tc-sub{font-size:11px;color:#6b7280;margin-top:2px;}
-.turno-lista{max-height:220px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:14px;}
-.turno-item{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #f3f4f6;font-size:12px;}
-.turno-item:last-child{border-bottom:none;}
-.turno-item .ti-hora{font-weight:700;color:#374151;white-space:nowrap;width:90px;flex-shrink:0;}
-.turno-item .ti-nome{flex:1;color:#111827;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.turno-item .ti-serv{color:#6b7280;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;}
-.turno-item .ti-val{font-weight:700;color:#16a34a;white-space:nowrap;margin-left:auto;}
-.turno-item .ti-pgto{font-size:10px;color:#9ca3af;white-space:nowrap;}
-.turno-pgto{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
-.turno-pgto-linha{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f9fafb;border-radius:8px;font-size:13px;}
-.turno-pgto-linha .tpl-label{display:flex;align-items:center;gap:8px;color:#374151;font-weight:500;}
-.turno-pgto-linha .tpl-valor{font-weight:700;color:#111827;}
-.turno-empty{text-align:center;padding:24px;color:#9ca3af;font-size:13px;}
-
-/* ── LISTA ── */
-.lista-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.table-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:12px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left;}
 th{background:#f9fafb;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#f9fafb;}
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;}
 
-/* ── MODAIS ── */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:200;padding:30px 20px;overflow-y:auto;}
-.modal-content{background:#fff;width:580px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
-.modal-content.sm{width:440px;}
+/* Smart search */
+.smart-search-wrap{position:relative;width:100%;}
+.smart-search-wrap input[type="text"]{width:100%;padding:9px 28px 9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;}
+.smart-search-wrap input[type="text"]:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.ss-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:14px;padding:0;display:none;}
+.ss-clear.visible{display:block;}
+.ss-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:220px;overflow-y:auto;z-index:9999;display:none;}
+.ss-dropdown.open{display:block;}
+.ss-option{padding:9px 12px;cursor:pointer;font-size:13px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid #f3f4f6;}
+.ss-option:last-child{border-bottom:none;}
+.ss-option:hover{background:#eff6ff;}
+.ss-name{font-weight:600;color:#111827;}
+.ss-meta{font-size:11px;color:#6b7280;}
+.ss-novo{padding:10px 12px;cursor:pointer;font-size:13px;color:#2563eb;font-weight:600;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:6px;}
+.ss-novo:hover{background:#eff6ff;}
+
+/* Modais */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
+.modal-content{background:#fff;width:660px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-content.sm{width:420px;}
+.modal-content.md{width:560px;}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
 .modal-header h2{margin:0;font-size:18px;color:#111827;}
 .btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
@@ -135,210 +92,202 @@ tr:hover td{background:#f9fafb;}
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .span2{grid-column:span 2;}
 .mfield{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
-.mfield:last-child{margin-bottom:0;}
 .mfield label{font-size:12px;font-weight:600;color:#374151;}
-.mfield input,.mfield select,.mfield textarea{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;width:100%;}
+.mfield input,.mfield select,.mfield textarea{width:100%;padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
 .mfield input:focus,.mfield select:focus,.mfield textarea:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.info-card{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:2;color:#374151;}
-.com-box{border-radius:8px;padding:9px 13px;font-size:12px;margin-top:6px;display:none;}
-.com-box.normal{background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;}
-.com-box.four{background:#eff6ff;border:1px solid #bfdbfe;color:#2563eb;}
-.det-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
-.est-section{border-top:1px solid #e5e7eb;margin-top:16px;padding-top:14px;}
-.est-section h4{margin:0 0 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;}
-.est-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
-.est-row select{flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;}
-.est-row input[type=number]{width:65px;padding:7px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:12px;text-align:center;}
-.btn-rem{background:none;border:none;color:#dc2626;cursor:pointer;font-size:15px;padding:3px;}
-.btn-add-est{background:none;color:#2563eb;border:1px dashed #93c5fd;border-radius:8px;padding:7px;font-size:12px;cursor:pointer;width:100%;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;}
-.btn-add-est:hover{background:#eff6ff;}
-.smart-search-wrap{position:relative;width:100%;}
-.smart-search-wrap input[type="text"]{width:100%;padding:9px 28px 9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;}
-.smart-search-wrap input[type="text"]:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.ss-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9ca3af;font-size:14px;padding:0;display:none;}
-.ss-clear.visible{display:block;}
-.ss-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:200px;overflow-y:auto;z-index:9999;display:none;}
-.ss-dropdown.open{display:block;}
-.ss-option{padding:9px 12px;cursor:pointer;font-size:13px;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid #f3f4f6;}
-.ss-option:last-child{border-bottom:none;}
-.ss-option:hover{background:#eff6ff;}
-.ss-name{font-weight:600;color:#111827;}
-.ss-meta{font-size:11px;color:#6b7280;}
-.ss-novo{padding:10px 12px;cursor:pointer;font-size:13px;color:#2563eb;font-weight:600;border-top:1px solid #e5e7eb;display:flex;align-items:center;gap:6px;}
-.ss-novo:hover{background:#eff6ff;}
+.mfield input:disabled{background:#f9fafb;color:#374151;font-weight:700;}
+.sep{border-top:1px solid #e5e7eb;margin:16px 0 14px;padding-top:14px;}
+.sep h4{margin:0 0 12px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;display:flex;align-items:center;gap:6px;}
+.serv-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;background:#f9fafb;border-radius:8px;padding:8px 10px;}
+.serv-row select{flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;}
+.serv-row .lbl{font-size:11px;color:#6b7280;white-space:nowrap;}
+.serv-row input[type=number]{width:90px;padding:7px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right;}
+.btn-add-serv{background:none;color:#2563eb;border:1px dashed #93c5fd;border-radius:8px;padding:7px;font-size:12px;cursor:pointer;width:100%;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.btn-add-serv:hover{background:#eff6ff;}
+.btn-rem-serv{background:none;border:none;color:#dc2626;cursor:pointer;font-size:15px;padding:3px;}
+.pgto-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+.pgto-row select{flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;}
+.pgto-row input{width:130px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right;}
+.resumo-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px 16px;}
+.rl{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;}
+.rl.total{border-top:1px solid #e5e7eb;margin-top:6px;padding-top:8px;font-weight:700;font-size:15px;}
+.rl.troco{color:#16a34a;font-weight:700;}
+.rl.troco.neg{color:#dc2626;}
+
+/* Fechamento */
+.fech-header{text-align:center;padding:10px 0 14px;}
+.fech-header h2{margin:0;font-size:18px;font-weight:800;color:#111827;}
+.fech-header p{margin:4px 0 0;font-size:12px;color:#6b7280;}
+.fech-linha{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid #f3f4f6;font-size:14px;}
+.fech-linha:last-child{border-bottom:none;}
+.fech-linha .fl-label{display:flex;align-items:center;gap:8px;color:#374151;}
+.fech-linha .fl-valor{font-weight:700;font-size:15px;}
+.fech-total{display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;border-top:2px solid #111827;font-size:17px;font-weight:800;margin-top:8px;}
+.fech-caixa{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 16px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;}
+.fech-caixa .fc-label{font-size:12px;color:#16a34a;font-weight:600;}
+.fech-caixa .fc-valor{font-size:20px;font-weight:900;color:#16a34a;}
+
+/* Lista atendimentos no fechamento */
+.fech-lista{max-height:180px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;margin:10px 0;}
+.fech-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #f3f4f6;font-size:12px;}
+.fech-item:last-child{border-bottom:none;}
+.fech-item .fi-hora{color:#6b7280;width:80px;flex-shrink:0;}
+.fech-item .fi-nome{flex:1;font-weight:600;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fech-item .fi-pgto{color:#9ca3af;font-size:11px;white-space:nowrap;}
+.fech-item .fi-val{font-weight:700;color:#16a34a;white-space:nowrap;margin-left:auto;}
+
+/* Caixa saldo */
+.caixa-bar{display:flex;gap:16px;margin-bottom:20px;align-items:stretch;}
+.caixa-card{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);flex:1;display:flex;justify-content:space-between;align-items:center;padding:20px 24px;}
+
+.repo-hist{max-height:180px;overflow-y:auto;margin-top:10px;}
+.repo-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.repo-item:last-child{border-bottom:none;}
+.repo-item .ri-val{font-weight:700;}
+.repo-item .ri-val.pos{color:#16a34a;}
+.repo-item .ri-val.neg{color:#dc2626;}
+
+@media print{body *{visibility:hidden;}#printArea,#printArea *{visibility:visible;}#printArea{position:fixed;top:0;left:0;width:100%;padding:30px;background:#fff;}.no-print{display:none !important;}}
 </style>
 </head>
 <body>
 <div class="app">
 <aside id="sidebar"></aside>
 <main class="content">
-
   <div class="topbar">
-    <h1>Atendimentos</h1>
-    <div class="topbar-right">
-      <a href="servicos.html" style="text-decoration:none"><button class="btn-ghost"><i class="fa fa-spa"></i> Serviços</button></a>
-      <button class="btn-ghost" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
-      <button class="btn-yellow" onclick="abrirFecharTurno()"><i class="fa fa-cash-register"></i> Fechar Turno</button>
-      <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Agendamento</button>
+    <h1>Fluxo de Caixa</h1>
+    <div class="topbar-btns">
+      <a href="atendimentos.html" style="text-decoration:none"><button class="btn-ghost"><i class="fa fa-calendar-check"></i> Atendimentos</button></a>
+      <button onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+      <button class="btn-yellow" onclick="abrirFecharCaixa()"><i class="fa fa-cash-register"></i> Fechar Turno</button>
+      <button class="btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Lançamento</button>
     </div>
   </div>
 
+  <!-- Turno ativo (aparece quando veio de Atendimentos) -->
+  <div class="turno-ativo-bar" id="turnoAtivoBar" style="display:none">
+    <div class="ta-info">
+      <div class="ta-icon"><i class="fa fa-cash-register"></i></div>
+      <div>
+        <div class="ta-texto" id="turnoAtivoTexto">Fechamento de turno</div>
+        <div class="ta-sub">Revise os dados abaixo e confirme o fechamento</div>
+      </div>
+    </div>
+    <button class="btn-yellow" onclick="abrirFecharCaixa(true)"><i class="fa fa-check"></i> Confirmar Fechamento</button>
+  </div>
 
-  <!-- RESUMO DO DIA -->
-  <div class="resumo-bar" id="resumoBar">
-    <div class="resumo-card" style="border-left-color:#f59e0b">
-      <div class="rc-icon" style="background:#fef3c7;color:#d97706"><i class="fa fa-calendar-day"></i></div>
-      <div><div class="rc-num" id="rsAgendado">—</div><div class="rc-label">Agendados</div><div class="rc-periodo" id="rsPeriodo1"></div></div>
-    </div>
-    <div class="resumo-card" style="border-left-color:#22c55e">
-      <div class="rc-icon" style="background:#dcfce7;color:#16a34a"><i class="fa fa-check-circle"></i></div>
-      <div><div class="rc-num" id="rsConfirmado">—</div><div class="rc-label">Confirmados</div><div class="rc-periodo" id="rsPeriodo2"></div></div>
-    </div>
-    <div class="resumo-card" style="border-left-color:#8E2440">
-      <div class="rc-icon" style="background:#ffe4ec;color:#8E2440"><i class="fa fa-clock"></i></div>
-      <div><div class="rc-num" id="rsNaoConf">—</div><div class="rc-label">Não confirmou</div><div class="rc-periodo" id="rsPeriodo3"></div></div>
-    </div>
-    <div class="resumo-card" style="border-left-color:#9ca3af">
-      <div class="rc-icon" style="background:#f3f4f6;color:#6b7280"><i class="fa fa-ban"></i></div>
-      <div><div class="rc-num" id="rsCancelado">—</div><div class="rc-label">Cancelados</div><div class="rc-periodo" id="rsPeriodo4"></div></div>
-    </div>
-    <div class="resumo-card" style="border-left-color:#a855f7">
-      <div class="rc-icon" style="background:#f3e8ff;color:#7c3aed"><i class="fa fa-file-invoice-dollar"></i></div>
-      <div><div class="rc-num" id="rsFaturado">—</div><div class="rc-label">Faturados</div><div class="rc-periodo" id="rsPeriodo5"></div></div>
+  <div class="filtros-card">
+    <div class="field"><label>Data de</label><input type="date" id="filtroIni"></div>
+    <div class="field"><label>Data até</label><input type="date" id="filtroFim"></div>
+    <div class="field"><label>Operador</label><select id="filtroOp"><option value="">Todos</option></select></div>
+    <div class="field"><label>Terapeuta</label><select id="filtroTer"><option value="">Todos</option></select></div>
+    <button class="btn-blue" onclick="aplicarFiltro()"><i class="fa fa-filter"></i> Filtrar</button>
+    <button class="btn-ghost" onclick="limparFiltro()"><i class="fa fa-times"></i> Limpar</button>
+  </div>
+
+  <div class="totais">
+    <div class="total-card c-gray"><div class="t-label"><i class="fa fa-list"></i> Lançamentos</div><div class="t-valor" id="totCount">—</div><div class="t-sub">no período</div></div>
+    <div class="total-card c-blue"><div class="t-label"><i class="fa fa-dollar-sign"></i> Valor Bruto</div><div class="t-valor blue" id="totBruto">—</div><div class="t-sub">soma dos serviços</div></div>
+    <div class="total-card c-red"><div class="t-label"><i class="fa fa-tag"></i> Descontos</div><div class="t-valor red" id="totDesc">—</div><div class="t-sub">total descontado</div></div>
+    <div class="total-card c-purple"><div class="t-label"><i class="fa fa-handshake"></i> Comissões</div><div class="t-valor purple" id="totCom">—</div><div class="t-sub">total de comissões</div></div>
+    <div class="total-card c-green"><div class="t-label"><i class="fa fa-check-circle"></i> Total Final</div><div class="t-valor green" id="totFinal">—</div><div class="t-sub">receita líquida</div></div>
+  </div>
+
+  <div class="caixa-bar">
+    <div class="caixa-card">
+      <div>
+        <div class="t-label" style="color:#16a34a"><i class="fa fa-cash-register"></i> Caixa (Dinheiro)</div>
+        <div class="t-valor green" id="caixaAtual">R$ 0,00</div>
+        <div class="t-sub" id="caixaSub">Atualize via fechamento de turno</div>
+      </div>
+      <button class="btn-ghost" onclick="abrirReposicao()"><i class="fa fa-plus"></i> Repor / Ajustar</button>
     </div>
   </div>
 
-  <!-- CONTROLES -->
-  <div class="agenda-controls">
-    <!-- Visão -->
-    <div class="view-tabs">
-      <button class="view-tab active" id="tabDia"    onclick="mudarView('dia')">Dia</button>
-      <button class="view-tab"        id="tabSemana" onclick="mudarView('semana')">Semana</button>
-      <button class="view-tab"        id="tabLista"  onclick="mudarView('lista')">Lista</button>
-    </div>
-
-    <!-- Navegação de data -->
-    <div class="semana-nav" id="navData">
-      <button class="btn-ghost" onclick="navegar(-1)"><i class="fa fa-chevron-left"></i></button>
-      <button class="btn-ghost" onclick="irHoje()" style="font-size:12px">Hoje</button>
-      <button class="btn-ghost" onclick="navegar(1)"><i class="fa fa-chevron-right"></i></button>
-      <span class="semana-label" id="dataLabel"></span>
-    </div>
-
-    <!-- Filtro de status (lista) -->
-    <div id="filtroStatusWrap" style="display:none;align-items:center;gap:6px;">
-      <span style="font-size:12px;font-weight:600;color:#6b7280">Status:</span>
-      <select id="filtroStatus" onchange="renderLista()" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
-        <option value="">Todos</option>
-        <option>Agendado</option><option>Confirmado</option><option>Faturado</option><option>Cancelado</option>
-      </select>
-    </div>
-
-    <!-- Seletor de profissional — DESTAQUE -->
-    <div class="prof-selector" style="margin-left:auto;">
-      <span class="prof-selector-label"><i class="fa fa-user" style="margin-right:5px"></i>Profissional</span>
-      <select id="filtroTer" onchange="renderAtual()"><option value="">Todas</option></select>
-    </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Data</th><th>Operador</th><th>Cliente</th><th>Terapeuta</th>
+        <th>Serviços</th><th>Valor Final</th><th>Comissão</th><th>Pgto</th><th>Troco</th><th>Ações</th>
+      </tr></thead>
+      <tbody id="lista"></tbody>
+    </table>
+    <div id="paginacao"></div>
   </div>
-
-  <!-- LEGENDA -->
-  <div class="legenda-bar" id="legendaBar">
-    <!-- preenchida dinamicamente por renderLegenda() após carregar grupos do Supabase -->
-  </div>
-
-  <div id="viewCal" class="cal-wrap"></div>
-  <div id="viewLista" class="lista-wrap" style="display:none">
-    <table><thead><tr>
-      <th>Data/Hora</th><th>Cliente</th><th>Serviço</th>
-      <th>Terapeuta(s)</th><th>Status</th><th>Valor</th><th>Ações</th>
-    </tr></thead><tbody id="listaBody"></tbody></table>
-  </div>
-
 </main>
 </div>
 
-<!-- MODAL AGENDAMENTO -->
-<div class="modal" id="modalAg">
+<!-- MODAL LANÇAMENTO -->
+<div class="modal" id="modalLanc">
 <div class="modal-content">
   <div class="modal-header">
-    <h2 id="agTitulo">Novo Agendamento</h2>
-    <button class="btn-fechar" onclick="fecharAg()"><i class="fa fa-times"></i></button>
+    <h2 id="lancTit">Novo Lançamento</h2>
+    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
   </div>
   <div class="modal-body">
     <div class="grid-2">
-      <div class="mfield"><label>Data *</label><input type="date" id="agData"></div>
-      <div class="mfield"><label>Origem</label><select id="agOrigem"><option value="">Selecione</option></select></div>
-      <div class="mfield"><label>Hora Início *</label><input type="time" id="agHoraIni" oninput="autoFim()"></div>
-      <div class="mfield"><label>Hora Fim</label><input type="time" id="agHoraFim"></div>
+      <div class="mfield"><label>Data *</label><input type="date" id="lancData"></div>
+      <div class="mfield"><label>Operador</label><select id="lancOp"><option value="">Selecione</option></select></div>
       <div class="mfield span2">
         <label>Cliente *</label>
         <div class="smart-search-wrap">
-          <input type="text" id="agCliSrc" placeholder="Buscar por nome ou telefone…" autocomplete="off">
-          <button class="ss-clear" id="agCliClr">✕</button>
-          <input type="hidden" id="agCli">
-          <div class="ss-dropdown" id="agCliDrop"></div>
+          <input type="text" id="cliSrc" placeholder="Buscar por nome ou telefone…" autocomplete="off">
+          <button class="ss-clear" id="cliClr">✕</button>
+          <input type="hidden" id="cliId">
+          <div class="ss-dropdown" id="cliDrop"></div>
         </div>
       </div>
-      <div class="mfield span2"><label>Serviço *</label><select id="agServ" onchange="aoMudarServ()"><option value="">Selecione</option></select></div>
-      <div class="mfield span2" id="campoTer1"><label>Terapeuta *</label><select id="agTer1" onchange="calcCom()"><option value="">Selecione</option></select></div>
-      <div class="mfield span2" id="campoTer2" style="display:none"><label>2ª Terapeuta (Four Hands) *</label><select id="agTer2" onchange="calcCom()"><option value="">Selecione</option></select></div>
-      <div class="span2" id="comWrap" style="display:none"><div class="com-box" id="comBox"></div></div>
-      <div class="mfield span2"><label>Status</label>
-        <select id="agStatus">
-          <option value="Agendado">Agendado</option>
-          <option value="Nao Confirmado">Cliente não confirmou</option>
-          <option value="Confirmado">Confirmado</option>
-          <option value="Cancelado">Cancelado</option>
+      <div class="mfield span2"><label>Terapeuta</label><select id="lancTer"><option value="">Selecione</option></select></div>
+    </div>
+    <div class="sep">
+      <h4><i class="fa fa-spa"></i> Serviços</h4>
+      <div id="servItens"></div>
+      <button class="btn-add-serv" onclick="addServ()"><i class="fa fa-plus"></i> Adicionar serviço</button>
+    </div>
+    <div class="sep">
+      <h4><i class="fa fa-calculator"></i> Resumo</h4>
+      <div class="resumo-box">
+        <div class="rl"><span>Valor Bruto</span><span id="rBruto">R$ 0,00</span></div>
+        <div class="rl"><span>Desconto (serviços)</span><span id="rDesc" style="color:#dc2626">- R$ 0,00</span></div>
+        <div class="rl"><span>Desconto adicional</span><span id="rDescExtra" style="color:#dc2626">- R$ 0,00</span></div>
+        <div class="rl"><span>Acréscimo</span><span id="rAcres" style="color:#16a34a">+ R$ 0,00</span></div>
+        <div class="rl total"><span>Valor Final (R$)</span><span id="rFinal" style="color:#16a34a">R$ 0,00</span></div>
+        <div class="rl" style="margin-top:8px;color:#7c3aed"><span>Comissão Total</span><span id="rCom">R$ 0,00</span></div>
+      </div>
+      <div class="grid-2" style="margin-top:12px">
+        <div class="mfield"><label style="color:#dc2626">Desconto Adicional (R$)</label><input type="number" id="lancDescExtra" value="0" step="0.01" oninput="calcRes()" style="border:2px solid #fca5a5;color:#dc2626;font-weight:600"></div>
+        <div class="mfield"><label style="color:#16a34a">Acréscimo (R$)</label><input type="number" id="lancAcres" value="0" step="0.01" oninput="calcRes()" style="border:2px solid #86efac;color:#16a34a;font-weight:600"></div>
+      </div>
+    </div>
+    <div class="sep">
+      <h4><i class="fa fa-money-bill-wave"></i> Pagamento</h4>
+      <div style="margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Forma de Pagamento 1</div>
+        <div class="pgto-row"><select id="p1Forma"><option value="">Selecione</option></select><input type="number" id="p1Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()"></div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:4px">Forma de Pagamento 2 <span style="font-weight:400;color:#9ca3af">— opcional</span></div>
+        <div class="pgto-row"><select id="p2Forma"><option value="">Selecione</option></select><input type="number" id="p2Val" step="0.01" placeholder="R$ 0,00" oninput="calcTroco()"></div>
+      </div>
+      <div class="resumo-box" style="margin-top:10px">
+        <div class="rl"><span>Total a pagar</span><span id="tAPagar">R$ 0,00</span></div>
+        <div class="rl"><span>Total pago</span><span id="tPago">R$ 0,00</span></div>
+        <div class="rl troco" id="trocoLinha"><span id="trocoLabel">Troco</span><span id="trocoVal">R$ 0,00</span></div>
+      </div>
+      <div class="mfield" style="margin-top:12px">
+        <label>Destino do Troco</label>
+        <select id="lancTrocoDestino">
+          <option value="nenhum">Não teve troco</option>
+          <option value="troco">Troco devolvido ao cliente</option>
+          <option value="caixa">Ficou no caixa</option>
         </select>
       </div>
-      <div class="mfield span2"><label>Observação</label><textarea id="agObs" rows="2" placeholder="Opcional..."></textarea></div>
     </div>
-    <div class="est-section">
-      <h4><i class="fa fa-box"></i> Itens de Estoque</h4>
-      <div id="agEst"></div>
-      <button class="btn-add-est" onclick="addEst('agEst')"><i class="fa fa-plus"></i> Adicionar item</button>
-    </div>
+    <div class="mfield"><label>Observação</label><input id="lancObs" placeholder="Opcional..."></div>
   </div>
   <div class="modal-footer">
-    <button class="btn-cancel" onclick="fecharAg()">Cancelar</button>
-    <button class="btn-green" onclick="salvarAg()"><i class="fa fa-save"></i> Salvar</button>
-  </div>
-</div>
-</div>
-
-<!-- MODAL DETALHES -->
-<div class="modal" id="modalDet">
-<div class="modal-content sm">
-  <div class="modal-header">
-    <h2 id="detTit">Detalhes</h2>
-    <button class="btn-fechar" onclick="fecharDet()"><i class="fa fa-times"></i></button>
-  </div>
-  <div class="modal-body">
-    <div class="info-card" id="detInfo"></div>
-    <div class="det-btns" id="detBtns"></div>
-  </div>
-</div>
-</div>
-
-<!-- MODAL PAGAMENTO -->
-<div class="modal" id="modalPgto">
-<div class="modal-content sm">
-  <div class="modal-header">
-    <h2>Confirmar Atendimento</h2>
-    <button class="btn-fechar" onclick="fecharPgto()"><i class="fa fa-times"></i></button>
-  </div>
-  <div class="modal-body">
-    <div class="info-card" id="pgtoInfo"></div>
-    <div class="grid-2">
-      <div class="mfield"><label>Valor (R$)</label><input type="number" id="pgtoVal" step="0.01" oninput="calcPgto()"></div>
-      <div class="mfield"><label>Desconto (R$)</label><input type="number" id="pgtoDes" value="0" step="0.01" oninput="calcPgto()"></div>
-      <div class="mfield span2"><label>Valor Final</label><input type="number" id="pgtoFin" disabled style="background:#f9fafb;font-weight:700;color:#16a34a"></div>
-      <div class="mfield span2"><label>Forma de Pagamento</label><select id="pgtoForma"><option value="">Selecione</option></select></div>
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn-cancel" onclick="fecharPgto()">Cancelar</button>
-    <button class="btn-green" onclick="confirmar()"><i class="fa fa-check"></i> Confirmar</button>
+    <button class="btn-cancel" onclick="fecharModal()">Cancelar</button>
+    <button class="btn-green" onclick="salvar()"><i class="fa fa-save"></i> Salvar</button>
   </div>
 </div>
 </div>
@@ -348,9 +297,9 @@ tr:hover td{background:#f9fafb;}
 <div class="modal-content sm">
   <div class="modal-header"><h2>Novo Cliente</h2><button class="btn-fechar" onclick="fecharNC()"><i class="fa fa-times"></i></button></div>
   <div class="modal-body">
-    <div class="mfield"><label>Nome *</label><input id="ncNome" placeholder="Nome completo"></div>
-    <div class="mfield"><label>Telefone *</label><input id="ncTel" placeholder="(11) 99999-9999"></div>
-    <div class="mfield"><label>Email</label><input id="ncEmail" type="email" placeholder="opcional"></div>
+    <div class="mfield"><label>Nome *</label><input id="ncNome"></div>
+    <div class="mfield"><label>Telefone *</label><input id="ncTel"></div>
+    <div class="mfield"><label>Email</label><input id="ncEmail" type="email"></div>
   </div>
   <div class="modal-footer">
     <button class="btn-cancel" onclick="fecharNC()">Cancelar</button>
@@ -360,68 +309,89 @@ tr:hover td{background:#f9fafb;}
 </div>
 
 <!-- MODAL FECHAR TURNO -->
-<div class="modal" id="modalTurno">
-<div class="modal-content" style="width:560px">
-  <div class="modal-header">
+<div class="modal" id="modalFechamento">
+<div class="modal-content md">
+  <div class="modal-header no-print">
     <h2><i class="fa fa-cash-register" style="color:#d97706;margin-right:8px"></i>Fechar Turno</h2>
-    <button class="btn-fechar" onclick="fecharTurno()"><i class="fa fa-times"></i></button>
+    <button class="btn-fechar" onclick="fecharFechamento()"><i class="fa fa-times"></i></button>
   </div>
   <div class="modal-body">
-    <!-- Seleção de turno -->
-    <div class="grid-2" style="margin-bottom:16px">
-      <div class="mfield" style="margin-bottom:0">
-        <label>Recepcionista</label>
-        <select id="turnoOp" onchange="calcTurno()"><option value="">Todas</option></select>
-      </div>
-      <div class="mfield" style="margin-bottom:0">
-        <label>Data</label>
-        <input type="date" id="turnoData" onchange="calcTurno()">
-      </div>
-      <div class="mfield" style="margin-bottom:0">
-        <label>Hora início do turno</label>
-        <input type="time" id="turnoHoraIni">
-      </div>
-      <div class="mfield" style="margin-bottom:0">
-        <label>Hora fim do turno</label>
-        <input type="time" id="turnoHoraFim">
+    <!-- Configuração do turno -->
+    <div class="no-print" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px;">
+      <div class="grid-2">
+        <div class="mfield" style="margin-bottom:0"><label>Recepcionista</label><select id="fechOp" onchange="calcFechamento()"><option value="">Todas</option></select></div>
+        <div class="mfield" style="margin-bottom:0"><label>Data</label><input type="date" id="fechData" onchange="calcFechamento()"></div>
+        <div class="mfield" style="margin-bottom:8px"><label>Hora início</label><input type="time" id="fechHoraIni"></div>
+        <div class="mfield" style="margin-bottom:8px"><label>Hora fim</label><input type="time" id="fechHoraFim"></div>
+        <div class="mfield span2" style="margin-bottom:0"><label>Fundo inicial (troco em caixa no início do turno)</label><input type="number" id="fechFundo" value="0" step="0.01" oninput="calcFechamento()" placeholder="Ex: 100,00"></div>
       </div>
     </div>
 
-    <!-- Cards resumo -->
-    <div class="turno-resumo">
-      <div class="turno-card" style="border-left:3px solid #22c55e">
-        <div class="tc-label"><i class="fa fa-check-circle"></i> Atendimentos</div>
-        <div class="tc-valor" id="turnoQtd">0</div>
-        <div class="tc-sub">confirmados no dia</div>
+    <div id="printArea">
+      <div class="fech-header"><h2 id="fechTitulo">Fechamento de Turno</h2><p id="fechSubtitulo"></p></div>
+
+      <!-- Lista de atendimentos do turno -->
+      <div class="no-print" style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:6px" id="fechListaTitulo">Atendimentos do turno</div>
+        <div class="fech-lista" id="fechLista"></div>
       </div>
-      <div class="turno-card" style="border-left:3px solid #2563eb">
-        <div class="tc-label"><i class="fa fa-dollar-sign"></i> Total arrecadado</div>
-        <div class="tc-valor" id="turnoTotal">R$ 0,00</div>
-        <div class="tc-sub">soma dos atendimentos</div>
+
+      <!-- Totais por forma de pagamento -->
+      <div style="margin:0 0 12px">
+        <div class="fech-linha"><span class="fl-label"><i class="fa fa-money-bill-wave" style="color:#16a34a"></i> Dinheiro</span><span class="fl-valor" id="fechDinheiro">R$ 0,00</span></div>
+        <div class="fech-linha"><span class="fl-label"><i class="fa fa-qrcode" style="color:#06b6d4"></i> PIX</span><span class="fl-valor" id="fechPix">R$ 0,00</span></div>
+        <div class="fech-linha"><span class="fl-label"><i class="fa fa-credit-card" style="color:#2563eb"></i> Débito</span><span class="fl-valor" id="fechDebito">R$ 0,00</span></div>
+        <div class="fech-linha"><span class="fl-label"><i class="fa fa-credit-card" style="color:#7c3aed"></i> Crédito</span><span class="fl-valor" id="fechCredito">R$ 0,00</span></div>
+        <div class="fech-linha" id="fechOutrosLinha" style="display:none"><span class="fl-label"><i class="fa fa-ellipsis-h" style="color:#9ca3af"></i> Outros</span><span class="fl-valor" id="fechOutros">R$ 0,00</span></div>
+        <div class="fech-linha" style="color:#dc2626"><span class="fl-label"><i class="fa fa-coins" style="color:#dc2626"></i> Trocos devolvidos</span><span class="fl-valor" id="fechTroco">- R$ 0,00</span></div>
       </div>
+      <div class="fech-total"><span>Total do Turno</span><span id="fechTotal">R$ 0,00</span></div>
+      <div class="fech-caixa">
+        <div><div class="fc-label"><i class="fa fa-box"></i> Dinheiro em caixa</div><div style="font-size:11px;color:#6b7280;margin-top:2px">Fundo inicial + Dinheiro recebido − Trocos</div></div>
+        <div class="fc-valor" id="fechTrocoCaixa">R$ 0,00</div>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:#9ca3af;text-align:center" id="fechRodape"></div>
     </div>
 
-    <!-- Breakdown por forma de pagamento -->
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:8px">Por forma de pagamento</div>
-    <div class="turno-pgto" id="turnoPgtoBreakdown"></div>
-
-    <!-- Lista de atendimentos -->
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:8px">Atendimentos do dia</div>
-    <div class="turno-lista" id="turnoLista"></div>
-
-    <!-- Observação -->
-    <div class="mfield" style="margin-bottom:0">
-      <label><i class="fa fa-comment" style="margin-right:4px;color:#9ca3af"></i>Recado para próxima recepcionista</label>
-      <textarea id="turnoObs" rows="2" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;resize:none" placeholder="Ex: Cliente X ligou, caixa com R$ 50 de troco..."></textarea>
+    <!-- Observação / recado -->
+    <div class="no-print" style="margin-top:14px">
+      <div class="mfield" style="margin-bottom:0">
+        <label><i class="fa fa-comment" style="color:#9ca3af;margin-right:4px"></i>Recado para próxima recepcionista</label>
+        <textarea id="fechObs" rows="2" style="width:100%;padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;resize:none" placeholder="Ex: Caixa com R$ 80 de troco, cliente X vai ligar..."></textarea>
+      </div>
     </div>
   </div>
-  <div class="modal-footer" style="justify-content:space-between">
-    <span style="font-size:12px;color:#9ca3af" id="turnoUltimoFech"></span>
-    <div style="display:flex;gap:10px">
-      <button class="btn-cancel" onclick="fecharTurno()">Cancelar</button>
-      <button class="btn-yellow" onclick="irParaFluxo()"><i class="fa fa-arrow-right"></i> Ir para Fluxo de Caixa</button>
-      <button class="btn-green" onclick="salvarFechamentoTurno()"><i class="fa fa-check"></i> Confirmar Fechamento</button>
+  <div class="modal-footer no-print" style="justify-content:space-between">
+    <span style="font-size:12px;color:#9ca3af" id="fechContagem">0 lançamentos</span>
+    <div style="display:flex;gap:8px">
+      <button class="btn-ghost" onclick="fecharFechamento()">Cancelar</button>
+      <button class="btn-ghost" onclick="window.print()"><i class="fa fa-print"></i> Imprimir</button>
+      <button style="background:#25D366;color:#fff" onclick="enviarWhatsApp()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+      <button class="btn-green" onclick="salvarFechamento()"><i class="fa fa-check"></i> Confirmar Fechamento</button>
     </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL REPOSIÇÃO -->
+<div class="modal" id="modalRepo">
+<div class="modal-content sm">
+  <div class="modal-header"><h2><i class="fa fa-cash-register"></i> Caixa — Ajuste</h2><button class="btn-fechar" onclick="fecharRepo()"><i class="fa fa-times"></i></button></div>
+  <div class="modal-body">
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:#16a34a;font-weight:600">Saldo atual em caixa</span>
+      <span style="font-size:22px;font-weight:900;color:#16a34a" id="repoSaldoAtual">R$ 0,00</span>
+    </div>
+    <div class="grid-2">
+      <div class="mfield"><label>Tipo</label><select id="repoTipo"><option value="entrada">+ Entrada (reposição)</option><option value="saida">- Saída (retirada)</option><option value="ajuste">= Ajuste manual</option></select></div>
+      <div class="mfield"><label>Valor (R$)</label><input type="number" id="repoValor" step="0.01" placeholder="0,00"></div>
+      <div class="mfield span2"><label>Motivo</label><input id="repoMotivo" placeholder="Ex: Reposição de troco, Retirada para banco..."></div>
+    </div>
+    <div class="repo-hist" id="repoHist"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharRepo()">Cancelar</button>
+    <button class="btn-green" onclick="salvarRepo()"><i class="fa fa-check"></i> Confirmar</button>
   </div>
 </div>
 </div>
@@ -429,810 +399,411 @@ tr:hover td{background:#f9fafb;}
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
-<script src="assets/sidebar/sidebar.js" defer></script>
+<script src="assets/sidebar/sidebar.js"></script>
 <script>
+let dados=[],listaFilt=[],dadosServicos=[],servicosMap={},formasPgto=[];
+let editandoId=null,ssCliente,opsMap={},tersMap={};
+let atendimentosDoDia=[];
+const FC_PAGE_SIZE=50;
+let fcPagina=1,fcTotal=0;
+const fmtM=v=>Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const fmtD=v=>{if(!v)return"—";const[y,m,d]=v.split("-");return`${d}/${m}/${y}`;};
+const fmtH=v=>v?v.substring(0,5):"";
+const norm=s=>(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+function hoje(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().split("T")[0];}
+function getUser(cb,n=20){if(window.usuarioLogado)return cb(window.usuarioLogado);if(n<=0)return cb(null);setTimeout(()=>getUser(cb,n-1),100);}
 
-/* ══════════════════════════════════════════
-   CORES POR GRUPO — carregadas do Supabase (parametros.cor)
-══════════════════════════════════════════ */
-let gruposCorMap = {}; // grupo -> hex  (preenchido em carregarDados)
-
-function renderLegenda(){
-  const bar = document.getElementById("legendaBar");
-  if(!bar) return;
-  // Grupos com cor cadastrada, ordenados alfabeticamente
-  const grupos = Object.keys(gruposCorMap).sort();
-  let html = '<span class="legenda-titulo">Serviços:</span>';
-  if(grupos.length){
-    grupos.forEach(g=>{
-      const cor = gruposCorMap[g];
-      html += `<div class="leg"><div class="leg-dot" style="background:${cor}"></div>${g}</div>`;
-    });
-  } else {
-    html += '<span style="font-size:11px;color:#9ca3af">Configure as cores em Serviços → Cores dos Grupos</span>';
-  }
-  html += `<div class="leg-sep"></div>
-    <span class="legenda-titulo">Status:</span>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#22c55e"></div>Confirmado</div>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#f59e0b"></div>Agendado</div>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#8E2440"></div>Não confirmou</div>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#9ca3af"></div>Cancelado</div>
-    <div class="leg-status"><div class="leg-status-dot" style="background:#a855f7"></div>Faturado</div>`;
-  bar.innerHTML = html;
-}
-
-function corTexto(hex){
-  if(!hex) return "#374151";
-  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  return (0.299*r+0.587*g+0.114*b)>150?"#1f2937":"#fff";
-}
-
-const STATUS_DOT = {
-  "Agendado":       "#f59e0b",
-  "Nao Confirmado": "#8E2440",
-  "Confirmado":     "#22c55e",
-  "Faturado":       "#a855f7",
-  "Cancelado":      "#9ca3af",
-};
-
-const BADGE_CSS = {
-  "Agendado":       "background:#fef3c7;color:#92400e",
-  "Nao Confirmado": "background:#ffe4ec;color:#8E2440",
-  "Confirmado":     "background:#dcfce7;color:#166534",
-  "Faturado":       "background:#f3e8ff;color:#6b21a8",
-  "Cancelado":      "background:#f3f4f6;color:#6b7280",
-};
-
-function corServico(s) {
-  if (!s) return { bg:"#e5e7eb", txt:"#374151" };
-  // Busca cor do grupo no mapa carregado do Supabase
-  const hex = gruposCorMap[s.grupo] || null;
-  if (hex) return { bg: hex, txt: corTexto(hex) };
-  return { bg:"#e2e8f0", txt:"#374151" };
-}
-
-/* ══════════════════════════════════════════
-   CONSTANTES E ESTADO
-══════════════════════════════════════════ */
-const HORA_INI=9, HORA_FIM=23, SLOT_H=30, ALT_SLOT=28;
-const DIAS_PT=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
-const MESES_PT=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-
-let dados=[], servicosMap={}, terapeutasMap={}, dadosProd=[], dadosServicos=[], dadosTers=[];
-let formasPgto=[], editandoId=null, confirmandoId=null;
-let viewAtual="semana", dataBase=new Date();
-let ssAg;
-
-const fmtM = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const fmtD = v => { if(!v)return"—"; const[y,m,d]=v.split("-"); return`${d}/${m}/${y}`; };
-const fmtH = v => v ? v.substring(0,5) : "";
-const hoje = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().split("T")[0]; };
-const norm = s => (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-const nomeS = s => s ? [s.grupo, s.subgrupo, s.tempo?s.tempo+" min":""].filter(Boolean).join(" ") : "—";
-const nomeC = c => { if(!c)return"—"; const t=(c.telefone_1||"").replace(/\D/g,""); const l4=t.length>=4?t.slice(-4):""; return l4?`${c.nome} ${l4}`:c.nome; };
-const h2m = h => { if(!h)return 0; const[hh,mm]=h.split(":"); return+hh*60+ +mm; };
-const isFour = sid => { const s=servicosMap[sid]; return s&&(s.grupo||"").toLowerCase().includes("four"); };
-
-function getUser(cb,n=20){ if(window.usuarioLogado)return cb(window.usuarioLogado); if(n<=0)return cb(null); setTimeout(()=>getUser(cb,n-1),100); }
-function eTerapeuta(u){ return u&&u.role==="usuario"; }
-function podeEditar(u){ return u&&(u.role==="admin"||u.role==="apoio"); }
-
-/* ══════ SMART SEARCH ══════ */
-function mkSS({si,hi,drop,clr,onNovo}){
-  let deb=null;
-  const close=()=>drop.classList.remove("open");
-  const open=rs=>{
-    drop.innerHTML="";
-    if(!rs.length) drop.innerHTML='<div style="padding:10px;color:#9ca3af;font-size:12px;text-align:center">Nenhum cliente</div>';
-    else rs.forEach(c=>{
-      const t=(c.telefone_1||"").replace(/\D/g,""),l4=t.length>=4?t.slice(-4):t;
-      const el=document.createElement("div");el.className="ss-option";
-      el.innerHTML=`<span class="ss-name">${c.nome}</span>${l4?`<span class="ss-meta">${l4}</span>`:""}`;
-      el.addEventListener("mousedown",e=>{e.preventDefault();pick(c);});
-      drop.appendChild(el);
-    });
-    if(onNovo){
-      const el=document.createElement("div");el.className="ss-novo";
-      el.innerHTML='<i class="fa fa-user-plus"></i> Cadastrar novo cliente';
-      el.addEventListener("mousedown",e=>{e.preventDefault();onNovo(si.value);});
-      drop.appendChild(el);
-    }
-    drop.classList.add("open");
-  };
-  const pick=c=>{
-    const t=(c.telefone_1||"").replace(/\D/g,""),l4=t.length>=4?t.slice(-4):"";
-    si.value=l4?`${c.nome}  ${l4}`:c.nome; hi.value=c.id;
-    clr.classList.add("visible"); close();
-  };
-  const clear=()=>{si.value="";hi.value="";clr.classList.remove("visible");close();};
-  async function buscar(q){
-    const tok=q.split(/\s+/).filter(Boolean),tN=tok.filter(t=>/\D/.test(t)),tT=tok.filter(t=>/^\d+$/.test(t));
-    let qb=client.from("clientes").select("id,nome,telefone_1");
-    tN.forEach(t=>qb=qb.ilike("nome",`%${t}%`));
-    tT.forEach(t=>qb=qb.ilike("telefone_1",`%${t}%`));
-    const{data}=await qb.order("nome").limit(30); return data||[];
-  }
-  si.addEventListener("input",()=>{
-    const v=si.value.trim();clr.classList.toggle("visible",v.length>0);hi.value="";
-    clearTimeout(deb);if(!v){close();return;}
-    drop.innerHTML='<div style="padding:10px;color:#9ca3af;font-size:12px;text-align:center">Buscando…</div>';
-    drop.classList.add("open");
-    deb=setTimeout(async()=>open(await buscar(norm(v))),280);
-  });
-  si.addEventListener("blur",()=>setTimeout(close,150));
-  clr.addEventListener("click",clear);
-  document.addEventListener("click",e=>{if(!si.closest(".smart-search-wrap").contains(e.target))close();});
-  return{setValue(c){if(!c){clear();return;}pick(c);},clearSelection:clear};
-}
-
-/* ══════ CARGA DE DADOS ══════ */
-async function carregarDados(){
-  const{data:servs}=await client.from("servicos").select("*").eq("status","ativo").order("grupo");
-  dadosServicos=servs||[]; dadosServicos.forEach(s=>servicosMap[s.id]=s);
-  const selS=document.getElementById("agServ");
-  dadosServicos.forEach(s=>selS.innerHTML+=`<option value="${s.id}">${nomeS(s)}</option>`);
-
-  const{data:ters}=await client.from("terapeutas").select("cpf,nome_profissional,cargo").eq("status","Ativo").in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]).order("nome_profissional");
-  dadosTers=ters||[]; dadosTers.forEach(t=>{
-    terapeutasMap[t.cpf]=t;
-    ["agTer1","agTer2","filtroTer"].forEach(id=>document.getElementById(id).innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`);
-  });
-
-  const{data:prods}=await client.from("produtos").select("id,nome").order("nome");
-  dadosProd=prods||[];
-
-  const{data:params}=await client.from("parametros").select("tipo,valor,cor").in("tipo",["origens_lead","formas_pagamento","grupos_servico"]).eq("ativo",true).order("valor");
-  const origens=(params||[]).filter(p=>p.tipo==="origens_lead").map(p=>p.valor);
-  formasPgto=(params||[]).filter(p=>p.tipo==="formas_pagamento").map(p=>p.valor);
-  // Mapa grupo -> cor para o calendário
-  gruposCorMap={};
-  (params||[]).filter(p=>p.tipo==="grupos_servico"&&p.cor).forEach(p=>{gruposCorMap[p.valor]=p.cor;});
-  renderLegenda();
-  if(!origens.length) origens.push("Instagram","Google","Indicação","WhatsApp","Outro");
-  if(!formasPgto.length) formasPgto.push("Dinheiro","PIX","Cartão Débito","Cartão Crédito");
-  origens.forEach(o=>document.getElementById("agOrigem").innerHTML+=`<option>${o}</option>`);
-  formasPgto.forEach(f=>document.getElementById("pgtoForma").innerHTML+=`<option>${f}</option>`);
-
-  ssAg=mkSS({si:document.getElementById("agCliSrc"),hi:document.getElementById("agCli"),drop:document.getElementById("agCliDrop"),clr:document.getElementById("agCliClr"),onNovo:n=>abrirNC(n)});
-}
-
-async function carregar(){
-  getUser(async u=>{
-    let q=client.from("atendimentos")
-      .select(`*,clientes(id,nome,telefone_1),servicos(id,grupo,subgrupo,tempo,valor,comissao),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(cpf,nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(cpf,nome_profissional)`)
-      .order("data").order("hora_inicio");
-    if(eTerapeuta(u)&&u.cpf) q=q.or(`terapeuta1_cpf.eq.${u.cpf},terapeuta2_cpf.eq.${u.cpf}`);
-    const{data,error}=await q;
-    if(error){console.error(error);return;}
-    dados=data||[];
-    renderAtual();
-  });
-}
-
-/* ══════ VISÃO ══════ */
-function renderAtual(){
-  atualizarLabel();
-  renderResumo();
-  if(viewAtual==="lista") renderLista();
-  else renderCal();
-}
-
-/* ══════ RESUMO DO DIA ══════ */
-function renderResumo(){
-  const filtroTer=document.getElementById("filtroTer").value;
-  const dias=diasParaRender();
-  const datas=new Set(dias.map(d=>isoDate(d)));
-  const doPeriodo=dados.filter(r=>datas.has(r.data)&&(!filtroTer||r.terapeuta1_cpf===filtroTer||r.terapeuta2_cpf===filtroTer));
-  const conta=s=>doPeriodo.filter(r=>r.status===s).length;
-  document.getElementById("rsAgendado").textContent=conta("Agendado");
-  document.getElementById("rsConfirmado").textContent=conta("Confirmado");
-  document.getElementById("rsNaoConf").textContent=conta("Nao Confirmado");
-  document.getElementById("rsCancelado").textContent=conta("Cancelado");
-  document.getElementById("rsFaturado").textContent=conta("Faturado");
-  // Label do período exibido nos cards
-  let periodoLabel="";
-  if(viewAtual==="lista") periodoLabel="";
-  else if(dias.length===1) periodoLabel=fmtDiaCurto(dias[0]);
-  else periodoLabel=fmtDiaCurto(dias[0])+" – "+fmtDiaCurto(dias[dias.length-1]);
-  ["rsPeriodo1","rsPeriodo2","rsPeriodo3","rsPeriodo4","rsPeriodo5"].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.textContent=periodoLabel;
-  });
-}
-
-function fmtDiaCurto(d){
-  return d.getDate()+"/"+String(d.getMonth()+1).padStart(2,"0");
-}
-
-function diasParaRender(){
-  if(viewAtual==="dia") return [new Date(dataBase)];
-  const ini=new Date(dataBase);
-  ini.setDate(ini.getDate()-ini.getDay()); // domingo
-  return Array.from({length:7},(_,i)=>{const d=new Date(ini);d.setDate(d.getDate()+i);return d;});
-}
-
-function atualizarLabel(){
-  const el=document.getElementById("dataLabel");
-  if(viewAtual==="dia"){
-    const d=dataBase;
-    el.textContent=`${DIAS_PT[d.getDay()]}, ${d.getDate()} de ${MESES_PT[d.getMonth()]} de ${d.getFullYear()}`;
-  } else if(viewAtual==="semana"){
-    const dias=diasParaRender();
-    const ini=dias[0],fim=dias[6];
-    el.textContent=`${ini.getDate()} ${MESES_PT[ini.getMonth()]} – ${fim.getDate()} ${MESES_PT[fim.getMonth()]} ${fim.getFullYear()}`;
-  } else {
-    el.textContent="";
-  }
-}
-
-function navegar(dir){
-  if(viewAtual==="dia") dataBase.setDate(dataBase.getDate()+dir);
-  else dataBase.setDate(dataBase.getDate()+dir*7);
-  renderAtual();
-}
-function irHoje(){ dataBase=new Date(); dataBase.setHours(0,0,0,0); renderAtual(); }
-
-function mudarView(v){
-  viewAtual=v;
-  ["dia","semana","lista"].forEach(n=>document.getElementById("tab"+n.charAt(0).toUpperCase()+n.slice(1)).classList.toggle("active",n===v));
-  document.getElementById("viewCal").style.display=v!=="lista"?"":"none";
-  document.getElementById("viewLista").style.display=v==="lista"?"":"none";
-  document.getElementById("navData").style.display=v!=="lista"?"flex":"none";
-  document.getElementById("filtroStatusWrap").style.display=v==="lista"?"flex":"none";
-  renderAtual();
-}
-
-/* ══════ CALENDÁRIO ══════ */
-function renderCal(){
-  const wrap=document.getElementById("viewCal");
-  const dias=diasParaRender();
-  const filtroTer=document.getElementById("filtroTer").value;
-  const hojeStr=hoje();
-  const totalSlots=(HORA_FIM-HORA_INI)*2;
-  const nCols=dias.length;
-
-  /* cabeçalho */
-  let html=`<div style="display:grid;grid-template-columns:52px repeat(${nCols},1fr);min-width:${nCols===1?320:620}px;position:sticky;top:0;z-index:3;background:#fff;">`;
-  html+=`<div class="cal-corner"></div>`;
-  dias.forEach(d=>{
-    const dStr=isoDate(d);
-    const isH=dStr===hojeStr;
-    html+=`<div class="cal-day-hdr${isH?" hoje":""}"><div class="ds">${DIAS_PT[d.getDay()]}</div><div class="dn">${d.getDate()}</div></div>`;
-  });
-  html+=`</div>`;
-
-  /* corpo */
-  html+=`<div style="display:grid;grid-template-columns:52px repeat(${nCols},1fr);min-width:${nCols===1?320:620}px">`;
-
-  /* coluna de horas */
-  html+=`<div>`;
-  for(let s=0;s<totalSlots;s++){
-    const minT=HORA_INI*60+s*30,hh=Math.floor(minT/60),mm=minT%60;
-    html+=`<div class="time-cell" style="height:${ALT_SLOT}px">${mm===0?String(hh).padStart(2,"0")+":00":""}</div>`;
-  }
-  html+=`</div>`;
-
-  /* colunas de dia */
-  dias.forEach(d=>{
-    const dStr=isoDate(d);
-    const isH=dStr===hojeStr;
-    html+=`<div class="day-col${isH?" hoje-col":""}">`;
-
-    /* slots clicáveis */
-    for(let s=0;s<totalSlots;s++){
-      const minT=HORA_INI*60+s*30,hh=String(Math.floor(minT/60)).padStart(2,"0"),mm=minT%60===0?"00":"30";
-      html+=`<div class="${minT%60===0?"slot-line hora-cheia":"slot-line"}" style="height:${ALT_SLOT}px" onclick="abrirNovoSlot('${dStr}','${hh}:${mm}')"></div>`;
-    }
-
-    /* linha do agora */
-    if(isH){
-      const agora=new Date(),mAgora=agora.getHours()*60+agora.getMinutes();
-      if(mAgora>=HORA_INI*60&&mAgora<=HORA_FIM*60){
-        const topPx=((mAgora-HORA_INI*60)/30)*ALT_SLOT;
-        html+=`<div class="linha-agora" style="top:${topPx}px"></div>`;
-      }
-    }
-
-    /* cards */
-    const cardsDia=dados.filter(r=>r.data===dStr&&(!filtroTer||r.terapeuta1_cpf===filtroTer||r.terapeuta2_cpf===filtroTer));
-    /* empacotamento de sobreposição */
-    const comMins=cardsDia.map(r=>({...r,mI:h2m(r.hora_inicio),mF:r.hora_fim?h2m(r.hora_fim):h2m(r.hora_inicio)+60}));
-    comMins.forEach(r=>{r._col=0;comMins.forEach(o=>{if(o===r)return;if(o.mI<r.mF&&o.mF>r.mI&&o._col===r._col)r._col++;});});
-    comMins.forEach(r=>{r._tot=1;comMins.forEach(o=>{if(o===r)return;if(o.mI<r.mF&&o.mF>r.mI)r._tot=Math.max(r._tot,r._col+1,o._col+1);});});
-
-    comMins.forEach(r=>{
-      const topPx=((r.mI-HORA_INI*60)/30)*ALT_SLOT;
-      const hPx=Math.max(((r.mF-r.mI)/30)*ALT_SLOT-2,ALT_SLOT);
-      const pct=100/r._tot, left=r._col*pct;
-      const cor=corServico(r.servicos);
-      const dot=STATUS_DOT[r.status]||"#9ca3af";
-      const ter=[r.ter1?.nome_profissional,r.ter2?.nome_profissional].filter(Boolean).join("+");
-      html+=`<div class="ag-card" onclick="abrirDet('${r.id}');event.stopPropagation()"
-        style="top:${topPx}px;height:${hPx}px;left:calc(${left}% + 2px);width:calc(${pct}% - 5px);background:${cor.bg};color:${cor.txt};border-left:3px solid rgba(0,0,0,.18)">
-        <div class="ag-status-dot" style="background:${dot}"></div>
-        <div class="ag-hora">${fmtH(r.hora_inicio)}${r.hora_fim?"–"+fmtH(r.hora_fim):""}</div>
-        <div class="ag-nome">${nomeC(r.clientes)}</div>
-        <div class="ag-serv">${nomeS(r.servicos)}</div>
-        ${ter?`<div class="ag-serv" style="opacity:.75">${ter}</div>`:""}
-      </div>`;
-    });
-
-    html+=`</div>`;
-  });
-  html+=`</div>`;
-  wrap.innerHTML=html;
-}
-
-function isoDate(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
-
-/* ══════ LISTA ══════ */
-function renderLista(){
-  const fT=document.getElementById("filtroTer").value;
-  const fS=document.getElementById("filtroStatus").value;
-  const lista=dados.filter(r=>(!fT||r.terapeuta1_cpf===fT||r.terapeuta2_cpf===fT)&&(!fS||r.status===fS));
-  const tbody=document.getElementById("listaBody");
-  tbody.innerHTML="";
-  if(!lista.length){tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:32px">Nenhum atendimento.</td></tr>`;return;}
-  const u=window.usuarioLogado;
-  lista.forEach(r=>{
-    const cor=corServico(r.servicos);
-    const css=BADGE_CSS[r.status]||"background:#f3f4f6;color:#6b7280";
-    const ter=[r.ter1?.nome_profissional,r.ter2?.nome_profissional].filter(Boolean).join(" + ");
-    const dot=`<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${STATUS_DOT[r.status]||"#9ca3af"};margin-right:5px;vertical-align:middle"></span>`;
-    const servChip=`<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:${cor.bg};flex-shrink:0;display:inline-block"></span>${nomeS(r.servicos)}</span>`;
-    const btnDel=podeEditar(u)?`<button class="btn-red" style="padding:5px 9px;font-size:12px" onclick="excluir('${r.id}')"><i class="fa fa-trash"></i></button>`:"";
-    tbody.innerHTML+=`<tr>
-      <td>${fmtD(r.data)} ${fmtH(r.hora_inicio)}</td>
-      <td>${nomeC(r.clientes)}</td>
-      <td>${servChip}</td>
-      <td>${ter||"—"}</td>
-      <td><span style="display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;${css}">${dot}${r.status==="Nao Confirmado"?"Não confirmou":r.status}</span></td>
-      <td>${r.valor_final?fmtM(r.valor_final):"—"}</td>
-      <td style="display:flex;gap:6px">
-        <button class="btn-yellow" style="padding:5px 9px;font-size:12px" onclick="abrirDet('${r.id}')"><i class="fa fa-eye"></i></button>
-        ${btnDel}
-      </td>
-    </tr>`;
-  });
-}
-
-/* ══════ MODAL AGENDAMENTO ══════ */
-function resetAg(){
-  ["agData","agHoraIni","agHoraFim","agObs"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
-  ["agServ","agOrigem","agTer1","agTer2"].forEach(id=>document.getElementById(id).value="");
-  document.getElementById("agStatus").value="Agendado";
-  document.getElementById("agData").value=hoje();
-  document.getElementById("agHoraIni").value="09:00";
-  document.getElementById("agHoraFim").value="10:00";
-  document.getElementById("campoTer2").style.display="none";
-  document.getElementById("comWrap").style.display="none";
-  document.getElementById("agEst").innerHTML="";
-  ssAg?.clearSelection();
-}
-
-function abrirNovo(){
-  editandoId=null; resetAg();
-  getUser(u=>{
-    const sel=document.getElementById("agTer1");
-    if(eTerapeuta(u)&&u.cpf){sel.value=u.cpf;sel.disabled=true;}
-    else sel.disabled=false;
-    calcCom();
-  });
-  document.getElementById("agTitulo").textContent="Novo Agendamento";
-  document.getElementById("modalAg").style.display="flex";
-}
-
-function abrirNovoSlot(data,hora){
-  abrirNovo();
-  document.getElementById("agData").value=data;
-  document.getElementById("agHoraIni").value=hora;
-  autoFim();
-}
-function fecharAg(){ document.getElementById("modalAg").style.display="none"; }
-
-function autoFim(){
-  const ini=document.getElementById("agHoraIni").value;
-  const sid=document.getElementById("agServ").value;
-  const dur=servicosMap[sid]?.tempo?parseInt(servicosMap[sid].tempo):60;
-  if(!ini)return;
-  const[hh,mm]=ini.split(":").map(Number);
-  const f=hh*60+mm+dur;
-  document.getElementById("agHoraFim").value=`${String(Math.floor(f/60)).padStart(2,"0")}:${String(f%60).padStart(2,"0")}`;
-}
-
-function aoMudarServ(){
-  const s=servicosMap[document.getElementById("agServ").value];
-  document.getElementById("campoTer2").style.display=s&&(s.grupo||"").toLowerCase().includes("four")?"":"none";
-  autoFim(); calcCom();
-}
-
-function calcCom(){
-  const s=servicosMap[document.getElementById("agServ").value];
-  if(!s||!s.comissao){document.getElementById("comWrap").style.display="none";return;}
-  const f=(s.grupo||"").toLowerCase().includes("four");
-  const t1=terapeutasMap[document.getElementById("agTer1").value]?.nome_profissional||"";
-  const t2=f?terapeutasMap[document.getElementById("agTer2").value]?.nome_profissional||"":"";
-  const box=document.getElementById("comBox"); box.className="com-box"+(f?" four":" normal");
-  if(f&&t1&&t2) box.innerHTML=`<i class="fa fa-handshake"></i> ${fmtM(s.comissao)} p/ <b>${t1}</b> + ${fmtM(s.comissao)} p/ <b>${t2}</b>`;
-  else if(!f&&t1) box.innerHTML=`<i class="fa fa-handshake"></i> Comissão: <b>${fmtM(s.comissao)}</b> para <b>${t1}</b>`;
-  else{document.getElementById("comWrap").style.display="none";return;}
-  document.getElementById("comWrap").style.display="block";
-}
-
-async function salvarAg(){
-  const cliId=document.getElementById("agCli").value;
-  const servId=document.getElementById("agServ").value;
-  const dataV=document.getElementById("agData").value;
-  const ter1=document.getElementById("agTer1").value;
-  if(!cliId){alert("Selecione um cliente.");return;}
-  if(!servId){alert("Selecione um serviço.");return;}
-  if(!dataV){alert("Informe a data.");return;}
-  if(!ter1){alert("Selecione a terapeuta.");return;}
-  const f=isFour(servId);
-  const ter2=f?document.getElementById("agTer2").value:"";
-  if(f&&!ter2){alert("Selecione a 2ª terapeuta.");return;}
-  const s=servicosMap[servId];
-  const payload={
-    data:dataV, hora_inicio:document.getElementById("agHoraIni").value||null,
-    hora_fim:document.getElementById("agHoraFim").value||null,
-    status:document.getElementById("agStatus").value||"Agendado",
-    cliente_id:cliId, servico_id:servId,
-    terapeuta1_cpf:ter1, terapeuta2_cpf:ter2||null,
-    origem_lead:document.getElementById("agOrigem").value||null,
-    observacao:document.getElementById("agObs").value.trim()||null,
-    valor:s?.valor||0, desconto:0, valor_final:s?.valor||0,
-    comissao_total:f?(s?.comissao||0)*2:(s?.comissao||0)
-  };
-  let aid=editandoId, error;
-  if(editandoId){({error}=await client.from("atendimentos").update(payload).eq("id",editandoId));}
-  else{const{data:novo,error:e}=await client.from("atendimentos").insert(payload).select().single();error=e;if(novo)aid=novo.id;}
-  if(error){alert("Erro: "+error.message);return;}
-  const itens=getEst("agEst");
-  if(itens.length&&aid){
-    await client.from("atendimento_estoque").delete().eq("atendimento_id",aid);
-    await client.from("atendimento_estoque").insert(itens.map(i=>({...i,atendimento_id:aid})));
-  }
-  fecharAg(); carregar();
-}
-
-/* ══════ MODAL DETALHES ══════ */
-function abrirDet(id){
-  const u=window.usuarioLogado;
-  const r=dados.find(d=>d.id===id); if(!r)return;
-  const ter=[r.ter1?.nome_profissional,r.ter2?.nome_profissional].filter(Boolean).join(" + ");
-  const cor=corServico(r.servicos);
-  const css=BADGE_CSS[r.status]||"background:#f3f4f6;color:#6b7280";
-  const statusLabel=r.status==="Nao Confirmado"?"Não confirmou":r.status;
-  document.getElementById("detTit").textContent=nomeC(r.clientes);
-  document.getElementById("detInfo").innerHTML=`
-    <b>Data:</b> ${fmtD(r.data)} ${fmtH(r.hora_inicio)?`às ${fmtH(r.hora_inicio)}`:""} ${r.hora_fim?"– "+fmtH(r.hora_fim):""}<br>
-    <b>Serviço:</b> <span style="display:inline-flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:${cor.bg};display:inline-block"></span>${nomeS(r.servicos)}</span><br>
-    <b>Terapeuta(s):</b> ${ter||"—"}<br>
-    <b>Origem:</b> ${r.origem_lead||"—"}<br>
-    <b>Status:</b> <span style="display:inline-flex;align-items:center;padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700;${css}"><span style="width:7px;height:7px;border-radius:50%;background:${STATUS_DOT[r.status]||"#9ca3af"};margin-right:5px;display:inline-block"></span>${statusLabel}</span><br>
-    ${r.valor_final?`<b>Valor Final:</b> ${fmtM(r.valor_final)}<br>`:""}
-    ${r.forma_pagamento?`<b>Pgto:</b> ${r.forma_pagamento}<br>`:""}
-    ${r.observacao?`<b>Obs:</b> ${r.observacao}`:""}
-  `;
-  const btns=document.getElementById("detBtns"); btns.innerHTML="";
-  if(r.status==="Agendado"||r.status==="Nao Confirmado"){
-    mk(btns,"btn-green","fa-check Confirmar & Pagar",()=>{fecharDet();abrirPgto(id);});
-    mk(btns,"btn-yellow","fa-pencil Editar",()=>{fecharDet();abrirEditar(id);});
-    if(podeEditar(u)) mk(btns,"btn-red","fa-times Cancelar",async()=>{if(!confirm("Cancelar?"))return;await client.from("atendimentos").update({status:"Cancelado"}).eq("id",id);fecharDet();carregar();});
-  }
-  if(r.status==="Confirmado"){
-    mk(btns,"btn-yellow","fa-pencil Editar",()=>{fecharDet();abrirEditar(id);});
-    if(podeEditar(u)) mk(btns,"btn-ghost","fa-file-invoice Faturar",async()=>{if(!confirm("Marcar como Faturado?"))return;await client.from("atendimentos").update({status:"Faturado"}).eq("id",id);fecharDet();carregar();});
-  }
-  if(podeEditar(u)) mk(btns,"btn-ghost","fa-trash",async()=>{fecharDet();excluir(id);},true);
-  document.getElementById("modalDet").style.display="flex";
-}
-
-function mk(container,cls,iconLabel,fn,danger=false){
-  const b=document.createElement("button");
-  const[icon,...label]=iconLabel.split(" ");
-  b.className=cls;
-  b.innerHTML=`<i class="fa ${icon}"${danger?" style='color:#dc2626'":""}></i>${label.join(" ")}`;
-  b.onclick=fn; container.appendChild(b);
-}
-function fecharDet(){ document.getElementById("modalDet").style.display="none"; }
-
-async function abrirEditar(id){
-  editandoId=id; const r=dados.find(d=>d.id===id); if(!r)return;
-  resetAg();
-  document.getElementById("agTitulo").textContent="Editar Agendamento";
-  document.getElementById("modalAg").style.display="flex";
-  setTimeout(async()=>{
-    document.getElementById("agData").value=r.data||"";
-    document.getElementById("agHoraIni").value=fmtH(r.hora_inicio);
-    document.getElementById("agHoraFim").value=fmtH(r.hora_fim);
-    document.getElementById("agServ").value=r.servico_id||"";
-    document.getElementById("agOrigem").value=r.origem_lead||"";
-    document.getElementById("agStatus").value=r.status||"Agendado";
-    const selTer1=document.getElementById("agTer1");
-    selTer1.value=r.terapeuta1_cpf||"";
-    getUser(u=>{selTer1.disabled=eTerapeuta(u);});
-    document.getElementById("agObs").value=r.observacao||"";
-    document.getElementById("campoTer2").style.display=isFour(r.servico_id)?"":"none";
-    document.getElementById("agTer2").value=r.terapeuta2_cpf||"";
-    calcCom();
-    if(r.cliente_id){const{data:c}=await client.from("clientes").select("id,nome,telefone_1").eq("id",r.cliente_id).limit(1);ssAg?.setValue(c?.[0]||null);}
-    const{data:itens}=await client.from("atendimento_estoque").select("produto_id,quantidade").eq("atendimento_id",id);
-    document.getElementById("agEst").innerHTML="";
-    (itens||[]).forEach(item=>{addEst("agEst");const rows=document.getElementById("agEst").querySelectorAll(".est-row");const last=rows[rows.length-1];last.querySelector("select").value=item.produto_id;last.querySelector("input[type=number]").value=item.quantidade;});
-  },30);
-}
-
-/* ══════ MODAL PAGAMENTO ══════ */
-function abrirPgto(id){
-  confirmandoId=id; const r=dados.find(d=>d.id===id); if(!r)return;
-  const s=servicosMap[r.servico_id];
-  document.getElementById("pgtoInfo").innerHTML=`<b>${nomeC(r.clientes)}</b><br>${nomeS(r.servicos)}<br>${fmtD(r.data)} ${fmtH(r.hora_inicio)?`às ${fmtH(r.hora_inicio)}`:""}`; 
-  document.getElementById("pgtoVal").value=s?.valor||r.valor||0;
-  document.getElementById("pgtoDes").value=0; calcPgto();
-  document.getElementById("pgtoForma").value="";
-  document.getElementById("modalPgto").style.display="flex";
-}
-function fecharPgto(){ document.getElementById("modalPgto").style.display="none"; }
-function calcPgto(){ const v=parseFloat(document.getElementById("pgtoVal").value||0),d=parseFloat(document.getElementById("pgtoDes").value||0);document.getElementById("pgtoFin").value=(v-d).toFixed(2); }
-async function confirmar(){
-  const r=dados.find(d=>d.id===confirmandoId);
-  const s=r?servicosMap[r.servico_id]:null;
-  const f=s&&(s.grupo||"").toLowerCase().includes("four");
-  const v=parseFloat(document.getElementById("pgtoVal").value||0);
-  const d=parseFloat(document.getElementById("pgtoDes").value||0);
-  const{error}=await client.from("atendimentos").update({
-    status:"Confirmado",valor:v,desconto:d,valor_final:v-d,
-    comissao_total:f?(s?.comissao||0)*2:(s?.comissao||0),
-    forma_pagamento:document.getElementById("pgtoForma").value||null
-  }).eq("id",confirmandoId);
-  if(error){alert("Erro: "+error.message);return;}
-  fecharPgto(); carregar();
-}
-
-/* ══════ ESTOQUE ══════ */
-function addEst(cid){
-  const c=document.getElementById(cid),row=document.createElement("div");row.className="est-row";
-  const sel=document.createElement("select");sel.innerHTML="<option value=''>Selecionar produto</option>";
-  dadosProd.forEach(p=>sel.innerHTML+=`<option value="${p.id}">${p.nome}</option>`);
-  const qty=document.createElement("input");qty.type="number";qty.min="1";qty.value="1";
-  const btn=document.createElement("button");btn.className="btn-rem";btn.innerHTML='<i class="fa fa-times"></i>';btn.onclick=()=>c.removeChild(row);
-  row.appendChild(sel);row.appendChild(qty);row.appendChild(btn);c.appendChild(row);
-}
-function getEst(cid){
-  return Array.from(document.getElementById(cid).querySelectorAll(".est-row")).map(row=>{
-    const sel=row.querySelector("select"),qty=row.querySelector("input[type=number]");
-    return sel.value?{produto_id:sel.value,quantidade:+qty.value||1}:null;
-  }).filter(Boolean);
-}
-
-/* ══════ NOVO CLIENTE ══════ */
-function abrirNC(nome){document.getElementById("ncNome").value=nome||"";document.getElementById("ncTel").value="";document.getElementById("ncEmail").value="";document.getElementById("modalNC").style.display="flex";}
-function fecharNC(){ document.getElementById("modalNC").style.display="none"; }
-async function salvarNC(){
-  const nome=document.getElementById("ncNome").value.trim(),tel=document.getElementById("ncTel").value.trim();
-  if(!nome){alert("Nome obrigatório.");return;}if(!tel){alert("Telefone obrigatório.");return;}
-  const{data:novo,error}=await client.from("clientes").insert({nome,telefone_1:tel,email:document.getElementById("ncEmail").value.trim()||null}).select().single();
-  if(error){alert("Erro: "+error.message);return;}fecharNC();ssAg?.setValue(novo);
-}
-
-/* ══════ FECHAR TURNO ══════ */
-let recepcionistasMap = {};
-
-async function carregarRecepcionistas(){
-  const{data}=await client.from("terapeutas")
-    .select("cpf,nome_profissional")
-    .eq("status","Ativo")
-    .in("cargo",["Atendente","Recepcionista","Gerente","Analista"])
-    .order("nome_profissional");
-  recepcionistasMap={};
-  const sel=document.getElementById("turnoOp");
-  sel.innerHTML='<option value="">Todas</option>';
-  (data||[]).forEach(r=>{
-    recepcionistasMap[r.cpf]=r.nome_profissional;
-    sel.innerHTML+=`<option value="${r.cpf}">${r.nome_profissional}</option>`;
-  });
-}
-
-async function abrirFecharTurno(){
-  await carregarRecepcionistas();
-  document.getElementById("turnoData").value=hoje();
-  document.getElementById("turnoHoraIni").value="";
-  document.getElementById("turnoHoraFim").value="";
-  document.getElementById("turnoObs").value="";
-  // pré-seleciona operador logado se for recepcionista
-  getUser(u=>{
-    if(u&&u.cpf&&recepcionistasMap[u.cpf])
-      document.getElementById("turnoOp").value=u.cpf;
-  });
-  await calcTurno();
-  document.getElementById("modalTurno").style.display="flex";
-}
-function fecharTurno(){ document.getElementById("modalTurno").style.display="none"; }
-
-function classifPgtoTurno(forma){
+function classifPgto(forma){
   if(!forma)return"outros";
   const f=forma.toLowerCase();
-  if(f.includes("dinheiro")||f.includes("espécie"))return"dinheiro";
+  if(f.includes("dinheiro")||f.includes("espécie")||f.includes("especie"))return"dinheiro";
   if(f.includes("débito")||f.includes("debito"))return"debito";
   if(f.includes("crédito")||f.includes("credito"))return"credito";
   if(f.includes("pix"))return"pix";
   return"outros";
 }
 
-const PGTO_ICONS={
-  dinheiro:{icon:"fa-money-bill-wave",color:"#16a34a",label:"Dinheiro"},
-  pix:{icon:"fa-qrcode",color:"#06b6d4",label:"PIX"},
-  debito:{icon:"fa-credit-card",color:"#2563eb",label:"Débito"},
-  credito:{icon:"fa-credit-card",color:"#7c3aed",label:"Crédito"},
-  outros:{icon:"fa-ellipsis-h",color:"#9ca3af",label:"Outros"},
-};
+function mkSS({si,hi,drop,clr,onNovo}){
+  let deb=null;
+  const close=()=>drop.classList.remove("open");
+  const open=rs=>{drop.innerHTML="";if(!rs.length)drop.innerHTML='<div style="padding:10px;color:#9ca3af;font-size:12px;text-align:center">Nenhum cliente</div>';else rs.forEach(c=>{const t=(c.telefone_1||"").replace(/\D/g,""),l4=t.length>=4?t.slice(-4):t;const el=document.createElement("div");el.className="ss-option";el.innerHTML=`<span class="ss-name">${c.nome}</span>${l4?`<span class="ss-meta">${l4}</span>`:""}`;el.addEventListener("mousedown",e=>{e.preventDefault();pick(c);});drop.appendChild(el);});if(onNovo){const el=document.createElement("div");el.className="ss-novo";el.innerHTML='<i class="fa fa-user-plus"></i> Cadastrar novo cliente';el.addEventListener("mousedown",e=>{e.preventDefault();onNovo(si.value);});drop.appendChild(el);}drop.classList.add("open");};
+  const pick=c=>{const t=(c.telefone_1||"").replace(/\D/g,""),l4=t.length>=4?t.slice(-4):"";si.value=l4?`${c.nome}  ${l4}`:c.nome;hi.value=c.id;clr.classList.add("visible");close();};
+  const clear=()=>{si.value="";hi.value="";clr.classList.remove("visible");close();};
+  async function buscar(q){const tok=q.split(/\s+/).filter(Boolean),tN=tok.filter(t=>/\D/.test(t)),tT=tok.filter(t=>/^\d+$/.test(t));let qb=client.from("clientes").select("id,nome,telefone_1");tN.forEach(t=>qb=qb.ilike("nome",`%${t}%`));tT.forEach(t=>qb=qb.ilike("telefone_1",`%${t}%`));const{data}=await qb.order("nome").limit(30);return data||[];}
+  si.addEventListener("input",()=>{const v=si.value.trim();clr.classList.toggle("visible",v.length>0);hi.value="";clearTimeout(deb);if(!v){close();return;}drop.innerHTML='<div style="padding:10px;color:#9ca3af;font-size:12px;text-align:center">Buscando…</div>';drop.classList.add("open");deb=setTimeout(async()=>open(await buscar(norm(v))),280);});
+  si.addEventListener("blur",()=>setTimeout(close,150));
+  clr.addEventListener("click",clear);
+  document.addEventListener("click",e=>{if(!si.closest(".smart-search-wrap").contains(e.target))close();});
+  return{setValue(c){if(!c){clear();return;}pick(c);},clearSelection:clear};
+}
 
-async function calcTurno(){
-  const dataFiltro=document.getElementById("turnoData").value;
-  // Usa os dados já carregados em memória (filtra por data)
-  const dodia=dados.filter(r=>r.data===dataFiltro&&(r.status==="Confirmado"||r.status==="Faturado"));
-  
-  // totais
-  const total=dodia.reduce((s,r)=>s+(r.valor_final||0),0);
-  document.getElementById("turnoQtd").textContent=dodia.length;
-  document.getElementById("turnoTotal").textContent=fmtM(total);
+async function carregarDados(){
+  const{data:servs}=await client.from("servicos").select("*").eq("status","ativo").order("grupo");
+  dadosServicos=servs||[];dadosServicos.forEach(s=>servicosMap[s.id]=s);
+  const{data:ops}=await client.from("terapeutas").select("cpf,nome_profissional").eq("status","Ativo").in("cargo",["Atendente","Recepcionista","Gerente","Analista"]).order("nome_profissional");
+  (ops||[]).forEach(o=>{opsMap[o.cpf]=o.nome_profissional;["lancOp","filtroOp","fechOp"].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML+=`<option value="${o.cpf}">${o.nome_profissional}</option>`;});});
+  const{data:ters}=await client.from("terapeutas").select("cpf,nome_profissional").eq("status","Ativo").in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]).order("nome_profissional");
+  (ters||[]).forEach(t=>{tersMap[t.cpf]=t.nome_profissional;["lancTer","filtroTer"].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML+=`<option value="${t.cpf}">${t.nome_profissional}</option>`;});});
+  const{data:params}=await client.from("parametros").select("valor").eq("tipo","formas_pagamento").eq("ativo",true).order("valor");
+  formasPgto=(params||[]).map(p=>p.valor);
+  if(!formasPgto.length)formasPgto=["Dinheiro","PIX","Cartão Débito","Cartão Crédito"];
+  ["p1Forma","p2Forma"].forEach(id=>{const el=document.getElementById(id);formasPgto.forEach(f=>el.innerHTML+=`<option>${f}</option>`);});
+  ssCliente=mkSS({si:document.getElementById("cliSrc"),hi:document.getElementById("cliId"),drop:document.getElementById("cliDrop"),clr:document.getElementById("cliClr"),onNovo:nome=>abrirNC(nome)});
+}
 
-  // breakdown por forma de pagamento — usa forma_pagamento do atendimento
-  const pgtoMap={};
-  dodia.forEach(r=>{
-    if(!r.forma_pagamento)return;
-    const k=classifPgtoTurno(r.forma_pagamento);
-    pgtoMap[k]=(pgtoMap[k]||0)+(r.valor_final||0);
+function addServ(){const c=document.getElementById("servItens");const row=document.createElement("div");row.className="serv-row";const sel=document.createElement("select");sel.innerHTML="<option value=''>Selecionar serviço</option>";dadosServicos.forEach(s=>sel.innerHTML+=`<option value="${s.id}">${[s.grupo,s.subgrupo,s.tempo?s.tempo+" min":""].filter(Boolean).join(" ")}</option>`);const lv=document.createElement("span");lv.className="lbl";lv.textContent="R$";const iv=document.createElement("input");iv.type="number";iv.placeholder="Valor";iv.step="0.01";iv.addEventListener("input",calcRes);const ld=document.createElement("span");ld.className="lbl";ld.textContent="Desc";const id2=document.createElement("input");id2.type="number";id2.placeholder="0";id2.step="0.01";id2.value="0";id2.addEventListener("input",calcRes);sel.addEventListener("change",()=>{const s=servicosMap[sel.value];if(s){iv.value=s.valor||0;id2.value=0;calcRes();}});const btn=document.createElement("button");btn.className="btn-rem-serv";btn.innerHTML='<i class="fa fa-times"></i>';btn.onclick=()=>{c.removeChild(row);calcRes();};[sel,lv,iv,ld,id2,btn].forEach(el=>row.appendChild(el));c.appendChild(row);}
+function getServicos(){return Array.from(document.getElementById("servItens").querySelectorAll(".serv-row")).map(row=>{const sel=row.querySelector("select");const nums=row.querySelectorAll("input[type=number]");if(!sel.value)return null;const s=servicosMap[sel.value];return{servico_id:sel.value,valor:parseFloat(nums[0].value||0),desconto:parseFloat(nums[1].value||0),comissao:s?.comissao||0};}).filter(Boolean);}
+function calcRes(){const servs=getServicos();const bruto=servs.reduce((s,x)=>s+x.valor,0);const descServs=servs.reduce((s,x)=>s+x.desconto,0);const descExtra=parseFloat(document.getElementById("lancDescExtra").value||0);const acrescimo=parseFloat(document.getElementById("lancAcres").value||0);const com=servs.reduce((s,x)=>s+x.comissao,0);const final=bruto-descServs-descExtra+acrescimo;document.getElementById("rBruto").textContent=fmtM(bruto);document.getElementById("rDesc").textContent=`- ${fmtM(descServs)}`;document.getElementById("rDescExtra").textContent=`- ${fmtM(descExtra)}`;document.getElementById("rAcres").textContent=`+ ${fmtM(acrescimo)}`;document.getElementById("rFinal").textContent=fmtM(final);document.getElementById("rCom").textContent=fmtM(com);calcTroco();}
+function calcTroco(){const finalStr=document.getElementById("rFinal").textContent;const final=parseFloat(finalStr.replace(/[^\d,]/g,"").replace(",","."))||0;const p1=parseFloat(document.getElementById("p1Val").value||0);const p2=parseFloat(document.getElementById("p2Val").value||0);const pago=p1+p2;const troco=pago-final;document.getElementById("tAPagar").textContent=fmtM(final);document.getElementById("tPago").textContent=fmtM(pago);document.getElementById("trocoVal").textContent=fmtM(Math.abs(troco));document.getElementById("trocoLabel").textContent=troco>=0?"Troco":"Falta";document.getElementById("trocoLinha").className="rl troco"+(troco<0?" neg":"");}
+
+function resetModal(){document.getElementById("lancData").value=hoje();document.getElementById("lancDescExtra").value="0";document.getElementById("lancAcres").value="0";document.getElementById("lancObs").value="";document.getElementById("lancTer").value="";document.getElementById("lancTrocoDestino").value="nenhum";["p1Forma","p1Val","p2Forma","p2Val"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});document.getElementById("servItens").innerHTML="";ssCliente?.clearSelection();calcRes();}
+function abrirNovo(){editandoId=null;resetModal();document.getElementById("lancTit").textContent="Novo Lançamento";getUser(u=>{const sel=document.getElementById("lancOp");if(u&&u.cpf&&opsMap[u.cpf]){sel.value=u.cpf;if(u.role==="usuario")sel.disabled=true;}else sel.disabled=false;});document.getElementById("modalLanc").style.display="flex";addServ();}
+async function abrirEditar(id){editandoId=id;const r=dados.find(d=>d.id===id);if(!r)return;resetModal();document.getElementById("lancTit").textContent="Editar Lançamento";document.getElementById("modalLanc").style.display="flex";setTimeout(async()=>{document.getElementById("lancData").value=r.data||"";document.getElementById("lancOp").value=r.operador_cpf||"";document.getElementById("lancTer").value=r.terapeuta_cpf||"";document.getElementById("lancDescExtra").value=r.desconto||0;document.getElementById("lancAcres").value=r.acrescimo||0;document.getElementById("lancObs").value=r.observacao||"";document.getElementById("lancTrocoDestino").value=r.troco_destino||"nenhum";document.getElementById("p1Forma").value=r.forma_pgto_1||"";document.getElementById("p1Val").value=r.valor_pgto_1||"";document.getElementById("p2Forma").value=r.forma_pgto_2||"";document.getElementById("p2Val").value=r.valor_pgto_2||"";if(r.cliente_id){const{data:c}=await client.from("clientes").select("id,nome,telefone_1").eq("id",r.cliente_id).limit(1);ssCliente?.setValue(c?.[0]||null);}const{data:servs}=await client.from("fluxo_caixa_servicos").select("*").eq("fluxo_id",id);document.getElementById("servItens").innerHTML="";(servs||[]).forEach(s=>{addServ();const rows=document.getElementById("servItens").querySelectorAll(".serv-row");const last=rows[rows.length-1];last.querySelector("select").value=s.servico_id;const nums=last.querySelectorAll("input[type=number]");nums[0].value=s.valor;nums[1].value=s.desconto;});calcRes();},30);}
+function fecharModal(){document.getElementById("modalLanc").style.display="none";document.getElementById("lancOp").disabled=false;}
+
+async function salvar(){
+  const cliId=document.getElementById("cliId").value;
+  const dataV=document.getElementById("lancData").value;
+  const servs=getServicos();
+  if(!cliId){alert("Selecione um cliente.");return;}
+  if(!dataV){alert("Informe a data.");return;}
+  if(!servs.length){alert("Adicione ao menos um serviço.");return;}
+  const bruto=servs.reduce((s,x)=>s+x.valor,0);
+  const descServs=servs.reduce((s,x)=>s+x.desconto,0);
+  const descExtra=parseFloat(document.getElementById("lancDescExtra").value||0);
+  const acrescimo=parseFloat(document.getElementById("lancAcres").value||0);
+  const com=servs.reduce((s,x)=>s+x.comissao,0);
+  const valorFinal=bruto-descServs-descExtra+acrescimo;
+  const p1=parseFloat(document.getElementById("p1Val").value||0);
+  const p2=parseFloat(document.getElementById("p2Val").value||0);
+  const valorPago=p1+p2;
+  const troco=valorPago-valorFinal;
+  const{data:cArr}=await client.from("clientes").select("nome,telefone_1").eq("id",cliId).limit(1);
+  const cli=cArr?.[0];
+  const tel=(cli?.telefone_1||"").replace(/\D/g,"");
+  const l4=tel.length>=4?tel.slice(-4):"";
+  const clienteNome=cli?`${cli.nome.split(" ")[0]}${l4?" "+l4:""}`:document.getElementById("cliSrc").value;
+  const payload={data:dataV,operador_cpf:document.getElementById("lancOp").value||null,terapeuta_cpf:document.getElementById("lancTer").value||null,cliente_id:cliId,cliente_nome:clienteNome,moeda:"BRL",cotacao:1,valor_bruto:bruto,desconto:descServs+descExtra,acrescimo,valor_final:valorFinal,valor_pago:valorPago,troco,comissao_total:com,forma_pgto_1:document.getElementById("p1Forma").value||null,valor_pgto_1:p1,forma_pgto_2:document.getElementById("p2Forma").value||null,valor_pgto_2:p2,troco_destino:document.getElementById("lancTrocoDestino").value||"troco",observacao:document.getElementById("lancObs").value.trim()||null};
+  let lancId=editandoId,error;
+  if(editandoId){({error}=await client.from("fluxo_caixa").update(payload).eq("id",editandoId));if(!error)await client.from("fluxo_caixa_servicos").delete().eq("fluxo_id",editandoId);}
+  else{const{data:novo,error:e}=await client.from("fluxo_caixa").insert(payload).select().single();error=e;if(novo)lancId=novo.id;}
+  if(error){alert("Erro: "+error.message);return;}
+  if(servs.length&&lancId)await client.from("fluxo_caixa_servicos").insert(servs.map(s=>({fluxo_id:lancId,servico_id:s.servico_id,valor:s.valor,desconto:s.desconto,comissao:s.comissao})));
+  fecharModal();carregar();
+}
+
+async function carregar(){
+  const ini=document.getElementById("filtroIni").value;
+  const fim=document.getElementById("filtroFim").value;
+  const op=document.getElementById("filtroOp").value;
+  const ter=document.getElementById("filtroTer").value;
+  let q=client.from("fluxo_caixa").select("*",{count:"exact"}).order("data",{ascending:false}).order("created_at",{ascending:false}).range((fcPagina-1)*FC_PAGE_SIZE,fcPagina*FC_PAGE_SIZE-1);
+  if(ini)q=q.gte("data",ini);if(fim)q=q.lte("data",fim);if(op)q=q.eq("operador_cpf",op);if(ter)q=q.eq("terapeuta_cpf",ter);
+  const{data,error,count}=await q;
+  if(error){console.error(error);return;}
+  fcTotal=count||0;
+  const ids=(data||[]).map(d=>d.id);
+  let servNomes={};
+  if(ids.length){const{data:ss}=await client.from("fluxo_caixa_servicos").select("fluxo_id,servicos(grupo,subgrupo)").in("fluxo_id",ids);(ss||[]).forEach(s=>{if(!servNomes[s.fluxo_id])servNomes[s.fluxo_id]=[];const n=[s.servicos?.grupo,s.servicos?.subgrupo].filter(Boolean).join(" ");if(n)servNomes[s.fluxo_id].push(n);});}
+  dados=(data||[]).map(d=>({...d,_servNomes:(servNomes[d.id]||[]).join(", "),_opNome:opsMap[d.operador_cpf]||"",_terNome:tersMap[d.terapeuta_cpf]||""}));
+  listaFilt=[...dados];render();renderPaginacao();atualizarTotaisServidor();
+}
+
+async function atualizarTotaisServidor(){
+  const ini=document.getElementById("filtroIni").value;
+  const fim=document.getElementById("filtroFim").value;
+  const op=document.getElementById("filtroOp").value;
+  const ter=document.getElementById("filtroTer").value;
+  let q=client.from("fluxo_caixa").select("valor_bruto,desconto,comissao_total,valor_final");
+  if(ini)q=q.gte("data",ini);if(fim)q=q.lte("data",fim);if(op)q=q.eq("operador_cpf",op);if(ter)q=q.eq("terapeuta_cpf",ter);
+  const{data}=await q;
+  document.getElementById("totCount").textContent=fcTotal;
+  document.getElementById("totBruto").textContent=fmtM((data||[]).reduce((s,r)=>s+(r.valor_bruto||0),0));
+  document.getElementById("totDesc").textContent=fmtM((data||[]).reduce((s,r)=>s+(r.desconto||0),0));
+  document.getElementById("totCom").textContent=fmtM((data||[]).reduce((s,r)=>s+(r.comissao_total||0),0));
+  document.getElementById("totFinal").textContent=fmtM((data||[]).reduce((s,r)=>s+(r.valor_final||0),0));
+}
+
+function renderPaginacao(){const el=document.getElementById("paginacao");if(!el)return;const totalPags=Math.ceil(fcTotal/FC_PAGE_SIZE);if(totalPags<=1){el.innerHTML="";return;}let html=`<div style="display:flex;align-items:center;gap:6px;padding:12px 16px;border-top:1px solid #e5e7eb;font-size:13px;color:#6b7280"><span>${fcTotal} registros · página ${fcPagina} de ${totalPags}</span><div style="margin-left:auto;display:flex;gap:4px"><button class="btn-ghost" style="padding:5px 10px;font-size:12px" ${fcPagina===1?"disabled":""} onclick="mudarPag(${fcPagina-1})">‹ Anterior</button>`;const ini2=Math.max(1,fcPagina-2),fim2=Math.min(totalPags,fcPagina+2);for(let p=ini2;p<=fim2;p++)html+=`<button class="${p===fcPagina?"btn-blue":"btn-ghost"}" style="padding:5px 10px;font-size:12px" onclick="mudarPag(${p})">${p}</button>`;html+=`<button class="btn-ghost" style="padding:5px 10px;font-size:12px" ${fcPagina===totalPags?"disabled":""} onclick="mudarPag(${fcPagina+1})">Próxima ›</button></div></div>`;el.innerHTML=html;}
+function mudarPag(p){fcPagina=p;carregar();window.scrollTo(0,0);}
+
+function render(){
+  const tbody=document.getElementById("lista");tbody.innerHTML="";
+  if(!listaFilt.length){tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:32px">Nenhum lançamento.</td></tr>`;return;}
+  listaFilt.forEach(r=>{
+    const trocoBadge=r.troco>0?(r.troco_destino==="caixa"?`<span style="background:#dcfce7;color:#16a34a;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700">📦 Caixa</span>`:`<span style="background:#fef3c7;color:#d97706;border-radius:99px;padding:2px 8px;font-size:10px;font-weight:700">↩ ${fmtM(r.troco)}</span>`):`<span style="color:#d1d5db;font-size:12px">—</span>`;
+    tbody.innerHTML+=`<tr>
+      <td>${fmtD(r.data)}</td><td>${r._opNome||"—"}</td>
+      <td><strong>${r.cliente_nome||"—"}</strong>${r.fechamento_id?'<span style="display:inline-block;margin-left:6px;background:#f3f4f6;color:#9ca3af;border-radius:99px;padding:1px 7px;font-size:10px;font-weight:700">✓ fechado</span>':""}</td>
+      <td style="font-size:12px;color:#7c3aed">${r._terNome||"—"}</td>
+      <td style="font-size:12px;color:#6b7280;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r._servNomes||"—"}</td>
+      <td><strong>${fmtM(r.valor_final)}</strong></td>
+      <td style="color:#7c3aed">${fmtM(r.comissao_total)}</td>
+      <td style="font-size:12px">${[r.forma_pgto_1,r.forma_pgto_2].filter(Boolean).join(" + ")||"—"}</td>
+      <td>${trocoBadge}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn-yellow" style="padding:5px 9px;font-size:12px" onclick="abrirEditar('${r.id}')"><i class="fa fa-pencil"></i></button>
+        <button class="btn-red" style="padding:5px 9px;font-size:12px" onclick="excluir('${r.id}')"><i class="fa fa-trash"></i></button>
+      </td>
+    </tr>`;
   });
-  const breakdown=document.getElementById("turnoPgtoBreakdown");
-  if(!Object.keys(pgtoMap).length){
-    breakdown.innerHTML='<div style="color:#9ca3af;font-size:12px;padding:4px 0">Nenhuma forma de pagamento registrada</div>';
-  } else {
-    breakdown.innerHTML=Object.entries(pgtoMap).map(([k,v])=>{
-      const p=PGTO_ICONS[k]||PGTO_ICONS.outros;
-      return`<div class="turno-pgto-linha">
-        <span class="tpl-label"><i class="fa ${p.icon}" style="color:${p.color}"></i>${p.label}</span>
-        <span class="tpl-valor">${fmtM(v)}</span>
+}
+
+function aplicarFiltro(){fcPagina=1;carregar();}
+function limparFiltro(){["filtroIni","filtroFim","filtroOp","filtroTer"].forEach(id=>document.getElementById(id).value="");fcPagina=1;carregar();}
+async function excluir(id){if(!confirm("Excluir este lançamento?"))return;await client.from("fluxo_caixa_servicos").delete().eq("fluxo_id",id);await client.from("fluxo_caixa").delete().eq("id",id);carregar();}
+
+function abrirNC(nome){document.getElementById("ncNome").value=nome||"";document.getElementById("ncTel").value="";document.getElementById("ncEmail").value="";document.getElementById("modalNC").style.display="flex";}
+function fecharNC(){document.getElementById("modalNC").style.display="none";}
+async function salvarNC(){const nome=document.getElementById("ncNome").value.trim(),tel=document.getElementById("ncTel").value.trim();if(!nome){alert("Nome obrigatório.");return;}if(!tel){alert("Telefone obrigatório.");return;}const{data:novo,error}=await client.from("clientes").insert({nome,telefone_1:tel,email:document.getElementById("ncEmail").value.trim()||null}).select().single();if(error){alert("Erro: "+error.message);return;}fecharNC();ssCliente?.setValue(novo);}
+
+/* ══════ FECHAR TURNO ══════ */
+async function abrirFecharCaixa(direto){
+  document.getElementById("fechData").value=hoje();
+  document.getElementById("fechHoraIni").value="";
+  document.getElementById("fechHoraFim").value="";
+  document.getElementById("fechFundo").value="0";
+  document.getElementById("fechObs").value="";
+  // Pré-carrega do operador logado
+  getUser(u=>{if(u&&u.cpf&&opsMap[u.cpf])document.getElementById("fechOp").value=u.cpf;calcFechamento();});
+  if(!direto)calcFechamento();
+  document.getElementById("modalFechamento").style.display="flex";
+}
+function fecharFechamento(){document.getElementById("modalFechamento").style.display="none";}
+
+async function calcFechamento(){
+  const dataFiltro=document.getElementById("fechData").value;
+  const fundo=parseFloat(document.getElementById("fechFundo").value||0);
+  
+  // Busca lançamentos do fluxo_caixa não fechados do dia
+  const{data:lancs}=await client.from("fluxo_caixa")
+    .select("*").eq("data",dataFiltro||hoje()).is("fechamento_id",null);
+  
+  // Também busca atendimentos confirmados do dia para mostrar na lista
+  const{data:atends}=await client.from("atendimentos")
+    .select("*,clientes(nome,telefone_1),servicos(grupo,subgrupo)")
+    .eq("data",dataFiltro||hoje())
+    .in("status",["Confirmado","Faturado"])
+    .order("hora_inicio");
+  atendimentosDoDia=atends||[];
+
+  const lista=lancs||[];
+  let dinheiro=0,debito=0,credito=0,pix=0,outros=0,trocos=0;
+  lista.forEach(r=>{
+    const t1=classifPgto(r.forma_pgto_1),v1=r.valor_pgto_1||0;
+    if(t1==="dinheiro")dinheiro+=v1;else if(t1==="debito")debito+=v1;else if(t1==="credito")credito+=v1;else if(t1==="pix")pix+=v1;else outros+=v1;
+    if(r.forma_pgto_2){const t2=classifPgto(r.forma_pgto_2),v2=r.valor_pgto_2||0;if(t2==="dinheiro")dinheiro+=v2;else if(t2==="debito")debito+=v2;else if(t2==="credito")credito+=v2;else if(t2==="pix")pix+=v2;else outros+=v2;}
+    if(r.troco>0&&r.troco_destino!=="caixa")trocos+=r.troco;
+  });
+  const total=dinheiro+debito+credito+pix+outros-trocos;
+  const trocoCaixa=fundo+dinheiro-trocos;
+
+  document.getElementById("fechDinheiro").textContent=fmtM(dinheiro);
+  document.getElementById("fechPix").textContent=fmtM(pix);
+  document.getElementById("fechDebito").textContent=fmtM(debito);
+  document.getElementById("fechCredito").textContent=fmtM(credito);
+  document.getElementById("fechOutros").textContent=fmtM(outros);
+  document.getElementById("fechOutrosLinha").style.display=outros>0?"":"none";
+  document.getElementById("fechTroco").textContent=`- ${fmtM(trocos)}`;
+  document.getElementById("fechTotal").textContent=fmtM(total);
+  document.getElementById("fechTrocoCaixa").textContent=fmtM(trocoCaixa);
+  document.getElementById("fechContagem").textContent=`${lista.length} lançamento${lista.length!==1?"s":""} não fechados`;
+  const opNome=document.getElementById("fechOp").value?opsMap[document.getElementById("fechOp").value]||"":"";
+  document.getElementById("fechTitulo").textContent="Fechamento"+(opNome?" — "+opNome:"");
+  document.getElementById("fechSubtitulo").textContent=dataFiltro?fmtD(dataFiltro):"";
+  document.getElementById("fechRodape").textContent="Gerado em "+new Date().toLocaleString("pt-BR");
+
+  // Lista de atendimentos
+  const fechLista=document.getElementById("fechLista");
+  const tituloEl=document.getElementById("fechListaTitulo");
+  if(atendimentosDoDia.length){
+    tituloEl.textContent=`${atendimentosDoDia.length} atendimento${atendimentosDoDia.length!==1?"s":""} confirmados`;
+    fechLista.innerHTML=atendimentosDoDia.map(a=>{
+      const nomeC=a.clientes?(()=>{const t=(a.clientes.telefone_1||"").replace(/\D/g,"");const l4=t.length>=4?t.slice(-4):"";return l4?`${a.clientes.nome} ${l4}`:a.clientes.nome;})():"—";
+      const nomeS=[a.servicos?.grupo,a.servicos?.subgrupo].filter(Boolean).join(" ")||"—";
+      return`<div class="fech-item">
+        <span class="fi-hora">${(a.hora_inicio||"").substring(0,5)}${a.hora_fim?"–"+(a.hora_fim||"").substring(0,5):""}</span>
+        <span class="fi-nome">${nomeC}</span>
+        <span class="fi-pgto">${a.forma_pagamento||"—"}</span>
+        <span class="fi-val">${fmtM(a.valor_final)}</span>
       </div>`;
     }).join("");
-  }
-
-  // lista de atendimentos
-  const lista=document.getElementById("turnoLista");
-  if(!dodia.length){
-    lista.innerHTML='<div class="turno-empty"><i class="fa fa-calendar-check" style="font-size:22px;display:block;margin-bottom:8px;color:#d1d5db"></i>Nenhum atendimento confirmado hoje</div>';
   } else {
-    const sorted=[...dodia].sort((a,b)=>( a.hora_inicio||"").localeCompare(b.hora_inicio||""));
-    lista.innerHTML=sorted.map(r=>{
-      const cor=corServico(r.servicos);
-      return`<div class="turno-item">
-        <span class="ti-hora">${fmtH(r.hora_inicio)}${r.hora_fim?"–"+fmtH(r.hora_fim):""}</span>
-        <span style="width:8px;height:8px;border-radius:3px;background:${cor.bg};flex-shrink:0"></span>
-        <span class="ti-nome">${nomeC(r.clientes)}</span>
-        <span class="ti-serv">${nomeS(r.servicos)}</span>
-        <span class="ti-pgto">${r.forma_pagamento||"—"}</span>
-        <span class="ti-val">${fmtM(r.valor_final)}</span>
-      </div>`;
-    }).join("");
-  }
-
-  // último fechamento
-  const{data:fechs}=await client.from("fechamentos_caixa")
-    .select("created_at,operador_cpf,hora_fim")
-    .eq("data",dataFiltro)
-    .order("created_at",{ascending:false})
-    .limit(1);
-  const uf=fechs?.[0];
-  const el=document.getElementById("turnoUltimoFech");
-  if(uf){
-    const nome=recepcionistasMap[uf.operador_cpf]||"—";
-    const hora=uf.hora_fim||new Date(uf.created_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-    el.textContent=`Último fechamento: ${nome} às ${hora}`;
-  } else {
-    el.textContent="Nenhum fechamento registrado hoje";
+    tituloEl.textContent="Atendimentos do dia";
+    fechLista.innerHTML='<div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">Nenhum atendimento confirmado hoje</div>';
   }
 }
 
-function irParaFluxo(){
-  const op=document.getElementById("turnoOp").value;
-  const data=document.getElementById("turnoData").value;
-  const hi=document.getElementById("turnoHoraIni").value;
-  const hf=document.getElementById("turnoHoraFim").value;
-  const obs=encodeURIComponent(document.getElementById("turnoObs").value);
-  const params=new URLSearchParams({abrirFechamento:"1"});
-  if(op)params.set("op",op);
-  if(data)params.set("data",data);
-  if(hi)params.set("hi",hi);
-  if(hf)params.set("hf",hf);
-  if(obs)params.set("obs",obs);
-  window.location.href="fluxo_caixa.html?"+params.toString();
-}
-
-async function salvarFechamentoTurno(){
-  const dataFiltro=document.getElementById("turnoData").value;
+async function salvarFechamento(){
+  const dataFiltro=document.getElementById("fechData").value;
   if(!dataFiltro){alert("Informe a data.");return;}
-  const opCpf=document.getElementById("turnoOp").value||null;
-  const hi=document.getElementById("turnoHoraIni").value||null;
-  const hf=document.getElementById("turnoHoraFim").value||null;
-  const obs=document.getElementById("turnoObs").value.trim()||null;
+  const opCpf=document.getElementById("fechOp").value||null;
+  const fundo=parseFloat(document.getElementById("fechFundo").value||0);
+  const obs=document.getElementById("fechObs").value.trim()||null;
+  const din=parseFloat(document.getElementById("fechDinheiro").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const deb=parseFloat(document.getElementById("fechDebito").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const cre=parseFloat(document.getElementById("fechCredito").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const px=parseFloat(document.getElementById("fechPix").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const out=parseFloat(document.getElementById("fechOutros").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const trc=parseFloat(document.getElementById("fechTroco").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const tot=parseFloat(document.getElementById("fechTotal").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
+  const caixa=parseFloat(document.getElementById("fechTrocoCaixa").textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
 
-  const dodia=dados.filter(r=>r.data===dataFiltro&&(r.status==="Confirmado"||r.status==="Faturado"));
-  
-  // Calcula totais por forma de pagamento
-  const pgtoMap={dinheiro:0,pix:0,debito:0,credito:0,outros:0};
-  let trocos=0;
-  dodia.forEach(r=>{
-    if(r.forma_pagamento){
-      const k=classifPgtoTurno(r.forma_pagamento);
-      pgtoMap[k]+=(r.valor_final||0);
-    }
-  });
-  const totalGeral=Object.values(pgtoMap).reduce((s,v)=>s+v,0);
-
-  const payload={
-    data:dataFiltro,
-    operador_cpf:opCpf,
-    hora_inicio:hi,
-    hora_fim:hf,
-    fundo_inicial:0,
-    total_dinheiro:pgtoMap.dinheiro,
-    total_debito:pgtoMap.debito,
-    total_credito:pgtoMap.credito,
-    total_pix:pgtoMap.pix,
-    total_outros:pgtoMap.outros,
-    total_trocos:trocos,
-    troco_caixa:pgtoMap.dinheiro,
-    total_geral:totalGeral,
+  const{data:novo,error}=await client.from("fechamentos_caixa").insert({
+    data:dataFiltro,operador_cpf:opCpf,
+    hora_inicio:document.getElementById("fechHoraIni").value||null,
+    hora_fim:document.getElementById("fechHoraFim").value||null,
+    fundo_inicial:fundo,total_dinheiro:din,total_debito:deb,total_credito:cre,
+    total_pix:px,total_outros:out,total_trocos:trc,troco_caixa:caixa,total_geral:tot,
     observacao:obs
-  };
-
-  const{data:novo,error}=await client.from("fechamentos_caixa").insert(payload).select().single();
+  }).select().single();
   if(error){alert("Erro ao salvar: "+error.message);return;}
 
-  // Marca atendimentos como faturados/fechados vinculando ao fechamento
-  if(novo?.id&&dodia.length){
-    await client.from("atendimentos").update({status:"Faturado"}).in("id",dodia.map(r=>r.id));
+  // Vincula lançamentos não fechados ao fechamento
+  if(novo?.id){
+    let qUpd=client.from("fluxo_caixa").update({fechamento_id:novo.id}).is("fechamento_id",null).eq("data",dataFiltro);
+    if(opCpf)qUpd=qUpd.eq("operador_cpf",opCpf);
+    await qUpd;
   }
 
-  alert(`Turno fechado! ${dodia.length} atendimento${dodia.length!==1?"s":""} · ${fmtM(totalGeral)}`);
-  fecharTurno();
+  // Mostra recado do turno anterior se existir
+  const{data:anterior}=await client.from("fechamentos_caixa")
+    .select("observacao,operador_cpf,hora_fim")
+    .eq("data",dataFiltro)
+    .not("id","eq",novo?.id)
+    .order("created_at",{ascending:false})
+    .limit(1);
+  
+  let msg=`Turno fechado com sucesso!\nTotal: ${fmtM(tot)}`;
+  if(anterior?.[0]?.observacao){
+    const nomeOp=opsMap[anterior[0].operador_cpf]||"recepcionista anterior";
+    msg+=`\n\n📝 Recado de ${nomeOp}:\n"${anterior[0].observacao}"`;
+  }
+  alert(msg);
+  fecharFechamento();
   carregar();
+  carregarCaixa();
+  // Limpa banner do turno ativo se veio de Atendimentos
+  document.getElementById("turnoAtivoBar").style.display="none";
 }
 
-/* ══════ EXCLUIR / EXPORTAR ══════ */
-async function excluir(id){
-  if(!confirm("Excluir este atendimento?"))return;
-  await client.from("atendimento_estoque").delete().eq("atendimento_id",id);
-  await client.from("atendimentos").delete().eq("id",id);
-  carregar();
+/* ══════ CAIXA ══════ */
+let saldoCaixa=0;
+async function carregarCaixa(){
+  const{data:fechs}=await client.from("fechamentos_caixa").select("troco_caixa,created_at,data").order("created_at",{ascending:false}).limit(1);
+  const uf=fechs?.[0];const baseFechar=uf?.troco_caixa||0;
+  const{data:lancsPend}=await client.from("fluxo_caixa").select("forma_pgto_1,valor_pgto_1,forma_pgto_2,valor_pgto_2,troco,troco_destino").is("fechamento_id",null);
+  let saldoDin=0;
+  (lancsPend||[]).forEach(r=>{const p1D=classifPgto(r.forma_pgto_1)==="dinheiro"?(r.valor_pgto_1||0):0;const p2D=classifPgto(r.forma_pgto_2)==="dinheiro"?(r.valor_pgto_2||0):0;const td=r.troco>0&&r.troco_destino!=="caixa"?r.troco:0;saldoDin+=p1D+p2D-td;});
+  const{data:movs}=await client.from("caixa_movimentacoes").select("*").order("created_at",{ascending:false});
+  let saldo=baseFechar+saldoDin;
+  const tsBase=uf?.created_at||"2000-01-01";
+  (movs||[]).filter(m=>m.created_at>=tsBase).forEach(m=>{if(m.tipo==="entrada")saldo+=m.valor;else if(m.tipo==="saida")saldo-=m.valor;else if(m.tipo==="ajuste")saldo=m.valor;});
+  saldoCaixa=saldo;
+  document.getElementById("caixaAtual").textContent=fmtM(saldo);
+  document.getElementById("caixaAtual").style.color=saldo>=0?"#16a34a":"#dc2626";
+  const lc=(lancsPend||[]).length;
+  document.getElementById("caixaSub").textContent=uf?`Base: ${fmtM(baseFechar)} (últ. fechamento) + ${lc} lançamento${lc!==1?"s":""} pendente${lc!==1?"s":""}`:(`${lc} lançamento${lc!==1?"s":""} sem fechamento anterior`);
 }
 
-function exportarExcel(){
-  if(!dados.length){alert("Nada para exportar.");return;}
-  const exp=dados.map(r=>({
-    "Data":fmtD(r.data),"Hora":fmtH(r.hora_inicio),"Status":r.status==="Nao Confirmado"?"Não confirmou":r.status,
-    "Cliente":nomeC(r.clientes),"Serviço":nomeS(r.servicos),
-    "Terapeuta 1":r.ter1?.nome_profissional||"","Terapeuta 2":r.ter2?.nome_profissional||"",
-    "Origem":r.origem_lead||"","Forma Pgto":r.forma_pagamento||"",
-    "Valor":+r.valor||0,"Desconto":+r.desconto||0,"Final":+r.valor_final||0,"Comissão":+r.comissao_total||0
-  }));
-  const ws=XLSX.utils.json_to_sheet(exp);
-  ws["!cols"]=Object.keys(exp[0]).map(col=>({wch:Math.max(col.length,...exp.map(r=>String(r[col]||"").length))+2}));
-  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Atendimentos");XLSX.writeFile(wb,"atendimentos.xlsx");
+function abrirReposicao(){document.getElementById("repoSaldoAtual").textContent=fmtM(saldoCaixa);document.getElementById("repoTipo").value="entrada";document.getElementById("repoValor").value="";document.getElementById("repoMotivo").value="";carregarHistRepo();document.getElementById("modalRepo").style.display="flex";}
+function fecharRepo(){document.getElementById("modalRepo").style.display="none";}
+async function carregarHistRepo(){const{data}=await client.from("caixa_movimentacoes").select("*").order("created_at",{ascending:false}).limit(10);const hist=document.getElementById("repoHist");if(!data?.length){hist.innerHTML='<p style="text-align:center;color:#9ca3af;font-size:12px;padding:10px">Nenhuma movimentação</p>';return;}hist.innerHTML='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;padding:8px 0 4px">Histórico recente</div>'+data.map(m=>{const sinal=m.tipo==="saida"?"-":m.tipo==="ajuste"?"=":"+";const cls=m.tipo==="saida"?"neg":"pos";const dt=new Date(m.created_at).toLocaleString("pt-BR");return`<div class="repo-item"><span style="color:#374151">${m.motivo||m.tipo} <span style="color:#9ca3af;font-size:11px">${dt}</span></span><span class="ri-val ${cls}">${sinal} ${fmtM(m.valor)}</span></div>`;}).join("");}
+async function salvarRepo(){const tipo=document.getElementById("repoTipo").value;const valor=parseFloat(document.getElementById("repoValor").value||0);const motivo=document.getElementById("repoMotivo").value.trim();if(!valor||valor<=0){alert("Informe um valor.");return;}const{error}=await client.from("caixa_movimentacoes").insert({tipo,valor,motivo:motivo||tipo});if(error){alert("Erro: "+error.message);return;}fecharRepo();carregarCaixa();}
+
+/* ══════ WHATSAPP ══════ */
+const WA_NUMERO = "5511986118418"; // número de recebimento
+
+function enviarWhatsApp(){
+  const data   = document.getElementById("fechData").value;
+  const opCpf  = document.getElementById("fechOp").value;
+  const opNome = opCpf ? (opsMap[opCpf]||"") : "";
+  const hi     = document.getElementById("fechHoraIni").value;
+  const hf     = document.getElementById("fechHoraFim").value;
+  const obs    = document.getElementById("fechObs").value.trim();
+  const din    = document.getElementById("fechDinheiro").textContent;
+  const pix    = document.getElementById("fechPix").textContent;
+  const deb    = document.getElementById("fechDebito").textContent;
+  const cre    = document.getElementById("fechCredito").textContent;
+  const tot    = document.getElementById("fechTotal").textContent;
+  const cxa    = document.getElementById("fechTrocoCaixa").textContent;
+  const qtd    = document.getElementById("fechContagem").textContent;
+
+  const turno  = hi&&hf ? hi+"-"+hf : hi ? "a partir das "+hi : "";
+  const dataFmt = data ? fmtD(data) : "";
+
+  let msg = "\uD83C\uDFEA *Hara Spa \u2014 Fechamento de Turno*\n";
+  msg += "\uD83D\uDCC5 " + dataFmt + (turno ? " \u00B7 " + turno : "");
+  if(opNome) msg += "\n\uD83D\uDC64 " + opNome;
+  msg += "\n" + qtd;
+  msg += "\n\n\uD83D\uDCB0 *Por forma de pagamento:*";
+  msg += "\n\uD83D\uDCB5 Dinheiro: *" + din + "*";
+  msg += "\n\uD83D\uDCF1 PIX: *" + pix + "*";
+  msg += "\n\uD83D\uDCB3 D\u00E9bito: *" + deb + "*";
+  msg += "\n\uD83D\uDCB3 Cr\u00E9dito: *" + cre + "*";
+  msg += "\n\n\u2705 *Total do turno: " + tot + "*";
+  msg += "\n\uD83C\uDFE6 Dinheiro em caixa: " + cxa;
+
+  if(atendimentosDoDia.length){
+    msg += "\n\n\uD83D\uDCCB *Atendimentos (" + atendimentosDoDia.length + "):*";
+    atendimentosDoDia.forEach(a=>{
+      const tel=(a.clientes?.telefone_1||"").replace(/\D/g,"");
+      const l4=tel.length>=4?tel.slice(-4):"";
+      const nomeC=a.clientes?(l4?a.clientes.nome+" "+l4:a.clientes.nome):"—";
+      const hora=(a.hora_inicio||"").substring(0,5);
+      msg += "\n\u2022 " + hora + " " + nomeC + " \u2014 " + fmtM(a.valor_final);
+    });
+  }
+
+  if(obs) msg += "\n\n\uD83D\uDCAC *Recado:* " + obs;
+  msg += "\n\n_Enviado via Sistema Hara_";
+
+  window.open("https://wa.me/"+WA_NUMERO+"?text="+encodeURIComponent(msg), "_blank");
 }
 
-/* ══════ INIT ══════ */
+function exportarExcel(){if(!listaFilt.length){alert("Nada para exportar.");return;}const exp=listaFilt.map(r=>({"Data":fmtD(r.data),"Operador":r._opNome||"","Terapeuta":r._terNome||"","Cliente":r.cliente_nome||"","Serviços":r._servNomes||"","Valor Bruto":+r.valor_bruto||0,"Desconto":+r.desconto||0,"Acréscimo":+r.acrescimo||0,"Valor Final":+r.valor_final||0,"Valor Pago":+r.valor_pago||0,"Troco":+r.troco||0,"Troco Destino":r.troco_destino||"","Comissão":+r.comissao_total||0,"Pgto 1":r.forma_pgto_1||"","Valor Pgto 1":+r.valor_pgto_1||0,"Pgto 2":r.forma_pgto_2||"","Valor Pgto 2":+r.valor_pgto_2||0}));const ws=XLSX.utils.json_to_sheet(exp);ws["!cols"]=Object.keys(exp[0]).map(col=>({wch:Math.max(col.length,...exp.map(r=>String(r[col]||"").length))+2}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Fluxo de Caixa");XLSX.writeFile(wb,"fluxo_caixa.xlsx");}
+
+/* ══════ LEITURA DE URL PARAMS (vindo de Atendimentos) ══════ */
+function lerUrlParams(){
+  const p=new URLSearchParams(window.location.search);
+  if(p.get("abrirFechamento")==="1"){
+    const op=p.get("op")||"";
+    const data=p.get("data")||hoje();
+    const hi=p.get("hi")||"";
+    const hf=p.get("hf")||"";
+    const obs=decodeURIComponent(p.get("obs")||"");
+    // Mostra banner
+    const bar=document.getElementById("turnoAtivoBar");
+    const opNome=opsMap[op]||"";
+    document.getElementById("turnoAtivoTexto").textContent=`Fechamento de turno${opNome?" — "+opNome:""}${data?" · "+fmtD(data):""}`;
+    bar.style.display="flex";
+    // Pré-preenche modal de fechamento
+    setTimeout(()=>{
+      if(op)document.getElementById("fechOp").value=op;
+      document.getElementById("fechData").value=data;
+      if(hi)document.getElementById("fechHoraIni").value=hi;
+      if(hf)document.getElementById("fechHoraFim").value=hf;
+      if(obs)document.getElementById("fechObs").value=obs;
+      calcFechamento();
+      document.getElementById("modalFechamento").style.display="flex";
+    },500);
+    // Limpa URL
+    window.history.replaceState({},"",window.location.pathname);
+  }
+}
+
 document.addEventListener("DOMContentLoaded",async()=>{
-  dataBase=new Date(); dataBase.setHours(0,0,0,0);
+  const h=hoje();
+  const ult=new Date();
+  ult.setDate(1);
+  const y=ult.getFullYear(),m=String(ult.getMonth()+1).padStart(2,"0");
+  const ultimoDia=new Date(y,ult.getMonth()+1,0).getDate();
+  document.getElementById("filtroIni").value=`${y}-${m}-01`;
+  document.getElementById("filtroFim").value=`${y}-${m}-${String(ultimoDia).padStart(2,"0")}`;
   await carregarDados();
-  getUser(u=>{
-    if(eTerapeuta(u)&&u.cpf){
-      const ft=document.getElementById("filtroTer");ft.value=u.cpf;ft.disabled=true;
-    }
-  });
-  mudarView("semana");
   await carregar();
+  await carregarCaixa();
+  lerUrlParams();
 });
 </script>
 </body>

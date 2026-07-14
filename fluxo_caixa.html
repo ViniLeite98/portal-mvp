@@ -366,6 +366,7 @@ tr:hover td{background:#f9fafb;}
     <div style="display:flex;gap:8px">
       <button class="btn-ghost" onclick="fecharFechamento()">Cancelar</button>
       <button class="btn-ghost" onclick="window.print()"><i class="fa fa-print"></i> Imprimir</button>
+      <button style="background:#25D366;color:#fff" onclick="enviarWhatsApp()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
       <button class="btn-green" onclick="salvarFechamento()"><i class="fa fa-check"></i> Confirmar Fechamento</button>
     </div>
   </div>
@@ -709,6 +710,56 @@ function abrirReposicao(){document.getElementById("repoSaldoAtual").textContent=
 function fecharRepo(){document.getElementById("modalRepo").style.display="none";}
 async function carregarHistRepo(){const{data}=await client.from("caixa_movimentacoes").select("*").order("created_at",{ascending:false}).limit(10);const hist=document.getElementById("repoHist");if(!data?.length){hist.innerHTML='<p style="text-align:center;color:#9ca3af;font-size:12px;padding:10px">Nenhuma movimentação</p>';return;}hist.innerHTML='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;padding:8px 0 4px">Histórico recente</div>'+data.map(m=>{const sinal=m.tipo==="saida"?"-":m.tipo==="ajuste"?"=":"+";const cls=m.tipo==="saida"?"neg":"pos";const dt=new Date(m.created_at).toLocaleString("pt-BR");return`<div class="repo-item"><span style="color:#374151">${m.motivo||m.tipo} <span style="color:#9ca3af;font-size:11px">${dt}</span></span><span class="ri-val ${cls}">${sinal} ${fmtM(m.valor)}</span></div>`;}).join("");}
 async function salvarRepo(){const tipo=document.getElementById("repoTipo").value;const valor=parseFloat(document.getElementById("repoValor").value||0);const motivo=document.getElementById("repoMotivo").value.trim();if(!valor||valor<=0){alert("Informe um valor.");return;}const{error}=await client.from("caixa_movimentacoes").insert({tipo,valor,motivo:motivo||tipo});if(error){alert("Erro: "+error.message);return;}fecharRepo();carregarCaixa();}
+
+/* ══════ WHATSAPP ══════ */
+const WA_NUMERO = "5511956589259"; // número do Vinicius para teste
+
+function enviarWhatsApp(){
+  const data   = document.getElementById("fechData").value;
+  const opCpf  = document.getElementById("fechOp").value;
+  const opNome = opCpf ? (opsMap[opCpf]||"") : "";
+  const hi     = document.getElementById("fechHoraIni").value;
+  const hf     = document.getElementById("fechHoraFim").value;
+  const obs    = document.getElementById("fechObs").value.trim();
+  const din    = document.getElementById("fechDinheiro").textContent;
+  const pix    = document.getElementById("fechPix").textContent;
+  const deb    = document.getElementById("fechDebito").textContent;
+  const cre    = document.getElementById("fechCredito").textContent;
+  const tot    = document.getElementById("fechTotal").textContent;
+  const cxa    = document.getElementById("fechTrocoCaixa").textContent;
+  const qtd    = document.getElementById("fechContagem").textContent;
+
+  const turno  = hi&&hf ? hi+"-"+hf : hi ? "a partir das "+hi : "";
+  const dataFmt = data ? fmtD(data) : "";
+
+  let msg = "\uD83C\uDFEA *Hara Spa \u2014 Fechamento de Turno*\n";
+  msg += "\uD83D\uDCC5 " + dataFmt + (turno ? " \u00B7 " + turno : "");
+  if(opNome) msg += "\n\uD83D\uDC64 " + opNome;
+  msg += "\n" + qtd;
+  msg += "\n\n\uD83D\uDCB0 *Por forma de pagamento:*";
+  msg += "\n\uD83D\uDCB5 Dinheiro: *" + din + "*";
+  msg += "\n\uD83D\uDCF1 PIX: *" + pix + "*";
+  msg += "\n\uD83D\uDCB3 D\u00E9bito: *" + deb + "*";
+  msg += "\n\uD83D\uDCB3 Cr\u00E9dito: *" + cre + "*";
+  msg += "\n\n\u2705 *Total do turno: " + tot + "*";
+  msg += "\n\uD83C\uDFE6 Dinheiro em caixa: " + cxa;
+
+  if(atendimentosDoDia.length){
+    msg += "\n\n\uD83D\uDCCB *Atendimentos (" + atendimentosDoDia.length + "):*";
+    atendimentosDoDia.forEach(a=>{
+      const tel=(a.clientes?.telefone_1||"").replace(/\D/g,"");
+      const l4=tel.length>=4?tel.slice(-4):"";
+      const nomeC=a.clientes?(l4?a.clientes.nome+" "+l4:a.clientes.nome):"—";
+      const hora=(a.hora_inicio||"").substring(0,5);
+      msg += "\n\u2022 " + hora + " " + nomeC + " \u2014 " + fmtM(a.valor_final);
+    });
+  }
+
+  if(obs) msg += "\n\n\uD83D\uDCAC *Recado:* " + obs;
+  msg += "\n\n_Enviado via Sistema Hara_";
+
+  window.open("https://wa.me/"+WA_NUMERO+"?text="+encodeURIComponent(msg), "_blank");
+}
 
 function exportarExcel(){if(!listaFilt.length){alert("Nada para exportar.");return;}const exp=listaFilt.map(r=>({"Data":fmtD(r.data),"Operador":r._opNome||"","Terapeuta":r._terNome||"","Cliente":r.cliente_nome||"","Serviços":r._servNomes||"","Valor Bruto":+r.valor_bruto||0,"Desconto":+r.desconto||0,"Acréscimo":+r.acrescimo||0,"Valor Final":+r.valor_final||0,"Valor Pago":+r.valor_pago||0,"Troco":+r.troco||0,"Troco Destino":r.troco_destino||"","Comissão":+r.comissao_total||0,"Pgto 1":r.forma_pgto_1||"","Valor Pgto 1":+r.valor_pgto_1||0,"Pgto 2":r.forma_pgto_2||"","Valor Pgto 2":+r.valor_pgto_2||0}));const ws=XLSX.utils.json_to_sheet(exp);ws["!cols"]=Object.keys(exp[0]).map(col=>({wch:Math.max(col.length,...exp.map(r=>String(r[col]||"").length))+2}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Fluxo de Caixa");XLSX.writeFile(wb,"fluxo_caixa.xlsx");}
 

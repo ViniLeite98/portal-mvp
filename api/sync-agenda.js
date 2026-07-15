@@ -10,18 +10,21 @@ const BASIC_AUTH       = "bWluaGFhZ2VuZGEtc3BhOjZMR2tQdVpTcDhWS3A1dQ==";
 // ---------- LOGIN ----------
 
 async function fazerLogin() {
-  // encodeURIComponent garante que caracteres especiais (@, #, &, +) na senha sejam escapados
-  const body = "grant_type=password"
-    + "&username=" + encodeURIComponent(process.env.MA_USERNAME)
-    + "&password=" + encodeURIComponent(process.env.MA_PASSWORD);
+  // Mesmo formato do Apps Script que funciona
+  const params = new URLSearchParams();
+  params.append("grant_type", "password");
+  params.append("username",   process.env.MA_USERNAME);
+  params.append("password",   process.env.MA_PASSWORD);
 
   const resp = await fetch(TOKEN_URL, {
     method: "POST",
     headers: {
       "Authorization": "Basic " + BASIC_AUTH,
       "Content-Type":  "application/x-www-form-urlencoded",
+      "Accept":        "application/json",
+      "User-Agent":    "Mozilla/5.0",
     },
-    body: body,
+    body: params,
   });
 
   if (!resp.ok) {
@@ -142,9 +145,10 @@ async function testarLogin(res) {
   const username = process.env.MA_USERNAME || "(não definido)";
   const password = process.env.MA_PASSWORD || "(não definido)";
 
-  const body = "grant_type=password"
-    + "&username=" + encodeURIComponent(username)
-    + "&password=" + encodeURIComponent(password);
+  const params = new URLSearchParams();
+  params.append("grant_type", "password");
+  params.append("username",   username);
+  params.append("password",   password);
 
   try {
     const resp = await fetch(TOKEN_URL, {
@@ -152,16 +156,18 @@ async function testarLogin(res) {
       headers: {
         "Authorization": "Basic " + BASIC_AUTH,
         "Content-Type":  "application/x-www-form-urlencoded",
+        "Accept":        "application/json",
+        "User-Agent":    "Mozilla/5.0",
       },
-      body: body,
+      body: params,
     });
 
     const txt = await resp.text();
     res.status(200).json({
       status_code: resp.status,
-      username_env: username.slice(0, 5) + "...",  // mostra só início por segurança
+      username_env: username.slice(0, 5) + "...",
       password_len: password.length,
-      body_enviado: body.replace(encodeURIComponent(password), "***"),
+      body_enviado: params.toString().replace(encodeURIComponent(password), "***"),
       resposta: txt.slice(0, 500),
     });
   } catch(e) {

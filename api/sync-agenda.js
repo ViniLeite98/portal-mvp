@@ -137,7 +137,45 @@ async function upsertSupabase(agendamentos) {
 
 // ---------- HANDLER ----------
 
+// ---- ENDPOINT DE TESTE DE LOGIN ----
+// Acessa: /api/sync-agenda?debug=login
+async function testarLogin(res) {
+  const username = process.env.MA_USERNAME || "(não definido)";
+  const password = process.env.MA_PASSWORD || "(não definido)";
+
+  const body = "grant_type=password"
+    + "&username=" + encodeURIComponent(username)
+    + "&password=" + encodeURIComponent(password);
+
+  try {
+    const resp = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": "Basic " + BASIC_AUTH,
+        "Content-Type":  "application/x-www-form-urlencoded",
+        "App_is_web":    "true",
+      },
+      body: body,
+    });
+
+    const txt = await resp.text();
+    res.status(200).json({
+      status_code: resp.status,
+      username_env: username.slice(0, 5) + "...",  // mostra só início por segurança
+      password_len: password.length,
+      body_enviado: body.replace(encodeURIComponent(password), "***"),
+      resposta: txt.slice(0, 500),
+    });
+  } catch(e) {
+    res.status(500).json({ erro: e.message });
+  }
+}
+
 export default async function handler(req, res) {
+  // Modo debug — testa só o login
+  if (req.query.debug === "login") {
+    return testarLogin(res);
+  }
   // Aceita GET (cron da Vercel) ou POST (chamada manual)
   const modo = req.query.modo || "hoje"; // "hoje" ou "historico"
 

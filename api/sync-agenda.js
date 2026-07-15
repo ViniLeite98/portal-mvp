@@ -10,11 +10,10 @@ const BASIC_AUTH       = "bWluaGFhZ2VuZGEtc3BhOjZMR2tQdVpTcDhWS3A1dQ==";
 // ---------- LOGIN ----------
 
 async function fazerLogin() {
-  const body = new URLSearchParams({
-    grant_type: "password",
-    username:   process.env.MA_USERNAME,
-    password:   process.env.MA_PASSWORD,
-  });
+  // encodeURIComponent garante que caracteres especiais (@, #, &, +) na senha sejam escapados
+  const body = "grant_type=password"
+    + "&username=" + encodeURIComponent(process.env.MA_USERNAME)
+    + "&password=" + encodeURIComponent(process.env.MA_PASSWORD);
 
   const resp = await fetch(TOKEN_URL, {
     method: "POST",
@@ -23,7 +22,7 @@ async function fazerLogin() {
       "Content-Type":  "application/x-www-form-urlencoded",
       "App_is_web":    "true",
     },
-    body: body.toString(),
+    body: body,
   });
 
   if (!resp.ok) {

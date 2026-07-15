@@ -20,7 +20,6 @@ async function fazerLogin() {
     headers: {
       "Authorization": "Basic " + BASIC_AUTH,
       "Content-Type":  "application/x-www-form-urlencoded",
-      "App_is_web":    "true",
     },
     body: body,
   });
@@ -153,7 +152,6 @@ async function testarLogin(res) {
       headers: {
         "Authorization": "Basic " + BASIC_AUTH,
         "Content-Type":  "application/x-www-form-urlencoded",
-        "App_is_web":    "true",
       },
       body: body,
     });

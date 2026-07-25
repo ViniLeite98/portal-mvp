@@ -122,7 +122,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
       <span class="label" id="collabLabel">serviços</span>
     </div>
     <div style="display:flex;gap:10px;">
-      <button onclick="abrirGrupos()" style="background:#6366f1"><i class="fa fa-palette"></i> Cores dos Grupos</button>
       <button class="exportar" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
       <button onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Serviço</button>
     </div>
@@ -232,19 +231,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </div>
 
 <!-- MODAL CORES DOS GRUPOS -->
-<div class="modal" id="modalGrupos">
-<div class="modal-content sm">
-  <div class="modal-header">
-    <h2><i class="fa fa-palette" style="color:#6366f1;margin-right:8px"></i>Cores dos Grupos</h2>
-    <button class="btn-fechar" onclick="fecharGrupos()"><i class="fa fa-times"></i></button>
-  </div>
-  <div class="modal-body" id="gruposBody"></div>
-  <div class="modal-footer">
-    <button class="btn-cancel" onclick="fecharGrupos()">Fechar</button>
-    <button class="btn-save" onclick="salvarCoresGrupos()"><i class="fa fa-save"></i> Salvar Cores</button>
-  </div>
-</div>
-</div>
 
 <script>
 /* ══════ PALETA ══════ */
@@ -345,7 +331,7 @@ function renderGruposBar(){
         <div class="grupo-qtd">${qtd} serviço${qtd!==1?"s":""}</div>
         ${!cor?'<div class="grupo-sem-cor">⚠ Sem cor</div>':""}
       </div>`;
-    card.onclick=()=>abrirGruposDirect(g);
+    
     bar.appendChild(card);
   });
 }
@@ -487,7 +473,7 @@ document.getElementById("grupo").addEventListener("change",function(){
     info.style.display="";
     swatch.style.background=cor||"#e5e7eb";
     swatch.style.border=cor?"1px solid rgba(0,0,0,.1)":"1px dashed #d1d5db";
-    label.textContent=cor?`Cor do grupo "${g}"`:`Grupo "${g}" ainda não tem cor — configure em Cores dos Grupos`;
+    label.textContent=cor?`Cor do grupo "${g}"`:`Grupo "${g}" sem cor definida`;
     label.style.color=cor?"#111827":"#f59e0b";
   } else {
     info.style.display="none";
@@ -541,50 +527,6 @@ async function excluir(id){
 /* ══════ MODAL CORES DOS GRUPOS ══════ */
 let grupoFoco=null; // grupo que está sendo editado no modal
 
-function abrirGrupos(){grupoFoco=null;renderModalGrupos();document.getElementById("modalGrupos").style.display="flex";}
-function abrirGruposDirect(g){grupoFoco=g;renderModalGrupos();document.getElementById("modalGrupos").style.display="flex";}
-function fecharGrupos(){document.getElementById("modalGrupos").style.display="none";}
-
-function renderModalGrupos(){
-  const grupos=[...new Set([...Object.keys(gruposMap),...dados.map(s=>s.grupo).filter(Boolean)])].sort();
-  const body=document.getElementById("gruposBody");
-  body.innerHTML="";
-
-  grupos.forEach(g=>{
-    const corAtual=gruposMap[g]||"";
-    const sec=document.createElement("div");
-    sec.style="margin-bottom:20px";
-    sec.innerHTML=`
-      <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:8px;display:flex;align-items:center;gap:8px">
-        <span style="width:16px;height:16px;border-radius:4px;background:${corAtual||"#e5e7eb"};border:1px solid rgba(0,0,0,.1);display:inline-block"></span>
-        ${g}
-      </div>
-      <div class="paleta-grid" id="paleta_${g.replace(/\s/g,"_")}"></div>
-      <div class="cor-preview-wrap">
-        <span class="cor-preview-box" id="prev_${g.replace(/\s/g,"_")}" style="background:${corAtual||"transparent"};border:${corAtual?"1px solid rgba(0,0,0,.1)":"1px dashed #d1d5db"}"></span>
-        <span id="prevLabel_${g.replace(/\s/g,"_")}" style="color:${corAtual?"#111827":"#9ca3af"}">${corAtual?nomeCor(corAtual):"Nenhuma cor selecionada"}</span>
-      </div>`;
-    body.appendChild(sec);
-
-    const grid=sec.querySelector(".paleta-grid");
-    PALETA.forEach(p=>{
-      const div=document.createElement("div");
-      div.className="paleta-item"+(p.hex===corAtual?" sel":"");
-      div.style.background=p.hex;
-      div.title=p.nome;
-      div.innerHTML='<span class="ck"><i class="fa fa-check"></i></span>';
-      div.dataset.grupo=g;
-      div.dataset.hex=p.hex;
-      div.dataset.nome=p.nome;
-      div.onclick=()=>selecionarCorGrupo(g,p.hex,p.nome);
-      grid.appendChild(div);
-    });
-
-    // Scroll para o grupo clicado diretamente
-    if(grupoFoco===g) setTimeout(()=>sec.scrollIntoView({behavior:"smooth",block:"start"}),100);
-  });
-}
-
 function selecionarCorGrupo(grupo,hex,nome){
   const key=grupo.replace(/\s/g,"_");
   // atualiza UI da paleta
@@ -598,31 +540,6 @@ function selecionarCorGrupo(grupo,hex,nome){
   if(label){label.textContent=nome;label.style.color="#111827";}
   // atualiza mapa local (ainda não salvo)
   gruposMap[grupo]=hex;
-}
-
-async function salvarCoresGrupos(){
-  // Busca todos os parametros de grupos_servico para ter os IDs
-  const{data:params,error:eGet}=await client.from("parametros")
-    .select("id,valor").eq("tipo","grupos_servico");
-  if(eGet){alert("Erro ao buscar grupos: "+eGet.message);return;}
-
-  const updates=[];
-  const grupos=[...new Set([...Object.keys(gruposMap),...dados.map(s=>s.grupo).filter(Boolean)])];
-  for(const g of grupos){
-    const cor=gruposMap[g]||null;
-    const param=params?.find(p=>p.valor===g);
-    if(param){
-      updates.push(client.from("parametros").update({cor}).eq("id",param.id));
-    } else {
-      // Grupo existe nos serviços mas não em parametros — cria
-      updates.push(client.from("parametros").insert({tipo:"grupos_servico",valor:g,cor,ativo:true}));
-    }
-  }
-  const results=await Promise.all(updates);
-  const erros=results.map(r=>r.error).filter(Boolean);
-  if(erros.length){alert("Erro ao salvar: "+erros[0].message);return;}
-  fecharGrupos();
-  await carregar();
 }
 
 function nomeCor(hex){

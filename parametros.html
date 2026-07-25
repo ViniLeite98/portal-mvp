@@ -279,6 +279,7 @@ const SECOES = {
 const SECOES_COM_ICONE  = ["certificacoes"];
 const SECOES_TIPOS_PGTO = ["tipos_pagamento"];
 const SECOES_KANBAN     = ["kanban_colunas"];
+const SECOES_COM_COR    = ["grupos_servico"]; // salva na coluna `cor`
 
 const COR_PALETA = ['#3b82f6','#f59e0b','#ef4444','#8b5cf6','#10b981','#6b7280','#06b6d4','#d946ef','#f43f5e','#84cc16','#f97316','#14b8a6'];
 
@@ -357,7 +358,7 @@ async function carregar(){
     itens=(data||[]).map(c=>({id:c.id,valor:c.nome,icone:c.icone,ativo:true,descricao:null,negativo:false,ordem:0}));
   } else {
     const {data,error}=await client.from("parametros")
-      .select("id,tipo,valor,descricao,ativo,ordem,negativo")
+      .select("id,tipo,valor,descricao,cor,ativo,ordem,negativo")
       .eq("tipo",secaoAtual)
       .order("ordem")
       .order("valor");
@@ -383,6 +384,7 @@ function render(){
   const temIcone=SECOES_COM_ICONE.includes(secaoAtual);
   const tipoPgto=SECOES_TIPOS_PGTO.includes(secaoAtual);
   const isKanban=SECOES_KANBAN.includes(secaoAtual);
+  const isComCor  = SECOES_COM_COR.includes(secaoAtual);
 
   if(!itens.length&&!adicionando){
     lista.innerHTML='<div class="empty-state"><i class="fa '+SECOES[secaoAtual].icon+'"></i>Nenhum item cadastrado ainda.<br>Clique em <strong>Adicionar</strong> para começar.</div>';
@@ -401,6 +403,9 @@ function render(){
     if(isKanban){
       var cor=item.descricao||"#6b7280";
       swatchHtml='<div class="color-swatch" style="background:'+cor+'" title="'+cor+'"></div>';
+    } else if(isComCor){
+      var cor=item.cor||"#d1d5db";
+      swatchHtml='<div style="width:18px;height:18px;border-radius:50%;background:'+cor+';flex-shrink:0;border:2px solid rgba(0,0,0,.1)" title="'+cor+'"></div>';
     }
     var codHtml="",negBadge="";
     if(tipoPgto){
@@ -446,14 +451,14 @@ function abrirAdicionar(){
   var tipoPgto=SECOES_TIPOS_PGTO.includes(secaoAtual);
   var isKanban=SECOES_KANBAN.includes(secaoAtual);
 
-  if(temIcone || tipoPgto || isKanban){
+  if(temIcone || tipoPgto || isKanban || isComCor){
     // Limpa campos do modal
     document.getElementById("editNome").value="";
     document.getElementById("editDesc").value="";
     document.getElementById("campoIcone").style.display   =temIcone?"":"none";
     document.getElementById("campoCodigo").style.display  =tipoPgto?"":"none";
     document.getElementById("campoNegativo").style.display=tipoPgto?"":"none";
-    document.getElementById("campoCor").style.display     =isKanban?"":"none";
+    document.getElementById("campoCor").style.display     =(isKanban||isComCor)?"":"none";
     document.getElementById("campoDesc").style.display    =(tipoPgto||isKanban)?"none":"";
     if(tipoPgto){
       document.getElementById("editCodigo").value="";
@@ -479,6 +484,12 @@ async function confirmarAdicionar(){
   if(SECOES_KANBAN.includes(secaoAtual)){
     var cor=document.getElementById("addCor")?.value||"#6366f1";
     ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:cor,ordem:itens.length,ativo:true}));
+  } else if(SECOES_COM_COR.includes(secaoAtual)){
+    var cor=document.getElementById("addCor")?.value||"#6366f1";
+    ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,cor,ordem:itens.length,ativo:true}));
+  } else if(SECOES_COM_COR.includes(secaoAtual)){
+    var cor=document.getElementById("addCor")?.value||"#6366f1";
+    ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,cor,ordem:itens.length,ativo:true}));
   } else if(SECOES_TIPOS_PGTO.includes(secaoAtual)){
     var cod=(document.getElementById("addCodigo")?.value||"").trim()||null;
     ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:cod,ativo:true,ordem:itens.length,negativo:false}));
@@ -498,11 +509,18 @@ function abrirEditar(id){
   var temIcone=SECOES_COM_ICONE.includes(secaoAtual);
   var tipoPgto=SECOES_TIPOS_PGTO.includes(secaoAtual);
   var isKanban=SECOES_KANBAN.includes(secaoAtual);
+  var isComCor=SECOES_COM_COR.includes(secaoAtual);
   document.getElementById("campoIcone").style.display   =temIcone?"":"none";
   document.getElementById("campoCodigo").style.display  =tipoPgto?"":"none";
   document.getElementById("campoNegativo").style.display=tipoPgto?"":"none";
-  document.getElementById("campoCor").style.display     =isKanban?"":"none";
-  document.getElementById("campoDesc").style.display    =(tipoPgto||isKanban)?"none":"";
+  document.getElementById("campoCor").style.display     =(isKanban||isComCor)?"":"none";
+  document.getElementById("campoDesc").style.display    =(tipoPgto||isKanban||isComCor)?"none":"";
+  if(isKanban||isComCor){
+    var corVal=isKanban?(item.descricao||"#6366f1"):(item.cor||"#6366f1");
+    document.getElementById("editCorHex").value=corVal;
+    document.getElementById("editCorPicker").value=corVal;
+    onColorHexChange(corVal);
+  }
   if(tipoPgto){
     document.getElementById("editCodigo").value=item.descricao||"";
     document.getElementById("editNegativo").value=item.negativo?"true":"false";
@@ -538,6 +556,13 @@ async function salvarEdicao(){
       ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:cor,ordem:itens.length,ativo:true}));
     } else {
       ({error}=await client.from("parametros").update({valor:nome,descricao:cor}).eq("id",editandoId));
+    }
+  } else if(SECOES_COM_COR.includes(secaoAtual)){
+    var cor=document.getElementById("editCorHex").value.trim()||"#6366f1";
+    if(inserindo){
+      ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,cor,ordem:itens.length,ativo:true}));
+    } else {
+      ({error}=await client.from("parametros").update({valor:nome,cor}).eq("id",editandoId));
     }
   } else if(SECOES_TIPOS_PGTO.includes(secaoAtual)){
     var codigo=document.getElementById("editCodigo").value.trim()||null;

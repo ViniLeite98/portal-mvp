@@ -35,7 +35,8 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 
 /* Grupos card */
 .grupos-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
-.grupo-card{background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px;cursor:pointer;border:2px solid transparent;transition:border-color .15s;}
+.grupo-card{background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px;cursor:pointer;border:2px solid transparent;transition:all .15s;}
+.grupo-card.ativo{border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 .grupo-card:hover{border-color:#e5e7eb;}
 .grupo-card.editando{border-color:#2563eb;}
 .grupo-swatch{width:22px;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.1);flex-shrink:0;}
@@ -362,6 +363,23 @@ function atualizarIcones(){
     else icon.className="fa fa-sort sort-icon";
   });
 }
+function filtrarPorGrupo(grupo, cardEl){
+  const sel = document.getElementById("filtroGrupo");
+  const jaAtivo = sel.value === grupo;
+
+  // Toggle — clicou no mesmo: limpa filtro
+  if(jaAtivo){
+    sel.value = "";
+    document.querySelectorAll(".grupo-card").forEach(c=>c.classList.remove("ativo"));
+  } else {
+    sel.value = grupo;
+    document.querySelectorAll(".grupo-card").forEach(c=>c.classList.remove("ativo"));
+    if(cardEl) cardEl.classList.add("ativo");
+  }
+  paginaAtual = 0;
+  aplicarFiltroEOrdem();
+}
+
 function aplicarFiltroEOrdem(){
   const termo=(document.getElementById("buscaServico").value||"").toLowerCase();
   const status=document.getElementById("filtroStatus").value;

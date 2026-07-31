@@ -321,14 +321,13 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     <!-- 1. Data e hora -->
     <div class="grid3">
       <div class="mfield"><label>Data *</label><input type="date" id="agData"></div>
-      <div class="mfield"><label>Hora Início *</label><input type="time" id="agHoraIni"></div>
+      <div class="mfield"><label>Hora Início *</label><input type="time" id="agHoraIni" oninput="recalcHoraFim()"></div>
       <div class="mfield"><label>Hora Fim</label><input type="time" id="agHoraFim"></div>
     </div>
 
     <!-- 2. Serviços (primeiro) -->
     <div class="sep-titulo"><i class="fa fa-spa"></i> Serviços</div>
     <div id="agServItens"></div>
-    <button class="btn-add" onclick="addServAg()"><i class="fa fa-plus"></i> Adicionar serviço</button>
 
     <!-- 3. Terapeutas (depois do serviço) -->
     <div class="sep-titulo"><i class="fa fa-user-tie"></i> Terapeutas</div>
@@ -654,6 +653,20 @@ function precisaDoisTerapeutas(s) {
   return g.includes("four hands") || g.includes("simultân") || sg.includes("four hands") || sg.includes("simultân");
 }
 
+function recalcHoraFim() {
+  const horaIni=document.getElementById("agHoraIni").value;
+  if(!horaIni) return;
+  const servs=getServsAg();
+  if(!servs.length) return;
+  const s=servicosMap[servs[0].servico_id];
+  if(!s||!s.tempo) return;
+  const[hh,mm]=horaIni.split(":").map(Number);
+  const total=hh*60+mm+parseInt(s.tempo);
+  const hFim=String(Math.floor(total/60)%24).padStart(2,"0");
+  const mFim=String(total%60).padStart(2,"0");
+  document.getElementById("agHoraFim").value=`${hFim}:${mFim}`;
+}
+
 function atualizarTer2(servico) {
   const label = document.getElementById("agTer2Label");
   const sel = document.getElementById("agTer2");
@@ -890,7 +903,7 @@ function renderLista() {
     const nomeC=a.clientes?.nome||"—";
     const tel=(a.clientes?.telefone_1||"").replace(/\D/g,"");
     const l4=tel.length>=4?tel.slice(-4):"";
-    const nomeServico=[a.servicos?.grupo,a.servicos?.subgrupo].filter(Boolean).join(" ")||"—";
+    const nomeServ=a.servicos?nomeServico(a.servicos):"—";
     const ter1=tersMap[a.terapeuta1_cpf]||"";
     const ter2=tersMap[a.terapeuta2_cpf]||"";
     const teres=[ter1,ter2].filter(Boolean).join(" + ");
@@ -918,7 +931,7 @@ function renderLista() {
       <div class="ag-body">
         <div class="ag-info">
           <div class="ag-cliente">${nomeC}${l4?" "+l4:""}${extras.length?` <span style="font-size:10px;color:#6b7280">+${extras.length}</span>`:""}</div>
-          <div class="ag-servico">${nomeServico}</div>
+          <div class="ag-servico">${nomeServ}</div>
           <div class="ag-ter">${teres}</div>
         </div>
         <div class="ag-tags">
@@ -994,10 +1007,24 @@ function addServAg(){
   const id2=document.createElement("input"); id2.type="number"; id2.placeholder="0"; id2.step="0.01"; id2.value="0"; id2.addEventListener("input",calcAgRes);
   sel.addEventListener("change",()=>{
     const s=servicosMap[sel.value];
-    if(s){iv.value=Math.abs(s.valor||0);id2.value=0;calcAgRes();atualizarTer2(s);}
+    if(s){
+      iv.value=Math.abs(s.valor||0);
+      id2.value=0;
+      calcAgRes();
+      atualizarTer2(s);
+      // Preenche hora_fim automaticamente
+      const horaIni=document.getElementById("agHoraIni").value;
+      if(horaIni && s.tempo){
+        const[hh,mm]=horaIni.split(":").map(Number);
+        const total=hh*60+mm+parseInt(s.tempo);
+        const hFim=String(Math.floor(total/60)%24).padStart(2,"0");
+        const mFim=String(total%60).padStart(2,"0");
+        document.getElementById("agHoraFim").value=`${hFim}:${mFim}`;
+      }
+    }
   });
-  const btn=document.createElement("button"); btn.className="btn-rem"; btn.innerHTML='<i class="fa fa-times"></i>'; btn.onclick=()=>{c.removeChild(row);calcAgRes();atualizarTer2(null);};
-  [sel,lv,iv,ld,id2,btn].forEach(el=>row.appendChild(el));
+  // Sem botão de remover — só 1 serviço por agendamento
+  [sel,lv,iv,ld,id2].forEach(el=>row.appendChild(el));
   c.appendChild(row);
 }
 
@@ -1033,7 +1060,14 @@ async function salvarAg(){
   if(!cliId){alert("Selecione um cliente.");return;}
   if(!dataV){alert("Informe a data.");return;}
   if(!document.getElementById("agHoraIni").value){alert("Informe a hora de início.");return;}
+  if(!document.getElementById("agTer1").value){alert("Selecione o Terapeuta 1.");return;}
   if(!servs.length){alert("Adicione ao menos um serviço.");return;}
+  // Valida terapeuta 2 se serviço exige
+  const servPrincipal=servs[0]?.servico_id||null;
+  const servPrincipalObj=servicosMap[servPrincipal];
+  if(precisaDoisTerapeutas(servPrincipalObj)&&!document.getElementById("agTer2").value){
+    alert("Este serviço requer 2 terapeutas. Selecione o Terapeuta 2.");return;
+  }
 
   const bruto=servs.reduce((s,x)=>s+x.valor,0);
   const descS=servs.reduce((s,x)=>s+x.desconto,0);
@@ -1041,7 +1075,6 @@ async function salvarAg(){
   const acr=parseFloat(document.getElementById("agAcres").value||0);
   const com=servs.reduce((s,x)=>s+x.comissao,0);
   const final=bruto-descS-descE+acr;
-  const servPrincipal=servs[0]?.servico_id||null;
 
   const payload={
     data:dataV,
@@ -1085,7 +1118,7 @@ function abrirDetalhe(id){
   const nomeC=a.clientes?.nome||"—";
   const tel=(a.clientes?.telefone_1||"").replace(/\D/g,"");
   const l4=tel.length>=4?tel.slice(-4):"";
-  const nomeS=[a.servicos?.grupo,a.servicos?.subgrupo].filter(Boolean).join(" ")||"—";
+  const nomeS=a.servicos?nomeServico(a.servicos):"—";
   const ter1=tersMap[a.terapeuta1_cpf]||"";
   const ter2=tersMap[a.terapeuta2_cpf]||"";
   const extras=(a.clientes_extra||[]);

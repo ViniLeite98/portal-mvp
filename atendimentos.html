@@ -685,62 +685,92 @@ async function popularSelectsTerapeutas() {
   const ter1Val = document.getElementById("agTer1").value;
   const ter2Val = document.getElementById("agTer2").value;
 
-  // Consulta solicitações acordadas que cobrem a data selecionada
-  let solicitacoesAtivas = [];
+  // Mapa de horários por dia da semana
+  let horarioMap = {}; // cpf → {hora_entrada, hora_saida, disponivel}
+  let solMap = {};     // cpf → solicitação ativa
+
   if(data) {
+    const dow = new Date(data+"T12:00:00").getDay();
+    const diaNome = DIAS_PT[dow];
+
+    // 1. Consulta grade semanal para o dia da semana
+    const{data:hors}=await client.from("terapeutas_horarios")
+      .select("terapeuta_cpf,hora_entrada,hora_saida,disponivel")
+      .eq("dia_semana", diaNome)
+      .in("terapeuta_cpf", todosTerapeutas.map(t=>t.cpf));
+    (hors||[]).forEach(h=>{
+      horarioMap[h.terapeuta_cpf]={
+        hora_entrada: h.hora_entrada?.slice(0,5)||null,
+        hora_saida:   h.hora_saida?.slice(0,5)||null,
+        disponivel:   h.disponivel
+      };
+    });
+
+    // 2. Consulta solicitações acordadas que cobrem a data
     const{data:sols}=await client.from("solicitacoes")
       .select("terapeuta_cpf,tipo,hora_inicio,hora_fim,data_inicio,data_fim")
       .eq("status","Acordado")
       .lte("data_inicio",data)
       .gte("data_fim",data);
-    solicitacoesAtivas=sols||[];
+    (sols||[]).forEach(s=>{ solMap[s.terapeuta_cpf]=s; });
   }
-
-  // Mapa: cpf → solicitação ativa
-  const solMap={};
-  solicitacoesAtivas.forEach(s=>{ solMap[s.terapeuta_cpf]=s; });
 
   function statusTer(ter) {
     const sol = solMap[ter.cpf];
+    // Solicitação tem prioridade sobre tudo
     if(sol) {
       const tipo=sol.tipo;
       if(["Férias","Falta","Atestado","Viagem"].includes(tipo))
         return { disponivel:false, motivo: tipo };
       if(tipo==="Alteração de Horário")
-        return { disponivel:true, hora_entrada:sol.hora_inicio?.slice(0,5), hora_saida:sol.hora_fim?.slice(0,5), motivo:"Horário ajustado" };
+        return {
+          disponivel:true,
+          hora_entrada:sol.hora_inicio?.slice(0,5),
+          hora_saida:sol.hora_fim?.slice(0,5),
+          motivo:"Horário ajustado ⚡"
+        };
     }
-    // Folga fixa semanal
-    if(!terDisponivelNaData(ter, data))
-      return { disponivel:false, motivo:"Folga "+ter.dia_folga };
+
+    // Horário da grade semanal
+    const h = horarioMap[ter.cpf];
+    if(h) {
+      if(!h.disponivel) return { disponivel:false, motivo:"Folga (grade semanal)" };
+      return { disponivel:true, hora_entrada:h.hora_entrada, hora_saida:h.hora_saida, motivo:null };
+    }
+
+    // Fallback: folga fixa do cadastro
+    if(ter.tem_folga === "Sim" && data) {
+      const dow = new Date(data+"T12:00:00").getDay();
+      if(ter.dia_folga === DIAS_PT[dow])
+        return { disponivel:false, motivo:"Folga "+ter.dia_folga };
+    }
+
+    // Fallback: horário padrão do cadastro
     return { disponivel:true, hora_entrada:ter.hora_entrada, hora_saida:ter.hora_saida, motivo:null };
   }
 
   function buildOpts(select, incluiNenhum) {
     select.innerHTML = incluiNenhum ? '<option value="">Nenhum</option>' : '<option value="">Selecione</option>';
-
     const disponiveis=[], indisponiveis=[];
     todosTerapeutas.forEach(t=>{
       const st=statusTer(t);
       if(st.disponivel) disponiveis.push({t,st});
       else indisponiveis.push({t,st});
     });
-
     if(disponiveis.length) {
       const grp=document.createElement("optgroup");
       grp.label="✅ Disponíveis"+(data?" — "+fmtD(data):"");
       disponiveis.forEach(({t,st})=>{
         const horario=st.hora_entrada&&st.hora_saida?` (${st.hora_entrada}–${st.hora_saida})`:"";
-        const ajuste=st.motivo?" ⚡":"";
         const chk=horaIni&&st.hora_entrada&&st.hora_saida?terDisponivelNoHorario({hora_entrada:st.hora_entrada,hora_saida:st.hora_saida},horaIni):{ok:true};
         const opt=document.createElement("option");
         opt.value=t.cpf;
-        opt.textContent=t.nome_profissional+horario+ajuste;
+        opt.textContent=t.nome_profissional+horario+(st.motivo?" ⚡":"");
         if(!chk.ok) opt.style.color="#d97706";
         grp.appendChild(opt);
       });
       select.appendChild(grp);
     }
-
     if(indisponiveis.length) {
       const grp=document.createElement("optgroup");
       grp.label="❌ Indisponíveis"+(data?" — "+fmtD(data):"");
@@ -761,13 +791,13 @@ async function popularSelectsTerapeutas() {
   if(ter1Val) document.getElementById("agTer1").value=ter1Val;
   if(ter2Val) document.getElementById("agTer2").value=ter2Val;
 
-  validarHorarioTerapeutas(solMap);
+  validarHorarioTerapeutas(solMap, horarioMap);
 }
 
-function validarHorarioTerapeutas(solMap) {
+function validarHorarioTerapeutas(solMap, horarioMap) {
   solMap=solMap||{};
+  horarioMap=horarioMap||{};
   const horaIni=document.getElementById("agHoraIni").value;
-  const data=document.getElementById("agData").value;
   const ter1Cpf=document.getElementById("agTer1").value;
   const ter2Cpf=document.getElementById("agTer2").value;
   let avisos=[];
@@ -776,8 +806,18 @@ function validarHorarioTerapeutas(solMap) {
     const t=todosTerapeutas.find(x=>x.cpf===cpf);
     if(!t)return;
     const sol=solMap[cpf];
-    let hEnt=t.hora_entrada, hSai=t.hora_saida;
-    if(sol&&sol.tipo==="Alteração de Horário"){ hEnt=sol.hora_inicio?.slice(0,5); hSai=sol.hora_fim?.slice(0,5); }
+    const h=horarioMap[cpf];
+    let hEnt, hSai;
+    if(sol&&sol.tipo==="Alteração de Horário"){
+      hEnt=sol.hora_inicio?.slice(0,5);
+      hSai=sol.hora_fim?.slice(0,5);
+    } else if(h) {
+      hEnt=h.hora_entrada;
+      hSai=h.hora_saida;
+    } else {
+      hEnt=t.hora_entrada;
+      hSai=t.hora_saida;
+    }
     if(horaIni&&hEnt&&hSai){
       const chk=terDisponivelNoHorario({hora_entrada:hEnt,hora_saida:hSai},horaIni);
       if(!chk.ok) avisos.push(`⚠️ ${t.nome_profissional}: ${chk.msg}`);

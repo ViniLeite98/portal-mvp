@@ -29,13 +29,15 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:#f5f7fb;color:#11182
 .btn-primary:hover{opacity:.9;}
 .btn-danger{background:#dc2626;color:#fff;}
 .btn-danger:hover{opacity:.9;}
-.toolbar{display:flex;align-items:center;gap:10px;padding:12px 24px;background:#fff;border-bottom:1px solid #e5e7eb;flex-shrink:0;}
+.toolbar{display:flex;align-items:center;gap:10px;padding:12px 24px;background:#fff;border-bottom:1px solid #e5e7eb;flex-shrink:0;flex-wrap:wrap;}
 .search-wrap{position:relative;flex:1;max-width:280px;}
 .search-wrap i{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:12px;}
 .search-wrap input{width:100%;padding:8px 10px 8px 30px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;color:#111827;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;}
 .search-wrap input:focus{border-color:#6366f1;background:#fff;}
 .filter-select{padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;color:#374151;font-size:13px;font-family:inherit;outline:none;cursor:pointer;}
 .filter-select:focus{border-color:#6366f1;}
+.link-parametros{margin-left:auto;font-size:12px;color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding:6px 10px;border-radius:7px;transition:all .15s;}
+.link-parametros:hover{background:#f3f4f6;color:#374151;}
 .board-wrap{flex:1;padding:20px 24px;overflow-x:auto;overflow-y:visible;}
 .board{display:flex;gap:14px;align-items:flex-start;width:max-content;min-height:calc(100vh - 165px);padding-bottom:24px;}
 .col{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;}
@@ -145,6 +147,9 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:#f5f7fb;color:#11182
     <option value="">Todas as prioridades</option>
     <option>Crítica</option><option>Alta</option><option>Média</option><option>Baixa</option>
   </select>
+  <a href="parametros.html#kanban_colunas" class="link-parametros">
+    <i class="fa fa-sliders" style="font-size:11px"></i> Gerenciar colunas em Parâmetros →
+  </a>
 </div>
 
 <div class="board-wrap">
@@ -234,7 +239,6 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:#f5f7fb;color:#11182
 <div class="toast" id="toast"><i class="fa fa-check-circle"></i> <span id="toastMsg"></span></div>
 
 <script>
-// ── Seed de colunas padrão ────────────────────────────────────────────────────
 const COLUNAS_SEED = [
   {valor:'Aberto',       descricao:'#3b82f6', ordem:0},
   {valor:'Análise',      descricao:'#f59e0b', ordem:1},
@@ -247,7 +251,6 @@ const COLUNAS_SEED = [
 let COLUNAS = [], cards = [], pessoas = [];
 let cardAtivo = null, editandoId = null, draggingId = null;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function getColuna(id) { return COLUNAS.find(c => c.id === id); }
 function getPessoa(id) { return pessoas.find(p => p.id === id); }
 function prioClass(p)  { return ({Alta:'priority-alta',Media:'priority-media',Baixa:'priority-baixa',Critica:'priority-critica'})[p] || 'priority-baixa'; }
@@ -269,7 +272,6 @@ function tsAgora() {
   return new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 }
 
-// ── Render board ──────────────────────────────────────────────────────────────
 function renderCard(card) {
   const col = getColuna(card.coluna_id);
   const p   = getPessoa(card.responsavel);
@@ -322,7 +324,6 @@ function renderBoard(filtrados) {
   board.innerHTML += '<div class="col-add-new"><button class="btn-add-col" onclick="adicionarColuna()"><i class="fa fa-plus"></i> Nova coluna</button></div>';
 }
 
-// ── Drag & drop ───────────────────────────────────────────────────────────────
 function dragStart(e, id) {
   draggingId = id;
   setTimeout(() => { const el = document.getElementById('card-'+id); if(el) el.classList.add('dragging'); }, 0);
@@ -342,22 +343,17 @@ async function drop(e, colunaId) {
   if (!id) return;
   const card = cards.find(c => c.id === id);
   if (!card || card.coluna_id === colunaId) return;
-
   const anterior = card.coluna_id;
   const novoHist = [...(card.historico||[]), tsAgora()+' — '+(getPessoa(card.responsavel)?.nome||'Sistema')+' moveu de "'+getColuna(anterior)?.nome+'" para "'+getColuna(colunaId)?.nome+'"'];
-
-  // Otimista
   card.coluna_id = colunaId;
   card.historico = novoHist;
   draggingId = null;
   renderBoard();
-
   const {error} = await client.from('kanban_cards').update({coluna_id: colunaId, historico: novoHist}).eq('id', id);
   if (error) { toast('Erro ao mover card', true); await carregarCards(); return; }
   toast('Movido para "'+getColuna(colunaId)?.nome+'"');
 }
 
-// ── Filtro ────────────────────────────────────────────────────────────────────
 function filtrar() {
   const busca = document.getElementById('busca').value.toLowerCase();
   const resp  = document.getElementById('filtroResponsavel').value;
@@ -372,7 +368,6 @@ function filtrar() {
   }));
 }
 
-// ── Modal Novo / Editar ───────────────────────────────────────────────────────
 function abrirModalNovo(colunaPreset) {
   editandoId = null;
   document.getElementById('modalNovoTitulo').textContent = 'Novo Card';
@@ -392,15 +387,12 @@ function fecharModalNovo() { document.getElementById('modalNovo').classList.remo
 async function salvarCard() {
   const titulo = document.getElementById('novoTitulo').value.trim();
   if (!titulo) { alert('Informe um título.'); return; }
-
   const btn = document.getElementById('btnSalvarCard');
   btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Salvando...';
-
   const tag       = document.getElementById('novaTag').value;
   const coluna_id = document.getElementById('novaColuna').value;
   const payload = {
-    titulo,
-    coluna_id,
+    titulo, coluna_id,
     area:       document.getElementById('novaArea').value || null,
     prioridade: document.getElementById('novaPrioridade').value,
     responsavel:document.getElementById('novoResponsavel').value || null,
@@ -409,7 +401,6 @@ async function salvarCard() {
     tags:       tag ? [tag] : [],
     ativo:      true,
   };
-
   let error;
   if (editandoId) {
     const card = cards.find(c => c.id === editandoId);
@@ -422,20 +413,16 @@ async function salvarCard() {
     ({error} = await client.from('kanban_cards').insert(payload));
     if (!error) toast('Card criado!');
   }
-
   btn.disabled = false; btn.innerHTML = '<i class="fa fa-check"></i> Salvar';
-
   if (error) { alert('Erro ao salvar: '+error.message); return; }
   fecharModalNovo();
   await carregarCards();
 }
 
-// ── Modal Detalhe ─────────────────────────────────────────────────────────────
 function abrirDetalhe(id) {
   cardAtivo = id;
   const card = cards.find(c => c.id === id); if (!card) return;
   const col  = getColuna(card.coluna_id);
-
   document.getElementById('detalheId').textContent = '#'+card.id.slice(0,6)+'  ';
   document.getElementById('detalheTitulo').textContent = card.titulo;
   document.getElementById('detalheDesc').textContent = card.descricao || 'Sem descrição.';
@@ -443,18 +430,15 @@ function abrirDetalhe(id) {
     '<div class="detail-badge" style="background:'+col?.cor+'18;color:'+col?.cor+';border:1px solid'+col?.cor+'33">'+col?.nome+'</div>'+
     '<div class="detail-badge" style="background:#f3f4f6;color:#374151">'+(card.area||'—')+'</div>'+
     '<div class="detail-badge" style="background:#f3f4f6;color:#374151">'+card.prioridade+'</div>';
-
   popularSelectsColunas();
   document.getElementById('detalheMoverColuna').value = card.coluna_id;
   document.getElementById('detalheResponsavel').innerHTML =
     '<option value="">Sem responsável</option>'+
     pessoas.map(p => '<option value="'+p.id+'"'+(p.id===card.responsavel?' selected':'')+'>'+p.nome+'</option>').join('');
-
   const hist = card.historico || [];
   document.getElementById('detalheHistorico').innerHTML = hist.length
     ? hist.slice().reverse().map(h => '<div class="history-item"><div class="history-dot"></div><div class="history-text">'+h+'</div></div>').join('')
     : '<div style="font-size:12px;color:#9ca3af">Sem histórico.</div>';
-
   document.getElementById('modalDetalhe').classList.add('open');
 }
 function fecharModalDetalhe() { document.getElementById('modalDetalhe').classList.remove('open'); cardAtivo = null; }
@@ -464,7 +448,6 @@ async function moverCardModal() {
   const card   = cards.find(c => c.id === cardAtivo); if (!card) return;
   const novaCol = document.getElementById('detalheMoverColuna').value;
   if (novaCol === card.coluna_id) return;
-
   const anterior = card.coluna_id;
   const novoHist = [...(card.historico||[]), tsAgora()+' — Movido de "'+getColuna(anterior)?.nome+'" para "'+getColuna(novaCol)?.nome+'"'];
   const {error} = await client.from('kanban_cards').update({coluna_id: novaCol, historico: novoHist}).eq('id', cardAtivo);
@@ -511,7 +494,6 @@ async function excluirCardModal() {
   toast('Card excluído.');
 }
 
-// ── Nova coluna ───────────────────────────────────────────────────────────────
 async function adicionarColuna() {
   const nome = prompt('Nome da nova coluna:'); if (!nome?.trim()) return;
   const cores = ['#06b6d4','#d946ef','#f43f5e','#84cc16','#f97316','#14b8a6'];
@@ -525,7 +507,6 @@ async function adicionarColuna() {
   toast('Coluna "'+nome.trim()+'" criada!');
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────────
 function toast(msg, erro) {
   const el = document.getElementById('toast');
   document.getElementById('toastMsg').textContent = msg;
@@ -535,7 +516,6 @@ function toast(msg, erro) {
   setTimeout(() => el.classList.remove('show'), 2800);
 }
 
-// ── Carregar cards do Supabase ────────────────────────────────────────────────
 async function carregarCards() {
   const {data, error} = await client
     .from('kanban_cards')
@@ -548,7 +528,6 @@ async function carregarCards() {
   renderBoard();
 }
 
-// ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   function waitUser(cb, n) {
     if (n === undefined) n = 30;
@@ -556,26 +535,20 @@ async function init() {
     if (n <= 0) return cb(null);
     setTimeout(() => waitUser(cb, n-1), 100);
   }
-
   waitUser(async function() {
-    // 1. Colunas (cor em descricao)
     let {data:colData, error:colErr} = await client
       .from('parametros').select('id,valor,descricao,ordem')
       .eq('tipo','kanban_colunas').eq('ativo',true).order('ordem');
     if (colErr) { console.error(colErr); colData = []; }
-
     if (!colData || !colData.length) {
       const {data:seeded} = await client.from('parametros')
         .insert(COLUNAS_SEED.map(s => ({tipo:'kanban_colunas',valor:s.valor,descricao:s.descricao,ordem:s.ordem,ativo:true})))
         .select('id,valor,descricao,ordem');
       colData = seeded || [];
     }
-
     COLUNAS = (colData||[])
       .sort((a,b) => (a.ordem??9999)-(b.ordem??9999))
       .map(c => ({id:c.id, nome:c.valor, cor:c.descricao||'#6b7280', ordem:c.ordem}));
-
-    // 2. Terapeutas
     const {data:ter} = await client.from('terapeutas')
       .select('cpf,nome_profissional').eq('status','Ativo').order('nome_profissional');
     const coresPessoa = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#d946ef'];
@@ -583,18 +556,13 @@ async function init() {
       id: t.cpf, nome: t.nome_profissional,
       cor: coresPessoa[t.nome_profissional.charCodeAt(0) % coresPessoa.length]
     }));
-
-    // 3. Selects responsável
     const sf = document.getElementById('filtroResponsavel');
     const sn = document.getElementById('novoResponsavel');
     pessoas.forEach(p => {
       sf.innerHTML += '<option value="'+p.id+'">'+p.nome+'</option>';
       sn.innerHTML += '<option value="'+p.id+'">'+p.nome+'</option>';
     });
-
     popularSelectsColunas();
-
-    // 4. Cards do banco
     await carregarCards();
   });
 }

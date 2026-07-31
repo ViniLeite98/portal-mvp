@@ -42,7 +42,6 @@
       html += hr();
       html += titulo("FINANCEIRO");
       html += item("despesas.html", "fa-receipt", "Despesas");
-      html += item("fluxo_caixa.html", "fa-cash-register", "Fluxo de Caixa");
       html += item("estoque.html", "fa-boxes-stacked", "Estoque");
       html += item("folha_pagamento.html", "fa-money-check-dollar", "Folha de Pagamento");
       html += hr();

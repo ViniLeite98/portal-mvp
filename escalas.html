@@ -411,8 +411,8 @@ function mostrarDia(dia){
 
   // ---- VISÃO ADMIN/APOIO ----
   const baseT=terapeutasFiltradas();
-  const disponiveis=baseT.filter(t=>!estaIndisponivel(t,data));
-  const indisponiveis=baseT.filter(t=>estaIndisponivel(t,data));
+  const disponiveis=baseT.filter(t=>!estaIndisponivel(t,data)).sort((a,b)=>(a.nome_profissional||"").localeCompare(b.nome_profissional||"","pt-BR"));
+  const indisponiveis=baseT.filter(t=>estaIndisponivel(t,data)).sort((a,b)=>(a.nome_profissional||"").localeCompare(b.nome_profissional||"","pt-BR"));
   // terapeutas com horário alterado (estão disponíveis, mas com horário diferente)
   const comHorarioAlterado=disponiveis.filter(t=>!!solicitacaoHorario(t,data));
   const fem=disponiveis.filter(t=>ehFeminina(t)).length;
@@ -620,6 +620,7 @@ function renderGrafico(data){
   canvas._slots=slots; canvas._contagens=contagens;
   canvas._meta={PAD_LEFT,PAD_RIGHT,PAD_TOP,PAD_BOTTOM,chartW,chartH,barW,bW,GAP,W,H};
 
+  canvas.style.cursor="pointer";
   canvas.onmousemove=function(e){
     const rect=canvas.getBoundingClientRect();
     const mx=e.clientX-rect.left;
@@ -632,7 +633,7 @@ function renderGrafico(data){
       const mm=(slot%60).toString().padStart(2,"0");
       const hh2=Math.floor((slot+60)/60).toString().padStart(2,"0");
       const mm2=((slot+60)%60).toString().padStart(2,"0");
-      tooltip.textContent=hh+":"+mm+"–"+hh2+":"+mm2+"  •  "+count+" terapeuta"+(count!==1?"s":"");
+      tooltip.textContent=hh+":"+mm+"–"+hh2+":"+mm2+"  •  "+count+" terapeuta"+(count!==1?"s":"")+" — clique para filtrar";
       tooltip.style.display="block";
       tooltip.style.left=(e.clientX-tooltip.offsetWidth/2)+"px";
       tooltip.style.top=(e.clientY-44)+"px";
@@ -641,6 +642,71 @@ function renderGrafico(data){
     }
   };
   canvas.onmouseleave=function(){ tooltip.style.display="none"; };
+  canvas.onclick=function(e){
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const meta=canvas._meta;
+    const i=Math.floor((mx-meta.PAD_LEFT)/meta.barW);
+    if(i<0||i>=canvas._slots.length) return;
+    const slot=canvas._slots[i];
+    const dataAtual=new Date(ano,mes,diaSelecionado);
+    const baseT=terapeutasFiltradas();
+    // terapeutas disponíveis nesse slot
+    const noSlot=baseT.filter(t=>{
+      if(estaIndisponivel(t,dataAtual)) return false;
+      const s=solicitacaoHorario(t,dataAtual);
+      const en=horaParaMinutos(s?s.hora_inicio:t.hora_entrada);
+      const sa=horaParaMinutos(s?s.hora_fim:t.hora_saida);
+      if(en===null||sa===null) return false;
+      return slot>=en && slot<sa;
+    }).sort((a,b)=>(a.nome_profissional||"").localeCompare(b.nome_profissional||"","pt-BR"));
+    const foraSlot=baseT.filter(t=>{
+      if(estaIndisponivel(t,dataAtual)) return true;
+      const s=solicitacaoHorario(t,dataAtual);
+      const en=horaParaMinutos(s?s.hora_inicio:t.hora_entrada);
+      const sa=horaParaMinutos(s?s.hora_fim:t.hora_saida);
+      if(en===null||sa===null) return true;
+      return !(slot>=en && slot<sa);
+    }).sort((a,b)=>(a.nome_profissional||"").localeCompare(b.nome_profissional||"","pt-BR"));
+    const hh=Math.floor(slot/60).toString().padStart(2,"0");
+    const mm=(slot%60).toString().padStart(2,"0");
+    const hh2=Math.floor((slot+60)/60).toString().padStart(2,"0");
+    const mm2=((slot+60)%60).toString().padStart(2,"0");
+    const horaStr=hh+":"+mm+"–"+hh2+":"+mm2;
+    const painel=document.getElementById("painelDia");
+    const dataStr=String(diaSelecionado).padStart(2,"0")+"/"+String(mes+1).padStart(2,"0")+"/"+ano;
+    let html=
+      '<div class="dia-header"><h3>'+dataStr+'</h3>'+
+      '<span class="dia-badge" style="background:#eff6ff;color:#1d4ed8;display:flex;align-items:center;gap:5px">'+
+      '<i class="fa fa-clock"></i> '+horaStr+'</span>'+
+      '<button onclick="mostrarDia('+diaSelecionado+')" style="background:#f3f4f6;color:#374151;border:none;border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;margin-left:8px">✕ Limpar filtro</button></div>';
+    html+='<div style="font-size:12px;color:#6b7280;margin-bottom:8px">'+noSlot.length+' disponível(is) neste horário</div>';
+    html+='<div class="section-label">Disponíveis às '+horaStr+' ('+noSlot.length+')</div>';
+    if(noSlot.length){
+      html+='<div class="terapeutas-grid">';
+      noSlot.forEach(function(t){
+        const s=solicitacaoHorario(t,dataAtual);
+        const detalhe=s?'<span class="badge-horario"><i class="fa fa-clock"></i> '+fmtHora(s.hora_inicio)+'–'+fmtHora(s.hora_fim)+'</span>':(t.hora_entrada||"")+' – '+(t.hora_saida||"");
+        html+='<div class="t-card"><div class="t-avatar '+(ehFeminina(t)?"fem":"masc")+'"><i class="fa '+(ehFeminina(t)?"fa-person-dress":"fa-person")+'"></i></div>'+
+          '<div class="t-info"><div class="t-nome" title="'+t.nome_profissional+'">'+t.nome_profissional+'</div><div class="t-detalhe">'+detalhe+'</div></div></div>';
+      });
+      html+='</div>';
+    }
+    if(foraSlot.length){
+      html+='<div class="section-label">Fora deste horário ('+foraSlot.length+')</div>';
+      html+='<div class="terapeutas-grid">';
+      foraSlot.forEach(function(t){
+        const ausente=estaIndisponivel(t,dataAtual);
+        const s=!ausente?solicitacaoHorario(t,dataAtual):null;
+        const detalhe=ausente?'<span class="badge-motivo">Ausente</span>':s?'<span class="badge-horario">'+fmtHora(s.hora_inicio)+'–'+fmtHora(s.hora_fim)+'</span>':(t.hora_entrada||"")+' – '+(t.hora_saida||"");
+        html+='<div class="t-card indisp"><div class="t-avatar '+(ehFeminina(t)?"fem":"masc")+'"><i class="fa '+(ehFeminina(t)?"fa-person-dress":"fa-person")+'"></i></div>'+
+          '<div class="t-info"><div class="t-nome" title="'+t.nome_profissional+'">'+t.nome_profissional+'</div><div class="t-detalhe">'+detalhe+'</div></div></div>';
+      });
+      html+='</div>';
+    }
+    painel.innerHTML=html;
+    tooltip.style.display="none";
+  };
 }
 
 document.addEventListener('DOMContentLoaded',function(){

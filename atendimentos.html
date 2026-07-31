@@ -318,34 +318,32 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   </div>
   <div class="mb" style="max-height:80vh;overflow-y:auto;">
 
-    <!-- Dados básicos -->
+    <!-- 1. Data e hora -->
     <div class="grid3">
-      <div class="mfield">
-        <label>Data *</label>
-        <input type="date" id="agData">
-      </div>
-      <div class="mfield">
-        <label>Hora Início *</label>
-        <input type="time" id="agHoraIni">
-      </div>
-      <div class="mfield">
-        <label>Hora Fim</label>
-        <input type="time" id="agHoraFim">
-      </div>
+      <div class="mfield"><label>Data *</label><input type="date" id="agData"></div>
+      <div class="mfield"><label>Hora Início *</label><input type="time" id="agHoraIni"></div>
+      <div class="mfield"><label>Hora Fim</label><input type="time" id="agHoraFim"></div>
     </div>
 
+    <!-- 2. Serviços (primeiro) -->
+    <div class="sep-titulo"><i class="fa fa-spa"></i> Serviços</div>
+    <div id="agServItens"></div>
+    <button class="btn-add" onclick="addServAg()"><i class="fa fa-plus"></i> Adicionar serviço</button>
+
+    <!-- 3. Terapeutas (depois do serviço) -->
+    <div class="sep-titulo"><i class="fa fa-user-tie"></i> Terapeutas</div>
     <div class="grid2">
       <div class="mfield">
         <label>Terapeuta 1 *</label>
         <select id="agTer1"><option value="">Selecione</option></select>
       </div>
-      <div class="mfield">
-        <label>Terapeuta 2 <span style="font-weight:400;color:#9ca3af">— opcional</span></label>
+      <div class="mfield" id="agTer2Wrap">
+        <label id="agTer2Label">Terapeuta 2 <span style="font-weight:400;color:#9ca3af">— opcional</span></label>
         <select id="agTer2"><option value="">Nenhum</option></select>
       </div>
     </div>
 
-    <!-- Cliente principal -->
+    <!-- 4. Cliente principal -->
     <div class="sep-titulo"><i class="fa fa-user"></i> Cliente Principal</div>
     <div class="mfield">
       <label>Buscar cliente *</label>
@@ -357,7 +355,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
     </div>
 
-    <!-- Clientes adicionais -->
+    <!-- 5. Clientes adicionais -->
     <div class="sep-titulo"><i class="fa fa-users"></i> Outras Pessoas <span style="font-weight:400;color:#9ca3af;font-size:10px">— opcional</span></div>
     <div id="cliExtraLista"></div>
     <div class="mfield">
@@ -368,14 +366,9 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
     </div>
 
-    <!-- Serviços -->
-    <div class="sep-titulo"><i class="fa fa-spa"></i> Serviços</div>
-    <div id="agServItens"></div>
-    <button class="btn-add" onclick="addServAg()"><i class="fa fa-plus"></i> Adicionar serviço</button>
-
-    <!-- Resumo financeiro -->
+    <!-- 6. Valores -->
     <div class="sep-titulo"><i class="fa fa-calculator"></i> Valores</div>
-    <div class="resumo" id="agResumo">
+    <div class="resumo">
       <div class="rl"><span>Valor bruto</span><span id="agRBruto">R$ 0,00</span></div>
       <div class="rl"><span>Desconto</span><span id="agRDesc" style="color:#dc2626">- R$ 0,00</span></div>
       <div class="rl"><span>Acréscimo</span><span id="agRAcres" style="color:#16a34a">+ R$ 0,00</span></div>
@@ -387,7 +380,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       <div class="mfield"><label style="color:#16a34a">Acréscimo (R$)</label><input type="number" id="agAcres" value="0" step="0.01" oninput="calcAgRes()"></div>
     </div>
 
-    <!-- Sinal -->
+    <!-- 7. Sinal -->
     <div class="sep-titulo"><i class="fa fa-hand-holding-dollar"></i> Sinal <span style="font-weight:400;color:#9ca3af;font-size:10px">— apenas para agendamentos</span></div>
     <div class="sinal-box">
       <div class="sb-title"><i class="fa fa-circle-check"></i> Sinal recebido</div>
@@ -397,8 +390,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
     </div>
 
-    <!-- Origem / obs -->
-    <div class="grid2">
+    <!-- 8. Origem / obs -->
+    <div class="grid2" style="margin-top:12px;">
       <div class="mfield"><label>Origem do Lead</label>
         <select id="agOrigem">
           <option value="">Não informado</option>
@@ -648,6 +641,30 @@ let ssAgCli = null, ssAgCliEx = null;
 let ncCallback = null;
 
 const fmtM = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+
+function nomeServico(s) {
+  if(!s) return "—";
+  return [s.grupo, s.tempo ? s.tempo+"min" : null, s.subgrupo].filter(Boolean).join(" ");
+}
+
+function precisaDoisTerapeutas(s) {
+  if(!s) return false;
+  const g = (s.grupo||"").toLowerCase();
+  const sg = (s.subgrupo||"").toLowerCase();
+  return g.includes("four hands") || g.includes("simultân") || sg.includes("four hands") || sg.includes("simultân");
+}
+
+function atualizarTer2(servico) {
+  const label = document.getElementById("agTer2Label");
+  const sel = document.getElementById("agTer2");
+  if(precisaDoisTerapeutas(servico)) {
+    label.innerHTML = 'Terapeuta 2 <span style="color:#dc2626;font-weight:700">*</span>';
+    sel.querySelector("option[value='']").textContent = "Obrigatório";
+  } else {
+    label.innerHTML = 'Terapeuta 2 <span style="font-weight:400;color:#9ca3af">— opcional</span>';
+    sel.querySelector("option[value='']").textContent = "Nenhum";
+  }
+}
 const fmtD = v => { if(!v)return"—"; const[y,m,d]=v.split("-"); return`${d}/${m}/${y}`; };
 const fmtH = v => v ? v.substring(0,5) : "";
 const norm = s => (s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
@@ -757,7 +774,7 @@ async function carregarDados() {
   const{data:servs}=await client.from("servicos").select("*").eq("status","ativo").order("grupo");
   dadosServicos=servs||[]; dadosServicos.forEach(s=>servicosMap[s.id]=s);
   document.getElementById("fServ").innerHTML='<option value="">Todos</option>'+
-    dadosServicos.map(s=>`<option value="${s.id}">${[s.grupo,s.subgrupo].filter(Boolean).join(" ")}</option>`).join("");
+    dadosServicos.map(s=>`<option value="${s.id}">${nomeServico(s)}</option>`).join("");
 
   // Terapeutas
   const{data:ters}=await client.from("terapeutas").select("cpf,nome_profissional").eq("status","Ativo")
@@ -970,13 +987,16 @@ function addServAg(){
   const row=document.createElement("div"); row.className="serv-row";
   const sel=document.createElement("select");
   sel.innerHTML="<option value=''>Selecionar serviço</option>";
-  dadosServicos.forEach(s=>sel.innerHTML+=`<option value="${s.id}">${[s.grupo,s.subgrupo,s.tempo?s.tempo+"min":""].filter(Boolean).join(" ")}</option>`);
+  dadosServicos.forEach(s=>sel.innerHTML+=`<option value="${s.id}">${nomeServico(s)}</option>`);
   const lv=document.createElement("span"); lv.className="lbl"; lv.textContent="R$";
   const iv=document.createElement("input"); iv.type="number"; iv.placeholder="Valor"; iv.step="0.01"; iv.addEventListener("input",calcAgRes);
   const ld=document.createElement("span"); ld.className="lbl"; ld.textContent="Desc";
   const id2=document.createElement("input"); id2.type="number"; id2.placeholder="0"; id2.step="0.01"; id2.value="0"; id2.addEventListener("input",calcAgRes);
-  sel.addEventListener("change",()=>{const s=servicosMap[sel.value];if(s){iv.value=s.valor||0;id2.value=0;calcAgRes();}});
-  const btn=document.createElement("button"); btn.className="btn-rem"; btn.innerHTML='<i class="fa fa-times"></i>'; btn.onclick=()=>{c.removeChild(row);calcAgRes();};
+  sel.addEventListener("change",()=>{
+    const s=servicosMap[sel.value];
+    if(s){iv.value=Math.abs(s.valor||0);id2.value=0;calcAgRes();atualizarTer2(s);}
+  });
+  const btn=document.createElement("button"); btn.className="btn-rem"; btn.innerHTML='<i class="fa fa-times"></i>'; btn.onclick=()=>{c.removeChild(row);calcAgRes();atualizarTer2(null);};
   [sel,lv,iv,ld,id2,btn].forEach(el=>row.appendChild(el));
   c.appendChild(row);
 }

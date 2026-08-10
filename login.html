@@ -311,7 +311,7 @@ function entrar() {
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)){showMsg("Digite um email válido.","e");return;}
   btn("bEntrar",true,"Entrar");
   document.getElementById("msg").className="msg";
-  client.auth.signInWithPassword({email:email,password:senha}).then(function(res){
+  client.auth.signInWithPassword({email:email,password:senha}).then(async function(res){
     if(res.error){
       registrarLog(null, email, null, "falha", res.error.message);
       showMsg(traduzir(res.error.message),"e");
@@ -320,6 +320,20 @@ function entrar() {
     }
     var user = res.data.user;
     var nome = user.user_metadata && user.user_metadata.nome ? user.user_metadata.nome : null;
+
+    // ── Verifica se o colaborador está inativo ──
+    var perfilRes = await client.from("perfis").select("cpf_terapeuta").eq("id", user.id).single();
+    if(perfilRes.data && perfilRes.data.cpf_terapeuta) {
+      var terapeutaRes = await client.from("terapeutas").select("status").eq("cpf", perfilRes.data.cpf_terapeuta).single();
+      if(terapeutaRes.data && terapeutaRes.data.status === "Inativo") {
+        await client.auth.signOut();
+        registrarLog(user.id, email, nome, "falha", "Usuário inativo");
+        showMsg("Seu acesso foi desativado. Entre em contato com a administração.","e");
+        btn("bEntrar",false,"Entrar");
+        return;
+      }
+    }
+
     registrarLog(user.id, email, nome, "sucesso", null);
     buscarPerfil(user.id, 0, function(perfil){ irPara(perfil.role); });
   });

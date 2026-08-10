@@ -126,7 +126,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .pix-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .salario-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px;}
 .salario-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-
 /* ── HORÁRIOS ── */
 .horario-grid{display:flex;flex-direction:column;gap:10px;}
 .horario-row{display:grid;grid-template-columns:120px 1fr 1fr 80px;gap:10px;align-items:center;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;}
@@ -142,7 +141,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .horario-input{padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;width:100%;}
 .horario-input:focus{outline:none;border-color:#2563eb;}
 .horario-info{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;font-size:12px;color:#1d4ed8;margin-bottom:16px;display:flex;align-items:flex-start;gap:8px;}
-
 /* ── FOTOS ── */
 .foto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
 .foto-card{position:relative;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;background:#f9fafb;}
@@ -150,7 +148,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .foto-card-info{padding:7px 10px;font-size:11px;color:#6b7280;}
 .foto-card-del{position:absolute;top:6px;right:6px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;}
 .foto-card-del:hover{background:#dc2626;}
-
 @media (max-width: 1366px) {
   .content{padding:24px;}h1{font-size:20px;}th,td{padding:10px;font-size:13px;}
   .filter-group input{width:180px;font-size:13px;}.modal-content{width:98vw;}.side-nav{width:160px;}
@@ -534,13 +531,11 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 
 <script>
 const DIAS_SEMANA = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
-
 let cpfAtual = null;
 let cpfEdicaoHabilitada = false;
 var filaItems = [], filaCounter = 0;
 var filaFotos = [], filaFotoCounter = 0;
 const CARGOS_FIXOS = ["Gerente","Atendente","Recepcionista","Faxineira","Analista"];
-
 const campos = [
   "nome_completo","nome_profissional","cpf","rg","nascimento","email",
   "tipo_sanguineo","telefone","telefone_emergencia","cep","rua","numero",
@@ -550,7 +545,6 @@ const campos = [
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio",
   "status","data_inativacao","peso","altura","cor_cabelo","salario_base","regime"
 ];
-
 function mascara(id,fn){const el=document.getElementById(id);if(!el)return;el.addEventListener('input',function(){const pos=this.selectionStart,prev=this.value;this.value=fn(this.value);if(this.value.length===prev.length)this.setSelectionRange(pos,pos);});}
 function fmtCPF(v){v=v.replace(/\D/g,'').substring(0,11);if(v.length<=3)return v;if(v.length<=6)return v.slice(0,3)+'.'+v.slice(3);if(v.length<=9)return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);}
 function fmtRG(v){v=v.replace(/\D/g,'').substring(0,9);if(v.length<=2)return v;if(v.length<=5)return v.slice(0,2)+'.'+v.slice(2);if(v.length<=8)return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8);}
@@ -558,18 +552,15 @@ function fmtTel(v){v=v.replace(/\D/g,'').substring(0,11);if(v.length<=2)return v
 function fmtCEP(v){v=v.replace(/\D/g,'').substring(0,8);if(v.length<=5)return v;return v.slice(0,5)+'-'+v.slice(5);}
 function fmtCPFDisplay(v){v=(v||"").replace(/\D/g,"");if(v.length!==11)return v;return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);}
 function limparCPF(v){return (v||"").replace(/\D/g,"");}
-
 function aplicarMascaras(){
   mascara('cpf',fmtCPF);mascara('rg',fmtRG);mascara('telefone',fmtTel);
   mascara('telefone_emergencia',fmtTel);mascara('cep',fmtCEP);
   const uf=document.getElementById('uf');
   if(uf)uf.addEventListener('input',function(){this.value=this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2);});
 }
-
 function bloquearCPF(){document.getElementById("cpf").readOnly=true;document.getElementById("cpf_aviso").style.display="flex";cpfEdicaoHabilitada=false;}
 function habilitarEdicaoCPF(){if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?"))return;const el=document.getElementById("cpf");el.readOnly=false;el.focus();el.select();document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=true;}
 function desbloquearCPF(){document.getElementById("cpf").readOnly=false;document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=false;}
-
 function aoMudarCargo(){
   const cargo=document.getElementById("cargo").value;
   const isFixo=CARGOS_FIXOS.includes(cargo);
@@ -577,7 +568,6 @@ function aoMudarCargo(){
   if(!isFixo)document.getElementById("salario_base").value="";
   atualizarProgresso();
 }
-
 function mudarTab(tab,btn){
   document.querySelectorAll(".tab-panel").forEach(el=>el.classList.remove("active"));
   document.querySelectorAll(".side-nav .side-btn").forEach(el=>el.classList.remove("active"));
@@ -585,7 +575,6 @@ function mudarTab(tab,btn){
   btn.classList.add("active");abaAtiva=tab;atualizarProgresso();
   if(tab==="horarios") renderHorarioGrid();
 }
-
 function getPayload(){
   const obj={};
   campos.forEach(c=>{
@@ -596,7 +585,6 @@ function getPayload(){
   });
   return obj;
 }
-
 function setForm(data){
   campos.forEach(c=>{
     const el=document.getElementById(c);if(!el)return;
@@ -608,11 +596,9 @@ function setForm(data){
   ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id=>{const el=document.getElementById(id);if(el&&el.value)el.dispatchEvent(new Event('input'));});
   aoMudarCargo();
 }
-
 // ── HORÁRIOS ────────────────────────────────────────────────────────────────
 let horariosDados = {};
 let solicitacaoAtiva = null;
-
 function renderHorarioGrid() {
   const grid = document.getElementById("horarioGrid");
   const hEntPad = document.getElementById("hora_entrada").value || "09:00";
@@ -655,7 +641,6 @@ function renderHorarioGrid() {
     </div>`;
   }).join("");
 }
-
 function toggleDia(dia, disponivel) {
   const row = document.getElementById("hrow-"+dia);
   const entEl = document.getElementById("hent-"+dia);
@@ -673,7 +658,6 @@ function toggleDia(dia, disponivel) {
     txt.textContent = "Folga";
   }
 }
-
 async function carregarHorarios(cpf) {
   horariosDados = {}; solicitacaoAtiva = null;
   const hoje = new Date().toISOString().split("T")[0];
@@ -687,7 +671,6 @@ async function carregarHorarios(cpf) {
   (resHor.data||[]).forEach(h => { horariosDados[h.dia_semana] = h; });
   if(resSol.data && resSol.data.length > 0) solicitacaoAtiva = resSol.data[0];
 }
-
 async function salvarHorarios() {
   if(!cpfAtual) { alert("Salve o cadastro primeiro."); return; }
   const rows = DIAS_SEMANA.map(dia => {
@@ -702,14 +685,12 @@ async function salvarHorarios() {
   await carregarHorarios(cpfAtual);
   alert("Horários salvos com sucesso!");
 }
-
 // ── ESTADO GLOBAL ──
 let todosRegistros = [];
 let registrosFiltrados = [];
 let ordemCol = 'nome';
 let ordemDir = 'asc';
 let paginaAtual = 1;
-
 function atualizarContador(total, statusFiltro, cargoFiltro) {
   const countEl = document.getElementById("collabCount");
   const labelEl = document.getElementById("collabLabel");
@@ -722,27 +703,23 @@ function atualizarContador(total, statusFiltro, cargoFiltro) {
   if(cargoFiltro) partes.push("· " + cargoFiltro);
   labelEl.textContent = sufixo + (partes.length ? " " + partes.join(" ") : "");
 }
-
 function limparFiltros(){
   document.getElementById("pesquisaNome").value = "";
   document.getElementById("filtroStatus").value = "Ativo";
   document.getElementById("filtroCargo").value = "";
   carregar();
 }
-
 function checarBtnLimpar(){
   const nome = document.getElementById("pesquisaNome").value;
   const status = document.getElementById("filtroStatus").value;
   const cargo = document.getElementById("filtroCargo").value;
   document.getElementById("btnLimparFiltros").classList.toggle("visible", !!(nome || status !== "Ativo" || cargo));
 }
-
 function ordenarPor(col) {
   if(ordemCol === col) { ordemDir = ordemDir === 'asc' ? 'desc' : 'asc'; }
   else { ordemCol = col; ordemDir = 'asc'; }
   atualizarIconesOrdem(); paginaAtual = 1; aplicarOrdemEFiltro();
 }
-
 function atualizarIconesOrdem() {
   ['nome','cargo'].forEach(c => {
     const th = document.getElementById('th-' + c); if(!th) return;
@@ -752,7 +729,6 @@ function atualizarIconesOrdem() {
     else { icon.className = 'fa fa-sort sort-icon'; }
   });
 }
-
 async function carregar(){
   if(!window.usuarioLogado){setTimeout(carregar,100);return;}
   const u=window.usuarioLogado;
@@ -767,9 +743,7 @@ async function carregar(){
   if(error){console.error(error);return;}
   todosRegistros = data || []; paginaAtual = 1; aplicarOrdemEFiltro(); checarBtnLimpar();
 }
-
 function filtrarTabela(){ paginaAtual = 1; aplicarOrdemEFiltro(); }
-
 function aplicarOrdemEFiltro(){
   const filtroNome = document.getElementById("pesquisaNome").value.toLowerCase();
   const filtroCargo = document.getElementById("filtroCargo").value;
@@ -789,7 +763,6 @@ function aplicarOrdemEFiltro(){
   atualizarContador(registrosFiltrados.length, document.getElementById("filtroStatus").value, document.getElementById("filtroCargo").value);
   checarBtnLimpar(); renderTabela();
 }
-
 function renderTabela(){
   const porPag = parseInt(document.getElementById("porPagina").value) || 10;
   const total = registrosFiltrados.length;
@@ -833,7 +806,6 @@ function renderTabela(){
   });
   addBtn('<i class="fa fa-chevron-right"></i>', paginaAtual+1, false, paginaAtual===totalPags);
 }
-
 function resetModal(){
   campos.forEach(c=>{const el=document.getElementById(c);if(el)el.value="";});
   document.getElementById("hora_entrada").value="09:00";
@@ -853,7 +825,6 @@ function resetModal(){
   if(roleEl)roleEl.disabled=!isAdmin;
   mudarTab("pessoais",document.querySelector(".side-nav .side-btn"));
 }
-
 function abrirNovo(){
   cpfAtual=null;cpfEdicaoHabilitada=false;resetModal();desbloquearCPF();
   const isAdm=window.usuarioLogado?.role==="admin";
@@ -872,7 +843,6 @@ function abrirNovo(){
   abaAtiva="pessoais";atualizarProgresso();
   document.getElementById("modal").style.display="flex";
 }
-
 async function editar(cpf){
   cpfAtual=cpf;cpfEdicaoHabilitada=false;
   const {data,error}=await client.from("terapeutas").select("*").eq("cpf",cpf).single();
@@ -901,9 +871,7 @@ async function editar(cpf){
   }
   document.getElementById("modal").style.display="flex";
 }
-
 function fecharModal(){document.getElementById("modal").style.display="none";}
-
 async function salvar(){
   const u=window.usuarioLogado;const payload=getPayload();
   if(!payload.nome_completo||!payload.nome_profissional||!payload.email){alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");return;}
@@ -979,13 +947,10 @@ async function salvar(){
   }
   carregar();fecharModal();
 }
-
 async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?"))return;
-  const {data:docs}=await client.from("documentos").select("id,url").eq("equipe_id",cpf);
+  const {data:docs}=await client.from("documentos").select("id").eq("equipe_id",cpf);
   if(docs&&docs.length>0){
-    const paths=docs.map(d=>d.url.split("/storage/v1/object/public/documentos/")[1]).filter(Boolean).map(p=>decodeURIComponent(p));
-    if(paths.length>0)await client.storage.from("documentos").remove(paths);
     await client.from("documentos").delete().eq("equipe_id",cpf);
   }
   await client.from("solicitacoes").delete().eq("terapeuta_cpf",cpf);
@@ -994,18 +959,15 @@ async function excluir(cpf){
   if(error){alert("Erro ao excluir: "+error.message);return;}
   carregar();
 }
-
 function limparNome(nome){return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");}
 function iconeDoc(nome){const ext=(nome||"").split(".").pop().toLowerCase();if(["jpg","jpeg","png","gif","webp"].includes(ext))return "fa-image";if(ext==="pdf")return "fa-file-pdf";if(["doc","docx"].includes(ext))return "fa-file-word";return "fa-file-alt";}
-
 async function carregarDocs(cpf){
   const {data,error}=await client.from("documentos").select("*").eq("equipe_id",cpf).neq("tipo","Foto").order("created_at",{ascending:false});
   const lista=document.getElementById("docLista");const badge=document.getElementById("docBadge");
   if(error||!data||data.length===0){lista.innerHTML='<div class="doc-empty">Nenhum documento anexado.</div>';badge.style.display="none";return;}
   badge.textContent=data.length;badge.style.display="";
-  lista.innerHTML=data.map(d=>'<div class="doc-item" id="doc-'+d.id+'"><div class="doc-item-left"><div class="doc-icon"><i class="fa '+iconeDoc(d.nome_arquivo)+'"></i></div><div><div class="doc-name">'+d.nome_arquivo+'</div><div class="doc-tipo">'+d.tipo+' · '+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div></div></div><div class="doc-item-right"><a href="'+d.url+'" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc(\''+d.id+'\',\''+d.url+'\')"><i class="fa fa-trash"></i></button></div></div>').join("");
+  lista.innerHTML=data.map(d=>'<div class="doc-item" id="doc-'+d.id+'"><div class="doc-item-left"><div class="doc-icon"><i class="fa '+iconeDoc(d.nome_arquivo)+'"></i></div><div><div class="doc-name">'+d.nome_arquivo+'</div><div class="doc-tipo">'+d.tipo+' · '+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div></div></div><div class="doc-item-right"><a href="'+d.url+'" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc(\''+d.id+'\')"><i class="fa fa-trash"></i></button></div></div>').join("");
 }
-
 function adicionarFilaUpload(){
   const tipo=document.getElementById("doc_tipo").value;
   const files=document.getElementById("doc_arquivo").files;
@@ -1021,16 +983,13 @@ function adicionarFilaUpload(){
   document.getElementById("doc_arquivo").value="";
   atualizarBtnEnviar();
 }
-
 function removerFilaItem(id){filaItems=filaItems.filter(i=>i.id!==id);const el=document.getElementById(id);if(el)el.remove();atualizarBtnEnviar();}
-
 function atualizarBtnEnviar(){
   const pendentes=filaItems.filter(i=>i.status==="pendente");
   const btn=document.getElementById("btnEnviarTodos");
   if(btn)btn.style.display=(pendentes.length&&cpfAtual)?"inline-flex":"none";
   if(btn)btn.innerHTML='<i class="fa fa-upload"></i> Enviar '+pendentes.length+' arquivo'+(pendentes.length!==1?"s":"");
 }
-
 async function enviarTodos(){
   if(!cpfAtual)return;
   const pendentes=filaItems.filter(i=>i.status==="pendente");
@@ -1050,16 +1009,13 @@ async function enviarTodos(){
   }
   setTimeout(()=>{filaItems=filaItems.filter(i=>i.status!=="ok");atualizarBtnEnviar();carregarDocs(cpfAtual);if(btn)btn.disabled=false;},1600);
 }
-
-async function excluirDoc(id,url){
+async function excluirDoc(id){
   if(!confirm("Excluir este documento?"))return;
-  const path=url.split("/storage/v1/object/public/documentos/")[1];
-  if(path)await client.storage.from("documentos").remove([decodeURIComponent(path)]);
-  await client.from("documentos").delete().eq("id",id);carregarDocs(cpfAtual);
+  const {error}=await client.from("documentos").delete().eq("id",id);
+  if(error){alert("Erro ao excluir: "+error.message);return;}
+  carregarDocs(cpfAtual);
 }
-
 // ── FOTOS ────────────────────────────────────────────────────────────────────
-
 function adicionarFilaFoto() {
   const files = document.getElementById("foto_arquivo").files;
   if(!files || !files.length) return;
@@ -1074,20 +1030,17 @@ function adicionarFilaFoto() {
   document.getElementById("foto_arquivo").value = "";
   atualizarBtnFotos();
 }
-
 function removerFilaFoto(id) {
   filaFotos = filaFotos.filter(i => i.id !== id);
   const el = document.getElementById(id); if(el) el.remove();
   atualizarBtnFotos();
 }
-
 function atualizarBtnFotos() {
   const pendentes = filaFotos.filter(i => i.status === "pendente");
   const btn = document.getElementById("btnEnviarFotos");
   if(btn) btn.style.display = (pendentes.length && cpfAtual) ? "inline-flex" : "none";
   if(btn) btn.innerHTML = '<i class="fa fa-upload"></i> Enviar ' + pendentes.length + ' foto' + (pendentes.length !== 1 ? "s" : "");
 }
-
 async function enviarFotos() {
   if(!cpfAtual) return;
   const pendentes = filaFotos.filter(i => i.status === "pendente");
@@ -1108,7 +1061,6 @@ async function enviarFotos() {
   }
   setTimeout(() => { filaFotos = filaFotos.filter(i => i.status !== "ok"); atualizarBtnFotos(); carregarFotos(cpfAtual); if(btn) btn.disabled = false; }, 1600);
 }
-
 async function carregarFotos(cpf) {
   const {data, error} = await client.from("documentos").select("*").eq("equipe_id", cpf).eq("tipo", "Foto").order("created_at", {ascending: false});
   const lista = document.getElementById("fotoLista");
@@ -1121,26 +1073,22 @@ async function carregarFotos(cpf) {
   lista.innerHTML = '<div class="foto-grid">' + data.map(d =>
     '<div class="foto-card" id="foto-'+d.id+'">'+
     '<img src="'+d.url+'" alt="'+d.nome_arquivo+'" onclick="window.open(\''+d.url+'\',\'_blank\')">'+
-    '<button class="foto-card-del" onclick="excluirFoto(\''+d.id+'\',\''+d.url+'\')"><i class="fa fa-trash"></i></button>'+
+    '<button class="foto-card-del" onclick="excluirFoto(\''+d.id+'\')"><i class="fa fa-trash"></i></button>'+
     '<div class="foto-card-info">'+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div>'+
     '</div>'
   ).join("") + '</div>';
 }
-
-async function excluirFoto(id, url) {
+async function excluirFoto(id) {
   if(!confirm("Excluir esta foto?")) return;
-  const path = url.split("/storage/v1/object/public/documentos/")[1];
-  if(path) await client.storage.from("documentos").remove([decodeURIComponent(path)]);
-  await client.from("documentos").delete().eq("id", id);
+  const {error} = await client.from("documentos").delete().eq("id", id);
+  if(error) { alert("Erro ao excluir: " + error.message); return; }
   carregarFotos(cpfAtual);
 }
-
 function aoMudarStatus(select){
   const campo=document.getElementById("campo_data_inativacao");const input=document.getElementById("data_inativacao");
   if(select.value==="Inativo"){campo.style.display="";if(!input.value)input.value=new Date().toISOString().split("T")[0];}
   else{campo.style.display="none";input.value="";}
 }
-
 const CAMPOS_POR_ABA={
   pessoais:[{id:"nome_completo",label:"Nome Completo"},{id:"nome_profissional",label:"Nome Profissional"},{id:"cpf",label:"CPF"},{id:"email",label:"Email"}],
   contatos:[{id:"telefone",label:"Telefone"}],
@@ -1151,7 +1099,6 @@ const CAMPOS_POR_ABA={
 };
 const TODOS_CAMPOS=Object.values(CAMPOS_POR_ABA).flat();
 let abaAtiva="pessoais";
-
 function atualizarProgresso(){
   const wrap=document.getElementById("progressWrap");if(!wrap||wrap.style.display==="none")return;
   const total=TODOS_CAMPOS.length;
@@ -1172,7 +1119,6 @@ function atualizarProgresso(){
       '<div style="border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px">Passe para outras abas para ver os campos delas.</div>';
   }
 }
-
 document.addEventListener('DOMContentLoaded',()=>{
   aplicarMascaras();
   atualizarIconesOrdem();

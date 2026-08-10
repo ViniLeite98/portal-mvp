@@ -28,12 +28,12 @@ var MENU = [
   { sep:true,                                                                                    roles:["admin","apoio"] },
   { titulo:"FINANCEIRO",                                                                         roles:["admin","apoio"] },
   { href:"despesas.html",         icon:"fa-receipt",              label:"Despesas",             roles:["admin","apoio"] },
-  { href:"fluxo_caixa.html",      icon:"fa-cash-register",        label:"Fluxo de Caixa",       roles:["admin","apoio"] },
   { href:"estoque.html",          icon:"fa-boxes-stacked",        label:"Estoque",              roles:["admin","apoio"] },
   { href:"folha_pagamento.html",  icon:"fa-money-check-dollar",   label:"Folha de Pagamento",   roles:["admin","apoio"] },
   { sep:true,                                                                                    roles:["admin"] },
   { titulo:"CONFIGURAÇÕES",                                                                      roles:["admin"] },
   { href:"parametros.html",       icon:"fa-sliders",              label:"Parâmetros",           roles:["admin"] },
+  { href:"logins.html",           icon:"fa-shield-halved",        label:"Logins",               roles:["admin"] },
 ];
 
 function authBuildSidebar(role, nome) {
@@ -149,19 +149,3 @@ if (document.readyState === "loading") {
 } else {
   authInit();
 }
-
-/* ── CHATBOT ── */
-(function() {
-  function loadChatbot() {
-    if (location.pathname.includes("login")) return;
-    var script = document.createElement("script");
-    script.src = "assets/js/chatbot.js";
-    script.defer = true;
-    document.body.appendChild(script);
-  }
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", loadChatbot);
-  } else {
-    loadChatbot();
-  }
-})();

@@ -33,18 +33,15 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
 .btn-limpar:hover{background:#f3f4f6;}
 .btn-limpar.visible{display:inline-flex;}
-
 /* Grupos card */
 .grupos-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
 .grupo-card{background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px;cursor:pointer;border:2px solid transparent;transition:all .15s;}
 .grupo-card.ativo{border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
 .grupo-card:hover{border-color:#e5e7eb;}
-.grupo-card.editando{border-color:#2563eb;}
 .grupo-swatch{width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.1);flex-shrink:0;}
 .grupo-nome{font-size:11px;font-weight:600;color:#111827;}
 .grupo-qtd{font-size:10px;color:#9ca3af;}
 .grupo-sem-cor{font-size:10px;color:#f59e0b;font-weight:600;}
-
 .table-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
@@ -64,7 +61,6 @@ button.exportar{background:#16a34a;}
 .empty-row td{text-align:center;color:#9ca3af;padding:32px;}
 .cor-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;}
 .cor-swatch-sm{width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.1);flex-shrink:0;}
-
 .paginacao{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px;}
 .paginacao-info{font-size:13px;color:#6b7280;}
 .paginacao-info strong{color:#111827;}
@@ -77,8 +73,6 @@ button.exportar{background:#16a34a;}
 .pag-btn.ellipsis:hover{background:none;}
 .por-pagina-wrap{display:flex;align-items:center;gap:7px;font-size:13px;color:#6b7280;}
 .por-pagina-wrap select{padding:5px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;background:#fff;color:#111827;}
-
-/* Modais */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:1000;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:560px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .modal-content.sm{width:420px;}
@@ -98,7 +92,16 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
 .btn-cancel:hover{background:#f3f4f6;}
 .btn-save{background:#1f2937;}
-
+/* ── GRUPO DROPDOWN MULTI ── */
+.grupo-dropdown-btn{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;cursor:pointer;min-width:200px;display:flex;align-items:center;justify-content:space-between;gap:8px;user-select:none;transition:border-color .15s;}
+.grupo-dropdown-btn:hover{border-color:#9ca3af;}
+.grupo-dropdown-btn.ativo{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.grupo-dropdown-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:230px;padding:6px 0;max-height:300px;overflow-y:auto;}
+.grupo-dropdown-menu.aberto{display:block;}
+.grupo-menu-item{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;font-size:13px;color:#374151;transition:background .1s;}
+.grupo-menu-item:hover{background:#f9fafb;}
+.grupo-menu-item input[type=checkbox]{width:15px;height:15px;accent-color:#2563eb;cursor:pointer;flex-shrink:0;}
+.grupo-menu-sep{border:none;border-top:1px solid #f3f4f6;margin:4px 0;}
 /* Paleta */
 .paleta-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;}
 .paleta-item{width:34px;height:34px;border-radius:8px;cursor:pointer;border:3px solid transparent;transition:transform .1s,border-color .15s;position:relative;flex-shrink:0;}
@@ -141,9 +144,18 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
         <option value="inativo">Inativo</option>
       </select>
     </div>
-    <div class="filter-group">
+    <div class="filter-group" style="position:relative">
       <span class="filter-label"><i class="fa fa-layer-group" style="margin-right:3px"></i> Grupo</span>
-      <select id="filtroGrupo"><option value="">Todos os grupos</option></select>
+      <div id="grupoDropdownBtn" class="grupo-dropdown-btn" onclick="toggleGrupoDropdown()">
+        <span id="grupoDropdownLabel">Todos os grupos</span>
+        <i class="fa fa-chevron-down" style="font-size:11px;color:#9ca3af"></i>
+      </div>
+      <div id="grupoDropdownMenu" class="grupo-dropdown-menu">
+        <label class="grupo-menu-item" style="border-bottom:1px solid #f3f4f6;margin-bottom:2px;">
+          <input type="checkbox" id="grupoTodos" checked onchange="selecionarTodosGrupos()"> Todos os grupos
+        </label>
+        <div id="grupoCheckboxList"></div>
+      </div>
     </div>
     <button class="btn-limpar" id="btnLimparFiltros" onclick="limparFiltros()">
       <i class="fa fa-times"></i> Limpar filtros
@@ -232,10 +244,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 </div>
 </div>
 
-<!-- MODAL CORES DOS GRUPOS -->
-
 <script>
-/* ══════ PALETA ══════ */
 const PALETA = [
   {hex:"#29B6F6",nome:"Azul (Nuru)"},
   {hex:"#8BE000",nome:"Verde neon (Vivência)"},
@@ -259,23 +268,75 @@ const PALETA = [
   {hex:"#7E57C2",nome:"Roxo médio"},
 ];
 
-function corTexto(hex){
-  if(!hex)return"#374151";
-  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  return(0.299*r+0.587*g+0.114*b)>150?"#1f2937":"#fff";
-}
-
 let dados=[], gruposMap={}, idAtual=null;
 let ordemCol='servico', ordemDir='asc', paginaAtual=0, dadosFiltrados=[];
+let gruposSelecionados=[];
 
 const nomeS=s=>[s.grupo,s.subgrupo,s.tempo?s.tempo+" min":""].filter(Boolean).join(" ");
 const moeda=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
 const parseMoeda=v=>parseFloat((v||"0").replace(/\./g,"").replace(",","."))||0;
 const corDoGrupo=g=>gruposMap[g]||null;
 
+// ── DROPDOWN MULTI GRUPO ──────────────────────────────────────────────────
+function toggleGrupoDropdown() {
+  const menu = document.getElementById("grupoDropdownMenu");
+  const btn = document.getElementById("grupoDropdownBtn");
+  const aberto = menu.classList.contains("aberto");
+  menu.classList.toggle("aberto", !aberto);
+  btn.classList.toggle("ativo", !aberto);
+}
+
+document.addEventListener("click", function(e) {
+  const btn = document.getElementById("grupoDropdownBtn");
+  const menu = document.getElementById("grupoDropdownMenu");
+  if(btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.classList.remove("aberto");
+    btn.classList.remove("ativo");
+  }
+});
+
+function selecionarTodosGrupos() {
+  document.querySelectorAll(".grupo-chk").forEach(c => c.checked = false);
+  document.getElementById("grupoTodos").checked = true;
+  gruposSelecionados = [];
+  atualizarLabelGrupo();
+  paginaAtual = 0;
+  aplicarFiltroEOrdem();
+  checarBtnLimpar();
+}
+
+function onGrupoCkChange() {
+  const chks = document.querySelectorAll(".grupo-chk:checked");
+  gruposSelecionados = Array.from(chks).map(c => c.value);
+  document.getElementById("grupoTodos").checked = gruposSelecionados.length === 0;
+  atualizarLabelGrupo();
+  paginaAtual = 0;
+  aplicarFiltroEOrdem();
+  checarBtnLimpar();
+}
+
+function atualizarLabelGrupo() {
+  const label = document.getElementById("grupoDropdownLabel");
+  if(gruposSelecionados.length === 0) label.textContent = "Todos os grupos";
+  else if(gruposSelecionados.length === 1) label.textContent = gruposSelecionados[0];
+  else label.textContent = gruposSelecionados.length + " grupos selecionados";
+}
+
+function popularCheckboxGrupos(grupos) {
+  const lista = document.getElementById("grupoCheckboxList");
+  lista.innerHTML = grupos.map(g =>
+    `<label class="grupo-menu-item">
+      <input type="checkbox" class="grupo-chk" value="${g}" onchange="onGrupoCkChange()">
+      <span style="display:flex;align-items:center;gap:6px">
+        ${gruposMap[g] ? `<span style="width:10px;height:10px;border-radius:3px;background:${gruposMap[g]};flex-shrink:0"></span>` : ""}
+        ${g}
+      </span>
+    </label>`
+  ).join("");
+}
+
 /* ══════ CARGA ══════ */
 async function carregarGrupos(){
-  // Busca grupos com cor da tabela parametros
   const{data}=await client.from("parametros")
     .select("valor,cor")
     .eq("tipo","grupos_servico")
@@ -300,19 +361,18 @@ async function carregar(){
 }
 
 function popularSelectGrupo(){
-  // Grupos: união dos que existem em parametros + os que existem nos serviços
   const doParams=Object.keys(gruposMap);
   const dosServicos=[...new Set(dados.map(s=>s.grupo).filter(Boolean))];
   const todos=[...new Set([...doParams,...dosServicos])].sort();
 
   const selModal=document.getElementById("grupo");
-  const selFiltro=document.getElementById("filtroGrupo");
   selModal.innerHTML="<option value=''>Selecione</option>";
-  selFiltro.innerHTML="<option value=''>Todos os grupos</option>";
   todos.forEach(g=>{
     selModal.innerHTML+=`<option value="${g}">${g}</option>`;
-    selFiltro.innerHTML+=`<option value="${g}">${g}</option>`;
   });
+
+  // popula checkboxes do dropdown
+  popularCheckboxGrupos(todos);
 }
 
 /* ══════ BARRA DE GRUPOS ══════ */
@@ -325,7 +385,6 @@ function renderGruposBar(){
     const qtd=dados.filter(s=>s.grupo===g).length;
     const card=document.createElement("div");
     card.className="grupo-card";
-    card.title="Clique para editar a cor deste grupo";
     card.innerHTML=`
       <span class="grupo-swatch" style="background:${cor||"#e5e7eb"}"></span>
       <div>
@@ -342,20 +401,26 @@ function renderGruposBar(){
 function limparFiltros(){
   document.getElementById("buscaServico").value="";
   document.getElementById("filtroStatus").value="";
-  document.getElementById("filtroGrupo").value="";
+  gruposSelecionados=[];
+  document.querySelectorAll(".grupo-chk").forEach(c=>c.checked=false);
+  const todosEl=document.getElementById("grupoTodos");
+  if(todosEl)todosEl.checked=true;
+  atualizarLabelGrupo();
   checarBtnLimpar();paginaAtual=0;aplicarFiltroEOrdem();
 }
+
 function checarBtnLimpar(){
   const b=document.getElementById("buscaServico").value;
   const s=document.getElementById("filtroStatus").value;
-  const g=document.getElementById("filtroGrupo").value;
-  document.getElementById("btnLimparFiltros").classList.toggle("visible",!!(b||s||g));
+  document.getElementById("btnLimparFiltros").classList.toggle("visible",!!(b||s||gruposSelecionados.length>0));
 }
+
 function ordenar(col){
   if(ordemCol===col)ordemDir=ordemDir==="asc"?"desc":"asc";
   else{ordemCol=col;ordemDir="asc";}
   atualizarIcones();paginaAtual=0;aplicarFiltroEOrdem();
 }
+
 function atualizarIcones(){
   ["servico","tempo","valor","comissao"].forEach(c=>{
     const th=document.getElementById("th-"+c);if(!th)return;
@@ -364,31 +429,15 @@ function atualizarIcones(){
     else icon.className="fa fa-sort sort-icon";
   });
 }
-function filtrarPorGrupo(grupo, cardEl){
-  const sel = document.getElementById("filtroGrupo");
-  const jaAtivo = sel.value === grupo;
-
-  // Toggle — clicou no mesmo: limpa filtro
-  if(jaAtivo){
-    sel.value = "";
-    document.querySelectorAll(".grupo-card").forEach(c=>c.classList.remove("ativo"));
-  } else {
-    sel.value = grupo;
-    document.querySelectorAll(".grupo-card").forEach(c=>c.classList.remove("ativo"));
-    if(cardEl) cardEl.classList.add("ativo");
-  }
-  paginaAtual = 0;
-  aplicarFiltroEOrdem();
-}
 
 function aplicarFiltroEOrdem(){
   const termo=(document.getElementById("buscaServico").value||"").toLowerCase();
   const status=document.getElementById("filtroStatus").value;
-  const grupo=document.getElementById("filtroGrupo").value;
   dadosFiltrados=dados.filter(s=>{
+    const grupoOk = gruposSelecionados.length===0 || gruposSelecionados.includes(s.grupo);
     return nomeS(s).toLowerCase().includes(termo)
       &&(!status||s.status===status)
-      &&(!grupo||s.grupo===grupo);
+      && grupoOk;
   });
   dadosFiltrados.sort((a,b)=>{
     let va,vb;
@@ -403,8 +452,10 @@ function aplicarFiltroEOrdem(){
   document.getElementById("collabCount").textContent=dadosFiltrados.length;
   let label=dadosFiltrados.length===1?"serviço":"serviços";
   const partes=[];
+  const status=document.getElementById("filtroStatus").value;
   if(status==="ativo")partes.push("ativos");else if(status==="inativo")partes.push("inativos");
-  if(grupo)partes.push("· "+grupo);
+  if(gruposSelecionados.length===1)partes.push("· "+gruposSelecionados[0]);
+  else if(gruposSelecionados.length>1)partes.push("· "+gruposSelecionados.length+" grupos");
   document.getElementById("collabLabel").textContent=label+(partes.length?" "+partes.join(" "):"");
   checarBtnLimpar();renderTabela();
 }
@@ -445,7 +496,6 @@ function renderTabela(){
         +"</tr>";
     });
   }
-  // paginação
   const infoEl=document.getElementById("paginacaoInfo");
   const ctrlEl=document.getElementById("paginacaoControles");
   if(total===0){infoEl.innerHTML="Nenhum resultado.";ctrlEl.innerHTML="";return;}
@@ -543,28 +593,6 @@ async function excluir(id){
   carregar();
 }
 
-/* ══════ MODAL CORES DOS GRUPOS ══════ */
-let grupoFoco=null; // grupo que está sendo editado no modal
-
-function selecionarCorGrupo(grupo,hex,nome){
-  const key=grupo.replace(/\s/g,"_");
-  // atualiza UI da paleta
-  document.querySelectorAll(`[data-grupo="${grupo}"]`).forEach(el=>{
-    el.classList.toggle("sel",el.dataset.hex===hex);
-  });
-  // atualiza preview
-  const prev=document.getElementById(`prev_${key}`);
-  const label=document.getElementById(`prevLabel_${key}`);
-  if(prev){prev.style.background=hex;prev.style.border="1px solid rgba(0,0,0,.1)";}
-  if(label){label.textContent=nome;label.style.color="#111827";}
-  // atualiza mapa local (ainda não salvo)
-  gruposMap[grupo]=hex;
-}
-
-function nomeCor(hex){
-  return PALETA.find(p=>p.hex===hex)?.nome||hex;
-}
-
 /* ══════ EXPORTAR ══════ */
 function exportarExcel(){
   const exp=dados.map(s=>({
@@ -583,10 +611,8 @@ function exportarExcel(){
 /* ══════ INIT ══════ */
 document.addEventListener("DOMContentLoaded",()=>{
   atualizarIcones();
-  const reset=()=>{paginaAtual=0;aplicarFiltroEOrdem();};
-  document.getElementById("buscaServico").addEventListener("input",reset);
-  document.getElementById("filtroStatus").addEventListener("change",reset);
-  document.getElementById("filtroGrupo").addEventListener("change",reset);
+  document.getElementById("buscaServico").addEventListener("input",()=>{paginaAtual=0;aplicarFiltroEOrdem();});
+  document.getElementById("filtroStatus").addEventListener("change",()=>{paginaAtual=0;aplicarFiltroEOrdem();});
   carregar();
 });
 </script>

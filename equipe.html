@@ -126,7 +126,6 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .pix-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .salario-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px;}
 .salario-box-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#16a34a;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
-/* ── HORÁRIOS ── */
 .horario-grid{display:flex;flex-direction:column;gap:10px;}
 .horario-row{display:grid;grid-template-columns:120px 1fr 1fr 80px;gap:10px;align-items:center;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;}
 .horario-row.indisponivel{background:#fef2f2;border-color:#fecaca;opacity:.7;}
@@ -141,14 +140,12 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .horario-input{padding:7px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;width:100%;}
 .horario-input:focus{outline:none;border-color:#2563eb;}
 .horario-info{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;font-size:12px;color:#1d4ed8;margin-bottom:16px;display:flex;align-items:flex-start;gap:8px;}
-/* ── FOTOS ── */
 .foto-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;}
 .foto-card{position:relative;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;background:#f9fafb;}
 .foto-card img{width:100%;height:120px;object-fit:cover;display:block;cursor:pointer;}
 .foto-card-info{padding:7px 10px;font-size:11px;color:#6b7280;}
 .foto-card-del{position:absolute;top:6px;right:6px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;}
 .foto-card-del:hover{background:#dc2626;}
-/* ── CARGO DROPDOWN ── */
 .cargo-dropdown-btn{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;cursor:pointer;min-width:200px;display:flex;align-items:center;justify-content:space-between;gap:8px;user-select:none;transition:border-color .15s;}
 .cargo-dropdown-btn:hover{border-color:#9ca3af;}
 .cargo-dropdown-btn.ativo{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
@@ -562,7 +559,6 @@ const campos = [
   "status","data_inativacao","peso","altura","cor_cabelo","salario_base","regime"
 ];
 
-// ── FILTRO CARGO MULTI-SELECT ──────────────────────────────────────────────
 let cargosSelecionados = [];
 
 function toggleCargoDropdown() {
@@ -660,9 +656,11 @@ function setForm(data){
   ['cpf','rg','telefone','telefone_emergencia','cep'].forEach(id=>{const el=document.getElementById(id);if(el&&el.value)el.dispatchEvent(new Event('input'));});
   aoMudarCargo();
 }
+
 // ── HORÁRIOS ────────────────────────────────────────────────────────────────
 let horariosDados = {};
 let solicitacaoAtiva = null;
+
 function renderHorarioGrid() {
   const grid = document.getElementById("horarioGrid");
   const hEntPad = document.getElementById("hora_entrada").value || "09:00";
@@ -705,6 +703,7 @@ function renderHorarioGrid() {
     </div>`;
   }).join("");
 }
+
 function toggleDia(dia, disponivel) {
   const row = document.getElementById("hrow-"+dia);
   const entEl = document.getElementById("hent-"+dia);
@@ -722,12 +721,15 @@ function toggleDia(dia, disponivel) {
     txt.textContent = "Folga";
   }
 }
+
 async function carregarHorarios(cpf) {
   horariosDados = {}; solicitacaoAtiva = null;
   const hoje = new Date().toISOString().split("T")[0];
   const [resHor, resSol] = await Promise.all([
-    client.from("terapeutas_horarios").select("*").eq("terapeuta_cpf", cpf),
-    client.from("solicitacoes")
+    // funcionario_horario (ex-terapeutas_horarios)
+    client.from("funcionario_horario").select("*").eq("terapeuta_cpf", cpf),
+    // funcionario_solicitacao (ex-solicitacoes)
+    client.from("funcionario_solicitacao")
       .select("tipo,hora_inicio,hora_fim,data_inicio,data_fim,status")
       .eq("terapeuta_cpf", cpf).eq("tipo", "Alteração de Horário").eq("status", "Acordado")
       .lte("data_inicio", hoje).gte("data_fim", hoje).limit(1)
@@ -735,6 +737,7 @@ async function carregarHorarios(cpf) {
   (resHor.data||[]).forEach(h => { horariosDados[h.dia_semana] = h; });
   if(resSol.data && resSol.data.length > 0) solicitacaoAtiva = resSol.data[0];
 }
+
 async function salvarHorarios() {
   if(!cpfAtual) { alert("Salve o cadastro primeiro."); return; }
   const rows = DIAS_SEMANA.map(dia => {
@@ -744,17 +747,20 @@ async function salvarHorarios() {
     const hSai = document.getElementById("hsai-"+dia)?.value || null;
     return { terapeuta_cpf: cpfAtual, dia_semana: dia, disponivel: disp, hora_entrada: disp && hEnt ? hEnt : null, hora_saida: disp && hSai ? hSai : null };
   });
-  const{error} = await client.from("terapeutas_horarios").upsert(rows, {onConflict: "terapeuta_cpf,dia_semana"});
+  // funcionario_horario (ex-terapeutas_horarios)
+  const{error} = await client.from("funcionario_horario").upsert(rows, {onConflict: "terapeuta_cpf,dia_semana"});
   if(error){ alert("Erro ao salvar horários: "+error.message); return; }
   await carregarHorarios(cpfAtual);
   alert("Horários salvos com sucesso!");
 }
+
 // ── ESTADO GLOBAL ──
 let todosRegistros = [];
 let registrosFiltrados = [];
 let ordemCol = 'nome';
 let ordemDir = 'asc';
 let paginaAtual = 1;
+
 function atualizarContador(total, statusFiltro) {
   const countEl = document.getElementById("collabCount");
   const labelEl = document.getElementById("collabLabel");
@@ -768,6 +774,7 @@ function atualizarContador(total, statusFiltro) {
   else if(cargosSelecionados.length > 1) partes.push("· " + cargosSelecionados.length + " cargos");
   labelEl.textContent = sufixo + (partes.length ? " " + partes.join(" ") : "");
 }
+
 function limparFiltros(){
   document.getElementById("pesquisaNome").value = "";
   document.getElementById("filtroStatus").value = "Ativo";
@@ -777,16 +784,19 @@ function limparFiltros(){
   atualizarLabelCargo();
   carregar();
 }
+
 function checarBtnLimpar(){
   const nome = document.getElementById("pesquisaNome").value;
   const status = document.getElementById("filtroStatus").value;
   document.getElementById("btnLimparFiltros").classList.toggle("visible", !!(nome || status !== "Ativo" || cargosSelecionados.length > 0));
 }
+
 function ordenarPor(col) {
   if(ordemCol === col) { ordemDir = ordemDir === 'asc' ? 'desc' : 'asc'; }
   else { ordemCol = col; ordemDir = 'asc'; }
   atualizarIconesOrdem(); paginaAtual = 1; aplicarOrdemEFiltro();
 }
+
 function atualizarIconesOrdem() {
   ['nome','cargo'].forEach(c => {
     const th = document.getElementById('th-' + c); if(!th) return;
@@ -796,6 +806,7 @@ function atualizarIconesOrdem() {
     else { icon.className = 'fa fa-sort sort-icon'; }
   });
 }
+
 async function carregar(){
   if(!window.usuarioLogado){setTimeout(carregar,100);return;}
   const u=window.usuarioLogado;
@@ -803,14 +814,17 @@ async function carregar(){
   const btnNovo=document.getElementById("btnNovoCadastro");
   if(btnNovo)btnNovo.style.display=podeNovo?"":"none";
   const statusFiltro=document.getElementById("filtroStatus").value;
-  let query=client.from("terapeutas").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
+  // funcionario (ex-terapeutas)
+  let query=client.from("funcionario").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro)query=query.eq("status",statusFiltro);
   if(u&&u.role==="usuario"&&u.cpf)query=query.eq("cpf",u.cpf.replace(/\D/g,''));
   const {data,error}=await query;
   if(error){console.error(error);return;}
   todosRegistros = data || []; paginaAtual = 1; aplicarOrdemEFiltro(); checarBtnLimpar();
 }
+
 function filtrarTabela(){ paginaAtual = 1; aplicarOrdemEFiltro(); }
+
 function aplicarOrdemEFiltro(){
   const filtroNome = document.getElementById("pesquisaNome").value.toLowerCase();
   registrosFiltrados = todosRegistros.filter(t => {
@@ -829,6 +843,7 @@ function aplicarOrdemEFiltro(){
   atualizarContador(registrosFiltrados.length, document.getElementById("filtroStatus").value);
   checarBtnLimpar(); renderTabela();
 }
+
 function renderTabela(){
   const porPag = parseInt(document.getElementById("porPagina").value) || 10;
   const total = registrosFiltrados.length;
@@ -872,6 +887,7 @@ function renderTabela(){
   });
   addBtn('<i class="fa fa-chevron-right"></i>', paginaAtual+1, false, paginaAtual===totalPags);
 }
+
 function resetModal(){
   campos.forEach(c=>{const el=document.getElementById(c);if(el)el.value="";});
   document.getElementById("hora_entrada").value="09:00";
@@ -891,6 +907,7 @@ function resetModal(){
   if(roleEl)roleEl.disabled=!isAdmin;
   mudarTab("pessoais",document.querySelector(".side-nav .side-btn"));
 }
+
 function abrirNovo(){
   cpfAtual=null;cpfEdicaoHabilitada=false;resetModal();desbloquearCPF();
   const isAdm=window.usuarioLogado?.role==="admin";
@@ -909,9 +926,11 @@ function abrirNovo(){
   abaAtiva="pessoais";atualizarProgresso();
   document.getElementById("modal").style.display="flex";
 }
+
 async function editar(cpf){
   cpfAtual=cpf;cpfEdicaoHabilitada=false;
-  const {data,error}=await client.from("terapeutas").select("*").eq("cpf",cpf).single();
+  // funcionario (ex-terapeutas)
+  const {data,error}=await client.from("funcionario").select("*").eq("cpf",cpf).single();
   if(error){console.error(error);return;}
   resetModal();setForm(data);bloquearCPF();
   document.getElementById("modalTitulo").textContent=data.nome_profissional||"Editar Cadastro";
@@ -936,16 +955,19 @@ async function editar(cpf){
   }
   document.getElementById("modal").style.display="flex";
 }
+
 function fecharModal(){document.getElementById("modal").style.display="none";}
+
 async function salvar(){
   const u=window.usuarioLogado;const payload=getPayload();
   if(!payload.nome_completo||!payload.nome_profissional||!payload.email){alert("Preencha os campos obrigatórios: Nome Completo, Nome Profissional e Email.");return;}
   if(!cpfAtual){
     if(!payload.cpf){alert("CPF é obrigatório.");return;}
     const cpfNovo=limparCPF(payload.cpf);
-    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
+    // funcionario (ex-terapeutas)
+    const {data:existente}=await client.from("funcionario").select("cpf").eq("cpf",cpfNovo).limit(1);
     if(existente&&existente.length>0){alert("CPF já cadastrado.");return;}
-    const {error}=await client.from("terapeutas").insert({...payload,cpf:cpfNovo});
+    const {error}=await client.from("funcionario").insert({...payload,cpf:cpfNovo});
     if(error){alert("Erro ao salvar: "+error.message);return;}
     cpfAtual=cpfNovo;
     document.getElementById("tabDocsBtn").style.display="";
@@ -977,23 +999,26 @@ async function salvar(){
   } else if(cpfEdicaoHabilitada&&limparCPF(payload.cpf)!==limparCPF(cpfAtual)){
     const cpfAntigo=limparCPF(cpfAtual);const cpfNovo=limparCPF(payload.cpf);
     if(!cpfNovo||cpfNovo.length!==11){alert("CPF inválido.");return;}
-    const {data:existente}=await client.from("terapeutas").select("cpf").eq("cpf",cpfNovo).limit(1);
+    const {data:existente}=await client.from("funcionario").select("cpf").eq("cpf",cpfNovo).limit(1);
     if(existente&&existente.length>0){alert("CPF já pertence a outro cadastro.");return;}
-    const {data:dadosAtuais}=await client.from("terapeutas").select("*").eq("cpf",cpfAntigo).single();
+    const {data:dadosAtuais}=await client.from("funcionario").select("*").eq("cpf",cpfAntigo).single();
     const novoRegistro={...dadosAtuais,...payload,cpf:cpfNovo};delete novoRegistro.created_at;
-    const {error:errInsert}=await client.from("terapeutas").insert(novoRegistro);
+    const {error:errInsert}=await client.from("funcionario").insert(novoRegistro);
     if(errInsert){alert("Erro ao criar registro: "+errInsert.message);return;}
     await client.from("documentos").update({equipe_id:cpfNovo}).eq("equipe_id",cpfAntigo);
-    await client.from("solicitacoes").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
-    await client.from("terapeutas_horarios").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
+    // funcionario_solicitacao (ex-solicitacoes)
+    await client.from("funcionario_solicitacao").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
+    // funcionario_horario (ex-terapeutas_horarios)
+    await client.from("funcionario_horario").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
     await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("cpf_terapeuta",cpfAntigo);
-    const {error:errDel}=await client.from("terapeutas").delete().eq("cpf",cpfAntigo);
+    const {error:errDel}=await client.from("funcionario").delete().eq("cpf",cpfAntigo);
     if(errDel){alert("Erro ao remover registro antigo: "+errDel.message);return;}
     cpfAtual=cpfNovo;cpfEdicaoHabilitada=false;bloquearCPF();document.getElementById("cpf").value=fmtCPF(cpfNovo);
   } else {
     if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){alert("Sem permissão.");return;}
     const updatePayload={...payload};delete updatePayload.cpf;
-    const {error}=await client.from("terapeutas").update(updatePayload).eq("cpf",cpfAtual);
+    // funcionario (ex-terapeutas)
+    const {error}=await client.from("funcionario").update(updatePayload).eq("cpf",cpfAtual);
     if(error){alert("Erro ao salvar: "+error.message);return;}
   }
   const cpfParaVincular=cpfAtual;
@@ -1012,18 +1037,24 @@ async function salvar(){
   }
   carregar();fecharModal();
 }
+
 async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?"))return;
   const {data:docs}=await client.from("documentos").select("id").eq("equipe_id",cpf);
   if(docs&&docs.length>0){ await client.from("documentos").delete().eq("equipe_id",cpf); }
-  await client.from("solicitacoes").delete().eq("terapeuta_cpf",cpf);
-  await client.from("terapeutas_horarios").delete().eq("terapeuta_cpf",cpf);
-  const {error}=await client.from("terapeutas").delete().eq("cpf",cpf);
+  // funcionario_solicitacao (ex-solicitacoes)
+  await client.from("funcionario_solicitacao").delete().eq("terapeuta_cpf",cpf);
+  // funcionario_horario (ex-terapeutas_horarios)
+  await client.from("funcionario_horario").delete().eq("terapeuta_cpf",cpf);
+  // funcionario (ex-terapeutas)
+  const {error}=await client.from("funcionario").delete().eq("cpf",cpf);
   if(error){alert("Erro ao excluir: "+error.message);return;}
   carregar();
 }
+
 function limparNome(nome){return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");}
 function iconeDoc(nome){const ext=(nome||"").split(".").pop().toLowerCase();if(["jpg","jpeg","png","gif","webp"].includes(ext))return "fa-image";if(ext==="pdf")return "fa-file-pdf";if(["doc","docx"].includes(ext))return "fa-file-word";return "fa-file-alt";}
+
 async function carregarDocs(cpf){
   const {data,error}=await client.from("documentos").select("*").eq("equipe_id",cpf).neq("tipo","Foto").order("created_at",{ascending:false});
   const lista=document.getElementById("docLista");const badge=document.getElementById("docBadge");
@@ -1031,6 +1062,7 @@ async function carregarDocs(cpf){
   badge.textContent=data.length;badge.style.display="";
   lista.innerHTML=data.map(d=>'<div class="doc-item" id="doc-'+d.id+'"><div class="doc-item-left"><div class="doc-icon"><i class="fa '+iconeDoc(d.nome_arquivo)+'"></i></div><div><div class="doc-name">'+d.nome_arquivo+'</div><div class="doc-tipo">'+d.tipo+' · '+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div></div></div><div class="doc-item-right"><a href="'+d.url+'" target="_blank"><i class="fa fa-external-link-alt"></i> Abrir</a><button class="btn-del" onclick="excluirDoc(\''+d.id+'\')"><i class="fa fa-trash"></i></button></div></div>').join("");
 }
+
 function adicionarFilaUpload(){
   const tipo=document.getElementById("doc_tipo").value;
   const files=document.getElementById("doc_arquivo").files;
@@ -1078,6 +1110,7 @@ async function excluirDoc(id){
   if(error){alert("Erro ao excluir: "+error.message);return;}
   carregarDocs(cpfAtual);
 }
+
 // ── FOTOS ──
 function adicionarFilaFoto() {
   const files = document.getElementById("foto_arquivo").files;
@@ -1144,11 +1177,13 @@ async function excluirFoto(id) {
   if(error) { alert("Erro ao excluir: " + error.message); return; }
   carregarFotos(cpfAtual);
 }
+
 function aoMudarStatus(select){
   const campo=document.getElementById("campo_data_inativacao");const input=document.getElementById("data_inativacao");
   if(select.value==="Inativo"){campo.style.display="";if(!input.value)input.value=new Date().toISOString().split("T")[0];}
   else{campo.style.display="none";input.value="";}
 }
+
 const CAMPOS_POR_ABA={
   pessoais:[{id:"nome_completo",label:"Nome Completo"},{id:"nome_profissional",label:"Nome Profissional"},{id:"cpf",label:"CPF"},{id:"email",label:"Email"}],
   contatos:[{id:"telefone",label:"Telefone"}],
@@ -1159,6 +1194,7 @@ const CAMPOS_POR_ABA={
 };
 const TODOS_CAMPOS=Object.values(CAMPOS_POR_ABA).flat();
 let abaAtiva="pessoais";
+
 function atualizarProgresso(){
   const wrap=document.getElementById("progressWrap");if(!wrap||wrap.style.display==="none")return;
   const total=TODOS_CAMPOS.length;
@@ -1179,6 +1215,7 @@ function atualizarProgresso(){
       '<div style="border-top:1px solid #374151;margin-top:8px;padding-top:8px;color:#9ca3af;font-size:11px">Passe para outras abas para ver os campos delas.</div>';
   }
 }
+
 document.addEventListener('DOMContentLoaded',()=>{
   aplicarMascaras();
   atualizarIconesOrdem();

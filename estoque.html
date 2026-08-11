@@ -16,8 +16,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
-
-/* Topbar */
 .page-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .page-topbar h1{margin:0;}
 .topbar-btns{display:flex;gap:10px;}
@@ -27,20 +25,14 @@ button.btn-green{background:#16a34a;}
 button.btn-red{background:#dc2626;}
 button.btn-blue{background:#2563eb;}
 button.btn-yellow{background:#d97706;}
-
-/* Resumo */
 .resumo{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
 .resumo-card{background:#fff;border-radius:14px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .resumo-card .r-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:6px;}
 .resumo-card .r-valor{font-size:22px;font-weight:800;color:#111827;}
 .resumo-card .r-sub{font-size:11px;color:#6b7280;margin-top:3px;}
-
-/* Tabs */
 .tabs{display:flex;gap:2px;margin-bottom:20px;background:#e5e7eb;border-radius:10px;padding:4px;}
 .tab-btn{flex:1;background:none;color:#6b7280;border:none;border-radius:8px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
 .tab-btn.active{background:#fff;color:#111827;box-shadow:0 1px 4px rgba(0,0,0,.1);}
-
-/* ── TOPBAR padrão equipe (dentro das tabs) ── */
 .tab-topbar{margin-bottom:16px;}
 .tab-topbar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .collab-counter{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:7px 16px;font-size:13px;color:#374151;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
@@ -57,8 +49,6 @@ button.btn-yellow{background:#d97706;}
 .btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
 .btn-limpar:hover{background:#f3f4f6;color:#374151;}
 .btn-limpar.visible{display:inline-flex;}
-
-/* Table */
 .table-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 table{width:100%;border-collapse:collapse;}
 th,td{padding:13px 16px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left;}
@@ -74,8 +64,6 @@ tr:hover td{background:#f9fafb;}
 .badge-low{background:#fef3c7;color:#d97706;}
 .badge-out{background:#fee2e2;color:#dc2626;}
 .empty-state{text-align:center;color:#9ca3af;padding:40px;font-size:13px;}
-
-/* Paginação padrão equipe */
 .paginacao{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px;}
 .paginacao-info{font-size:13px;color:#6b7280;}
 .paginacao-info strong{color:#111827;}
@@ -88,8 +76,6 @@ tr:hover td{background:#f9fafb;}
 .pag-btn.ellipsis:hover{background:none;}
 .por-pagina-wrap{display:flex;align-items:center;gap:7px;font-size:13px;color:#6b7280;}
 .por-pagina-wrap select{padding:5px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;background:#fff;color:#111827;}
-
-/* Histórico */
 .hist-item{display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #f3f4f6;}
 .hist-item:last-child{border-bottom:none;}
 .hist-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
@@ -102,8 +88,6 @@ tr:hover td{background:#f9fafb;}
 .hist-qtd.entrada{color:#16a34a;}
 .hist-qtd.saida{color:#dc2626;}
 .alerta-low{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:16px;display:none;}
-
-/* Modais */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:500px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .modal-content.sm{width:440px;}
@@ -339,11 +323,8 @@ let produtos=[],historico=[],terapeutas=[];
 let produtoEditId=null,tipoMovAtual="entrada";
 let tersMap={};
 
-// Estado ordenação e paginação — Estoque
 let eOrdemCol='nome',eOrdemDir='asc',paginaEstoque=0;
 let produtosFiltrados=[];
-
-// Estado paginação — Histórico
 let paginaHist=0;
 let histFiltrado=[];
 
@@ -361,9 +342,12 @@ function mudarTab(tab,btn){
 
 async function carregar(){
   const [{data:p},{data:h},{data:t}]=await Promise.all([
-    client.from("estoque_atual").select("*").order("nome"),
-    client.from("movimentacoes_estoque").select("*, produtos(nome,categoria), terapeutas(nome_profissional)").order("created_at",{ascending:false}).limit(500),
-    client.from("terapeutas").select("cpf,nome_profissional").eq("status","Ativo").in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]).order("nome_profissional")
+    // estoque_saldo (ex-estoque_atual)
+    client.from("estoque_saldo").select("*").order("nome"),
+    // estoque_movimentacao (ex-movimentacoes_estoque), produto (ex-produtos), funcionario (ex-terapeutas)
+    client.from("estoque_movimentacao").select("*, produto(nome,categoria), funcionario(nome_profissional)").order("created_at",{ascending:false}).limit(500),
+    // funcionario (ex-terapeutas)
+    client.from("funcionario").select("cpf,nome_profissional").eq("status","Ativo").in("cargo",["Terapeuta Feminina","Terapeuta Masculino"]).order("nome_profissional")
   ]);
   produtos=p||[];historico=h||[];terapeutas=t||[];tersMap={};
   terapeutas.forEach(t=>tersMap[t.cpf]=t.nome_profissional);
@@ -399,7 +383,6 @@ function renderFiltroCategoria(){
   cats.forEach(c=>sel.innerHTML+="<option>"+c+"</option>");
 }
 
-// ── ESTOQUE FILTROS E ORDENAÇÃO ──
 function limparFiltrosEstoque(){
   document.getElementById("buscaProduto").value="";
   document.getElementById("filtroCategoria").value="";
@@ -500,7 +483,6 @@ function renderProdutos(){
   renderPaginacaoGenerica("paginacaoInfoEstoque","paginacaoCtrlEstoque",total,inicio,fim,totalPags,porPag,p=>{paginaEstoque=p;renderProdutos();});
 }
 
-// ── HISTÓRICO ──
 function limparFiltrosHist(){
   document.getElementById("buscaHist").value="";
   document.getElementById("filtroTipoHist").value="";
@@ -523,7 +505,8 @@ function aplicarFiltroHist(){
   const terFilt=document.getElementById("filtroTerHist").value;
   const dataFilt=document.getElementById("filtroDataHist").value;
   histFiltrado=historico.filter(h=>{
-    const nomeOk=(h.produtos?.nome||"").toLowerCase().includes(busca);
+    // join agora usa alias "produto" (ex-produtos) e "funcionario" (ex-terapeutas)
+    const nomeOk=(h.produto?.nome||"").toLowerCase().includes(busca);
     const tipoOk=!tipoFilt||h.tipo===tipoFilt;
     const terOk=!terFilt||h.terapeuta_cpf===terFilt;
     const dataOk=!dataFilt||h.created_at?.startsWith(dataFilt);
@@ -547,17 +530,18 @@ function renderHistorico(){
   if(!pagina.length){div.innerHTML='<div class="empty-state"><i class="fa fa-history" style="font-size:28px;display:block;margin-bottom:10px;color:#d1d5db"></i>Nenhuma movimentação encontrada.</div>';
   } else {
     div.innerHTML=pagina.map(h=>{
-      const terNome=h.terapeutas?.nome_profissional||"";
+      // alias: h.funcionario (ex-h.terapeutas), h.produto (ex-h.produtos)
+      const terNome=h.funcionario?.nome_profissional||"";
       return '<div class="hist-item">'
         +'<div class="hist-icon '+h.tipo+'"><i class="fa '+(h.tipo==="entrada"?"fa-arrow-down":"fa-arrow-up")+'"></i></div>'
         +'<div class="hist-info">'
-          +'<div class="hist-nome">'+(h.produtos?.nome||"—")+'</div>'
+          +'<div class="hist-nome">'+(h.produto?.nome||"—")+'</div>'
           +'<div class="hist-meta">'
             +(h.motivo?'<span>'+h.motivo+'</span> · ':'')+
             (terNome?'<span style="color:#7c3aed"><i class="fa fa-person-dress"></i> '+terNome+'</span> · ':'')+
             (h.observacao?'<span>'+h.observacao+'</span> · ':'')+
             '<span>'+fmtData(h.created_at)+'</span>'+
-            (h.produtos?.categoria?' · <span>'+h.produtos.categoria+'</span>':'')
+            (h.produto?.categoria?' · <span>'+h.produto.categoria+'</span>':'')
           +'</div>'
         +'</div>'
         +'<div class="hist-qtd '+h.tipo+'">'+(h.tipo==="entrada"?"+":"-")+h.quantidade+'</div>'
@@ -567,7 +551,6 @@ function renderHistorico(){
   renderPaginacaoGenerica("paginacaoInfoHist","paginacaoCtrlHist",total,inicio,fim,totalPags,porPag,p=>{paginaHist=p;renderHistorico();});
 }
 
-// ── PAGINAÇÃO GENÉRICA ──
 function renderPaginacaoGenerica(infoId,ctrlId,total,inicio,fim,totalPags,porPag,onPage){
   const infoEl=document.getElementById(infoId),ctrlEl=document.getElementById(ctrlId);
   if(total===0){infoEl.innerHTML="Nenhum resultado.";ctrlEl.innerHTML="";return;}
@@ -592,14 +575,60 @@ function popularSelectProdutos(){
 
 function abrirNovoProduto(){produtoEditId=null;["prodNome","prodValor","prodQtdInicial","prodMinimo"].forEach(id=>{const el=document.getElementById(id);if(el)el.value=id==="prodQtdInicial"||id==="prodMinimo"?"0":"";});document.getElementById("prodCategoria").value="";document.getElementById("modalProdutoTitulo").textContent="Novo Produto";document.getElementById("modalProduto").style.display="flex";}
 function fecharModalProduto(){document.getElementById("modalProduto").style.display="none";}
-async function salvarProduto(){const nome=document.getElementById("prodNome").value.trim();if(!nome){alert("Nome obrigatório.");return;}const payload={nome,categoria:document.getElementById("prodCategoria").value||null,valor:parseFloat(document.getElementById("prodValor").value||0),minimo:parseInt(document.getElementById("prodMinimo").value||0)};const {data:novo,error}=await client.from("produtos").insert(payload).select().single();if(error){alert("Erro: "+error.message);return;}const qtdInicial=parseInt(document.getElementById("prodQtdInicial").value||0);if(qtdInicial>0){await client.from("movimentacoes_estoque").insert({produto_id:novo.id,tipo:"entrada",quantidade:qtdInicial,motivo:"Estoque inicial"});}fecharModalProduto();carregar();}
+
+async function salvarProduto(){
+  const nome=document.getElementById("prodNome").value.trim();
+  if(!nome){alert("Nome obrigatório.");return;}
+  const payload={nome,categoria:document.getElementById("prodCategoria").value||null,valor:parseFloat(document.getElementById("prodValor").value||0),minimo:parseInt(document.getElementById("prodMinimo").value||0)};
+  // produto (ex-produtos)
+  const {data:novo,error}=await client.from("produto").insert(payload).select().single();
+  if(error){alert("Erro: "+error.message);return;}
+  const qtdInicial=parseInt(document.getElementById("prodQtdInicial").value||0);
+  if(qtdInicial>0){
+    // estoque_movimentacao (ex-movimentacoes_estoque)
+    await client.from("estoque_movimentacao").insert({produto_id:novo.id,tipo:"entrada",quantidade:qtdInicial,motivo:"Estoque inicial"});
+  }
+  fecharModalProduto();carregar();
+}
+
 function abrirEditar(id){const p=produtos.find(x=>x.id===id);if(!p)return;produtoEditId=id;document.getElementById("editNome").value=p.nome||"";document.getElementById("editCategoria").value=p.categoria||"";document.getElementById("editValor").value=p.valor||0;document.getElementById("editMinimo").value=p.minimo||0;document.getElementById("modalEditar").style.display="flex";}
 function fecharModalEditar(){document.getElementById("modalEditar").style.display="none";}
-async function salvarEdicao(){const nome=document.getElementById("editNome").value.trim();if(!nome){alert("Nome obrigatório.");return;}const {error}=await client.from("produtos").update({nome,categoria:document.getElementById("editCategoria").value||null,valor:parseFloat(document.getElementById("editValor").value||0),minimo:parseInt(document.getElementById("editMinimo").value||0)}).eq("id",produtoEditId);if(error){alert("Erro: "+error.message);return;}fecharModalEditar();carregar();}
+
+async function salvarEdicao(){
+  const nome=document.getElementById("editNome").value.trim();
+  if(!nome){alert("Nome obrigatório.");return;}
+  // produto (ex-produtos)
+  const {error}=await client.from("produto").update({nome,categoria:document.getElementById("editCategoria").value||null,valor:parseFloat(document.getElementById("editValor").value||0),minimo:parseInt(document.getElementById("editMinimo").value||0)}).eq("id",produtoEditId);
+  if(error){alert("Erro: "+error.message);return;}
+  fecharModalEditar();carregar();
+}
+
 function abrirMovimentar(tipo,produtoId){tipoMovAtual=tipo;document.getElementById("modalMovTitulo").textContent=tipo==="entrada"?"Entrada de Estoque":"Saída de Estoque";document.getElementById("btnConfirmarMov").style.background=tipo==="entrada"?"#16a34a":"#dc2626";document.getElementById("movQtd").value="1";document.getElementById("movObs").value="";document.getElementById("movTerapeuta").value="";const selMotivo=document.getElementById("movMotivo");selMotivo.innerHTML="<option value=''>Selecione</option>";MOTIVOS[tipo].forEach(m=>selMotivo.innerHTML+='<option>'+m+'</option>');popularSelectProdutos();if(produtoId)document.getElementById("movProduto").value=produtoId;document.getElementById("modalMovimentar").style.display="flex";}
 function fecharModalMov(){document.getElementById("modalMovimentar").style.display="none";}
-async function confirmarMov(){const prodId=document.getElementById("movProduto").value;const qtd=parseInt(document.getElementById("movQtd").value||0);const motivo=document.getElementById("movMotivo").value;const obs=document.getElementById("movObs").value.trim();const terCpf=document.getElementById("movTerapeuta").value||null;if(!prodId){alert("Selecione o produto.");return;}if(!qtd||qtd<=0){alert("Informe uma quantidade válida.");return;}if(tipoMovAtual==="saida"){const p=produtos.find(x=>x.id===prodId);if(p&&(p.saldo||0)<qtd){alert("Saldo insuficiente. Disponível: "+(p.saldo||0));return;}}const {error}=await client.from("movimentacoes_estoque").insert({produto_id:prodId,tipo:tipoMovAtual,quantidade:qtd,motivo:motivo||null,observacao:obs||null,terapeuta_cpf:terCpf});if(error){alert("Erro: "+error.message);return;}fecharModalMov();carregar();}
-async function excluirProduto(id){if(!confirm("Excluir este produto e todo seu histórico?"))return;await client.from("movimentacoes_estoque").delete().eq("produto_id",id);await client.from("produtos").delete().eq("id",id);carregar();}
+
+async function confirmarMov(){
+  const prodId=document.getElementById("movProduto").value;
+  const qtd=parseInt(document.getElementById("movQtd").value||0);
+  const motivo=document.getElementById("movMotivo").value;
+  const obs=document.getElementById("movObs").value.trim();
+  const terCpf=document.getElementById("movTerapeuta").value||null;
+  if(!prodId){alert("Selecione o produto.");return;}
+  if(!qtd||qtd<=0){alert("Informe uma quantidade válida.");return;}
+  if(tipoMovAtual==="saida"){const p=produtos.find(x=>x.id===prodId);if(p&&(p.saldo||0)<qtd){alert("Saldo insuficiente. Disponível: "+(p.saldo||0));return;}}
+  // estoque_movimentacao (ex-movimentacoes_estoque)
+  const {error}=await client.from("estoque_movimentacao").insert({produto_id:prodId,tipo:tipoMovAtual,quantidade:qtd,motivo:motivo||null,observacao:obs||null,terapeuta_cpf:terCpf});
+  if(error){alert("Erro: "+error.message);return;}
+  fecharModalMov();carregar();
+}
+
+async function excluirProduto(id){
+  if(!confirm("Excluir este produto e todo seu histórico?"))return;
+  // estoque_movimentacao (ex-movimentacoes_estoque)
+  await client.from("estoque_movimentacao").delete().eq("produto_id",id);
+  // produto (ex-produtos)
+  await client.from("produto").delete().eq("id",id);
+  carregar();
+}
 
 document.addEventListener('DOMContentLoaded',()=>{
   atualizarIconesEstoque();

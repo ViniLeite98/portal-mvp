@@ -33,7 +33,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
 .btn-limpar:hover{background:#f3f4f6;}
 .btn-limpar.visible{display:inline-flex;}
-/* Grupos card */
 .grupos-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
 .grupo-card{background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px;cursor:pointer;border:2px solid transparent;transition:all .15s;}
 .grupo-card.ativo{border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
@@ -92,7 +91,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
 .btn-cancel:hover{background:#f3f4f6;}
 .btn-save{background:#1f2937;}
-/* ── GRUPO DROPDOWN MULTI ── */
 .grupo-dropdown-btn{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;cursor:pointer;min-width:200px;display:flex;align-items:center;justify-content:space-between;gap:8px;user-select:none;transition:border-color .15s;}
 .grupo-dropdown-btn:hover{border-color:#9ca3af;}
 .grupo-dropdown-btn.ativo{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
@@ -102,7 +100,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .grupo-menu-item:hover{background:#f9fafb;}
 .grupo-menu-item input[type=checkbox]{width:15px;height:15px;accent-color:#2563eb;cursor:pointer;flex-shrink:0;}
 .grupo-menu-sep{border:none;border-top:1px solid #f3f4f6;margin:4px 0;}
-/* Paleta */
 .paleta-grid{display:flex;flex-wrap:wrap;gap:8px;padding:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;}
 .paleta-item{width:34px;height:34px;border-radius:8px;cursor:pointer;border:3px solid transparent;transition:transform .1s,border-color .15s;position:relative;flex-shrink:0;}
 .paleta-item:hover{transform:scale(1.12);}
@@ -163,7 +160,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
   </div>
 </div>
 
-<!-- GRUPOS COM CORES (visual) -->
 <div class="grupos-bar" id="gruposBar"></div>
 
 <div class="table-wrap">
@@ -277,7 +273,6 @@ const moeda=v=>Number(v||0).toLocaleString("pt-BR",{minimumFractionDigits:2});
 const parseMoeda=v=>parseFloat((v||"0").replace(/\./g,"").replace(",","."))||0;
 const corDoGrupo=g=>gruposMap[g]||null;
 
-// ── DROPDOWN MULTI GRUPO ──────────────────────────────────────────────────
 function toggleGrupoDropdown() {
   const menu = document.getElementById("grupoDropdownMenu");
   const btn = document.getElementById("grupoDropdownBtn");
@@ -335,7 +330,6 @@ function popularCheckboxGrupos(grupos) {
   ).join("");
 }
 
-/* ══════ CARGA ══════ */
 async function carregarGrupos(){
   const{data}=await client.from("parametros")
     .select("valor,cor")
@@ -347,7 +341,8 @@ async function carregarGrupos(){
 }
 
 async function carregarServicos(){
-  const{data,error}=await client.from("servicos").select("*");
+  // servico (ex-servicos)
+  const{data,error}=await client.from("servico").select("*");
   if(error){console.error(error);return;}
   dados=data||[];
 }
@@ -371,11 +366,9 @@ function popularSelectGrupo(){
     selModal.innerHTML+=`<option value="${g}">${g}</option>`;
   });
 
-  // popula checkboxes do dropdown
   popularCheckboxGrupos(todos);
 }
 
-/* ══════ BARRA DE GRUPOS ══════ */
 function renderGruposBar(){
   const bar=document.getElementById("gruposBar");
   const grupos=[...new Set(dados.map(s=>s.grupo).filter(Boolean))].sort();
@@ -397,7 +390,6 @@ function renderGruposBar(){
   });
 }
 
-/* ══════ FILTROS / ORDENAÇÃO ══════ */
 function limparFiltros(){
   document.getElementById("buscaServico").value="";
   document.getElementById("filtroStatus").value="";
@@ -459,7 +451,6 @@ function aplicarFiltroEOrdem(){
   checarBtnLimpar();renderTabela();
 }
 
-/* ══════ TABELA ══════ */
 function renderTabela(){
   const porPag=parseInt(document.getElementById("porPagina").value)||10;
   const total=dadosFiltrados.length;
@@ -521,7 +512,6 @@ function renderTabela(){
   addBtn('<i class="fa fa-chevron-right"></i>',paginaAtual+1,false,paginaAtual>=totalPags-1);
 }
 
-/* ══════ MODAL SERVIÇO ══════ */
 function resetModal(){
   ["grupo","subgrupo","valor","comissao"].forEach(id=>{
     const el=document.getElementById(id);if(el)el.value="";
@@ -579,20 +569,21 @@ async function salvar(){
   };
   if(!payload.grupo){alert("Selecione o grupo do serviço.");return;}
   let error;
-  if(idAtual){({error}=await client.from("servicos").update(payload).eq("id",idAtual));}
-  else{({error}=await client.from("servicos").insert(payload));}
+  // servico (ex-servicos)
+  if(idAtual){({error}=await client.from("servico").update(payload).eq("id",idAtual));}
+  else{({error}=await client.from("servico").insert(payload));}
   if(error){alert("Erro ao salvar: "+error.message);return;}
   fecharModal();carregar();
 }
 
 async function excluir(id){
   if(!confirm("Excluir este serviço?"))return;
-  const{error}=await client.from("servicos").delete().eq("id",id);
+  // servico (ex-servicos)
+  const{error}=await client.from("servico").delete().eq("id",id);
   if(error){alert("Erro: "+error.message);return;}
   carregar();
 }
 
-/* ══════ EXPORTAR ══════ */
 function exportarExcel(){
   const exp=dados.map(s=>({
     "Serviço":nomeS(s),"Grupo":s.grupo||"","Subgrupo":s.subgrupo||"",
@@ -607,7 +598,6 @@ function exportarExcel(){
   XLSX.writeFile(wb,"servicos.xlsx");
 }
 
-/* ══════ INIT ══════ */
 document.addEventListener("DOMContentLoaded",()=>{
   atualizarIcones();
   document.getElementById("buscaServico").addEventListener("input",()=>{paginaAtual=0;aplicarFiltroEOrdem();});

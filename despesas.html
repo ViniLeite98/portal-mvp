@@ -66,7 +66,6 @@ tr:hover td{background:#f9fafb;}
 .nf-atual{display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;font-size:12px;margin-top:6px;}
 .nf-atual a{color:#16a34a;text-decoration:none;font-weight:600;}
 .upload-status{font-size:12px;color:#2563eb;margin-top:6px;display:none;}
-/* Toast de recorrências geradas */
 .toast-recorrencia{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1f2937;color:#fff;border-radius:12px;padding:14px 22px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:999;opacity:0;transition:opacity .3s;}
 .toast-recorrencia.show{opacity:1;}
 .toast-recorrencia i{color:#34d399;font-size:16px;}
@@ -213,24 +212,18 @@ const CENTROS_DEFAULT=["Operacional","Estrutura","Marketing","Administrativo","O
 function fmtMoeda(v){return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function fmtData(v){if(!v)return"—";const[y,m,d]=v.split("-");return`${d}/${m}/${y}`;}
 function hoje(){const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().split("T")[0];}
-function anoMesHoje(){const h=hoje();return h.substring(0,7);} // "2026-05"
+function anoMesHoje(){const h=hoje();return h.substring(0,7);}
 function isVencido(vencimento,status){if(["Pago","Pendente Aprovação","Aprovado","Reprovado"].includes(status))return false;return vencimento<hoje();}
 function limparNome(nome){return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");}
 function getUser(cb,n=20){if(window.usuarioLogado)return cb(window.usuarioLogado);if(n<=0)return cb(null);setTimeout(()=>getUser(cb,n-1),100);}
 
-// ── GERAR RECORRÊNCIAS DO MÊS ATUAL ─────────────────────────────────────────
-// Para cada despesa recorrente, verifica se já existe uma cópia no mês atual.
-// Se não existir, cria com status "A pagar".
 async function gerarRecorrencias(todasDespesas){
   const recorrentes = todasDespesas.filter(d => d.recorrente && d.recorrencia === "mensal");
   if(!recorrentes.length) return 0;
-
-  const mesAtual = anoMesHoje(); // "2026-05"
+  const mesAtual = anoMesHoje();
   let geradas = 0;
   const novas = [];
-
   for(const d of recorrentes){
-    // Verifica se já tem uma despesa com mesma descrição neste mês
     const jaExiste = todasDespesas.some(x =>
       x.descricao === d.descricao &&
       x.data_vencimento &&
@@ -238,18 +231,12 @@ async function gerarRecorrencias(todasDespesas){
       x.id !== d.id
     );
     if(jaExiste) continue;
-
-    // Monta vencimento: mesmo dia do mês original, mas no mês atual
     const diaOriginal = d.data_vencimento ? d.data_vencimento.split("-")[2] : "10";
     const [anoAtual, mesAtualNum] = mesAtual.split("-");
-    // Garante que o dia não exceda o último dia do mês
     const ultimoDia = new Date(parseInt(anoAtual), parseInt(mesAtualNum), 0).getDate();
     const dia = String(Math.min(parseInt(diaOriginal), ultimoDia)).padStart(2,"0");
     const novoVencimento = `${anoAtual}-${mesAtualNum}-${dia}`;
-
-    // Não gerar se o mês do original já é o mês atual (evita duplicar a própria despesa)
     if(d.data_vencimento && d.data_vencimento.substring(0,7) === mesAtual) continue;
-
     novas.push({
       descricao:    d.descricao,
       categoria:    d.categoria,
@@ -265,9 +252,9 @@ async function gerarRecorrencias(todasDespesas){
     });
     geradas++;
   }
-
   if(novas.length){
-    const {error} = await client.from("despesas").insert(novas);
+    // despesa (ex-despesas)
+    const {error} = await client.from("despesa").insert(novas);
     if(error){ console.error("Erro ao gerar recorrências:", error); return 0; }
   }
   return geradas;
@@ -282,7 +269,6 @@ function mostrarToastRecorrencia(qtd){
   setTimeout(()=>el.classList.remove("show"), 4000);
 }
 
-// ── RENDERIZAR ───────────────────────────────────────────────────────────────
 function renderTopbar(u){
   isAdmin = u && u.role === "admin";
   const btns = document.getElementById("topbarBtns");
@@ -311,22 +297,19 @@ async function carregarParametros(){
 }
 
 async function carregar(){
-  const{data,error}=await client.from("despesas").select("*").order("data_vencimento");
+  // despesa (ex-despesas)
+  const{data,error}=await client.from("despesa").select("*").order("data_vencimento");
   if(error){console.error(error);return;}
   const todas = data||[];
-
-  // Gera recorrências antes de renderizar
   const qtdGeradas = await gerarRecorrencias(todas);
-
-  // Se gerou alguma, recarrega do banco para pegar as novas
   if(qtdGeradas > 0){
-    const{data:atualizado}=await client.from("despesas").select("*").order("data_vencimento");
+    // despesa (ex-despesas)
+    const{data:atualizado}=await client.from("despesa").select("*").order("data_vencimento");
     dados=(atualizado||[]).map(d=>({...d,status:isVencido(d.data_vencimento,d.status)?"Vencido":d.status}));
     mostrarToastRecorrencia(qtdGeradas);
   } else {
     dados=todas.map(d=>({...d,status:isVencido(d.data_vencimento,d.status)?"Vencido":d.status}));
   }
-
   listaFiltrada=[...dados];
   render();
 }
@@ -514,15 +497,17 @@ async function salvar(){
     statusEl.style.display="none";
   }
   let error;
-  if(editandoId){({error}=await client.from("despesas").update(payload).eq("id",editandoId));}
-  else{({error}=await client.from("despesas").insert(payload));}
+  // despesa (ex-despesas)
+  if(editandoId){({error}=await client.from("despesa").update(payload).eq("id",editandoId));}
+  else{({error}=await client.from("despesa").insert(payload));}
   if(error){alert("Erro ao salvar: "+error.message);return;}
   fecharModal();carregar();
 }
 
-async function aprovar(id){if(!confirm("Aprovar esta despesa?"))return;await client.from("despesas").update({status:"A pagar"}).eq("id",id);carregar();}
-async function reprovar(id){if(!confirm("Reprovar esta despesa?"))return;await client.from("despesas").update({status:"Reprovado"}).eq("id",id);carregar();}
-async function excluir(id){if(!confirm("Excluir esta despesa?"))return;await client.from("despesas").delete().eq("id",id);carregar();}
+// despesa (ex-despesas)
+async function aprovar(id){if(!confirm("Aprovar esta despesa?"))return;await client.from("despesa").update({status:"A pagar"}).eq("id",id);carregar();}
+async function reprovar(id){if(!confirm("Reprovar esta despesa?"))return;await client.from("despesa").update({status:"Reprovado"}).eq("id",id);carregar();}
+async function excluir(id){if(!confirm("Excluir esta despesa?"))return;await client.from("despesa").delete().eq("id",id);carregar();}
 
 function abrirPagar(id){
   pagarId=id;
@@ -535,7 +520,8 @@ function fecharModalPagar(){document.getElementById("modalPagar").style.display=
 async function confirmarPagamento(){
   const data=document.getElementById("pagarData").value;
   if(!data){alert("Informe a data de pagamento.");return;}
-  const{error}=await client.from("despesas").update({status:"Pago",data_pagamento:data}).eq("id",pagarId);
+  // despesa (ex-despesas)
+  const{error}=await client.from("despesa").update({status:"Pago",data_pagamento:data}).eq("id",pagarId);
   if(error){alert("Erro: "+error.message);return;}
   fecharModalPagar();carregar();
 }

@@ -148,6 +148,16 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .foto-card-info{padding:7px 10px;font-size:11px;color:#6b7280;}
 .foto-card-del{position:absolute;top:6px;right:6px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;}
 .foto-card-del:hover{background:#dc2626;}
+/* ── CARGO DROPDOWN ── */
+.cargo-dropdown-btn{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;cursor:pointer;min-width:200px;display:flex;align-items:center;justify-content:space-between;gap:8px;user-select:none;transition:border-color .15s;}
+.cargo-dropdown-btn:hover{border-color:#9ca3af;}
+.cargo-dropdown-btn.ativo{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.cargo-dropdown-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:220px;padding:6px 0;}
+.cargo-dropdown-menu.aberto{display:block;}
+.cargo-menu-item{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;font-size:13px;color:#374151;transition:background .1s;}
+.cargo-menu-item:hover{background:#f9fafb;}
+.cargo-menu-item input[type=checkbox]{width:15px;height:15px;accent-color:#2563eb;cursor:pointer;flex-shrink:0;}
+.cargo-menu-sep{border:none;border-top:1px solid #f3f4f6;margin:4px 0;}
 @media (max-width: 1366px) {
   .content{padding:24px;}h1{font-size:20px;}th,td{padding:10px;font-size:13px;}
   .filter-group input{width:180px;font-size:13px;}.modal-content{width:98vw;}.side-nav{width:160px;}
@@ -190,18 +200,24 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
         <option value="Inativo">Inativo</option>
       </select>
     </div>
-    <div class="filter-group">
+    <div class="filter-group" style="position:relative">
       <span class="filter-label"><i class="fa fa-briefcase" style="margin-right:3px"></i> Cargo</span>
-      <select id="filtroCargo" onchange="filtrarTabela()">
-        <option value="">Todos os cargos</option>
-        <option>Terapeuta Feminina</option>
-        <option>Terapeuta Masculino</option>
-        <option>Gerente</option>
-        <option>Atendente</option>
-        <option>Recepcionista</option>
-        <option>Faxineira</option>
-        <option>Analista</option>
-      </select>
+      <div id="cargoDropdownBtn" class="cargo-dropdown-btn" onclick="toggleCargoDropdown()">
+        <span id="cargoDropdownLabel">Todos os cargos</span>
+        <i class="fa fa-chevron-down" style="font-size:11px;color:#9ca3af"></i>
+      </div>
+      <div id="cargoDropdownMenu" class="cargo-dropdown-menu">
+        <label class="cargo-menu-item" style="border-bottom:1px solid #f3f4f6;margin-bottom:2px;">
+          <input type="checkbox" id="cargoTodos" checked onchange="selecionarTodosCargos()"> Todos os cargos
+        </label>
+        <label class="cargo-menu-item"><input type="checkbox" class="cargo-chk" value="Terapeuta Feminina" onchange="onCargoCkChange()"> Terapeuta Feminina</label>
+        <label class="cargo-menu-item"><input type="checkbox" class="cargo-chk" value="Terapeuta Masculino" onchange="onCargoCkChange()"> Terapeuta Masculino</label>
+        <label class="cargo-menu-item"><input type="checkbox" class="cargo-chk" value="Gerente" onchange="onCargoCkChange()"> Gerente</label>
+        <label class="cargo-menu-item"><input type="checkbox" class="cargo-chk" value="Atendente" onchange="onCargoCkChange()"> Atendente</label>
+        <label class="cargo-menu-item"><input type="checkbox" class="cargo-chk" value="Recepcionista" onchange="onCargoCkChange()"> Recepcionista</label>
+        <label class="cargo-menu-item"><input type="checkbox" class="cargo-chk" value="Faxineira" onchange="onCargoCkChange()"> Faxineira</label>
+        <label class="cargo-menu-item"><input type="checkbox" class="cargo-chk" value="Analista" onchange="onCargoCkChange()"> Analista</label>
+      </div>
     </div>
     <button class="btn-limpar" id="btnLimparFiltros" onclick="limparFiltros()">
       <i class="fa fa-times"></i> Limpar filtros
@@ -545,6 +561,54 @@ const campos = [
   "cargo","tem_folga","dia_folga","hora_entrada","hora_saida","data_inicio",
   "status","data_inativacao","peso","altura","cor_cabelo","salario_base","regime"
 ];
+
+// ── FILTRO CARGO MULTI-SELECT ──────────────────────────────────────────────
+let cargosSelecionados = [];
+
+function toggleCargoDropdown() {
+  const menu = document.getElementById("cargoDropdownMenu");
+  const btn = document.getElementById("cargoDropdownBtn");
+  const aberto = menu.classList.contains("aberto");
+  menu.classList.toggle("aberto", !aberto);
+  btn.classList.toggle("ativo", !aberto);
+}
+
+document.addEventListener("click", function(e) {
+  const btn = document.getElementById("cargoDropdownBtn");
+  const menu = document.getElementById("cargoDropdownMenu");
+  if(btn && menu && !btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.classList.remove("aberto");
+    btn.classList.remove("ativo");
+  }
+});
+
+function selecionarTodosCargos() {
+  document.querySelectorAll(".cargo-chk").forEach(c => c.checked = false);
+  document.getElementById("cargoTodos").checked = true;
+  cargosSelecionados = [];
+  atualizarLabelCargo();
+  paginaAtual = 1;
+  aplicarOrdemEFiltro();
+  checarBtnLimpar();
+}
+
+function onCargoCkChange() {
+  const chks = document.querySelectorAll(".cargo-chk:checked");
+  cargosSelecionados = Array.from(chks).map(c => c.value);
+  document.getElementById("cargoTodos").checked = cargosSelecionados.length === 0;
+  atualizarLabelCargo();
+  paginaAtual = 1;
+  aplicarOrdemEFiltro();
+  checarBtnLimpar();
+}
+
+function atualizarLabelCargo() {
+  const label = document.getElementById("cargoDropdownLabel");
+  if(cargosSelecionados.length === 0) label.textContent = "Todos os cargos";
+  else if(cargosSelecionados.length === 1) label.textContent = cargosSelecionados[0];
+  else label.textContent = cargosSelecionados.length + " cargos selecionados";
+}
+
 function mascara(id,fn){const el=document.getElementById(id);if(!el)return;el.addEventListener('input',function(){const pos=this.selectionStart,prev=this.value;this.value=fn(this.value);if(this.value.length===prev.length)this.setSelectionRange(pos,pos);});}
 function fmtCPF(v){v=v.replace(/\D/g,'').substring(0,11);if(v.length<=3)return v;if(v.length<=6)return v.slice(0,3)+'.'+v.slice(3);if(v.length<=9)return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6);return v.slice(0,3)+'.'+v.slice(3,6)+'.'+v.slice(6,9)+'-'+v.slice(9);}
 function fmtRG(v){v=v.replace(/\D/g,'').substring(0,9);if(v.length<=2)return v;if(v.length<=5)return v.slice(0,2)+'.'+v.slice(2);if(v.length<=8)return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5);return v.slice(0,2)+'.'+v.slice(2,5)+'.'+v.slice(5,8)+'-'+v.slice(8);}
@@ -691,7 +755,7 @@ let registrosFiltrados = [];
 let ordemCol = 'nome';
 let ordemDir = 'asc';
 let paginaAtual = 1;
-function atualizarContador(total, statusFiltro, cargoFiltro) {
+function atualizarContador(total, statusFiltro) {
   const countEl = document.getElementById("collabCount");
   const labelEl = document.getElementById("collabLabel");
   if(!countEl) return;
@@ -700,20 +764,23 @@ function atualizarContador(total, statusFiltro, cargoFiltro) {
   let partes = [];
   if(statusFiltro === "Ativo") partes.push("ativos");
   else if(statusFiltro === "Inativo") partes.push("inativos");
-  if(cargoFiltro) partes.push("· " + cargoFiltro);
+  if(cargosSelecionados.length === 1) partes.push("· " + cargosSelecionados[0]);
+  else if(cargosSelecionados.length > 1) partes.push("· " + cargosSelecionados.length + " cargos");
   labelEl.textContent = sufixo + (partes.length ? " " + partes.join(" ") : "");
 }
 function limparFiltros(){
   document.getElementById("pesquisaNome").value = "";
   document.getElementById("filtroStatus").value = "Ativo";
-  document.getElementById("filtroCargo").value = "";
+  cargosSelecionados = [];
+  document.querySelectorAll(".cargo-chk").forEach(c => c.checked = false);
+  document.getElementById("cargoTodos").checked = true;
+  atualizarLabelCargo();
   carregar();
 }
 function checarBtnLimpar(){
   const nome = document.getElementById("pesquisaNome").value;
   const status = document.getElementById("filtroStatus").value;
-  const cargo = document.getElementById("filtroCargo").value;
-  document.getElementById("btnLimparFiltros").classList.toggle("visible", !!(nome || status !== "Ativo" || cargo));
+  document.getElementById("btnLimparFiltros").classList.toggle("visible", !!(nome || status !== "Ativo" || cargosSelecionados.length > 0));
 }
 function ordenarPor(col) {
   if(ordemCol === col) { ordemDir = ordemDir === 'asc' ? 'desc' : 'asc'; }
@@ -746,10 +813,9 @@ async function carregar(){
 function filtrarTabela(){ paginaAtual = 1; aplicarOrdemEFiltro(); }
 function aplicarOrdemEFiltro(){
   const filtroNome = document.getElementById("pesquisaNome").value.toLowerCase();
-  const filtroCargo = document.getElementById("filtroCargo").value;
   registrosFiltrados = todosRegistros.filter(t => {
     const nomeOk = (t.nome_profissional||"").toLowerCase().includes(filtroNome);
-    const cargoOk = !filtroCargo || t.cargo === filtroCargo;
+    const cargoOk = cargosSelecionados.length === 0 || cargosSelecionados.includes(t.cargo);
     return nomeOk && cargoOk;
   });
   registrosFiltrados.sort((a, b) => {
@@ -760,7 +826,7 @@ function aplicarOrdemEFiltro(){
     if(va > vb) return ordemDir === 'asc' ? 1 : -1;
     return 0;
   });
-  atualizarContador(registrosFiltrados.length, document.getElementById("filtroStatus").value, document.getElementById("filtroCargo").value);
+  atualizarContador(registrosFiltrados.length, document.getElementById("filtroStatus").value);
   checarBtnLimpar(); renderTabela();
 }
 function renderTabela(){
@@ -854,8 +920,7 @@ async function editar(cpf){
   document.getElementById("progressWrap").style.display="inline-flex";
   document.getElementById("docAviso").style.display="none";
   abaAtiva="pessoais";setTimeout(atualizarProgresso,50);
-  carregarDocs(cpf);
-  carregarFotos(cpf);
+  carregarDocs(cpf); carregarFotos(cpf);
   await carregarHorarios(cpf);
   const u=window.usuarioLogado;
   if(u&&u.role==="admin"){
@@ -950,9 +1015,7 @@ async function salvar(){
 async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?"))return;
   const {data:docs}=await client.from("documentos").select("id").eq("equipe_id",cpf);
-  if(docs&&docs.length>0){
-    await client.from("documentos").delete().eq("equipe_id",cpf);
-  }
+  if(docs&&docs.length>0){ await client.from("documentos").delete().eq("equipe_id",cpf); }
   await client.from("solicitacoes").delete().eq("terapeuta_cpf",cpf);
   await client.from("terapeutas_horarios").delete().eq("terapeuta_cpf",cpf);
   const {error}=await client.from("terapeutas").delete().eq("cpf",cpf);
@@ -1015,7 +1078,7 @@ async function excluirDoc(id){
   if(error){alert("Erro ao excluir: "+error.message);return;}
   carregarDocs(cpfAtual);
 }
-// ── FOTOS ────────────────────────────────────────────────────────────────────
+// ── FOTOS ──
 function adicionarFilaFoto() {
   const files = document.getElementById("foto_arquivo").files;
   if(!files || !files.length) return;
@@ -1065,10 +1128,7 @@ async function carregarFotos(cpf) {
   const {data, error} = await client.from("documentos").select("*").eq("equipe_id", cpf).eq("tipo", "Foto").order("created_at", {ascending: false});
   const lista = document.getElementById("fotoLista");
   const badge = document.getElementById("fotoBadge");
-  if(error || !data || data.length === 0) {
-    lista.innerHTML = '<div class="doc-empty">Nenhuma foto anexada.</div>';
-    badge.style.display = "none"; return;
-  }
+  if(error || !data || data.length === 0) { lista.innerHTML = '<div class="doc-empty">Nenhuma foto anexada.</div>'; badge.style.display = "none"; return; }
   badge.textContent = data.length; badge.style.display = "";
   lista.innerHTML = '<div class="foto-grid">' + data.map(d =>
     '<div class="foto-card" id="foto-'+d.id+'">'+
@@ -1125,7 +1185,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   TODOS_CAMPOS.forEach(c=>{const el=document.getElementById(c.id);if(el){el.addEventListener("input",atualizarProgresso);el.addEventListener("change",atualizarProgresso);}});
   document.getElementById("pesquisaNome").addEventListener("input", checarBtnLimpar);
   document.getElementById("filtroStatus").addEventListener("change", checarBtnLimpar);
-  document.getElementById("filtroCargo").addEventListener("change", checarBtnLimpar);
   carregar();
 });
 </script>

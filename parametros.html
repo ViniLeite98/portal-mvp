@@ -354,7 +354,7 @@ function mudarSecao(secao,el,viaHash){
 
 async function carregar(){
   if(SECOES_COM_ICONE.includes(secaoAtual)){
-    const {data,error}=await client.from("certificacoes").select("id,nome,icone").order("nome");
+    const {data,error}=await client.from("certificacao").select("id,nome,icone").order("nome");
     if(error){console.error(error);return;}
     itens=(data||[]).map(c=>({id:c.id,valor:c.nome,icone:c.icone,ativo:true,descricao:null,negativo:false,ordem:0}));
   } else {
@@ -547,9 +547,9 @@ async function salvarEdicao(){
   if(SECOES_COM_ICONE.includes(secaoAtual)){
     var icone=document.getElementById("editIcone").value||"fa-certificate";
     if(inserindo){
-      ({error}=await client.from("certificacoes").insert({nome,icone}));
+      ({error}=await client.from("certificacao").insert({nome,icone}));
     } else {
-      ({error}=await client.from("certificacoes").update({nome,icone}).eq("id",editandoId));
+      ({error}=await client.from("certificacao").update({nome,icone}).eq("id",editandoId));
     }
   } else if(SECOES_KANBAN.includes(secaoAtual)){
     var cor=document.getElementById("editCorHex").value.trim()||"#6366f1";
@@ -667,12 +667,12 @@ async function excluir(id){
   if(!confirm("Excluir este item?"))return;
   var error;
   if(SECOES_COM_ICONE.includes(secaoAtual)){
-    var {data:vinculos}=await client.from("terapeuta_certificacoes").select("id").eq("certificacao_id",id);
+    var {data:vinculos}=await client.from("funcionario_certificacao").select("id").eq("certificacao_id",id);
     if(vinculos&&vinculos.length>0){
       if(!confirm("Esta certificação está vinculada a "+vinculos.length+" profissional(is).\nDeseja excluir e remover todos os vínculos?"))return;
-      await client.from("terapeuta_certificacoes").delete().eq("certificacao_id",id);
+      await client.from("funcionario_certificacao").delete().eq("certificacao_id",id);
     }
-    ({error}=await client.from("certificacoes").delete().eq("id",id));
+    ({error}=await client.from("certificacao").delete().eq("id",id));
   } else {
     ({error}=await client.from("parametros").delete().eq("id",id));
   }

@@ -302,7 +302,6 @@ function diasAtras(data){
   return Math.floor((new Date() - new Date(data+"T00:00:00")) / 86400000);
 }
 
-// ── FILTROS ──
 function limparFiltros(){
   document.getElementById("busca").value = "";
   document.getElementById("filtroVisita").value = "";
@@ -321,11 +320,9 @@ function checarBtnLimpar(){
   document.getElementById("btnLimparFiltros").classList.toggle("visible", !!ativo);
 }
 
-// ── ORDENAÇÃO ──
 function ordenarPor(col){
   if(ordemCol === col){ ordemDir = ordemDir === 'asc' ? 'desc' : 'asc'; }
   else { ordemCol = col; ordemDir = col === 'recente' ? 'desc' : 'asc'; }
-  // Sincroniza o select de ordem
   document.getElementById("filtroOrdem").value = col;
   atualizarIconesOrdem();
   paginaAtual = 0;
@@ -347,7 +344,6 @@ function atualizarIconesOrdem(){
   });
 }
 
-// ── CONTADOR ──
 function atualizarContador(total, visita){
   document.getElementById("collabCount").textContent = total;
   let label = total === 1 ? "cliente" : "clientes";
@@ -362,11 +358,12 @@ async function carregar(){
   const btnNovo = document.getElementById("btnNovo");
   if(btnNovo) btnNovo.style.display = isAdmin ? "" : "none";
 
-  const {count: totalCount} = await client.from("clientes").select("*",{count:"exact",head:true});
-  const {count: sumidosCount} = await client.from("clientes").select("*",{count:"exact",head:true})
+  // cliente (ex-clientes)
+  const {count: totalCount} = await client.from("cliente").select("*",{count:"exact",head:true});
+  const {count: sumidosCount} = await client.from("cliente").select("*",{count:"exact",head:true})
     .not("ultimo_atendimento","is",null)
     .lt("ultimo_atendimento", new Date(Date.now()-60*86400000).toISOString().split("T")[0]);
-  const {data: ticketData} = await client.from("clientes").select("valor_total,total_atendimentos").gt("total_atendimentos",0).limit(5000);
+  const {data: ticketData} = await client.from("cliente").select("valor_total,total_atendimentos").gt("total_atendimentos",0).limit(5000);
   const ticketMed = ticketData?.length
     ? ticketData.reduce((a,c)=>a+(c.valor_total||0),0) / ticketData.reduce((a,c)=>a+(c.total_atendimentos||0),0) : 0;
 
@@ -385,7 +382,8 @@ async function carregarPagina(){
   const inicio  = porPag >= 9999 ? 0 : paginaAtual * porPag;
   const fim     = porPag >= 9999 ? 99999 : inicio + porPag - 1;
 
-  let q = client.from("clientes")
+  // cliente (ex-clientes)
+  let q = client.from("cliente")
     .select("id,nome,telefone_1,telefone_2,email,dt_nasc,total_atendimentos,valor_total,ultimo_atendimento",{count:"exact"});
 
   if(busca)              q = q.or('nome.ilike.%'+busca+'%,telefone_1.ilike.%'+busca+'%,email.ilike.%'+busca+'%');
@@ -494,7 +492,8 @@ async function abrirDetalhe(id, tabInicial){
   tabInicial = tabInicial || "perfil";
   clienteAtual = dados.find(c=>c.id===id) || null;
   if(!clienteAtual){
-    const {data} = await client.from("clientes").select("*").eq("id",id).single();
+    // cliente (ex-clientes)
+    const {data} = await client.from("cliente").select("*").eq("id",id).single();
     clienteAtual = data;
   }
   if(!clienteAtual) return;
@@ -527,7 +526,6 @@ async function abrirDetalhe(id, tabInicial){
   document.getElementById("eTel2").value  = c.telefone_2||"";
   document.querySelectorAll(".modal-tab").forEach(t=>t.classList.remove("active"));
   document.querySelectorAll(".tab-panel").forEach(t=>t.classList.remove("active"));
-  // encontra a tab certa
   document.querySelectorAll(".modal-tab").forEach(t=>{ if(t.textContent.trim().toLowerCase().includes(tabInicial==="editar"?"editar":"perfil")) t.classList.add("active"); });
   document.getElementById("tab-"+tabInicial).classList.add("active");
   document.getElementById("btnExcluir").style.display = "";
@@ -567,15 +565,17 @@ async function salvar(){
     telefone_2: document.getElementById("eTel2").value.trim()||null,
   };
   let error;
-  if(clienteAtual?.id){ ({error} = await client.from("clientes").update(payload).eq("id", clienteAtual.id)); }
-  else                 { ({error} = await client.from("clientes").insert(payload)); }
+  // cliente (ex-clientes)
+  if(clienteAtual?.id){ ({error} = await client.from("cliente").update(payload).eq("id", clienteAtual.id)); }
+  else                 { ({error} = await client.from("cliente").insert(payload)); }
   if(error){ alert("Erro ao salvar: "+error.message); return; }
   fecharModal(); carregar();
 }
 
 async function confirmarExcluir(id){
   if(!confirm("Excluir este cliente?")) return;
-  const {error} = await client.from("clientes").delete().eq("id",id);
+  // cliente (ex-clientes)
+  const {error} = await client.from("cliente").delete().eq("id",id);
   if(error){ alert("Erro: "+error.message); return; }
   carregar();
 }
@@ -583,7 +583,8 @@ async function confirmarExcluir(id){
 async function excluirCliente(){
   if(!clienteAtual?.id) return;
   if(!confirm("Excluir este cliente?")) return;
-  const {error} = await client.from("clientes").delete().eq("id",clienteAtual.id);
+  // cliente (ex-clientes)
+  const {error} = await client.from("cliente").delete().eq("id",clienteAtual.id);
   if(error){ alert("Erro: "+error.message); return; }
   fecharModal(); carregar();
 }

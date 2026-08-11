@@ -16,8 +16,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
 .content{flex:1;padding:40px;}
-
-/* ── TOPBAR padrão equipe ── */
 .topbar{margin-bottom:20px;}
 .topbar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
 .collab-counter{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:7px 16px;font-size:13px;color:#374151;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
@@ -34,8 +32,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
 .btn-limpar:hover{background:#f3f4f6;color:#374151;}
 .btn-limpar.visible{display:inline-flex;}
-
-/* Table */
 table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:13px;text-align:left;}
 th{background:#f9fafb;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;}
@@ -58,8 +54,6 @@ button:hover{opacity:.9;}
 .arquivo-link{font-size:12px;color:#2563eb;text-decoration:none;font-weight:500;display:inline-flex;align-items:center;gap:4px;}
 .arquivo-link:hover{text-decoration:underline;}
 .empty-row td{text-align:center;color:#9ca3af;padding:32px;}
-
-/* Paginação padrão equipe */
 .paginacao{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px;}
 .paginacao-info{font-size:13px;color:#6b7280;}
 .paginacao-info strong{color:#111827;}
@@ -72,8 +66,6 @@ button:hover{opacity:.9;}
 .pag-btn.ellipsis:hover{background:none;}
 .por-pagina-wrap{display:flex;align-items:center;gap:7px;font-size:13px;color:#6b7280;}
 .por-pagina-wrap select{padding:5px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;background:#fff;color:#111827;}
-
-/* Modais */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:1000;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:600px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
@@ -268,7 +260,6 @@ document.addEventListener("DOMContentLoaded",function(){
     if(tipo!=="Alteração de Horário"){document.getElementById("hora_inicio").value="";document.getElementById("hora_fim").value="";}
   };
 
-  // ── FILTROS ──
   window.limparFiltros=function(){
     document.getElementById("buscaNome").value="";
     document.getElementById("filtroStatus").value="";
@@ -283,7 +274,6 @@ document.addEventListener("DOMContentLoaded",function(){
     document.getElementById("btnLimparFiltros").classList.toggle("visible",!!(b||s||t));
   }
 
-  // ── ORDENAÇÃO ──
   function ordenar(col){
     if(ordemCol===col){ordemDir=ordemDir==='asc'?'desc':'asc';}
     else{ordemCol=col;ordemDir=col==='data'?'desc':'asc';}
@@ -305,13 +295,10 @@ document.addEventListener("DOMContentLoaded",function(){
     const busca=(document.getElementById("buscaNome").value||"").toLowerCase();
     const filtStatus=document.getElementById("filtroStatus").value;
     const filtTipo=document.getElementById("filtroTipo").value;
-
     solFiltradas=todasSolicitacoes.filter(s=>{
       const nome=(mapaTerapeutas[s.terapeuta_cpf]||"").toLowerCase();
       return nome.includes(busca)&&(!filtStatus||s.status===filtStatus)&&(!filtTipo||s.tipo===filtTipo);
     });
-
-    // Ordenação
     const statusOrd={"Pendente":0,"Acordado":1,"Não Acordado":2};
     solFiltradas.sort((a,b)=>{
       let va='',vb='';
@@ -323,14 +310,11 @@ document.addEventListener("DOMContentLoaded",function(){
       if(va>vb)return ordemDir==='asc'?1:-1;
       return 0;
     });
-
-    // Contador
     const total=solFiltradas.length;
     document.getElementById("collabCount").textContent=total;
     let label=total===1?"solicitação":"solicitações";
     if(filtStatus)label+=" "+filtStatus.toLowerCase();
     document.getElementById("collabLabel").textContent=label;
-
     checarBtnLimpar();renderTabela();
   }
 
@@ -371,7 +355,6 @@ document.addEventListener("DOMContentLoaded",function(){
           +"</tr>";
       });
     }
-    // Paginação
     const infoEl=document.getElementById("paginacaoInfo"),ctrlEl=document.getElementById("paginacaoControles");
     if(total===0){infoEl.innerHTML="Nenhum resultado.";ctrlEl.innerHTML="";return;}
     if(porPag>=9999){infoEl.innerHTML="Exibindo <strong>todos os "+total+"</strong>";ctrlEl.innerHTML="";return;}
@@ -388,7 +371,8 @@ document.addEventListener("DOMContentLoaded",function(){
   }
 
   async function carregarTerapeutas(){
-    const {data}=await client.from("terapeutas").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
+    // funcionario (ex-terapeutas)
+    const {data}=await client.from("funcionario").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
     mapaTerapeutas={};(data||[]).forEach(t=>{mapaTerapeutas[t.cpf]=t.nome_profissional;});
     const sel=document.getElementById("terapeuta");
     sel.innerHTML="<option value=''>Selecione</option>";
@@ -404,7 +388,8 @@ document.addEventListener("DOMContentLoaded",function(){
 
   async function carregar(){
     getUser(async u=>{
-      let q=client.from("solicitacoes").select("*").order("created_at",{ascending:false});
+      // funcionario_solicitacao (ex-solicitacoes)
+      let q=client.from("funcionario_solicitacao").select("*").order("created_at",{ascending:false});
       if(eUsuario(u)&&u.cpf) q=q.eq("terapeuta_cpf",u.cpf);
       const {data}=await q;
       todasSolicitacoes=data||[];
@@ -438,7 +423,8 @@ document.addEventListener("DOMContentLoaded",function(){
 
   window.abrirEditar=async function(id){
     idEdicao=id;
-    const {data:s}=await client.from("solicitacoes").select("*").eq("id",id).single();if(!s)return;
+    // funcionario_solicitacao (ex-solicitacoes)
+    const {data:s}=await client.from("funcionario_solicitacao").select("*").eq("id",id).single();if(!s)return;
     resetModal();
     document.getElementById("terapeuta").value=s.terapeuta_cpf||"";
     document.getElementById("tipo").value=s.tipo||"";
@@ -484,7 +470,8 @@ document.addEventListener("DOMContentLoaded",function(){
     if(!dataInicio||!dataFim){alert("Preencha as datas.");return;}
     if(dataFim<dataInicio){alert("Data fim não pode ser menor que data início.");return;}
     if(tipo==="Alteração de Horário"){if(!horaInicio||!horaFim){alert("Informe o horário alterado.");return;}if(horaFim<=horaInicio){alert("Hora fim deve ser maior que hora início.");return;}}
-    let query=client.from("solicitacoes").select("id,tipo,data_inicio,data_fim,status").eq("terapeuta_cpf",terapeuta).neq("status","Não Acordado").lte("data_inicio",dataFim).gte("data_fim",dataInicio);
+    // funcionario_solicitacao (ex-solicitacoes) — verificação de conflitos
+    let query=client.from("funcionario_solicitacao").select("id,tipo,data_inicio,data_fim,status").eq("terapeuta_cpf",terapeuta).neq("status","Não Acordado").lte("data_inicio",dataFim).gte("data_fim",dataInicio);
     if(idEdicao)query=query.neq("id",idEdicao);
     const {data:conflitos}=await query;
     if(conflitos&&conflitos.length>0){const c=conflitos[0];alert("⚠️ Já existe uma solicitação de \""+c.tipo+"\" para este profissional no período "+fmtData(c.data_inicio)+" → "+fmtData(c.data_fim)+" ("+c.status+").\nRevise as datas antes de continuar.");return;}
@@ -503,14 +490,16 @@ document.addEventListener("DOMContentLoaded",function(){
       payload.arquivo_url=urlData.publicUrl;payload.arquivo_nome=file.name;statusEl.style.display="none";
     }
     let error;
-    if(idEdicao){({error}=await client.from("solicitacoes").update(payload).eq("id",idEdicao));}
-    else{({error}=await client.from("solicitacoes").insert(payload));}
+    // funcionario_solicitacao (ex-solicitacoes)
+    if(idEdicao){({error}=await client.from("funcionario_solicitacao").update(payload).eq("id",idEdicao));}
+    else{({error}=await client.from("funcionario_solicitacao").insert(payload));}
     if(error){alert("Erro ao salvar: "+error.message);return;}
     fecharModal();carregar();
   };
 
   window.alterarStatus=async function(id,novoStatus,aprovadoPor){
-    await client.from("solicitacoes").update({status:novoStatus,aprovado_por:aprovadoPor||null}).eq("id",id);carregar();
+    // funcionario_solicitacao (ex-solicitacoes)
+    await client.from("funcionario_solicitacao").update({status:novoStatus,aprovado_por:aprovadoPor||null}).eq("id",id);carregar();
   };
 
   let _confirmarId=null,_confirmarStatus=null;
@@ -540,7 +529,8 @@ document.addEventListener("DOMContentLoaded",function(){
   window.excluir=async function(id,arquivoUrl){
     if(!confirm("Excluir esta solicitação?"))return;
     if(arquivoUrl){const path=arquivoUrl.split("/storage/v1/object/public/documentos/")[1];if(path)await client.storage.from("documentos").remove([decodeURIComponent(path)]);}
-    await client.from("solicitacoes").delete().eq("id",id);carregar();
+    // funcionario_solicitacao (ex-solicitacoes)
+    await client.from("funcionario_solicitacao").delete().eq("id",id);carregar();
   };
 
   atualizarIconesOrdem();

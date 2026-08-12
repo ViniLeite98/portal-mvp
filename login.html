@@ -324,7 +324,7 @@ function entrar() {
     // ── Verifica se o colaborador está inativo ──
     var perfilRes = await client.from("perfis").select("cpf_terapeuta").eq("id", user.id).single();
     if(perfilRes.data && perfilRes.data.cpf_terapeuta) {
-      var terapeutaRes = await client.from("terapeutas").select("status").eq("cpf", perfilRes.data.cpf_terapeuta).single();
+      var terapeutaRes = await client.from("funcionario").select("status").eq("cpf", perfilRes.data.cpf_terapeuta).single();
       if(terapeutaRes.data && terapeutaRes.data.status === "Inativo") {
         await client.auth.signOut();
         registrarLog(user.id, email, nome, "falha", "Usuário inativo");
@@ -393,7 +393,7 @@ async function cad() {
     var userId=res.data.user.id;
     await client.from("perfis").upsert({id:userId,email:email,nome:nome,role:"usuario",cpf_terapeuta:cpfDigits});
     if(!ehInterno){
-      await client.from("terapeutas").upsert({cpf:cpfDigits,nome_completo:nome,nome_profissional:nome.split(" ")[0],email:email,status:"Ativo"},{onConflict:"cpf"});
+      await client.from("funcionario").upsert({cpf:cpfDigits,nome_completo:nome,nome_profissional:nome.split(" ")[0],email:email,status:"Ativo"},{onConflict:"cpf"});
     }
   }
 

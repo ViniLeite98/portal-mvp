@@ -371,12 +371,12 @@ document.addEventListener("DOMContentLoaded",function(){
   }
 
   async function carregarTerapeutas(){
-    // funcionario (ex-terapeutas)
-    const {data}=await client.from("funcionario").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
+    // funcionario (ex-terapeutas) — busca todos, ativos e inativos
+    const {data}=await client.from("funcionario").select("cpf,nome_profissional,status").order("nome_profissional");
     mapaTerapeutas={};(data||[]).forEach(t=>{mapaTerapeutas[t.cpf]=t.nome_profissional;});
     const sel=document.getElementById("terapeuta");
     sel.innerHTML="<option value=''>Selecione</option>";
-    (data||[]).forEach(t=>sel.innerHTML+="<option value='"+t.cpf+"'>"+t.nome_profissional+"</option>");
+    (data||[]).forEach(t=>sel.innerHTML+="<option value='"+t.cpf+"'>"+t.nome_profissional+(t.status==="Inativo"?" (Inativo)":"")+"</option>");
     const {data:params}=await client.from("parametros").select("valor").eq("tipo","tipos_solicitacao").eq("ativo",true).order("valor");
     const tipos=(params||[]).map(p=>p.valor);
     const listaTipos=tipos.length?tipos:["Alteração de Horário","Atestado","Falta","Férias","Viagem"];

@@ -6,7 +6,6 @@
 <title>Dashboard | Hara Spa</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
@@ -194,12 +193,9 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
         </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-width:0;">
-        <div class="card"><div class="card-header"><h3>Distribuição de Tempo</h3></div><div class="chart-wrap"><canvas id="chartTempo" height="160"></canvas></div></div>
-        <div class="card"><div class="card-header"><h3>Tipos de Ausência</h3></div><div class="chart-wrap"><canvas id="chartAus" height="120"></canvas></div></div>
       </div>
     </div>
     <div class="row">
-      <div class="card col-2"><div class="card-header"><h3>Ausências — Últimos 12 Meses</h3></div><div class="chart-wrap"><canvas id="chartAusMes" height="140"></canvas></div></div>
       <div class="card"><div class="card-header"><h3>Saídas no Ano</h3></div><div id="turnoverLista" style="padding:10px 16px;max-height:240px;overflow-y:auto;"></div></div>
     </div>
   </div>
@@ -310,7 +306,6 @@ function aplicarEquipe(){
   const lista=filtrarFuncs();
   renderKPIs(lista);
   renderTabela(lista);
-  renderCharts(lista);
   renderTurnover();
 }
 
@@ -354,32 +349,6 @@ function renderTabela(lista){
       +"<td><span class='badge-sm "+(ativo?"badge-ativo":"badge-inativo")+"'><span class='dot "+(ativo?"green":"red")+"'></span>"+f.status+"</span></td>"
       +"</tr>";
   }).join("");
-}
-
-function renderCharts(lista){
-  const g={color:"#f3f4f6"};
-  const tx={color:"#9ca3af",font:{size:10}};
-
-  const faixas={"<6m":0,"6m–1a":0,"1–2a":0,"2–3a":0,"3–5a":0,"5a+":0};
-  lista.filter(f=>f.status==="Ativo"&&f.data_inicio).forEach(f=>{
-    const m=diffMeses(f.data_inicio);
-    if(m<6)faixas["<6m"]++;else if(m<12)faixas["6m–1a"]++;else if(m<24)faixas["1–2a"]++;
-    else if(m<36)faixas["2–3a"]++;else if(m<60)faixas["3–5a"]++;else faixas["5a+"]++;
-  });
-  mkChart("chartTempo",{type:"bar",data:{labels:Object.keys(faixas),datasets:[{data:Object.values(faixas),backgroundColor:"rgba(37,99,235,.7)",borderColor:"#2563eb",borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{ticks:tx,grid:g},y:{ticks:{...tx,stepSize:1},grid:g,beginAtZero:true}}}});
-
-  const cpfs=lista.map(f=>f.cpf);
-  const tipos={};
-  solicitacoes.filter(s=>cpfs.includes(s.terapeuta_cpf)&&isAusencia(s.tipo)).forEach(s=>{tipos[s.tipo]=(tipos[s.tipo]||0)+1;});
-  const tL=Object.keys(tipos),tV=Object.values(tipos);
-  if(tL.length){mkChart("chartAus",{type:"doughnut",data:{labels:tL,datasets:[{data:tV,backgroundColor:["#dc2626","#d97706","#7c3aed","#16a34a","#2563eb","#6366f1"].slice(0,tL.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:true,aspectRatio:2.2,plugins:{legend:{position:"right",labels:{color:"#6b7280",font:{size:10},boxWidth:9,padding:8}}}}});}
-
-  const mesMap={};
-  const now=new Date();
-  for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const k=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");mesMap[k]=0;}
-  solicitacoes.filter(s=>cpfs.includes(s.terapeuta_cpf)&&isAusencia(s.tipo)).forEach(s=>{const k=s.data_inicio&&s.data_inicio.substring(0,7);if(k&&mesMap[k]!==undefined)mesMap[k]++;});
-  const mL=Object.keys(mesMap).map(k=>{const[y,m]=k.split("-");return MESES[parseInt(m)-1]+"/"+y.slice(2);});
-  mkChart("chartAusMes",{type:"line",data:{labels:mL,datasets:[{label:"Ausências",data:Object.values(mesMap),borderColor:"#d97706",backgroundColor:"rgba(217,119,6,.07)",fill:true,tension:.35,pointRadius:3,pointBackgroundColor:"#d97706",borderWidth:2}]},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{display:false}},scales:{x:{ticks:tx,grid:g},y:{ticks:{...tx,stepSize:1},grid:g,beginAtZero:true}}}});
 }
 
 function renderTurnover(){

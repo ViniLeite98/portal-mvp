@@ -151,22 +151,6 @@ tr:hover .acoes{opacity:1;}
         <span class="filter-label"><i class="fa fa-search" style="margin-right:3px"></i> Busca</span>
         <input type="text" id="busca" placeholder="Nome, telefone ou email...">
       </div>
-      <div class="filter-group">
-        <span class="filter-label"><i class="fa fa-filter" style="margin-right:3px"></i> Situação</span>
-        <select id="filtroVisita">
-          <option value="">Todos</option>
-          <option value="sumidos">Sumidos +60 dias</option>
-        </select>
-      </div>
-      <div class="filter-group">
-        <span class="filter-label"><i class="fa fa-sort" style="margin-right:3px"></i> Ordenar</span>
-        <select id="filtroOrdem">
-          <option value="nome">Nome A→Z</option>
-          <option value="visitas">Mais visitas</option>
-          <option value="valor">Maior valor</option>
-          <option value="recente">Última visita</option>
-        </select>
-      </div>
       <button class="btn-limpar" id="btnLimparFiltros" onclick="limparFiltros()">
         <i class="fa fa-times"></i> Limpar filtros
       </button>
@@ -180,10 +164,8 @@ tr:hover .acoes{opacity:1;}
         <tr>
           <th class="sortable" onclick="ordenarPor('nome')" id="th-nome">Cliente <i class="fa fa-sort sort-icon"></i></th>
           <th>Telefone</th>
-          <th class="sortable" onclick="ordenarPor('recente')" id="th-recente">Última Visita <i class="fa fa-sort sort-icon"></i></th>
-          <th class="sortable" onclick="ordenarPor('visitas')" id="th-visitas">Atendimentos <i class="fa fa-sort sort-icon"></i></th>
-          <th class="sortable" onclick="ordenarPor('valor')" id="th-valor">Valor Total <i class="fa fa-sort sort-icon"></i></th>
-
+          <th>Email</th>
+          <th>Nascimento</th>
         </tr>
       </thead>
       <tbody id="lista">
@@ -277,51 +259,19 @@ function diasAtras(data){
 
 function limparFiltros(){
   document.getElementById("busca").value = "";
-  document.getElementById("filtroVisita").value = "";
-  document.getElementById("filtroOrdem").value = "nome";
-  ordemCol = 'nome'; ordemDir = 'asc';
-  atualizarIconesOrdem();
   paginaAtual = 0;
   carregarPagina();
+  checarBtnLimpar();
 }
 
 function checarBtnLimpar(){
   const busca = document.getElementById("busca").value;
-  const visita = document.getElementById("filtroVisita").value;
-  const ordem = document.getElementById("filtroOrdem").value;
-  const ativo = busca || visita || ordem !== 'nome';
-  document.getElementById("btnLimparFiltros").classList.toggle("visible", !!ativo);
+  document.getElementById("btnLimparFiltros").classList.toggle("visible", !!busca);
 }
 
-function ordenarPor(col){
-  if(ordemCol === col){ ordemDir = ordemDir === 'asc' ? 'desc' : 'asc'; }
-  else { ordemCol = col; ordemDir = col === 'recente' ? 'desc' : 'asc'; }
-  document.getElementById("filtroOrdem").value = col;
-  atualizarIconesOrdem();
-  paginaAtual = 0;
-  carregarPagina();
-}
-
-function atualizarIconesOrdem(){
-  ['nome','recente','visitas','valor'].forEach(c => {
-    const th = document.getElementById('th-'+c);
-    if(!th) return;
-    const icon = th.querySelector('.sort-icon');
-    th.classList.remove('asc','desc');
-    if(ordemCol === c){
-      th.classList.add(ordemDir);
-      icon.className = 'fa sort-icon ' + (ordemDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down');
-    } else {
-      icon.className = 'fa fa-sort sort-icon';
-    }
-  });
-}
-
-function atualizarContador(total, visita){
+function atualizarContador(total){
   document.getElementById("collabCount").textContent = total;
-  let label = total === 1 ? "cliente" : "clientes";
-  if(visita === "sumidos") label += " sumidos";
-  document.getElementById("collabLabel").textContent = label;
+  document.getElementById("collabLabel").textContent = total === 1 ? "cliente" : "clientes";
 }
 
 async function carregar(){
@@ -336,25 +286,16 @@ async function carregar(){
 }
 
 async function carregarPagina(){
-  const busca   = (document.getElementById("busca").value||"").toLowerCase();
-  const filtro  = document.getElementById("filtroVisita").value;
-  const porPag  = parseInt(document.getElementById("porPagina").value) || 10;
-  const inicio  = porPag >= 9999 ? 0 : paginaAtual * porPag;
-  const fim     = porPag >= 9999 ? 99999 : inicio + porPag - 1;
+  const busca  = (document.getElementById("busca").value||"").toLowerCase();
+  const porPag = parseInt(document.getElementById("porPagina").value) || 10;
+  const inicio = porPag >= 9999 ? 0 : paginaAtual * porPag;
+  const fim    = porPag >= 9999 ? 99999 : inicio + porPag - 1;
 
-  // cliente (ex-clientes)
   let q = client.from("cliente")
-    .select("id,nome,telefone_1,telefone_2,email,dt_nasc,total_atendimentos,valor_total,ultimo_atendimento",{count:"exact"});
+    .select("id,nome,telefone_1,telefone_2,email,dt_nasc",{count:"exact"});
 
-  if(busca)              q = q.or('nome.ilike.%'+busca+'%,telefone_1.ilike.%'+busca+'%,email.ilike.%'+busca+'%');
-  if(filtro==="sumidos") q = q.not("ultimo_atendimento","is",null).lt("ultimo_atendimento", new Date(Date.now()-60*86400000).toISOString().split("T")[0]);
-
-  const colMap = { nome:'nome', visitas:'total_atendimentos', valor:'valor_total', recente:'ultimo_atendimento' };
-  const col = colMap[ordemCol] || 'nome';
-  const asc = ordemDir === 'asc';
-  if(ordemCol === 'recente') q = q.order(col, {ascending:asc, nullsFirst:false});
-  else q = q.order(col, {ascending:asc});
-
+  if(busca) q = q.or('nome.ilike.%'+busca+'%,telefone_1.ilike.%'+busca+'%,email.ilike.%'+busca+'%');
+  q = q.order('nome', {ascending: ordemDir === 'asc'});
   if(porPag < 9999) q = q.range(inicio, fim);
 
   const {data, count, error} = await q;
@@ -362,7 +303,7 @@ async function carregarPagina(){
   dados = data || [];
   totalFiltrado = count || 0;
 
-  atualizarContador(totalFiltrado, filtro);
+  atualizarContador(totalFiltrado);
   checarBtnLimpar();
   render();
   renderPaginacao(porPag);
@@ -371,29 +312,15 @@ async function carregarPagina(){
 function render(){
   const tbody = document.getElementById("lista");
   if(!dados.length){
-    tbody.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="fa fa-users"></i>Nenhum cliente encontrado</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><i class="fa fa-users"></i>Nenhum cliente encontrado</div></td></tr>';
     return;
   }
   tbody.innerHTML = dados.map(c => {
-    const cor  = corAvatar(c.nome);
-    const ini  = iniciais(c.nome);
-    const dias = diasAtras(c.ultimo_atendimento);
-    let ultimaLabel = "—";
-    if(dias===0) ultimaLabel="Hoje";
-    else if(dias===1) ultimaLabel="Ontem";
-    else if(dias!=null) ultimaLabel=dias+'d atrás';
-    const visitBadge = c.total_atendimentos
-      ? '<span class="badge-visits"><i class="fa fa-calendar-check"></i>'+c.total_atendimentos+'</span>'
-      : '<span class="badge-nunca">Nenhum</span>';
-    const valBadge = c.valor_total
-      ? '<span class="badge-valor">'+fmtM(c.valor_total)+'</span>'
-      : '<span class="badge-nunca">—</span>';
     return '<tr onclick="abrirDetalhe(\''+c.id+'\')">'
-      +'<td><div class="cliente-nome">'+(c.nome||"—")+'</div><div class="cliente-email">'+(c.email||"")+'</div></td>'
+      +'<td><div class="cliente-nome">'+(c.nome||"—")+'</div></td>'
       +'<td>'+fmtTel(c.telefone_1)+'</td>'
-      +'<td style="color:'+(dias>60?'#dc2626':dias!=null?'#374151':'#9ca3af')+'">'+ultimaLabel+'</td>'
-      +'<td>'+visitBadge+'</td>'
-      +'<td>'+valBadge+'</td>'
+      +'<td style="color:#6b7280;font-size:12px">'+(c.email||"—")+'</td>'
+      +'<td style="color:#6b7280;font-size:12px">'+(c.dt_nasc?fmtD(c.dt_nasc):"—")+'</td>'
     +'</tr>';
   }).join("");
 }
@@ -545,16 +472,8 @@ async function excluirCliente(){
 }
 
 document.addEventListener("DOMContentLoaded",()=>{
-  atualizarIconesOrdem();
   const reset = () => { paginaAtual=0; carregarPagina(); checarBtnLimpar(); };
   document.getElementById("busca").addEventListener("input", reset);
-  document.getElementById("filtroVisita").addEventListener("change", reset);
-  document.getElementById("filtroOrdem").addEventListener("change", ()=>{
-    ordemCol = document.getElementById("filtroOrdem").value;
-    ordemDir = ordemCol === 'recente' ? 'desc' : 'asc';
-    atualizarIconesOrdem();
-    paginaAtual=0; carregarPagina(); checarBtnLimpar();
-  });
   document.getElementById("modal").addEventListener("click", e=>{ if(e.target===document.getElementById("modal")) fecharModal(); });
   carregar();
 });

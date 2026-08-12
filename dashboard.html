@@ -497,7 +497,7 @@ function anoAtualStr(){return String(new Date().getFullYear());}
 let equipeStatusMap = {}; // nome_profissional -> "Ativo" | "Inativo"
 
 async function fetchEquipe(){
-  const {data} = await client.from("terapeutas")
+  const {data} = await client.from("funcionario")
     .select("nome_profissional,status,cargo");
   if(!data){ console.warn("[Equipe] sem dados"); return; }
   equipeStatusMap = {};
@@ -534,9 +534,9 @@ async function fetchLegadoRecente(){
 }
 async function fetchNovosRecente(){
   const ano=anoAtualStr();
-  const{data,error}=await client.from("atendimentos").select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`).eq("status","Confirmado").gte("data",ano+"-01-01");
+  const{data,error}=await client.from("atendimento").select(`data,hora_inicio,valor_final,comissao_total,status,servico(grupo,subgrupo),ter1:funcionario!atendimento_terapeuta1_cpf_fkey(nome_profissional),ter2:funcionario!atendimento_terapeuta2_cpf_fkey(nome_profissional),cliente(nome)`).eq("status","Faturado").gte("data",ano+"-01-01");
   if(error||!data)return[];
-  return data.map(r=>{const prof=r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—";return{profissional:prof,data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo",_status:statusProf(prof)};});
+  return data.map(r=>{const prof=r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—";return{profissional:prof,data:r.data,hora_inicio:r.hora_inicio,cliente:r.cliente?.nome||null,servico:r.servico?[r.servico.grupo,r.servico.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo",_status:statusProf(prof)};});
 }
 async function fetchLegadoCompleto(){
   const cached=lerCache(CACHE_KEY_LEGADO);if(cached)return cached;
@@ -554,7 +554,7 @@ async function fetchLegadoCompleto(){
 async function fetchNovosCompleto(){
   const cached=lerCache(CACHE_KEY_NOVO);if(cached)return cached;
   let todos=[],from=0;
-  while(true){const{data,error}=await client.from("atendimentos").select(`data,hora_inicio,valor_final,comissao_total,status,servicos(grupo,subgrupo),ter1:terapeutas!atendimentos_terapeuta1_cpf_fkey(nome_profissional),ter2:terapeutas!atendimentos_terapeuta2_cpf_fkey(nome_profissional),clientes(nome)`).eq("status","Confirmado").range(from,from+999);if(error||!data||!data.length)break;todos=todos.concat(data.map(r=>{const prof=r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—";return{profissional:prof,data:r.data,hora_inicio:r.hora_inicio,cliente:r.clientes?.nome||null,servico:r.servicos?[r.servicos.grupo,r.servicos.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo",_status:statusProf(prof)};}));if(data.length<1000)break;from+=1000;}
+  while(true){const{data,error}=await client.from("atendimento").select(`data,hora_inicio,valor_final,comissao_total,status,servico(grupo,subgrupo),ter1:funcionario!atendimento_terapeuta1_cpf_fkey(nome_profissional),ter2:funcionario!atendimento_terapeuta2_cpf_fkey(nome_profissional),cliente(nome)`).eq("status","Faturado").range(from,from+999);if(error||!data||!data.length)break;todos=todos.concat(data.map(r=>{const prof=r.ter1?.nome_profissional||r.ter2?.nome_profissional||"—";return{profissional:prof,data:r.data,hora_inicio:r.hora_inicio,cliente:r.cliente?.nome||null,servico:r.servico?[r.servico.grupo,r.servico.subgrupo].filter(Boolean).join(" "):"—",valor:r.valor_final||0,comissao:r.comissao_total||0,_fonte:"novo",_status:statusProf(prof)};}));if(data.length<1000)break;from+=1000;}
   salvarCache(CACHE_KEY_NOVO,todos);return todos;
 }
 

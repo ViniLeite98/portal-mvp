@@ -340,7 +340,7 @@ async function carregarGrupos(){
 }
 
 async function carregarServicos(){
-  const{data,error}=await client.from("servicos").select("*");
+  const{data,error}=await client.from("servico").select("*");
   if(error){console.error(error);return;}
   dados=data||[];
 }
@@ -567,15 +567,15 @@ async function salvar(){
   };
   if(!payload.grupo){alert("Selecione o grupo do serviço.");return;}
   let error;
-  if(idAtual){({error}=await client.from("servicos").update(payload).eq("id",idAtual));}
-  else{({error}=await client.from("servicos").insert(payload));}
+  if(idAtual){({error}=await client.from("servico").update(payload).eq("id",idAtual));}
+  else{({error}=await client.from("servico").insert(payload));}
   if(error){alert("Erro ao salvar: "+error.message);return;}
   fecharModal();carregar();
 }
 
 async function excluir(id){
   if(!confirm("Excluir este serviço?"))return;
-  const{error}=await client.from("servicos").delete().eq("id",id);
+  const{error}=await client.from("servico").delete().eq("id",id);
   if(error){alert("Erro: "+error.message);return;}
   carregar();
 }

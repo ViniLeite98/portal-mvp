@@ -216,8 +216,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
     </div>
   </div>
   <div class="content">
-    <div class="row">
-      <div class="card col-3">
+    <div style="display:flex;gap:14px;align-items:flex-start;">
+      <div class="card" style="flex:3;min-width:0;">
         <div class="card-header"><h3>Funcionários</h3><span style="font-size:11px;color:#1f2937" id="tabelaCount">—</span></div>
         <div style="overflow-x:auto;">
           <table class="func-table">
@@ -232,9 +232,9 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
           </table>
         </div>
       </div>
-      <div class="card" style="flex:1;min-width:0;">
+      <div class="card" style="flex:1;min-width:220px;">
         <div class="card-header"><h3>Saídas no Ano</h3></div>
-        <div id="turnoverLista" style="padding:10px 16px;max-height:500px;overflow-y:auto;"></div>
+        <div id="turnoverLista" style="padding:10px 16px;max-height:600px;overflow-y:auto;"></div>
       </div>
     </div>
   </div>

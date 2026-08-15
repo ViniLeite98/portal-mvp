@@ -12,7 +12,6 @@
 <script src="assets/js/tracker.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 <style>
-
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-height:100vh;}
 .app{display:flex;min-height:100vh;}
@@ -115,15 +114,55 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
 .loading-overlay.hidden{display:none;}
 .spinner{width:26px;height:26px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .6s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── LOGINS ── */
+.login-kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:20px 28px;background:#f5f7fb;border-bottom:1px solid #e5e7eb;}
+.login-kpi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.login-kpi-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.login-kpi-icon.green{background:#dcfce7;color:#16a34a;}
+.login-kpi-icon.red{background:#fee2e2;color:#dc2626;}
+.login-kpi-icon.blue{background:#dbeafe;color:#2563eb;}
+.login-kpi-icon.yellow{background:#fef3c7;color:#d97706;}
+.login-kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:3px;}
+.login-kpi-val{font-size:22px;font-weight:800;color:#111827;line-height:1;}
+.login-kpi-sub{font-size:11px;color:#9ca3af;margin-top:2px;}
+.login-filtros{display:flex;gap:10px;align-items:center;padding:12px 28px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;}
+.login-filtros select,.login-filtros input{padding:7px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#111827;background:#fff;font-family:'Segoe UI',sans-serif;}
+.login-filtros select:focus,.login-filtros input:focus{outline:none;border-color:#2563eb;}
+.btn-filtrar{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:'Segoe UI',sans-serif;}
+.btn-filtrar:hover{background:#111827;}
+.btn-limpar-login{background:none;color:#6b7280;border:1px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:'Segoe UI',sans-serif;}
+.btn-limpar-login:hover{background:#f3f4f6;}
+.login-content{flex:1;padding:20px 28px;overflow-y:auto;}
+.login-table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.login-table-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #f3f4f6;}
+.login-table-header span{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;}
+.login-table-header small{font-size:12px;color:#9ca3af;}
+.login-table{width:100%;border-collapse:collapse;}
+.login-table th{padding:8px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;border-bottom:1px solid #f3f4f6;background:#f9fafb;}
+.login-table td{padding:10px 14px;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
+.login-table tr:last-child td{border-bottom:none;}
+.login-table tr:hover td{background:#fafafa;}
+.badge-sucesso{background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;}
+.badge-falha{background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;}
+.login-usuario-nome{font-weight:600;color:#111827;font-size:13px;}
+.login-usuario-email{font-size:11px;color:#9ca3af;}
+.login-device-icon{font-size:16px;color:#9ca3af;}
+.login-empty{text-align:center;padding:48px;color:#9ca3af;font-size:13px;}
+.login-empty i{font-size:28px;display:block;margin-bottom:10px;color:#e5e7eb;}
+
 @media(max-width:900px){
   .kpi-bar{grid-template-columns:repeat(3,1fr);}
   .row{flex-wrap:wrap;}.col-2,.col-3{flex:none!important;width:100%;}
   .topbar,.sub-nav,.filtros-bar,.content{padding-left:16px;padding-right:16px;}
+  .login-kpi-bar{grid-template-columns:repeat(2,1fr);padding:14px 16px;}
+  .login-filtros,.login-content{padding-left:16px;padding-right:16px;}
 }
 @media(max-width:600px){
   .kpi-bar{grid-template-columns:repeat(2,1fr);}
   .kpi-value{font-size:20px;}
   .panel-kpis{grid-template-columns:repeat(2,1fr);}
+  .login-kpi-bar{grid-template-columns:1fr 1fr;}
 }
 </style>
 </head>
@@ -148,6 +187,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
   <button class="sub-btn active" onclick="mudarAba('equipe',this)"><i class="fa fa-users" style="font-size:11px"></i> Equipe</button>
   <button class="sub-btn disabled"><i class="fa fa-calendar-check" style="font-size:11px"></i> Dia <span class="soon">em breve</span></button>
   <button class="sub-btn disabled"><i class="fa fa-chart-line" style="font-size:11px"></i> Financeiro <span class="soon">em breve</span></button>
+  <button class="sub-btn" onclick="mudarAba('logins',this)"><i class="fa fa-shield-halved" style="font-size:11px"></i> Logins</button>
 </div>
 
 <!-- ABA EQUIPE -->
@@ -192,8 +232,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
           </table>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-width:0;">
-      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;flex:1;min-width:0;"></div>
     </div>
     <div class="row">
       <div class="card"><div class="card-header"><h3>Saídas no Ano</h3></div><div id="turnoverLista" style="padding:10px 16px;max-height:240px;overflow-y:auto;"></div></div>
@@ -219,10 +258,69 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
   </div>
 </div>
 
+<!-- ABA LOGINS -->
+<div class="page" id="page-logins">
+  <div class="login-kpi-bar">
+    <div class="login-kpi">
+      <div class="login-kpi-icon green"><i class="fa fa-circle-check"></i></div>
+      <div><div class="login-kpi-label">Acessos Hoje</div><div class="login-kpi-val" id="lkAcessos">—</div><div class="login-kpi-sub">logins com sucesso</div></div>
+    </div>
+    <div class="login-kpi">
+      <div class="login-kpi-icon red"><i class="fa fa-circle-xmark"></i></div>
+      <div><div class="login-kpi-label">Falhas Hoje</div><div class="login-kpi-val" id="lkFalhas">—</div><div class="login-kpi-sub">tentativas inválidas</div></div>
+    </div>
+    <div class="login-kpi">
+      <div class="login-kpi-icon blue"><i class="fa fa-users"></i></div>
+      <div><div class="login-kpi-label">Usuários Únicos</div><div class="login-kpi-val" id="lkUnicos">—</div><div class="login-kpi-sub">nos últimos 7 dias</div></div>
+    </div>
+    <div class="login-kpi">
+      <div class="login-kpi-icon yellow"><i class="fa fa-clock"></i></div>
+      <div><div class="login-kpi-label">Último Acesso</div><div class="login-kpi-val" id="lkUltimoEmail" style="font-size:13px;padding-top:4px">—</div><div class="login-kpi-sub" id="lkUltimoTempo">—</div></div>
+    </div>
+  </div>
+
+  <div class="login-filtros">
+    <select id="lFiltroStatus">
+      <option value="">Todos</option>
+      <option value="sucesso">Sucesso</option>
+      <option value="falha">Falha</option>
+    </select>
+    <input type="text" id="lFiltroUsuario" placeholder="Nome ou email..." style="min-width:200px">
+    <input type="date" id="lFiltroIni">
+    <input type="date" id="lFiltroFim">
+    <button class="btn-filtrar" onclick="carregarLogins()"><i class="fa fa-filter"></i> Filtrar</button>
+    <button class="btn-limpar-login" onclick="limparFiltrosLogin()">Limpar</button>
+  </div>
+
+  <div class="login-content">
+    <div class="login-table-wrap">
+      <div class="login-table-header">
+        <span>Registros</span>
+        <small id="lCount">—</small>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="login-table">
+          <thead>
+            <tr>
+              <th>Data / Hora</th>
+              <th>Usuário</th>
+              <th>Status</th>
+              <th>Dispositivo</th>
+              <th>Navegador</th>
+              <th>Detalhe</th>
+            </tr>
+          </thead>
+          <tbody id="lTabela"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div>
 </div>
 
-<!-- PAINEL DETALHE -->
+<!-- PAINEL DETALHE EQUIPE -->
 <div class="modal" id="modalDetalhe">
 <div class="modal-panel">
   <div class="panel-header">
@@ -251,6 +349,7 @@ const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","
 const CARGOS_FIXOS=["Gerente","Atendente","Recepcionista","Faxineira","Analista"];
 const CORES_AVATAR=["#6366f1","#8b5cf6","#ec4899","#06b6d4","#10b981","#f59e0b","#ef4444","#3b82f6"];
 let funcionarios=[],solicitacoes=[],charts={};
+let loginsCarregados=false;
 
 function corAvatar(n){return CORES_AVATAR[(n||"A").charCodeAt(0)%CORES_AVATAR.length];}
 function iniciais(n){return(n||"?").split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();}
@@ -272,15 +371,16 @@ function tipoBadge(tipo){
   return"aus-tipo-badge aus-outro";
 }
 function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
-function mkChart(id,cfg){destroyChart(id);const el=document.getElementById(id);if(!el)return;charts[id]=new Chart(el,cfg);}
 
 function mudarAba(aba,btn){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".sub-btn:not(.disabled)").forEach(b=>b.classList.remove("active"));
   document.getElementById("page-"+aba).classList.add("active");
   btn.classList.add("active");
+  if(aba==="logins"&&!loginsCarregados){carregarLogins();}
 }
 
+/* ══ EQUIPE ══ */
 async function carregar(){
   const[{data:f},{data:s}]=await Promise.all([
     client.from("funcionario").select("*").order("nome_profissional"),
@@ -333,18 +433,14 @@ function renderTabela(lista){
   document.getElementById("tabelaCount").textContent=lista.length+" registro"+(lista.length!==1?"s":"");
   const tbody=document.getElementById("tabelaFunc");
   if(!lista.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Nenhum funcionário.</td></tr>';return;}
-  const maxT=Math.max(...lista.filter(f=>f.data_inicio).map(f=>diffMeses(f.data_inicio)),1);
   tbody.innerHTML=lista.map(f=>{
     const meses=f.data_inicio?diffMeses(f.data_inicio):0;
-    const pct=Math.min(100,Math.round(meses/maxT*100));
     const aus=solicitacoes.filter(s=>s.terapeuta_cpf===f.cpf&&isAusencia(s.tipo));
-    const cor=corAvatar(f.nome_profissional);
-    const ini=iniciais(f.nome_profissional);
     const ativo=f.status==="Ativo";
     return "<tr onclick=\"abrirDetalhe('"+f.cpf+"')\">"
       +"<td><span class='func-nome'>"+f.nome_profissional+"</span></td>"
       +"<td><span class='func-sub'>"+f.cargo+"</span></td>"
-      +"<td><span style='font-size:12px;color:#374151'>"+( f.data_inicio?fmtTempo(meses):"—")+"</span></td>"
+      +"<td><span style='font-size:12px;color:#374151'>"+(f.data_inicio?fmtTempo(meses):"—")+"</span></td>"
       +"<td>"+(aus.length?"<span class='badge-sm badge-aus'>"+aus.length+"</span>":"<span style='color:#1f2937;font-size:12px'>—</span>")+"</td>"
       +"<td><span class='badge-sm "+(ativo?"badge-ativo":"badge-inativo")+"'><span class='dot "+(ativo?"green":"red")+"'></span>"+f.status+"</span></td>"
       +"</tr>";
@@ -383,6 +479,92 @@ function abrirDetalhe(cpf){
 }
 function fecharModal(){document.getElementById("modalDetalhe").classList.remove("open");}
 document.getElementById("modalDetalhe").addEventListener("click",e=>{if(e.target===document.getElementById("modalDetalhe"))fecharModal();});
+
+/* ══ LOGINS ══ */
+function fmtDataHora(ts){
+  if(!ts)return"—";
+  const d=new Date(ts);
+  return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+function tempoRelativo(ts){
+  if(!ts)return"—";
+  const diff=Math.floor((Date.now()-new Date(ts))/1000);
+  if(diff<60)return"agora";
+  if(diff<3600)return Math.floor(diff/60)+"min atrás";
+  if(diff<86400)return Math.floor(diff/3600)+"h atrás";
+  return Math.floor(diff/86400)+"d atrás";
+}
+
+async function carregarLogins(){
+  loginsCarregados=true;
+  const status=document.getElementById("lFiltroStatus").value;
+  const usuario=document.getElementById("lFiltroUsuario").value.trim();
+  const ini=document.getElementById("lFiltroIni").value;
+  const fim=document.getElementById("lFiltroFim").value;
+
+  let q=client.from("login_logs").select("*").order("created_at",{ascending:false}).limit(200);
+  if(status) q=q.eq("status",status);
+  if(ini) q=q.gte("created_at",ini+"T00:00:00");
+  if(fim) q=q.lte("created_at",fim+"T23:59:59");
+
+  const{data:todos}=await q;
+  let lista=todos||[];
+
+  if(usuario){
+    const u=usuario.toLowerCase();
+    lista=lista.filter(r=>(r.nome||"").toLowerCase().includes(u)||(r.email||"").toLowerCase().includes(u));
+  }
+
+  // KPIs
+  const hojeStr=hoje();
+  const acessosHoje=(todos||[]).filter(r=>r.status==="sucesso"&&r.created_at?.startsWith(hojeStr)).length;
+  const falhasHoje=(todos||[]).filter(r=>r.status==="falha"&&r.created_at?.startsWith(hojeStr)).length;
+  const set7=new Date(Date.now()-7*86400000).toISOString();
+  const unicos=new Set((todos||[]).filter(r=>r.created_at>set7&&r.status==="sucesso").map(r=>r.email)).size;
+  const ultimo=(todos||[]).find(r=>r.status==="sucesso");
+
+  document.getElementById("lkAcessos").textContent=acessosHoje;
+  document.getElementById("lkFalhas").textContent=falhasHoje;
+  document.getElementById("lkUnicos").textContent=unicos;
+  document.getElementById("lkUltimoEmail").textContent=ultimo?.email||"—";
+  document.getElementById("lkUltimoTempo").textContent=ultimo?tempoRelativo(ultimo.created_at):"—";
+  document.getElementById("lCount").textContent=lista.length+" registro"+(lista.length!==1?"s":"");
+
+  const tbody=document.getElementById("lTabela");
+  if(!lista.length){
+    tbody.innerHTML='<tr><td colspan="6" class="login-empty"><i class="fa fa-shield-halved"></i>Nenhum registro encontrado.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML=lista.map(r=>{
+    const sucesso=r.status==="sucesso";
+    const badge=sucesso
+      ?'<span class="badge-sucesso"><i class="fa fa-check"></i> SUCESSO</span>'
+      :'<span class="badge-falha"><i class="fa fa-times"></i> FALHA</span>';
+    const devIcon=r.dispositivo==="mobile"?'<i class="fa fa-mobile-screen login-device-icon" title="Mobile"></i>':'<i class="fa fa-desktop login-device-icon" title="Desktop"></i>';
+    const nomeHtml=r.nome
+      ?'<div class="login-usuario-nome">'+r.nome+'</div><div class="login-usuario-email">'+r.email+'</div>'
+      :'<div class="login-usuario-email">'+r.email+'</div>';
+    const detalhe=r.motivo_falha||'<span style="color:#d1d5db">—</span>';
+    return '<tr>'
+      +'<td style="white-space:nowrap;color:#6b7280">'+fmtDataHora(r.created_at)+'</td>'
+      +'<td>'+nomeHtml+'</td>'
+      +'<td>'+badge+'</td>'
+      +'<td style="text-align:center">'+devIcon+'</td>'
+      +'<td style="color:#6b7280">'+( r.navegador||"—")+'</td>'
+      +'<td style="font-size:12px;color:#9ca3af">'+detalhe+'</td>'
+      +'</tr>';
+  }).join("");
+}
+
+function limparFiltrosLogin(){
+  document.getElementById("lFiltroStatus").value="";
+  document.getElementById("lFiltroUsuario").value="";
+  document.getElementById("lFiltroIni").value="";
+  document.getElementById("lFiltroFim").value="";
+  carregarLogins();
+}
+
 document.addEventListener("DOMContentLoaded",carregar);
 </script>
 </body>

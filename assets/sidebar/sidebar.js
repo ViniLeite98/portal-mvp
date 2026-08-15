@@ -47,7 +47,6 @@
       html += hr();
       html += titulo("CONFIGURAÇÕES");
       html += item("parametros.html", "fa-sliders", "Parâmetros");
-      html += item("logins.html", "fa-shield-halved", "Logins");
     }
     html += hr();
     html += '<a href="#" class="menu-item" onclick="sairDoCaixa()" style="color:#f87171">' +

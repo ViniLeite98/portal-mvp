@@ -33,13 +33,12 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
 .btn-limpar:hover{background:#f3f4f6;}
 .btn-limpar.visible{display:inline-flex;}
-.grupos-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-.grupo-card{background:#fff;border-radius:12px;padding:10px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:flex;align-items:center;gap:10px;cursor:pointer;border:2px solid transparent;transition:all .15s;}
-.grupo-card.ativo{border-color:#2563eb;background:#eff6ff;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.grupo-card:hover{border-color:#e5e7eb;}
-.grupo-swatch{width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.1);flex-shrink:0;}
-.grupo-nome{font-size:11px;font-weight:600;color:#111827;}
-.grupo-qtd{font-size:10px;color:#9ca3af;}
+.grupos-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.grupos-bar-label{font-size:12px;font-weight:600;color:#9ca3af;margin-right:4px;}
+.grupo-item{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#374151;font-weight:500;}
+.grupo-swatch{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.1);flex-shrink:0;}
+.grupo-nome{font-size:12px;font-weight:500;color:#374151;}
+.grupo-qtd{display:none;}
 .grupo-sem-cor{font-size:10px;color:#f59e0b;font-weight:600;}
 .table-wrap{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 table{width:100%;border-collapse:collapse;}
@@ -371,20 +370,17 @@ function renderGruposBar(){
   const bar=document.getElementById("gruposBar");
   const grupos=[...new Set(dados.map(s=>s.grupo).filter(Boolean))].sort();
   bar.innerHTML="";
+  if(!grupos.length) return;
+  const lbl=document.createElement("span");
+  lbl.className="grupos-bar-label";
+  lbl.textContent="Legenda:";
+  bar.appendChild(lbl);
   grupos.forEach(g=>{
     const cor=corDoGrupo(g);
-    const qtd=dados.filter(s=>s.grupo===g).length;
-    const card=document.createElement("div");
-    card.className="grupo-card";
-    card.innerHTML=`
-      <span class="grupo-swatch" style="background:${cor||"#e5e7eb"}"></span>
-      <div>
-        <div class="grupo-nome">${g}</div>
-        <div class="grupo-qtd">${qtd} serviço${qtd!==1?"s":""}</div>
-        ${!cor?'<div class="grupo-sem-cor"><a href="parametros.html#grupos_servico" style="color:#f59e0b;font-size:11px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:3px"><i class="fa fa-arrow-right"></i> Definir cor em Parâmetros</a></div>':""}
-      </div>`;
-    card.style.cursor = !cor ? "default" : "pointer";
-    bar.appendChild(card);
+    const item=document.createElement("span");
+    item.className="grupo-item";
+    item.innerHTML=`<span class="grupo-swatch" style="background:${cor||"#e5e7eb"}"></span><span class="grupo-nome">${g}</span>`;
+    bar.appendChild(item);
   });
 }
 

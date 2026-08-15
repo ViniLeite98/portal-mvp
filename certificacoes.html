@@ -2,570 +2,466 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard | Hara Spa</title>
+<title>Certificações | Hara Spa</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/tracker.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-height:100vh;}
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
-#sidebar{flex-shrink:0;}
-.main{flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid #e5e7eb;background:#fff;flex-shrink:0;}
-.topbar-title{font-size:18px;font-weight:800;color:#111827;}
-.topbar-eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px;}
-.sub-nav{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;padding:0 28px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;}
-.sub-nav::-webkit-scrollbar{display:none;}
-.sub-btn{padding:12px 16px;border:none;border-bottom:2px solid transparent;background:none;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;font-family:'Segoe UI',sans-serif;transition:all .15s;}
-.sub-btn:hover{color:#111827;}
-.sub-btn.active{color:#2563eb;border-bottom-color:#2563eb;}
-.sub-btn.disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
-.sub-btn .soon{font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border-radius:4px;padding:2px 5px;margin-left:2px;}
-.page{display:none;flex:1;flex-direction:column;}
-.page.active{display:flex;}
-.kpi-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#e5e7eb;border-bottom:1px solid #e5e7eb;flex-shrink:0;}
-.kpi-cell{padding:16px 20px;background:#fff;display:flex;flex-direction:column;gap:3px;}
-.kpi-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;}
-.kpi-value{font-size:24px;font-weight:800;color:#111827;line-height:1;}
-.kpi-value.green{color:#16a34a;}
-.kpi-value.red{color:#dc2626;}
-.kpi-value.yellow{color:#d97706;}
-.kpi-value.blue{color:#2563eb;}
-.kpi-value.sm{font-size:14px;padding-top:4px;font-weight:700;}
-.kpi-sub{font-size:11px;color:#9ca3af;margin-top:1px;}
-.filtros-bar{display:flex;gap:8px;align-items:center;padding:12px 28px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;flex-shrink:0;}
-.pill{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#374151;font-family:'Segoe UI',sans-serif;display:inline-flex;align-items:center;gap:6px;}
-.pill select{background:none;border:none;color:inherit;font-size:inherit;font-weight:inherit;font-family:inherit;cursor:pointer;outline:none;}
-.pill select option{background:#fff;color:#111827;}
-.content{flex:1;padding:20px 28px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
-.row{display:flex;gap:14px;}
-.row>*{flex:1;min-width:0;}
-.col-2{flex:2!important;}
-.col-3{flex:3!important;}
-.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);}
-.card-header{padding:12px 16px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;}
-.card-header h3{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;}
-.chart-wrap{padding:12px 16px;}
-.func-table{width:100%;border-collapse:collapse;}
-.func-table thead th{padding:7px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;border-bottom:1px solid #f3f4f6;background:#f9fafb;}
-.func-table tbody tr{border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .12s;}
-.func-table tbody tr:hover td{background:#f8faff;}
-.func-table tbody tr:last-child{border-bottom:none;}
-.func-table td{padding:8px 12px;font-size:12px;color:#374151;vertical-align:middle;}
-.func-table thead th:first-child{min-width:120px;}
-.func-nome{font-weight:600;color:#111827;font-size:12px;}
-.func-sub{font-size:11px;color:#9ca3af;}
-.tempo-bar-wrap{display:flex;align-items:center;gap:8px;}
-.tempo-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;min-width:50px;}
-.tempo-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#2563eb,#60a5fa);}
-.tempo-label{font-size:11px;color:#6b7280;white-space:nowrap;min-width:48px;}
-.badge-sm{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;}
-.badge-ativo{background:#dcfce7;color:#16a34a;}
-.badge-inativo{background:#fee2e2;color:#dc2626;}
-.badge-aus{background:#fef3c7;color:#d97706;}
-.dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
-.dot.green{background:#16a34a;}
-.dot.red{background:#dc2626;}
-.turnover-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6;}
-.turnover-item:last-child{border-bottom:none;}
-.turnover-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:#dc2626;}
-.turnover-nome{font-size:13px;font-weight:600;color:#111827;flex:1;}
-.turnover-info{font-size:11px;color:#9ca3af;}
-.turnover-tempo{font-size:11px;color:#6b7280;white-space:nowrap;}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:flex-end;z-index:500;}
-.modal.open{display:flex;}
-.modal-panel{background:#fff;border-left:1px solid #e5e7eb;width:440px;max-width:95vw;height:100vh;overflow-y:auto;animation:slideIn .2s ease;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.08);}
-@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
-.panel-header{padding:18px 22px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;background:#fff;z-index:10;}
-.panel-avatar{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0;}
-.panel-nome{font-size:16px;font-weight:700;color:#111827;}
-.panel-cargo{font-size:11px;color:#6b7280;margin-top:2px;}
-.panel-close{background:#f3f4f6;border:none;color:#6b7280;width:30px;height:30px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
-.panel-close:hover{background:#e5e7eb;color:#111827;}
-.panel-body{padding:20px 22px;display:flex;flex-direction:column;gap:18px;flex:1;}
-.panel-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
-.panel-kpi{background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;padding:12px 14px;}
-.pk-label{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin-bottom:4px;}
-.pk-value{font-size:18px;font-weight:800;color:#111827;}
-.pk-sub{font-size:10px;color:#9ca3af;margin-top:2px;}
-.panel-section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;padding-bottom:8px;border-bottom:1px solid #f3f4f6;margin-bottom:4px;}
-.aus-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f3f4f6;}
-.aus-item:last-child{border-bottom:none;}
-.aus-tipo-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;}
-.aus-ferias{background:#ede9fe;color:#7c3aed;}
-.aus-atestado{background:#fee2e2;color:#dc2626;}
-.aus-falta{background:#fef3c7;color:#d97706;}
-.aus-alteracao{background:#dcfce7;color:#16a34a;}
-.aus-viagem{background:#dbeafe;color:#2563eb;}
-.aus-outro{background:#f3f4f6;color:#374151;}
-.empty{text-align:center;padding:32px;color:#9ca3af;font-size:13px;}
-.empty i{font-size:24px;display:block;margin-bottom:8px;color:#e5e7eb;}
-.coming-soon{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:60px;text-align:center;}
-.coming-soon i{font-size:44px;color:#e5e7eb;}
-.coming-soon h2{font-size:17px;font-weight:700;color:#374151;}
-.coming-soon p{font-size:13px;color:#9ca3af;max-width:300px;line-height:1.6;}
-.loading-overlay{position:fixed;inset:0;background:rgba(245,247,251,.92);display:flex;align-items:center;justify-content:center;z-index:999;gap:14px;font-size:13px;color:#6b7280;}
-.loading-overlay.hidden{display:none;}
-.spinner{width:26px;height:26px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .6s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── LOGINS ── */
-.login-kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:20px 28px;background:#f5f7fb;border-bottom:1px solid #e5e7eb;}
-.login-kpi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
-.login-kpi-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.login-kpi-icon.green{background:#dcfce7;color:#16a34a;}
-.login-kpi-icon.red{background:#fee2e2;color:#dc2626;}
-.login-kpi-icon.blue{background:#dbeafe;color:#2563eb;}
-.login-kpi-icon.yellow{background:#fef3c7;color:#d97706;}
-.login-kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:3px;}
-.login-kpi-val{font-size:22px;font-weight:800;color:#111827;line-height:1;}
-.login-kpi-sub{font-size:11px;color:#9ca3af;margin-top:2px;}
-.login-filtros{display:flex;gap:10px;align-items:center;padding:12px 28px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;}
-.login-filtros select,.login-filtros input{padding:7px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#111827;background:#fff;font-family:'Segoe UI',sans-serif;}
-.login-filtros select:focus,.login-filtros input:focus{outline:none;border-color:#2563eb;}
-.btn-filtrar{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:'Segoe UI',sans-serif;}
-.btn-filtrar:hover{background:#111827;}
-.btn-limpar-login{background:none;color:#6b7280;border:1px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:'Segoe UI',sans-serif;}
-.btn-limpar-login:hover{background:#f3f4f6;}
-.login-content{flex:1;padding:20px 28px;overflow-y:auto;}
-.login-table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);}
-.login-table-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #f3f4f6;}
-.login-table-header span{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;}
-.login-table-header small{font-size:12px;color:#9ca3af;}
-.login-table{width:100%;border-collapse:collapse;}
-.login-table th{padding:8px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;border-bottom:1px solid #f3f4f6;background:#f9fafb;}
-.login-table td{padding:10px 14px;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
-.login-table tr:last-child td{border-bottom:none;}
-.login-table tr:hover td{background:#fafafa;}
-.badge-sucesso{background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;}
-.badge-falha{background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;}
-.login-usuario-nome{font-weight:600;color:#111827;font-size:13px;}
-.login-usuario-email{font-size:11px;color:#9ca3af;}
-.login-device-icon{font-size:16px;color:#9ca3af;}
-.login-empty{text-align:center;padding:48px;color:#9ca3af;font-size:13px;}
-.login-empty i{font-size:28px;display:block;margin-bottom:10px;color:#e5e7eb;}
-
-@media(max-width:900px){
-  .kpi-bar{grid-template-columns:repeat(3,1fr);}
-  .row{flex-wrap:wrap;}.col-2,.col-3{flex:none!important;width:100%;}
-  .topbar,.sub-nav,.filtros-bar,.content{padding-left:16px;padding-right:16px;}
-  .login-kpi-bar{grid-template-columns:repeat(2,1fr);padding:14px 16px;}
-  .login-filtros,.login-content{padding-left:16px;padding-right:16px;}
-}
-@media(max-width:600px){
-  .kpi-bar{grid-template-columns:repeat(2,1fr);}
-  .kpi-value{font-size:20px;}
-  .panel-kpis{grid-template-columns:repeat(2,1fr);}
-  .login-kpi-bar{grid-template-columns:1fr 1fr;}
-}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;padding:24px 32px;}
+.topbar{margin-bottom:20px;}
+.topbar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.collab-counter{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:7px 16px;font-size:13px;color:#374151;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.collab-counter i{color:#2563eb;font-size:13px;}
+.collab-counter .count{font-weight:700;color:#111827;font-size:16px;}
+.collab-counter .label{color:#6b7280;font-size:12px;}
+.filters-row{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;}
+.filter-group{display:flex;flex-direction:column;gap:4px;}
+.filter-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;}
+.filter-group input,.filter-group select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;}
+.filter-group input{width:260px;}
+.filter-group input:focus,.filter-group select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.filter-group select{min-width:180px;}
+.btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
+.btn-limpar:hover{background:#f3f4f6;color:#374151;}
+.btn-limpar.visible{display:inline-flex;}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+th,td{padding:14px;border-bottom:1px solid #e5e7eb;font-size:14px;text-align:left;}
+th{background:#f9fafb;font-weight:600;}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap;}
+th.sortable:hover{background:#f3f4f6;color:#1d4ed8;}
+th.sortable .sort-icon{margin-left:5px;font-size:11px;color:#9ca3af;}
+th.sortable.asc .sort-icon,th.sortable.desc .sort-icon{color:#2563eb;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f9fafb;}
+button{background:#1f2937;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:13px;}
+button.excluir{background:#dc2626;}
+button.exportar{background:#16a34a;}
+button.vincular-btn{background:#2563eb;display:inline-flex !important;align-items:center;gap:6px;}
+.cert-icones{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.cert-icones .icone-svg{width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cert-icones .icone-svg svg{width:18px;height:18px;}
+.badge-count{background:#f3f4f6;color:#374151;font-size:11px;font-weight:700;border-radius:99px;padding:2px 8px;margin-left:4px;}
+.paginacao{display:flex;align-items:center;justify-content:space-between;margin-top:16px;flex-wrap:wrap;gap:10px;}
+.paginacao-info{font-size:13px;color:#6b7280;}
+.paginacao-info strong{color:#111827;}
+.paginacao-controles{display:flex;align-items:center;gap:6px;}
+.pag-btn{background:#fff;color:#374151;border:1px solid #d1d5db;border-radius:7px;padding:6px 11px;font-size:13px;cursor:pointer;min-width:34px;text-align:center;transition:all .15s;}
+.pag-btn:hover:not(:disabled){background:#f3f4f6;border-color:#9ca3af;}
+.pag-btn:disabled{opacity:.4;cursor:default;}
+.pag-btn.ativo{background:#1f2937;color:#fff;border-color:#1f2937;font-weight:700;}
+.pag-btn.ellipsis{border:none;background:none;cursor:default;color:#9ca3af;min-width:20px;padding:6px 4px;}
+.pag-btn.ellipsis:hover{background:none;}
+.por-pagina-wrap{display:flex;align-items:center;gap:7px;font-size:13px;color:#6b7280;}
+.por-pagina-wrap select{padding:5px 8px;border:1px solid #d1d5db;border-radius:7px;font-size:13px;background:#fff;color:#111827;}
+.legenda{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px;color:#6b7280;margin-bottom:16px;}
+.legenda span{display:flex;align-items:center;gap:5px;}
+.legenda .icone-svg{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.legenda .icone-svg svg{width:16px;height:16px;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
+.modal-content{background:#fff;width:560px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal-content.sm{width:420px;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 24px 0;}
+.modal-header h2{margin:0;font-size:18px;color:#111827;}
+.btn-fechar{background:none;color:#6b7280;font-size:20px;border:none;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.btn-fechar:hover{background:#f3f4f6;color:#111827;}
+.modal-body{padding:24px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;background:#f9fafb;}
+.modal-footer button{padding:9px 20px;font-size:13px;font-weight:600;}
+.btn-cancel{background:#fff;color:#374151;border:1px solid #d1d5db;}
+.btn-cancel:hover{background:#f3f4f6;}
+.btn-save{background:#1f2937;}
+.btn-save:hover{background:#111827;}
+.grid-vincular{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.field{display:flex;flex-direction:column;}
+.field label{font-size:12px;font-weight:600;margin-bottom:5px;color:#374151;}
+input,select{padding:9px 11px;border-radius:8px;border:1px solid #d1d5db;font-size:13px;color:#111827;background:#fff;}
+input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.span2{grid-column:span 2;}
+.cert-row{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px solid #f3f4f6;}
+.cert-row:last-child{border-bottom:none;}
+.cert-row-left{display:flex;align-items:center;gap:10px;}
+.cert-info{display:flex;flex-direction:column;}
+.cert-nome{font-size:13px;font-weight:600;color:#111827;}
+.cert-data{font-size:11px;color:#9ca3af;margin-top:2px;}
+.cert-row-right{display:flex;gap:6px;align-items:center;}
+.cert-upload{margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.cert-upload input[type=file]{border:1px dashed #d1d5db;border-radius:6px;padding:5px 8px;font-size:12px;background:#f9fafb;cursor:pointer;flex:1;min-width:0;}
+.btn-upload-cert{background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;}
+.btn-ver-cert{font-size:12px;color:#2563eb;text-decoration:none;font-weight:500;}
+.cert-arquivo{display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;margin-top:4px;}
+.cert-arquivo i{color:#2563eb;}
+.upload-ing{font-size:11px;color:#2563eb;display:none;}
 </style>
 </head>
 <body>
 <div class="app">
 <aside id="sidebar"></aside>
-<div class="main">
-
-<div class="loading-overlay" id="loadingOverlay">
-  <div class="spinner"></div>
-  <span>Carregando...</span>
-</div>
+<main class="content">
 
 <div class="topbar">
-  <div>
-    <div class="topbar-eyebrow">Hara Spa</div>
-    <div class="topbar-title">Dashboard</div>
+  <div class="topbar-top">
+    <div class="collab-counter">
+      <i class="fa fa-certificate"></i>
+      <span class="count" id="collabCount">—</span>
+      <span class="label" id="collabLabel">profissionais certificados</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="exportar" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
+      <button class="vincular-btn" onclick="abrirVincular()"><i class="fa fa-plus"></i> Vincular Certificação</button>
+    </div>
+  </div>
+  <div class="filters-row">
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-search" style="margin-right:3px"></i> Busca</span>
+      <input id="buscaTerapeuta" placeholder="Buscar profissional ou certificação...">
+    </div>
+    <div class="filter-group">
+      <span class="filter-label"><i class="fa fa-certificate" style="margin-right:3px"></i> Certificação</span>
+      <select id="filtroCert"><option value="">Todas as certificações</option></select>
+    </div>
+    <button class="btn-limpar" id="btnLimparFiltros" onclick="limparFiltros()">
+      <i class="fa fa-times"></i> Limpar filtros
+    </button>
   </div>
 </div>
 
-<div class="sub-nav">
-  <button class="sub-btn active" onclick="mudarAba('equipe',this)"><i class="fa fa-users" style="font-size:11px"></i> Equipe</button>
-  <button class="sub-btn disabled"><i class="fa fa-calendar-check" style="font-size:11px"></i> Dia <span class="soon">em breve</span></button>
-  <button class="sub-btn disabled"><i class="fa fa-chart-line" style="font-size:11px"></i> Financeiro <span class="soon">em breve</span></button>
-  <button class="sub-btn" onclick="mudarAba('logins',this)"><i class="fa fa-shield-halved" style="font-size:11px"></i> Logins</button>
-</div>
+<div class="legenda" id="legenda"></div>
 
-<!-- ABA EQUIPE -->
-<div class="page active" id="page-equipe">
-  <div class="kpi-bar">
-    <div class="kpi-cell"><div class="kpi-label">Ativos</div><div class="kpi-value blue" id="kAtivos">—</div><div class="kpi-sub" id="kAtivosSub">—</div></div>
-    <div class="kpi-cell"><div class="kpi-label">Tempo Médio de Casa</div><div class="kpi-value" id="kTempo">—</div><div class="kpi-sub">equipe ativa</div></div>
-    <div class="kpi-cell"><div class="kpi-label">Turnover <span id="kAno" style="font-weight:400;color:#1f2937;font-family:'Inter',sans-serif;font-size:10px"></span></div><div class="kpi-value red" id="kTurnover">—</div><div class="kpi-sub">saídas no ano</div></div>
-    <div class="kpi-cell"><div class="kpi-label">Ausências — Mês</div><div class="kpi-value yellow" id="kAusencias">—</div><div class="kpi-sub">atestados, faltas e férias</div></div>
-    <div class="kpi-cell"><div class="kpi-label">Mais Antigo</div><div class="kpi-value sm" id="kAntigo">—</div><div class="kpi-sub" id="kAntigoTempo">—</div></div>
-  </div>
-  <div class="filtros-bar">
-    <div class="pill"><i class="fa fa-briefcase" style="font-size:10px"></i>
-      <select id="filtroCargo" onchange="aplicarEquipe()">
-        <option value="">Todos os cargos</option>
-        <option value="terapeuta">Terapeutas</option>
-        <option value="fixo">Funcionários Fixos</option>
-      </select>
-    </div>
-    <div class="pill"><i class="fa fa-circle" style="font-size:8px"></i>
-      <select id="filtroStatus" onchange="aplicarEquipe()">
-        <option value="Ativo">Ativos</option>
-        <option value="Inativo">Inativos</option>
-        <option value="">Todos</option>
-      </select>
-    </div>
-  </div>
-  <div class="content">
-    <div style="display:flex;gap:14px;align-items:flex-start;">
-      <div class="card" style="width:65%;flex-shrink:0;">
-        <div class="card-header"><h3>Funcionários</h3><span style="font-size:11px;color:#1f2937" id="tabelaCount">—</span></div>
-        <div style="overflow-x:auto;">
-          <table class="func-table" style="width:auto;min-width:unset;">
-            <thead><tr>
-              <th style="width:130px">Nome</th>
-              <th style="width:120px">Cargo</th>
-              <th style="width:55px">Tempo</th>
-              <th style="width:65px">Ausências</th>
-              <th style="width:65px">Status</th>
-            </tr></thead>
-            <tbody id="tabelaFunc"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="card" style="flex:1;min-width:220px;">
-        <div class="card-header"><h3>Saídas no Ano</h3></div>
-        <div id="turnoverLista" style="padding:10px 16px;max-height:600px;overflow-y:auto;"></div>
-      </div>
-    </div>
-  </div>
-</div>
+<table>
+  <thead>
+    <tr>
+      <th class="sortable" onclick="ordenar('nome')" id="th-nome">Profissional <i class="fa fa-sort sort-icon"></i></th>
+      <th>Certificações</th>
+      <th class="sortable" onclick="ordenar('qtd')" id="th-qtd">Qtd <i class="fa fa-sort sort-icon"></i></th>
+      <th>Ações</th>
+    </tr>
+  </thead>
+  <tbody id="lista"></tbody>
+</table>
 
-<!-- ABA DIA -->
-<div class="page" id="page-dia">
-  <div class="coming-soon">
-    <i class="fa fa-calendar-check"></i>
-    <h2>Visão do Dia</h2>
-    <p>Atendimentos do dia, receita em tempo real e quem está trabalhando. Disponível quando os primeiros atendimentos forem faturados.</p>
-  </div>
-</div>
-
-<!-- ABA FINANCEIRO -->
-<div class="page" id="page-financeiro">
-  <div class="coming-soon">
-    <i class="fa fa-chart-line"></i>
-    <h2>Visão Financeira</h2>
-    <p>Receita por período, ticket médio e comparativo mês a mês. Disponível com volume de atendimentos faturados.</p>
-  </div>
-</div>
-
-<!-- ABA LOGINS -->
-<div class="page" id="page-logins">
-  <div class="login-kpi-bar">
-    <div class="login-kpi">
-      <div class="login-kpi-icon green"><i class="fa fa-circle-check"></i></div>
-      <div><div class="login-kpi-label">Acessos Hoje</div><div class="login-kpi-val" id="lkAcessos">—</div><div class="login-kpi-sub">logins com sucesso</div></div>
-    </div>
-    <div class="login-kpi">
-      <div class="login-kpi-icon red"><i class="fa fa-circle-xmark"></i></div>
-      <div><div class="login-kpi-label">Falhas Hoje</div><div class="login-kpi-val" id="lkFalhas">—</div><div class="login-kpi-sub">tentativas inválidas</div></div>
-    </div>
-    <div class="login-kpi">
-      <div class="login-kpi-icon blue"><i class="fa fa-users"></i></div>
-      <div><div class="login-kpi-label">Usuários Únicos</div><div class="login-kpi-val" id="lkUnicos">—</div><div class="login-kpi-sub">nos últimos 7 dias</div></div>
-    </div>
-    <div class="login-kpi">
-      <div class="login-kpi-icon yellow"><i class="fa fa-clock"></i></div>
-      <div><div class="login-kpi-label">Último Acesso</div><div class="login-kpi-val" id="lkUltimoEmail" style="font-size:13px;padding-top:4px">—</div><div class="login-kpi-sub" id="lkUltimoTempo">—</div></div>
-    </div>
-  </div>
-
-  <div class="login-filtros">
-    <select id="lFiltroStatus">
-      <option value="">Todos</option>
-      <option value="sucesso">Sucesso</option>
-      <option value="falha">Falha</option>
+<div class="paginacao">
+  <div class="por-pagina-wrap">
+    Exibir
+    <select id="porPagina" onchange="paginaAtual=0;renderTabela()">
+      <option value="10" selected>10</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="9999">Todos</option>
     </select>
-    <input type="text" id="lFiltroUsuario" placeholder="Nome ou email..." style="min-width:200px">
-    <input type="date" id="lFiltroIni">
-    <input type="date" id="lFiltroFim">
-    <button class="btn-filtrar" onclick="carregarLogins()"><i class="fa fa-filter"></i> Filtrar</button>
-    <button class="btn-limpar-login" onclick="limparFiltrosLogin()">Limpar</button>
+    por página
   </div>
+  <div class="paginacao-info" id="paginacaoInfo"></div>
+  <div class="paginacao-controles" id="paginacaoControles"></div>
+</div>
 
-  <div class="login-content">
-    <div class="login-table-wrap">
-      <div class="login-table-header">
-        <span>Registros</span>
-        <small id="lCount">—</small>
+<div style="margin-top:24px;text-align:center;font-size:12px;color:#9ca3af;">
+  Não encontrou a certificação que procura?
+  <a href="parametros.html#certificacoes" style="color:#2563eb;text-decoration:none;font-weight:600;">
+    <i class="fa fa-arrow-right" style="font-size:10px;margin:0 2px"></i> Gerenciar certificações em Parâmetros
+  </a>
+</div>
+</main>
+</div>
+
+<!-- MODAL VINCULAR -->
+<div class="modal" id="modalVincular">
+<div class="modal-content">
+  <div class="modal-header">
+    <h2>Vincular Certificação</h2>
+    <button class="btn-fechar" onclick="fecharVincular()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="grid-vincular">
+      <div class="field span2"><label>Profissional</label><select id="cpf_terapeuta"></select></div>
+      <div class="field span2"><label>Certificação</label><select id="certificacao_id"></select></div>
+      <div class="field"><label>Data de Obtenção</label><input type="date" id="data_obtencao"></div>
+      <div class="field span2">
+        <label>Certificado (arquivo) <span style="color:#9ca3af;font-weight:400">— opcional</span></label>
+        <input type="file" id="arquivo_vincular" accept="image/*,.pdf,.doc,.docx">
       </div>
-      <div style="overflow-x:auto;">
-        <table class="login-table">
-          <thead>
-            <tr>
-              <th>Data / Hora</th>
-              <th>Usuário</th>
-              <th>Status</th>
-              <th>Dispositivo</th>
-              <th>Navegador</th>
-              <th>Detalhe</th>
-            </tr>
-          </thead>
-          <tbody id="lTabela"></tbody>
-        </table>
-      </div>
+    </div>
+    <div class="upload-ing" id="uploading_vincular" style="margin-top:8px">
+      <i class="fa fa-spinner fa-spin"></i> Enviando arquivo...
     </div>
   </div>
-</div>
-
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharVincular()">Cancelar</button>
+    <button class="btn-save" onclick="vincular()"><i class="fa fa-link"></i> Vincular</button>
+  </div>
 </div>
 </div>
 
-<!-- PAINEL DETALHE EQUIPE -->
-<div class="modal" id="modalDetalhe">
-<div class="modal-panel">
-  <div class="panel-header">
-    <div style="display:flex;align-items:center;gap:12px;">
-      <div class="panel-avatar" id="panelAvatar"></div>
-      <div><div class="panel-nome" id="panelNome">—</div><div class="panel-cargo" id="panelCargo">—</div></div>
-    </div>
-    <button class="panel-close" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+<!-- MODAL CERTS -->
+<div class="modal" id="modalCerts">
+<div class="modal-content">
+  <div class="modal-header">
+    <h2 id="tituloModal">Certificações</h2>
+    <button class="btn-fechar" onclick="fecharModal()"><i class="fa fa-times"></i></button>
   </div>
-  <div class="panel-body">
-    <div class="panel-kpis">
-      <div class="panel-kpi"><div class="pk-label">Tempo de Casa</div><div class="pk-value" id="panelTempo">—</div><div class="pk-sub" id="panelDataInicio">—</div></div>
-      <div class="panel-kpi"><div class="pk-label">Ausências</div><div class="pk-value" id="panelTotalAus">—</div><div class="pk-sub">histórico total</div></div>
-      <div class="panel-kpi"><div class="pk-label">Dias Ausente</div><div class="pk-value" id="panelDiasAus">—</div><div class="pk-sub">estimativa</div></div>
-    </div>
-    <div>
-      <div class="panel-section-title">Histórico de Ausências</div>
-      <div id="panelAusencias"></div>
-    </div>
+  <div class="modal-body" id="listaCerts"></div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModal()">Fechar</button>
+  </div>
+</div>
+</div>
+
+<!-- MODAL EDITAR DATA -->
+<div class="modal" id="modalEditarData">
+<div class="modal-content sm">
+  <div class="modal-header">
+    <h2>Editar Data</h2>
+    <button class="btn-fechar" onclick="fecharModalData()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="field"><label>Nova Data de Obtenção</label><input type="date" id="novaDataInput"></div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn-cancel" onclick="fecharModalData()">Cancelar</button>
+    <button class="btn-save" onclick="salvarNovaData()"><i class="fa fa-save"></i> Salvar</button>
   </div>
 </div>
 </div>
 
 <script>
-const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-const CARGOS_FIXOS=["Gerente","Atendente","Recepcionista","Faxineira","Analista"];
-const CORES_AVATAR=["#6366f1","#8b5cf6","#ec4899","#06b6d4","#10b981","#f59e0b","#ef4444","#3b82f6"];
-let funcionarios=[],solicitacoes=[],charts={};
-let loginsCarregados=false;
+let dados=[],editandoId=null,certificacoes=[];
+let ordemCol='nome',ordemDir='asc',paginaAtual=0;
+let agrupados=[];
 
-function corAvatar(n){return CORES_AVATAR[(n||"A").charCodeAt(0)%CORES_AVATAR.length];}
-function iniciais(n){return(n||"?").split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();}
-function fmtD(v){if(!v)return"—";const[y,m,d]=v.split("-");return d+"/"+m+"/"+y;}
-function hoje(){return new Date().toISOString().split("T")[0];}
-function anoAtual(){return new Date().getFullYear();}
-function diffMeses(d1,d2){const a=new Date(d1),b=new Date(d2||hoje());return(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());}
-function fmtTempo(m){if(m<1)return"<1m";if(m<12)return m+"m";const a=Math.floor(m/12),r=m%12;return r>0?a+"a "+r+"m":a+"a";}
-function isTerapeuta(c){return["Terapeuta Feminina","Terapeuta Masculino"].includes(c);}
-function diffDias(d1,d2){if(!d1||!d2)return 1;return Math.max(1,Math.round((new Date(d2)-new Date(d1))/86400000)+1);}
-function isAusencia(tipo){const t=(tipo||"").toLowerCase();return!t.includes("alteração")&&!t.includes("alteracao");}
-function tipoBadge(tipo){
-  const t=(tipo||"").toLowerCase();
-  if(t.includes("férias")||t.includes("ferias"))return"aus-tipo-badge aus-ferias";
-  if(t.includes("atestado"))return"aus-tipo-badge aus-atestado";
-  if(t.includes("falta"))return"aus-tipo-badge aus-falta";
-  if(t.includes("alteração")||t.includes("alteracao"))return"aus-tipo-badge aus-alteracao";
-  if(t.includes("viagem"))return"aus-tipo-badge aus-viagem";
-  return"aus-tipo-badge aus-outro";
-}
-function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function podeVerTudo(u){return u&&(u.role==="admin"||u.role==="apoio");}
 
-function mudarAba(aba,btn){
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll(".sub-btn:not(.disabled)").forEach(b=>b.classList.remove("active"));
-  document.getElementById("page-"+aba).classList.add("active");
-  btn.classList.add("active");
-  if(aba==="logins"&&!loginsCarregados){carregarLogins();}
+function renderIcone(icone,cor,tamanho,titulo){
+  tamanho=tamanho||18;titulo=titulo?' title="'+titulo+'"':'';
+  if(!icone)icone='fa-certificate';
+  if(icone.trim().startsWith('<svg')){const svg=icone.replace(/currentColor/g,cor||'#6b7280');return '<span class="icone-svg" style="width:'+tamanho+'px;height:'+tamanho+'px"'+titulo+'>'+svg+'</span>';}
+  if(icone.startsWith('data:')||icone.startsWith('http'))return '<img src="'+icone+'" style="width:'+tamanho+'px;height:'+tamanho+'px;border-radius:3px;object-fit:cover"'+titulo+'>';
+  return '<i class="fa-solid '+icone+'" style="font-size:'+tamanho+'px;color:'+(cor||'#6b7280')+'"'+titulo+'></i>';
 }
 
-/* ══ EQUIPE ══ */
-async function carregar(){
-  const[{data:f},{data:s}]=await Promise.all([
-    client.from("funcionario").select("*").order("nome_profissional"),
-    client.from("funcionario_solicitacao").select("*").eq("status","Acordado").order("data_inicio",{ascending:false})
-  ]);
-  funcionarios=f||[];solicitacoes=s||[];
-  document.getElementById("kAno").textContent=anoAtual();
-  document.getElementById("loadingOverlay").classList.add("hidden");
-  aplicarEquipe();
+function corIcone(icone){
+  const cores={"fa-person-dress":"#ec4899","fa-user-group":"#3b82f6","fa-droplet":"#06b6d4","fa-spa":"#10b981","fa-shoe-prints":"#f59e0b","fa-certificate":"#8b5cf6","fa-star":"#f59e0b","fa-heart":"#ef4444","fa-hands":"#6366f1","fa-leaf":"#22c55e","fa-fire":"#f97316","fa-snowflake":"#38bdf8"};
+  if(!icone||icone.trim().startsWith('<svg')||icone.startsWith('data:')||icone.startsWith('http'))return '#6b7280';
+  return cores[icone]||"#6b7280";
 }
 
-function filtrarFuncs(){
-  const cargo=document.getElementById("filtroCargo").value;
-  const status=document.getElementById("filtroStatus").value;
-  return funcionarios.filter(f=>{
-    const cOk=!cargo||(cargo==="terapeuta"?isTerapeuta(f.cargo):CARGOS_FIXOS.includes(f.cargo));
-    const sOk=!status||f.status===status;
-    return cOk&&sOk;
+function renderLegenda(){
+  const legEl=document.getElementById("legenda");
+  if(!certificacoes.length){legEl.innerHTML="";return;}
+  legEl.innerHTML='<strong>Legenda:</strong> '+certificacoes.map(c=>'<span>'+renderIcone(c.icone||'fa-certificate',corIcone(c.icone),16,c.nome)+' '+c.nome+'</span>').join('');
+}
+
+function limparFiltros(){
+  document.getElementById("buscaTerapeuta").value="";
+  document.getElementById("filtroCert").value="";
+  checarBtnLimpar();paginaAtual=0;aplicarFiltroEOrdem();
+}
+
+function checarBtnLimpar(){
+  const busca=document.getElementById("buscaTerapeuta").value;
+  const cert=document.getElementById("filtroCert").value;
+  document.getElementById("btnLimparFiltros").classList.toggle("visible",!!(busca||cert));
+}
+
+function ordenar(col){
+  if(ordemCol===col){ordemDir=ordemDir==='asc'?'desc':'asc';}else{ordemCol=col;ordemDir='asc';}
+  atualizarIconesOrdem();paginaAtual=0;aplicarFiltroEOrdem();
+}
+
+function atualizarIconesOrdem(){
+  ['nome','qtd'].forEach(c=>{
+    const th=document.getElementById('th-'+c);if(!th)return;
+    const icon=th.querySelector('.sort-icon');
+    th.classList.remove('asc','desc');
+    if(ordemCol===c){th.classList.add(ordemDir);icon.className='fa sort-icon '+(ordemDir==='asc'?'fa-sort-up':'fa-sort-down');}
+    else icon.className='fa fa-sort sort-icon';
   });
 }
 
-function aplicarEquipe(){
-  const lista=filtrarFuncs();
-  renderKPIs(lista);
-  renderTabela(lista);
-  renderTurnover();
+function aplicarFiltroEOrdem(){
+  const termo=(document.getElementById("buscaTerapeuta").value||"").toLowerCase();
+  const certFiltro=document.getElementById("filtroCert").value;
+  const filtrado=dados.filter(d=>{
+    const nome=(d.funcionario?.nome_profissional||"").toLowerCase();
+    const cert=(d.certificacao?.nome||"").toLowerCase();
+    const termoOk=nome.includes(termo)||cert.includes(termo);
+    const certOk=!certFiltro||d.certificacao?.id===certFiltro;
+    return termoOk&&certOk;
+  });
+  const mapa={};
+  filtrado.forEach(r=>{
+    const nome=r.funcionario?.nome_profissional||"Sem nome";
+    if(!mapa[nome])mapa[nome]={nome,certs:[]};
+    mapa[nome].certs.push(r);
+  });
+  agrupados=Object.values(mapa).sort((a,b)=>{
+    if(ordemCol==='qtd'){const diff=(ordemDir==='asc'?1:-1)*(a.certs.length-b.certs.length);return diff||a.nome.localeCompare(b.nome);}
+    return(ordemDir==='asc'?1:-1)*a.nome.localeCompare(b.nome);
+  });
+  document.getElementById("collabCount").textContent=agrupados.length;
+  const cert=certificacoes.find(c=>c.id===certFiltro);
+  document.getElementById("collabLabel").textContent=(agrupados.length===1?"profissional certificado":"profissionais certificados")+(cert?" · "+cert.nome:"");
+  checarBtnLimpar();renderTabela();
 }
 
-function renderKPIs(lista){
-  const ativos=lista.filter(f=>f.status==="Ativo");
-  const inativos=lista.filter(f=>f.status==="Inativo");
-  const tempos=ativos.filter(f=>f.data_inicio).map(f=>diffMeses(f.data_inicio));
-  const tempoMed=tempos.length?Math.round(tempos.reduce((s,v)=>s+v,0)/tempos.length):0;
-  const anoStr=String(anoAtual());
-  const saidas=funcionarios.filter(f=>f.status==="Inativo"&&f.data_inativacao&&f.data_inativacao.startsWith(anoStr));
-  const mesAtual=anoAtual()+"-"+String(new Date().getMonth()+1).padStart(2,"0");
-  const ausMes=solicitacoes.filter(s=>isAusencia(s.tipo)&&(s.data_inicio&&s.data_inicio.startsWith(mesAtual)||s.data_fim&&s.data_fim.startsWith(mesAtual)));
-  const comData=ativos.filter(f=>f.data_inicio).sort((a,b)=>a.data_inicio.localeCompare(b.data_inicio));
-  const maisAntigo=comData[0];
-  document.getElementById("kAtivos").textContent=ativos.length;
-  document.getElementById("kAtivosSub").textContent=inativos.length+" inativo"+(inativos.length!==1?"s":"");
-  document.getElementById("kTempo").textContent=fmtTempo(tempoMed);
-  document.getElementById("kTurnover").textContent=saidas.length;
-  document.getElementById("kAusencias").textContent=ausMes.length;
-  document.getElementById("kAntigo").textContent=maisAntigo?maisAntigo.nome_profissional:"—";
-  document.getElementById("kAntigoTempo").textContent=maisAntigo?fmtTempo(diffMeses(maisAntigo.data_inicio))+" de casa":"—";
-}
-
-function renderTabela(lista){
-  document.getElementById("tabelaCount").textContent=lista.length+" registro"+(lista.length!==1?"s":"");
-  const tbody=document.getElementById("tabelaFunc");
-  if(!lista.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Nenhum funcionário.</td></tr>';return;}
-  tbody.innerHTML=lista.map(f=>{
-    const meses=f.data_inicio?diffMeses(f.data_inicio):0;
-    const aus=solicitacoes.filter(s=>s.terapeuta_cpf===f.cpf&&isAusencia(s.tipo));
-    const ativo=f.status==="Ativo";
-    return "<tr onclick=\"abrirDetalhe('"+f.cpf+"')\">"
-      +"<td><span class='func-nome'>"+f.nome_profissional+"</span></td>"
-      +"<td><span class='func-sub'>"+f.cargo+"</span></td>"
-      +"<td><span style='font-size:12px;color:#374151'>"+(f.data_inicio?fmtTempo(meses):"—")+"</span></td>"
-      +"<td>"+(aus.length?"<span class='badge-sm badge-aus'>"+aus.length+"</span>":"<span style='color:#1f2937;font-size:12px'>—</span>")+"</td>"
-      +"<td><span class='badge-sm "+(ativo?"badge-ativo":"badge-inativo")+"'><span class='dot "+(ativo?"green":"red")+"'></span>"+f.status+"</span></td>"
-      +"</tr>";
-  }).join("");
-}
-
-function renderTurnover(){
-  const anoStr=String(anoAtual());
-  const saidas=funcionarios.filter(f=>f.status==="Inativo"&&f.data_inativacao&&f.data_inativacao.startsWith(anoStr)).sort((a,b)=>b.data_inativacao.localeCompare(a.data_inativacao));
-  const div=document.getElementById("turnoverLista");
-  if(!saidas.length){div.innerHTML="<div class='empty'><i class='fa fa-check-circle' style='color:#34d399'></i>Nenhuma saída em "+anoAtual()+"</div>";return;}
-  div.innerHTML=saidas.map(f=>{
-    const meses=f.data_inicio&&f.data_inativacao?diffMeses(f.data_inicio,f.data_inativacao):null;
-    return "<div class='turnover-item'><div class='turnover-dot'></div><div style='flex:1;min-width:0'><div class='turnover-nome'>"+f.nome_profissional+"</div><div class='turnover-info'>"+(f.cargo||"—")+" · "+fmtD(f.data_inativacao)+"</div></div><div class='turnover-tempo'>"+(meses!==null?fmtTempo(meses):"—")+"</div></div>";
-  }).join("");
-}
-
-function abrirDetalhe(cpf){
-  const f=funcionarios.find(x=>x.cpf===cpf);if(!f)return;
-  const cor=corAvatar(f.nome_profissional);
-  document.getElementById("panelAvatar").style.background=cor;
-  document.getElementById("panelAvatar").textContent=iniciais(f.nome_profissional);
-  document.getElementById("panelNome").textContent=f.nome_profissional;
-  document.getElementById("panelCargo").textContent=(f.cargo||"—")+" · "+f.status;
-  const meses=f.data_inicio?diffMeses(f.data_inicio,f.data_inativacao):0;
-  document.getElementById("panelTempo").textContent=f.data_inicio?fmtTempo(meses):"—";
-  document.getElementById("panelDataInicio").textContent=f.data_inicio?"desde "+fmtD(f.data_inicio):"sem data de início";
-  const aus=solicitacoes.filter(s=>s.terapeuta_cpf===cpf&&isAusencia(s.tipo));
-  document.getElementById("panelTotalAus").textContent=aus.length;
-  document.getElementById("panelDiasAus").textContent=aus.reduce((s,a)=>s+diffDias(a.data_inicio,a.data_fim),0)+"d";
-  const ausDiv=document.getElementById("panelAusencias");
-  ausDiv.innerHTML=!aus.length
-    ?"<div class='empty'><i class='fa fa-calendar-check'></i>Sem ausências registradas.</div>"
-    :aus.map(s=>"<div class='aus-item'><div><div style='font-size:12px;color:#6b7280'>"+fmtD(s.data_inicio)+" → "+fmtD(s.data_fim)+"</div><div style='font-size:10px;color:#374151;margin-top:2px'>"+diffDias(s.data_inicio,s.data_fim)+" dia(s)</div></div><span class='"+tipoBadge(s.tipo)+"'>"+s.tipo+"</span></div>").join("");
-  document.getElementById("modalDetalhe").classList.add("open");
-}
-function fecharModal(){document.getElementById("modalDetalhe").classList.remove("open");}
-document.getElementById("modalDetalhe").addEventListener("click",e=>{if(e.target===document.getElementById("modalDetalhe"))fecharModal();});
-
-/* ══ LOGINS ══ */
-function fmtDataHora(ts){
-  if(!ts)return"—";
-  const d=new Date(ts);
-  return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
-}
-function tempoRelativo(ts){
-  if(!ts)return"—";
-  const diff=Math.floor((Date.now()-new Date(ts))/1000);
-  if(diff<60)return"agora";
-  if(diff<3600)return Math.floor(diff/60)+"min atrás";
-  if(diff<86400)return Math.floor(diff/3600)+"h atrás";
-  return Math.floor(diff/86400)+"d atrás";
-}
-
-async function carregarLogins(){
-  loginsCarregados=true;
-  const status=document.getElementById("lFiltroStatus").value;
-  const usuario=document.getElementById("lFiltroUsuario").value.trim();
-  const ini=document.getElementById("lFiltroIni").value;
-  const fim=document.getElementById("lFiltroFim").value;
-
-  let q=client.from("login_logs").select("*").order("created_at",{ascending:false}).limit(200);
-  if(status) q=q.eq("status",status);
-  if(ini) q=q.gte("created_at",ini+"T00:00:00");
-  if(fim) q=q.lte("created_at",fim+"T23:59:59");
-
-  const{data:todos}=await q;
-  let lista=todos||[];
-
-  if(usuario){
-    const u=usuario.toLowerCase();
-    lista=lista.filter(r=>(r.nome||"").toLowerCase().includes(u)||(r.email||"").toLowerCase().includes(u));
+function renderTabela(){
+  const porPag=parseInt(document.getElementById("porPagina").value)||10;
+  const total=agrupados.length;
+  const totalPags=porPag>=9999?1:Math.max(1,Math.ceil(total/porPag));
+  if(paginaAtual>=totalPags)paginaAtual=totalPags-1;
+  const inicio=porPag>=9999?0:paginaAtual*porPag;
+  const fim=porPag>=9999?total:Math.min(inicio+porPag,total);
+  const pagina=agrupados.slice(inicio,fim);
+  const tbody=document.getElementById("lista");tbody.innerHTML="";
+  if(!pagina.length){
+    tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:#9ca3af;padding:32px">Nenhum resultado encontrado.</td></tr>';
+  } else {
+    pagina.forEach(t=>{
+      const iconesUnicos=[...new Map(t.certs.map(c=>[c.certificacao?.id,{icone:c.certificacao?.icone||"fa-certificate",nome:c.certificacao?.nome}])).values()];
+      const iconesHtml=iconesUnicos.map(i=>renderIcone(i.icone,corIcone(i.icone),18,i.nome)).join('');
+      tbody.innerHTML+='<tr><td><strong>'+t.nome+'</strong></td><td><div class="cert-icones">'+iconesHtml+'</div></td><td><span class="badge-count">'+t.certs.length+'</span></td><td><button onclick="abrirModal(\''+t.nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-eye"></i> Ver / Editar</button></td></tr>';
+    });
   }
-
-  // KPIs
-  const hojeStr=hoje();
-  const acessosHoje=(todos||[]).filter(r=>r.status==="sucesso"&&r.created_at?.startsWith(hojeStr)).length;
-  const falhasHoje=(todos||[]).filter(r=>r.status==="falha"&&r.created_at?.startsWith(hojeStr)).length;
-  const set7=new Date(Date.now()-7*86400000).toISOString();
-  const unicos=new Set((todos||[]).filter(r=>r.created_at>set7&&r.status==="sucesso").map(r=>r.email)).size;
-  const ultimo=(todos||[]).find(r=>r.status==="sucesso");
-
-  document.getElementById("lkAcessos").textContent=acessosHoje;
-  document.getElementById("lkFalhas").textContent=falhasHoje;
-  document.getElementById("lkUnicos").textContent=unicos;
-  document.getElementById("lkUltimoEmail").textContent=ultimo?.email||"—";
-  document.getElementById("lkUltimoTempo").textContent=ultimo?tempoRelativo(ultimo.created_at):"—";
-  document.getElementById("lCount").textContent=lista.length+" registro"+(lista.length!==1?"s":"");
-
-  const tbody=document.getElementById("lTabela");
-  if(!lista.length){
-    tbody.innerHTML='<tr><td colspan="6" class="login-empty"><i class="fa fa-shield-halved"></i>Nenhum registro encontrado.</td></tr>';
-    return;
+  const infoEl=document.getElementById("paginacaoInfo"),ctrlEl=document.getElementById("paginacaoControles");
+  if(total===0){infoEl.innerHTML="Nenhum resultado.";ctrlEl.innerHTML="";return;}
+  if(porPag>=9999){infoEl.innerHTML="Exibindo <strong>todos os "+total+"</strong>";ctrlEl.innerHTML="";return;}
+  infoEl.innerHTML="Exibindo <strong>"+(inicio+1)+"–"+fim+"</strong> de <strong>"+total+"</strong>";
+  ctrlEl.innerHTML="";
+  function addBtn(label,pg,ativo,desabilitado,ellipsis){
+    const b=document.createElement("button");b.className="pag-btn"+(ativo?" ativo":"")+(ellipsis?" ellipsis":"");b.innerHTML=label;b.disabled=desabilitado;
+    if(!desabilitado&&!ellipsis)b.onclick=()=>{paginaAtual=pg;renderTabela();};ctrlEl.appendChild(b);
   }
+  addBtn('<i class="fa fa-chevron-left"></i>',paginaAtual-1,false,paginaAtual===0);
+  const pages=[];for(let i=0;i<totalPags;i++){if(i===0||i===totalPags-1||Math.abs(i-paginaAtual)<=1)pages.push(i);else if(pages[pages.length-1]!=='...')pages.push('...');}
+  pages.forEach(p=>{if(p==='...')addBtn('…',null,false,false,true);else addBtn(p+1,p,p===paginaAtual,false);});
+  addBtn('<i class="fa fa-chevron-right"></i>',paginaAtual+1,false,paginaAtual>=totalPags-1);
+}
 
-  tbody.innerHTML=lista.map(r=>{
-    const sucesso=r.status==="sucesso";
-    const badge=sucesso
-      ?'<span class="badge-sucesso"><i class="fa fa-check"></i> SUCESSO</span>'
-      :'<span class="badge-falha"><i class="fa fa-times"></i> FALHA</span>';
-    const devIcon=r.dispositivo==="mobile"?'<i class="fa fa-mobile-screen login-device-icon" title="Mobile"></i>':'<i class="fa fa-desktop login-device-icon" title="Desktop"></i>';
-    const nomeHtml=r.nome
-      ?'<div class="login-usuario-nome">'+r.nome+'</div><div class="login-usuario-email">'+r.email+'</div>'
-      :'<div class="login-usuario-email">'+r.email+'</div>';
-    const detalhe=r.motivo_falha||'<span style="color:#d1d5db">—</span>';
-    return '<tr>'
-      +'<td style="white-space:nowrap;color:#6b7280">'+fmtDataHora(r.created_at)+'</td>'
-      +'<td>'+nomeHtml+'</td>'
-      +'<td>'+badge+'</td>'
-      +'<td style="text-align:center">'+devIcon+'</td>'
-      +'<td style="color:#6b7280">'+( r.navegador||"—")+'</td>'
-      +'<td style="font-size:12px;color:#9ca3af">'+detalhe+'</td>'
-      +'</tr>';
+async function carregarSelects(){
+  // funcionario (ex-terapeutas)
+  const {data:funcionarios}=await client.from("funcionario").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
+  const selTer=document.getElementById("cpf_terapeuta");selTer.innerHTML="<option value=''>Selecione o profissional</option>";
+  (funcionarios||[]).forEach(t=>selTer.innerHTML+='<option value="'+t.cpf+'">'+t.nome_profissional+'</option>');
+
+  // certificacao (ex-certificacoes)
+  const {data:certs}=await client.from("certificacao").select("id,nome,icone").order("nome");
+  certificacoes=certs||[];
+  const selCert=document.getElementById("certificacao_id");selCert.innerHTML="<option value=''>Selecione a certificação</option>";
+  certificacoes.forEach(c=>selCert.innerHTML+='<option value="'+c.id+'">'+c.nome+'</option>');
+  const filtro=document.getElementById("filtroCert");filtro.innerHTML="<option value=''>Todas as certificações</option>";
+  certificacoes.forEach(c=>filtro.innerHTML+='<option value="'+c.id+'">'+c.nome+'</option>');
+  renderLegenda();
+}
+
+async function carregarLista(){
+  if(!window.usuarioLogado){setTimeout(carregarLista,100);return;}
+  const u=window.usuarioLogado;
+  // funcionario_certificacao (ex-terapeuta_certificacoes), join com certificacao e funcionario
+  let q=client.from("funcionario_certificacao")
+    .select('id,data_obtencao,arquivo_url,arquivo_nome,cpf_terapeuta,certificacao(id,nome,icone),funcionario(nome_profissional)')
+    .order("id");
+  if(!podeVerTudo(u)&&u&&u.cpf)q=q.eq("cpf_terapeuta",u.cpf);
+  const {data}=await q;dados=data||[];paginaAtual=0;aplicarFiltroEOrdem();
+}
+
+function abrirVincular(){
+  const u=window.usuarioLogado;const selTer=document.getElementById("cpf_terapeuta");
+  if(!podeVerTudo(u)&&u&&u.cpf){selTer.value=u.cpf;selTer.disabled=true;}else{selTer.value="";selTer.disabled=false;}
+  document.getElementById("certificacao_id").value="";document.getElementById("data_obtencao").value="";
+  if(document.getElementById("arquivo_vincular"))document.getElementById("arquivo_vincular").value="";
+  document.getElementById("modalVincular").style.display="flex";
+}
+function fecharVincular(){document.getElementById("modalVincular").style.display="none";}
+
+async function vincular(){
+  const cpf=document.getElementById("cpf_terapeuta").value,cert=document.getElementById("certificacao_id").value,data=document.getElementById("data_obtencao").value,file=document.getElementById("arquivo_vincular").files[0];
+  if(!cpf||!cert){alert("Selecione o profissional e a certificação.");return;}
+  const {data:inserted,error}=await client.from("funcionario_certificacao").insert({cpf_terapeuta:cpf,certificacao_id:cert,data_obtencao:data||null}).select().single();
+  if(error){alert("Erro ao vincular: "+error.message);return;}
+  if(file&&inserted?.id){
+    const statusEl=document.getElementById("uploading_vincular");statusEl.style.display="block";
+    const fileName='certificados/'+inserted.id+'/'+Date.now()+'_'+limparNome(file.name);
+    const {error:upErr}=await client.storage.from("documentos").upload(fileName,file);
+    if(!upErr){const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);await client.from("funcionario_certificacao").update({arquivo_url:urlData.publicUrl,arquivo_nome:file.name}).eq("id",inserted.id);}
+    statusEl.style.display="none";
+  }
+  fecharVincular();carregarLista();
+}
+
+function abrirModal(nome){
+  const u=window.usuarioLogado;const registros=dados.filter(d=>d.funcionario?.nome_profissional===nome);
+  document.getElementById("tituloModal").textContent=nome;
+  const html=registros.map(r=>{
+    const icone=r.certificacao?.icone||"fa-certificate",cor=corIcone(icone);
+    const dataFmt=r.data_obtencao?new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR"):"Sem data";
+    const iconeHtml=renderIcone(icone,cor,20);
+    const arquivoHtml=r.arquivo_url
+      ?'<div class="cert-arquivo"><i class="fa fa-paperclip"></i><a class="btn-ver-cert" href="'+r.arquivo_url+'" target="_blank"><i class="fa fa-eye"></i> '+(r.arquivo_nome||"Ver certificado")+'</a>'+(podeVerTudo(u)?'<button class="excluir" style="padding:2px 8px;font-size:11px" onclick="excluirArquivo(\''+r.id+'\',\''+(r.arquivo_url||"").replace(/'/g,"\\'")+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-times"></i> Remover</button>':'')+'</div>'
+      :'<div class="cert-upload"><input type="file" id="file_'+r.id+'" accept="image/*,.pdf,.doc,.docx"><button class="btn-upload-cert" onclick="uploadCert(\''+r.id+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-upload"></i> Anexar certificado</button><span class="upload-ing" id="uploading_'+r.id+'"><i class="fa fa-spinner fa-spin"></i></span></div>';
+    const botoesAcao=podeVerTudo(u)
+      ?'<button onclick="editarCert(\''+r.id+'\',\''+(r.data_obtencao||"")+'\')"><i class="fa fa-pencil"></i></button><button class="excluir" onclick="excluir(\''+r.id+'\',\''+nome.replace(/'/g,"\\'")+'\')"><i class="fa fa-trash"></i></button>'
+      :'<button onclick="editarCert(\''+r.id+'\',\''+(r.data_obtencao||"")+'\')"><i class="fa fa-pencil"></i></button>';
+    return '<div class="cert-row"><div style="display:flex;align-items:center;justify-content:space-between;width:100%"><div class="cert-row-left">'+iconeHtml+'<div class="cert-info"><span class="cert-nome">'+(r.certificacao?.nome||"")+'</span><span class="cert-data"><i class="fa fa-calendar-alt"></i> '+dataFmt+'</span></div></div><div class="cert-row-right">'+botoesAcao+'</div></div>'+arquivoHtml+'</div>';
   }).join("");
+  document.getElementById("listaCerts").innerHTML=html||'<p style="color:#9ca3af;text-align:center">Nenhuma certificação.</p>';
+  document.getElementById("modalCerts").style.display="flex";
+}
+function fecharModal(){document.getElementById("modalCerts").style.display="none";}
+function editarCert(id,dataAtual){editandoId=id;document.getElementById("novaDataInput").value=dataAtual||"";document.getElementById("modalEditarData").style.display="flex";}
+function fecharModalData(){document.getElementById("modalEditarData").style.display="none";}
+async function salvarNovaData(){
+  const novaData=document.getElementById("novaDataInput").value;if(!novaData){alert("Selecione uma data.");return;}
+  const {error}=await client.from("funcionario_certificacao").update({data_obtencao:novaData}).eq("id",editandoId);
+  if(error){alert("Erro: "+error.message);return;}
+  fecharModalData();await carregarLista();const r=dados.find(d=>d.id==editandoId);if(r)abrirModal(r.funcionario?.nome_profissional);
+}
+async function excluir(id,nome){
+  if(!confirm("Excluir este vínculo?"))return;
+  const {error}=await client.from("funcionario_certificacao").delete().eq("id",id);
+  if(error){alert("Erro: "+error.message);return;}
+  await carregarLista();const ainda=dados.filter(d=>d.funcionario?.nome_profissional===nome);
+  if(ainda.length)abrirModal(nome);else fecharModal();
+}
+function limparNome(nome){return nome.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_");}
+async function uploadCert(id,nomeTerapeuta){
+  const file=document.getElementById("file_"+id)?.files[0];if(!file){alert("Selecione um arquivo.");return;}
+  const statusEl=document.getElementById("uploading_"+id);if(statusEl)statusEl.style.display="inline";
+  const fileName='certificados/'+id+'/'+Date.now()+'_'+limparNome(file.name);
+  const {error:upErr}=await client.storage.from("documentos").upload(fileName,file);
+  if(upErr){if(statusEl)statusEl.style.display="none";alert("Erro: "+upErr.message);return;}
+  const {data:urlData}=client.storage.from("documentos").getPublicUrl(fileName);
+  const {error}=await client.from("funcionario_certificacao").update({arquivo_url:urlData.publicUrl,arquivo_nome:file.name}).eq("id",id);
+  if(statusEl)statusEl.style.display="none";if(error){alert("Erro: "+error.message);return;}
+  await carregarLista();abrirModal(nomeTerapeuta);
+}
+async function excluirArquivo(id,url,nomeTerapeuta){
+  if(!confirm("Remover o arquivo?"))return;
+  const path=url.split("/storage/v1/object/public/documentos/")[1];
+  if(path)await client.storage.from("documentos").remove([decodeURIComponent(path)]);
+  await client.from("funcionario_certificacao").update({arquivo_url:null,arquivo_nome:null}).eq("id",id);
+  await carregarLista();abrirModal(nomeTerapeuta);
+}
+function exportarExcel(){
+  const exportData=dados.map(r=>({"Profissional":r.funcionario?.nome_profissional||"","Certificação":r.certificacao?.nome||"","Data Obtenção":r.data_obtencao?new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR"):""}));
+  const ws=XLSX.utils.json_to_sheet(exportData);const colunas=["Profissional","Certificação","Data Obtenção"];
+  ws["!cols"]=colunas.map(col=>({wch:Math.max(col.length,...exportData.map(r=>String(r[col]||"").length))+2}));
+  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,"Certificações");XLSX.writeFile(wb,"certificacoes.xlsx");
 }
 
-function limparFiltrosLogin(){
-  document.getElementById("lFiltroStatus").value="";
-  document.getElementById("lFiltroUsuario").value="";
-  document.getElementById("lFiltroIni").value="";
-  document.getElementById("lFiltroFim").value="";
-  carregarLogins();
-}
-
-document.addEventListener("DOMContentLoaded",carregar);
+document.addEventListener('DOMContentLoaded',()=>{
+  atualizarIconesOrdem();
+  const reset=()=>{paginaAtual=0;aplicarFiltroEOrdem();};
+  document.getElementById("buscaTerapeuta").addEventListener("input",()=>{checarBtnLimpar();reset();});
+  document.getElementById("filtroCert").addEventListener("change",()=>{checarBtnLimpar();reset();});
+  carregarSelects();carregarLista();
+});
 </script>
 </body>
 </html>

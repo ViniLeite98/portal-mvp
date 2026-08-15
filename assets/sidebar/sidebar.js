@@ -1,72 +1,571 @@
-(function() {
-  var paginaAtual = window.location.pathname.split("/").pop() || "index.html";
-  function ativo(pagina) {
-    return paginaAtual === pagina ? " active" : "";
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard | Hara Spa</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/tracker.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-height:100vh;}
+.app{display:flex;min-height:100vh;}
+#sidebar{flex-shrink:0;}
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh;overflow-x:hidden;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid #e5e7eb;background:#fff;flex-shrink:0;}
+.topbar-title{font-size:18px;font-weight:800;color:#111827;}
+.topbar-eyebrow{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af;margin-bottom:2px;}
+.sub-nav{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;padding:0 28px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;}
+.sub-nav::-webkit-scrollbar{display:none;}
+.sub-btn{padding:12px 16px;border:none;border-bottom:2px solid transparent;background:none;font-size:13px;font-weight:600;color:#6b7280;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;font-family:'Segoe UI',sans-serif;transition:all .15s;}
+.sub-btn:hover{color:#111827;}
+.sub-btn.active{color:#2563eb;border-bottom-color:#2563eb;}
+.sub-btn.disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
+.sub-btn .soon{font-size:9px;font-weight:700;background:#eff6ff;color:#2563eb;border-radius:4px;padding:2px 5px;margin-left:2px;}
+.page{display:none;flex:1;flex-direction:column;}
+.page.active{display:flex;}
+.kpi-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#e5e7eb;border-bottom:1px solid #e5e7eb;flex-shrink:0;}
+.kpi-cell{padding:16px 20px;background:#fff;display:flex;flex-direction:column;gap:3px;}
+.kpi-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;}
+.kpi-value{font-size:24px;font-weight:800;color:#111827;line-height:1;}
+.kpi-value.green{color:#16a34a;}
+.kpi-value.red{color:#dc2626;}
+.kpi-value.yellow{color:#d97706;}
+.kpi-value.blue{color:#2563eb;}
+.kpi-value.sm{font-size:14px;padding-top:4px;font-weight:700;}
+.kpi-sub{font-size:11px;color:#9ca3af;margin-top:1px;}
+.filtros-bar{display:flex;gap:8px;align-items:center;padding:12px 28px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;flex-shrink:0;}
+.pill{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#374151;font-family:'Segoe UI',sans-serif;display:inline-flex;align-items:center;gap:6px;}
+.pill select{background:none;border:none;color:inherit;font-size:inherit;font-weight:inherit;font-family:inherit;cursor:pointer;outline:none;}
+.pill select option{background:#fff;color:#111827;}
+.content{flex:1;padding:20px 28px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
+.row{display:flex;gap:14px;}
+.row>*{flex:1;min-width:0;}
+.col-2{flex:2!important;}
+.col-3{flex:3!important;}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.card-header{padding:12px 16px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;}
+.card-header h3{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;}
+.chart-wrap{padding:12px 16px;}
+.func-table{width:100%;border-collapse:collapse;}
+.func-table thead th{padding:7px 12px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;border-bottom:1px solid #f3f4f6;background:#f9fafb;}
+.func-table tbody tr{border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .12s;}
+.func-table tbody tr:hover td{background:#f8faff;}
+.func-table tbody tr:last-child{border-bottom:none;}
+.func-table td{padding:8px 12px;font-size:12px;color:#374151;vertical-align:middle;}
+.func-table thead th:first-child{min-width:120px;}
+.func-nome{font-weight:600;color:#111827;font-size:12px;}
+.func-sub{font-size:11px;color:#9ca3af;}
+.tempo-bar-wrap{display:flex;align-items:center;gap:8px;}
+.tempo-bar-bg{flex:1;height:4px;background:#e5e7eb;border-radius:2px;overflow:hidden;min-width:50px;}
+.tempo-bar-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#2563eb,#60a5fa);}
+.tempo-label{font-size:11px;color:#6b7280;white-space:nowrap;min-width:48px;}
+.badge-sm{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;}
+.badge-ativo{background:#dcfce7;color:#16a34a;}
+.badge-inativo{background:#fee2e2;color:#dc2626;}
+.badge-aus{background:#fef3c7;color:#d97706;}
+.dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.dot.green{background:#16a34a;}
+.dot.red{background:#dc2626;}
+.turnover-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6;}
+.turnover-item:last-child{border-bottom:none;}
+.turnover-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:#dc2626;}
+.turnover-nome{font-size:13px;font-weight:600;color:#111827;flex:1;}
+.turnover-info{font-size:11px;color:#9ca3af;}
+.turnover-tempo{font-size:11px;color:#6b7280;white-space:nowrap;}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:flex-end;z-index:500;}
+.modal.open{display:flex;}
+.modal-panel{background:#fff;border-left:1px solid #e5e7eb;width:440px;max-width:95vw;height:100vh;overflow-y:auto;animation:slideIn .2s ease;display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.08);}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
+.panel-header{padding:18px 22px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;background:#fff;z-index:10;}
+.panel-avatar{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0;}
+.panel-nome{font-size:16px;font-weight:700;color:#111827;}
+.panel-cargo{font-size:11px;color:#6b7280;margin-top:2px;}
+.panel-close{background:#f3f4f6;border:none;color:#6b7280;width:30px;height:30px;border-radius:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
+.panel-close:hover{background:#e5e7eb;color:#111827;}
+.panel-body{padding:20px 22px;display:flex;flex-direction:column;gap:18px;flex:1;}
+.panel-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.panel-kpi{background:#f9fafb;border:1px solid #e5e7eb;border-radius:9px;padding:12px 14px;}
+.pk-label{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;margin-bottom:4px;}
+.pk-value{font-size:18px;font-weight:800;color:#111827;}
+.pk-sub{font-size:10px;color:#9ca3af;margin-top:2px;}
+.panel-section-title{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#9ca3af;padding-bottom:8px;border-bottom:1px solid #f3f4f6;margin-bottom:4px;}
+.aus-item{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f3f4f6;}
+.aus-item:last-child{border-bottom:none;}
+.aus-tipo-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;}
+.aus-ferias{background:#ede9fe;color:#7c3aed;}
+.aus-atestado{background:#fee2e2;color:#dc2626;}
+.aus-falta{background:#fef3c7;color:#d97706;}
+.aus-alteracao{background:#dcfce7;color:#16a34a;}
+.aus-viagem{background:#dbeafe;color:#2563eb;}
+.aus-outro{background:#f3f4f6;color:#374151;}
+.empty{text-align:center;padding:32px;color:#9ca3af;font-size:13px;}
+.empty i{font-size:24px;display:block;margin-bottom:8px;color:#e5e7eb;}
+.coming-soon{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:60px;text-align:center;}
+.coming-soon i{font-size:44px;color:#e5e7eb;}
+.coming-soon h2{font-size:17px;font-weight:700;color:#374151;}
+.coming-soon p{font-size:13px;color:#9ca3af;max-width:300px;line-height:1.6;}
+.loading-overlay{position:fixed;inset:0;background:rgba(245,247,251,.92);display:flex;align-items:center;justify-content:center;z-index:999;gap:14px;font-size:13px;color:#6b7280;}
+.loading-overlay.hidden{display:none;}
+.spinner{width:26px;height:26px;border:3px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── LOGINS ── */
+.login-kpi-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:20px 28px;background:#f5f7fb;border-bottom:1px solid #e5e7eb;}
+.login-kpi{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);}
+.login-kpi-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.login-kpi-icon.green{background:#dcfce7;color:#16a34a;}
+.login-kpi-icon.red{background:#fee2e2;color:#dc2626;}
+.login-kpi-icon.blue{background:#dbeafe;color:#2563eb;}
+.login-kpi-icon.yellow{background:#fef3c7;color:#d97706;}
+.login-kpi-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:3px;}
+.login-kpi-val{font-size:22px;font-weight:800;color:#111827;line-height:1;}
+.login-kpi-sub{font-size:11px;color:#9ca3af;margin-top:2px;}
+.login-filtros{display:flex;gap:10px;align-items:center;padding:12px 28px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;}
+.login-filtros select,.login-filtros input{padding:7px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#111827;background:#fff;font-family:'Segoe UI',sans-serif;}
+.login-filtros select:focus,.login-filtros input:focus{outline:none;border-color:#2563eb;}
+.btn-filtrar{background:#1f2937;color:#fff;border:none;border-radius:8px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:'Segoe UI',sans-serif;}
+.btn-filtrar:hover{background:#111827;}
+.btn-limpar-login{background:none;color:#6b7280;border:1px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:'Segoe UI',sans-serif;}
+.btn-limpar-login:hover{background:#f3f4f6;}
+.login-content{flex:1;padding:20px 28px;overflow-y:auto;}
+.login-table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+.login-table-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #f3f4f6;}
+.login-table-header span{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;}
+.login-table-header small{font-size:12px;color:#9ca3af;}
+.login-table{width:100%;border-collapse:collapse;}
+.login-table th{padding:8px 14px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#9ca3af;border-bottom:1px solid #f3f4f6;background:#f9fafb;}
+.login-table td{padding:10px 14px;font-size:13px;color:#374151;border-bottom:1px solid #f3f4f6;vertical-align:middle;}
+.login-table tr:last-child td{border-bottom:none;}
+.login-table tr:hover td{background:#fafafa;}
+.badge-sucesso{background:#dcfce7;color:#16a34a;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;}
+.badge-falha{background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 10px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;}
+.login-usuario-nome{font-weight:600;color:#111827;font-size:13px;}
+.login-usuario-email{font-size:11px;color:#9ca3af;}
+.login-device-icon{font-size:16px;color:#9ca3af;}
+.login-empty{text-align:center;padding:48px;color:#9ca3af;font-size:13px;}
+.login-empty i{font-size:28px;display:block;margin-bottom:10px;color:#e5e7eb;}
+
+@media(max-width:900px){
+  .kpi-bar{grid-template-columns:repeat(3,1fr);}
+  .row{flex-wrap:wrap;}.col-2,.col-3{flex:none!important;width:100%;}
+  .topbar,.sub-nav,.filtros-bar,.content{padding-left:16px;padding-right:16px;}
+  .login-kpi-bar{grid-template-columns:repeat(2,1fr);padding:14px 16px;}
+  .login-filtros,.login-content{padding-left:16px;padding-right:16px;}
+}
+@media(max-width:600px){
+  .kpi-bar{grid-template-columns:repeat(2,1fr);}
+  .kpi-value{font-size:20px;}
+  .panel-kpis{grid-template-columns:repeat(2,1fr);}
+  .login-kpi-bar{grid-template-columns:1fr 1fr;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside id="sidebar"></aside>
+<div class="main">
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <span>Carregando...</span>
+</div>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-eyebrow">Hara Spa</div>
+    <div class="topbar-title">Dashboard</div>
+  </div>
+</div>
+
+<div class="sub-nav">
+  <button class="sub-btn active" onclick="mudarAba('equipe',this)"><i class="fa fa-users" style="font-size:11px"></i> Equipe</button>
+  <button class="sub-btn disabled"><i class="fa fa-calendar-check" style="font-size:11px"></i> Dia <span class="soon">em breve</span></button>
+  <button class="sub-btn disabled"><i class="fa fa-chart-line" style="font-size:11px"></i> Financeiro <span class="soon">em breve</span></button>
+  <button class="sub-btn" onclick="mudarAba('logins',this)"><i class="fa fa-shield-halved" style="font-size:11px"></i> Logins</button>
+</div>
+
+<!-- ABA EQUIPE -->
+<div class="page active" id="page-equipe">
+  <div class="kpi-bar">
+    <div class="kpi-cell"><div class="kpi-label">Ativos</div><div class="kpi-value blue" id="kAtivos">—</div><div class="kpi-sub" id="kAtivosSub">—</div></div>
+    <div class="kpi-cell"><div class="kpi-label">Tempo Médio de Casa</div><div class="kpi-value" id="kTempo">—</div><div class="kpi-sub">equipe ativa</div></div>
+    <div class="kpi-cell"><div class="kpi-label">Turnover <span id="kAno" style="font-weight:400;color:#1f2937;font-family:'Inter',sans-serif;font-size:10px"></span></div><div class="kpi-value red" id="kTurnover">—</div><div class="kpi-sub">saídas no ano</div></div>
+    <div class="kpi-cell"><div class="kpi-label">Ausências — Mês</div><div class="kpi-value yellow" id="kAusencias">—</div><div class="kpi-sub">atestados, faltas e férias</div></div>
+    <div class="kpi-cell"><div class="kpi-label">Mais Antigo</div><div class="kpi-value sm" id="kAntigo">—</div><div class="kpi-sub" id="kAntigoTempo">—</div></div>
+  </div>
+  <div class="filtros-bar">
+    <div class="pill"><i class="fa fa-briefcase" style="font-size:10px"></i>
+      <select id="filtroCargo" onchange="aplicarEquipe()">
+        <option value="">Todos os cargos</option>
+        <option value="terapeuta">Terapeutas</option>
+        <option value="fixo">Funcionários Fixos</option>
+      </select>
+    </div>
+    <div class="pill"><i class="fa fa-circle" style="font-size:8px"></i>
+      <select id="filtroStatus" onchange="aplicarEquipe()">
+        <option value="Ativo">Ativos</option>
+        <option value="Inativo">Inativos</option>
+        <option value="">Todos</option>
+      </select>
+    </div>
+  </div>
+  <div class="content">
+    <div class="row">
+      <div class="card col-3">
+        <div class="card-header"><h3>Funcionários</h3><span style="font-size:11px;color:#1f2937" id="tabelaCount">—</span></div>
+        <div style="overflow-x:auto;">
+          <table class="func-table">
+            <thead><tr>
+              <th style="width:160px">Nome</th>
+              <th style="width:160px">Cargo</th>
+              <th style="width:80px">Tempo</th>
+              <th style="width:80px">Ausências</th>
+              <th style="width:80px">Status</th>
+            </tr></thead>
+            <tbody id="tabelaFunc"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card" style="flex:1;min-width:0;">
+        <div class="card-header"><h3>Saídas no Ano</h3></div>
+        <div id="turnoverLista" style="padding:10px 16px;max-height:500px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ABA DIA -->
+<div class="page" id="page-dia">
+  <div class="coming-soon">
+    <i class="fa fa-calendar-check"></i>
+    <h2>Visão do Dia</h2>
+    <p>Atendimentos do dia, receita em tempo real e quem está trabalhando. Disponível quando os primeiros atendimentos forem faturados.</p>
+  </div>
+</div>
+
+<!-- ABA FINANCEIRO -->
+<div class="page" id="page-financeiro">
+  <div class="coming-soon">
+    <i class="fa fa-chart-line"></i>
+    <h2>Visão Financeira</h2>
+    <p>Receita por período, ticket médio e comparativo mês a mês. Disponível com volume de atendimentos faturados.</p>
+  </div>
+</div>
+
+<!-- ABA LOGINS -->
+<div class="page" id="page-logins">
+  <div class="login-kpi-bar">
+    <div class="login-kpi">
+      <div class="login-kpi-icon green"><i class="fa fa-circle-check"></i></div>
+      <div><div class="login-kpi-label">Acessos Hoje</div><div class="login-kpi-val" id="lkAcessos">—</div><div class="login-kpi-sub">logins com sucesso</div></div>
+    </div>
+    <div class="login-kpi">
+      <div class="login-kpi-icon red"><i class="fa fa-circle-xmark"></i></div>
+      <div><div class="login-kpi-label">Falhas Hoje</div><div class="login-kpi-val" id="lkFalhas">—</div><div class="login-kpi-sub">tentativas inválidas</div></div>
+    </div>
+    <div class="login-kpi">
+      <div class="login-kpi-icon blue"><i class="fa fa-users"></i></div>
+      <div><div class="login-kpi-label">Usuários Únicos</div><div class="login-kpi-val" id="lkUnicos">—</div><div class="login-kpi-sub">nos últimos 7 dias</div></div>
+    </div>
+    <div class="login-kpi">
+      <div class="login-kpi-icon yellow"><i class="fa fa-clock"></i></div>
+      <div><div class="login-kpi-label">Último Acesso</div><div class="login-kpi-val" id="lkUltimoEmail" style="font-size:13px;padding-top:4px">—</div><div class="login-kpi-sub" id="lkUltimoTempo">—</div></div>
+    </div>
+  </div>
+
+  <div class="login-filtros">
+    <select id="lFiltroStatus">
+      <option value="">Todos</option>
+      <option value="sucesso">Sucesso</option>
+      <option value="falha">Falha</option>
+    </select>
+    <input type="text" id="lFiltroUsuario" placeholder="Nome ou email..." style="min-width:200px">
+    <input type="date" id="lFiltroIni">
+    <input type="date" id="lFiltroFim">
+    <button class="btn-filtrar" onclick="carregarLogins()"><i class="fa fa-filter"></i> Filtrar</button>
+    <button class="btn-limpar-login" onclick="limparFiltrosLogin()">Limpar</button>
+  </div>
+
+  <div class="login-content">
+    <div class="login-table-wrap">
+      <div class="login-table-header">
+        <span>Registros</span>
+        <small id="lCount">—</small>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="login-table">
+          <thead>
+            <tr>
+              <th>Data / Hora</th>
+              <th>Usuário</th>
+              <th>Status</th>
+              <th>Dispositivo</th>
+              <th>Navegador</th>
+              <th>Detalhe</th>
+            </tr>
+          </thead>
+          <tbody id="lTabela"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- PAINEL DETALHE EQUIPE -->
+<div class="modal" id="modalDetalhe">
+<div class="modal-panel">
+  <div class="panel-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="panel-avatar" id="panelAvatar"></div>
+      <div><div class="panel-nome" id="panelNome">—</div><div class="panel-cargo" id="panelCargo">—</div></div>
+    </div>
+    <button class="panel-close" onclick="fecharModal()"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="panel-body">
+    <div class="panel-kpis">
+      <div class="panel-kpi"><div class="pk-label">Tempo de Casa</div><div class="pk-value" id="panelTempo">—</div><div class="pk-sub" id="panelDataInicio">—</div></div>
+      <div class="panel-kpi"><div class="pk-label">Ausências</div><div class="pk-value" id="panelTotalAus">—</div><div class="pk-sub">histórico total</div></div>
+      <div class="panel-kpi"><div class="pk-label">Dias Ausente</div><div class="pk-value" id="panelDiasAus">—</div><div class="pk-sub">estimativa</div></div>
+    </div>
+    <div>
+      <div class="panel-section-title">Histórico de Ausências</div>
+      <div id="panelAusencias"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const CARGOS_FIXOS=["Gerente","Atendente","Recepcionista","Faxineira","Analista"];
+const CORES_AVATAR=["#6366f1","#8b5cf6","#ec4899","#06b6d4","#10b981","#f59e0b","#ef4444","#3b82f6"];
+let funcionarios=[],solicitacoes=[],charts={};
+let loginsCarregados=false;
+
+function corAvatar(n){return CORES_AVATAR[(n||"A").charCodeAt(0)%CORES_AVATAR.length];}
+function iniciais(n){return(n||"?").split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();}
+function fmtD(v){if(!v)return"—";const[y,m,d]=v.split("-");return d+"/"+m+"/"+y;}
+function hoje(){return new Date().toISOString().split("T")[0];}
+function anoAtual(){return new Date().getFullYear();}
+function diffMeses(d1,d2){const a=new Date(d1),b=new Date(d2||hoje());return(b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth());}
+function fmtTempo(m){if(m<1)return"<1m";if(m<12)return m+"m";const a=Math.floor(m/12),r=m%12;return r>0?a+"a "+r+"m":a+"a";}
+function isTerapeuta(c){return["Terapeuta Feminina","Terapeuta Masculino"].includes(c);}
+function diffDias(d1,d2){if(!d1||!d2)return 1;return Math.max(1,Math.round((new Date(d2)-new Date(d1))/86400000)+1);}
+function isAusencia(tipo){const t=(tipo||"").toLowerCase();return!t.includes("alteração")&&!t.includes("alteracao");}
+function tipoBadge(tipo){
+  const t=(tipo||"").toLowerCase();
+  if(t.includes("férias")||t.includes("ferias"))return"aus-tipo-badge aus-ferias";
+  if(t.includes("atestado"))return"aus-tipo-badge aus-atestado";
+  if(t.includes("falta"))return"aus-tipo-badge aus-falta";
+  if(t.includes("alteração")||t.includes("alteracao"))return"aus-tipo-badge aus-alteracao";
+  if(t.includes("viagem"))return"aus-tipo-badge aus-viagem";
+  return"aus-tipo-badge aus-outro";
+}
+function destroyChart(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+
+function mudarAba(aba,btn){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll(".sub-btn:not(.disabled)").forEach(b=>b.classList.remove("active"));
+  document.getElementById("page-"+aba).classList.add("active");
+  btn.classList.add("active");
+  if(aba==="logins"&&!loginsCarregados){carregarLogins();}
+}
+
+/* ══ EQUIPE ══ */
+async function carregar(){
+  const[{data:f},{data:s}]=await Promise.all([
+    client.from("funcionario").select("*").order("nome_profissional"),
+    client.from("funcionario_solicitacao").select("*").eq("status","Acordado").order("data_inicio",{ascending:false})
+  ]);
+  funcionarios=f||[];solicitacoes=s||[];
+  document.getElementById("kAno").textContent=anoAtual();
+  document.getElementById("loadingOverlay").classList.add("hidden");
+  aplicarEquipe();
+}
+
+function filtrarFuncs(){
+  const cargo=document.getElementById("filtroCargo").value;
+  const status=document.getElementById("filtroStatus").value;
+  return funcionarios.filter(f=>{
+    const cOk=!cargo||(cargo==="terapeuta"?isTerapeuta(f.cargo):CARGOS_FIXOS.includes(f.cargo));
+    const sOk=!status||f.status===status;
+    return cOk&&sOk;
+  });
+}
+
+function aplicarEquipe(){
+  const lista=filtrarFuncs();
+  renderKPIs(lista);
+  renderTabela(lista);
+  renderTurnover();
+}
+
+function renderKPIs(lista){
+  const ativos=lista.filter(f=>f.status==="Ativo");
+  const inativos=lista.filter(f=>f.status==="Inativo");
+  const tempos=ativos.filter(f=>f.data_inicio).map(f=>diffMeses(f.data_inicio));
+  const tempoMed=tempos.length?Math.round(tempos.reduce((s,v)=>s+v,0)/tempos.length):0;
+  const anoStr=String(anoAtual());
+  const saidas=funcionarios.filter(f=>f.status==="Inativo"&&f.data_inativacao&&f.data_inativacao.startsWith(anoStr));
+  const mesAtual=anoAtual()+"-"+String(new Date().getMonth()+1).padStart(2,"0");
+  const ausMes=solicitacoes.filter(s=>isAusencia(s.tipo)&&(s.data_inicio&&s.data_inicio.startsWith(mesAtual)||s.data_fim&&s.data_fim.startsWith(mesAtual)));
+  const comData=ativos.filter(f=>f.data_inicio).sort((a,b)=>a.data_inicio.localeCompare(b.data_inicio));
+  const maisAntigo=comData[0];
+  document.getElementById("kAtivos").textContent=ativos.length;
+  document.getElementById("kAtivosSub").textContent=inativos.length+" inativo"+(inativos.length!==1?"s":"");
+  document.getElementById("kTempo").textContent=fmtTempo(tempoMed);
+  document.getElementById("kTurnover").textContent=saidas.length;
+  document.getElementById("kAusencias").textContent=ausMes.length;
+  document.getElementById("kAntigo").textContent=maisAntigo?maisAntigo.nome_profissional:"—";
+  document.getElementById("kAntigoTempo").textContent=maisAntigo?fmtTempo(diffMeses(maisAntigo.data_inicio))+" de casa":"—";
+}
+
+function renderTabela(lista){
+  document.getElementById("tabelaCount").textContent=lista.length+" registro"+(lista.length!==1?"s":"");
+  const tbody=document.getElementById("tabelaFunc");
+  if(!lista.length){tbody.innerHTML='<tr><td colspan="5" class="empty">Nenhum funcionário.</td></tr>';return;}
+  tbody.innerHTML=lista.map(f=>{
+    const meses=f.data_inicio?diffMeses(f.data_inicio):0;
+    const aus=solicitacoes.filter(s=>s.terapeuta_cpf===f.cpf&&isAusencia(s.tipo));
+    const ativo=f.status==="Ativo";
+    return "<tr onclick=\"abrirDetalhe('"+f.cpf+"')\">"
+      +"<td><span class='func-nome'>"+f.nome_profissional+"</span></td>"
+      +"<td><span class='func-sub'>"+f.cargo+"</span></td>"
+      +"<td><span style='font-size:12px;color:#374151'>"+(f.data_inicio?fmtTempo(meses):"—")+"</span></td>"
+      +"<td>"+(aus.length?"<span class='badge-sm badge-aus'>"+aus.length+"</span>":"<span style='color:#1f2937;font-size:12px'>—</span>")+"</td>"
+      +"<td><span class='badge-sm "+(ativo?"badge-ativo":"badge-inativo")+"'><span class='dot "+(ativo?"green":"red")+"'></span>"+f.status+"</span></td>"
+      +"</tr>";
+  }).join("");
+}
+
+function renderTurnover(){
+  const anoStr=String(anoAtual());
+  const saidas=funcionarios.filter(f=>f.status==="Inativo"&&f.data_inativacao&&f.data_inativacao.startsWith(anoStr)).sort((a,b)=>b.data_inativacao.localeCompare(a.data_inativacao));
+  const div=document.getElementById("turnoverLista");
+  if(!saidas.length){div.innerHTML="<div class='empty'><i class='fa fa-check-circle' style='color:#34d399'></i>Nenhuma saída em "+anoAtual()+"</div>";return;}
+  div.innerHTML=saidas.map(f=>{
+    const meses=f.data_inicio&&f.data_inativacao?diffMeses(f.data_inicio,f.data_inativacao):null;
+    return "<div class='turnover-item'><div class='turnover-dot'></div><div style='flex:1;min-width:0'><div class='turnover-nome'>"+f.nome_profissional+"</div><div class='turnover-info'>"+(f.cargo||"—")+" · "+fmtD(f.data_inativacao)+"</div></div><div class='turnover-tempo'>"+(meses!==null?fmtTempo(meses):"—")+"</div></div>";
+  }).join("");
+}
+
+function abrirDetalhe(cpf){
+  const f=funcionarios.find(x=>x.cpf===cpf);if(!f)return;
+  const cor=corAvatar(f.nome_profissional);
+  document.getElementById("panelAvatar").style.background=cor;
+  document.getElementById("panelAvatar").textContent=iniciais(f.nome_profissional);
+  document.getElementById("panelNome").textContent=f.nome_profissional;
+  document.getElementById("panelCargo").textContent=(f.cargo||"—")+" · "+f.status;
+  const meses=f.data_inicio?diffMeses(f.data_inicio,f.data_inativacao):0;
+  document.getElementById("panelTempo").textContent=f.data_inicio?fmtTempo(meses):"—";
+  document.getElementById("panelDataInicio").textContent=f.data_inicio?"desde "+fmtD(f.data_inicio):"sem data de início";
+  const aus=solicitacoes.filter(s=>s.terapeuta_cpf===cpf&&isAusencia(s.tipo));
+  document.getElementById("panelTotalAus").textContent=aus.length;
+  document.getElementById("panelDiasAus").textContent=aus.reduce((s,a)=>s+diffDias(a.data_inicio,a.data_fim),0)+"d";
+  const ausDiv=document.getElementById("panelAusencias");
+  ausDiv.innerHTML=!aus.length
+    ?"<div class='empty'><i class='fa fa-calendar-check'></i>Sem ausências registradas.</div>"
+    :aus.map(s=>"<div class='aus-item'><div><div style='font-size:12px;color:#6b7280'>"+fmtD(s.data_inicio)+" → "+fmtD(s.data_fim)+"</div><div style='font-size:10px;color:#374151;margin-top:2px'>"+diffDias(s.data_inicio,s.data_fim)+" dia(s)</div></div><span class='"+tipoBadge(s.tipo)+"'>"+s.tipo+"</span></div>").join("");
+  document.getElementById("modalDetalhe").classList.add("open");
+}
+function fecharModal(){document.getElementById("modalDetalhe").classList.remove("open");}
+document.getElementById("modalDetalhe").addEventListener("click",e=>{if(e.target===document.getElementById("modalDetalhe"))fecharModal();});
+
+/* ══ LOGINS ══ */
+function fmtDataHora(ts){
+  if(!ts)return"—";
+  const d=new Date(ts);
+  return d.toLocaleDateString("pt-BR")+" "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+}
+function tempoRelativo(ts){
+  if(!ts)return"—";
+  const diff=Math.floor((Date.now()-new Date(ts))/1000);
+  if(diff<60)return"agora";
+  if(diff<3600)return Math.floor(diff/60)+"min atrás";
+  if(diff<86400)return Math.floor(diff/3600)+"h atrás";
+  return Math.floor(diff/86400)+"d atrás";
+}
+
+async function carregarLogins(){
+  loginsCarregados=true;
+  const status=document.getElementById("lFiltroStatus").value;
+  const usuario=document.getElementById("lFiltroUsuario").value.trim();
+  const ini=document.getElementById("lFiltroIni").value;
+  const fim=document.getElementById("lFiltroFim").value;
+
+  let q=client.from("login_logs").select("*").order("created_at",{ascending:false}).limit(200);
+  if(status) q=q.eq("status",status);
+  if(ini) q=q.gte("created_at",ini+"T00:00:00");
+  if(fim) q=q.lte("created_at",fim+"T23:59:59");
+
+  const{data:todos}=await q;
+  let lista=todos||[];
+
+  if(usuario){
+    const u=usuario.toLowerCase();
+    lista=lista.filter(r=>(r.nome||"").toLowerCase().includes(u)||(r.email||"").toLowerCase().includes(u));
   }
-  function item(href, icon, label) {
-    return '<a href="' + href + '" class="menu-item' + ativo(href) + '">' +
-      '<i class="fa-solid ' + icon + '"></i>' +
-      '<span>' + label + '</span>' +
-      '</a>';
+
+  // KPIs
+  const hojeStr=hoje();
+  const acessosHoje=(todos||[]).filter(r=>r.status==="sucesso"&&r.created_at?.startsWith(hojeStr)).length;
+  const falhasHoje=(todos||[]).filter(r=>r.status==="falha"&&r.created_at?.startsWith(hojeStr)).length;
+  const set7=new Date(Date.now()-7*86400000).toISOString();
+  const unicos=new Set((todos||[]).filter(r=>r.created_at>set7&&r.status==="sucesso").map(r=>r.email)).size;
+  const ultimo=(todos||[]).find(r=>r.status==="sucesso");
+
+  document.getElementById("lkAcessos").textContent=acessosHoje;
+  document.getElementById("lkFalhas").textContent=falhasHoje;
+  document.getElementById("lkUnicos").textContent=unicos;
+  document.getElementById("lkUltimoEmail").textContent=ultimo?.email||"—";
+  document.getElementById("lkUltimoTempo").textContent=ultimo?tempoRelativo(ultimo.created_at):"—";
+  document.getElementById("lCount").textContent=lista.length+" registro"+(lista.length!==1?"s":"");
+
+  const tbody=document.getElementById("lTabela");
+  if(!lista.length){
+    tbody.innerHTML='<tr><td colspan="6" class="login-empty"><i class="fa fa-shield-halved"></i>Nenhum registro encontrado.</td></tr>';
+    return;
   }
-  function hr() {
-    return '<hr style="border-color:#374151; margin:18px 0;">';
-  }
-  function titulo(txt) {
-    return '<div class="menu-title">' + txt + '</div>';
-  }
-  function renderSidebar() {
-    if (!window.usuarioLogado) { setTimeout(renderSidebar, 100); return; }
-    var u = window.usuarioLogado;
-    var usuario = u && u.role === "usuario";
-    var html = '<div class="sidebar">';
-    html += '<div class="logo">Hara Spa</div>';
-    if (!usuario) {
-      html += item("dashboard.html", "fa-chart-line", "Dashboard");
-    }
-    html += hr();
-    html += titulo("CADASTROS");
-    html += item("equipe.html", "fa-users", "Equipe");
-    if (!usuario) {
-      html += item("clientes.html", "fa-user", "Clientes");
-      html += item("servicos.html", "fa-hand-holding-heart", "Serviços");
-    }
-    html += item("certificacoes.html", "fa-certificate", "Certificações");
-    html += hr();
-    html += titulo("OPERACIONAL");
-    html += item("atendimentos.html", "fa-calendar-check", "Atendimentos");
-    html += item("escalas.html", "fa-calendar-days", "Escalas");
-    html += item("solicitacoes.html", "fa-file-lines", "Solicitações");
-    html += item("kanban.html", "fa-table-columns", "Kanban");
-    if (!usuario) {
-      html += hr();
-      html += titulo("FINANCEIRO");
-      html += item("despesas.html", "fa-receipt", "Despesas");
-      html += item("estoque.html", "fa-boxes-stacked", "Estoque");
-      html += item("folha_pagamento.html", "fa-money-check-dollar", "Folha de Pagamento");
-      html += hr();
-      html += titulo("CONFIGURAÇÕES");
-      html += item("parametros.html", "fa-sliders", "Parâmetros");
-    }
-    html += hr();
-    html += '<a href="#" class="menu-item" onclick="sairDoCaixa()" style="color:#f87171">' +
-      '<i class="fa-solid fa-arrow-right-from-bracket"></i>' +
-      '<span>Sair</span>' +
-      '</a>';
-    html += '</div>';
-    document.getElementById("sidebar").innerHTML = html;
-  }
-  renderSidebar();
-  window.sairDoCaixa = function() {
-    if (typeof client !== 'undefined') {
-      client.auth.signOut().finally(function() {
-        Object.keys(localStorage).forEach(function(k) {
-          if (k.startsWith('sb-')) localStorage.removeItem(k);
-        });
-        window.location.href = 'login.html';
-      });
-    } else {
-      window.location.href = 'login.html';
-    }
-  };
-})();
+
+  tbody.innerHTML=lista.map(r=>{
+    const sucesso=r.status==="sucesso";
+    const badge=sucesso
+      ?'<span class="badge-sucesso"><i class="fa fa-check"></i> SUCESSO</span>'
+      :'<span class="badge-falha"><i class="fa fa-times"></i> FALHA</span>';
+    const devIcon=r.dispositivo==="mobile"?'<i class="fa fa-mobile-screen login-device-icon" title="Mobile"></i>':'<i class="fa fa-desktop login-device-icon" title="Desktop"></i>';
+    const nomeHtml=r.nome
+      ?'<div class="login-usuario-nome">'+r.nome+'</div><div class="login-usuario-email">'+r.email+'</div>'
+      :'<div class="login-usuario-email">'+r.email+'</div>';
+    const detalhe=r.motivo_falha||'<span style="color:#d1d5db">—</span>';
+    return '<tr>'
+      +'<td style="white-space:nowrap;color:#6b7280">'+fmtDataHora(r.created_at)+'</td>'
+      +'<td>'+nomeHtml+'</td>'
+      +'<td>'+badge+'</td>'
+      +'<td style="text-align:center">'+devIcon+'</td>'
+      +'<td style="color:#6b7280">'+( r.navegador||"—")+'</td>'
+      +'<td style="font-size:12px;color:#9ca3af">'+detalhe+'</td>'
+      +'</tr>';
+  }).join("");
+}
+
+function limparFiltrosLogin(){
+  document.getElementById("lFiltroStatus").value="";
+  document.getElementById("lFiltroUsuario").value="";
+  document.getElementById("lFiltroIni").value="";
+  document.getElementById("lFiltroFim").value="";
+  carregarLogins();
+}
+
+document.addEventListener("DOMContentLoaded",carregar);
+</script>
+</body>
+</html>

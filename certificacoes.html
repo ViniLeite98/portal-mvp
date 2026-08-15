@@ -325,15 +325,22 @@ function atualizarLabelCert(){
 
 function popularCheckboxCerts(){
   const lista=document.getElementById("certCheckboxList");
-  lista.innerHTML=certificacoes.map(c=>
-    `<label class="cert-menu-item">
-      <input type="checkbox" class="cert-chk" value="${c.id}" onchange="onCertCkChange()">
-      <span style="display:flex;align-items:center;gap:6px">
-        ${renderIcone(c.icone||'fa-certificate',corIcone(c.icone),14,c.nome)}
-        ${c.nome}
-      </span>
-    </label>`
-  ).join("");
+  lista.innerHTML="";
+  certificacoes.forEach(c=>{
+    const label=document.createElement("label");
+    label.className="cert-menu-item";
+    const chk=document.createElement("input");
+    chk.type="checkbox";
+    chk.className="cert-chk";
+    chk.value=c.id;
+    chk.addEventListener("change",onCertCkChange);
+    const span=document.createElement("span");
+    span.style.cssText="display:flex;align-items:center;gap:6px;font-size:13px;";
+    span.innerHTML=renderIcone(c.icone||'fa-certificate',corIcone(c.icone),14,c.nome)+" "+c.nome;
+    label.appendChild(chk);
+    label.appendChild(span);
+    lista.appendChild(label);
+  });
 }
 
 function limparFiltros(){

@@ -29,7 +29,6 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .filter-group input,.filter-group select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;}
 .filter-group input{width:260px;}
 .filter-group input:focus,.filter-group select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
-.filter-group select{min-width:180px;}
 .btn-limpar{height:38px;background:#fff;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:0 14px;font-size:13px;cursor:pointer;white-space:nowrap;display:none;align-items:center;gap:6px;align-self:flex-end;}
 .btn-limpar:hover{background:#f3f4f6;color:#374151;}
 .btn-limpar.visible{display:inline-flex;}
@@ -66,6 +65,15 @@ button.vincular-btn{background:#2563eb;display:inline-flex !important;align-item
 .legenda span{display:flex;align-items:center;gap:5px;}
 .legenda .icone-svg{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
 .legenda .icone-svg svg{width:16px;height:16px;}
+/* Dropdown multi-select */
+.cert-dropdown-btn{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;cursor:pointer;min-width:220px;display:flex;align-items:center;justify-content:space-between;gap:8px;user-select:none;transition:border-color .15s;}
+.cert-dropdown-btn:hover{border-color:#9ca3af;}
+.cert-dropdown-btn.ativo{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.cert-dropdown-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:240px;padding:6px 0;max-height:300px;overflow-y:auto;}
+.cert-dropdown-menu.aberto{display:block;}
+.cert-menu-item{display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;font-size:13px;color:#374151;transition:background .1s;}
+.cert-menu-item:hover{background:#f9fafb;}
+.cert-menu-item input[type=checkbox]{width:15px;height:15px;accent-color:#2563eb;cursor:pointer;flex-shrink:0;}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;z-index:10;padding:30px 20px;overflow-y:auto;}
 .modal-content{background:#fff;width:560px;max-width:100%;border-radius:18px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2);}
 .modal-content.sm{width:420px;}
@@ -124,9 +132,18 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
       <span class="filter-label"><i class="fa fa-search" style="margin-right:3px"></i> Busca</span>
       <input id="buscaTerapeuta" placeholder="Buscar profissional ou certificação...">
     </div>
-    <div class="filter-group">
+    <div class="filter-group" style="position:relative">
       <span class="filter-label"><i class="fa fa-certificate" style="margin-right:3px"></i> Certificação</span>
-      <select id="filtroCert"><option value="">Todas as certificações</option></select>
+      <div id="certDropdownBtn" class="cert-dropdown-btn" onclick="toggleCertDropdown()">
+        <span id="certDropdownLabel">Todas as certificações</span>
+        <i class="fa fa-chevron-down" style="font-size:11px;color:#9ca3af"></i>
+      </div>
+      <div id="certDropdownMenu" class="cert-dropdown-menu">
+        <label class="cert-menu-item" style="border-bottom:1px solid #f3f4f6;margin-bottom:2px;">
+          <input type="checkbox" id="certTodos" checked onchange="selecionarTodasCerts()"> Todas as certificações
+        </label>
+        <div id="certCheckboxList"></div>
+      </div>
     </div>
     <button class="btn-limpar" id="btnLimparFiltros" onclick="limparFiltros()">
       <i class="fa fa-times"></i> Limpar filtros
@@ -235,6 +252,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 let dados=[],editandoId=null,certificacoes=[];
 let ordemCol='nome',ordemDir='asc',paginaAtual=0;
 let agrupados=[];
+let certsSelecionadas=[];
 
 function podeVerTudo(u){return u&&(u.role==="admin"||u.role==="apoio");}
 
@@ -258,16 +276,79 @@ function renderLegenda(){
   legEl.innerHTML='<strong>Legenda:</strong> '+certificacoes.map(c=>'<span>'+renderIcone(c.icone||'fa-certificate',corIcone(c.icone),16,c.nome)+' '+c.nome+'</span>').join('');
 }
 
+/* ── DROPDOWN MULTI-SELECT ── */
+function toggleCertDropdown(){
+  const menu=document.getElementById("certDropdownMenu");
+  const btn=document.getElementById("certDropdownBtn");
+  const aberto=menu.classList.contains("aberto");
+  menu.classList.toggle("aberto",!aberto);
+  btn.classList.toggle("ativo",!aberto);
+}
+
+document.addEventListener("click",function(e){
+  const btn=document.getElementById("certDropdownBtn");
+  const menu=document.getElementById("certDropdownMenu");
+  if(btn&&menu&&!btn.contains(e.target)&&!menu.contains(e.target)){
+    menu.classList.remove("aberto");
+    btn.classList.remove("ativo");
+  }
+});
+
+function selecionarTodasCerts(){
+  document.querySelectorAll(".cert-chk").forEach(c=>c.checked=false);
+  document.getElementById("certTodos").checked=true;
+  certsSelecionadas=[];
+  atualizarLabelCert();
+  paginaAtual=0;
+  aplicarFiltroEOrdem();
+  checarBtnLimpar();
+}
+
+function onCertCkChange(){
+  const chks=document.querySelectorAll(".cert-chk:checked");
+  certsSelecionadas=Array.from(chks).map(c=>c.value);
+  document.getElementById("certTodos").checked=certsSelecionadas.length===0;
+  atualizarLabelCert();
+  paginaAtual=0;
+  aplicarFiltroEOrdem();
+  checarBtnLimpar();
+}
+
+function atualizarLabelCert(){
+  const label=document.getElementById("certDropdownLabel");
+  if(certsSelecionadas.length===0) label.textContent="Todas as certificações";
+  else if(certsSelecionadas.length===1){
+    const c=certificacoes.find(x=>x.id===certsSelecionadas[0]);
+    label.textContent=c?c.nome:"1 selecionada";
+  } else label.textContent=certsSelecionadas.length+" selecionadas";
+}
+
+function popularCheckboxCerts(){
+  const lista=document.getElementById("certCheckboxList");
+  lista.innerHTML=certificacoes.map(c=>
+    `<label class="cert-menu-item">
+      <input type="checkbox" class="cert-chk" value="${c.id}" onchange="onCertCkChange()">
+      <span style="display:flex;align-items:center;gap:6px">
+        ${renderIcone(c.icone||'fa-certificate',corIcone(c.icone),14,c.nome)}
+        ${c.nome}
+      </span>
+    </label>`
+  ).join("");
+}
+
 function limparFiltros(){
   document.getElementById("buscaTerapeuta").value="";
-  document.getElementById("filtroCert").value="";
+  certsSelecionadas=[];
+  document.querySelectorAll(".cert-chk").forEach(c=>c.checked=false);
+  const todosEl=document.getElementById("certTodos");
+  if(todosEl)todosEl.checked=true;
+  atualizarLabelCert();
   checarBtnLimpar();paginaAtual=0;aplicarFiltroEOrdem();
 }
 
 function checarBtnLimpar(){
   const busca=document.getElementById("buscaTerapeuta").value;
-  const cert=document.getElementById("filtroCert").value;
-  document.getElementById("btnLimparFiltros").classList.toggle("visible",!!(busca||cert));
+  document.getElementById("btnLimparFiltros").classList.toggle("visible",!!(busca||certsSelecionadas.length>0));
 }
 
 function ordenar(col){
@@ -287,12 +368,11 @@ function atualizarIconesOrdem(){
 
 function aplicarFiltroEOrdem(){
   const termo=(document.getElementById("buscaTerapeuta").value||"").toLowerCase();
-  const certFiltro=document.getElementById("filtroCert").value;
   const filtrado=dados.filter(d=>{
     const nome=(d.funcionario?.nome_profissional||"").toLowerCase();
     const cert=(d.certificacao?.nome||"").toLowerCase();
     const termoOk=nome.includes(termo)||cert.includes(termo);
-    const certOk=!certFiltro||d.certificacao?.id===certFiltro;
+    const certOk=certsSelecionadas.length===0||certsSelecionadas.includes(d.certificacao?.id);
     return termoOk&&certOk;
   });
   const mapa={};
@@ -306,8 +386,10 @@ function aplicarFiltroEOrdem(){
     return(ordemDir==='asc'?1:-1)*a.nome.localeCompare(b.nome);
   });
   document.getElementById("collabCount").textContent=agrupados.length;
-  const cert=certificacoes.find(c=>c.id===certFiltro);
-  document.getElementById("collabLabel").textContent=(agrupados.length===1?"profissional certificado":"profissionais certificados")+(cert?" · "+cert.nome:"");
+  const labelExtra=certsSelecionadas.length===1
+    ?" · "+(certificacoes.find(c=>c.id===certsSelecionadas[0])?.nome||"")
+    :certsSelecionadas.length>1?" · "+certsSelecionadas.length+" certificações":"";
+  document.getElementById("collabLabel").textContent=(agrupados.length===1?"profissional certificado":"profissionais certificados")+labelExtra;
   checarBtnLimpar();renderTabela();
 }
 
@@ -345,25 +427,21 @@ function renderTabela(){
 }
 
 async function carregarSelects(){
-  // funcionario (ex-terapeutas)
   const {data:funcionarios}=await client.from("funcionario").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
   const selTer=document.getElementById("cpf_terapeuta");selTer.innerHTML="<option value=''>Selecione o profissional</option>";
   (funcionarios||[]).forEach(t=>selTer.innerHTML+='<option value="'+t.cpf+'">'+t.nome_profissional+'</option>');
 
-  // certificacao (ex-certificacoes)
   const {data:certs}=await client.from("certificacao").select("id,nome,icone").order("nome");
   certificacoes=certs||[];
   const selCert=document.getElementById("certificacao_id");selCert.innerHTML="<option value=''>Selecione a certificação</option>";
   certificacoes.forEach(c=>selCert.innerHTML+='<option value="'+c.id+'">'+c.nome+'</option>');
-  const filtro=document.getElementById("filtroCert");filtro.innerHTML="<option value=''>Todas as certificações</option>";
-  certificacoes.forEach(c=>filtro.innerHTML+='<option value="'+c.id+'">'+c.nome+'</option>');
+  popularCheckboxCerts();
   renderLegenda();
 }
 
 async function carregarLista(){
   if(!window.usuarioLogado){setTimeout(carregarLista,100);return;}
   const u=window.usuarioLogado;
-  // funcionario_certificacao (ex-terapeuta_certificacoes), join com certificacao e funcionario
   let q=client.from("funcionario_certificacao")
     .select('id,data_obtencao,arquivo_url,arquivo_nome,cpf_terapeuta,certificacao(id,nome,icone),funcionario(nome_profissional)')
     .order("id");
@@ -457,9 +535,7 @@ function exportarExcel(){
 
 document.addEventListener('DOMContentLoaded',()=>{
   atualizarIconesOrdem();
-  const reset=()=>{paginaAtual=0;aplicarFiltroEOrdem();};
-  document.getElementById("buscaTerapeuta").addEventListener("input",()=>{checarBtnLimpar();reset();});
-  document.getElementById("filtroCert").addEventListener("change",()=>{checarBtnLimpar();reset();});
+  document.getElementById("buscaTerapeuta").addEventListener("input",()=>{checarBtnLimpar();paginaAtual=0;aplicarFiltroEOrdem();});
   carregarSelects();carregarLista();
 });
 </script>

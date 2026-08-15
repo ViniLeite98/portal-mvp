@@ -222,11 +222,11 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
         <div style="overflow-x:auto;">
           <table class="func-table">
             <thead><tr>
-              <th style="width:160px">Nome</th>
-              <th style="width:160px">Cargo</th>
-              <th style="width:80px">Tempo</th>
-              <th style="width:80px">Ausências</th>
-              <th style="width:80px">Status</th>
+              <th style="width:130px">Nome</th>
+              <th style="width:120px">Cargo</th>
+              <th style="width:55px">Tempo</th>
+              <th style="width:65px">Ausências</th>
+              <th style="width:65px">Status</th>
             </tr></thead>
             <tbody id="tabelaFunc"></tbody>
           </table>

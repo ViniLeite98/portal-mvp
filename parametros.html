@@ -104,20 +104,15 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .upload-thumb{display:none;margin-top:10px;text-align:center;}
 .upload-thumb img{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid #e5e7eb;}
 .upload-thumb span{display:block;font-size:11px;color:#6b7280;margin-top:4px;}
-
-/* Iconify panel */
 .iconify-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:180px;overflow-y:auto;margin-top:8px;}
 .iconify-opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;font-size:10px;color:#6b7280;transition:all .12s;text-align:center;line-height:1.2;}
 .iconify-opt:hover{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
 .iconify-opt.selected{border-color:#2563eb;background:#eff6ff;color:#1d4ed8;}
 .iconify-opt svg{width:22px;height:22px;flex-shrink:0;}
 .iconify-loading{text-align:center;color:#9ca3af;font-size:12px;padding:20px;grid-column:1/-1;}
-
-/* Botão voltar */
 .btn-voltar{display:none;align-items:center;gap:6px;background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;color:#374151;text-decoration:none;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:all .15s;}
 .btn-voltar:hover{background:#f3f4f6;border-color:#d1d5db;}
 .btn-voltar i{font-size:11px;color:#6b7280;}
-/* Highlight temporário na seção cargos vinda do link */
 .param-menu-item.highlight-pulse{animation:pulse-blue 1.2s ease;}
 @keyframes pulse-blue{0%,100%{background:transparent}40%{background:#dbeafe;color:#1d4ed8;}}
 </style>
@@ -215,7 +210,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
           <div class="picker-tabs">
             <button class="picker-tab active" onclick="mudarPickerTab('fa',this)"><i class="fa fa-icons"></i> Font Awesome</button>
             <button class="picker-tab" onclick="mudarPickerTab('iconify',this)"><i class="fa fa-magnifying-glass"></i> Iconify</button>
-<button class="picker-tab" onclick="mudarPickerTab('upload',this)"><i class="fa fa-upload"></i> Upload</button>
+            <button class="picker-tab" onclick="mudarPickerTab('upload',this)"><i class="fa fa-upload"></i> Upload</button>
           </div>
           <div class="picker-panel active" id="pickerPanel-fa">
             <div class="picker-search"><input id="faBusca" placeholder="Buscar ícone... ex: flag, heart"></div>
@@ -280,7 +275,7 @@ const SECOES = {
 const SECOES_COM_ICONE  = ["certificacoes"];
 const SECOES_TIPOS_PGTO = ["tipos_pagamento"];
 const SECOES_KANBAN     = ["kanban_colunas"];
-const SECOES_COM_COR    = ["grupos_servico"]; // salva na coluna `cor`
+const SECOES_COM_COR    = ["grupos_servico"];
 
 const COR_PALETA = ['#3b82f6','#f59e0b','#ef4444','#8b5cf6','#10b981','#6b7280','#06b6d4','#d946ef','#f43f5e','#84cc16','#f97316','#14b8a6'];
 
@@ -301,7 +296,7 @@ const FA_ICONES = [{i:"fa-certificate",l:"Certificado"},{i:"fa-person-dress",l:"
 
 let secaoAtual="certificacoes", itens=[], editandoId=null, adicionando=false, pickerAberto=false;
 
-// ── NAVEGAÇÃO POR HASH ────────────────────────────────────────────────────────
+// ── NAVEGAÇÃO POR HASH ──────────────────────────────────────────────────────
 function verificarHash(){
   const hash = window.location.hash.replace('#','');
   if(hash && SECOES[hash]){
@@ -311,15 +306,16 @@ function verificarHash(){
       menuItem.classList.add('highlight-pulse');
       setTimeout(()=>menuItem.classList.remove('highlight-pulse'), 1400);
     }
-    // Detecta origem e configura botão voltar
     const ref = document.referrer;
     if(ref.includes('equipe.html')){
       mostrarBtnVoltar('equipe.html', 'Voltar para Equipe');
     } else if(ref.includes('certificacoes.html')){
       mostrarBtnVoltar('certificacoes.html', 'Voltar para Certificações');
+    } else if(ref.includes('servicos.html')){
+      mostrarBtnVoltar('servicos.html', 'Voltar para Serviços');
     }
   } else {
-    carregar(); // sem hash, carrega seção padrão normalmente
+    carregar();
   }
 }
 
@@ -334,7 +330,7 @@ function esconderBtnVoltar(){
   const btn = document.getElementById('btnVoltar');
   if(btn) btn.style.display = 'none';
 }
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
 
 function mudarSecao(secao,el,viaHash){
   secaoAtual=secao;
@@ -346,7 +342,6 @@ function mudarSecao(secao,el,viaHash){
   const infoBox=document.getElementById("panelInfoBox");
   if(info){infoBox.style.display="flex";document.getElementById("panelInfoTexto").textContent=info;}
   else infoBox.style.display="none";
-  // Se o usuário clicou manualmente no menu (não via hash inicial), esconde o botão voltar
   if(!viaHash) esconderBtnVoltar();
   history.replaceState(null,'','#'+secao);
   carregar();
@@ -385,7 +380,7 @@ function render(){
   const temIcone=SECOES_COM_ICONE.includes(secaoAtual);
   const tipoPgto=SECOES_TIPOS_PGTO.includes(secaoAtual);
   const isKanban=SECOES_KANBAN.includes(secaoAtual);
-  const isComCor  = SECOES_COM_COR.includes(secaoAtual);
+  const isComCor=SECOES_COM_COR.includes(secaoAtual);
 
   if(!itens.length&&!adicionando){
     lista.innerHTML='<div class="empty-state"><i class="fa '+SECOES[secaoAtual].icon+'"></i>Nenhum item cadastrado ainda.<br>Clique em <strong>Adicionar</strong> para começar.</div>';
@@ -427,7 +422,6 @@ function render(){
     '</div>';
   }).join("");
 
-  // add-row só para seções simples (ícone e campos ricos usam o modal)
   if(adicionando && !temIcone){
     lista.innerHTML+=
       '<div class="add-row">'+
@@ -446,14 +440,13 @@ function render(){
 }
 
 function abrirAdicionar(){
-  // Seções com ícone ou campos ricos: abre o modal completo para inserção
-  editandoId=null; // null = modo inserção
+  editandoId=null;
   var temIcone=SECOES_COM_ICONE.includes(secaoAtual);
   var tipoPgto=SECOES_TIPOS_PGTO.includes(secaoAtual);
   var isKanban=SECOES_KANBAN.includes(secaoAtual);
+  var isComCor=SECOES_COM_COR.includes(secaoAtual);
 
   if(temIcone || tipoPgto || isKanban || isComCor){
-    // Limpa campos do modal
     document.getElementById("editNome").value="";
     document.getElementById("editDesc").value="";
     document.getElementById("campoIcone").style.display   =temIcone?"":"none";
@@ -466,13 +459,12 @@ function abrirAdicionar(){
       document.getElementById("editNegativo").value="false";
     }
     if(temIcone){ setPickerValor("fa-certificate"); renderFaGrid(""); }
-    if(isKanban){ setCorAtual("#6366f1"); renderCorPaleta("#6366f1"); }
+    if(isKanban||isComCor){ setCorAtual("#6366f1"); renderCorPaleta("#6366f1"); }
     fecharPickerBody();
     document.getElementById("modalTitulo").textContent="Novo — "+SECOES[secaoAtual].label;
     document.getElementById("modalEditar").style.display="flex";
     setTimeout(()=>document.getElementById("editNome").focus(), 80);
   } else {
-    // Seções simples: linha inline como antes
     adicionando=true; render();
   }
 }
@@ -485,9 +477,6 @@ async function confirmarAdicionar(){
   if(SECOES_KANBAN.includes(secaoAtual)){
     var cor=document.getElementById("addCor")?.value||"#6366f1";
     ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:cor,ordem:itens.length,ativo:true}));
-  } else if(SECOES_COM_COR.includes(secaoAtual)){
-    var cor=document.getElementById("addCor")?.value||"#6366f1";
-    ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,cor,ordem:itens.length,ativo:true}));
   } else if(SECOES_COM_COR.includes(secaoAtual)){
     var cor=document.getElementById("addCor")?.value||"#6366f1";
     ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,cor,ordem:itens.length,ativo:true}));
@@ -546,33 +535,21 @@ async function salvarEdicao(){
 
   if(SECOES_COM_ICONE.includes(secaoAtual)){
     var icone=document.getElementById("editIcone").value||"fa-certificate";
-    if(inserindo){
-      ({error}=await client.from("certificacao").insert({nome,icone}));
-    } else {
-      ({error}=await client.from("certificacao").update({nome,icone}).eq("id",editandoId));
-    }
+    if(inserindo){({error}=await client.from("certificacao").insert({nome,icone}));}
+    else{({error}=await client.from("certificacao").update({nome,icone}).eq("id",editandoId));}
   } else if(SECOES_KANBAN.includes(secaoAtual)){
     var cor=document.getElementById("editCorHex").value.trim()||"#6366f1";
-    if(inserindo){
-      ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:cor,ordem:itens.length,ativo:true}));
-    } else {
-      ({error}=await client.from("parametros").update({valor:nome,descricao:cor}).eq("id",editandoId));
-    }
+    if(inserindo){({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:cor,ordem:itens.length,ativo:true}));}
+    else{({error}=await client.from("parametros").update({valor:nome,descricao:cor}).eq("id",editandoId));}
   } else if(SECOES_COM_COR.includes(secaoAtual)){
     var cor=document.getElementById("editCorHex").value.trim()||"#6366f1";
-    if(inserindo){
-      ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,cor,ordem:itens.length,ativo:true}));
-    } else {
-      ({error}=await client.from("parametros").update({valor:nome,cor}).eq("id",editandoId));
-    }
+    if(inserindo){({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,cor,ordem:itens.length,ativo:true}));}
+    else{({error}=await client.from("parametros").update({valor:nome,cor}).eq("id",editandoId));}
   } else if(SECOES_TIPOS_PGTO.includes(secaoAtual)){
     var codigo=document.getElementById("editCodigo").value.trim()||null;
     var negativo=document.getElementById("editNegativo").value==="true";
-    if(inserindo){
-      ({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:codigo,ativo:true,ordem:itens.length,negativo}));
-    } else {
-      ({error}=await client.from("parametros").update({valor:nome,descricao:codigo,negativo}).eq("id",editandoId));
-    }
+    if(inserindo){({error}=await client.from("parametros").insert({tipo:secaoAtual,valor:nome,descricao:codigo,ativo:true,ordem:itens.length,negativo}));}
+    else{({error}=await client.from("parametros").update({valor:nome,descricao:codigo,negativo}).eq("id",editandoId));}
   } else {
     var desc=document.getElementById("editDesc").value.trim()||null;
     ({error}=await client.from("parametros").update({valor:nome,descricao:desc}).eq("id",editandoId));
@@ -600,69 +577,47 @@ function selecionarFa(icone){setPickerValor(icone);renderFaGrid(document.getElem
 function aplicarFaManual(){var v=document.getElementById("faManual").value.trim();if(!v)return;if(!v.startsWith("fa-"))v="fa-"+v;selecionarFa(v);document.getElementById("faManual").value="";}
 function handleUpload(input){var file=input.files[0];if(!file)return;if(file.size>2*1024*1024){alert("Máximo 2MB.");return;}var reader=new FileReader();reader.onload=function(e){var url=e.target.result;setPickerValor(url);document.getElementById("uploadThumbWrap").style.display="block";document.getElementById("uploadThumbImg").src=url;document.getElementById("uploadThumbNome").textContent=file.name;};reader.readAsDataURL(file);}
 
-// ── ICONIFY SEARCH ───────────────────────────────────────────────────────────
-let iconifyDebounce = null;
-// listeners de teclado registrados no DOMContentLoaded principal abaixo
-
 async function buscarIconify(){
-  const q = (document.getElementById('iconifyBusca').value||'').trim();
-  if(!q) return;
-  const grid = document.getElementById('iconifyGrid');
-  grid.innerHTML = '<div class="iconify-loading"><i class="fa fa-spinner fa-spin" style="font-size:18px;display:block;margin-bottom:6px"></i>Buscando...</div>';
-  try {
-    const res = await fetch('https://api.iconify.design/search?query='+encodeURIComponent(q)+'&limit=48');
-    const data = await res.json();
-    if(!data.icons || !data.icons.length){
-      grid.innerHTML = '<div class="iconify-loading">Nenhum ícone encontrado para "'+q+'"</div>';
-      return;
-    }
-    // Busca SVGs em paralelo (lotes de 12)
-    grid.innerHTML = '<div class="iconify-loading"><i class="fa fa-spinner fa-spin" style="font-size:18px;display:block;margin-bottom:6px"></i>Carregando ícones...</div>';
-    const icons = data.icons.slice(0, 36);
-    const svgs = await Promise.all(icons.map(async name => {
-      try {
-        const [prefix, iconName] = name.split(':');
-        const r = await fetch('https://api.iconify.design/'+prefix+'/'+iconName+'.svg?color=%236b7280&width=24&height=24');
-        const svg = await r.text();
-        return {name, svg};
-      } catch(e){ return {name, svg:null}; }
+  const q=(document.getElementById('iconifyBusca').value||'').trim();
+  if(!q)return;
+  const grid=document.getElementById('iconifyGrid');
+  grid.innerHTML='<div class="iconify-loading"><i class="fa fa-spinner fa-spin" style="font-size:18px;display:block;margin-bottom:6px"></i>Buscando...</div>';
+  try{
+    const res=await fetch('https://api.iconify.design/search?query='+encodeURIComponent(q)+'&limit=48');
+    const data=await res.json();
+    if(!data.icons||!data.icons.length){grid.innerHTML='<div class="iconify-loading">Nenhum ícone encontrado para "'+q+'"</div>';return;}
+    grid.innerHTML='<div class="iconify-loading"><i class="fa fa-spinner fa-spin" style="font-size:18px;display:block;margin-bottom:6px"></i>Carregando ícones...</div>';
+    const icons=data.icons.slice(0,36);
+    const svgs=await Promise.all(icons.map(async name=>{
+      try{const[prefix,iconName]=name.split(':');const r=await fetch('https://api.iconify.design/'+prefix+'/'+iconName+'.svg?color=%236b7280&width=24&height=24');const svg=await r.text();return{name,svg};}
+      catch(e){return{name,svg:null};}
     }));
-    // Guarda SVGs para acesso rápido
-    window._iconifySvgMap = {};
-    svgs.forEach(x=>{ if(x.svg) window._iconifySvgMap[x.name]=x.svg; });
-    // Renderiza via DOM (evita quebra de aspas no onclick inline)
-    grid.innerHTML = '';
-    svgs.filter(x=>x.svg).forEach(x => {
-      const div = document.createElement('div');
-      div.className = 'iconify-opt';
-      div.title = x.name;
-      div.dataset.name = x.name;
-      div.innerHTML = x.svg + '<span>' + x.name.split(':')[1] + '</span>';
-      div.addEventListener('click', function(){ selecionarIconify(div, x.name); });
+    window._iconifySvgMap={};
+    svgs.forEach(x=>{if(x.svg)window._iconifySvgMap[x.name]=x.svg;});
+    grid.innerHTML='';
+    svgs.filter(x=>x.svg).forEach(x=>{
+      const div=document.createElement('div');div.className='iconify-opt';div.title=x.name;div.dataset.name=x.name;
+      div.innerHTML=x.svg+'<span>'+x.name.split(':')[1]+'</span>';
+      div.addEventListener('click',function(){selecionarIconify(div,x.name);});
       grid.appendChild(div);
     });
-  } catch(e){
-    grid.innerHTML = '<div class="iconify-loading" style="color:#dc2626">Erro ao buscar. Tente novamente.</div>';
-  }
+  }catch(e){grid.innerHTML='<div class="iconify-loading" style="color:#dc2626">Erro ao buscar. Tente novamente.</div>';}
 }
 
-function selecionarIconify(el, name){
-  const svg = window._iconifySvgMap?.[name];
-  if(!svg) return;
-  // Colore o SVG selecionado para #7c3aed no preview
-  const svgColored = svg.replace(/currentColor|#6b7280/g, '#7c3aed');
+function selecionarIconify(el,name){
+  const svg=window._iconifySvgMap?.[name];if(!svg)return;
+  const svgColored=svg.replace(/currentColor|#6b7280/g,'#7c3aed');
   setPickerValor(svgColored);
   document.querySelectorAll('.iconify-opt').forEach(o=>o.classList.remove('selected'));
   el.classList.add('selected');
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
 
 async function toggleAtivo(id,ativoAtual){
   var {error}=await client.from("parametros").update({ativo:!ativoAtual}).eq("id",id);
   if(error){alert("Erro: "+error.message);return;}
   carregar();
 }
+
 async function excluir(id){
   if(!confirm("Excluir este item?"))return;
   var error;

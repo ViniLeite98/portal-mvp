@@ -16,7 +16,7 @@
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .app{display:flex;min-height:100vh;}
 #sidebar{width:260px;flex-shrink:0;}
-.content{flex:1;padding:40px;}
+.content{flex:1;padding:24px 32px;}
 .topbar{margin-bottom:20px;}
 .topbar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
 .collab-counter{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:7px 16px;font-size:13px;color:#374151;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.06);}
@@ -114,7 +114,6 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 <div class="app">
 <aside id="sidebar"></aside>
 <main class="content">
-<h1>Serviços</h1>
 
 <div class="topbar">
   <div class="topbar-top">
@@ -341,8 +340,7 @@ async function carregarGrupos(){
 }
 
 async function carregarServicos(){
-  // servico (ex-servicos)
-  const{data,error}=await client.from("servico").select("*");
+  const{data,error}=await client.from("servicos").select("*");
   if(error){console.error(error);return;}
   dados=data||[];
 }
@@ -569,17 +567,15 @@ async function salvar(){
   };
   if(!payload.grupo){alert("Selecione o grupo do serviço.");return;}
   let error;
-  // servico (ex-servicos)
-  if(idAtual){({error}=await client.from("servico").update(payload).eq("id",idAtual));}
-  else{({error}=await client.from("servico").insert(payload));}
+  if(idAtual){({error}=await client.from("servicos").update(payload).eq("id",idAtual));}
+  else{({error}=await client.from("servicos").insert(payload));}
   if(error){alert("Erro ao salvar: "+error.message);return;}
   fecharModal();carregar();
 }
 
 async function excluir(id){
   if(!confirm("Excluir este serviço?"))return;
-  // servico (ex-servicos)
-  const{error}=await client.from("servico").delete().eq("id",id);
+  const{error}=await client.from("servicos").delete().eq("id",id);
   if(error){alert("Erro: "+error.message);return;}
   carregar();
 }

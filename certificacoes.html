@@ -449,8 +449,10 @@ async function carregarSelects(){
 async function carregarLista(){
   if(!window.usuarioLogado){setTimeout(carregarLista,100);return;}
   const u=window.usuarioLogado;
+  // CORRIGIDO: !inner garante que só aparecem funcionários ativos
   let q=client.from("funcionario_certificacao")
-    .select('id,data_obtencao,arquivo_url,arquivo_nome,cpf_terapeuta,certificacao(id,nome,icone),funcionario(nome_profissional)')
+    .select('id,data_obtencao,arquivo_url,arquivo_nome,cpf_terapeuta,certificacao(id,nome,icone),funcionario!inner(nome_profissional,status)')
+    .eq("funcionario.status","Ativo")
     .order("id");
   if(!podeVerTudo(u)&&u&&u.cpf)q=q.eq("cpf_terapeuta",u.cpf);
   const {data}=await q;dados=data||[];paginaAtual=0;aplicarFiltroEOrdem();

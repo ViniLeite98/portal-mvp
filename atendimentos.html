@@ -80,6 +80,17 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .slot-bg.meia{border-bottom:1px dashed #f3f4f6;}
 .slot-bg.bloqueado{background:repeating-linear-gradient(45deg,#fee2e2,#fee2e2 4px,#fef2f2 4px,#fef2f2 10px);cursor:pointer;}
 .slot-bg.bloqueado:hover{background:repeating-linear-gradient(45deg,#fecaca,#fecaca 4px,#fee2e2 4px,#fee2e2 10px);}
+/* drag-and-drop colunas */
+.col-item{display:flex;align-items:center;gap:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:9px 12px;cursor:grab;user-select:none;transition:box-shadow .15s;}
+.col-item:active{cursor:grabbing;}
+.col-item.dragging{opacity:.4;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.col-item.drag-over{border-color:#2563eb;background:#eff6ff;}
+.col-item .col-grip{color:#d1d5db;font-size:14px;}
+.col-item .col-nome{flex:1;font-size:13px;font-weight:600;color:#111827;}
+.col-item .col-vis{background:none;border:none;cursor:pointer;font-size:16px;padding:2px 4px;border-radius:4px;}
+.col-item.oculto .col-nome{color:#9ca3af;text-decoration:line-through;}
+.col-item .col-vis.ativo{color:#2563eb;}
+.col-item .col-vis.inativo{color:#d1d5db;}
 
 /* blocos de atendimento */
 .ag-block{position:absolute;left:2px;right:2px;border-radius:6px;padding:4px 7px;cursor:pointer;overflow:hidden;font-size:11px;line-height:1.3;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.12);transition:box-shadow .15s,opacity .15s;}
@@ -242,6 +253,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
     </div>
     <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="abrirGerenciarColunas()"><i class="fa fa-sliders"></i> Colunas</button>
       <button class="btn btn-yellow" onclick="abrirFechamento()"><i class="fa fa-cash-register"></i> Fechar Turno</button>
       <button class="btn btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo</button>
     </div>
@@ -624,6 +636,27 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 </div>
 </div>
 
+<!-- ═══ MODAL GERENCIAR COLUNAS ═══ -->
+<div class="modal" id="modalColunas">
+<div class="mc sm">
+  <div class="mh">
+    <h2><i class="fa fa-sliders" style="color:#2563eb"></i> Gerenciar Colunas</h2>
+    <button class="btn-x" onclick="fecharModal('modalColunas')"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="mb" style="padding-bottom:8px;">
+    <p style="font-size:12px;color:#6b7280;margin-bottom:12px;"><i class="fa fa-grip-lines" style="color:#9ca3af"></i> Arraste para reordenar · <i class="fa fa-eye" style="color:#9ca3af"></i> Clique no olho para ocultar</p>
+    <div id="colunasLista" style="display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto;"></div>
+  </div>
+  <div class="mf" style="justify-content:space-between;">
+    <button class="btn btn-ghost" onclick="resetarColunas()"><i class="fa fa-rotate-left"></i> Resetar</button>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" onclick="fecharModal('modalColunas')">Cancelar</button>
+      <button class="btn btn-blue" onclick="salvarColunas()"><i class="fa fa-save"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+</div>
+
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
@@ -765,7 +798,8 @@ function renderAgenda() {
     if(a.terapeuta2_cpf && agPorTer[a.terapeuta2_cpf]) agPorTer[a.terapeuta2_cpf].push(a);
   });
 
-  todosTerapeutas.forEach(ter => {
+  const tersVisiveis = colunasConfig.length ? todosTerapeutas.filter(t => { const c = colunasConfig.find(x => x.cpf === t.cpf); return !c || c.visivel; }) : todosTerapeutas;
+  tersVisiveis.forEach(ter => {
     const col = document.createElement("div");
     col.className = "ter-col";
 
@@ -1196,6 +1230,8 @@ async function carregarDados(){
     .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"])
     .order("nome_profissional");
   todosTerapeutas=ters||[];
+  aplicarColunasConfig();
+  colunasConfig = todosTerapeutas.map(t => { const saved = carregarColunasConfig(); const s = saved ? saved.find(x => x.cpf === t.cpf) : null; return { cpf: t.cpf, nome: t.nome_profissional, visivel: s ? s.visivel : true }; });
   todosTerapeutas.forEach(t=>{
     tersMap[t.cpf]=t.nome_profissional;
     const el=document.getElementById("fTer");
@@ -1607,6 +1643,109 @@ async function salvarNC(){
 }
 
 function fecharModal(id){document.getElementById(id).classList.remove("open");}
+
+// ── GERENCIAR COLUNAS ──
+const STORAGE_KEY = 'hara_colunas_config';
+let colunasConfig = []; // [{cpf, nome, visivel}] em ordem
+
+function carregarColunasConfig() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved) return JSON.parse(saved);
+  } catch(e){}
+  return null;
+}
+
+function salvarColunasNoStorage(cfg) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); } catch(e){}
+}
+
+function aplicarColunasConfig() {
+  const saved = carregarColunasConfig();
+  if(!saved || !todosTerapeutas.length) return;
+  // ordena todosTerapeutas conforme salvo, mantém novos no fim
+  const ordem = saved.map(s => s.cpf);
+  const salvosSet = new Set(ordem);
+  const ordenados = [];
+  ordem.forEach(cpf => {
+    const t = todosTerapeutas.find(x => x.cpf === cpf);
+    if(t) ordenados.push(t);
+  });
+  // novos terapeutas não salvos vão pro fim
+  todosTerapeutas.forEach(t => { if(!salvosSet.has(t.cpf)) ordenados.push(t); });
+  todosTerapeutas = ordenados;
+  // aplica visibilidade
+  colunasConfig = todosTerapeutas.map(t => {
+    const s = saved.find(x => x.cpf === t.cpf);
+    return { cpf: t.cpf, nome: t.nome_profissional, visivel: s ? s.visivel : true };
+  });
+}
+
+function abrirGerenciarColunas() {
+  // sincroniza config com terapeutas atuais
+  colunasConfig = todosTerapeutas.map(t => {
+    const ex = colunasConfig.find(c => c.cpf === t.cpf);
+    return { cpf: t.cpf, nome: t.nome_profissional, visivel: ex ? ex.visivel : true };
+  });
+  renderColunasLista();
+  document.getElementById('modalColunas').classList.add('open');
+}
+
+function renderColunasLista() {
+  const lista = document.getElementById('colunasLista');
+  lista.innerHTML = '';
+  colunasConfig.forEach((c, i) => {
+    const item = document.createElement('div');
+    item.className = 'col-item' + (c.visivel ? '' : ' oculto');
+    item.draggable = true;
+    item.dataset.idx = i;
+    item.innerHTML = `
+      <i class="fa fa-grip-lines col-grip"></i>
+      <span class="col-nome">${c.nome}</span>
+      <button class="col-vis ${c.visivel ? 'ativo' : 'inativo'}" onclick="toggleVisCol(${i})" title="${c.visivel ? 'Ocultar' : 'Mostrar'}">
+        <i class="fa ${c.visivel ? 'fa-eye' : 'fa-eye-slash'}"></i>
+      </button>`;
+    // drag events
+    item.addEventListener('dragstart', e => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', i);
+      setTimeout(() => item.classList.add('dragging'), 0);
+    });
+    item.addEventListener('dragend', () => item.classList.remove('dragging'));
+    item.addEventListener('dragover', e => { e.preventDefault(); item.classList.add('drag-over'); });
+    item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+    item.addEventListener('drop', e => {
+      e.preventDefault();
+      item.classList.remove('drag-over');
+      const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIdx = parseInt(item.dataset.idx);
+      if(fromIdx === toIdx) return;
+      const moved = colunasConfig.splice(fromIdx, 1)[0];
+      colunasConfig.splice(toIdx, 0, moved);
+      renderColunasLista();
+    });
+    lista.appendChild(item);
+  });
+}
+
+function toggleVisCol(idx) {
+  colunasConfig[idx].visivel = !colunasConfig[idx].visivel;
+  renderColunasLista();
+}
+
+function salvarColunas() {
+  salvarColunasNoStorage(colunasConfig);
+  // reordena todosTerapeutas
+  todosTerapeutas = colunasConfig.map(c => todosTerapeutas.find(t => t.cpf === c.cpf)).filter(Boolean);
+  fecharModal('modalColunas');
+  renderAgenda();
+}
+
+function resetarColunas() {
+  localStorage.removeItem(STORAGE_KEY);
+  colunasConfig = todosTerapeutas.map(t => ({ cpf: t.cpf, nome: t.nome_profissional, visivel: true }));
+  renderColunasLista();
+}
 
 document.addEventListener("DOMContentLoaded",async()=>{
   renderDiasSemana();

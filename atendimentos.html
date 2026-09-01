@@ -78,6 +78,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .slot-bg{height:48px;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .1s;}
 .slot-bg:hover{background:#f0f9ff;}
 .slot-bg.meia{border-bottom:1px dashed #f3f4f6;}
+.slot-bg.bloqueado{background:#f3f4f6;cursor:default;}
+.slot-bg.bloqueado:hover{background:#f3f4f6;}
 
 /* blocos de atendimento */
 .ag-block{position:absolute;left:2px;right:2px;border-radius:6px;padding:4px 7px;cursor:pointer;overflow:hidden;font-size:11px;line-height:1.3;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.12);transition:box-shadow .15s,opacity .15s;}
@@ -630,6 +632,7 @@ let ssAgCli = null, ssAgCliEx = null;
 let ncCallback = null;
 let viewAtual = 'agenda';
 let semanaOffset = 0; // semanas a partir da semana atual
+let horariosMap = {}; // cpf -> {hora_entrada, hora_saida, disponivel}
 
 const HORA_INI = 8;   // 08:00
 const HORA_FIM = 23;  // até 23:00
@@ -769,15 +772,28 @@ function renderAgenda() {
     body.style.height = (slotCount * SLOT_H) + "px";
     body.style.position = "relative";
 
-    // slots clicáveis
+    // slots clicáveis (bloqueados fora da jornada)
+    const jornadaTer = horariosMap[ter.cpf] || {};
+    const entMin = jornadaTer.hora_entrada ? toMin(jornadaTer.hora_entrada) : null;
+    const saiMin = jornadaTer.hora_saida   ? toMin(jornadaTer.hora_saida)   : null;
+    const indisponivel = jornadaTer.disponivel === false;
+
     for(let i=0; i<slotCount; i++) {
       const h = HORA_INI + Math.floor(i/2);
       const m = i%2===0 ? "00" : "30";
-      const slotEl = document.createElement("div");
-      slotEl.className = "slot-bg" + (i%2===1?" meia":"");
-      slotEl.style.cssText = `position:absolute;top:${i*SLOT_H}px;left:0;right:0;height:${SLOT_H}px;`;
+      const slotMin = h*60 + (i%2===0?0:30);
       const horaStr = `${String(h).padStart(2,"0")}:${m}`;
-      slotEl.addEventListener("click", () => abrirNovoComDados(dataSel, horaStr, ter.cpf));
+
+      const dentroJornada = !indisponivel
+        && (entMin === null || slotMin >= entMin)
+        && (saiMin === null || slotMin < saiMin);
+
+      const slotEl = document.createElement("div");
+      slotEl.className = "slot-bg" + (i%2===1?" meia":"") + (!dentroJornada?" bloqueado":"");
+      slotEl.style.cssText = `position:absolute;top:${i*SLOT_H}px;left:0;right:0;height:${SLOT_H}px;`;
+      if(dentroJornada) {
+        slotEl.addEventListener("click", () => abrirNovoComDados(dataSel, horaStr, ter.cpf));
+      }
       body.appendChild(slotEl);
     }
 
@@ -825,6 +841,35 @@ function renderAgenda() {
 // ── CARREGAR ──
 async function carregar() {
   atualizarKPILabel();
+
+  // busca horários da grade semanal para o dia selecionado
+  horariosMap = {};
+  if(todosTerapeutas.length) {
+    const dow = new Date(dataSel+"T12:00:00").getDay();
+    const diaNome = DIAS_PT[dow];
+    const{data:hors} = await client.from("funcionario_horario")
+      .select("terapeuta_cpf,hora_entrada,hora_saida,disponivel")
+      .eq("dia_semana", diaNome)
+      .in("terapeuta_cpf", todosTerapeutas.map(t=>t.cpf));
+    (hors||[]).forEach(h => {
+      horariosMap[h.terapeuta_cpf] = {
+        hora_entrada: h.hora_entrada?.slice(0,5) || null,
+        hora_saida:   h.hora_saida?.slice(0,5)   || null,
+        disponivel:   h.disponivel
+      };
+    });
+    // fallback: usa hora_entrada/hora_saida do próprio registro funcionario
+    todosTerapeutas.forEach(t => {
+      if(!horariosMap[t.cpf]) {
+        horariosMap[t.cpf] = {
+          hora_entrada: t.hora_entrada?.slice(0,5) || null,
+          hora_saida:   t.hora_saida?.slice(0,5)   || null,
+          disponivel:   true
+        };
+      }
+    });
+  }
+
   const{data,error}=await client.from("atendimento")
     .select("*,cliente:cliente_id(id,nome,telefone_1),servico:servico_id(id,grupo,subgrupo,valor,comissao,tempo)")
     .eq("data",dataSel)

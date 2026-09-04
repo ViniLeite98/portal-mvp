@@ -1230,6 +1230,11 @@ async function carregarDados(){
     .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"])
     .order("nome_profissional");
   todosTerapeutas=ters||[];
+  // se for terapeuta, filtra só a coluna dela
+  const u = window.usuarioLogado;
+  if(u && ["Terapeuta Feminina","Terapeuta Masculino"].includes(u.cargo)) {
+    todosTerapeutas = todosTerapeutas.filter(t => t.cpf === u.cpf);
+  }
   aplicarColunasConfig();
   colunasConfig = todosTerapeutas.map(t => { const saved = carregarColunasConfig(); const s = saved ? saved.find(x => x.cpf === t.cpf) : null; return { cpf: t.cpf, nome: t.nome_profissional, visivel: s ? s.visivel : true }; });
   todosTerapeutas.forEach(t=>{
@@ -1749,6 +1754,7 @@ function resetarColunas() {
 
 document.addEventListener("DOMContentLoaded",async()=>{
   renderDiasSemana();
+  await new Promise(res => getUser(res));
   await carregarDados();
   await carregar();
 });

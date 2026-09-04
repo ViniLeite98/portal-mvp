@@ -276,6 +276,10 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
     <div class="kpi-cell"><div class="kpi-label">Aguardando</div><div class="kpi-val yellow" id="kAgend">0</div></div>
     <div class="kpi-cell"><div class="kpi-label">Receita do Dia</div><div class="kpi-val green" id="kReceita">R$ 0</div></div>
     <div class="kpi-cell"><div class="kpi-label">Sinais Retidos</div><div class="kpi-val yellow" id="kSinais">R$ 0</div></div>
+    <div class="kpi-cell" style="border-left:1px solid rgba(255,255,255,.15)"><div class="kpi-label">💵 Dinheiro</div><div class="kpi-val" id="kDin">R$ 0</div></div>
+    <div class="kpi-cell"><div class="kpi-label">📱 PIX</div><div class="kpi-val" id="kPix">R$ 0</div></div>
+    <div class="kpi-cell"><div class="kpi-label">💳 Débito</div><div class="kpi-val" id="kDeb">R$ 0</div></div>
+    <div class="kpi-cell"><div class="kpi-label">💳 Crédito</div><div class="kpi-val" id="kCre">R$ 0</div></div>
   </div>
 
   <!-- VIEW AGENDA -->
@@ -935,6 +939,26 @@ function renderKPIs() {
   document.getElementById("kAgend").textContent=agendamentos.filter(a=>a.status==="Agendado").length;
   document.getElementById("kReceita").textContent=fmtM(receita);
   document.getElementById("kSinais").textContent=fmtM(sinais);
+  // totais por forma de pagamento (só faturados)
+  let kDin=0,kPix=0,kDeb=0,kCre=0;
+  agendamentos.filter(a=>a.status==="Faturado").forEach(a=>{
+    [[a.forma_pgto_1,a.valor_pgto_1],[a.forma_pgto_2,a.valor_pgto_2]].forEach(([f,v])=>{
+      if(!f)return;
+      const t=classifPgto(f),val=parseFloat(v||0);
+      if(t==="dinheiro")kDin+=val;
+      else if(t==="pix")kPix+=val;
+      else if(t==="debito")kDeb+=val;
+      else if(t==="credito")kCre+=val;
+    });
+    kDin+=parseFloat(a.sinal_valor||0)*(classifPgto(a.sinal_forma)==="dinheiro"?1:0);
+    kPix+=parseFloat(a.sinal_valor||0)*(classifPgto(a.sinal_forma)==="pix"?1:0);
+    kDeb+=parseFloat(a.sinal_valor||0)*(classifPgto(a.sinal_forma)==="debito"?1:0);
+    kCre+=parseFloat(a.sinal_valor||0)*(classifPgto(a.sinal_forma)==="credito"?1:0);
+  });
+  document.getElementById("kDin").textContent=fmtM(kDin);
+  document.getElementById("kPix").textContent=fmtM(kPix);
+  document.getElementById("kDeb").textContent=fmtM(kDeb);
+  document.getElementById("kCre").textContent=fmtM(kCre);
 }
 
 function renderCards() {

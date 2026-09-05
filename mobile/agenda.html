@@ -313,6 +313,8 @@
   async function carregarAgenda() {
     const hoje = new Date().toISOString().split('T')[0];
 
+    const orFilter = 'terapeuta1_cpf.eq.' + cpf + ',terapeuta2_cpf.eq.' + cpf;
+
     const { data, error } = await client
       .from('atendimento')
       .select(`
@@ -325,7 +327,7 @@
         cliente:cliente_id ( nome ),
         servico:servico_id ( nome )
       `)
-      .or(`terapeuta1_cpf.eq.${cpf},terapeuta2_cpf.eq.${cpf}`)
+      .or(orFilter)
       .eq('data', hoje)
       .order('hora_inicio', { ascending: true });
 

@@ -15,6 +15,46 @@
   function titulo(txt) {
     return '<div class="menu-title">' + txt + '</div>';
   }
+
+  function getPaginaLabel() {
+    var labels = {
+      'dashboard.html': 'Dashboard',
+      'equipe.html': 'Equipe',
+      'clientes.html': 'Clientes',
+      'servicos.html': 'Serviços',
+      'certificacoes.html': 'Certificações',
+      'atendimentos.html': 'Atendimentos',
+      'escalas.html': 'Escalas',
+      'solicitacoes.html': 'Solicitações',
+      'kanban.html': 'Kanban',
+      'despesas.html': 'Despesas',
+      'estoque.html': 'Estoque',
+      'folha_pagamento.html': 'Folha de Pagamento',
+      'parametros.html': 'Parâmetros',
+    };
+    return labels[paginaAtual] || 'Hara Spa';
+  }
+
+  function injetarMobileTopbar() {
+    if (document.querySelector('.mobile-topbar')) return;
+    var topbar = document.createElement('div');
+    topbar.className = 'mobile-topbar';
+    topbar.innerHTML =
+      '<button class="hamburger" onclick="toggleSidebar()" aria-label="Menu">' +
+        '<i class="fa-solid fa-bars"></i>' +
+      '</button>' +
+      '<span class="page-title">' + getPaginaLabel() + '</span>' +
+      '<div class="topbar-right"></div>';
+
+    var overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    overlay.onclick = function() { fecharSidebar(); };
+    document.body.prepend(overlay);
+
+    var app = document.querySelector('.app') || document.body;
+    app.parentNode.insertBefore(topbar, app);
+  }
+
   function renderSidebar() {
     if (!window.usuarioLogado) { setTimeout(renderSidebar, 100); return; }
     var u = window.usuarioLogado;
@@ -55,8 +95,40 @@
       '</a>';
     html += '</div>';
     document.getElementById("sidebar").innerHTML = html;
+
+    // Injeta topbar mobile após renderizar sidebar
+    injetarMobileTopbar();
+
+    // Fecha sidebar ao clicar em item no mobile
+    document.querySelectorAll('.menu-item').forEach(function(el) {
+      el.addEventListener('click', function() {
+        if (window.innerWidth <= 768) fecharSidebar();
+      });
+    });
   }
+
   renderSidebar();
+
+  window.toggleSidebar = function() {
+    var sidebar = document.querySelector('.sidebar');
+    var overlay = document.querySelector('.sidebar-overlay');
+    if (!sidebar) return;
+    var isOpen = sidebar.classList.contains('open');
+    if (isOpen) {
+      fecharSidebar();
+    } else {
+      sidebar.classList.add('open');
+      if (overlay) overlay.classList.add('open');
+    }
+  };
+
+  function fecharSidebar() {
+    var sidebar = document.querySelector('.sidebar');
+    var overlay = document.querySelector('.sidebar-overlay');
+    if (sidebar) sidebar.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+  }
+
   window.sairDoCaixa = function() {
     if (typeof client !== 'undefined') {
       client.auth.signOut().finally(function() {

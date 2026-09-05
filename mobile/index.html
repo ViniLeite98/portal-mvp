@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#c8a97e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Hara" />
+  <title>Hara Spa</title>
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/assets/icons/icon-192.png" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(160deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 24px;
+      padding: 40px 32px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo img {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      object-fit: cover;
+    }
+
+    .logo-placeholder {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #c8a97e, #a0845e);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      color: white;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .logo h1 {
+      margin-top: 12px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .logo p {
+      font-size: 13px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1.5px solid #e8e8e8;
+      border-radius: 12px;
+      font-size: 15px;
+      color: #1a1a2e;
+      background: #fafafa;
+      transition: border-color 0.2s, background 0.2s;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #c8a97e;
+      background: white;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #c8a97e, #a0845e);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .error {
+      background: #fff0f0;
+      border: 1px solid #ffcccc;
+      color: #cc3333;
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-size: 13px;
+      margin-top: 16px;
+      display: none;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-placeholder">H</div>
+    <h1>Hara Spa</h1>
+    <p>Acesso para funcionários</p>
+  </div>
+
+  <div class="form-group">
+    <label for="email">E-mail</label>
+    <input type="email" id="email" placeholder="seu@email.com" autocomplete="email" />
+  </div>
+
+  <div class="form-group">
+    <label for="senha">Senha</label>
+    <input type="password" id="senha" placeholder="••••••••" autocomplete="current-password" />
+  </div>
+
+  <button class="btn" id="btnLogin" onclick="fazerLogin()">Entrar</button>
+
+  <div class="error" id="erro"></div>
+</div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+<!-- Push -->
+<script src="/assets/js/push-init.js"></script>
+
+<script>
+  const SUPABASE_URL = 'https://rymehgsoarjeecuwyhny.supabase.co';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY'; // substitua pela anon key
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // Registra service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('[SW] Registrado:', reg.scope))
+      .catch(err => console.error('[SW] Erro:', err));
+  }
+
+  // Se já está logado, redireciona
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) verificarFuncionario(session.user.email);
+  });
+
+  async function fazerLogin() {
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value;
+    const btn = document.getElementById('btnLogin');
+    const erro = document.getElementById('erro');
+
+    erro.style.display = 'none';
+
+    if (!email || !senha) {
+      mostrarErro('Preencha e-mail e senha.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Entrando...';
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+
+    if (error) {
+      mostrarErro('E-mail ou senha incorretos.');
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
+      return;
+    }
+
+    await verificarFuncionario(email);
+  }
+
+  async function verificarFuncionario(email) {
+    // Busca funcionário pelo email
+    const { data: func, error } = await supabase
+      .from('funcionario')
+      .select('cpf, nome_profissional, status, cargo')
+      .eq('email', email)
+      .single();
+
+    if (error || !func) {
+      await supabase.auth.signOut();
+      mostrarErro('Funcionário não encontrado.');
+      document.getElementById('btnLogin').disabled = false;
+      document.getElementById('btnLogin').textContent = 'Entrar';
+      return;
+    }
+
+    if (func.status === 'Inativo') {
+      await supabase.auth.signOut();
+      mostrarErro('Seu acesso está inativo. Fale com a gerência.');
+      document.getElementById('btnLogin').disabled = false;
+      document.getElementById('btnLogin').textContent = 'Entrar';
+      return;
+    }
+
+    // Salva dados do funcionário localmente
+    localStorage.setItem('hara_cpf', func.cpf);
+    localStorage.setItem('hara_nome', func.nome_profissional);
+    localStorage.setItem('hara_cargo', func.cargo);
+
+    // Inicializa push notifications
+    await initPushNotifications(supabase, func.cpf);
+
+    // Redireciona para agenda
+    window.location.href = '/mobile/agenda.html';
+  }
+
+  function mostrarErro(msg) {
+    const erro = document.getElementById('erro');
+    erro.textContent = msg;
+    erro.style.display = 'block';
+  }
+
+  // Enter para logar
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') fazerLogin();
+  });
+</script>
+
+</body>
+</html>

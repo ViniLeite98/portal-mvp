@@ -186,7 +186,7 @@
   }
 
   // Se já está logado, redireciona
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  client.auth.getSession().then(({ data: { session } }) => {
     if (session) verificarFuncionario(session.user.email);
   });
 
@@ -206,7 +206,7 @@
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span> Entrando...';
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    const { data, error } = await client.auth.signInWithPassword({ email, password: senha });
 
     if (error) {
       mostrarErro('E-mail ou senha incorretos.');
@@ -220,14 +220,14 @@
 
   async function verificarFuncionario(email) {
     // Busca funcionário pelo email
-    const { data: func, error } = await supabase
+    const { data: func, error } = await client
       .from('funcionario')
       .select('cpf, nome_profissional, status, cargo')
       .eq('email', email)
       .single();
 
     if (error || !func) {
-      await supabase.auth.signOut();
+      await client.auth.signOut();
       mostrarErro('Funcionário não encontrado.');
       document.getElementById('btnLogin').disabled = false;
       document.getElementById('btnLogin').textContent = 'Entrar';
@@ -235,7 +235,7 @@
     }
 
     if (func.status === 'Inativo') {
-      await supabase.auth.signOut();
+      await client.auth.signOut();
       mostrarErro('Seu acesso está inativo. Fale com a gerência.');
       document.getElementById('btnLogin').disabled = false;
       document.getElementById('btnLogin').textContent = 'Entrar';
@@ -248,7 +248,7 @@
     localStorage.setItem('hara_cargo', func.cargo);
 
     // Inicializa push notifications
-    await initPushNotifications(supabase, func.cpf);
+    await initPushNotifications(client, func.cpf);
 
     // Redireciona para agenda
     window.location.href = '/mobile/agenda.html';

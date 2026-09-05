@@ -315,18 +315,9 @@
 
     const orFilter = 'terapeuta1_cpf.eq.' + cpf + ',terapeuta2_cpf.eq.' + cpf;
 
-    const { data, error } = await client
+    const { data: rawData, error } = await client
       .from('atendimento')
-      .select(`
-        id,
-        data,
-        hora_inicio,
-        hora_fim,
-        status,
-        valor_final,
-        cliente:cliente_id ( nome ),
-        servico:servico_id ( nome )
-      `)
+      .select('id, data, hora_inicio, hora_fim, status, valor_final, cliente_id, servico_id')
       .or(orFilter)
       .eq('data', hoje)
       .order('hora_inicio', { ascending: true });
@@ -340,6 +331,24 @@
         </div>`;
       return;
     }
+
+    // Busca nomes de clientes
+    const clienteIds = [...new Set((rawData||[]).map(a => a.cliente_id).filter(Boolean))];
+    const servicoIds = [...new Set((rawData||[]).map(a => a.servico_id).filter(Boolean))];
+
+    const [{ data: clientes }, { data: servicos }] = await Promise.all([
+      clienteIds.length ? client.from('cliente').select('id, nome').in('id', clienteIds) : { data: [] },
+      servicoIds.length ? client.from('servico').select('id, nome').in('id', servicoIds) : { data: [] }
+    ]);
+
+    const clienteMap = Object.fromEntries((clientes||[]).map(c => [c.id, c.nome]));
+    const servicoMap = Object.fromEntries((servicos||[]).map(s => [s.id, s.nome]));
+
+    const data = (rawData||[]).map(a => ({
+      ...a,
+      cliente: { nome: clienteMap[a.cliente_id] || 'Cliente' },
+      servico: { nome: servicoMap[a.servico_id] || '' }
+    }));
 
     renderizarLista(data || []);
   }

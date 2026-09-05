@@ -19,8 +19,7 @@ const CACHE_NAME = 'hara-pwa-v2';
 const STATIC_ASSETS = [
   '/mobile/',
   '/mobile/index.html',
-  '/mobile/registrar.html',
-  '/assets/sidebar/sidebar.js',
+  '/mobile/agenda.html',
 ];
 
 self.addEventListener('install', event => {

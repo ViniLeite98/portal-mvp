@@ -313,14 +313,22 @@
   async function carregarAgenda() {
     const hoje = new Date().toISOString().split('T')[0];
 
-    const orFilter = 'terapeuta1_cpf.eq.' + cpf + ',terapeuta2_cpf.eq.' + cpf;
+    const cargosAdmin = ['Gerente', 'Analista', 'Recepcionista', 'Atendente'];
+    const cargo = localStorage.getItem('hara_cargo') || '';
+    const isAdmin = cargosAdmin.includes(cargo);
 
-    const { data: rawData, error } = await client
+    let query = client
       .from('atendimento')
-      .select('id, data, hora_inicio, hora_fim, status, valor_final, cliente_id, servico_id')
-      .or(orFilter)
+      .select('id, data, hora_inicio, hora_fim, status, valor_final, cliente_id, servico_id, terapeuta1_cpf, terapeuta2_cpf')
       .eq('data', hoje)
       .order('hora_inicio', { ascending: true });
+
+    if (!isAdmin) {
+      const orFilter = 'terapeuta1_cpf.eq.' + cpf + ',terapeuta2_cpf.eq.' + cpf;
+      query = query.or(orFilter);
+    }
+
+    const { data: rawData, error } = await query;
 
     if (error) {
       console.error(error);

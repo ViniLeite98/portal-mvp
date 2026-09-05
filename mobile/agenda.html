@@ -297,7 +297,7 @@
     window.location.href = '/mobile/';
   }
 
-  supabase.auth.getSession().then(({ data: { session } }) => {
+  client.auth.getSession().then(({ data: { session } }) => {
     if (!session) window.location.href = '/mobile/';
   });
 
@@ -311,7 +311,7 @@
   async function carregarAgenda() {
     const hoje = new Date().toISOString().split('T')[0];
 
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('atendimento')
       .select(`
         id,
@@ -416,7 +416,7 @@
     const btn = document.querySelector(`#card-${id} .btn-checkin`);
     if (btn) btn.disabled = true;
 
-    const { error } = await supabase
+    const { error } = await client
       .from('atendimento')
       .update({ status: 'Confirmado' })
       .eq('id', id);
@@ -436,7 +436,7 @@
     const btn = document.querySelector(`#card-${id} .btn-checkout`);
     if (btn) btn.disabled = true;
 
-    const { error } = await supabase
+    const { error } = await client
       .from('atendimento')
       .update({ status: 'Faturado', faturado_em: new Date().toISOString() })
       .eq('id', id);
@@ -456,7 +456,7 @@
     localStorage.removeItem('hara_cpf');
     localStorage.removeItem('hara_nome');
     localStorage.removeItem('hara_cargo');
-    await supabase.auth.signOut();
+    await client.auth.signOut();
     window.location.href = '/mobile/';
   }
 

@@ -122,6 +122,7 @@
 
     .atendimento-card.agendado  { border-left-color: #4a90d9; }
     .atendimento-card.em_andamento { border-left-color: #f0a500; }
+    .atendimento-card.confirmado { border-left-color: #9b59b6; }
     .atendimento-card.concluido { border-left-color: #4caf50; }
     .atendimento-card.cancelado { border-left-color: #e74c3c; opacity: 0.6; }
 
@@ -154,6 +155,7 @@
     }
 
     .badge-agendado     { background: #e8f1fb; color: #4a90d9; }
+    .badge-confirmado   { background: #f3e8ff; color: #7b2fa8; }
     .badge-em_andamento { background: #fff3cd; color: #b07d00; }
     .badge-concluido    { background: #e8f5e9; color: #388e3c; }
     .badge-cancelado    { background: #fdecea; color: #c62828; }
@@ -314,15 +316,16 @@
       .select(`
         id,
         data,
-        horario,
+        hora_inicio,
+        hora_fim,
         status,
-        duracao,
+        valor_final,
         cliente:cliente_id ( nome ),
         servico:servico_id ( nome )
       `)
-      .eq('funcionario_cpf', cpf)
+      .or(`terapeuta1_cpf.eq.${cpf},terapeuta2_cpf.eq.${cpf}`)
       .eq('data', hoje)
-      .order('horario', { ascending: true });
+      .order('hora_inicio', { ascending: true });
 
     if (error) {
       console.error(error);
@@ -337,13 +340,24 @@
     renderizarLista(data || []);
   }
 
+  function calcDuracao(inicio, fim) {
+    if (!inicio || !fim) return '';
+    const [h1, m1] = inicio.split(':').map(Number);
+    const [h2, m2] = fim.split(':').map(Number);
+    const diff = (h2 * 60 + m2) - (h1 * 60 + m1);
+    return diff > 0 ? `${diff} min` : '';
+  }
+
   function renderizarLista(atendimentos) {
     const lista = document.getElementById('lista');
 
-    // Resumo
-    const concluidos  = atendimentos.filter(a => a.status === 'concluido').length;
-    const agendados   = atendimentos.filter(a => ['agendado','em_andamento'].includes(a.status)).length;
-    const restantes   = atendimentos.filter(a => a.status === 'agendado').length;
+    // Status reais da tabela
+    const statusAtivos = ['Agendado', 'Confirmado'];
+    const statusFinalizado = ['Faturado'];
+
+    const concluidos = atendimentos.filter(a => statusFinalizado.includes(a.status)).length;
+    const agendados  = atendimentos.filter(a => statusAtivos.includes(a.status)).length;
+    const restantes  = atendimentos.filter(a => a.status === 'Agendado').length;
 
     document.getElementById('totalAgendados').textContent  = agendados;
     document.getElementById('totalConcluidos').textContent = concluidos;
@@ -360,79 +374,80 @@
       return;
     }
 
-    lista.innerHTML = atendimentos.map(a => {
-      const statusLabel = {
-        agendado:     'Agendado',
-        em_andamento: 'Em andamento',
-        concluido:    'Concluído',
-        cancelado:    'Cancelado'
-      }[a.status] || a.status;
+    // Mapa de status para classe CSS e label
+    const statusMap = {
+      'Agendado':   { cls: 'agendado',   label: 'Agendado' },
+      'Confirmado': { cls: 'confirmado', label: 'Confirmado' },
+      'Faturado':   { cls: 'concluido',  label: 'Faturado' },
+      'Cancelado':  { cls: 'cancelado',  label: 'Cancelado' },
+    };
 
-      const horario = a.horario ? a.horario.substring(0, 5) : '--:--';
-      const duracao = a.duracao ? `${a.duracao} min` : '';
+    lista.innerHTML = atendimentos.map(a => {
+      const s = statusMap[a.status] || { cls: 'agendado', label: a.status };
+      const horario = a.hora_inicio ? a.hora_inicio.substring(0, 5) : '--:--';
+      const duracao = calcDuracao(a.hora_inicio, a.hora_fim);
       const cliente = a.cliente?.nome || 'Cliente';
       const servico = a.servico?.nome || '';
-
-      const podeChekin  = a.status === 'agendado';
-      const podeCheckout = a.status === 'em_andamento';
+      const podeConfirmar = a.status === 'Agendado';
+      const podeFaturar   = a.status === 'Confirmado';
 
       return `
-        <div class="atendimento-card ${a.status}" id="card-${a.id}">
+        <div class="atendimento-card ${s.cls}" id="card-${a.id}">
           <div class="card-top">
             <div>
               <div class="horario">${horario}</div>
               <div class="duracao">${duracao}</div>
             </div>
-            <span class="status-badge badge-${a.status}">${statusLabel}</span>
+            <span class="status-badge badge-${s.cls}">${s.label}</span>
           </div>
           <div class="cliente-nome">${cliente}</div>
           <div class="servico-nome">${servico}</div>
-          ${(podeChekin || podeCheckout) ? `
+          ${(podeConfirmar || podeFaturar) ? `
           <div class="card-actions">
-            ${podeChekin ? `<button class="btn-action btn-checkin" onclick="checkIn('${a.id}')">▶ Iniciar</button>` : ''}
-            ${podeCheckout ? `<button class="btn-action btn-checkout" onclick="checkOut('${a.id}')">✓ Finalizar</button>` : ''}
+            ${podeConfirmar ? `<button class="btn-action btn-checkin" onclick="confirmar('${a.id}')">✓ Confirmar</button>` : ''}
+            ${podeFaturar   ? `<button class="btn-action btn-checkout" onclick="faturar('${a.id}')">✓ Faturar</button>` : ''}
           </div>` : ''}
         </div>`;
     }).join('');
   }
 
-  // ── Check-in ───────────────────────────────────────────────────────────────
-  async function checkIn(id) {
+  // ── Confirmar (Agendado → Confirmado) ─────────────────────────────────────
+  async function confirmar(id) {
     const btn = document.querySelector(`#card-${id} .btn-checkin`);
     if (btn) btn.disabled = true;
 
     const { error } = await supabase
       .from('atendimento')
-      .update({ status: 'em_andamento', checkin_at: new Date().toISOString() })
+      .update({ status: 'Confirmado' })
       .eq('id', id);
 
     if (error) {
-      mostrarToast('Erro ao iniciar atendimento.');
+      mostrarToast('Erro ao confirmar.');
       if (btn) btn.disabled = false;
       return;
     }
 
-    mostrarToast('✓ Atendimento iniciado!');
+    mostrarToast('✓ Atendimento confirmado!');
     await carregarAgenda();
   }
 
-  // ── Check-out ──────────────────────────────────────────────────────────────
-  async function checkOut(id) {
+  // ── Faturar (Confirmado → Faturado) ───────────────────────────────────────
+  async function faturar(id) {
     const btn = document.querySelector(`#card-${id} .btn-checkout`);
     if (btn) btn.disabled = true;
 
     const { error } = await supabase
       .from('atendimento')
-      .update({ status: 'concluido', checkout_at: new Date().toISOString() })
+      .update({ status: 'Faturado', faturado_em: new Date().toISOString() })
       .eq('id', id);
 
     if (error) {
-      mostrarToast('Erro ao finalizar atendimento.');
+      mostrarToast('Erro ao faturar.');
       if (btn) btn.disabled = false;
       return;
     }
 
-    mostrarToast('✓ Atendimento concluído!');
+    mostrarToast('✓ Atendimento faturado!');
     await carregarAgenda();
   }
 

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#c8a97e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Minha Agenda — Hara</title>
+  <link rel="manifest" href="/manifest.json" />
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f7fb;
+      min-height: 100dvh;
+      padding-bottom: 32px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1a1a2e, #0f3460);
+      color: white;
+      padding: 20px 20px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .header h2 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .header .data {
+      font-size: 13px;
+      opacity: 0.75;
+      margin-top: 2px;
+    }
+
+    .header .nome {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+
+    .btn-sair {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* ── Resumo do dia ── */
+    .resumo {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .resumo-card {
+      background: white;
+      border-radius: 14px;
+      padding: 14px 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .resumo-card .num {
+      font-size: 26px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .resumo-card .label {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .resumo-card.destaque .num { color: #c8a97e; }
+
+    /* ── Lista de atendimentos ── */
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 16px;
+      margin-bottom: 10px;
+    }
+
+    .lista {
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .atendimento-card {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      border-left: 4px solid #e0e0e0;
+      transition: transform 0.1s;
+    }
+
+    .atendimento-card:active { transform: scale(0.99); }
+
+    .atendimento-card.agendado  { border-left-color: #4a90d9; }
+    .atendimento-card.em_andamento { border-left-color: #f0a500; }
+    .atendimento-card.concluido { border-left-color: #4caf50; }
+    .atendimento-card.cancelado { border-left-color: #e74c3c; opacity: 0.6; }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .horario {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1a2e;
+    }
+
+    .duracao {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 1px;
+    }
+
+    .status-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .badge-agendado     { background: #e8f1fb; color: #4a90d9; }
+    .badge-em_andamento { background: #fff3cd; color: #b07d00; }
+    .badge-concluido    { background: #e8f5e9; color: #388e3c; }
+    .badge-cancelado    { background: #fdecea; color: #c62828; }
+
+    .cliente-nome {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 2px;
+    }
+
+    .servico-nome {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn-action:active { transform: scale(0.97); }
+    .btn-action:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-checkin  { background: #f0a500; color: white; }
+    .btn-checkout { background: #4caf50; color: white; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 48px 24px;
+      color: #aaa;
+    }
+
+    .empty .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty p { font-size: 15px; }
+
+    /* ── Loading ── */
+    .loading {
+      text-align: center;
+      padding: 48px;
+      color: #aaa;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid #e0e0e0;
+      border-top-color: #c8a97e;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a2e;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <h2 id="headerNome">Minha Agenda</h2>
+      <div class="data" id="headerData"></div>
+    </div>
+    <button class="btn-sair" onclick="sair()">Sair</button>
+  </div>
+</div>
+
+<!-- Resumo -->
+<div class="resumo" id="resumo" style="display:none">
+  <div class="resumo-card">
+    <div class="num" id="totalAgendados">0</div>
+    <div class="label">Agendados</div>
+  </div>
+  <div class="resumo-card destaque">
+    <div class="num" id="totalConcluidos">0</div>
+    <div class="label">Concluídos</div>
+  </div>
+  <div class="resumo-card">
+    <div class="num" id="totalRestantes">0</div>
+    <div class="label">Restantes</div>
+  </div>
+</div>
+
+<!-- Lista -->
+<div class="section-title" id="sectionTitle" style="display:none">Atendimentos de hoje</div>
+<div class="lista" id="lista">
+  <div class="loading"><div class="spinner"></div></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+  const SUPABASE_URL = 'https://rymehgsoarjeecuwyhny.supabase.co';
+  const SUPABASE_ANON = 'YOUR_SUPABASE_ANON_KEY'; // substitua pela anon key
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // ── Verifica auth ──────────────────────────────────────────────────────────
+  const cpf   = localStorage.getItem('hara_cpf');
+  const nome  = localStorage.getItem('hara_nome');
+
+  if (!cpf) {
+    window.location.href = '/mobile/';
+  }
+
+  supabase.auth.getSession().then(({ data: { session } }) => {
+    if (!session) window.location.href = '/mobile/';
+  });
+
+  // ── Header ─────────────────────────────────────────────────────────────────
+  document.getElementById('headerNome').textContent = nome || 'Minha Agenda';
+  document.getElementById('headerData').textContent = new Date().toLocaleDateString('pt-BR', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+
+  // ── Carrega atendimentos ───────────────────────────────────────────────────
+  async function carregarAgenda() {
+    const hoje = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('atendimento')
+      .select(`
+        id,
+        data,
+        horario,
+        status,
+        duracao,
+        cliente:cliente_id ( nome ),
+        servico:servico_id ( nome )
+      `)
+      .eq('funcionario_cpf', cpf)
+      .eq('data', hoje)
+      .order('horario', { ascending: true });
+
+    if (error) {
+      console.error(error);
+      document.getElementById('lista').innerHTML = `
+        <div class="empty">
+          <div class="icon">⚠️</div>
+          <p>Erro ao carregar agenda.</p>
+        </div>`;
+      return;
+    }
+
+    renderizarLista(data || []);
+  }
+
+  function renderizarLista(atendimentos) {
+    const lista = document.getElementById('lista');
+
+    // Resumo
+    const concluidos  = atendimentos.filter(a => a.status === 'concluido').length;
+    const agendados   = atendimentos.filter(a => ['agendado','em_andamento'].includes(a.status)).length;
+    const restantes   = atendimentos.filter(a => a.status === 'agendado').length;
+
+    document.getElementById('totalAgendados').textContent  = agendados;
+    document.getElementById('totalConcluidos').textContent = concluidos;
+    document.getElementById('totalRestantes').textContent  = restantes;
+    document.getElementById('resumo').style.display = 'grid';
+    document.getElementById('sectionTitle').style.display = 'block';
+
+    if (atendimentos.length === 0) {
+      lista.innerHTML = `
+        <div class="empty">
+          <div class="icon">🌿</div>
+          <p>Nenhum atendimento hoje.</p>
+        </div>`;
+      return;
+    }
+
+    lista.innerHTML = atendimentos.map(a => {
+      const statusLabel = {
+        agendado:     'Agendado',
+        em_andamento: 'Em andamento',
+        concluido:    'Concluído',
+        cancelado:    'Cancelado'
+      }[a.status] || a.status;
+
+      const horario = a.horario ? a.horario.substring(0, 5) : '--:--';
+      const duracao = a.duracao ? `${a.duracao} min` : '';
+      const cliente = a.cliente?.nome || 'Cliente';
+      const servico = a.servico?.nome || '';
+
+      const podeChekin  = a.status === 'agendado';
+      const podeCheckout = a.status === 'em_andamento';
+
+      return `
+        <div class="atendimento-card ${a.status}" id="card-${a.id}">
+          <div class="card-top">
+            <div>
+              <div class="horario">${horario}</div>
+              <div class="duracao">${duracao}</div>
+            </div>
+            <span class="status-badge badge-${a.status}">${statusLabel}</span>
+          </div>
+          <div class="cliente-nome">${cliente}</div>
+          <div class="servico-nome">${servico}</div>
+          ${(podeChekin || podeCheckout) ? `
+          <div class="card-actions">
+            ${podeChekin ? `<button class="btn-action btn-checkin" onclick="checkIn('${a.id}')">▶ Iniciar</button>` : ''}
+            ${podeCheckout ? `<button class="btn-action btn-checkout" onclick="checkOut('${a.id}')">✓ Finalizar</button>` : ''}
+          </div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  // ── Check-in ───────────────────────────────────────────────────────────────
+  async function checkIn(id) {
+    const btn = document.querySelector(`#card-${id} .btn-checkin`);
+    if (btn) btn.disabled = true;
+
+    const { error } = await supabase
+      .from('atendimento')
+      .update({ status: 'em_andamento', checkin_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      mostrarToast('Erro ao iniciar atendimento.');
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    mostrarToast('✓ Atendimento iniciado!');
+    await carregarAgenda();
+  }
+
+  // ── Check-out ──────────────────────────────────────────────────────────────
+  async function checkOut(id) {
+    const btn = document.querySelector(`#card-${id} .btn-checkout`);
+    if (btn) btn.disabled = true;
+
+    const { error } = await supabase
+      .from('atendimento')
+      .update({ status: 'concluido', checkout_at: new Date().toISOString() })
+      .eq('id', id);
+
+    if (error) {
+      mostrarToast('Erro ao finalizar atendimento.');
+      if (btn) btn.disabled = false;
+      return;
+    }
+
+    mostrarToast('✓ Atendimento concluído!');
+    await carregarAgenda();
+  }
+
+  // ── Sair ───────────────────────────────────────────────────────────────────
+  async function sair() {
+    localStorage.removeItem('hara_cpf');
+    localStorage.removeItem('hara_nome');
+    localStorage.removeItem('hara_cargo');
+    await supabase.auth.signOut();
+    window.location.href = '/mobile/';
+  }
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function mostrarToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  carregarAgenda();
+
+  // Auto-refresh a cada 60s
+  setInterval(carregarAgenda, 60000);
+</script>
+
+</body>
+</html>

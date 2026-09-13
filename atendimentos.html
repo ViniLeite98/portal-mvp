@@ -1262,8 +1262,13 @@ async function carregarDados(){
     .order("nome_profissional");
   todosTerapeutas=ters||[];
   const u = window.usuarioLogado;
-  if(u && ["Terapeuta Feminina","Terapeuta Masculino"].includes(u.cargo)) {
-    todosTerapeutas = todosTerapeutas.filter(t => t.cpf === u.cpf);
+  // se o usuário logado é terapeuta, mostra só a coluna dela
+  if(u && u.cpf) {
+    const {data:funcLogado} = await client.from("funcionario")
+      .select("cargo").eq("cpf", u.cpf).single();
+    if(funcLogado && ["Terapeuta Feminina","Terapeuta Masculino"].includes(funcLogado.cargo)) {
+      todosTerapeutas = todosTerapeutas.filter(t => t.cpf === u.cpf);
+    }
   }
   aplicarColunasConfig();
   colunasConfig = todosTerapeutas.map(t => { const saved = carregarColunasConfig(); const s = saved ? saved.find(x => x.cpf === t.cpf) : null; return { cpf: t.cpf, nome: t.nome_profissional, visivel: s ? s.visivel : true }; });

@@ -88,6 +88,11 @@ function authLogout() {
 }
 
 function authInit() {
+  var paginaAtual = location.pathname.split("/").pop() || "";
+
+  // onboarding.html não precisa de perfil — só de sessão
+  if (paginaAtual === "onboarding.html") return;
+
   client.auth.getSession().then(function(res) {
     var session = res.data && res.data.session;
 
@@ -102,10 +107,17 @@ function authInit() {
       .single()
       .then(function(res2) {
         var perfil = res2.data;
-        var role   = (perfil && perfil.role)          || "usuario";
-        var nome   = (perfil && perfil.nome)          || (perfil && perfil.email) || session.user.email;
-        var email  = (perfil && perfil.email)         || session.user.email;
-        var cpf    = (perfil && perfil.cpf_terapeuta) || null;
+
+        // ── Sem perfil → onboarding ──
+        if (!perfil) {
+          location.href = "onboarding.html";
+          return;
+        }
+
+        var role  = perfil.role  || "usuario";
+        var nome  = perfil.nome  || perfil.email || session.user.email;
+        var email = perfil.email || session.user.email;
+        var cpf   = perfil.cpf_terapeuta || null;
 
         if (AUTH_ROLE_EXIGIDO === "admin" && role !== "admin") {
           location.href = "equipe.html";
@@ -113,18 +125,28 @@ function authInit() {
         }
 
         if (role !== "admin" && role !== "apoio" && cpf) {
-          client.from("terapeutas")
-            .select("nome_profissional")
+          client.from("funcionario")
+            .select("nome_profissional,status,cpf")
             .eq("cpf", cpf)
             .limit(1)
             .then(function(res3) {
               var ter = res3.data && res3.data[0];
+
+              // bloqueia inativo
+              if (ter && ter.status === "Inativo") {
+                client.auth.signOut().then(function() {
+                  location.href = "login.html?inativo=1";
+                });
+                return;
+              }
+
               window.usuarioLogado = {
                 id:    session.user.id,
                 role:  role,
                 nome:  (ter && ter.nome_profissional) || nome,
                 email: email,
-                cpf:   cpf
+                cpf:   cpf,
+                cargo: ter && ter.cargo || null
               };
               var el = document.getElementById("sidebar");
               if (el) el.innerHTML = authBuildSidebar(role, window.usuarioLogado.nome);
@@ -135,7 +157,8 @@ function authInit() {
             role:  role,
             nome:  nome,
             email: email,
-            cpf:   cpf
+            cpf:   cpf,
+            cargo: null
           };
           var el = document.getElementById("sidebar");
           if (el) el.innerHTML = authBuildSidebar(role, nome);

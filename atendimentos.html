@@ -677,12 +677,12 @@ let cliExtras = [];
 let ssAgCli = null, ssAgCliEx = null;
 let ncCallback = null;
 let viewAtual = 'agenda';
-let semanaOffset = 0; // semanas a partir da semana atual
+let semanaOffset = 0;
 let horariosMap = {}; // cpf -> {hora_entrada, hora_saida, disponivel}
 
-const HORA_INI = 8;   // 08:00
-const HORA_FIM = 23;  // até 23:00
-const SLOT_H   = 48;  // px por 30min
+const HORA_INI = 8;
+const HORA_FIM = 23;
+const SLOT_H   = 48;
 
 const fmtM = v => Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const fmtH = v => v ? v.substring(0,5) : "";
@@ -703,7 +703,7 @@ const DIAS_ABREV = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 function getInicioSemana(offset=0) {
   const d = new Date();
   d.setHours(12,0,0,0);
-  const dow = d.getDay(); // 0=dom
+  const dow = d.getDay();
   d.setDate(d.getDate() - dow + offset*7);
   return d;
 }
@@ -742,10 +742,9 @@ function selecionarDia(d) {
 
 function mudarSemana(dir) {
   semanaOffset += dir;
-  // ajusta dataSel para o mesmo dia da semana na nova semana
   const dias = getDiasSemana(semanaOffset);
   const hj = hoje();
-  dataSel = dias.includes(hj) ? hj : dias[1]; // Segunda como default
+  dataSel = dias.includes(hj) ? hj : dias[1];
   renderDiasSemana();
   carregar();
 }
@@ -773,7 +772,7 @@ function renderAgenda() {
   const grid = document.getElementById("agendaGrid");
   grid.innerHTML = "";
 
-  const slotCount = (HORA_FIM - HORA_INI) * 2; // slots de 30min
+  const slotCount = (HORA_FIM - HORA_INI) * 2;
 
   // coluna de horas
   const horaCol = document.createElement("div");
@@ -784,7 +783,8 @@ function renderAgenda() {
     const m = i%2===0 ? "00" : "30";
     const slot = document.createElement("div");
     slot.className = "hora-slot";
-    if(i%2===0){slot.innerHTML=`<span style="color:#9ca3af">${String(h).padStart(2,"0")}:${m}</span>`;}else{slot.innerHTML=`<span style="font-size:10px;color:#9ca3af">${String(h).padStart(2,"0")}:30</span>`;}
+    if(i%2===0){slot.innerHTML=`<span style="color:#9ca3af">${String(h).padStart(2,"0")}:${m}</span>`;}
+    else{slot.innerHTML=`<span style="font-size:10px;color:#9ca3af">${String(h).padStart(2,"0")}:30</span>`;}
     horaCol.appendChild(slot);
   }
   grid.appendChild(horaCol);
@@ -798,11 +798,19 @@ function renderAgenda() {
   todosTerapeutas.forEach(t => agPorTer[t.cpf] = []);
   agendamentos.forEach(a => {
     if(agPorTer[a.terapeuta1_cpf]) agPorTer[a.terapeuta1_cpf].push(a);
-    // se ter2, aparece nos dois
     if(a.terapeuta2_cpf && agPorTer[a.terapeuta2_cpf]) agPorTer[a.terapeuta2_cpf].push(a);
   });
 
-  const tersVisiveis = colunasConfig.length ? todosTerapeutas.filter(t => { const c = colunasConfig.find(x => x.cpf === t.cpf); return !c || c.visivel; }) : todosTerapeutas;
+  // ── FILTRO: só terapeutas visíveis E com agenda no dia (disponivel !== false) ──
+  const tersVisiveis = (colunasConfig.length
+    ? todosTerapeutas.filter(t => { const c = colunasConfig.find(x => x.cpf === t.cpf); return !c || c.visivel; })
+    : todosTerapeutas
+  ).filter(t => {
+    const h = horariosMap[t.cpf];
+    // mostra se: não tem registro de horário (sem restrição) OU disponivel não é explicitamente false
+    return !h || h.disponivel !== false;
+  });
+
   tersVisiveis.forEach(ter => {
     const col = document.createElement("div");
     col.className = "ter-col";
@@ -819,7 +827,6 @@ function renderAgenda() {
     body.style.height = (slotCount * SLOT_H) + "px";
     body.style.position = "relative";
 
-    // slots clicáveis (bloqueados fora da jornada)
     const jornadaTer = horariosMap[ter.cpf] || {};
     const entMin = jornadaTer.hora_entrada ? toMin(jornadaTer.hora_entrada) : null;
     const saiMin = jornadaTer.hora_saida   ? toMin(jornadaTer.hora_saida)   : null;
@@ -851,7 +858,7 @@ function renderAgenda() {
       const topPx = ((iniMin - HORA_INI*60) / 30) * SLOT_H;
       const hPx   = Math.max(((fimMin - iniMin) / 30) * SLOT_H - 2, SLOT_H - 2);
 
-      if(topPx < 0) return; // fora do range
+      if(topPx < 0) return;
 
       const nomeC = a.cliente?.nome || "—";
       const tel = (a.cliente?.telefone_1||"").replace(/\D/g,"");
@@ -876,7 +883,6 @@ function renderAgenda() {
 
   grid.appendChild(terCols);
 
-  // scroll para 08:00
   setTimeout(() => {
     const wrap = document.getElementById("viewAgenda");
     wrap.scrollTop = 0;
@@ -887,7 +893,6 @@ function renderAgenda() {
 async function carregar() {
   atualizarKPILabel();
 
-  // busca horários da grade semanal para o dia selecionado
   horariosMap = {};
   if(todosTerapeutas.length) {
     const dow = new Date(dataSel+"T12:00:00").getDay();
@@ -926,9 +931,7 @@ async function carregar() {
   else { renderCards(); renderLista(); }
 }
 
-function atualizarKPILabel() {
-  // nada por agora, label está fixo
-}
+function atualizarKPILabel() {}
 
 function renderKPIs() {
   const conf=agendamentos.filter(a=>a.status==="Confirmado"||a.status==="Faturado");
@@ -939,7 +942,6 @@ function renderKPIs() {
   document.getElementById("kAgend").textContent=agendamentos.filter(a=>a.status==="Agendado").length;
   document.getElementById("kReceita").textContent=fmtM(receita);
   document.getElementById("kSinais").textContent=fmtM(sinais);
-  // totais por forma de pagamento (só faturados)
   let kDin=0,kPix=0,kDeb=0,kCre=0;
   agendamentos.filter(a=>a.status==="Faturado").forEach(a=>{
     [[a.forma_pgto_1,a.valor_pgto_1],[a.forma_pgto_2,a.valor_pgto_2]].forEach(([f,v])=>{
@@ -1254,7 +1256,6 @@ async function carregarDados(){
     .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"])
     .order("nome_profissional");
   todosTerapeutas=ters||[];
-  // se for terapeuta, filtra só a coluna dela
   const u = window.usuarioLogado;
   if(u && ["Terapeuta Feminina","Terapeuta Masculino"].includes(u.cargo)) {
     todosTerapeutas = todosTerapeutas.filter(t => t.cpf === u.cpf);
@@ -1675,7 +1676,7 @@ function fecharModal(id){document.getElementById(id).classList.remove("open");}
 
 // ── GERENCIAR COLUNAS ──
 const STORAGE_KEY = 'hara_colunas_config';
-let colunasConfig = []; // [{cpf, nome, visivel}] em ordem
+let colunasConfig = [];
 
 function carregarColunasConfig() {
   try {
@@ -1692,7 +1693,6 @@ function salvarColunasNoStorage(cfg) {
 function aplicarColunasConfig() {
   const saved = carregarColunasConfig();
   if(!saved || !todosTerapeutas.length) return;
-  // ordena todosTerapeutas conforme salvo, mantém novos no fim
   const ordem = saved.map(s => s.cpf);
   const salvosSet = new Set(ordem);
   const ordenados = [];
@@ -1700,10 +1700,8 @@ function aplicarColunasConfig() {
     const t = todosTerapeutas.find(x => x.cpf === cpf);
     if(t) ordenados.push(t);
   });
-  // novos terapeutas não salvos vão pro fim
   todosTerapeutas.forEach(t => { if(!salvosSet.has(t.cpf)) ordenados.push(t); });
   todosTerapeutas = ordenados;
-  // aplica visibilidade
   colunasConfig = todosTerapeutas.map(t => {
     const s = saved.find(x => x.cpf === t.cpf);
     return { cpf: t.cpf, nome: t.nome_profissional, visivel: s ? s.visivel : true };
@@ -1711,7 +1709,6 @@ function aplicarColunasConfig() {
 }
 
 function abrirGerenciarColunas() {
-  // sincroniza config com terapeutas atuais
   colunasConfig = todosTerapeutas.map(t => {
     const ex = colunasConfig.find(c => c.cpf === t.cpf);
     return { cpf: t.cpf, nome: t.nome_profissional, visivel: ex ? ex.visivel : true };
@@ -1734,7 +1731,6 @@ function renderColunasLista() {
       <button class="col-vis ${c.visivel ? 'ativo' : 'inativo'}" onclick="toggleVisCol(${i})" title="${c.visivel ? 'Ocultar' : 'Mostrar'}">
         <i class="fa ${c.visivel ? 'fa-eye' : 'fa-eye-slash'}"></i>
       </button>`;
-    // drag events
     item.addEventListener('dragstart', e => {
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', i);
@@ -1764,7 +1760,6 @@ function toggleVisCol(idx) {
 
 function salvarColunas() {
   salvarColunasNoStorage(colunasConfig);
-  // reordena todosTerapeutas
   todosTerapeutas = colunasConfig.map(c => todosTerapeutas.find(t => t.cpf === c.cpf)).filter(Boolean);
   fecharModal('modalColunas');
   renderAgenda();

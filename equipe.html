@@ -691,17 +691,11 @@ function renderHorarioGrid() {
   grid.innerHTML = banner + DIAS_SEMANA.map(dia => {
     const h = horariosDados[dia];
 
-    // padrão de disponibilidade:
-    // - Domingo sem dado salvo → folga
-    // - dia de folga fixa sem dado salvo → folga
-    // - demais → disponível
-    const defaultDisp = (dia === "Domingo")
-      ? false
-      : (folhaFixaDia ? dia !== folhaFixaDia : true);
-
-    const disp = h ? h.disponivel : defaultDisp;
-    const hEnt = h ? (h.hora_entrada||"").slice(0,5) : (disp ? hEntPad : "");
-    const hSai = h ? (h.hora_saida||"").slice(0,5)   : (disp ? hSaiPad : "");
+    // folga fixa e domingo têm prioridade absoluta sobre o dado salvo no banco
+    const forceFolga = (dia === "Domingo") || (folhaFixaDia === dia);
+    const disp = forceFolga ? false : (h ? h.disponivel : true);
+    const hEnt = (!disp) ? "" : (h ? (h.hora_entrada||"").slice(0,5) : hEntPad);
+    const hSai = (!disp) ? "" : (h ? (h.hora_saida||"").slice(0,5)   : hSaiPad);
 
     const temSol = !!solicitacaoAtiva && disp;
     const hEntSol = solicitacaoAtiva?.hora_inicio?.slice(0,5)||"";

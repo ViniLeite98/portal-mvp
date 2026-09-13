@@ -908,14 +908,19 @@ async function carregar() {
         disponivel:   h.disponivel
       };
     });
-    // fallback: usa hora_entrada/hora_saida do próprio registro funcionario
+    // fallback + força folga em Domingo e dia de folga fixa
     todosTerapeutas.forEach(t => {
+      const eFolga = diaNome === "Domingo"
+        || (t.tem_folga === "Sim" && t.dia_folga === diaNome);
       if(!horariosMap[t.cpf]) {
         horariosMap[t.cpf] = {
-          hora_entrada: t.hora_entrada?.slice(0,5) || null,
-          hora_saida:   t.hora_saida?.slice(0,5)   || null,
-          disponivel:   true
+          hora_entrada: eFolga ? null : (t.hora_entrada?.slice(0,5) || null),
+          hora_saida:   eFolga ? null : (t.hora_saida?.slice(0,5)   || null),
+          disponivel:   !eFolga
         };
+      } else if(eFolga) {
+        // tem registro no banco mas é dia de folga — força indisponível
+        horariosMap[t.cpf].disponivel = false;
       }
     });
   }

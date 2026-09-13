@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Bem-vindo | Hara Spa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--cream:#fdf8f3;--stone:#2c2420;--rose:#c4826a;--gold:#b8986a;--muted:#8a7b72;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 20px;}
+.card{background:#fff;border-radius:20px;box-shadow:0 8px 40px rgba(44,36,32,.12);width:100%;max-width:460px;overflow:hidden;}
+.card-header{background:var(--stone);padding:32px 36px;text-align:center;}
+.card-header .brand-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--rose),var(--gold));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 14px;}
+.card-header h1{font-family:'Playfair Display',serif;font-size:22px;color:#fff;font-weight:400;margin-bottom:6px;}
+.card-header p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.6;}
+.card-body{padding:32px 36px;}
+.steps{display:flex;gap:0;margin-bottom:28px;}
+.step{flex:1;text-align:center;position:relative;}
+.step:not(:last-child)::after{content:"";position:absolute;top:14px;left:50%;width:100%;height:2px;background:#e8e2db;z-index:0;}
+.step-dot{width:28px;height:28px;border-radius:50%;background:#e8e2db;color:#9ca3af;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;position:relative;z-index:1;transition:all .3s;}
+.step.ativo .step-dot{background:var(--rose);color:#fff;}
+.step.feito .step-dot{background:#16a34a;color:#fff;}
+.step-label{font-size:10px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+.step.ativo .step-label{color:var(--stone);}
+.painel{display:none;}
+.painel.ativo{display:block;}
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px;}
+.field input,.field select{width:100%;padding:12px 14px;border:1.5px solid #e8e2db;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;color:var(--stone);background:#fff;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:var(--rose);box-shadow:0 0 0 4px rgba(196,130,106,.1);}
+.field input::placeholder{color:#c8bfb8;}
+.field-hint{font-size:11px;margin-top:5px;display:none;}
+.field-hint.ok{color:#16a34a;display:block;}
+.field-hint.err{color:#c0392b;display:block;}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-top:4px;}
+.btn-main{background:var(--stone);color:#fff;}
+.btn-main:hover{background:#1a1410;transform:translateY(-1px);box-shadow:0 8px 24px rgba(44,36,32,.2);}
+.btn-main:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:none;}
+.btn-ghost{background:#fff;color:var(--muted);border:1.5px solid #e8e2db;margin-top:10px;}
+.btn-ghost:hover{background:#fdf8f3;}
+.msg{padding:11px 14px;border-radius:8px;font-size:13px;margin-bottom:18px;display:none;}
+.msg.e{background:#fdf2f0;border:1px solid #f5c4b8;color:#a0402a;display:block;}
+.msg.s{background:#f0faf5;border:1px solid #b8dfc8;color:#2a6644;display:block;}
+.avatar-wrap{text-align:center;margin-bottom:24px;}
+.avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--rose),var(--gold));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:#fff;margin:0 auto 8px;}
+.avatar-nome{font-size:15px;font-weight:600;color:var(--stone);}
+.avatar-email{font-size:12px;color:var(--muted);}
+.sucesso-wrap{text-align:center;padding:16px 0;}
+.sucesso-wrap i{font-size:48px;color:#16a34a;margin-bottom:16px;display:block;}
+.sucesso-wrap h3{font-family:'Playfair Display',serif;font-size:20px;color:var(--stone);margin-bottom:8px;}
+.sucesso-wrap p{font-size:13px;color:var(--muted);line-height:1.6;}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <div class="brand-icon">🌸</div>
+    <h1>Bem-vindo ao Hara Spa</h1>
+    <p>Precisamos de algumas informações para configurar seu perfil</p>
+  </div>
+  <div class="card-body">
+
+    <!-- Steps -->
+    <div class="steps">
+      <div class="step ativo" id="step1">
+        <div class="step-dot">1</div>
+        <div class="step-label">Perfil</div>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-dot">2</div>
+        <div class="step-label">Dados</div>
+      </div>
+      <div class="step" id="step3">
+        <div class="step-dot">3</div>
+        <div class="step-label">Pronto</div>
+      </div>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <!-- Painel 1: confirmação do perfil Google -->
+    <div class="painel ativo" id="p1">
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatarLetra">?</div>
+        <div class="avatar-nome" id="avatarNome">Carregando...</div>
+        <div class="avatar-email" id="avatarEmail"></div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:24px;line-height:1.6">
+        Identificamos sua conta Google. Vamos completar seu cadastro no sistema.
+      </p>
+      <button class="btn btn-main" onclick="irParaPasso2()">
+        <i class="fa fa-arrow-right"></i> Continuar
+      </button>
+      <button class="btn btn-ghost" onclick="sair()">
+        <i class="fa fa-arrow-left"></i> Usar outra conta
+      </button>
+    </div>
+
+    <!-- Painel 2: dados complementares -->
+    <div class="painel" id="p2">
+      <div class="field">
+        <label>Nome Completo *</label>
+        <input type="text" id="obNome" placeholder="Seu nome completo">
+      </div>
+      <div class="field">
+        <label>Nome Profissional *</label>
+        <input type="text" id="obNomeProf" placeholder="Como aparece no sistema">
+      </div>
+      <div class="field">
+        <label>CPF *</label>
+        <input type="text" id="obCpf" placeholder="000.000.000-00" maxlength="14" oninput="onCpfInput()">
+        <div class="field-hint" id="hintCpf"></div>
+      </div>
+      <div class="field">
+        <label>Telefone</label>
+        <input type="text" id="obTel" placeholder="(11) 99999-9999" maxlength="15" oninput="onTelInput()">
+      </div>
+      <div class="field">
+        <label>Cargo *</label>
+        <select id="obCargo">
+          <option value="">Selecione seu cargo</option>
+          <option value="Terapeuta Feminina">Terapeuta Feminina</option>
+          <option value="Terapeuta Masculino">Terapeuta Masculino</option>
+          <option value="Recepcionista">Recepcionista</option>
+          <option value="Atendente">Atendente</option>
+          <option value="Gerente">Gerente</option>
+          <option value="Faxineira">Faxineira</option>
+          <option value="Analista">Analista</option>
+        </select>
+      </div>
+      <button class="btn btn-main" id="btnSalvar" onclick="salvar()">
+        <i class="fa fa-check"></i> Criar meu perfil
+      </button>
+      <button class="btn btn-ghost" onclick="voltarPasso1()">
+        <i class="fa fa-arrow-left"></i> Voltar
+      </button>
+    </div>
+
+    <!-- Painel 3: sucesso -->
+    <div class="painel" id="p3">
+      <div class="sucesso-wrap">
+        <i class="fa fa-circle-check"></i>
+        <h3>Perfil criado com sucesso!</h3>
+        <p>Bem-vindo ao Sistema Hara. Você será redirecionado em instantes...</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script>
+var sessaoAtual = null;
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  var res = await client.auth.getSession();
+  var session = res.data && res.data.session;
+
+  if(!session) {
+    location.href = "login.html";
+    return;
+  }
+
+  sessaoAtual = session;
+  var user = session.user;
+  var meta = user.user_metadata || {};
+  var nome = meta.full_name || meta.name || meta.nome || user.email.split("@")[0];
+  var email = user.email;
+  var inicial = nome[0].toUpperCase();
+
+  // se já tem perfil, vai direto pro sistema
+  var perfilRes = await client.from("perfis").select("id").eq("id", user.id).single();
+  if(perfilRes.data) {
+    location.href = "equipe.html";
+    return;
+  }
+
+  // preenche avatar
+  document.getElementById("avatarLetra").textContent = inicial;
+  document.getElementById("avatarNome").textContent = nome;
+  document.getElementById("avatarEmail").textContent = email;
+
+  // pré-preenche nome no passo 2
+  document.getElementById("obNome").value = nome;
+  document.getElementById("obNomeProf").value = nome.split(" ")[0];
+}
+
+// ── Steps ─────────────────────────────────────────────────────────────────────
+function setStep(n) {
+  [1,2,3].forEach(function(i) {
+    var s = document.getElementById("step"+i);
+    var p = document.getElementById("p"+i);
+    s.classList.remove("ativo","feito");
+    p.classList.remove("ativo");
+    if(i < n) s.classList.add("feito");
+    else if(i === n) { s.classList.add("ativo"); p.classList.add("ativo"); }
+  });
+  document.getElementById("msg").className = "msg";
+}
+
+function irParaPasso2() { setStep(2); }
+function voltarPasso1() { setStep(1); }
+
+// ── Máscaras ─────────────────────────────────────────────────────────────────
+function fmtCPF(v) {
+  v = v.replace(/\D/g,"").substring(0,11);
+  if(v.length<=3) return v;
+  if(v.length<=6) return v.slice(0,3)+"."+v.slice(3);
+  if(v.length<=9) return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6);
+  return v.slice(0,3)+"."+v.slice(3,6)+"."+v.slice(6,9)+"-"+v.slice(9);
+}
+function fmtTel(v) {
+  v = v.replace(/\D/g,"").substring(0,11);
+  if(v.length<=2) return v.length?"("+v:v;
+  if(v.length<=6) return "("+v.slice(0,2)+") "+v.slice(2);
+  if(v.length<=10) return "("+v.slice(0,2)+") "+v.slice(2,6)+"-"+v.slice(6);
+  return "("+v.slice(0,2)+") "+v.slice(2,7)+"-"+v.slice(7);
+}
+function validarCPF(cpf) {
+  cpf = cpf.replace(/\D/g,"");
+  if(cpf.length!==11) return false;
+  if(/^(\d)\1{10}$/.test(cpf)) return false;
+  var s=0,r;
+  for(var i=1;i<=9;i++) s+=parseInt(cpf[i-1])*(11-i);
+  r=(s*10)%11; if(r===10||r===11) r=0;
+  if(r!==parseInt(cpf[9])) return false;
+  s=0;
+  for(var i=1;i<=10;i++) s+=parseInt(cpf[i-1])*(12-i);
+  r=(s*10)%11; if(r===10||r===11) r=0;
+  return r===parseInt(cpf[10]);
+}
+function onCpfInput() {
+  var el=document.getElementById("obCpf"),hint=document.getElementById("hintCpf");
+  el.value = fmtCPF(el.value);
+  var d = el.value.replace(/\D/g,"");
+  if(d.length<11){hint.className="field-hint";return;}
+  var ok = validarCPF(d);
+  hint.className = ok?"field-hint ok":"field-hint err";
+  hint.textContent = ok?"✓ CPF válido":"CPF inválido. Verifique os dígitos.";
+}
+function onTelInput() {
+  var el = document.getElementById("obTel");
+  el.value = fmtTel(el.value);
+}
+
+// ── Salvar ────────────────────────────────────────────────────────────────────
+async function salvar() {
+  var nome     = document.getElementById("obNome").value.trim();
+  var nomeProf = document.getElementById("obNomeProf").value.trim();
+  var cpfFmt   = document.getElementById("obCpf").value.trim();
+  var tel      = document.getElementById("obTel").value.trim();
+  var cargo    = document.getElementById("obCargo").value;
+  var cpf      = cpfFmt.replace(/\D/g,"");
+  var msgEl    = document.getElementById("msg");
+
+  if(!nome)     { showMsg("Informe seu nome completo.","e"); return; }
+  if(!nomeProf) { showMsg("Informe seu nome profissional.","e"); return; }
+  if(!cpf || cpf.length!==11 || !validarCPF(cpf)) { showMsg("CPF inválido.","e"); return; }
+  if(!cargo)    { showMsg("Selecione seu cargo.","e"); return; }
+
+  var btn = document.getElementById("btnSalvar");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Salvando...';
+
+  var user  = sessaoAtual.user;
+  var email = user.email;
+  var userId = user.id;
+
+  // define role pelo cargo
+  var role = "usuario";
+  if(["Recepcionista","Gerente","Analista","Atendente"].includes(cargo)) role = "apoio";
+
+  try {
+    // verifica se CPF já existe em funcionario
+    var dupCpf = await client.from("funcionario").select("cpf").eq("cpf",cpf).limit(1);
+    if(dupCpf.data && dupCpf.data.length > 0) {
+      // CPF já existe — só vincula o perfil
+      await client.from("funcionario").update({email:email}).eq("cpf",cpf);
+    } else {
+      // cria funcionario novo
+      await client.from("funcionario").insert({
+        cpf:cpf, nome_completo:nome, nome_profissional:nomeProf,
+        email:email, telefone:tel||null, cargo:cargo, status:"Ativo"
+      });
+    }
+
+    // cria perfil
+    await client.from("perfis").upsert({
+      id: userId, email: email, nome: nomeProf, role: role, cpf_terapeuta: cpf
+    });
+
+    // sucesso
+    setStep(3);
+    setTimeout(function() { location.href = "equipe.html"; }, 2000);
+
+  } catch(e) {
+    showMsg("Erro ao salvar: " + (e.message||"tente novamente."), "e");
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa fa-check"></i> Criar meu perfil';
+  }
+}
+
+function showMsg(txt, tipo) {
+  var el = document.getElementById("msg");
+  el.textContent = txt;
+  el.className = "msg " + tipo;
+}
+
+function sair() {
+  client.auth.signOut().then(function() { location.href = "login.html"; });
+}
+
+init();
+</script>
+</body>
+</html>

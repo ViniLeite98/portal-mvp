@@ -63,7 +63,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;d
   </div>
   <div class="card-body">
 
-    <!-- Steps -->
     <div class="steps">
       <div class="step ativo" id="step1">
         <div class="step-dot">1</div>
@@ -118,19 +117,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;d
         <label>Telefone</label>
         <input type="text" id="obTel" placeholder="(11) 99999-9999" maxlength="15" oninput="onTelInput()">
       </div>
-      <div class="field">
-        <label>Cargo *</label>
-        <select id="obCargo">
-          <option value="">Selecione seu cargo</option>
-          <option value="Terapeuta Feminina">Terapeuta Feminina</option>
-          <option value="Terapeuta Masculino">Terapeuta Masculino</option>
-          <option value="Recepcionista">Recepcionista</option>
-          <option value="Atendente">Atendente</option>
-          <option value="Gerente">Gerente</option>
-          <option value="Faxineira">Faxineira</option>
-          <option value="Analista">Analista</option>
-        </select>
-      </div>
       <button class="btn btn-main" id="btnSalvar" onclick="salvar()">
         <i class="fa fa-check"></i> Criar meu perfil
       </button>
@@ -156,41 +142,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);min-height:100vh;d
 <script>
 var sessaoAtual = null;
 
-// ── Init ─────────────────────────────────────────────────────────────────────
 async function init() {
   var res = await client.auth.getSession();
   var session = res.data && res.data.session;
-
-  if(!session) {
-    location.href = "login.html";
-    return;
-  }
+  if(!session) { location.href = "login.html"; return; }
 
   sessaoAtual = session;
-  var user = session.user;
-  var meta = user.user_metadata || {};
-  var nome = meta.full_name || meta.name || meta.nome || user.email.split("@")[0];
+  var user  = session.user;
+  var meta  = user.user_metadata || {};
+  var nome  = meta.full_name || meta.name || meta.nome || user.email.split("@")[0];
   var email = user.email;
-  var inicial = nome[0].toUpperCase();
 
-  // se já tem perfil, vai direto pro sistema
+  // se já tem perfil vai direto pro sistema
   var perfilRes = await client.from("perfis").select("id").eq("id", user.id).single();
-  if(perfilRes.data) {
-    location.href = "equipe.html";
-    return;
-  }
+  if(perfilRes.data) { location.href = "equipe.html"; return; }
 
-  // preenche avatar
-  document.getElementById("avatarLetra").textContent = inicial;
-  document.getElementById("avatarNome").textContent = nome;
+  document.getElementById("avatarLetra").textContent = nome[0].toUpperCase();
+  document.getElementById("avatarNome").textContent  = nome;
   document.getElementById("avatarEmail").textContent = email;
-
-  // pré-preenche nome no passo 2
-  document.getElementById("obNome").value = nome;
+  document.getElementById("obNome").value     = nome;
   document.getElementById("obNomeProf").value = nome.split(" ")[0];
 }
 
-// ── Steps ─────────────────────────────────────────────────────────────────────
 function setStep(n) {
   [1,2,3].forEach(function(i) {
     var s = document.getElementById("step"+i);
@@ -206,7 +179,6 @@ function setStep(n) {
 function irParaPasso2() { setStep(2); }
 function voltarPasso1() { setStep(1); }
 
-// ── Máscaras ─────────────────────────────────────────────────────────────────
 function fmtCPF(v) {
   v = v.replace(/\D/g,"").substring(0,11);
   if(v.length<=3) return v;
@@ -235,71 +207,62 @@ function validarCPF(cpf) {
   return r===parseInt(cpf[10]);
 }
 function onCpfInput() {
-  var el=document.getElementById("obCpf"),hint=document.getElementById("hintCpf");
+  var el=document.getElementById("obCpf"), hint=document.getElementById("hintCpf");
   el.value = fmtCPF(el.value);
   var d = el.value.replace(/\D/g,"");
   if(d.length<11){hint.className="field-hint";return;}
   var ok = validarCPF(d);
-  hint.className = ok?"field-hint ok":"field-hint err";
+  hint.className   = ok?"field-hint ok":"field-hint err";
   hint.textContent = ok?"✓ CPF válido":"CPF inválido. Verifique os dígitos.";
 }
 function onTelInput() {
-  var el = document.getElementById("obTel");
-  el.value = fmtTel(el.value);
+  document.getElementById("obTel").value = fmtTel(document.getElementById("obTel").value);
 }
 
-// ── Salvar ────────────────────────────────────────────────────────────────────
 async function salvar() {
   var nome     = document.getElementById("obNome").value.trim();
   var nomeProf = document.getElementById("obNomeProf").value.trim();
   var cpfFmt   = document.getElementById("obCpf").value.trim();
   var tel      = document.getElementById("obTel").value.trim();
-  var cargo    = document.getElementById("obCargo").value;
   var cpf      = cpfFmt.replace(/\D/g,"");
-  var msgEl    = document.getElementById("msg");
 
   if(!nome)     { showMsg("Informe seu nome completo.","e"); return; }
   if(!nomeProf) { showMsg("Informe seu nome profissional.","e"); return; }
   if(!cpf || cpf.length!==11 || !validarCPF(cpf)) { showMsg("CPF inválido.","e"); return; }
-  if(!cargo)    { showMsg("Selecione seu cargo.","e"); return; }
 
   var btn = document.getElementById("btnSalvar");
   btn.disabled = true;
   btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Salvando...';
 
-  var user  = sessaoAtual.user;
-  var email = user.email;
+  var user   = sessaoAtual.user;
+  var email  = user.email;
   var userId = user.id;
-
-  // define role pelo cargo
-  var role = "usuario";
-  if(["Recepcionista","Gerente","Analista","Atendente"].includes(cargo)) role = "apoio";
+  var role   = "usuario"; // admin define cargo/role depois
 
   try {
     // verifica se CPF já existe em funcionario
     var dupCpf = await client.from("funcionario").select("cpf").eq("cpf",cpf).limit(1);
     if(dupCpf.data && dupCpf.data.length > 0) {
-      // CPF já existe — só vincula o perfil
+      // CPF já existe — só vincula email
       await client.from("funcionario").update({email:email}).eq("cpf",cpf);
     } else {
-      // cria funcionario novo
+      // cria funcionario novo sem cargo (admin preenche depois)
       await client.from("funcionario").insert({
         cpf:cpf, nome_completo:nome, nome_profissional:nomeProf,
-        email:email, telefone:tel||null, cargo:cargo, status:"Ativo"
+        email:email, telefone:tel||null, status:"Ativo"
       });
     }
 
-    // cria perfil
+    // cria perfil com role usuario
     await client.from("perfis").upsert({
-      id: userId, email: email, nome: nomeProf, role: role, cpf_terapeuta: cpf
+      id:userId, email:email, nome:nomeProf, role:role, cpf_terapeuta:cpf
     });
 
-    // sucesso
     setStep(3);
     setTimeout(function() { location.href = "equipe.html"; }, 2000);
 
   } catch(e) {
-    showMsg("Erro ao salvar: " + (e.message||"tente novamente."), "e");
+    showMsg("Erro ao salvar: "+(e.message||"tente novamente."),"e");
     btn.disabled = false;
     btn.innerHTML = '<i class="fa fa-check"></i> Criar meu perfil';
   }
@@ -308,9 +271,8 @@ async function salvar() {
 function showMsg(txt, tipo) {
   var el = document.getElementById("msg");
   el.textContent = txt;
-  el.className = "msg " + tipo;
+  el.className = "msg "+tipo;
 }
-
 function sair() {
   client.auth.signOut().then(function() { location.href = "login.html"; });
 }

@@ -714,17 +714,17 @@ function getDiasSemana(offset=0) {
     const d = new Date(ini);
     d.setDate(d.getDate()+i);
     return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().split("T")[0];
-  });
+  }).filter((_,i) => i !== 0); // remove Domingo (índice 0)
 }
 
 function renderDiasSemana() {
   const dias = getDiasSemana(semanaOffset);
   const hj = hoje();
   const el = document.getElementById("diasSemana");
-  el.innerHTML = dias.map((d,i) => {
+  el.innerHTML = dias.map((d) => {
     const dt = new Date(d+"T12:00:00");
     const num = dt.getDate();
-    const nome = DIAS_ABREV[i];
+    const nome = DIAS_ABREV[dt.getDay()];
     const isHoje = d === hj;
     const isAtivo = d === dataSel;
     return `<div class="dia-pill${isHoje?" hoje":""}${isAtivo?" ativo":""}" onclick="selecionarDia('${d}')">
@@ -744,7 +744,7 @@ function mudarSemana(dir) {
   semanaOffset += dir;
   const dias = getDiasSemana(semanaOffset);
   const hj = hoje();
-  dataSel = dias.includes(hj) ? hj : dias[1];
+  dataSel = dias.includes(hj) ? hj : dias[0];
   renderDiasSemana();
   carregar();
 }

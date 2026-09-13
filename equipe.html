@@ -660,11 +660,18 @@ function setForm(data){
 // ── HORÁRIOS ────────────────────────────────────────────────────────────────
 let horariosDados = {};
 let solicitacaoAtiva = null;
+let folhaFixaDia = null; // dia de folga fixa vindo do cadastro funcional
 
 function renderHorarioGrid() {
   const grid = document.getElementById("horarioGrid");
   const hEntPad = document.getElementById("hora_entrada").value || "09:00";
   const hSaiPad = document.getElementById("hora_saida").value || "18:00";
+
+  // lê folga fixa do cadastro funcional para usar como padrão
+  const temFolga = document.getElementById("tem_folga")?.value;
+  const diaFolga = document.getElementById("dia_folga")?.value;
+  folhaFixaDia = (temFolga === "Sim" && diaFolga) ? diaFolga : null;
+
   let banner = "";
   if(solicitacaoAtiva) {
     const di = solicitacaoAtiva.data_inicio ? new Date(solicitacaoAtiva.data_inicio+"T12:00:00").toLocaleDateString("pt-BR") : "—";
@@ -680,15 +687,27 @@ function renderHorarioGrid() {
       </div>
     </div>`;
   }
+
   grid.innerHTML = banner + DIAS_SEMANA.map(dia => {
     const h = horariosDados[dia];
-    const disp = h ? h.disponivel : true;
-    const hEnt = h ? (h.hora_entrada||"").slice(0,5) : hEntPad;
-    const hSai = h ? (h.hora_saida||"").slice(0,5) : hSaiPad;
+
+    // padrão de disponibilidade:
+    // - Domingo sem dado salvo → folga
+    // - dia de folga fixa sem dado salvo → folga
+    // - demais → disponível
+    const defaultDisp = (dia === "Domingo")
+      ? false
+      : (folhaFixaDia ? dia !== folhaFixaDia : true);
+
+    const disp = h ? h.disponivel : defaultDisp;
+    const hEnt = h ? (h.hora_entrada||"").slice(0,5) : (disp ? hEntPad : "");
+    const hSai = h ? (h.hora_saida||"").slice(0,5)   : (disp ? hSaiPad : "");
+
     const temSol = !!solicitacaoAtiva && disp;
     const hEntSol = solicitacaoAtiva?.hora_inicio?.slice(0,5)||"";
     const hSaiSol = solicitacaoAtiva?.hora_fim?.slice(0,5)||"";
     const tagTemp = temSol ? `<span style="font-size:10px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:4px;padding:1px 6px;margin-left:6px;white-space:nowrap"><i class="fa fa-clock"></i> Temp: ${hEntSol}–${hSaiSol}</span>` : "";
+
     return `<div class="horario-row${!disp?" indisponivel":""}" id="hrow-${dia}">
       <div class="horario-dia" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">${dia}${tagTemp}</div>
       <input type="time" class="horario-input" id="hent-${dia}" value="${disp?hEnt:""}" ${!disp?"disabled":""}>
@@ -723,12 +742,10 @@ function toggleDia(dia, disponivel) {
 }
 
 async function carregarHorarios(cpf) {
-  horariosDados = {}; solicitacaoAtiva = null;
+  horariosDados = {}; solicitacaoAtiva = null; folhaFixaDia = null;
   const hoje = new Date().toISOString().split("T")[0];
   const [resHor, resSol] = await Promise.all([
-    // funcionario_horario (ex-terapeutas_horarios)
     client.from("funcionario_horario").select("*").eq("terapeuta_cpf", cpf),
-    // funcionario_solicitacao (ex-solicitacoes)
     client.from("funcionario_solicitacao")
       .select("tipo,hora_inicio,hora_fim,data_inicio,data_fim,status")
       .eq("terapeuta_cpf", cpf).eq("tipo", "Alteração de Horário").eq("status", "Acordado")
@@ -740,14 +757,27 @@ async function carregarHorarios(cpf) {
 
 async function salvarHorarios() {
   if(!cpfAtual) { alert("Salve o cadastro primeiro."); return; }
+
+  // lê folga fixa para usar como padrão caso grid não tenha sido renderizado
+  const temFolga = document.getElementById("tem_folga")?.value;
+  const diaFolga = document.getElementById("dia_folga")?.value;
+  const folga = (temFolga === "Sim" && diaFolga) ? diaFolga : null;
+
   const rows = DIAS_SEMANA.map(dia => {
     const chk = document.querySelector(`#hrow-${dia} input[type=checkbox]`);
-    const disp = chk ? chk.checked : true;
+    const defaultDisp = (dia === "Domingo") ? false : (folga ? dia !== folga : true);
+    const disp = chk ? chk.checked : defaultDisp;
     const hEnt = document.getElementById("hent-"+dia)?.value || null;
     const hSai = document.getElementById("hsai-"+dia)?.value || null;
-    return { terapeuta_cpf: cpfAtual, dia_semana: dia, disponivel: disp, hora_entrada: disp && hEnt ? hEnt : null, hora_saida: disp && hSai ? hSai : null };
+    return {
+      terapeuta_cpf: cpfAtual,
+      dia_semana: dia,
+      disponivel: disp,
+      hora_entrada: disp && hEnt ? hEnt : null,
+      hora_saida:   disp && hSai ? hSai : null
+    };
   });
-  // funcionario_horario (ex-terapeutas_horarios)
+
   const{error} = await client.from("funcionario_horario").upsert(rows, {onConflict: "terapeuta_cpf,dia_semana"});
   if(error){ alert("Erro ao salvar horários: "+error.message); return; }
   await carregarHorarios(cpfAtual);
@@ -814,7 +844,6 @@ async function carregar(){
   const btnNovo=document.getElementById("btnNovoCadastro");
   if(btnNovo)btnNovo.style.display=podeNovo?"":"none";
   const statusFiltro=document.getElementById("filtroStatus").value;
-  // funcionario (ex-terapeutas)
   let query=client.from("funcionario").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro)query=query.eq("status",statusFiltro);
   if(u&&u.role==="usuario"&&u.cpf)query=query.eq("cpf",u.cpf.replace(/\D/g,''));
@@ -900,6 +929,7 @@ function resetModal(){
   document.getElementById("filaFoto").innerHTML="";
   document.getElementById("btnEnviarFotos").style.display="none";
   horariosDados={};
+  folhaFixaDia=null;
   const campoRole=document.getElementById("campo_role");
   const roleEl=document.getElementById("role_usuario");
   const isAdmin=window.usuarioLogado?.role==="admin";
@@ -929,7 +959,6 @@ function abrirNovo(){
 
 async function editar(cpf){
   cpfAtual=cpf;cpfEdicaoHabilitada=false;
-  // funcionario (ex-terapeutas)
   const {data,error}=await client.from("funcionario").select("*").eq("cpf",cpf).single();
   if(error){console.error(error);return;}
   resetModal();setForm(data);bloquearCPF();
@@ -964,7 +993,6 @@ async function salvar(){
   if(!cpfAtual){
     if(!payload.cpf){alert("CPF é obrigatório.");return;}
     const cpfNovo=limparCPF(payload.cpf);
-    // funcionario (ex-terapeutas)
     const {data:existente}=await client.from("funcionario").select("cpf").eq("cpf",cpfNovo).limit(1);
     if(existente&&existente.length>0){alert("CPF já cadastrado.");return;}
     const {error}=await client.from("funcionario").insert({...payload,cpf:cpfNovo});
@@ -1006,9 +1034,7 @@ async function salvar(){
     const {error:errInsert}=await client.from("funcionario").insert(novoRegistro);
     if(errInsert){alert("Erro ao criar registro: "+errInsert.message);return;}
     await client.from("documentos").update({equipe_id:cpfNovo}).eq("equipe_id",cpfAntigo);
-    // funcionario_solicitacao (ex-solicitacoes)
     await client.from("funcionario_solicitacao").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
-    // funcionario_horario (ex-terapeutas_horarios)
     await client.from("funcionario_horario").update({terapeuta_cpf:cpfNovo}).eq("terapeuta_cpf",cpfAntigo);
     await client.from("perfis").update({cpf_terapeuta:cpfNovo}).eq("cpf_terapeuta",cpfAntigo);
     const {error:errDel}=await client.from("funcionario").delete().eq("cpf",cpfAntigo);
@@ -1017,7 +1043,6 @@ async function salvar(){
   } else {
     if(u&&u.role==="usuario"&&u.cpf&&u.cpf!==cpfAtual){alert("Sem permissão.");return;}
     const updatePayload={...payload};delete updatePayload.cpf;
-    // funcionario (ex-terapeutas)
     const {error}=await client.from("funcionario").update(updatePayload).eq("cpf",cpfAtual);
     if(error){alert("Erro ao salvar: "+error.message);return;}
   }
@@ -1042,11 +1067,8 @@ async function excluir(cpf){
   if(!confirm("Excluir este registro e todos os documentos vinculados?"))return;
   const {data:docs}=await client.from("documentos").select("id").eq("equipe_id",cpf);
   if(docs&&docs.length>0){ await client.from("documentos").delete().eq("equipe_id",cpf); }
-  // funcionario_solicitacao (ex-solicitacoes)
   await client.from("funcionario_solicitacao").delete().eq("terapeuta_cpf",cpf);
-  // funcionario_horario (ex-terapeutas_horarios)
   await client.from("funcionario_horario").delete().eq("terapeuta_cpf",cpf);
-  // funcionario (ex-terapeutas)
   const {error}=await client.from("funcionario").delete().eq("cpf",cpf);
   if(error){alert("Erro ao excluir: "+error.message);return;}
   carregar();

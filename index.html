@@ -20,15 +20,15 @@ p{font-size:13px;color:#8a7b72;}
 <script src="assets/js/supabase.js"></script>
 <script>
 async function verificar() {
-  // aguarda o Supabase processar o hash da URL (OAuth callback)
-  await client.auth.getSession();
-
   // escuta mudança de sessão (necessário para OAuth redirect)
   client.auth.onAuthStateChange(async function(event, session) {
     if(event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-      if(!session) {
-        location.href = "login.html";
-        return;
+      if(!session) { location.href = "login.html"; return; }
+
+      // se veio do Google, define senha padrão hara2026
+      const provider = session.user.app_metadata?.provider;
+      if(provider === "google") {
+        await client.auth.updateUser({ password: "hara2026" });
       }
 
       var res = await client.from("perfis")
@@ -37,10 +37,8 @@ async function verificar() {
         .single();
 
       if(!res.data) {
-        // sem perfil → onboarding
         location.href = "onboarding.html";
       } else {
-        // tem perfil → sistema
         location.href = "equipe.html";
       }
     } else if(event === "SIGNED_OUT") {
@@ -51,9 +49,12 @@ async function verificar() {
   // fallback: se já tem sessão ativa (não veio de OAuth)
   var res = await client.auth.getSession();
   var session = res.data && res.data.session;
-  if(!session) {
-    location.href = "login.html";
-    return;
+  if(!session) { location.href = "login.html"; return; }
+
+  // se veio do Google, define senha padrão hara2026
+  const provider = session.user.app_metadata?.provider;
+  if(provider === "google") {
+    await client.auth.updateUser({ password: "hara2026" });
   }
 
   var perfilRes = await client.from("perfis")

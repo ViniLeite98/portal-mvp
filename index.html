@@ -1,11 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="refresh" content="0;url=dashboard.html">
 <title>Hara Spa</title>
+<style>
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#fdf8f3;display:flex;align-items:center;justify-content:center;min-height:100vh;}
+.loader{text-align:center;}
+.spinner{width:36px;height:36px;border:3px solid #e8e2db;border-top-color:#c4826a;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+p{font-size:13px;color:#8a7b72;}
+</style>
 </head>
 <body>
-<script>window.location.href = "dashboard.html";</script>
+<div class="loader">
+  <div class="spinner"></div>
+  <p>Carregando...</p>
+</div>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script>
+async function verificar() {
+  // aguarda o Supabase processar o hash da URL (OAuth callback)
+  await client.auth.getSession();
+
+  // escuta mudança de sessão (necessário para OAuth redirect)
+  client.auth.onAuthStateChange(async function(event, session) {
+    if(event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+      if(!session) {
+        location.href = "login.html";
+        return;
+      }
+
+      var res = await client.from("perfis")
+        .select("id,role")
+        .eq("id", session.user.id)
+        .single();
+
+      if(!res.data) {
+        // sem perfil → onboarding
+        location.href = "onboarding.html";
+      } else {
+        // tem perfil → sistema
+        location.href = "equipe.html";
+      }
+    } else if(event === "SIGNED_OUT") {
+      location.href = "login.html";
+    }
+  });
+
+  // fallback: se já tem sessão ativa (não veio de OAuth)
+  var res = await client.auth.getSession();
+  var session = res.data && res.data.session;
+  if(!session) {
+    location.href = "login.html";
+    return;
+  }
+
+  var perfilRes = await client.from("perfis")
+    .select("id,role")
+    .eq("id", session.user.id)
+    .single();
+
+  if(!perfilRes.data) {
+    location.href = "onboarding.html";
+  } else {
+    location.href = "equipe.html";
+  }
+}
+
+verificar();
+</script>
 </body>
 </html>

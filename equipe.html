@@ -837,10 +837,24 @@ async function carregar(){
   const podeNovo=u&&(u.role==="admin"||u.role==="apoio");
   const btnNovo=document.getElementById("btnNovoCadastro");
   if(btnNovo)btnNovo.style.display=podeNovo?"":"none";
+
+  // terapeuta: oculta filtros e abre direto o próprio perfil
+  if(u.role==="usuario"&&u.cpf){
+    const topbar=document.querySelector(".topbar");
+    const tabela=document.querySelector("table");
+    const pag=document.getElementById("paginacao");
+    const hint=document.querySelector("main .content > div[style*='margin-top:24px']");
+    if(topbar)topbar.style.display="none";
+    if(tabela)tabela.style.display="none";
+    if(pag)pag.style.display="none";
+    if(hint)hint.style.display="none";
+    await editar(u.cpf.replace(/\D/g,''));
+    return;
+  }
+
   const statusFiltro=document.getElementById("filtroStatus").value;
   let query=client.from("funcionario").select("cpf,nome_profissional,status,cargo").order("nome_profissional");
   if(statusFiltro)query=query.eq("status",statusFiltro);
-  if(u&&u.role==="usuario"&&u.cpf)query=query.eq("cpf",u.cpf.replace(/\D/g,''));
   const {data,error}=await query;
   if(error){console.error(error);return;}
   todosRegistros = data || []; paginaAtual = 1; aplicarOrdemEFiltro(); checarBtnLimpar();
@@ -977,9 +991,14 @@ async function editar(cpf){
     })();
   }
   document.getElementById("modal").style.display="flex";
+  // terapeuta não tem tabela para voltar — oculta fechar e cancelar
+  const uLogado=window.usuarioLogado;
+  const ehTer=uLogado&&uLogado.role==="usuario";
+  const btnFch=document.querySelector("#modal .btn-fechar");
+  const btnCnc=document.querySelector("#modal .btn-cancel");
+  if(btnFch)btnFch.style.display=ehTer?"none":"";
+  if(btnCnc)btnCnc.style.display=ehTer?"none":"";
 }
-
-function fecharModal(){document.getElementById("modal").style.display="none";}
 
 async function salvar(){
   const u=window.usuarioLogado;const payload=getPayload();

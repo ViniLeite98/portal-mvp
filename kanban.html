@@ -251,6 +251,7 @@ const COLUNAS_SEED = [
 
 let COLUNAS = [], cards = [], pessoas = [];
 let cardAtivo = null, editandoId = null, draggingId = null;
+let cpfTerapeutaLogada = null; // null = admin/apoio, string = só vê os dela
 
 function getColuna(id) { return COLUNAS.find(c => c.id === id); }
 function getPessoa(id) { return pessoas.find(p => p.id === id); }
@@ -377,8 +378,9 @@ function abrirModalNovo(colunaPreset) {
   document.getElementById('novaData').value = '';
   document.getElementById('novaArea').value = '';
   document.getElementById('novaPrioridade').value = 'Media';
-  document.getElementById('novoResponsavel').value = '';
   document.getElementById('novaTag').value = '';
+  // pré-seleciona a terapeuta logada se aplicável
+  document.getElementById('novoResponsavel').value = cpfTerapeutaLogada || '';
   popularSelectsColunas();
   if (colunaPreset) document.getElementById('novaColuna').value = colunaPreset;
   document.getElementById('modalNovo').classList.add('open');
@@ -418,6 +420,8 @@ async function salvarCard() {
   if (error) { alert('Erro ao salvar: '+error.message); return; }
   fecharModalNovo();
   await carregarCards();
+  // mantém filtro da terapeuta
+  if(cpfTerapeutaLogada) filtrar();
 }
 
 function abrirDetalhe(id) {
@@ -492,6 +496,7 @@ async function excluirCardModal() {
   if (error) { toast('Erro ao excluir', true); return; }
   fecharModalDetalhe();
   await carregarCards();
+  if(cpfTerapeutaLogada) filtrar();
   toast('Card excluído.');
 }
 
@@ -536,7 +541,7 @@ async function init() {
     if (n <= 0) return cb(null);
     setTimeout(() => waitUser(cb, n-1), 100);
   }
-  waitUser(async function() {
+  waitUser(async function(u) {
     let {data:colData, error:colErr} = await client
       .from('parametros').select('id,valor,descricao,ordem')
       .eq('tipo','kanban_colunas').eq('ativo',true).order('ordem');
@@ -551,22 +556,47 @@ async function init() {
       .sort((a,b) => (a.ordem??9999)-(b.ordem??9999))
       .map(c => ({id:c.id, nome:c.valor, cor:c.descricao||'#6b7280', ordem:c.ordem}));
 
-    // funcionario (ex-terapeutas)
+    // carrega todos os funcionários ativos
     const {data:ter} = await client.from('funcionario')
-      .select('cpf,nome_profissional').eq('status','Ativo').order('nome_profissional');
+      .select('cpf,nome_profissional,cargo').eq('status','Ativo').order('nome_profissional');
+
     const coresPessoa = ['#6366f1','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#d946ef'];
-    pessoas = (ter||[]).map(t => ({
-      id: t.cpf, nome: t.nome_profissional,
+    let todasPessoas = (ter||[]).map(t => ({
+      id: t.cpf, nome: t.nome_profissional, cargo: t.cargo,
       cor: coresPessoa[t.nome_profissional.charCodeAt(0) % coresPessoa.length]
     }));
+
+    // ── se for terapeuta, filtra só ela ──
+    if(u && u.cpf) {
+      const funcLogado = todasPessoas.find(p => p.id === u.cpf);
+      if(funcLogado && ["Terapeuta Feminina","Terapeuta Masculino"].includes(funcLogado.cargo)) {
+        cpfTerapeutaLogada = u.cpf;
+        pessoas = todasPessoas.filter(p => p.id === u.cpf);
+      } else {
+        pessoas = todasPessoas;
+      }
+    } else {
+      pessoas = todasPessoas;
+    }
+
     const sf = document.getElementById('filtroResponsavel');
     const sn = document.getElementById('novoResponsavel');
     pessoas.forEach(p => {
       sf.innerHTML += '<option value="'+p.id+'">'+p.nome+'</option>';
       sn.innerHTML += '<option value="'+p.id+'">'+p.nome+'</option>';
     });
+
+    // pré-seleciona filtro e responsável padrão se for terapeuta
+    if(cpfTerapeutaLogada) {
+      sf.value = cpfTerapeutaLogada;
+      sn.value = cpfTerapeutaLogada;
+    }
+
     popularSelectsColunas();
     await carregarCards();
+
+    // aplica filtro automaticamente se for terapeuta
+    if(cpfTerapeutaLogada) filtrar();
   });
 }
 

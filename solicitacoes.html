@@ -113,7 +113,7 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
     <button id="btnNovaSol" class="btn-novo" onclick="abrirNovo()"><i class="fa fa-plus"></i> Nova Solicitação</button>
   </div>
   <div class="filters-row">
-    <div class="filter-group">
+    <div class="filter-group" id="grupoBuscaNome">
       <span class="filter-label"><i class="fa fa-search" style="margin-right:3px"></i> Busca</span>
       <input type="text" id="buscaNome" placeholder="Buscar profissional...">
     </div>
@@ -139,12 +139,12 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 <table>
   <thead>
     <tr>
-      <th class="sortable" onclick="ordenar('nome')" id="th-nome">Profissional <i class="fa fa-sort sort-icon"></i></th>
+      <th class="sortable th-admin" onclick="ordenar('nome')" id="th-nome">Profissional <i class="fa fa-sort sort-icon"></i></th>
       <th class="sortable" onclick="ordenar('tipo')" id="th-tipo">Tipo <i class="fa fa-sort sort-icon"></i></th>
       <th>Período</th>
       <th>Horário Alterado</th>
       <th class="sortable" onclick="ordenar('status')" id="th-status">Status <i class="fa fa-sort sort-icon"></i></th>
-      <th>Acordado / Rejeitado por</th>
+      <th class="th-admin">Acordado / Rejeitado por</th>
       <th>Atestado</th>
       <th>Ações</th>
     </tr>
@@ -341,12 +341,12 @@ document.addEventListener("DOMContentLoaded",function(){
         const btnReprovar=(podeGerenciar&&s.status!=="Não Acordado")?"<button class='btn-reprovar' onclick=\"abrirConfirmar('"+s.id+"','Não Acordado')\"><i class='fa fa-times'></i></button>":"";
         const btnExcluir=podeGerenciar?"<button class='btn-excluir' onclick=\"excluir('"+s.id+"','"+((s.arquivo_url||"").replace(/'/g,"\\'"))+"')\"><i class='fa fa-trash'></i></button>":"";
         tbody.innerHTML+="<tr>"
-          +"<td><strong>"+nome+"</strong></td>"
+          +"<td class='td-admin'><strong>"+nome+"</strong></td>"
           +"<td>"+s.tipo+"</td>"
           +"<td style='white-space:nowrap'>"+fmtData(s.data_inicio)+" → "+fmtData(s.data_fim)+"</td>"
           +"<td>"+horarioCol+"</td>"
           +"<td><span class='badge "+badgeClass+"'><i class='fa "+iconeStatus+"'></i> "+s.status+"</span></td>"
-          +"<td style='font-size:12px;color:#6b7280'>"+(s.aprovado_por?"<i class='fa fa-user'></i> "+s.aprovado_por:"—")+"</td>"
+          +"<td class='td-admin' style='font-size:12px;color:#6b7280'>"+(s.aprovado_por?"<i class='fa fa-user'></i> "+s.aprovado_por:"—")+"</td>"
           +"<td>"+arquivoCol+"</td>"
           +"<td style='white-space:nowrap;display:flex;gap:4px'>"
             +"<button onclick=\"abrirEditar('"+s.id+"')\"><i class='fa fa-pencil'></i></button>"
@@ -396,6 +396,16 @@ document.addEventListener("DOMContentLoaded",function(){
       const btn=document.getElementById("btnNovaSol");
       if(btn)btn.style.display="inline-flex";
       window._podeGerenciar=podeVerTudo(u);
+
+      // adapta UI por role
+      const ehTerapeuta=eUsuario(u);
+      const grupoBusca=document.getElementById("grupoBuscaNome");
+      if(grupoBusca)grupoBusca.style.display=ehTerapeuta?"none":"";
+      document.querySelectorAll(".th-admin").forEach(el=>el.style.display=ehTerapeuta?"none":"");
+      let style=document.getElementById("style-role");
+      if(!style){style=document.createElement("style");style.id="style-role";document.head.appendChild(style);}
+      style.textContent=ehTerapeuta?".td-admin{display:none!important}":"";
+
       paginaAtual=0;aplicarFiltroEOrdem();
     });
   }

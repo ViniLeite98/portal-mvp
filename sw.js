@@ -43,14 +43,11 @@ self.addEventListener('activate', function(e) {
 
 // estratégia: network first, fallback para cache
 self.addEventListener('fetch', function(e) {
-  // ignora requisições não-GET e do Supabase (sempre online)
   if (e.request.method !== 'GET') return;
   if (e.request.url.includes('supabase.co')) return;
-
   e.respondWith(
     fetch(e.request)
       .then(function(response) {
-        // atualiza cache com resposta nova
         var clone = response.clone();
         caches.open(CACHE_NAME).then(function(cache) {
           cache.put(e.request, clone);
@@ -58,10 +55,44 @@ self.addEventListener('fetch', function(e) {
         return response;
       })
       .catch(function() {
-        // offline: serve do cache
         return caches.match(e.request).then(function(cached) {
           return cached || caches.match('/login.html');
         });
       })
+  );
+});
+
+// ── PUSH: recebe e exibe a notificação ───────────────────────────────────
+self.addEventListener('push', function(e) {
+  var data = {};
+  try { data = e.data.json(); } catch(err) {
+    data = { title: 'Hara Spa', body: e.data ? e.data.text() : 'Nova notificação' };
+  }
+  e.waitUntil(
+    self.registration.showNotification(data.title || 'Hara Spa', {
+      body:    data.body  || '',
+      icon:    '/assets/icon-192.png',
+      badge:   '/assets/icon-192.png',
+      tag:     data.tag   || 'hara-notif',
+      data:    { url: data.url || '/atendimentos.html' },
+      vibrate: [200, 100, 200],
+      actions: [{ action: 'ver', title: 'Ver agendamento' }]
+    })
+  );
+});
+
+// ── CLICK: abre o app ao clicar na notificação ───────────────────────────
+self.addEventListener('notificationclick', function(e) {
+  e.notification.close();
+  var url = (e.notification.data && e.notification.data.url) || '/atendimentos.html';
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(list) {
+      for (var i = 0; i < list.length; i++) {
+        if (list[i].url.includes(url) && 'focus' in list[i]) {
+          return list[i].focus();
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(url);
+    })
   );
 });

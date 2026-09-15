@@ -3,6 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <title>Hara Spa</title>
+<!-- ── PWA ── -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#2c2420">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hara Spa">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('SW:',e);});});}</script>
+<!-- ── fim PWA ── -->
 <style>
 body{margin:0;font-family:'Segoe UI',sans-serif;background:#fdf8f3;display:flex;align-items:center;justify-content:center;min-height:100vh;}
 .loader{text-align:center;}
@@ -20,22 +30,17 @@ p{font-size:13px;color:#8a7b72;}
 <script src="assets/js/supabase.js"></script>
 <script>
 async function verificar() {
-  // escuta mudança de sessão (necessário para OAuth redirect)
   client.auth.onAuthStateChange(async function(event, session) {
     if(event === "SIGNED_IN" || event === "INITIAL_SESSION") {
       if(!session) { location.href = "login.html"; return; }
-
-      // se veio do Google, define senha padrão hara2026
       const provider = session.user.app_metadata?.provider;
       if(provider === "google") {
         await client.auth.updateUser({ password: "hara2026" });
       }
-
       var res = await client.from("perfis")
         .select("id,role")
         .eq("id", session.user.id)
         .single();
-
       if(!res.data) {
         location.href = "onboarding.html";
       } else {
@@ -46,22 +51,17 @@ async function verificar() {
     }
   });
 
-  // fallback: se já tem sessão ativa (não veio de OAuth)
   var res = await client.auth.getSession();
   var session = res.data && res.data.session;
   if(!session) { location.href = "login.html"; return; }
-
-  // se veio do Google, define senha padrão hara2026
   const provider = session.user.app_metadata?.provider;
   if(provider === "google") {
     await client.auth.updateUser({ password: "hara2026" });
   }
-
   var perfilRes = await client.from("perfis")
     .select("id,role")
     .eq("id", session.user.id)
     .single();
-
   if(!perfilRes.data) {
     location.href = "onboarding.html";
   } else {

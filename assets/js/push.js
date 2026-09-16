@@ -59,9 +59,14 @@ async function salvarSubscription(sub, u) {
     subscription:  sub.toJSON()
   };
 
-  // upsert baseado em user_id
-  await client.from('push_subscriptions')
-    .upsert(payload, { onConflict: 'user_id' });
+  // tenta upsert por user_id, se falhar faz insert simples
+  var res = await client.from('push_subscriptions')
+    .upsert(payload, { onConflict: 'user_id', ignoreDuplicates: false });
+
+  if(res.error) {
+    // fallback: insert direto
+    await client.from('push_subscriptions').insert(payload);
+  }
 }
 
 // roda depois que o usuário logado estiver disponível

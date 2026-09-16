@@ -838,17 +838,9 @@ async function carregar(){
   const btnNovo=document.getElementById("btnNovoCadastro");
   if(btnNovo)btnNovo.style.display=podeNovo?"":"none";
 
-  // terapeuta: oculta filtros e abre direto o próprio perfil
+  // terapeuta: vai direto para atendimentos
   if(u.role==="usuario"&&u.cpf){
-    const topbar=document.querySelector(".topbar");
-    const tabela=document.querySelector("table");
-    const pag=document.getElementById("paginacao");
-    const hint=document.querySelector("main .content > div[style*='margin-top:24px']");
-    if(topbar)topbar.style.display="none";
-    if(tabela)tabela.style.display="none";
-    if(pag)pag.style.display="none";
-    if(hint)hint.style.display="none";
-    await editar(u.cpf.replace(/\D/g,''));
+    location.href="atendimentos.html";
     return;
   }
 
@@ -998,10 +990,17 @@ async function editar(cpf){
   const ehTer=uLogado&&uLogado.role==="usuario";
   const btnFch=document.querySelector("#modal .btn-fechar");
   const btnCnc=document.querySelector("#modal .btn-cancel");
-  // só oculta fechar/cancelar se for terapeuta (não pode voltar para tabela)
-  // admin e apoio sempre veem os botões
-  if(btnFch)btnFch.style.display=(ehTer&&uLogado.cpf===cpf.replace(/\D/g,''))?"none":"";
-  if(btnCnc)btnCnc.style.display=(ehTer&&uLogado.cpf===cpf.replace(/\D/g,''))?"none":"";
+  // admin/apoio: fechar normal
+  // terapeuta: mostra botão mas redireciona para atendimentos
+  if(btnFch) {
+    btnFch.style.display="";
+    if(ehTer) {
+      btnFch.onclick = function() { location.href="atendimentos.html"; };
+    }
+  }
+  if(btnCnc) {
+    btnCnc.style.display = ehTer ? "none" : "";
+  }
 }
 
 async function salvar(){

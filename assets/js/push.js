@@ -59,31 +59,34 @@ async function salvarSubscription(sub, u) {
     subscription:  sub.toJSON()
   };
 
-  // tenta upsert por user_id, se falhar faz insert simples
-  var res = await client.from('push_subscriptions')
-    .upsert(payload, { onConflict: 'user_id', ignoreDuplicates: false });
+  console.log('[Push] Salvando subscription para:', u.cpf, payload);
+
+  // delete antigo e insere novo
+  await client.from('push_subscriptions').delete().eq('user_id', u.id);
+  var res = await client.from('push_subscriptions').insert(payload);
 
   if(res.error) {
-    // fallback: insert direto
-    await client.from('push_subscriptions').insert(payload);
+    console.error('[Push] Erro ao salvar:', res.error);
+  } else {
+    console.log('[Push] Subscription salva com sucesso!');
   }
 }
 
 // roda depois que o usuário logado estiver disponível
 function initPush() {
-  if (window.usuarioLogado) {
-    registrarPush();
-  } else {
-    var tentativas = 0;
-    var intervalo = setInterval(function() {
-      tentativas++;
-      if (window.usuarioLogado) {
-        clearInterval(intervalo);
-        registrarPush();
-      }
-      if (tentativas > 30) clearInterval(intervalo);
-    }, 300);
-  }
+  var tentativas = 0;
+  var intervalo = setInterval(function() {
+    tentativas++;
+    if (window.usuarioLogado) {
+      clearInterval(intervalo);
+      console.log('[Push] Usuário logado encontrado, iniciando push...');
+      registrarPush();
+    }
+    if (tentativas > 60) { // 18 segundos
+      clearInterval(intervalo);
+      console.warn('[Push] Timeout esperando usuário logado');
+    }
+  }, 300);
 }
 
 document.addEventListener('DOMContentLoaded', initPush);

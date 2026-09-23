@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Serviços | Hara Spa</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
@@ -107,6 +108,72 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .paleta-item.sel .ck{display:flex;}
 .cor-preview-wrap{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:#6b7280;}
 .cor-preview-box{width:28px;height:28px;border-radius:6px;border:1px dashed #d1d5db;flex-shrink:0;}
+
+/* ════════════ MOBILE ════════════ */
+@media (max-width: 768px) {
+  /* ── Layout geral ── */
+  html,body{overflow-x:hidden;}
+  #sidebar{width:auto;}
+  .content{padding:16px 16px 96px;min-width:0;max-width:100vw;}
+  button.exportar{padding:9px 12px;}
+
+  /* ── Botão Novo Serviço flutuante ── */
+  #btnNovo{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:56px;height:56px;padding:0;border-radius:50%;font-size:0;gap:0;background:#2563eb;box-shadow:0 6px 18px rgba(37,99,235,.4);z-index:900;align-items:center;justify-content:center;}
+  #btnNovo i{font-size:22px;}
+  #btnNovo:active{transform:scale(.94);}
+
+  /* ── Filtros: busca em cima, status + grupo lado a lado ── */
+  .filters-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .filter-group:first-child{grid-column:1/-1;}
+  .filter-group input{width:100%;}
+  .filter-group select,.grupo-dropdown-btn{min-width:0;width:100%;}
+  .filter-group input,.filter-group select,.grupo-dropdown-btn{font-size:16px;}
+  #grupoDropdownLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .grupo-dropdown-menu{left:auto;right:0;}
+  .btn-limpar.visible{grid-column:1/-1;justify-content:center;}
+
+  /* ── Legenda compacta ── */
+  .grupos-bar{gap:6px 12px;}
+  .grupos-bar-label{width:100%;}
+
+  /* ── Tabela vira cards ── */
+  .table-wrap{background:transparent;box-shadow:none;border-radius:0;overflow:visible;}
+  .content table, .content tbody, .content tr, .content td{display:block;width:100%;}
+  .content table{min-width:0 !important;max-width:100%;}
+  .content thead{display:none;}
+  .content tbody tr{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:10px;padding:12px 14px;}
+  .content tr:hover td{background:transparent;}
+  .content td{display:flex !important;justify-content:space-between;align-items:center;gap:12px;padding:5px 0;border:none;font-size:14px;text-align:right !important;white-space:normal !important;min-width:0;}
+  .content td::before{font-size:12px;font-weight:600;color:#9ca3af;flex-shrink:0;text-align:left;}
+  .content td:nth-child(1){font-size:16px;text-align:left !important;padding-bottom:8px;margin-bottom:4px;border-bottom:1px solid #f3f4f6;}
+  .content td:nth-child(2)::before{content:"Grupo";}
+  .content td:nth-child(3)::before{content:"Tempo";}
+  .content td:nth-child(4)::before{content:"Valor";}
+  .content td:nth-child(5)::before{content:"Comissão";}
+  .content td:nth-child(6)::before{content:"Status";}
+  .content td:nth-child(7){gap:8px;padding-top:10px;}
+  .content td:nth-child(7) button{flex:1;justify-content:center;padding:11px;font-size:14px;}
+  .content td:nth-child(7) button.excluir{flex:0 0 52px;}
+
+  /* linha "nenhum serviço" */
+  .content tr.empty-row{background:transparent;box-shadow:none;padding:0;}
+  .content tr.empty-row td{justify-content:center;text-align:center !important;padding:30px 0;border:none;margin:0;}
+
+  /* ── Paginação ── */
+  .paginacao{flex-direction:column;align-items:center;}
+  .paginacao-controles{flex-wrap:wrap;justify-content:center;}
+
+  /* ── Modal em tela cheia ── */
+  .modal{padding:0;align-items:stretch;}
+  .modal-content{width:100%;height:100dvh;border-radius:0;display:flex;flex-direction:column;}
+  .modal-header{padding:16px 16px 0;flex-shrink:0;}
+  .modal-body{flex:1;overflow-y:auto;padding:16px;}
+  .grid{grid-template-columns:1fr;gap:12px;}
+  .span2{grid-column:auto;}
+  input,select{font-size:16px;padding:10px 12px;}
+  .modal-footer{flex-shrink:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));}
+  .modal-footer button{flex:1;justify-content:center;padding:12px;font-size:14px;}
+}
 </style>
 </head>
 <body>
@@ -123,7 +190,7 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
     </div>
     <div style="display:flex;gap:10px;">
       <button class="exportar" onclick="exportarExcel()"><i class="fa fa-file-excel"></i> Exportar</button>
-      <button onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Serviço</button>
+      <button id="btnNovo" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo Serviço</button>
     </div>
   </div>
   <div class="filters-row">
@@ -224,8 +291,8 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
       <div class="field"><label>Status</label>
         <select id="status"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select>
       </div>
-      <div class="field"><label>Valor (R$)</label><input id="valor" placeholder="0,00"></div>
-      <div class="field"><label>Comissão (R$)</label><input id="comissao" placeholder="0,00"></div>
+      <div class="field"><label>Valor (R$)</label><input id="valor" placeholder="0,00" inputmode="decimal"></div>
+      <div class="field"><label>Comissão (R$)</label><input id="comissao" placeholder="0,00" inputmode="decimal"></div>
       <div class="field span2" id="corGrupoInfo" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px;display:none">
         <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:6px"><i class="fa fa-palette" style="color:#6366f1;margin-right:5px"></i>Cor na agenda</div>
         <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#6b7280">

@@ -1,4 +1,36 @@
 (function() {
+  // ── MODO "VERSÃO COMPLETA" (PC) NO CELULAR ─────────────────────────────────
+  // Se a pessoa escolheu ver a versão completa, trocamos o viewport para 1280px:
+  // o celular passa a mostrar o layout de PC (reduzido), igual ao "Site para computador" do Chrome.
+  var MODO_PC_KEY = 'hara_modo_pc';
+  function modoPCAtivo() {
+    try { return localStorage.getItem(MODO_PC_KEY) === '1'; } catch (e) { return false; }
+  }
+  // tela física pequena (celular/tablet), independente do viewport escolhido
+  function telaPequena() {
+    return Math.min(screen.width, screen.height) <= 1024;
+  }
+  (function aplicarModoPC() {
+    if (!modoPCAtivo()) return;
+    var meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'viewport';
+      document.head.appendChild(meta);
+    }
+    meta.content = 'width=1280';
+  })();
+
+  window.alternarModoPC = function(ev) {
+    if (ev) ev.preventDefault();
+    try {
+      if (modoPCAtivo()) localStorage.removeItem(MODO_PC_KEY);
+      else localStorage.setItem(MODO_PC_KEY, '1');
+    } catch (e) {}
+    window.location.reload();
+  };
+  // ───────────────────────────────────────────────────────────────────────────
+
   var paginaAtual = window.location.pathname.split("/").pop() || "index.html";
   function ativo(pagina) {
     return paginaAtual === pagina ? " active" : "";
@@ -89,6 +121,14 @@
       html += item("parametros.html", "fa-sliders", "Parâmetros");
     }
     html += hr();
+    // só aparece em celular/tablet (no PC não faz sentido)
+    if (telaPequena() || modoPCAtivo()) {
+      html += modoPCAtivo()
+        ? '<a href="#" class="menu-item" onclick="alternarModoPC(event)">' +
+            '<i class="fa-solid fa-mobile-screen"></i><span>Voltar à versão celular</span></a>'
+        : '<a href="#" class="menu-item" onclick="alternarModoPC(event)">' +
+            '<i class="fa-solid fa-desktop"></i><span>Ver versão completa</span></a>';
+    }
     html += '<a href="#" class="menu-item" onclick="sairDoCaixa()" style="color:#f87171">' +
       '<i class="fa-solid fa-arrow-right-from-bracket"></i>' +
       '<span>Sair</span>' +

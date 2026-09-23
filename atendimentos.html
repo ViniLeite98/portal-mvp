@@ -247,6 +247,16 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .fi-pgto{font-size:11px;color:#9ca3af;}
 .fi-val{font-weight:700;color:#16a34a;margin-left:auto;white-space:nowrap;}
 
+/* ── QUEM ESTÁ DISPONÍVEL ── */
+.chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{border:1.5px solid #d1d5db;background:#fff;color:#374151;border-radius:99px;padding:7px 16px;font-size:13px;font-weight:600;cursor:pointer;}
+.chip.ativo{background:#1f2937;color:#fff;border-color:#1f2937;}
+.disp-lista{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;}
+.disp-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.disp-item:last-child{border-bottom:none;}
+.disp-nome{font-weight:600;color:#111827;}
+.disp-sub{font-size:11px;color:#9ca3af;text-align:right;}
+
 /* ════════════ MOBILE ════════════ */
 @media (max-width: 768px) {
   html,body{overflow-x:hidden;}
@@ -340,6 +350,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
       </div>
     </div>
     <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="abrirDisponiveis()"><i class="fa fa-user-clock" style="color:#2563eb"></i> Disponíveis</button>
       <button class="btn btn-ghost" onclick="abrirGerenciarColunas()"><i class="fa fa-sliders"></i> Colunas</button>
       <button class="btn btn-yellow" onclick="abrirFechamento()"><i class="fa fa-cash-register"></i> Fechar Turno</button>
       <button class="btn btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo</button>
@@ -723,6 +734,40 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   <div class="mf">
     <button class="btn btn-ghost" onclick="fecharModal('modalNC')">Cancelar</button>
     <button class="btn btn-blue" onclick="salvarNC()"><i class="fa fa-user-plus"></i> Cadastrar</button>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MODAL QUEM ESTÁ DISPONÍVEL ═══ -->
+<div class="modal" id="modalDisp">
+<div class="mc sm">
+  <div class="mh">
+    <h2><i class="fa fa-user-clock" style="color:#2563eb"></i> Quem está disponível</h2>
+    <button class="btn-x" onclick="fecharModal('modalDisp')"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="mb">
+    <div style="font-size:12px;color:#6b7280;margin-bottom:10px" id="dispDataTxt"></div>
+    <div class="grid2" style="grid-template-columns:1fr 1fr">
+      <div class="mfield"><label>Horário</label><input type="time" id="dispHora" step="1800" oninput="calcDisponiveis()"></div>
+      <div class="mfield"><label>Duração</label>
+        <select id="dispDur" onchange="calcDisponiveis()">
+          <option value="30">30 min</option>
+          <option value="60" selected>60 min</option>
+          <option value="90">90 min</option>
+          <option value="120">120 min</option>
+        </select>
+      </div>
+    </div>
+    <div class="chips" id="dispChips" style="margin-bottom:14px">
+      <button class="chip ativo" onclick="setDispFiltro('',this)">Todos</button>
+      <button class="chip" onclick="setDispFiltro('Terapeuta Feminina',this)">Feminina</button>
+      <button class="chip" onclick="setDispFiltro('Terapeuta Masculino',this)">Masculino</button>
+    </div>
+    <div id="dispResultado"></div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-ghost" onclick="fecharModal('modalDisp')">Fechar</button>
+    <button class="btn btn-green" id="btnCopiarDisp" onclick="copiarDisponiveis()"><i class="fa fa-copy"></i> Copiar lista</button>
   </div>
 </div>
 </div>
@@ -1770,6 +1815,104 @@ async function salvarNC(){
 }
 
 function fecharModal(id){document.getElementById(id).classList.remove("open");}
+
+// ── QUEM ESTÁ DISPONÍVEL ──
+let dispFiltro = '';
+let dispTexto = '';
+let dispSolCache = { data: null, map: {} };
+
+async function abrirDisponiveis() {
+  const horaEl = document.getElementById("dispHora");
+  if(!horaEl.value) {
+    let h = dataSel === hoje() ? new Date().getHours() + 1 : 10;
+    h = Math.min(Math.max(h, HORA_INI), HORA_FIM - 1);
+    horaEl.value = String(h).padStart(2,"0") + ":00";
+  }
+  const dt = new Date(dataSel+"T12:00:00");
+  document.getElementById("dispDataTxt").innerHTML = '<i class="fa fa-calendar"></i> ' + DIAS_PT[dt.getDay()] + ", " + fmtD(dataSel);
+  document.getElementById("modalDisp").classList.add("open");
+  await calcDisponiveis();
+}
+
+function setDispFiltro(f, btn) {
+  dispFiltro = f;
+  document.querySelectorAll("#dispChips .chip").forEach(c => c.classList.toggle("ativo", c === btn));
+  calcDisponiveis();
+}
+
+async function calcDisponiveis() {
+  const res = document.getElementById("dispResultado");
+  const hora = document.getElementById("dispHora").value;
+  const dur = parseInt(document.getElementById("dispDur").value) || 60;
+  if(!hora) { res.innerHTML = '<div class="empty-state" style="padding:20px">Escolha um horário.</div>'; dispTexto = ''; return; }
+
+  // solicitações acordadas do dia (férias, falta, alteração de horário…)
+  if(dispSolCache.data !== dataSel) {
+    const { data: sols } = await client.from("funcionario_solicitacao")
+      .select("terapeuta_cpf,tipo,hora_inicio,hora_fim")
+      .eq("status","Acordado").lte("data_inicio",dataSel).gte("data_fim",dataSel);
+    dispSolCache = { data: dataSel, map: {} };
+    (sols||[]).forEach(s => { dispSolCache.map[s.terapeuta_cpf] = s; });
+  }
+  const solMap = dispSolCache.map;
+
+  const ini = toMin(hora), fim = ini + dur;
+  const ativos = agendamentos.filter(a => a.hora_inicio && ["Agendado","Confirmado","Faturado"].includes(a.status));
+  const livres = [], ocupados = [];
+
+  todosTerapeutas
+    .filter(t => !dispFiltro || t.cargo === dispFiltro)
+    .forEach(t => {
+      const h = horariosMap[t.cpf] || {};
+      const sol = solMap[t.cpf];
+      let motivo = null, hEnt = null, hSai = null;
+      if(sol && ["Férias","Falta","Atestado","Viagem"].includes(sol.tipo)) motivo = sol.tipo;
+      else if(h.disponivel === false) motivo = "Folga";
+      else {
+        if(sol && sol.tipo === "Alteração de Horário") { hEnt = sol.hora_inicio?.slice(0,5); hSai = sol.hora_fim?.slice(0,5); }
+        else { hEnt = h.hora_entrada; hSai = h.hora_saida; }
+        if(hEnt && ini < toMin(hEnt)) motivo = "Entra às " + hEnt;
+        else if(hSai && fim > toMin(hSai)) motivo = "Sai às " + hSai;
+        else {
+          const conf = ativos.find(a =>
+            (a.terapeuta1_cpf === t.cpf || a.terapeuta2_cpf === t.cpf)
+            && toMin(a.hora_inicio) < fim
+            && (a.hora_fim ? toMin(a.hora_fim) : toMin(a.hora_inicio) + 60) > ini);
+          if(conf) motivo = "Atendendo " + fmtH(conf.hora_inicio) + (conf.hora_fim ? "–" + fmtH(conf.hora_fim) : "");
+        }
+      }
+      (motivo ? ocupados : livres).push({ t, motivo, hEnt, hSai });
+    });
+
+  let html = `<div class="sep-titulo" style="margin-top:0"><i class="fa fa-circle-check" style="color:#16a34a"></i> Disponíveis (${livres.length})</div>`;
+  html += livres.length
+    ? `<div class="disp-lista">${livres.map(x => `<div class="disp-item"><span class="disp-nome">${x.t.nome_profissional}</span><span class="disp-sub">${x.hEnt && x.hSai ? x.hEnt + "–" + x.hSai : ""}</span></div>`).join("")}</div>`
+    : `<div class="empty-state" style="padding:20px">Ninguém livre nesse horário.</div>`;
+  if(ocupados.length) {
+    html += `<div class="sep-titulo"><i class="fa fa-circle-xmark" style="color:#dc2626"></i> Indisponíveis (${ocupados.length})</div>`;
+    html += `<div class="disp-lista">${ocupados.map(x => `<div class="disp-item" style="opacity:.75"><span class="disp-nome" style="color:#6b7280">${x.t.nome_profissional}</span><span class="disp-sub">${x.motivo}</span></div>`).join("")}</div>`;
+  }
+  res.innerHTML = html;
+
+  const dt = new Date(dataSel+"T12:00:00");
+  const filtroTxt = dispFiltro === "Terapeuta Feminina" ? " (femininas)" : dispFiltro === "Terapeuta Masculino" ? " (masculinos)" : "";
+  dispTexto = livres.length
+    ? `Disponíveis ${DIAS_ABREV[dt.getDay()]} ${fmtD(dataSel).slice(0,5)} às ${hora}${filtroTxt}:\n` + livres.map(x => "• " + x.t.nome_profissional).join("\n")
+    : "";
+}
+
+async function copiarDisponiveis() {
+  if(!dispTexto) { alert("Nenhuma terapeuta disponível para copiar."); return; }
+  try { await navigator.clipboard.writeText(dispTexto); }
+  catch(e) {
+    const ta = document.createElement("textarea");
+    ta.value = dispTexto; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove();
+  }
+  const btn = document.getElementById("btnCopiarDisp");
+  btn.innerHTML = '<i class="fa fa-check"></i> Copiado!';
+  setTimeout(() => { btn.innerHTML = '<i class="fa fa-copy"></i> Copiar lista'; }, 1500);
+}
 
 // ── GERENCIAR COLUNAS ──
 const STORAGE_KEY = 'hara_colunas_config';

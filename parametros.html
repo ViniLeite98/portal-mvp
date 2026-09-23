@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Parâmetros | Hara Spa</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
@@ -115,6 +116,65 @@ input:focus,select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px 
 .btn-voltar i{font-size:11px;color:#6b7280;}
 .param-menu-item.highlight-pulse{animation:pulse-blue 1.2s ease;}
 @keyframes pulse-blue{0%,100%{background:transparent}40%{background:#dbeafe;color:#1d4ed8;}}
+
+/* ════════════ MOBILE ════════════ */
+@media (max-width: 768px) {
+  /* ── Layout geral ── */
+  html,body{overflow-x:hidden;}
+  #sidebar{width:auto;}
+  .content{padding:16px 16px 40px;min-width:0;max-width:100vw;}
+  .topbar{margin-bottom:12px;}
+  .topbar > div{flex-wrap:wrap;}
+  .topbar h1{font-size:20px;}
+  .layout{grid-template-columns:1fr;gap:12px;}
+
+  /* ── Menu de seções vira faixa de abas deslizante ── */
+  .param-menu{position:static;display:flex;gap:6px;overflow-x:auto;padding:6px;border-radius:12px;scrollbar-width:none;}
+  .param-menu::-webkit-scrollbar{display:none;}
+  .param-menu-sep{display:none;}
+  .param-menu-item{flex-shrink:0;white-space:nowrap;padding:9px 14px;border-left:none;border-radius:99px;font-size:14px;background:#f9fafb;}
+  .param-menu-item.active{background:#2563eb;color:#fff;}
+  .param-menu-item.active i{color:#fff;}
+
+  /* ── Painel ── */
+  .param-panel{padding:16px;border-radius:12px;}
+  .panel-header{gap:10px;margin-bottom:16px;}
+  .panel-header h2{font-size:17px;}
+  .panel-header button{padding:10px 14px;flex-shrink:0;}
+  .panel-desc{margin-top:-8px;}
+
+  /* ── Itens ── */
+  .param-item{flex-wrap:wrap;gap:8px 10px;padding:12px;}
+  .param-item-drag{display:none;}
+  .param-item-nome{flex:1 1 auto;min-width:0;word-break:break-word;}
+  .param-item-actions{margin-left:auto;gap:8px;align-items:center;}
+  .param-item-actions button{width:40px;height:40px;padding:0;justify-content:center;font-size:14px;}
+  .param-item-actions .toggle-ativo{width:44px;height:24px;margin-right:4px;}
+  .param-item-actions .toggle-ativo::after{width:18px;height:18px;}
+  .param-item-actions .toggle-ativo.on::after{left:23px;}
+
+  /* ── Linha de adicionar ── */
+  .add-row{flex-wrap:wrap;padding:12px;}
+  .add-row input{font-size:16px;padding:10px 12px;}
+  .add-row #addNome{flex:1 1 100%;}
+  .add-row #addDescricao,.add-row #addCodigo{flex:1 1 0;max-width:none !important;min-width:0;}
+  .add-row button{width:44px;height:44px;padding:0;justify-content:center;}
+
+  /* ── Modal em tela cheia ── */
+  .modal{padding:0;align-items:stretch;}
+  .modal-content{width:100%;height:100dvh;border-radius:0;display:flex;flex-direction:column;}
+  .modal-header{padding:16px 16px 0;flex-shrink:0;}
+  .modal-body{flex:1;overflow-y:auto;padding:16px;}
+  .field input,.field select{font-size:16px;padding:10px 12px;}
+  .modal-footer{flex-shrink:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));}
+  .modal-footer button{flex:1;justify-content:center;padding:12px;font-size:14px;}
+  .color-opt{width:34px;height:34px;}
+  .picker-tab{font-size:12px;padding:10px 4px;}
+  .picker-search input{font-size:16px;}
+  .fa-grid{grid-template-columns:repeat(5,1fr);max-height:220px;}
+  .iconify-grid{grid-template-columns:repeat(4,1fr);max-height:240px;}
+  .fa-manual input{font-size:16px;}
+}
 </style>
 </head>
 <body>
@@ -336,6 +396,8 @@ function mudarSecao(secao,el,viaHash){
   secaoAtual=secao;
   document.querySelectorAll(".param-menu-item").forEach(i=>i.classList.remove("active"));
   el.classList.add("active");
+  // no celular o menu é uma faixa deslizante: traz a aba ativa para a vista
+  if(window.innerWidth<=768) el.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"});
   document.getElementById("panelTitulo").textContent=SECOES[secao].label;
   document.getElementById("panelDesc").textContent=SECOES[secao].desc;
   const info=SECOES[secao].info;

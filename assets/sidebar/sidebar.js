@@ -10,7 +10,7 @@
   function telaPequena() {
     return Math.min(screen.width, screen.height) <= 1024;
   }
-  (function aplicarModoPC() {
+  function aplicarModoPC() {
     if (!modoPCAtivo()) return;
     var meta = document.querySelector('meta[name="viewport"]');
     if (!meta) {
@@ -18,8 +18,16 @@
       meta.name = 'viewport';
       document.head.appendChild(meta);
     }
-    meta.content = 'width=1280';
-  })();
+    // largura real da tela na orientação atual (em pé ou deitado)
+    var deitado = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+    var larguraTela = deitado ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+    // zoom inicial para a página de 1280px caber inteira na tela
+    var zoom = Math.min(1, larguraTela / 1280).toFixed(3);
+    meta.content = 'width=1280, initial-scale=' + zoom + ', minimum-scale=' + zoom;
+  }
+  aplicarModoPC();
+  // ao virar o celular, recalcula o zoom
+  window.addEventListener('orientationchange', function() { setTimeout(aplicarModoPC, 200); });
 
   window.alternarModoPC = function(ev) {
     if (ev) ev.preventDefault();

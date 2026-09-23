@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Escalas | Hara Spa</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
@@ -27,6 +28,7 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .day.selected{border-color:#2563eb!important;box-shadow:0 0 0 3px rgba(37,99,235,.15);}
 .day-number{font-weight:700;font-size:13px;color:#111827;}
 .day small{font-size:10px;color:#6b7280;display:block;margin-top:4px;}
+.day small b{font-weight:inherit;}
 .day-fechado{background:#f9fafb;border-color:#e5e7eb!important;cursor:default;opacity:.6;}
 .day-fechado:hover{transform:none;}
 .day-fechado .day-number{color:#9ca3af;}
@@ -71,6 +73,45 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;}
 .grafico-legenda{display:flex;gap:16px;margin-top:12px;font-size:11px;color:#6b7280;flex-wrap:wrap;}
 .grafico-legenda span{display:flex;align-items:center;gap:5px;}
 .leg-g{width:10px;height:10px;border-radius:3px;}
+
+/* ════════════ MOBILE ════════════ */
+@media (max-width: 768px) {
+  /* ── Layout geral ── */
+  html,body{overflow-x:hidden;}
+  #sidebar{width:auto;}
+  .content{padding:16px 16px 40px;min-width:0;max-width:100vw;}
+  .topbar{flex-direction:column;align-items:stretch;gap:10px;margin-bottom:14px;}
+  .topbar h1{font-size:20px;}
+  .topbar > div{width:100%;}
+  #filtroCorCabelo{width:100%;font-size:16px !important;padding:10px 12px !important;}
+  .layout{grid-template-columns:1fr;gap:14px;}
+  .card{padding:14px;border-radius:14px;}
+
+  /* ── Calendário compacto: número + contagem ── */
+  .mes-nav button{padding:8px 14px;}
+  .weekdays,.calendar{gap:4px;}
+  .weekdays div{font-size:10px;letter-spacing:0;}
+  .day{min-height:50px;padding:6px 2px;border-radius:8px;border-width:1.5px;text-align:center;}
+  .day:hover{transform:none;}
+  .day-number{font-size:14px;}
+  .day small{font-size:0;margin-top:2px;}
+  .day small b{font-size:11px;font-weight:700;color:#374151;}
+  .legenda{gap:8px 12px;}
+
+  /* ── Painel do dia ── */
+  #painelDia{scroll-margin-top:70px;}
+  .dia-header{flex-wrap:wrap;gap:8px;}
+  .terapeutas-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .t-card{padding:8px;}
+  .t-card .t-avatar{width:28px;height:28px;font-size:12px;}
+  .t-card .t-nome{font-size:13px;}
+  .t-card .t-detalhe{font-size:10px;}
+  .t-card .badge-motivo,.t-card .badge-horario{font-size:10px;}
+
+  /* ── Gráfico ── */
+  .grafico-header{flex-wrap:wrap;gap:4px;}
+  .grafico-legenda{gap:8px 12px;}
+}
 </style>
 </head>
 <body>
@@ -155,6 +196,13 @@ function isoDate(d){ return d.toISOString().split("T")[0]; }
 function diaSemana(date){ return ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][date.getDay()]; }
 function folgaSemanal(t,data){ return t.tem_folga==="Sim"&&diaSemana(data)===(t.dia_folga||"").toLowerCase(); }
 function fmtHora(v){ if(!v)return""; return v.slice(0,5); }
+
+// no celular, depois de tocar num dia ou no gráfico, rola até a lista
+function rolarParaPainel(){
+  if(window.innerWidth<=768){
+    document.getElementById("painelDia").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+}
 
 function solicitacaoAusencia(t,data){
   const iso=isoDate(data);
@@ -275,10 +323,10 @@ function renderCalendar(){
       if(ausentes===0) div.classList.add("day-verde");
       else if(ausentes<4) div.classList.add("day-amarelo");
       else div.classList.add("day-vermelho");
-      div.innerHTML='<div class="day-number">'+d+'</div><small>'+disponiveis.length+' disponíveis</small>';
+      div.innerHTML='<div class="day-number">'+d+'</div><small><b>'+disponiveis.length+'</b> disponíveis</small>';
     }
 
-    div.onclick=(function(dd){return function(){mostrarDia(dd);};})(d);
+    div.onclick=(function(dd){return function(){mostrarDia(dd);rolarParaPainel();};})(d);
     cal.appendChild(div);
   }
 }
@@ -574,6 +622,7 @@ function renderGrafico(data){
     }
     painel.innerHTML=html;
     tooltip.style.display="none";
+    rolarParaPainel();
   };
 }
 

@@ -1,4 +1,6 @@
-const CACHE_NAME = 'hara-spa-v1';
+// ⚠️ Troque a versão (v2 → v3 → v4...) sempre que subir mudanças grandes.
+//    Isso apaga o cache antigo de todo mundo na próxima abertura do app.
+const CACHE_NAME = 'hara-spa-v2';
 
 // arquivos para cache offline
 const ASSETS = [
@@ -19,10 +21,15 @@ const ASSETS = [
 ];
 
 // instala e faz cache dos assets
+// (um por um: se algum falhar, os outros continuam — antes, uma falha travava a instalação inteira)
 self.addEventListener('install', function(e) {
   e.waitUntil(
     caches.open(CACHE_NAME).then(function(cache) {
-      return cache.addAll(ASSETS);
+      return Promise.all(ASSETS.map(function(url) {
+        return cache.add(new Request(url, { cache: 'reload' })).catch(function(err) {
+          console.warn('SW: não cacheou', url, err);
+        });
+      }));
     })
   );
   self.skipWaiting();
@@ -43,20 +50,35 @@ self.addEventListener('activate', function(e) {
 
 // estratégia: network first, fallback para cache
 self.addEventListener('fetch', function(e) {
-  if (e.request.method !== 'GET') return;
-  if (e.request.url.includes('supabase.co')) return;
+  var req = e.request;
+  if (req.method !== 'GET') return;
+  if (req.url.includes('supabase.co')) return;
+  if (req.url.includes('api.iconify.design')) return;
+
+  var mesmoSite = new URL(req.url).origin === self.location.origin;
+
+  // Arquivos do próprio site: pede ao servidor ignorando o cache do navegador.
+  // Era isso que fazia a versão antiga continuar aparecendo depois do deploy.
+  var buscar = mesmoSite
+    ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
+    : fetch(req);
+
   e.respondWith(
-    fetch(e.request)
+    buscar
       .then(function(response) {
-        var clone = response.clone();
-        caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(e.request, clone);
-        });
+        // só guarda respostas boas (não salva página de erro no cache)
+        if (response && (response.ok || response.type === 'opaque')) {
+          var clone = response.clone();
+          caches.open(CACHE_NAME).then(function(cache) { cache.put(req, clone); });
+        }
         return response;
       })
       .catch(function() {
-        return caches.match(e.request).then(function(cached) {
-          return cached || caches.match('/login.html');
+        return caches.match(req).then(function(cached) {
+          if (cached) return cached;
+          // sem internet e sem cópia: só páginas voltam para o login
+          if (req.mode === 'navigate') return caches.match('/login.html');
+          return Response.error();
         });
       })
   );

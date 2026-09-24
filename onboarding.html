@@ -237,29 +237,19 @@ async function salvar() {
   var user   = sessaoAtual.user;
   var email  = user.email;
   var userId = user.id;
-  var role   = "usuario"; // admin define cargo/role depois
 
   try {
-    // verifica se CPF já existe em funcionario
-    var dupCpf = await client.from("funcionario").select("cpf").eq("cpf",cpf).limit(1);
-    if(dupCpf.data && dupCpf.data.length > 0) {
-      // CPF já existe — só vincula email
-      await client.from("funcionario").update({email:email}).eq("cpf",cpf);
-    } else {
-      // cria funcionario novo sem cargo (admin preenche depois)
-      await client.from("funcionario").insert({
-        cpf:cpf, nome_completo:nome, nome_profissional:nomeProf,
-        email:email, telefone:tel||null, status:"Ativo"
-      });
-    }
-
-    // cria perfil com role usuario
-    await client.from("perfis").upsert({
-      id:userId, email:email, nome:nomeProf, role:role, cpf_terapeuta:cpf
+    // vincula com segurança no banco (confere e-mail da ficha; CPF novo fica "Pendente")
+    var r = await client.rpc("vincular_meu_cadastro", {
+      p_cpf: cpf, p_nome: nome, p_nome_prof: nomeProf, p_tel: tel || null
     });
+    if (r.error) throw r.error;
 
     setStep(3);
-    setTimeout(function() { location.href = "equipe.html"; }, 2000);
+    if (r.data === "pendente") {
+      showMsg("Cadastro enviado! A administração precisa liberar seu acesso.", "s");
+    }
+    setTimeout(function() { location.href = "equipe.html"; }, 2500);
 
   } catch(e) {
     showMsg("Erro ao salvar: "+(e.message||"tente novamente."),"e");

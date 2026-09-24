@@ -87,6 +87,19 @@ function authLogout() {
   });
 }
 
+// Tela para quem se cadastrou mas ainda não foi liberado pela administração
+function authAguardando() {
+  document.body.innerHTML =
+    '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f5f7fb;font-family:Segoe UI,sans-serif">' +
+      '<div style="max-width:380px;width:100%;background:#fff;border-radius:16px;padding:28px 24px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.08)">' +
+        '<div style="font-size:40px;margin-bottom:10px">⏳</div>' +
+        '<h2 style="margin:0 0 8px;font-size:20px;color:#111827">Acesso aguardando liberação</h2>' +
+        '<p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.6">Seu cadastro foi recebido. Assim que a administração liberar, você poderá usar o sistema normalmente.</p>' +
+        '<button onclick="authLogout()" style="width:100%;padding:12px;border:none;border-radius:10px;background:#1f2937;color:#fff;font-size:15px;font-weight:600;cursor:pointer">Sair</button>' +
+      '</div>' +
+    '</div>';
+}
+
 function authInit() {
   var paginaAtual = location.pathname.split("/").pop() || "";
 
@@ -124,9 +137,12 @@ function authInit() {
           return;
         }
 
-        if (role !== "admin" && role !== "apoio" && cpf) {
+        if (role !== "admin" && role !== "apoio") {
+          // sem ficha de funcionário ligada → aguardando liberação
+          if (!cpf) { authAguardando(); return; }
+
           client.from("funcionario")
-            .select("nome_profissional,status,cpf")
+            .select("nome_profissional,status,cpf,cargo")
             .eq("cpf", cpf)
             .limit(1)
             .then(function(res3) {
@@ -139,6 +155,9 @@ function authInit() {
                 });
                 return;
               }
+
+              // cadastro ainda não aprovado (Pendente) ou ficha não encontrada
+              if (!ter || ter.status !== "Ativo") { authAguardando(); return; }
 
               window.usuarioLogado = {
                 id:    session.user.id,

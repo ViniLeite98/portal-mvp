@@ -9,7 +9,7 @@
 
 var AUTH_ROLE_EXIGIDO = (document.currentScript || {}).getAttribute("data-role") || null;
 
-var ROTAS = { admin: "equipe.html", apoio: "equipe.html", usuario: "equipe.html" };
+var ROTAS = { admin: "atendimentos.html", apoio: "atendimentos.html", usuario: "atendimentos.html" };
 
 var MENU = [
   { href:"dashboard.html",        icon:"fa-chart-line",           label:"Dashboard",            roles:["admin","apoio"] },
@@ -88,6 +88,23 @@ function authLogout() {
 }
 
 // Tela para quem se cadastrou mas ainda não foi liberado pela administração
+// Terapeuta só vê os próprios dados: mostra tudo de uma vez e esconde a paginação
+function authModoTerapeuta() {
+  function aplicar() {
+    document.body.classList.add("papel-usuario");
+    if (!document.getElementById("estiloPapelUsuario")) {
+      var st = document.createElement("style");
+      st.id = "estiloPapelUsuario";
+      st.textContent = "body.papel-usuario .paginacao{display:none !important}";
+      document.head.appendChild(st);
+    }
+    var sel = document.getElementById("porPagina");
+    if (sel && sel.querySelector('option[value="9999"]')) sel.value = "9999";
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", aplicar);
+  else aplicar();
+}
+
 function authAguardando() {
   document.body.innerHTML =
     '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f5f7fb;font-family:Segoe UI,sans-serif">' +
@@ -169,6 +186,7 @@ function authInit() {
               };
               var el = document.getElementById("sidebar");
               if (el) el.innerHTML = authBuildSidebar(role, window.usuarioLogado.nome);
+              authModoTerapeuta();
             });
         } else {
           window.usuarioLogado = {

@@ -1,68 +1,30 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hara Spa</title>
-<!-- ── PWA ── -->
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2c2420">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Hara Spa">
-<link rel="apple-touch-icon" href="/assets/icon-192.png">
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('SW:',e);});});}</script>
-<!-- ── fim PWA ── -->
-<style>
-body{margin:0;font-family:'Segoe UI',sans-serif;background:#fdf8f3;display:flex;align-items:center;justify-content:center;min-height:100vh;}
-.loader{text-align:center;}
-.spinner{width:36px;height:36px;border:3px solid #e8e2db;border-top-color:#c4826a;border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 14px;}
-@keyframes spin{to{transform:rotate(360deg)}}
-p{font-size:13px;color:#8a7b72;}
-</style>
-</head>
-<body>
-<div class="loader">
-  <div class="spinner"></div>
-  <p>Carregando...</p>
-</div>
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-<script src="assets/js/supabase.js"></script>
-<script>
-async function verificar() {
-  client.auth.onAuthStateChange(async function(event, session) {
-    if(event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-      if(!session) { location.href = "login.html"; return; }
-      var res = await client.from("perfis")
-        .select("id,role")
-        .eq("id", session.user.id)
-        .single();
-      if(!res.data) {
-        location.href = "onboarding.html";
-      } else {
-        location.href = "equipe.html";
-      }
-    } else if(event === "SIGNED_OUT") {
-      location.href = "login.html";
+{
+  "redirects": [
+    {
+      "source": "/:path((?!sw\\.js$).*)",
+      "has": [{ "type": "host", "value": "portal-mvp.vercel.app" }],
+      "destination": "https://sistemahara.com/:path",
+      "permanent": true
+    },
+    {
+      "source": "/:path((?!sw\\.js$).*)",
+      "has": [{ "type": "host", "value": "portal-mvp-ten.vercel.app" }],
+      "destination": "https://sistemahara.com/:path",
+      "permanent": true
     }
-  });
-
-  var res = await client.auth.getSession();
-  var session = res.data && res.data.session;
-  if(!session) { location.href = "login.html"; return; }
-  var perfilRes = await client.from("perfis")
-    .select("id,role")
-    .eq("id", session.user.id)
-    .single();
-  if(!perfilRes.data) {
-    location.href = "onboarding.html";
-  } else {
-    location.href = "equipe.html";
-  }
+  ],
+  "headers": [
+    {
+      "source": "/.well-known/assetlinks.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json" }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
+  ]
 }
-
-verificar();
-</script>
-</body>
-</html>

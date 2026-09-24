@@ -300,15 +300,18 @@ function onCpfInput() {
 }
 
 async function verificarCpfInterno(cpfDigits) {
-  // funcionario (ex-terapeutas) — a tabela antiga "terapeutas" não existe mais
-  var res = await client.from("funcionario").select("cpf,nome_completo").eq("cpf", cpfDigits).limit(1);
-  var ehInterno = res.data && res.data.length > 0;
+  // pergunta ao banco só a categoria do CPF (sem expor nome nem dados)
+  var res = await client.rpc("status_cpf", { p_cpf: cpfDigits });
+  var status = res.data || "novo";
+  var hint = document.getElementById("hintCpf");
+  if (status === "com_acesso") {
+    document.getElementById("cCpf").className = "error";
+    hint.className = "field-hint error";
+    hint.textContent = "Este CPF já tem acesso. Use \"Entrar\" ou \"Esqueci a senha\".";
+  }
+  var ehInterno = status === "interno";
   document.getElementById("camposSenha").style.display = ehInterno ? "none" : "";
   document.getElementById("avisoSenhaPadrao").style.display = ehInterno ? "block" : "none";
-  if(ehInterno && res.data[0].nome_completo) {
-    var nomeEl = document.getElementById("cNome");
-    if(nomeEl && !nomeEl.value) nomeEl.value = res.data[0].nome_completo;
-  }
 }
 
 function showMsg(txt,tipo){var el=document.getElementById("msg");el.textContent=txt;el.className="msg "+tipo;el.scrollIntoView({behavior:"smooth",block:"nearest"});}
@@ -451,12 +454,10 @@ async function cad() {
   btn("bCad",true,"Criar Conta");
   document.getElementById("msg").className="msg";
 
-  if(!ehInterno){
-    var cpfPer=await client.from("perfis").select("id").eq("cpf_terapeuta",cpfDigits).limit(1);
-    if(cpfPer.data&&cpfPer.data.length>0){
-      showMsg("CPF já possui acesso. Tente entrar ou use \"Esqueci a senha\".","e");
-      btn("bCad",false,"Criar Conta");return;
-    }
+  var st = await client.rpc("status_cpf", { p_cpf: cpfDigits });
+  if(st.data === "com_acesso"){
+    showMsg("CPF já possui acesso. Tente entrar ou use \"Esqueci a senha\".","e");
+    btn("bCad",false,"Criar Conta");return;
   }
 
   var res=await client.auth.signUp({
@@ -467,11 +468,16 @@ async function cad() {
 
   if(res.error){showMsg(traduzir(res.error.message),"e");btn("bCad",false,"Criar Conta");return;}
 
-  if(res.data&&res.data.user){
-    var userId=res.data.user.id;
-    await client.from("perfis").upsert({id:userId,email:email,nome:nome,role:"usuario",cpf_terapeuta:cpfDigits});
-    if(!ehInterno){
-      await client.from("funcionario").upsert({cpf:cpfDigits,nome_completo:nome,nome_profissional:nome.split(" ")[0],email:email,status:"Ativo"},{onConflict:"cpf"});
+  // com sessão ativa, já vincula (confere o e-mail da ficha; CPF novo fica "Pendente").
+  // sem sessão (confirmação por e-mail), o vínculo acontece no primeiro acesso (onboarding).
+  if(res.data&&res.data.session){
+    var v = await client.rpc("vincular_meu_cadastro", {
+      p_cpf: cpfDigits, p_nome: nome, p_nome_prof: nome.split(" ")[0], p_tel: null
+    });
+    if(v.error){
+      await client.auth.signOut();
+      showMsg(v.error.message,"e");
+      btn("bCad",false,"Criar Conta");return;
     }
   }
 
@@ -508,6 +514,10 @@ async function resetSenha(){
   if(res.error){showMsg(traduzir(res.error.message),"e");btn("bReset",false,"Enviar link de redefinição");return;}
   showMsg("Link enviado! Verifique seu email.","s");
   btn("bReset",false,"Enviar link de redefinição");
+}
+
+if(/[?&]inativo=1/.test(location.search)){
+  showMsg("Seu acesso foi desativado. Entre em contato com a administração.","e");
 }
 
 // ─── Auto-redirect se já logado ──────────────────────────────────────────────

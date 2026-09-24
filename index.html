@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hara Spa</title>
 <!-- ── PWA ── -->
 <link rel="manifest" href="/manifest.json">
@@ -33,10 +34,6 @@ async function verificar() {
   client.auth.onAuthStateChange(async function(event, session) {
     if(event === "SIGNED_IN" || event === "INITIAL_SESSION") {
       if(!session) { location.href = "login.html"; return; }
-      const provider = session.user.app_metadata?.provider;
-      if(provider === "google") {
-        await client.auth.updateUser({ password: "hara2026" });
-      }
       var res = await client.from("perfis")
         .select("id,role")
         .eq("id", session.user.id)
@@ -54,10 +51,6 @@ async function verificar() {
   var res = await client.auth.getSession();
   var session = res.data && res.data.session;
   if(!session) { location.href = "login.html"; return; }
-  const provider = session.user.app_metadata?.provider;
-  if(provider === "google") {
-    await client.auth.updateUser({ password: "hara2026" });
-  }
   var perfilRes = await client.from("perfis")
     .select("id,role")
     .eq("id", session.user.id)

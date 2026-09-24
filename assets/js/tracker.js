@@ -5,6 +5,7 @@
 (function() {
   var entradaTs = Date.now();
   var logId = null;
+  var tokenSessao = null; // token do login, usado no PATCH de saída
   var TITULOS = {
     "dashboard.html":      "Dashboard",
     "atendimentos.html":   "Atendimentos",
@@ -39,6 +40,8 @@
       if (!u) return;
       var pagina = getPagina();
       try {
+        var ses = await client.auth.getSession();
+        tokenSessao = ses.data && ses.data.session ? ses.data.session.access_token : null;
         var res = await client.from("navigation_logs").insert({
           user_id:     u.id    || null,
           email:       u.email || null,
@@ -52,7 +55,7 @@
     });
   }
   function registrarSaidaBeacon() {
-    if (!logId) return;
+    if (!logId || !tokenSessao) return;
     var duracao = Math.round((Date.now() - entradaTs) / 1000);
     var SUPABASE_URL = window._supabaseUrl || "";
     var SUPABASE_KEY = window._supabaseKey || "";
@@ -66,7 +69,7 @@
         headers: {
           "Content-Type":  "application/json",
           "apikey":        SUPABASE_KEY,
-          "Authorization": "Bearer " + SUPABASE_KEY,
+          "Authorization": "Bearer " + tokenSessao,
           "Prefer":        "return=minimal"
         },
         keepalive: true

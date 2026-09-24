@@ -1,6 +1,6 @@
 // ⚠️ Troque a versão (v2 → v3 → v4...) sempre que subir mudanças grandes.
 //    Isso apaga o cache antigo de todo mundo na próxima abertura do app.
-const CACHE_NAME = 'hara-spa-v2';
+const CACHE_NAME = 'hara-spa-v3';
 
 // arquivos para cache offline
 const ASSETS = [
@@ -59,8 +59,15 @@ self.addEventListener('fetch', function(e) {
 
   // Arquivos do próprio site: pede ao servidor ignorando o cache do navegador.
   // Era isso que fazia a versão antiga continuar aparecendo depois do deploy.
+  // Em páginas (navegação), redirecionamentos têm que voltar "crus" para o navegador seguir
+  // (ex.: portal-mvp.vercel.app → sistemahara.com). Se o service worker seguir sozinho,
+  // o Chrome recusa a resposta e a tela fica em branco.
   var buscar = mesmoSite
-    ? fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' })
+    ? fetch(req.url, {
+        cache: 'no-cache',
+        credentials: 'same-origin',
+        redirect: req.mode === 'navigate' ? 'manual' : 'follow'
+      })
     : fetch(req);
 
   e.respondWith(

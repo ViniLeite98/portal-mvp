@@ -53,23 +53,14 @@ async function registrarPush() {
 }
 
 async function salvarSubscription(sub, u) {
-  var payload = {
-    user_id:       u.id,
-    terapeuta_cpf: u.cpf || null,
-    subscription:  sub.toJSON()
-  };
-
-  console.log('[Push] Salvando subscription para:', u.cpf, payload);
-
-  // delete antigo e insere novo
-  await client.from('push_subscriptions').delete().eq('user_id', u.id);
-  var res = await client.from('push_subscriptions').insert(payload);
-
-  if(res.error) {
-    console.error('[Push] Erro ao salvar:', res.error);
-  } else {
-    console.log('[Push] Subscription salva com sucesso!');
-  }
+  // Cada aparelho (celular, PC...) tem sua própria inscrição: registra ESTE aparelho
+  // sem apagar os outros da mesma pessoa. O CPF é pego do perfil lá no banco.
+  var res = await client.rpc('registrar_push', {
+    p_sub: sub.toJSON(),
+    p_user_agent: navigator.userAgent
+  });
+  if (res.error) console.error('[Push] Erro ao salvar:', res.error);
+  else console.log('[Push] Aparelho registrado para notificações');
 }
 
 // roda depois que o usuário logado estiver disponível

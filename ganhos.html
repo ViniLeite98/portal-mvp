@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Meus ganhos | Hara Spa</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/js/auth.js"></script>
+<script src="assets/js/tracker.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;min-width:0;padding:24px 32px;max-width:1100px;}
+.cab{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.cab h1{margin:0;font-size:22px;display:flex;align-items:center;gap:10px;}
+.cab h1 i{color:#16a34a;}
+#selTer{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;display:none;}
+.periodos{display:flex;gap:6px;background:#fff;border-radius:10px;padding:4px;box-shadow:0 1px 3px rgba(0,0,0,.06);width:max-content;max-width:100%;margin-bottom:10px;}
+.periodos button{border:none;background:none;padding:8px 14px;border-radius:8px;font-size:14px;font-weight:600;color:#6b7280;cursor:pointer;white-space:nowrap;}
+.periodos button.ativo{background:#111827;color:#fff;}
+.nav-mes{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:15px;font-weight:600;}
+.nav-mes button{width:34px;height:34px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;color:#374151;}
+.nav-mes button:disabled{opacity:.35;cursor:default;}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.card .rot{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;}
+.card .val{font-size:22px;font-weight:700;margin-top:6px;}
+.card .sub{font-size:12px;color:#6b7280;margin-top:4px;}
+.card.destaque{background:#111827;color:#fff;}
+.card.destaque .rot{color:#9ca3af;}
+.card.destaque .sub{color:#d1d5db;}
+.verde{color:#16a34a;} .vermelho{color:#dc2626;} .cinza{color:#6b7280;}
+.bloco{background:#fff;border-radius:14px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:6px 16px;margin-bottom:16px;}
+.bloco h2{font-size:14px;margin:12px 0 4px;color:#374151;display:flex;align-items:center;gap:8px;}
+.linha{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f3f4f6;}
+.linha:last-child{border-bottom:none;}
+.l-data{width:62px;flex-shrink:0;text-align:center;}
+.l-data .d{font-size:16px;font-weight:700;}
+.l-data .h{font-size:11px;color:#9ca3af;}
+.l-info{flex:1;min-width:0;}
+.l-info .t{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.l-info .s{font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.l-val{font-weight:700;font-size:14px;white-space:nowrap;}
+.vazio{color:#9ca3af;text-align:center;padding:24px 8px;font-size:14px;}
+.nota{font-size:12px;color:#9ca3af;line-height:1.5;margin:4px 2px 24px;}
+@media (max-width:900px){ .cards{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:768px){
+  .content{padding:16px;}
+  .card{padding:14px;}
+  .card .val{font-size:19px;}
+  .periodos{width:100%;}
+  .periodos button{flex:1;padding:9px 6px;font-size:13px;}
+  #selTer{width:100%;font-size:16px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside id="sidebar"></aside>
+<main class="content">
+
+  <div class="cab">
+    <h1><i class="fa fa-wallet"></i> <span id="titulo">Meus ganhos</span></h1>
+    <select id="selTer" onchange="carregar()"></select>
+  </div>
+
+  <div class="periodos" id="periodos">
+    <button data-p="semana" onclick="setPeriodo('semana')">Esta semana</button>
+    <button data-p="mes" onclick="setPeriodo('mes')" class="ativo">Mês</button>
+  </div>
+  <div class="nav-mes" id="navMes">
+    <button onclick="mudarMes(-1)" aria-label="Mês anterior"><i class="fa fa-chevron-left"></i></button>
+    <span id="mesLabel"></span>
+    <button id="btnProx" onclick="mudarMes(1)" aria-label="Próximo mês"><i class="fa fa-chevron-right"></i></button>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="rot">Comissões</div><div class="val verde" id="cCom">—</div><div class="sub" id="cComSub"></div></div>
+    <div class="card"><div class="rot">Adiantamentos</div><div class="val vermelho" id="cAdt">—</div><div class="sub" id="cAdtSub"></div></div>
+    <div class="card destaque"><div class="rot">A receber</div><div class="val" id="cLiq">—</div><div class="sub">comissões − adiantamentos</div></div>
+    <div class="card"><div class="rot">Previsto</div><div class="val cinza" id="cPrev">—</div><div class="sub" id="cPrevSub"></div></div>
+  </div>
+
+  <div class="bloco">
+    <h2><i class="fa fa-circle-check verde"></i> Atendimentos faturados</h2>
+    <div id="listaFat"></div>
+  </div>
+  <div class="bloco" id="blocoAdt">
+    <h2><i class="fa fa-hand-holding-dollar vermelho"></i> Adiantamentos</h2>
+    <div id="listaAdt"></div>
+  </div>
+  <p class="nota">Valores dos atendimentos já faturados pela recepção. "Previsto" são atendimentos agendados ou confirmados no período que ainda não foram faturados. O valor final do mês é o da folha de pagamento.</p>
+
+</main>
+</div>
+
+<script>
+let periodo = "mes";
+let mesRef = new Date(); mesRef.setDate(1);
+
+function iso(d){ return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function fmtM(v){ return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+function esc(v){ return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function diaMes(s){ const [y,m,d]=s.split("-"); return {d, m}; }
+const MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+
+function intervalo(){
+  if(periodo==="semana"){
+    const hoje=new Date(); const dow=(hoje.getDay()+6)%7; // segunda = 0
+    const ini=new Date(hoje); ini.setDate(hoje.getDate()-dow);
+    const fim=new Date(ini); fim.setDate(ini.getDate()+6);
+    return {ini:iso(ini), fim:iso(fim), label:`${ini.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} a ${fim.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}`};
+  }
+  const ini=new Date(mesRef.getFullYear(), mesRef.getMonth(), 1);
+  const fim=new Date(mesRef.getFullYear(), mesRef.getMonth()+1, 0);
+  return {ini:iso(ini), fim:iso(fim), label:`${MESES[ini.getMonth()]} de ${ini.getFullYear()}`};
+}
+function setPeriodo(p){
+  periodo=p;
+  document.querySelectorAll("#periodos button").forEach(b=>b.classList.toggle("ativo", b.dataset.p===p));
+  document.getElementById("navMes").style.display = "flex";
+  document.querySelectorAll("#navMes button").forEach(b=>b.style.visibility = p==="mes" ? "visible" : "hidden");
+  carregar();
+}
+function mudarMes(n){ mesRef.setMonth(mesRef.getMonth()+n); carregar(); }
+
+function cpfAlvo(){
+  const u=window.usuarioLogado;
+  if(u.role==="usuario") return u.cpf;
+  return document.getElementById("selTer").value;
+}
+
+async function prepararGestao(){
+  // admin/recepção podem ver os ganhos de qualquer terapeuta
+  const sel=document.getElementById("selTer");
+  const {data}=await client.from("funcionario").select("cpf,nome_profissional").eq("status","Ativo").order("nome_profissional");
+  sel.innerHTML=(data||[]).map(t=>`<option value="${esc(t.cpf)}">${esc(t.nome_profissional)}</option>`).join("");
+  sel.style.display="block";
+  document.getElementById("titulo").textContent="Ganhos";
+}
+
+async function carregar(){
+  const cpf=cpfAlvo(); if(!cpf) return;
+  const {ini,fim,label}=intervalo();
+  document.getElementById("mesLabel").textContent=label;
+  const agora=new Date(); agora.setDate(1);
+  document.getElementById("btnProx").disabled = periodo==="mes" && mesRef>=agora;
+
+  // mesma regra da folha de pagamento: atendimentos em que ela é a terapeuta principal
+  const [fat, prev, adt] = await Promise.all([
+    client.from("atendimento")
+      .select("data,hora_inicio,comissao_total,cliente:cliente_id(nome),servico:servico_id(grupo,subgrupo,tempo)")
+      .eq("terapeuta1_cpf",cpf).eq("status","Faturado").gte("data",ini).lte("data",fim)
+      .order("data",{ascending:false}).order("hora_inicio",{ascending:false}),
+    client.from("atendimento")
+      .select("comissao_total")
+      .eq("terapeuta1_cpf",cpf).in("status",["Agendado","Confirmado"]).gte("data",ini).lte("data",fim),
+    client.from("funcionario_adiantamento")
+      .select("data,valor,forma,observacao").eq("terapeuta_cpf",cpf).gte("data",ini).lte("data",fim)
+      .order("data",{ascending:false})
+  ]);
+  const erro = fat.error || prev.error || adt.error;
+  if(erro){ document.getElementById("listaFat").innerHTML=`<div class="vazio">${esc(erro.message)}</div>`; return; }
+
+  const fats=fat.data||[], prevs=prev.data||[], adts=adt.data||[];
+  const totCom=fats.reduce((s,a)=>s+Number(a.comissao_total||0),0);
+  const totAdt=adts.reduce((s,a)=>s+Number(a.valor||0),0);
+  const totPrev=prevs.reduce((s,a)=>s+Number(a.comissao_total||0),0);
+
+  document.getElementById("cCom").textContent=fmtM(totCom);
+  document.getElementById("cComSub").textContent=`${fats.length} atendimento${fats.length===1?"":"s"}`;
+  document.getElementById("cAdt").textContent=fmtM(totAdt);
+  document.getElementById("cAdtSub").textContent=adts.length?`${adts.length} lançamento${adts.length===1?"":"s"}`:"nenhum";
+  document.getElementById("cLiq").textContent=fmtM(totCom-totAdt);
+  document.getElementById("cPrev").textContent=fmtM(totPrev);
+  document.getElementById("cPrevSub").textContent=`${prevs.length} ainda não faturado${prevs.length===1?"":"s"}`;
+
+  document.getElementById("listaFat").innerHTML = fats.length ? fats.map(a=>{
+    const {d,m}=diaMes(a.data);
+    const sv=a.servico?[a.servico.grupo, a.servico.tempo?a.servico.tempo+"min":null, a.servico.subgrupo].filter(Boolean).join(" "):"";
+    return `<div class="linha"><div class="l-data"><div class="d">${d}/${m}</div><div class="h">${(a.hora_inicio||"").slice(0,5)}</div></div>
+      <div class="l-info"><div class="t">${esc(a.cliente?.nome||"Cliente")}</div><div class="s">${esc(sv)}</div></div>
+      <div class="l-val verde">${fmtM(a.comissao_total)}</div></div>`;
+  }).join("") : '<div class="vazio">Nenhum atendimento faturado neste período.</div>';
+
+  document.getElementById("blocoAdt").style.display = adts.length ? "" : "none";
+  document.getElementById("listaAdt").innerHTML = adts.map(a=>{
+    const {d,m}=diaMes(a.data);
+    return `<div class="linha"><div class="l-data"><div class="d">${d}/${m}</div></div>
+      <div class="l-info"><div class="t">${esc(a.observacao||"Adiantamento")}</div><div class="s">${esc(a.forma||"")}</div></div>
+      <div class="l-val vermelho">− ${fmtM(a.valor)}</div></div>`;
+  }).join("");
+}
+
+async function iniciar(){
+  if(!window.usuarioLogado){ setTimeout(iniciar,100); return; }
+  if(window.usuarioLogado.role!=="usuario") await prepararGestao();
+  setPeriodo("mes");
+}
+document.addEventListener("DOMContentLoaded", iniciar);
+</script>
+</body>
+</html>

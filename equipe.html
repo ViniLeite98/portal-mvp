@@ -1230,6 +1230,7 @@ function adicionarFilaUpload(){
   });
   document.getElementById("doc_arquivo").value="";
   atualizarBtnEnviar();
+  if(cpfAtual) enviarTodos(); // envia na hora; em cadastro novo, vai junto no Salvar
 }
 function removerFilaItem(id){filaItems=filaItems.filter(i=>i.id!==id);const el=document.getElementById(id);if(el)el.remove();atualizarBtnEnviar();}
 function atualizarBtnEnviar(){
@@ -1278,6 +1279,7 @@ function adicionarFilaFoto() {
   });
   document.getElementById("foto_arquivo").value = "";
   atualizarBtnFotos();
+  if(cpfAtual) enviarFotos(); // envia na hora; em cadastro novo, vai junto no Salvar
 }
 function removerFilaFoto(id) {
   filaFotos = filaFotos.filter(i => i.id !== id);
@@ -1302,10 +1304,10 @@ async function enviarFotos() {
     if(stEl) { stEl.textContent = "Enviando..."; stEl.className = "fila-item-status sending"; }
     const fileName = cpfAtual + "/fotos/" + Date.now() + "_" + limparNome(item.file.name);
     const {error: upErr} = await client.storage.from("documentos").upload(fileName, item.file);
-    if(upErr) { item.status = "erro"; if(stEl) { stEl.textContent = "Erro!"; stEl.className = "fila-item-status err"; } continue; }
+    if(upErr) { item.status = "erro"; console.error("Upload foto:", upErr); if(stEl) { stEl.textContent = "Erro: "+(upErr.message||"falha no envio"); stEl.className = "fila-item-status err"; } continue; }
     const {data: urlData} = client.storage.from("documentos").getPublicUrl(fileName);
     const {error: dbErr} = await client.from("documentos").insert({equipe_id: cpfAtual, tipo: "Foto", nome_arquivo: item.file.name, url: urlData.publicUrl});
-    if(dbErr) { item.status = "erro"; if(stEl) { stEl.textContent = "Erro!"; stEl.className = "fila-item-status err"; } }
+    if(dbErr) { item.status = "erro"; console.error("Registro foto:", dbErr); if(stEl) { stEl.textContent = "Erro: "+(dbErr.message||"falha ao salvar"); stEl.className = "fila-item-status err"; } }
     else { item.status = "ok"; if(stEl) { stEl.textContent = "✓ Enviado"; stEl.className = "fila-item-status ok"; } setTimeout((iid => () => { const el = document.getElementById(iid); if(el) el.remove(); })(item.id), 1500); }
   }
   setTimeout(() => { filaFotos = filaFotos.filter(i => i.status !== "ok"); atualizarBtnFotos(); carregarFotos(cpfAtual); if(btn) btn.disabled = false; }, 1600);

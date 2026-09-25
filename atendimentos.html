@@ -122,6 +122,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .ag-block.ag-inativo .b-hora{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .ag-block.ag-inativo .b-cliente{font-size:10px;}
 .ag-block.ag-ao-lado{right:calc(34% + 4px);}
+.selo-finalizado{background:#dcfce7;color:#14532d;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center;margin-top:10px;}
 
 /* blocos de jornada (entrada/saída) */
 .jornada-block{position:absolute;left:0;right:0;background:rgba(200,200,200,.18);border-top:2px solid #d1d5db;font-size:10px;color:#9ca3af;font-weight:700;text-align:center;padding-top:2px;pointer-events:none;z-index:1;}
@@ -1053,7 +1054,7 @@ function renderAgenda() {
       }
       block.innerHTML = `
         <div class="b-hora">${fmtH(a.hora_inicio)}${a.hora_fim?" – "+fmtH(a.hora_fim):""}</div>
-        <div class="b-cliente">${nomeC}${l4?" "+l4:""}</div>
+        <div class="b-cliente">${a.finalizado_em?'<i class="fa fa-circle-check" title="Terapeuta finalizou" style="color:#16a34a"></i> ':''}${nomeC}${l4?" "+l4:""}</div>
         ${nomeS ? `<div class="b-servico">${nomeS}</div>` : ""}
       `;
       block.addEventListener("click", e => { e.stopPropagation(); abrirDetalhe(a.id); });
@@ -1212,7 +1213,7 @@ function renderLista() {
       <div class="ag-status-bar ${a.status}"></div>
       <div class="ag-body-l">
         <div class="ag-info-l">
-          <div class="ag-cliente-l">${nomeC}${l4?" "+l4:""}${extras.length?` <span style="font-size:10px;color:#6b7280">+${extras.length}</span>`:""}</div>
+          <div class="ag-cliente-l">${a.finalizado_em?'<i class="fa fa-circle-check" title="Terapeuta finalizou" style="color:#16a34a"></i> ':''}${nomeC}${l4?" "+l4:""}${extras.length?` <span style="font-size:10px;color:#6b7280">+${extras.length}</span>`:""}</div>
           <div class="ag-servico-l">${nomeServ}</div>
           <div class="ag-ter-l">${teres}</div>
         </div>
@@ -1605,6 +1606,7 @@ function abrirDetalhe(id){
         ${sinal>0?`<div class="rl" style="color:#16a34a"><span>Sinal pago (${a.sinal_forma||"—"})</span><span style="font-weight:700">${fmtM(sinal)}</span></div>`:""}
         ${sinal>0?`<div class="rl" style="color:#dc2626"><span>Restante</span><span>${fmtM((a.valor_final||0)-sinal)}</span></div>`:""}
       </div>
+      ${a.finalizado_em?`<div class="selo-finalizado"><i class="fa fa-circle-check"></i> ${a.finalizado_por||"Terapeuta"} finalizou às ${horaDe(a.finalizado_em)}</div>`:""}
       ${a.motivo_cancel?`<div style="background:#fee2e2;border-radius:10px;padding:12px 14px;font-size:12px;color:#b91c1c"><i class="fa fa-ban"></i> <strong>Cancelamento:</strong> ${a.motivo_cancel}</div>`:""}
     </div>`;
   const acoes=[];
@@ -1638,8 +1640,29 @@ function abrirDetalheTerapeuta(a){
         ${linha("fa-spa",nomeS)}
       </div>
     </div>`;
-  document.getElementById("detAcoes").innerHTML=`<button class="btn btn-ghost" onclick="fecharModal('modalDet')">Fechar</button>`;
+  const podeFinalizar = !a.finalizado_em && (a.status==="Agendado"||a.status==="Confirmado") && a.data <= hoje();
+  const selo = a.finalizado_em
+    ? `<div class="selo-finalizado"><i class="fa fa-circle-check"></i> Você finalizou às ${horaDe(a.finalizado_em)} — a recepção já foi avisada.</div>` : "";
+  document.getElementById("detConteudo").insertAdjacentHTML("beforeend", selo);
+  document.getElementById("detAcoes").innerHTML =
+    `<button class="btn btn-ghost" onclick="fecharModal('modalDet')">Fechar</button>` +
+    (podeFinalizar ? `<button class="btn btn-green" id="btnFinalizar" onclick="finalizarAtendimento('${a.id}')"><i class="fa fa-circle-check"></i> Finalizei o atendimento</button>` : "");
   document.getElementById("modalDet").classList.add("open");
+}
+
+// "2026-09-25T17:44:00+00:00" -> "14:44" (horário de Brasília do aparelho)
+function horaDe(ts){ try{ return new Date(ts).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+
+// Terapeuta avisa que terminou → grava no banco e a recepção recebe notificação
+async function finalizarAtendimento(id){
+  const a=agendamentos.find(x=>x.id===id); if(!a) return;
+  if(!confirm(`Confirmar que você terminou o atendimento das ${fmtH(a.hora_inicio)}?\n\nA recepção vai receber um aviso.`)) return;
+  const b=document.getElementById("btnFinalizar"); if(b){ b.disabled=true; b.innerHTML='<i class="fa fa-spinner fa-spin"></i> Enviando...'; }
+  const {data,error}=await client.rpc("finalizar_atendimento",{p_id:id});
+  if(error){ alert(error.message||"Não foi possível finalizar."); if(b){ b.disabled=false; b.innerHTML='<i class="fa fa-circle-check"></i> Finalizei o atendimento'; } return; }
+  a.finalizado_em=data||new Date().toISOString();
+  if(viewAtual==="agenda") renderAgenda(); else renderLista();
+  abrirDetalheTerapeuta(a);
 }
 
 async function editarAg(id){

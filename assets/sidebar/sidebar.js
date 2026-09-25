@@ -248,7 +248,8 @@
 
   window.sairDoCaixa = function() {
     if (typeof client !== 'undefined') {
-      client.auth.signOut().finally(function() {
+      var antes = (typeof authRemoverPushAparelho === 'function') ? authRemoverPushAparelho() : Promise.resolve();
+      antes.then(function(){ return client.auth.signOut(); }).finally(function() {
         Object.keys(localStorage).forEach(function(k) {
           if (k.startsWith('sb-')) localStorage.removeItem(k);
         });

@@ -347,6 +347,13 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
   body.visao-terapeuta .kpi-cell{padding:10px 6px;}
   body.visao-terapeuta .kpi-val{font-size:18px;}
 }
+
+/* ── Celular: totais (e dias da semana) ficam presos no topo ao rolar a agenda ── */
+@media (max-width: 768px){
+  html,body{overflow-x:clip !important;}  /* "hidden" impede o sticky de funcionar */
+  .kpi-bar{position:sticky;top:var(--topo-mobile,52px);z-index:30;}
+  body.visao-terapeuta .semana-nav{position:sticky;top:calc(var(--topo-mobile,52px) + var(--kpi-h,50px));z-index:29;background:#fff;}
+}
 </style>
 </head>
 <body>
@@ -2037,6 +2044,16 @@ function resetarColunas() {
   colunasConfig = todosTerapeutas.map(t => ({ cpf: t.cpf, nome: t.nome_profissional, visivel: true }));
   renderColunasLista();
 }
+
+
+// mede a barra do topo e a barra de totais para o "grudar no topo" ficar certinho
+function medirTopoMobile(){
+  const t=document.querySelector(".mobile-topbar"), k=document.querySelector(".kpi-bar");
+  if(t) document.documentElement.style.setProperty("--topo-mobile", t.offsetHeight+"px");
+  if(k) document.documentElement.style.setProperty("--kpi-h", k.offsetHeight+"px");
+}
+window.addEventListener("resize",medirTopoMobile);
+setInterval(medirTopoMobile,1000);
 
 document.addEventListener("DOMContentLoaded",async()=>{
   renderDiasSemana();

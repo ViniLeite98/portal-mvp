@@ -1,57 +1,6 @@
 (function() {
-  // ── MODO "VERSÃO COMPLETA" (PC) NO CELULAR ─────────────────────────────────
-  // Se a pessoa escolheu ver a versão completa, trocamos o viewport para 1280px:
-  // o celular passa a mostrar o layout de PC (reduzido), igual ao "Site para computador" do Chrome.
-  var MODO_PC_KEY = 'hara_modo_pc';
-  // saída de emergência pela URL: ?versao=celular desliga, ?versao=completa liga
-  try {
-    var pv = new URLSearchParams(window.location.search).get('versao');
-    if (pv === 'celular') localStorage.removeItem(MODO_PC_KEY);
-    if (pv === 'completa') localStorage.setItem(MODO_PC_KEY, '1');
-  } catch (e) {}
-  function modoPCAtivo() {
-    try { return localStorage.getItem(MODO_PC_KEY) === '1'; } catch (e) { return false; }
-  }
-  // tela física pequena (celular/tablet), independente do viewport escolhido
-  function telaPequena() {
-    return Math.min(screen.width, screen.height) <= 1024;
-  }
-  function aplicarModoPC() {
-    if (!modoPCAtivo()) return;
-    var meta = document.querySelector('meta[name="viewport"]');
-    if (!meta) {
-      meta = document.createElement('meta');
-      meta.name = 'viewport';
-      document.head.appendChild(meta);
-    }
-    // largura real da tela na orientação atual (em pé ou deitado)
-    var deitado = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
-    var larguraTela = deitado ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-    // zoom inicial para a página de 1280px caber inteira na tela
-    var zoom = Math.min(1, larguraTela / 1280).toFixed(3);
-    meta.content = 'width=1280, initial-scale=' + zoom + ', minimum-scale=' + zoom;
-  }
-  aplicarModoPC();
-  // ao virar o celular, recalcula o zoom
-  window.addEventListener('orientationchange', function() { setTimeout(aplicarModoPC, 200); });
-
-  window.alternarModoPC = function(ev) {
-    if (ev) ev.preventDefault();
-    var ativo = modoPCAtivo();
-    try {
-      if (ativo) localStorage.removeItem(MODO_PC_KEY);
-      else localStorage.setItem(MODO_PC_KEY, '1');
-    } catch (e) {}
-    if (ativo) {
-      // volta o viewport normal na hora, para não herdar o zoom da versão completa
-      var meta = document.querySelector('meta[name="viewport"]');
-      if (meta) meta.content = 'width=device-width, initial-scale=1';
-    }
-    // recarrega pela URL limpa (sem ?versao=...)
-    window.location.replace(window.location.pathname + window.location.hash);
-  };
-  // ───────────────────────────────────────────────────────────────────────────
-
+  // limpa a escolha antiga de "versão completa" (recurso removido), para ninguém ficar preso nela
+  try { localStorage.removeItem('hara_modo_pc'); } catch (e) {}
 
   // ── VISUALIZADOR DE ARQUIVOS DENTRO DO SISTEMA ─────────────────────────────
   // Links para arquivos do Supabase (certificados, documentos, fotos, atestados, NF)
@@ -209,14 +158,6 @@
       html += item("parametros.html", "fa-sliders", "Parâmetros");
     }
     html += hr();
-    // só aparece em celular/tablet (no PC não faz sentido)
-    if (telaPequena() || modoPCAtivo()) {
-      html += modoPCAtivo()
-        ? '<a href="#" class="menu-item" onclick="alternarModoPC(event)">' +
-            '<i class="fa-solid fa-mobile-screen"></i><span>Voltar à versão celular</span></a>'
-        : '<a href="#" class="menu-item" onclick="alternarModoPC(event)">' +
-            '<i class="fa-solid fa-desktop"></i><span>Ver versão completa</span></a>';
-    }
     html += '<a href="#" class="menu-item" onclick="sairDoCaixa()" style="color:#f87171">' +
       '<i class="fa-solid fa-arrow-right-from-bracket"></i>' +
       '<span>Sair</span>' +

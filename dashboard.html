@@ -364,6 +364,12 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
 .pf{cursor:pointer;transition:box-shadow .15s,border-color .15s;} .pf:hover{border-color:#93c5fd;box-shadow:0 4px 14px rgba(37,99,235,.12);}
 @media (max-width:1100px){ .an-kpis.k6b{grid-template-columns:repeat(3,1fr);} }
 @media (max-width:768px){ .an-kpis.k6b{grid-template-columns:1fr 1fr;} .pd-cab{padding:12px;} .hb-m{grid-template-columns:48px 1fr;} }
+
+.lin-a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f3f4f6;font-size:13px;}
+.lin-a:last-child{border-bottom:none;}
+.lin-a .sub,.an .sub{font-size:12px;color:#6b7280;margin-top:2px;}
+.chip-a{font-size:11px;font-weight:700;border-radius:99px;padding:3px 9px;background:#f3f4f6;color:#374151;white-space:nowrap;flex-shrink:0;}
+.chip-a.now{background:#fee2e2;color:#b91c1c;} .chip-a.pend{background:#fef3c7;color:#b45309;}
 @media (max-width:1100px){
   .an-kpis{grid-template-columns:repeat(3,1fr);} .an-kpis.k5{grid-template-columns:repeat(3,1fr);}
   .c4,.c5,.c6,.c7,.c8{grid-column:span 12;}
@@ -406,6 +412,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
   <button class="sub-btn" onclick="mudarAba('prof',this)"><i class="fa fa-spa" style="font-size:11px"></i> Profissionais</button>
   <button class="sub-btn" onclick="mudarAba('fin',this)"><i class="fa fa-chart-line" style="font-size:11px"></i> Financeiro</button>
   <button class="sub-btn" onclick="mudarAba('exec',this)"><i class="fa fa-briefcase" style="font-size:11px"></i> Executivo</button>
+  <button class="sub-btn" onclick="mudarAba('aus',this)"><i class="fa fa-umbrella-beach" style="font-size:11px"></i> Ausências</button>
   <button class="sub-btn" onclick="mudarAba('equipe',this)"><i class="fa fa-users" style="font-size:11px"></i> Equipe</button>
   <button class="sub-btn" onclick="mudarAba('logins',this)"><i class="fa fa-shield-halved" style="font-size:11px"></i> Logins</button>
 </div>
@@ -498,6 +505,16 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
   <div class="an-grid">
     <div class="an-card c12"><h3>Por profissional</h3><div class="corpo"><div class="tb-wrap"><table class="tb" id="tbExProf"></table></div></div></div>
     <div class="an-card c12"><h3>Por horário de início</h3><div class="corpo"><div class="tb-wrap"><table class="tb" id="tbExHora"></table></div></div></div>
+  </div>
+</div>
+<!-- ABA AUSÊNCIAS -->
+<div class="page an" id="page-aus">
+  <div class="an-kpis k5" id="auKpis"></div>
+  <div class="an-grid">
+    <div class="an-card c12" id="auPendCard" style="border-color:#fde68a"><h3 style="background:#fffbeb">Aguardando aprovação <button class="rk-mais" style="padding:0" onclick="location.href='solicitacoes.html'">Abrir Solicitações →</button></h3><div class="corpo" id="auPend"></div></div>
+    <div class="an-card c6"><h3>Quem vai estar fora <small>próximos 30 dias</small></h3><div class="corpo" id="auProx"></div></div>
+    <div class="an-card c6"><h3>Dias de ausência por tipo <small>aprovadas, no período</small></h3><div class="corpo"><div class="rk" id="auTipo"></div></div></div>
+    <div class="an-card c12"><h3>Por pessoa <small>dias aprovados no período</small></h3><div class="corpo"><div class="tb-wrap"><table class="tb" id="auPessoa"></table></div></div></div>
   </div>
 </div>
 <div class="an-tip" id="anTip"></div>
@@ -874,9 +891,9 @@ function limparFiltrosLogin(){
 const AN = (() => {
   const DIAS_C = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
   const MES_C = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-  const ABAS = ["atend","prof","fin","exec"];
+  const ABAS = ["atend","prof","fin","exec","aus"];
   let demo = false, carregado = false, abaAtual = "atend";
-  let atds = [], despesas = [], profs = [], servs = [], folhaFix = [];
+  let atds = [], despesas = [], profs = [], servs = [], folhaFix = [], sols = [], nomesTodos = {};
   let periodo = null;      // {ini, fim, pIni, pFim} (p = período anterior, para comparar)
   const st = { limCli: 25, limProf: 10, limServ: 10 };
 
@@ -941,6 +958,7 @@ const AN = (() => {
       client.from("servico").select("id,grupo,subgrupo,tempo,valor,comissao")
     ]);
     profs = (f.data || []).filter(x => /terapeuta/i.test(x.cargo || "")).map(x => ({ cpf: x.cpf, nome: x.nome_profissional, ativo: x.status === "Ativo" }));
+    nomesTodos = {}; (f.data || []).forEach(x => nomesTodos[x.cpf] = x.nome_profissional);
     servs = (s.data || []).map(x => ({ id: x.id, nome: [x.grupo, x.tempo ? x.tempo + "min" : null, x.subgrupo].filter(Boolean).join(" "), valor: Number(x.valor || 0), comissao: Number(x.comissao || 0) }));
   }
 
@@ -979,6 +997,9 @@ const AN = (() => {
       });
       despesas = dq.filter(d => !/reprov|cancel/i.test(d.status || "")).map(d => ({ data: d.data_pagamento || d.data_vencimento, valor: Number(d.valor || 0), cat: d.categoria || "Sem categoria", status: d.status }))
         .filter(d => d.data && (!de || d.data >= de) && (!ate || d.data <= ate));
+      const sq = await client.from("funcionario_solicitacao").select("id,terapeuta_cpf,tipo,data_inicio,data_fim,status,justificativa,hora_inicio,hora_fim,created_at");
+      sols = (sq.data || []).filter(x => x.data_inicio).map(x => ({ cpf: x.terapeuta_cpf, tipo: x.tipo || "Outro", ini: x.data_inicio, fim: x.data_fim || x.data_inicio, status: x.status || "Pendente",
+        just: x.justificativa, hIni: (x.hora_inicio || "").slice(0, 5), hFim: (x.hora_fim || "").slice(0, 5), criado: (x.created_at || "").slice(0, 10) }));
       const fq = await client.from("folha").select("periodo_inicio,salario_base,acrescimos,tipo").eq("tipo", "fixo").not("periodo_inicio", "is", null);
       folhaFix = (fq.data || []).map(f => ({ data: f.periodo_inicio, valor: Number(f.salario_base || 0) + Number(f.acrescimos || 0) }))
         .filter(f => f.valor && (!de || f.data >= de) && (!ate || f.data <= ate));
@@ -1227,9 +1248,19 @@ const AN = (() => {
       <div class="an-grid">
         <div class="an-card c7"><h3>Por horário de início</h3><div class="corpo"><div class="tb-wrap"><table class="tb">${tbH}</table></div></div></div>
         <div class="an-card c5"><h3>Horário × dia</h3><div class="corpo"><div class="hm-wrap" id="hmProf"></div></div></div>
+        <div class="an-card c12"><h3>Ausências e solicitações <small>no período</small></h3><div class="corpo">${ausDela(cpf)}</div></div>
         <div class="an-card c12"><h3>Dias trabalhados <small>atendimentos por dia</small></h3><div class="corpo">${barras}</div></div>
       </div>`;
     heatmap("hmProf", L);
+  }
+
+  function ausDela(cpf) {
+    const L = sols.filter(s => s.cpf === cpf && (!periodo.ini || (s.ini <= periodo.fim && s.fim >= periodo.ini))).sort((a, b) => b.ini.localeCompare(a.ini));
+    if (!L.length) return '<div style="color:#9ca3af;font-size:13px;padding:10px 0;text-align:center">Nenhuma solicitação no período.</div>';
+    const dias = L.filter(s => s.status === "Acordado" && ehAusencia(s.tipo)).reduce((t, s) => t + diasSobrepostos(s, periodo.ini, periodo.fim), 0);
+    const cor = st => st === "Acordado" ? "#15803d" : st === "Pendente" ? "#b45309" : "#b91c1c";
+    return `<div class="sub" style="margin-bottom:6px"><b>${dias}</b> dia${dias === 1 ? "" : "s"} de ausência aprovada no período</div>` + L.map(s =>
+      `<div class="lin-a"><div><span class="${tipoBadge(s.tipo)}">${esc(s.tipo)}</span> <span class="sub">${s.fim !== s.ini ? dm(s.ini) + " a " + dm(s.fim) : dm(s.ini)}${s.hIni ? " · " + s.hIni + "–" + s.hFim : ""}${s.just ? " · " + esc(s.just) : ""}</span></div><span style="font-size:12px;font-weight:700;color:${cor(s.status)}">${esc(s.status)}</span></div>`).join("");
   }
 
   // mapa de calor reaproveitável
@@ -1340,6 +1371,66 @@ const AN = (() => {
         + `<tr class="tot"><td>Total</td><td>${R(TH.com)}</td><td>${N(TH.at)}</td><td></td><td>${N(TH.ret)}</td><td>${TH.at ? R2(TH.rec / TH.at) : "—"}</td></tr>`
         : `<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:18px">Sem atendimentos no período.</td></tr>`) + "</tbody>";
   }
+  // ══ ABA AUSÊNCIAS (faltas, férias, atestados, alterações de horário) ══
+  const ehAusencia = t => !/altera/i.test(t || "");
+  function diasSobrepostos(s, ini, fim) {
+    const a = s.ini > (ini || s.ini) ? s.ini : (ini || s.ini), b = s.fim < (fim || s.fim) ? s.fim : (fim || s.fim);
+    return b >= a ? diasEntre(a, b) : 0;
+  }
+  function renderAus() {
+    const fp = document.getElementById("fProf").value, hoje = hojeS();
+    const S = sols.filter(s => !fp || s.cpf === fp);
+    const noPer = S.filter(s => !periodo.ini || (s.ini <= periodo.fim && s.fim >= periodo.ini));
+    const aprov = noPer.filter(s => s.status === "Acordado");
+    const pend = S.filter(s => s.status === "Pendente").sort((a, b) => a.ini.localeCompare(b.ini));
+    const foraHoje = S.filter(s => s.status === "Acordado" && ehAusencia(s.tipo) && s.ini <= hoje && s.fim >= hoje);
+    const ausAprov = aprov.filter(s => ehAusencia(s.tipo));
+    const diasAus = ausAprov.reduce((t, s) => t + diasSobrepostos(s, periodo.ini, periodo.fim), 0);
+    const pessoas = new Set(ausAprov.map(s => s.cpf)).size;
+    const alt = aprov.filter(s => !ehAusencia(s.tipo)).length;
+    const kp = (l, v, s, cor) => `<div class="an-kpi"><div class="l">${l}</div><div class="v"${cor ? ` style="color:${cor}"` : ""}>${v}</div><div class="s">${s || ""}</div></div>`;
+    document.getElementById("auKpis").innerHTML =
+      kp("Aguardando aprovação", N(pend.length), pend.length ? "abra Solicitações para responder" : "nada pendente", pend.length ? "#b45309" : "")
+      + kp("Fora hoje", N(new Set(foraHoje.map(s => s.cpf)).size), foraHoje.length ? esc([...new Set(foraHoje.map(s => nomeQualquer(s.cpf)))].slice(0, 3).join(", ")) + (new Set(foraHoje.map(s => s.cpf)).size > 3 ? "…" : "") : "equipe completa")
+      + kp("Dias de ausência", N(diasAus), "aprovadas, no período")
+      + kp("Pessoas com ausência", N(pessoas), "no período")
+      + kp("Alterações de horário", N(alt), "aprovadas, no período");
+
+    // pendentes
+    const badge = t => `<span class="${tipoBadge(t)}">${esc(t)}</span>`;
+    const quando = s => s.fim && s.fim !== s.ini ? `${dm(s.ini)} a ${dm(s.fim)} · ${diasEntre(s.ini, s.fim)} dias` : dm(s.ini) + (s.hIni ? ` · ${s.hIni}–${s.hFim || ""}` : "");
+    document.getElementById("auPendCard").style.display = pend.length ? "" : "none";
+    document.getElementById("auPend").innerHTML = pend.map(s => `<div class="lin-a"><div><b>${esc(nomeQualquer(s.cpf))}</b> ${badge(s.tipo)}<div class="sub">${quando(s)}${s.just ? " · " + esc(s.just) : ""}</div></div><span class="sub">pedido em ${dm(s.criado || s.ini)}</span></div>`).join("");
+
+    // próximos 30 dias (não depende do período escolhido)
+    const lim = addD(hoje, 30);
+    const prox = S.filter(s => s.status !== "Não Acordado" && s.fim >= hoje && s.ini <= lim).sort((a, b) => a.ini.localeCompare(b.ini));
+    document.getElementById("auProx").innerHTML = prox.length ? prox.map(s => {
+      const agora = s.ini <= hoje;
+      const tag = agora ? '<span class="chip-a now">agora</span>' : `<span class="chip-a">em ${diasEntre(hoje, s.ini) - 1} dia${diasEntre(hoje, s.ini) - 1 === 1 ? "" : "s"}</span>`;
+      return `<div class="lin-a"><div><b>${esc(nomeQualquer(s.cpf))}</b> ${badge(s.tipo)}${s.status === "Pendente" ? ' <span class="chip-a pend">pendente</span>' : ""}<div class="sub">${quando(s)}</div></div>${tag}</div>`;
+    }).join("") : '<div style="color:#9ca3af;font-size:13px;padding:14px 0;text-align:center">Ninguém fora nos próximos 30 dias.</div>';
+
+    // por tipo (dias)
+    const pt = {}; ausAprov.forEach(s => { pt[s.tipo] = (pt[s.tipo] || 0) + diasSobrepostos(s, periodo.ini, periodo.fim); });
+    ranking("auTipo", Object.entries(pt).map(([n, v]) => ({ n, v })).sort((a, b) => b.v - a.v), { fmt: v => N(v) + " dia" + (v === 1 ? "" : "s") });
+
+    // por pessoa
+    const TIPOS = ["Falta", "Atestado", "Férias", "Viagem"];
+    const pp = {};
+    aprov.forEach(s => { const o = pp[s.cpf] ||= { n: nomeQualquer(s.cpf), t: {}, outros: 0, dias: 0, alt: 0, ult: "" };
+      if (!ehAusencia(s.tipo)) { o.alt++; return; }
+      const d = diasSobrepostos(s, periodo.ini, periodo.fim); o.dias += d;
+      const k = TIPOS.find(t => t.toLowerCase().slice(0, 4) === (s.tipo || "").toLowerCase().slice(0, 4));
+      if (k) o.t[k] = (o.t[k] || 0) + d; else o.outros += d;
+      if (s.fim > o.ult) o.ult = s.fim; });
+    const lp = Object.values(pp).sort((a, b) => b.dias - a.dias || b.alt - a.alt);
+    const diasPer = periodo.ini ? diasEntre(periodo.ini, periodo.fim < hoje ? periodo.fim : hoje) : null;
+    document.getElementById("auPessoa").innerHTML = `<thead><tr><th>Pessoa</th>${TIPOS.map(t => `<th>${t}</th>`).join("")}<th>Outros</th><th>Total dias</th>${diasPer ? "<th>% do período</th>" : ""}<th>Alter. horário</th><th>Última</th></tr></thead><tbody>` +
+      (lp.length ? lp.map(o => `<tr><td>${esc(o.n)}</td>${TIPOS.map(t => `<td>${o.t[t] || "—"}</td>`).join("")}<td>${o.outros || "—"}</td><td><b>${o.dias}</b></td>${diasPer ? `<td>${diasPer > 0 ? P(o.dias / diasPer) : "—"}</td>` : ""}<td>${o.alt || "—"}</td><td>${o.ult ? dm(o.ult) : "—"}</td></tr>`).join("")
+        : `<tr><td colspan="10" style="text-align:center;color:#9ca3af;padding:18px">Nenhuma ausência aprovada no período.</td></tr>`) + "</tbody>";
+  }
+  const nomeQualquer = cpf => nomesTodos[cpf] || nomeProf(cpf);
   const normForma = f => { const s = (f || "").toLowerCase(); if (s.includes("pix")) return "PIX"; if (s.includes("créd") || s.includes("cred")) return "Cartão de crédito"; if (s.includes("déb") || s.includes("deb")) return "Cartão de débito"; if (s.includes("dinheiro") || s.includes("espécie")) return "Dinheiro"; return f || "Outro"; };
 
   function render() {
@@ -1350,7 +1441,7 @@ const AN = (() => {
       vazio.innerHTML = `<i class="fa fa-circle-info"></i> Ainda há poucos atendimentos no sistema (${atds.length} no intervalo), então os gráficos ficam vazios. Eles se preenchem sozinhos conforme a agenda for usada. Para ver como fica com volume, toque em <b>"Ver com dados de exemplo"</b>.`;
       vazio.classList.add("on");
     } else vazio.classList.remove("on");
-    if (abaAtual === "atend") renderAtend(); else if (abaAtual === "prof") renderProf(); else if (abaAtual === "exec") renderExec(); else renderFin();
+    if (abaAtual === "atend") renderAtend(); else if (abaAtual === "prof") renderProf(); else if (abaAtual === "exec") renderExec(); else if (abaAtual === "aus") renderAus(); else renderFin();
   }
 
   // ══ DADOS DE EXEMPLO (só na tela) ══
@@ -1388,6 +1479,15 @@ const AN = (() => {
       }
     }
     atds = out;
+    sols = [];
+    const TP = ["Falta", "Atestado", "Férias", "Alteração de Horário", "Viagem"], wTP = [30, 22, 12, 28, 8];
+    for (let i = 0; i < 70; i++) {
+      const tp = pesos(TP, wTP), dIni = addD(hoje, -330 + Math.floor(rnd() * 370)), dur = tp === "Férias" ? 7 + Math.floor(rnd() * 8) : tp === "Viagem" ? 2 + Math.floor(rnd() * 4) : tp === "Atestado" ? 1 + Math.floor(rnd() * 3) : 1;
+      const st = dIni > hoje ? (rnd() < .5 ? "Pendente" : "Acordado") : (rnd() < .92 ? "Acordado" : (rnd() < .5 ? "Não Acordado" : "Pendente"));
+      sols.push({ cpf: pesos(P_, pesoP).cpf, tipo: tp, ini: dIni, fim: addD(dIni, dur - 1), status: st, just: tp === "Atestado" ? "Consulta médica" : tp === "Alteração de Horário" ? "Sair mais cedo" : "", hIni: tp === "Alteração de Horário" ? "10:00" : "", hFim: tp === "Alteração de Horário" ? "16:00" : "", criado: addD(dIni, -3) });
+    }
+    ["Falta", "Férias"].forEach((tp, j) => sols.push({ cpf: P_[j + 1].cpf, tipo: tp, ini: addD(hoje, -j), fim: addD(hoje, tp === "Férias" ? 9 : 0), status: "Acordado", just: "", hIni: "", hFim: "", criado: addD(hoje, -10) }));
+    sols.push({ cpf: P_[3].cpf, tipo: "Férias", ini: addD(hoje, 12), fim: addD(hoje, 26), status: "Pendente", just: "Viagem de família", hIni: "", hFim: "", criado: hoje });
     folhaFix = [];
     for (let i = 12; i >= 0; i--) { const b = new Date(hoje + "T12:00:00"); const m0 = new Date(b.getFullYear(), b.getMonth() - i, 1);
       [1, 16].forEach(dia => { const dt = iso(new Date(m0.getFullYear(), m0.getMonth(), dia)); if (dt <= hoje) folhaFix.push({ data: dt, valor: 4 * 1100 + Math.round((rnd() - .5) * 300) }); }); }

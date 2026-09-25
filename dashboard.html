@@ -333,6 +333,37 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
 /* tooltip */
 .an-tip{position:fixed;pointer-events:none;background:#111827;color:#fff;font-size:12px;padding:7px 10px;border-radius:8px;z-index:3000;display:none;max-width:240px;line-height:1.4;box-shadow:0 6px 18px rgba(0,0,0,.2);}
 .an-tip b{display:block;}
+
+/* barras horizontais (receita × despesas) */
+.hb{display:flex;flex-direction:column;gap:12px;}
+.hb-m{display:grid;grid-template-columns:62px 1fr;gap:4px 10px;align-items:center;cursor:default;}
+.hb-m .mn{font-size:12px;font-weight:600;color:var(--txt2);grid-row:span 3;text-align:right;}
+.hb-row{display:flex;align-items:center;gap:6px;min-width:0;}
+.hb-row i{display:block;height:10px;border-radius:0 4px 4px 0;background:var(--s1);min-width:2px;}
+.hb-row.d i{background:var(--s2);}
+.hb-row span{font-size:11px;font-weight:700;color:var(--txt);white-space:nowrap;}
+.hb-pct{font-size:11px;color:var(--txt2);}
+.hb-pct b{color:var(--txt);}
+/* despesas por tipo (grupo que abre) */
+.tb tr.grp td{cursor:pointer;} .tb tr.grp td:first-child::before{content:"+ ";color:#9ca3af;font-weight:700;}
+.tb tr.grp.aberto td:first-child::before{content:"− ";}
+.tb tr.sub td{color:#6b7280;font-weight:500;background:#fafbfc;} .tb tr.sub td:first-child{padding-left:22px;font-weight:500;color:#374151;}
+/* detalhe da profissional */
+.pd-cab{display:flex;align-items:center;gap:12px;padding:14px 28px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;}
+.pd-cab .pf-av{width:44px;height:44px;font-size:16px;}
+.pd-cab h2{margin:0;font-size:19px;}
+.pd-cab small{color:#6b7280;font-size:12px;}
+.pd-voltar{margin-left:auto;background:#f3f4f6;border:none;border-radius:8px;padding:9px 12px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;color:#374151;}
+.an-kpis.k6b{grid-template-columns:repeat(6,1fr);}
+.dias{display:flex;align-items:flex-end;gap:4px;height:150px;min-width:max-content;padding-top:20px;border-bottom:1px solid #d1d5db;}
+.dias .d{width:22px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:default;}
+.dias .d b{font-size:10px;color:var(--txt2);margin-bottom:2px;}
+.dias .d i{display:block;width:100%;border-radius:4px 4px 0 0;}
+.dias-x{display:flex;gap:4px;min-width:max-content;margin-top:4px;}
+.dias-x span{width:22px;text-align:center;font-size:9px;color:var(--txt2);line-height:1.2;}
+.pf{cursor:pointer;transition:box-shadow .15s,border-color .15s;} .pf:hover{border-color:#93c5fd;box-shadow:0 4px 14px rgba(37,99,235,.12);}
+@media (max-width:1100px){ .an-kpis.k6b{grid-template-columns:repeat(3,1fr);} }
+@media (max-width:768px){ .an-kpis.k6b{grid-template-columns:1fr 1fr;} .pd-cab{padding:12px;} .hb-m{grid-template-columns:48px 1fr;} }
 @media (max-width:1100px){
   .an-kpis{grid-template-columns:repeat(3,1fr);} .an-kpis.k5{grid-template-columns:repeat(3,1fr);}
   .c4,.c5,.c6,.c7,.c8{grid-column:span 12;}
@@ -374,6 +405,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
   <button class="sub-btn active" onclick="mudarAba('atend',this)"><i class="fa fa-calendar-check" style="font-size:11px"></i> Atendimentos</button>
   <button class="sub-btn" onclick="mudarAba('prof',this)"><i class="fa fa-spa" style="font-size:11px"></i> Profissionais</button>
   <button class="sub-btn" onclick="mudarAba('fin',this)"><i class="fa fa-chart-line" style="font-size:11px"></i> Financeiro</button>
+  <button class="sub-btn" onclick="mudarAba('exec',this)"><i class="fa fa-briefcase" style="font-size:11px"></i> Executivo</button>
   <button class="sub-btn" onclick="mudarAba('equipe',this)"><i class="fa fa-users" style="font-size:11px"></i> Equipe</button>
   <button class="sub-btn" onclick="mudarAba('logins',this)"><i class="fa fa-shield-halved" style="font-size:11px"></i> Logins</button>
 </div>
@@ -431,6 +463,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
 
 <!-- ABA PROFISSIONAIS -->
 <div class="page an" id="page-prof">
+  <div id="pfDet" style="display:none"></div>
+  <div id="pfLista">
   <div class="an-kpis k5">
     <div class="an-kpi"><div class="l">Profissionais ativas</div><div class="v" id="kpN">—</div><div class="s">com atendimento no período</div></div>
     <div class="an-kpi"><div class="l">Média por profissional</div><div class="v" id="kpMed">—</div><div class="s">atendimentos</div></div>
@@ -439,22 +473,31 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
     <div class="an-kpi"><div class="l">Cancelamentos</div><div class="v" id="kpCanc">—</div><div class="s" id="kpCancS"></div></div>
   </div>
   <div class="pf-grid" id="pfGrid"></div>
+  </div>
 </div>
 
 <!-- ABA FINANCEIRO -->
 <div class="page an" id="page-fin">
   <div class="an-kpis k5">
-    <div class="an-kpi"><div class="l">Receita realizada</div><div class="v" id="kfRec">—</div><div class="s" id="kfRecS"></div></div>
-    <div class="an-kpi"><div class="l">A realizar</div><div class="v" id="kfPrev">—</div><div class="s" id="kfPrevS"></div></div>
-    <div class="an-kpi"><div class="l">Comissões</div><div class="v" id="kfCom">—</div><div class="s" id="kfComS"></div></div>
+    <div class="an-kpi"><div class="l">Clientes</div><div class="v" id="kfCli">—</div><div class="s" id="kfCliS"></div></div>
+    <div class="an-kpi"><div class="l">Receita</div><div class="v" id="kfRec">—</div><div class="s" id="kfRecS"></div></div>
+    <div class="an-kpi"><div class="l">Comissão</div><div class="v" id="kfCom">—</div><div class="s" id="kfComS"></div></div>
     <div class="an-kpi"><div class="l">Despesas</div><div class="v" id="kfDesp">—</div><div class="s" id="kfDespS"></div></div>
-    <div class="an-kpi"><div class="l">Resultado</div><div class="v" id="kfRes">—</div><div class="s" id="kfResS"></div></div>
+    <div class="an-kpi"><div class="l">Receita líquida</div><div class="v" id="kfRes">—</div><div class="s" id="kfResS"></div></div>
   </div>
   <div class="an-grid">
-    <div class="an-card c8"><h3>Receita × custos por mês <small>custos = comissões + despesas</small></h3><div class="corpo"><div id="evoFin"></div><div class="tb-wrap" style="margin-top:12px"><table class="tb" id="tbFin"></table></div></div></div>
-    <div class="an-card c4"><h3>Formas de pagamento <small>atendimentos faturados</small></h3><div class="corpo"><div class="rk" id="rkForma"></div></div></div>
-    <div class="an-card c6"><h3>Despesas por categoria</h3><div class="corpo"><div class="rk" id="rkDesp"></div></div></div>
-    <div class="an-card c6"><h3>Receita por serviço</h3><div class="corpo"><div class="rk" id="rkRecServ"></div></div></div>
+    <div class="an-card c5"><h3>Despesas por tipo <small>toque para abrir</small></h3><div class="corpo"><div class="tb-wrap"><table class="tb" id="tbDespTipo"></table></div></div></div>
+    <div class="an-card c7"><h3>Receita × despesas por mês <small>% = despesa ÷ receita</small></h3><div class="corpo"><div id="evoFin"></div></div></div>
+    <div class="an-card c7"><h3>Por profissional</h3><div class="corpo"><div class="tb-wrap"><table class="tb" id="tbFinProf"></table></div></div></div>
+    <div class="an-card c5"><h3>Formas de pagamento <small>atendimentos faturados</small></h3><div class="corpo"><div class="rk" id="rkForma"></div></div></div>
+  </div>
+</div>
+<!-- ABA EXECUTIVO -->
+<div class="page an" id="page-exec">
+  <div class="an-kpis k5" id="exDest"></div>
+  <div class="an-grid">
+    <div class="an-card c12"><h3>Por profissional</h3><div class="corpo"><div class="tb-wrap"><table class="tb" id="tbExProf"></table></div></div></div>
+    <div class="an-card c12"><h3>Por horário de início</h3><div class="corpo"><div class="tb-wrap"><table class="tb" id="tbExHora"></table></div></div></div>
   </div>
 </div>
 <div class="an-tip" id="anTip"></div>
@@ -831,9 +874,9 @@ function limparFiltrosLogin(){
 const AN = (() => {
   const DIAS_C = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
   const MES_C = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-  const ABAS = ["atend","prof","fin"];
+  const ABAS = ["atend","prof","fin","exec"];
   let demo = false, carregado = false, abaAtual = "atend";
-  let atds = [], despesas = [], profs = [], servs = [];
+  let atds = [], despesas = [], profs = [], servs = [], folhaFix = [];
   let periodo = null;      // {ini, fim, pIni, pFim} (p = período anterior, para comparar)
   const st = { limCli: 25, limProf: 10, limServ: 10 };
 
@@ -905,7 +948,7 @@ const AN = (() => {
     periodo = calcPeriodo();
     document.getElementById("fDatas").classList.toggle("on", document.getElementById("fPer").value === "custom");
     if (!profs.length && !servs.length) await carregarListas();
-    if (demo) { gerarDemo(); preencherSelects(); render(); return; }
+    if (demo) { gerarDemo(); marcarRetornos(); preencherSelects(); render(); return; }
 
     // intervalo buscado: período + período anterior + 12 meses para a evolução
     let de = null, ate = periodo.fim;
@@ -916,12 +959,13 @@ const AN = (() => {
     }
     try {
       const rows = await buscarTudo(() => {
-        let q = client.from("atendimento").select("id,data,hora_inicio,status,valor_final,comissao_total,terapeuta1_cpf,terapeuta2_cpf,cliente_id,servico_id,finalizado_em,forma_pagamento,forma_pgto_1,valor_pgto_1,forma_pgto_2,valor_pgto_2,cliente:cliente_id(nome),servico:servico_id(grupo,subgrupo,tempo)").order("data").order("id");
+        let q = client.from("atendimento").select("id,data,hora_inicio,hora_fim,status,valor_final,comissao_total,terapeuta1_cpf,terapeuta2_cpf,cliente_id,servico_id,finalizado_em,forma_pagamento,forma_pgto_1,valor_pgto_1,forma_pgto_2,valor_pgto_2,cliente:cliente_id(nome),servico:servico_id(grupo,subgrupo,tempo)").order("data").order("id");
         if (de) q = q.gte("data", de); if (ate) q = q.lte("data", ate);
         return q;
       });
       atds = rows.map(a => ({
         id: a.id, data: a.data, hora: (a.hora_inicio || "").slice(0, 5), status: a.status,
+        dur: (a.hora_inicio && a.hora_fim) ? Math.max(0, (parseInt(a.hora_fim) * 60 + parseInt(a.hora_fim.slice(3, 5))) - (parseInt(a.hora_inicio) * 60 + parseInt(a.hora_inicio.slice(3, 5)))) : (a.servico?.tempo || 60),
         valor: Number(a.valor_final || 0), comissao: Number(a.comissao_total || 0),
         t1: a.terapeuta1_cpf, t2: a.terapeuta2_cpf, cliId: a.cliente_id, cliNome: a.cliente?.nome || "Sem cliente",
         servId: a.servico_id, servNome: a.servico ? [a.servico.grupo, a.servico.tempo ? a.servico.tempo + "min" : null, a.servico.subgrupo].filter(Boolean).join(" ") : "Sem serviço",
@@ -935,8 +979,11 @@ const AN = (() => {
       });
       despesas = dq.filter(d => !/reprov|cancel/i.test(d.status || "")).map(d => ({ data: d.data_pagamento || d.data_vencimento, valor: Number(d.valor || 0), cat: d.categoria || "Sem categoria", status: d.status }))
         .filter(d => d.data && (!de || d.data >= de) && (!ate || d.data <= ate));
-    } catch (e) { console.error(e); atds = []; despesas = []; }
-    preencherSelects(); render();
+      const fq = await client.from("folha").select("periodo_inicio,salario_base,acrescimos,tipo").eq("tipo", "fixo").not("periodo_inicio", "is", null);
+      folhaFix = (fq.data || []).map(f => ({ data: f.periodo_inicio, valor: Number(f.salario_base || 0) + Number(f.acrescimos || 0) }))
+        .filter(f => f.valor && (!de || f.data >= de) && (!ate || f.data <= ate));
+    } catch (e) { console.error(e); atds = []; despesas = []; folhaFix = []; }
+    marcarRetornos(); preencherSelects(); render();
   }
 
   function preencherSelects() {
@@ -950,6 +997,18 @@ const AN = (() => {
     sp.value = [...sp.options].some(o => o.value === vp) ? vp : "";
     ss.value = [...ss.options].some(o => o.value === vs) ? vs : "";
   }
+
+  // Retorno = atendimento de um cliente que JÁ tinha sido atendido antes pela MESMA profissional
+  function marcarRetornos() {
+    const visto = new Set();
+    atds.slice().sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora)).forEach(a => {
+      a.ret1 = false; a.ret2 = false;
+      if (ehCancel(a) || a.cliId == null) return;
+      if (a.t1) { const k = a.cliId + "|" + a.t1; a.ret1 = visto.has(k); visto.add(k); }
+      if (a.t2) { const k = a.cliId + "|" + a.t2; a.ret2 = visto.has(k); visto.add(k); }
+    });
+  }
+  const ehRet = (a, cpf) => cpf ? (a.t1 === cpf ? a.ret1 : a.t2 === cpf ? a.ret2 : false) : (a.ret1 || a.ret2);
 
   // ── filtros ──
   function filtrar(lista, ini, fim, { ignorarSit = false } = {}) {
@@ -966,7 +1025,7 @@ const AN = (() => {
     const fp = document.getElementById("fProf").value;
     const at = lista.length, rec = lista.reduce((s, a) => s + a.valor * parte(a, fp), 0), com = lista.reduce((s, a) => s + a.comissao * parte(a, fp), 0);
     const porCli = {}; lista.forEach(a => { if (a.cliId != null) porCli[a.cliId] = (porCli[a.cliId] || 0) + 1; });
-    const cli = Object.keys(porCli).length, ret = Object.values(porCli).filter(n => n > 1).length;
+    const cli = Object.keys(porCli).length, ret = lista.filter(a => ehRet(a, fp)).length;
     return { at, rec, com, tk: at ? rec / at : 0, cli, ret };
   }
 
@@ -1007,7 +1066,7 @@ const AN = (() => {
     set("kaCom", R(A.com), A.rec ? P(A.com / A.rec) + " da receita" : "");
     set("kaTk", R2(A.tk), variacao(A.tk, Ap.tk));
     set("kaCli", N(A.cli), variacao(A.cli, Ap.cli));
-    set("kaRet", N(A.ret), A.cli ? P(A.ret / A.cli) + " dos clientes voltaram" : "");
+    set("kaRet", N(A.ret), A.at ? P(A.ret / A.at) + " dos atendimentos" : "");
 
     // por profissional (four hands conta para as duas)
     const pp = {};
@@ -1066,17 +1125,19 @@ const AN = (() => {
     document.getElementById("maisCli").style.display = lc.length > st.limCli ? "" : "none";
   }
 
-  // ══ ABA PROFISSIONAIS ══
+  // ══ ABA PROFISSIONAIS (lista de cartões) ══
   function renderProf() {
-    const Ltodos = filtrar(atds, periodo.ini, periodo.fim, { ignorarSit: true });
     const fp = document.getElementById("fProf").value;
+    document.getElementById("pfLista").style.display = fp ? "none" : "";
+    document.getElementById("pfDet").style.display = fp ? "" : "none";
+    if (fp) return renderProfDet(fp);
+    const Ltodos = filtrar(atds, periodo.ini, periodo.fim, { ignorarSit: true });
     const por = {};
     Ltodos.forEach(a => [a.t1, a.t2].filter(Boolean).forEach(c => {
-      if (fp && c !== fp) return;
-      const o = por[c] ||= { cpf: c, n: nomeProf(c), at: 0, canc: 0, rec: 0, com: 0, cli: {}, horas: {}, serv: {}, dias: {} };
+      const o = por[c] ||= { cpf: c, n: nomeProf(c), at: 0, canc: 0, rec: 0, com: 0, ret: 0, cli: {}, horas: {}, serv: {}, dias: {} };
       if (ehCancel(a)) { o.canc++; return; }
-      const k = a.t2 ? .5 : 1; o.at++; o.rec += a.valor * k; o.com += a.comissao * k;
-      if (a.cliId != null) o.cli[a.cliId] = (o.cli[a.cliId] || 0) + 1;
+      const k = a.t2 ? .5 : 1; o.at++; o.rec += a.valor * k; o.com += a.comissao * k; if (ehRet(a, c)) o.ret++;
+      if (a.cliId != null) o.cli[a.cliId] = 1;
       const h = parseInt(a.hora); if (!isNaN(h)) o.horas[h] = (o.horas[h] || 0) + 1;
       o.serv[a.servNome] = (o.serv[a.servNome] || 0) + 1;
       const w = new Date(a.data + "T12:00:00").getDay(); o.dias[w] = (o.dias[w] || 0) + 1;
@@ -1084,57 +1145,200 @@ const AN = (() => {
     const lista = Object.values(por).filter(o => o.at || o.canc).sort((a, b) => b.at - a.at);
     const top = obj => { const e = Object.entries(obj).sort((a, b) => b[1] - a[1])[0]; return e ? e[0] : null; };
     const ativas = lista.filter(o => o.at);
-    const nCli = ativas.reduce((s, o) => s + Object.keys(o.cli).length, 0), nFid = ativas.reduce((s, o) => s + Object.values(o.cli).filter(v => v > 1).length, 0);
-    const totAt = ativas.reduce((s, o) => s + o.at, 0), totC = lista.reduce((s, o) => s + o.canc, 0);
+    const totAt = ativas.reduce((s, o) => s + o.at, 0), totC = lista.reduce((s, o) => s + o.canc, 0), totRet = ativas.reduce((s, o) => s + o.ret, 0);
     document.getElementById("kpN").textContent = N(ativas.length);
     document.getElementById("kpMed").textContent = ativas.length ? N(totAt / ativas.length) : "—";
     document.getElementById("kpCom").textContent = ativas.length ? R(ativas.reduce((s, o) => s + o.com, 0) / ativas.length) : "—";
-    document.getElementById("kpFid").textContent = nCli ? P(nFid / nCli) : "—";
+    document.getElementById("kpFid").textContent = totAt ? P(totRet / totAt) : "—";
     document.getElementById("kpCanc").textContent = totAt + totC ? P(totC / (totAt + totC)) : "—";
     document.getElementById("kpCancS").textContent = `${N(totC)} de ${N(totAt + totC)} agendamentos`;
-    const ini = n => n.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
     document.getElementById("pfGrid").innerHTML = lista.length ? lista.map((o, i) => {
-      const cl = Object.keys(o.cli).length, fid = Object.values(o.cli).filter(v => v > 1).length, h = top(o.horas), d = top(o.dias);
-      return `<div class="pf"><div class="pf-top"><div class="pf-av">${esc(ini(o.n))}</div><div><div class="pf-nome">${esc(o.n)}</div><div class="pf-pos">${i + 1}º em atendimentos</div></div></div>
+      const h = top(o.horas), d = top(o.dias);
+      return `<div class="pf" onclick="AN.abrirProf('${esc(o.cpf)}')"><div class="pf-top"><div class="pf-av">${esc(iniciaisN(o.n))}</div><div><div class="pf-nome">${esc(o.n)}</div><div class="pf-pos">${i + 1}º em atendimentos · toque para ver tudo</div></div></div>
         <div class="pf-kp"><div><span>Atend.</span><b>${N(o.at)}</b></div><div><span>Receita</span><b>${R(o.rec)}</b></div><div><span>Comissão</span><b>${R(o.com)}</b></div></div>
         <div class="pf-l"><span>Ticket médio</span><b>${o.at ? R(o.rec / o.at) : "—"}</b></div>
-        <div class="pf-l"><span>Clientes</span><b>${N(cl)} · ${cl ? P(fid / cl) : "0%"} voltaram</b></div>
+        <div class="pf-l"><span>Clientes · retornos</span><b>${N(Object.keys(o.cli).length)} · ${N(o.ret)} (${o.at ? P(o.ret / o.at) : "0%"})</b></div>
         <div class="pf-l"><span>Cancelamentos</span><b>${N(o.canc)}${o.at + o.canc ? " (" + P(o.canc / (o.at + o.canc)) + ")" : ""}</b></div>
         <div class="pf-l"><span>Horário mais forte</span><b>${h != null ? String(h).padStart(2, "0") + "h" : "—"}${d != null ? " · " + ["domingo","segunda","terça","quarta","quinta","sexta","sábado"][d] : ""}</b></div>
         <div class="pf-l"><span>Serviço mais feito</span><b style="max-width:60%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(top(o.serv) || "—")}</b></div></div>`;
     }).join("") : '<div class="an-card" style="padding:28px;text-align:center;color:#9ca3af">Nenhum atendimento no período.</div>';
   }
+  const iniciaisN = n => (n || "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  function abrirProf(cpf) { const s = document.getElementById("fProf"); s.value = cpf; render(); window.scrollTo(0, 0); }
+  function voltarProf() { document.getElementById("fProf").value = ""; render(); }
 
-  // ══ ABA FINANCEIRO ══
+  // ══ DETALHE DE UMA PROFISSIONAL (página "Atendentes" do Power BI) ══
+  let histCache = {};
+  async function renderProfDet(cpf) {
+    const box = document.getElementById("pfDet");
+    const L = filtrar(atds, periodo.ini, periodo.fim).filter(a => a.t1 === cpf || a.t2 === cpf);
+    const k = a => (a.t2 ? .5 : 1);
+    const real = L.filter(ehRealizado);
+    const com = L.reduce((s, a) => s + a.comissao * k(a), 0), comReal = real.reduce((s, a) => s + a.comissao * k(a), 0);
+    const rec = L.reduce((s, a) => s + a.valor * k(a), 0), ret = L.filter(a => ehRet(a, cpf)).length;
+    const q1 = L.filter(a => +a.data.slice(8) <= 15), q2 = L.filter(a => +a.data.slice(8) > 15);
+    const dias = {}; L.forEach(a => dias[a.data] = (dias[a.data] || 0) + 1);
+    const dLista = Object.keys(dias).sort();
+    const sab = dLista.filter(d => new Date(d + "T12:00:00").getDay() === 6).length;
+    const semana = dLista.filter(d => { const w = new Date(d + "T12:00:00").getDay(); return w >= 1 && w <= 5; }).length;
+
+    // histórico completo dela (para "ganhos desde o início" e "primeiro atendimento")
+    let hist = histCache[cpf + (demo ? "d" : "")];
+    if (!hist) {
+      if (demo) hist = atds.filter(a => (a.t1 === cpf || a.t2 === cpf) && !ehCancel(a));
+      else {
+        const { data } = await client.from("atendimento").select("data,status,finalizado_em,comissao_total,terapeuta2_cpf")
+          .or("terapeuta1_cpf.eq." + cpf + ",terapeuta2_cpf.eq." + cpf).in("status", ["Agendado", "Confirmado", "Faturado"]).order("data").limit(20000);
+        hist = (data || []).map(a => ({ data: a.data, status: a.status, finalizado: !!a.finalizado_em, comissao: Number(a.comissao_total || 0), t2: a.terapeuta2_cpf }));
+      }
+      histCache[cpf + (demo ? "d" : "")] = hist;
+    }
+    const histReal = hist.filter(ehRealizado);
+    const ganhoTotal = histReal.reduce((s, a) => s + a.comissao * (a.t2 ? .5 : 1), 0);
+    const primeiro = hist.length ? hist.map(a => a.data).sort()[0] : null;
+
+    const kp = (l, v, s) => `<div class="an-kpi"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s || ""}</div></div>`;
+    // por horário
+    const ph = {}; L.forEach(a => { const h = parseInt(a.hora); if (isNaN(h)) return; const o = ph[h] ||= { at: 0, com: 0, rec: 0, dias: new Set(), min: 0 }; o.at++; o.com += a.comissao * k(a); o.rec += a.valor * k(a); o.dias.add(a.data); o.min += a.dur || 60; });
+    const horas = Object.keys(ph).map(Number).sort((a, b) => a - b);
+    const tot = horas.reduce((t, h) => ({ at: t.at + ph[h].at, com: t.com + ph[h].com, rec: t.rec + ph[h].rec, min: t.min + ph[h].min }), { at: 0, com: 0, rec: 0, min: 0 });
+    const tbH = `<thead><tr><th>Horário</th><th>Atend.</th><th>Comissão</th><th>Dias</th><th>Média comissão</th><th>Horas trab.</th><th>Ticket</th></tr></thead><tbody>` +
+      (horas.length ? horas.map(h => { const o = ph[h]; return `<tr><td>${String(h).padStart(2, "0")}h</td><td>${o.at}</td><td>${R(o.com)}</td><td>${o.dias.size}</td><td>${R2(o.com / o.at)}</td><td>${N(o.min / 60)}</td><td>${R2(o.rec / o.at)}</td></tr>`; }).join("")
+        + `<tr class="tot"><td>Total</td><td>${tot.at}</td><td>${R(tot.com)}</td><td>${dLista.length}</td><td>${tot.at ? R2(tot.com / tot.at) : "—"}</td><td>${N(tot.min / 60)}</td><td>${tot.at ? R2(tot.rec / tot.at) : "—"}</td></tr>`
+        : `<tr><td colspan="7" style="text-align:center;color:#9ca3af;padding:18px">Sem atendimentos no período.</td></tr>`) + "</tbody>";
+
+    // barras de dias trabalhados (verde 5+, amarelo 3–4, vermelho 1–2)
+    const corDia = n => n >= 5 ? "#16a34a" : n >= 3 ? "#eab308" : "#dc2626";
+    const ultDias = dLista.slice(-60), mxD = Math.max(1, ...ultDias.map(d => dias[d]));
+    const DS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const barras = ultDias.length ? `<div class="leg"><span><i style="background:#16a34a"></i>5 ou mais</span><span><i style="background:#eab308"></i>3 a 4</span><span><i style="background:#dc2626"></i>1 a 2</span>${dLista.length > 60 ? "<span>· últimos 60 dias trabalhados</span>" : ""}</div>
+      <div class="tb-wrap"><div class="dias">${ultDias.map(d => `<div class="d" data-tip="<b>${DS[new Date(d + "T12:00:00").getDay()]} ${dm(d)}</b>${dias[d]} atendimento${dias[d] > 1 ? "s" : ""}"><b>${dias[d]}</b><i style="height:${dias[d] / mxD * 100}%;background:${corDia(dias[d])}"></i></div>`).join("")}</div>
+      <div class="dias-x">${ultDias.map(d => `<span>${DS[new Date(d + "T12:00:00").getDay()]}<br>${d.slice(8)}</span>`).join("")}</div></div>`
+      : '<div style="color:#9ca3af;font-size:13px;padding:14px 0;text-align:center">Nenhum dia trabalhado no período.</div>';
+
+    box.innerHTML = `<div class="pd-cab"><div class="pf-av">${esc(iniciaisN(nomeProf(cpf)))}</div><div><h2>${esc(nomeProf(cpf))}</h2><small>${primeiro ? "Primeiro atendimento em " + dm(primeiro) + "/" + primeiro.slice(0, 4) : "Sem atendimentos registrados"}</small></div>
+        <button class="pd-voltar" onclick="AN.voltarProf()"><i class="fa fa-arrow-left"></i> Todas as profissionais</button></div>
+      <div class="an-kpis k6b">${kp("Atendimentos", N(L.length), `${N(real.length)} realizados`)}${kp("Retornos", N(ret), L.length ? P(ret / L.length) + " dos atendimentos" : "")}
+        ${kp("Ganho no período", R(comReal), com > comReal ? "+ " + R(com - comReal) + " previsto" : "comissão realizada")}${kp("Ganhos desde o início", R(ganhoTotal), primeiro ? "desde " + dm(primeiro) + "/" + primeiro.slice(0, 4) : "")}
+        ${kp("Ticket médio", L.length ? R2(rec / L.length) : "—", "")}${kp("Clientes", N(new Set(L.map(a => a.cliId).filter(x => x != null)).size), "")}</div>
+      <div class="an-kpis k6b">${kp("1ª quinzena", N(q1.length) + " atend.", R(q1.reduce((s, a) => s + a.comissao * k(a), 0)))}${kp("2ª quinzena", N(q2.length) + " atend.", R(q2.reduce((s, a) => s + a.comissao * k(a), 0)))}
+        ${kp("Dias trabalhados", N(dLista.length), dLista.length ? (L.length / dLista.length).toLocaleString("pt-BR",{maximumFractionDigits:1}) + " atend. por dia" : "")}${kp("Dias de semana", N(semana), "segunda a sexta")}
+        ${kp("Sábados", N(sab), "")}${kp("Horas atendendo", N(tot.min / 60) + "h", dLista.length ? (tot.min / 60 / dLista.length).toLocaleString("pt-BR",{maximumFractionDigits:1}) + "h por dia" : "")}</div>
+      <div class="an-grid">
+        <div class="an-card c7"><h3>Por horário de início</h3><div class="corpo"><div class="tb-wrap"><table class="tb">${tbH}</table></div></div></div>
+        <div class="an-card c5"><h3>Horário × dia</h3><div class="corpo"><div class="hm-wrap" id="hmProf"></div></div></div>
+        <div class="an-card c12"><h3>Dias trabalhados <small>atendimentos por dia</small></h3><div class="corpo">${barras}</div></div>
+      </div>`;
+    heatmap("hmProf", L);
+  }
+
+  // mapa de calor reaproveitável
+  function heatmap(el, L) {
+    const hs = L.map(a => parseInt(a.hora)).filter(h => !isNaN(h));
+    const hMin = hs.length ? Math.min(...hs, 9) : 9, hMax = hs.length ? Math.max(...hs, 20) : 20;
+    const cont = {}; L.forEach(a => { const h = parseInt(a.hora); if (isNaN(h)) return; const w = new Date(a.data + "T12:00:00").getDay(); cont[h + "-" + w] = (cont[h + "-" + w] || 0) + 1; });
+    const mx = Math.max(1, ...Object.values(cont)), ordem = [1, 2, 3, 4, 5, 6, 0], NOMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+    const cor = v => { if (!v) return "background:#f6f8fb;color:transparent"; const t = v / mx; const c = t < .5 ? mix("#eef4fc", "#2a78d6", t * 2) : mix("#2a78d6", "#123a6b", (t - .5) * 2); return `background:${c};color:${t > .45 ? "#fff" : "#1e3a5f"}`; };
+    let hm = `<table class="hm"><thead><tr><th></th>${ordem.map(i => `<th>${DIAS_C[i]}</th>`).join("")}</tr></thead><tbody>`;
+    for (let h = hMin; h <= hMax; h++) hm += `<tr><td class="h">${String(h).padStart(2, "0")}h</td>${ordem.map(w => { const v = cont[h + "-" + w] || 0; return `<td class="c" style="${cor(v)}" data-tip="<b>${NOMES[w]}, ${h}h</b>${v} atendimento${v === 1 ? "" : "s"}">${v || ""}</td>`; }).join("")}</tr>`;
+    document.getElementById(el).innerHTML = hm + `</tbody></table><div class="hm-leg">menos <span class="g"></span> mais</div>`;
+  }
+
+  // ══ ABA FINANCEIRO (página "Financeiro" do Power BI) ══
+  let gruposAbertos = { func: true };
   function renderFin() {
     const L = filtrar(atds, periodo.ini, periodo.fim, { ignorarSit: true }).filter(a => !ehCancel(a));
-    const real = L.filter(ehRealizado), prev = L.filter(a => !ehRealizado(a));
+    const real = L.filter(ehRealizado);
     const fp = document.getElementById("fProf").value;
     const soma = (arr, k) => arr.reduce((s, a) => s + a[k] * parte(a, fp), 0);
-    const D = despesas.filter(d => !periodo.ini || (d.data >= periodo.ini && d.data <= periodo.fim));
-    const rec = soma(real, "valor"), com = soma(real, "comissao"), desp = fp ? 0 : D.reduce((s, d) => s + d.valor, 0), res = rec - com - desp;
+    const noPer = d => !periodo.ini || (d.data >= periodo.ini && d.data <= periodo.fim);
+    const D = fp ? [] : despesas.filter(noPer), F = fp ? [] : folhaFix.filter(noPer);
+    const rec = soma(real, "valor"), com = soma(real, "comissao"), folha = F.reduce((s, f) => s + f.valor, 0), outras = D.reduce((s, d) => s + d.valor, 0);
+    const despT = com + folha + outras, liq = rec - despT;
+    const cli = new Set(real.map(a => a.cliId).filter(x => x != null)).size;
     const Lp = periodo.pIni ? filtrar(atds, periodo.pIni, periodo.pFim, { ignorarSit: true }).filter(a => !ehCancel(a) && ehRealizado(a)) : [];
-    const recP = soma(Lp, "valor");
     const set = (id, v, s, cor) => { const e = document.getElementById(id); e.textContent = v; e.style.color = cor || ""; document.getElementById(id + "S").innerHTML = s || ""; };
-    set("kfRec", R(rec), variacao(rec, recP) || `${N(real.length)} atendimentos`);
-    set("kfPrev", R(soma(prev, "valor")), `${N(prev.length)} ainda sem baixa`);
+    set("kfCli", N(cli), `${N(real.length)} atendimentos realizados`);
+    set("kfRec", R(rec), variacao(rec, soma(Lp, "valor")) || (L.length > real.length ? R(soma(L.filter(a => !ehRealizado(a)), "valor")) + " ainda a realizar" : ""));
     set("kfCom", R(com), rec ? P(com / rec) + " da receita" : "");
-    set("kfDesp", fp ? "—" : R(desp), fp ? "não se aplica a uma profissional" : `${N(D.length)} lançamento${D.length === 1 ? "" : "s"}`);
-    set("kfRes", R(res), rec ? "margem " + P(res / rec) : "", res < 0 ? "#b91c1c" : res > 0 ? "#15803d" : "");
+    set("kfDesp", R(despT), rec ? P(despT / rec) + " da receita" + (fp ? " (só comissão)" : "") : "");
+    set("kfRes", R(liq), rec ? "margem " + P(liq / rec) : "", liq < 0 ? "#b91c1c" : liq > 0 ? "#15803d" : "");
 
+    // despesas por tipo, com o grupo "Funcionários" (comissão + folha salarial)
+    const cats = {}; D.forEach(d => cats[d.cat] = (cats[d.cat] || 0) + d.valor);
+    const linhas = [{ id: "func", n: "Funcionários", v: com + folha, sub: [["Comissão", com], ["Folha salarial (fixos)", folha]] }]
+      .concat(Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([n, v]) => ({ n, v })));
+    document.getElementById("tbDespTipo").innerHTML = `<thead><tr><th>Tipo de despesa</th><th>Valor</th><th>%</th></tr></thead><tbody>` +
+      linhas.map(l => `<tr class="${l.sub ? "grp" + (gruposAbertos[l.id] ? " aberto" : "") : ""}" ${l.sub ? `onclick="AN.alternarGrupo('${l.id}')"` : ""}><td>${esc(l.n)}</td><td>${R2(l.v)}</td><td>${despT ? P(l.v / despT) : "—"}</td></tr>`
+        + (l.sub && gruposAbertos[l.id] ? l.sub.map(([n, v]) => `<tr class="sub"><td>${n}</td><td>${R2(v)}</td><td>${despT ? P(v / despT) : "—"}</td></tr>`).join("") : "")).join("")
+      + `<tr class="tot"><td>Total</td><td>${R2(despT)}</td><td>${despT ? "100%" : ""}</td></tr></tbody>`;
+
+    // receita × despesas por mês (barras deitadas, cabem no celular)
     const M = meses12(), E = filtrar(atds, null, null, { ignorarSit: true }).filter(a => !ehCancel(a) && ehRealizado(a));
-    const dadosM = M.map(m => { const x = E.filter(a => a.data.slice(0, 7) === m.k); const dm_ = fp ? 0 : despesas.filter(d => d.data.slice(0, 7) === m.k).reduce((s, d) => s + d.valor, 0);
-      const r = soma(x, "valor"), c = soma(x, "comissao"); return { lbl: m.lbl, rec: r, cus: c + dm_, com: c, desp: dm_, res: r - c - dm_ }; });
-    colunas("evoFin", dadosM, [{ k: "rec", nome: "Receita" }, { k: "cus", nome: "Custos" }], R);
-    document.getElementById("tbFin").innerHTML = `<thead><tr><th>Mês</th><th>Receita</th><th>Comissões</th><th>Despesas</th><th>Resultado</th></tr></thead><tbody>` +
-      dadosM.slice().reverse().filter(d => d.rec || d.cus).map(d => `<tr><td>${d.lbl}</td><td>${R(d.rec)}</td><td>${R(d.com)}</td><td>${R(d.desp)}</td><td class="${d.res >= 0 ? "up" : "dn"}">${R(d.res)}</td></tr>`).join("") + "</tbody>";
+    const dM = M.map(m => { const x = E.filter(a => a.data.slice(0, 7) === m.k); const r = soma(x, "valor"), c = soma(x, "comissao");
+      const o = fp ? 0 : despesas.filter(d => d.data.slice(0, 7) === m.k).reduce((s, d) => s + d.valor, 0) + folhaFix.filter(f => f.data.slice(0, 7) === m.k).reduce((s, f) => s + f.valor, 0);
+      return { lbl: m.lbl, rec: r, desp: c + o }; }).filter(d => d.rec || d.desp);
+    const mxM = Math.max(1, ...dM.map(d => Math.max(d.rec, d.desp)));
+    document.getElementById("evoFin").innerHTML = dM.length ? `<div class="leg"><span><i style="background:var(--s1)"></i>Receita</span><span><i style="background:var(--s2)"></i>Despesas</span></div><div class="hb">` +
+      dM.slice().reverse().map(d => `<div class="hb-m" data-tip="<b>${d.lbl}</b>Receita: ${R(d.rec)}<br>Despesas: ${R(d.desp)}<br>Sobra: ${R(d.rec - d.desp)}"><span class="mn">${d.lbl}</span>
+        <div class="hb-row"><i style="width:${d.rec / mxM * 78}%"></i><span>${R(d.rec)}</span></div>
+        <div class="hb-row d"><i style="width:${d.desp / mxM * 78}%"></i><span>${R(d.desp)}</span></div>
+        <div class="hb-pct">despesa = <b>${d.rec ? P(d.desp / d.rec) : "—"}</b> da receita</div></div>`).join("") + `</div>`
+      : '<div style="color:#9ca3af;font-size:13px;padding:14px 0;text-align:center">Sem dados.</div>';
+
+    // por profissional
+    const pp = {}; real.forEach(a => [a.t1, a.t2].filter(Boolean).forEach(c => { if (fp && c !== fp) return; const o = pp[c] ||= { n: nomeProf(c), cli: new Set(), at: 0, rec: 0, com: 0 }; const k = a.t2 ? .5 : 1; o.at++; o.rec += a.valor * k; o.com += a.comissao * k; if (a.cliId != null) o.cli.add(a.cliId); }));
+    const lp = Object.values(pp).sort((a, b) => b.rec - a.rec), tt = lp.reduce((t, o) => ({ at: t.at + o.at, rec: t.rec + o.rec, com: t.com + o.com }), { at: 0, rec: 0, com: 0 });
+    document.getElementById("tbFinProf").innerHTML = `<thead><tr><th>Profissional</th><th>Clientes</th><th>Atend.</th><th>Receita</th><th>Comissão</th></tr></thead><tbody>` +
+      (lp.length ? lp.map(o => `<tr><td>${esc(o.n)}</td><td>${N(o.cli.size)}</td><td>${N(o.at)}</td><td>${R(o.rec)}</td><td>${R(o.com)}</td></tr>`).join("")
+        + `<tr class="tot"><td>Total</td><td>${N(cli)}</td><td>${N(tt.at)}</td><td>${R(tt.rec)}</td><td>${R(tt.com)}</td></tr>` : `<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:18px">Sem atendimentos realizados.</td></tr>`) + "</tbody>";
 
     const ff = {}; real.filter(a => a.status === "Faturado").forEach(a => a.formas.forEach(f => { const n = normForma(f.forma); ff[n] = (ff[n] || 0) + f.valor * parte(a, fp); }));
     ranking("rkForma", Object.entries(ff).map(([n, v]) => ({ n, v })).sort((a, b) => b.v - a.v), { fmt: R });
-    const dc = {}; D.forEach(d => dc[d.cat] = (dc[d.cat] || 0) + d.valor);
-    ranking("rkDesp", fp ? [] : Object.entries(dc).map(([n, v]) => ({ n, v })).sort((a, b) => b.v - a.v), { fmt: R });
-    const rs = {}; real.forEach(a => rs[a.servNome] = (rs[a.servNome] || 0) + a.valor * parte(a, fp));
-    ranking("rkRecServ", Object.entries(rs).map(([n, v]) => ({ n, v })).sort((a, b) => b.v - a.v), { fmt: R, lim: 10 });
+  }
+  function alternarGrupo(id) { gruposAbertos[id] = !gruposAbertos[id]; renderFin(); }
+
+  // ══ ABA EXECUTIVO (página "Executivo" do Power BI + destaques) ══
+  function renderExec() {
+    const L = filtrar(atds, periodo.ini, periodo.fim);
+    const fp = document.getElementById("fProf").value;
+    // destaques
+    const Lp = periodo.pIni ? filtrar(atds, periodo.pIni, periodo.pFim) : [];
+    const cnt = (arr, f) => { const o = {}; arr.forEach(a => { const k = f(a); if (k != null) o[k] = (o[k] || 0) + 1; }); return o; };
+    const topE = o => Object.entries(o).sort((a, b) => b[1] - a[1])[0];
+    const hTop = topE(cnt(L, a => parseInt(a.hora))), dTop = topE(cnt(L, a => new Date(a.data + "T12:00:00").getDay()));
+    const pc = {}; L.forEach(a => [a.t1, a.t2].filter(Boolean).forEach(c => pc[c] = (pc[c] || 0) + 1)); const pTop = topE(pc);
+    const sA = cnt(L, a => a.servNome), sP = cnt(Lp, a => a.servNome);
+    const cresc = Object.keys(sA).filter(k => (sP[k] || 0) >= 3).map(k => [k, (sA[k] - sP[k]) / sP[k]]).sort((a, b) => b[1] - a[1])[0];
+    const diasAb = new Set(L.map(a => a.data)).size;
+    const card = (ic, l, v, s) => `<div class="an-kpi"><div class="l"><i class="fa ${ic}"></i> ${l}</div><div class="v" style="font-size:18px">${v}</div><div class="s">${s || ""}</div></div>`;
+    document.getElementById("exDest").innerHTML =
+      card("fa-clock", "Horário mais movimentado", hTop ? String(hTop[0]).padStart(2, "0") + "h" : "—", hTop ? N(hTop[1]) + " atendimentos" : "")
+      + card("fa-calendar-day", "Dia mais forte", dTop ? ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][dTop[0]] : "—", dTop ? N(dTop[1]) + " atendimentos" : "")
+      + card("fa-star", "Profissional destaque", pTop ? esc(nomeProf(pTop[0])) : "—", pTop ? N(pTop[1]) + " atendimentos" : "")
+      + card("fa-arrow-trend-up", "Serviço que mais cresceu", cresc ? esc(cresc[0]) : "—", cresc ? `<span class="${cresc[1] >= 0 ? "up" : "dn"}">${cresc[1] >= 0 ? "+" : "−"}${P(Math.abs(cresc[1]))}</span> vs período anterior` : "precisa de período anterior")
+      + card("fa-store", "Média por dia aberto", diasAb ? (L.length / diasAb).toLocaleString("pt-BR",{maximumFractionDigits:1}) + " atend." : "—", diasAb ? `${N(diasAb)} dias com atendimento` : "");
+
+    // por profissional
+    const pp = {};
+    L.forEach(a => [a.t1, a.t2].filter(Boolean).forEach(c => { if (fp && c !== fp) return; const o = pp[c] ||= { n: nomeProf(c), at: 0, com: 0, rec: 0, ret: 0, cli: new Set() }; const k = a.t2 ? .5 : 1; o.at++; o.com += a.comissao * k; o.rec += a.valor * k; if (ehRet(a, c)) o.ret++; if (a.cliId != null) o.cli.add(a.cliId); }));
+    const lp = Object.values(pp).sort((a, b) => b.at - a.at);
+    const T = lp.reduce((t, o) => ({ at: t.at + o.at, com: t.com + o.com, rec: t.rec + o.rec, ret: t.ret + o.ret }), { at: 0, com: 0, rec: 0, ret: 0 });
+    const barra = (v, max) => `<span style="display:inline-block;vertical-align:middle;width:46px;height:6px;background:#f1f3f6;border-radius:4px;margin-right:6px;overflow:hidden"><i style="display:block;height:100%;width:${max ? v / max * 100 : 0}%;background:#2a78d6"></i></span>`;
+    const mxA = Math.max(0, ...lp.map(o => o.at / (T.at || 1)));
+    document.getElementById("tbExProf").innerHTML = `<thead><tr><th>Profissional</th><th>Atend.</th><th>% atend.</th><th>Comissão</th><th>% comissão</th><th>Clientes</th><th>Retornos</th><th>% retorno</th><th>Ticket</th></tr></thead><tbody>` +
+      (lp.length ? lp.map(o => `<tr><td>${esc(o.n)}</td><td>${N(o.at)}</td><td>${barra(o.at / (T.at || 1), mxA)}${P(o.at / (T.at || 1))}</td><td>${R(o.com)}</td><td>${P(o.com / (T.com || 1))}</td><td>${N(o.cli.size)}</td><td>${N(o.ret)}</td><td>${P(o.ret / (o.at || 1))}</td><td>${R(o.rec / (o.at || 1))}</td></tr>`).join("")
+        + `<tr class="tot"><td>Total</td><td>${N(T.at)}</td><td>100%</td><td>${R(T.com)}</td><td>100%</td><td></td><td>${N(T.ret)}</td><td>${P(T.ret / (T.at || 1))}</td><td>${T.at ? R(T.rec / T.at) : "—"}</td></tr>`
+        : `<tr><td colspan="9" style="text-align:center;color:#9ca3af;padding:18px">Sem atendimentos no período.</td></tr>`) + "</tbody>";
+
+    // por horário
+    const ph = {}; L.forEach(a => { const h = parseInt(a.hora); if (isNaN(h)) return; const o = ph[h] ||= { at: 0, com: 0, rec: 0, ret: 0, cli: new Set() }; const k = parte(a, fp); o.at++; o.com += a.comissao * k; o.rec += a.valor * k; if (ehRet(a, fp)) o.ret++; if (a.cliId != null) o.cli.add(a.cliId); });
+    const hs = Object.keys(ph).map(Number).sort((a, b) => a - b), mxC = Math.max(0, ...hs.map(h => ph[h].com));
+    const TH = hs.reduce((t, h) => ({ at: t.at + ph[h].at, com: t.com + ph[h].com, rec: t.rec + ph[h].rec, ret: t.ret + ph[h].ret }), { at: 0, com: 0, rec: 0, ret: 0 });
+    document.getElementById("tbExHora").innerHTML = `<thead><tr><th>Horário</th><th>Comissão</th><th>Atend.</th><th>Clientes</th><th>Retornos</th><th>Ticket</th></tr></thead><tbody>` +
+      (hs.length ? hs.map(h => { const o = ph[h]; return `<tr><td>${String(h).padStart(2, "0")}h</td><td>${barra(o.com, mxC)}${R(o.com)}</td><td>${N(o.at)}</td><td>${N(o.cli.size)}</td><td>${N(o.ret)}</td><td>${R2(o.rec / o.at)}</td></tr>`; }).join("")
+        + `<tr class="tot"><td>Total</td><td>${R(TH.com)}</td><td>${N(TH.at)}</td><td></td><td>${N(TH.ret)}</td><td>${TH.at ? R2(TH.rec / TH.at) : "—"}</td></tr>`
+        : `<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:18px">Sem atendimentos no período.</td></tr>`) + "</tbody>";
   }
   const normForma = f => { const s = (f || "").toLowerCase(); if (s.includes("pix")) return "PIX"; if (s.includes("créd") || s.includes("cred")) return "Cartão de crédito"; if (s.includes("déb") || s.includes("deb")) return "Cartão de débito"; if (s.includes("dinheiro") || s.includes("espécie")) return "Dinheiro"; return f || "Outro"; };
 
@@ -1146,7 +1350,7 @@ const AN = (() => {
       vazio.innerHTML = `<i class="fa fa-circle-info"></i> Ainda há poucos atendimentos no sistema (${atds.length} no intervalo), então os gráficos ficam vazios. Eles se preenchem sozinhos conforme a agenda for usada. Para ver como fica com volume, toque em <b>"Ver com dados de exemplo"</b>.`;
       vazio.classList.add("on");
     } else vazio.classList.remove("on");
-    if (abaAtual === "atend") renderAtend(); else if (abaAtual === "prof") renderProf(); else renderFin();
+    if (abaAtual === "atend") renderAtend(); else if (abaAtual === "prof") renderProf(); else if (abaAtual === "exec") renderExec(); else renderFin();
   }
 
   // ══ DADOS DE EXEMPLO (só na tela) ══
@@ -1178,12 +1382,15 @@ const AN = (() => {
         else { const r = rnd(); if (r < .07) status = "Cancelado"; else if (r < .09) status = "Remarcado"; else if (r < .80 || diasEntre(d, hoje) > 20) status = "Faturado"; else { status = "Confirmado"; fin = rnd() < .75; } }
         const desc = rnd() < .15 ? 0.9 : 1, valor = Math.round(s.valor * desc);
         const f1 = pesos(formas, pesoF), split = rnd() < .1;
-        out.push({ id: "d" + out.length, data: d, hora: String(h).padStart(2, "0") + ":" + (rnd() < .5 ? "00" : "30"), status, valor, comissao: s.comissao,
+        out.push({ id: "d" + out.length, data: d, hora: String(h).padStart(2, "0") + ":" + (rnd() < .5 ? "00" : "30"), status, valor, comissao: s.comissao, dur: parseInt((s.nome.match(/(\d+)\s*min/) || [0, 60])[1]),
           t1: t1.cpf, t2: t2 ? t2.cpf : null, cliId: c.id, cliNome: c.nome, servId: s.id, servNome: s.nome, finalizado: fin,
           formas: status === "Faturado" ? (split ? [{ forma: f1, valor: Math.round(valor / 2) }, { forma: pick(formas), valor: valor - Math.round(valor / 2) }] : [{ forma: f1, valor }]) : [] });
       }
     }
     atds = out;
+    folhaFix = [];
+    for (let i = 12; i >= 0; i--) { const b = new Date(hoje + "T12:00:00"); const m0 = new Date(b.getFullYear(), b.getMonth() - i, 1);
+      [1, 16].forEach(dia => { const dt = iso(new Date(m0.getFullYear(), m0.getMonth(), dia)); if (dt <= hoje) folhaFix.push({ data: dt, valor: 4 * 1100 + Math.round((rnd() - .5) * 300) }); }); }
     const cats = [["Aluguel", 6500, 0], ["Energia", 780, 180], ["Água", 240, 60], ["Produtos e óleos", 1300, 500], ["Lavanderia", 650, 150], ["Marketing", 900, 400], ["Internet e sistemas", 320, 0], ["Manutenção", 400, 600]];
     despesas = [];
     for (let i = 12; i >= 0; i--) { const b = new Date(hoje + "T12:00:00"); const m0 = new Date(b.getFullYear(), b.getMonth() - i, 1);
@@ -1225,7 +1432,7 @@ const AN = (() => {
   document.addEventListener("DOMContentLoaded", iniciarDicas);
 
   return {
-    carregar, render, renderClientes, alternarDemo, mostrar,
+    carregar, render, renderClientes, alternarDemo, mostrar, abrirProf, voltarProf, alternarGrupo,
     mudouPeriodo() { carregar(); },
     get limCli() { return st.limCli; }, set limCli(v) { st.limCli = v; },
     get limProf() { return st.limProf; }, set limProf(v) { st.limProf = v; },

@@ -126,8 +126,8 @@
     if (!window.usuarioLogado) { setTimeout(renderSidebar, 100); return; }
     var u = window.usuarioLogado;
     var usuario = u && u.role === "usuario";
-    // Escalas é só para a gestão: terapeuta que abrir pelo link vai para Atendimentos
-    if (usuario && paginaAtual === "escalas.html") { window.location.replace("atendimentos.html"); return; }
+    // Escalas e Kanban são só da gestão: terapeuta que abrir pelo link vai para Atendimentos
+    if (usuario && (paginaAtual === "escalas.html" || paginaAtual === "kanban.html")) { window.location.replace("atendimentos.html"); return; }
     var html = '<div class="sidebar">';
     html += '<div class="logo">Hara Spa</div>';
     if (!usuario) {
@@ -146,7 +146,7 @@
     html += item("atendimentos.html", "fa-calendar-check", "Atendimentos");
     if (!usuario) html += item("escalas.html", "fa-calendar-days", "Escalas");
     html += item("solicitacoes.html", "fa-file-lines", "Solicitações");
-    html += item("kanban.html", "fa-table-columns", "Kanban");
+    if (!usuario) html += item("kanban.html", "fa-table-columns", "Kanban");
     if (!usuario) {
       html += hr();
       html += titulo("FINANCEIRO");

@@ -268,6 +268,17 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
   .pendente-chip{justify-content:space-between;}
   .pendente-chip button{padding:9px 14px;font-size:13px;}
 }
+
+/* ── Terapeuta: o próprio cadastro aparece como página, não como janela ── */
+body.cadastro-proprio .content > :not(#modal){display:none !important;}
+body.cadastro-proprio #modal{position:static;display:block !important;background:none;padding:0;overflow:visible;z-index:auto;}
+body.cadastro-proprio .content{min-width:0;}
+body.cadastro-proprio #modal .modal-content{width:100%;max-width:1060px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+@media (max-width: 768px){
+  body.cadastro-proprio .content{padding:0 !important;}
+  body.cadastro-proprio #modal .modal-content{height:auto;min-height:calc(100dvh - 56px);border-radius:0;box-shadow:none;}
+  body.cadastro-proprio #modal .modal-footer{position:sticky;bottom:0;z-index:5;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));}
+}
 </style>
 </head>
 <body>
@@ -964,7 +975,10 @@ async function carregar(){
 
   // terapeuta: abre direto o próprio cadastro (sem lista)
   if(u.role==="usuario"&&u.cpf){
-    document.querySelector(".content").style.display="none";
+    // o cadastro vira a própria página (dentro do conteúdo, ao lado do menu), sem janela por cima
+    document.body.classList.add("cadastro-proprio");
+    const cont=document.querySelector(".content"), m=document.getElementById("modal");
+    if(m&&cont&&m.parentNode!==cont) cont.appendChild(m);
     editar(u.cpf);
     return;
   }
@@ -1119,12 +1133,9 @@ async function editar(cpf){
   const btnCnc=document.querySelector("#modal .btn-cancel");
   // admin/apoio: fechar normal
   // terapeuta: mostra botão mas redireciona para atendimentos
-  if(btnFch) {
-    btnFch.style.display="";
-    if(ehTer) {
-      btnFch.onclick = function() { location.href="atendimentos.html"; };
-    }
-  }
+  // terapeuta: o cadastro é a própria página (sem lista por trás), então não tem "fechar".
+  // Para sair, ela usa o menu (☰), como em qualquer outra tela.
+  if(btnFch) btnFch.style.display = ehTer ? "none" : "";
   if(btnCnc) {
     btnCnc.style.display = ehTer ? "none" : "";
   }

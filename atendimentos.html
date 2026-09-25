@@ -2125,11 +2125,33 @@ function medirTopoMobile(){
 window.addEventListener("resize",medirTopoMobile);
 setInterval(medirTopoMobile,1000);
 
+// ── AGENDA AO VIVO ──
+// Quando alguém cria, altera, cancela ou a terapeuta finaliza um atendimento do dia que está na tela,
+// a agenda se atualiza sozinha (sem recarregar a página).
+let canalAoVivo=null, timerAoVivo=null;
+function atualizarAoVivo(){
+  clearTimeout(timerAoVivo);
+  timerAoVivo=setTimeout(()=>{ carregar(); }, 700); // junta várias mudanças seguidas numa atualização só
+}
+function ligarAoVivo(){
+  if(canalAoVivo || !client.channel) return;
+  canalAoVivo=client.channel("agenda-ao-vivo")
+    .on("postgres_changes",{event:"*",schema:"public",table:"atendimento"},p=>{
+      const d=(p.new&&p.new.data)||(p.old&&p.old.data);
+      if(d && d!==dataSel) return; // mudança em outro dia: ignora
+      atualizarAoVivo();
+    })
+    .subscribe();
+}
+// celular bloqueado derruba a conexão: ao voltar para o app, busca de novo
+document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible" && agendamentos) atualizarAoVivo(); });
+
 document.addEventListener("DOMContentLoaded",async()=>{
   renderDiasSemana();
   await new Promise(res => getUser(res));
   await carregarDados();
   await carregar();
+  try{ ligarAoVivo(); }catch(e){ console.warn("Ao vivo:",e); }
 });
 </script>
 <script src="assets/js/push.js"></script>

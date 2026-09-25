@@ -170,14 +170,14 @@ async function carregar(){
   document.getElementById("btnProx").disabled = periodo!=="semana" && intervalo().dIni > new Date();
   quinz=salvo.q; mesRef=salvo.m;
 
-  // Conta como ganho: atendimento em que ela é a terapeuta principal e que
+  // Conta como ganho: atendimento dela (principal ou segunda terapeuta) que
   //  • a terapeuta deu baixa ("Finalizei o atendimento"), ou
   //  • a recepção já faturou.
   // O resto (agendado/confirmado ainda sem baixa) entra como "Previsto".
   const [at, adt] = await Promise.all([
     client.from("atendimento")
-      .select("data,hora_inicio,status,finalizado_em,comissao_total,cliente:cliente_id(nome),servico:servico_id(grupo,subgrupo,tempo)")
-      .eq("terapeuta1_cpf",cpf).in("status",["Agendado","Confirmado","Faturado"]).gte("data",ini).lte("data",fim)
+      .select("data,hora_inicio,status,finalizado_em,comissao_total,terapeuta2_cpf,cliente:cliente_id(nome),servico:servico_id(grupo,subgrupo,tempo)")
+      .or("terapeuta1_cpf.eq."+cpf+",terapeuta2_cpf.eq."+cpf).in("status",["Agendado","Confirmado","Faturado"]).gte("data",ini).lte("data",fim)
       .order("data",{ascending:false}).order("hora_inicio",{ascending:false}),
     client.from("funcionario_adiantamento")
       .select("data,valor,forma,observacao").eq("terapeuta_cpf",cpf).gte("data",ini).lte("data",fim)
@@ -186,7 +186,8 @@ async function carregar(){
   const erro = at.error || adt.error;
   if(erro){ document.getElementById("listaFat").innerHTML=`<div class="vazio">${esc(erro.message)}</div>`; return; }
 
-  const todos=at.data||[], adts=adt.data||[];
+  // four hands (duas terapeutas): cada uma fica com metade da comissão — mesma regra da folha
+  const todos=(at.data||[]).map(a=>({...a, fh:!!a.terapeuta2_cpf, comissao_total:Number(a.comissao_total||0)/(a.terapeuta2_cpf?2:1)})), adts=adt.data||[];
   const realizado = a => a.status==="Faturado" || !!a.finalizado_em;
   const fats=todos.filter(realizado), prevs=todos.filter(a=>!realizado(a));
   const totCom=fats.reduce((s,a)=>s+Number(a.comissao_total||0),0);
@@ -205,7 +206,7 @@ async function carregar(){
     const {d,m}=diaMes(a.data);
     const sv=a.servico?[a.servico.grupo, a.servico.tempo?a.servico.tempo+"min":null, a.servico.subgrupo].filter(Boolean).join(" "):"";
     return `<div class="linha"><div class="l-data"><div class="d">${d}/${m}</div><div class="h">${(a.hora_inicio||"").slice(0,5)}</div></div>
-      <div class="l-info"><div class="t">${esc(a.cliente?.nome||"Cliente")}</div><div class="s">${esc(sv)}</div></div>
+      <div class="l-info"><div class="t">${esc(a.cliente?.nome||"Cliente")}${a.fh?' <span class="tag tag-fat">four hands ½</span>':""}</div><div class="s">${esc(sv)}</div></div>
       <div style="text-align:right"><div class="l-val verde">${fmtM(a.comissao_total)}</div>
         <span class="tag ${a.status==="Faturado"?"tag-fat":"tag-fin"}">${a.status==="Faturado"?"Faturado":"Finalizado"}</span></div></div>`;
   }).join("") : '<div class="vazio">Nenhum atendimento realizado neste período.</div>';

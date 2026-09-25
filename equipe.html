@@ -273,6 +273,8 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 body.cadastro-proprio .content > :not(#modal){display:none !important;}
 body.cadastro-proprio #modal{position:static;display:block !important;background:none;padding:0;overflow:visible;z-index:auto;}
 body.cadastro-proprio .content{min-width:0;}
+/* terapeuta não troca o próprio CPF: some o aviso e o "Editar mesmo assim" */
+body.cadastro-proprio #cpf_aviso{display:none !important;}
 body.cadastro-proprio #modal .modal-content{width:100%;max-width:1060px;margin:0 auto;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 @media (max-width: 768px){
   body.cadastro-proprio .content{padding:0 !important;}
@@ -751,7 +753,7 @@ function aplicarMascaras(){
   if(uf)uf.addEventListener('input',function(){this.value=this.value.replace(/[^a-zA-Z]/g,'').toUpperCase().substring(0,2);});
 }
 function bloquearCPF(){document.getElementById("cpf").readOnly=true;document.getElementById("cpf_aviso").style.display="flex";cpfEdicaoHabilitada=false;}
-function habilitarEdicaoCPF(){if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?"))return;const el=document.getElementById("cpf");el.readOnly=false;el.focus();el.select();document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=true;}
+function habilitarEdicaoCPF(){if(document.body.classList.contains("cadastro-proprio"))return;if(!confirm("⚠️ Atenção!\n\nAlterar o CPF irá:\n• Criar um novo registro com o CPF novo\n• Migrar documentos e perfil de login\n• Excluir o registro antigo\n\nDeseja continuar?"))return;const el=document.getElementById("cpf");el.readOnly=false;el.focus();el.select();document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=true;}
 function desbloquearCPF(){document.getElementById("cpf").readOnly=false;document.getElementById("cpf_aviso").style.display="none";cpfEdicaoHabilitada=false;}
 function aoMudarCargo(){
   const cargo=document.getElementById("cargo").value;

@@ -47,6 +47,9 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827
 .l-info .t{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .l-info .s{font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .l-val{font-weight:700;font-size:14px;white-space:nowrap;}
+.tag{display:inline-block;font-size:10px;font-weight:700;border-radius:6px;padding:2px 6px;margin-top:3px;}
+.tag-fin{background:#dcfce7;color:#15803d;}
+.tag-fat{background:#ede9fe;color:#6d28d9;}
 .vazio{color:#9ca3af;text-align:center;padding:24px 8px;font-size:14px;}
 .nota{font-size:12px;color:#9ca3af;line-height:1.5;margin:4px 2px 24px;}
 @media (max-width:900px){ .cards{grid-template-columns:repeat(2,1fr);} }
@@ -88,14 +91,14 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827
   </div>
 
   <div class="bloco">
-    <h2><i class="fa fa-circle-check verde"></i> Atendimentos faturados</h2>
+    <h2><i class="fa fa-circle-check verde"></i> Atendimentos realizados</h2>
     <div id="listaFat"></div>
   </div>
   <div class="bloco" id="blocoAdt">
     <h2><i class="fa fa-hand-holding-dollar vermelho"></i> Adiantamentos</h2>
     <div id="listaAdt"></div>
   </div>
-  <p class="nota">Valores dos atendimentos já faturados pela recepção. "Previsto" são atendimentos agendados ou confirmados no período que ainda não foram faturados. O valor final do mês é o da folha de pagamento.</p>
+  <p class="nota">Entram nos ganhos os atendimentos em que você deu baixa ("Finalizei o atendimento") ou que a recepção já faturou. "Previsto" são os agendados ou confirmados do período que ainda estão sem baixa. O valor final do mês é o da folha de pagamento.</p>
 
 </main>
 </div>
@@ -152,23 +155,25 @@ async function carregar(){
   const agora=new Date(); agora.setDate(1);
   document.getElementById("btnProx").disabled = periodo==="mes" && mesRef>=agora;
 
-  // mesma regra da folha de pagamento: atendimentos em que ela é a terapeuta principal
-  const [fat, prev, adt] = await Promise.all([
+  // Conta como ganho: atendimento em que ela é a terapeuta principal e que
+  //  • a terapeuta deu baixa ("Finalizei o atendimento"), ou
+  //  • a recepção já faturou.
+  // O resto (agendado/confirmado ainda sem baixa) entra como "Previsto".
+  const [at, adt] = await Promise.all([
     client.from("atendimento")
-      .select("data,hora_inicio,comissao_total,cliente:cliente_id(nome),servico:servico_id(grupo,subgrupo,tempo)")
-      .eq("terapeuta1_cpf",cpf).eq("status","Faturado").gte("data",ini).lte("data",fim)
+      .select("data,hora_inicio,status,finalizado_em,comissao_total,cliente:cliente_id(nome),servico:servico_id(grupo,subgrupo,tempo)")
+      .eq("terapeuta1_cpf",cpf).in("status",["Agendado","Confirmado","Faturado"]).gte("data",ini).lte("data",fim)
       .order("data",{ascending:false}).order("hora_inicio",{ascending:false}),
-    client.from("atendimento")
-      .select("comissao_total")
-      .eq("terapeuta1_cpf",cpf).in("status",["Agendado","Confirmado"]).gte("data",ini).lte("data",fim),
     client.from("funcionario_adiantamento")
       .select("data,valor,forma,observacao").eq("terapeuta_cpf",cpf).gte("data",ini).lte("data",fim)
       .order("data",{ascending:false})
   ]);
-  const erro = fat.error || prev.error || adt.error;
+  const erro = at.error || adt.error;
   if(erro){ document.getElementById("listaFat").innerHTML=`<div class="vazio">${esc(erro.message)}</div>`; return; }
 
-  const fats=fat.data||[], prevs=prev.data||[], adts=adt.data||[];
+  const todos=at.data||[], adts=adt.data||[];
+  const realizado = a => a.status==="Faturado" || !!a.finalizado_em;
+  const fats=todos.filter(realizado), prevs=todos.filter(a=>!realizado(a));
   const totCom=fats.reduce((s,a)=>s+Number(a.comissao_total||0),0);
   const totAdt=adts.reduce((s,a)=>s+Number(a.valor||0),0);
   const totPrev=prevs.reduce((s,a)=>s+Number(a.comissao_total||0),0);
@@ -179,15 +184,16 @@ async function carregar(){
   document.getElementById("cAdtSub").textContent=adts.length?`${adts.length} lançamento${adts.length===1?"":"s"}`:"nenhum";
   document.getElementById("cLiq").textContent=fmtM(totCom-totAdt);
   document.getElementById("cPrev").textContent=fmtM(totPrev);
-  document.getElementById("cPrevSub").textContent=`${prevs.length} ainda não faturado${prevs.length===1?"":"s"}`;
+  document.getElementById("cPrevSub").textContent=`${prevs.length} ainda sem baixa`;
 
   document.getElementById("listaFat").innerHTML = fats.length ? fats.map(a=>{
     const {d,m}=diaMes(a.data);
     const sv=a.servico?[a.servico.grupo, a.servico.tempo?a.servico.tempo+"min":null, a.servico.subgrupo].filter(Boolean).join(" "):"";
     return `<div class="linha"><div class="l-data"><div class="d">${d}/${m}</div><div class="h">${(a.hora_inicio||"").slice(0,5)}</div></div>
       <div class="l-info"><div class="t">${esc(a.cliente?.nome||"Cliente")}</div><div class="s">${esc(sv)}</div></div>
-      <div class="l-val verde">${fmtM(a.comissao_total)}</div></div>`;
-  }).join("") : '<div class="vazio">Nenhum atendimento faturado neste período.</div>';
+      <div style="text-align:right"><div class="l-val verde">${fmtM(a.comissao_total)}</div>
+        <span class="tag ${a.status==="Faturado"?"tag-fat":"tag-fin"}">${a.status==="Faturado"?"Faturado":"Finalizado"}</span></div></div>`;
+  }).join("") : '<div class="vazio">Nenhum atendimento realizado neste período.</div>';
 
   document.getElementById("blocoAdt").style.display = adts.length ? "" : "none";
   document.getElementById("listaAdt").innerHTML = adts.map(a=>{

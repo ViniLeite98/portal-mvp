@@ -7,6 +7,47 @@
   // abriam fora do app, com a barra de endereço "...supabase.co". Agora abrem aqui dentro.
   (function(){
     function ehArquivo(href){ return href && href.indexOf("/storage/v1/object/") !== -1; }
+
+    // O bucket "documentos" agora é PRIVADO: o link salvo no banco (".../object/public/documentos/...")
+    // não abre mais sozinho. Na hora de mostrar, troca por um link temporário (1h) gerado com o login.
+    var MARCA = "/storage/v1/object/public/documentos/";
+    var cacheAss = {};
+    function caminhoDoc(href){
+      var i = href ? href.indexOf(MARCA) : -1;
+      return i === -1 ? null : decodeURIComponent(href.slice(i + MARCA.length).split("?")[0]);
+    }
+    window.urlAssinada = async function(href){
+      var cam = caminhoDoc(href);
+      if (!cam || typeof client === "undefined") return href;
+      var c = cacheAss[cam];
+      if (c && c.ate > Date.now()) return c.url;
+      var r = await client.storage.from("documentos").createSignedUrl(cam, 3600);
+      if (r.error || !r.data) { console.warn("Arquivo:", cam, r.error); return href; }
+      cacheAss[cam] = { url: r.data.signedUrl, ate: Date.now() + 50 * 60 * 1000 };
+      return r.data.signedUrl;
+    };
+    // imagens (fotos da equipe etc.) que apontam para o link antigo: troca o src automaticamente
+    function trocarImg(img){
+      var src = img.getAttribute("src");
+      if (!caminhoDoc(src) || img.dataset.assinando) return;
+      img.dataset.assinando = "1";
+      window.urlAssinada(src).then(function(u){ if (img.getAttribute("src") === src) img.src = u; delete img.dataset.assinando; });
+    }
+    function varrer(raiz){
+      if (!raiz.querySelectorAll) return;
+      if (raiz.tagName === "IMG") trocarImg(raiz);
+      raiz.querySelectorAll('img[src*="' + MARCA + '"]').forEach(trocarImg);
+    }
+    function iniciarObservador(){
+      varrer(document.body);
+      new MutationObserver(function(ms){
+        ms.forEach(function(m){
+          if (m.type === "attributes") trocarImg(m.target);
+          else m.addedNodes.forEach(function(n){ if (n.nodeType === 1) varrer(n); });
+        });
+      }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
+    }
+    if (document.body) iniciarObservador(); else document.addEventListener("DOMContentLoaded", iniciarObservador);
     function tipo(href){
       var u = href.split("?")[0].toLowerCase();
       if (/\.(jpe?g|png|gif|webp|bmp|heic|svg)$/.test(u)) return "img";
@@ -40,9 +81,11 @@
         '<button class="va-btn va-x" aria-label="Fechar">&times;</button></div>' +
         '<div class="va-corpo">' + corpo + '</div>';
       box.querySelector(".va-nome").textContent = nome || "Arquivo";
-      box.querySelector(".va-btn[download]").href = href;
-      if (t === "img") box.querySelector("img").src = href;
-      if (t === "pdf") box.querySelector("iframe").src = href;
+      window.urlAssinada(href).then(function(u){
+        box.querySelector(".va-btn[download]").href = u + (u.indexOf("?") === -1 ? "?" : "&") + "download=";
+        if (t === "img") box.querySelector("img").src = u;
+        if (t === "pdf") box.querySelector("iframe").src = u;
+      });
       function fechar(){ box.remove(); document.removeEventListener("keydown", esc); if (history.state && history.state.visuArq) history.back(); }
       function esc(e){ if (e.key === "Escape") fechar(); }
       box.querySelector(".va-x").onclick = fechar;
@@ -59,7 +102,12 @@
       var href = a.getAttribute("href");
       if (!ehArquivo(href)) return;
       // o Chrome do Android não mostra PDF dentro da página: nesse caso segue abrindo como antes
-      if (tipo(href) === "pdf" && /Android/i.test(navigator.userAgent)) return;
+      if (tipo(href) === "pdf" && /Android/i.test(navigator.userAgent)) {
+        e.preventDefault();
+        var aba = window.open("", "_blank");   // abre já no clique (senão o navegador bloqueia)
+        window.urlAssinada(href).then(function(u){ if (aba) aba.location.href = u; else location.href = u; });
+        return;
+      }
       e.preventDefault();
       abrirArquivo(href, (a.textContent || "").trim());
     }, true);

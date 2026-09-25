@@ -116,6 +116,12 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .ag-block.Faturado{background:#ede9fe;color:#4c1d95;border-left:3px solid #7c3aed;}
 .ag-block.Cancelado{background:#fee2e2;color:#7f1d1d;border-left:3px solid #dc2626;opacity:.65;}
 .ag-block.Remarcado{background:#fef3c7;color:#78350f;border-left:3px solid #d97706;opacity:.75;}
+/* cancelado/remarcado: faixa estreita à direita, o resto do horário fica clicável para marcar outro */
+.ag-block.ag-inativo{left:auto;right:2px;width:34%;z-index:1;padding:3px 5px;}
+.ag-block.ag-inativo .b-servico{display:none;}
+.ag-block.ag-inativo .b-hora{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ag-block.ag-inativo .b-cliente{font-size:10px;}
+.ag-block.ag-ao-lado{right:calc(34% + 4px);}
 
 /* blocos de jornada (entrada/saída) */
 .jornada-block{position:absolute;left:0;right:0;background:rgba(200,200,200,.18);border-top:2px solid #d1d5db;font-size:10px;color:#9ca3af;font-weight:700;text-align:center;padding-top:2px;pointer-events:none;z-index:1;}
@@ -1018,6 +1024,9 @@ function renderAgenda() {
 
     // blocos de atendimento
     const ags = agPorTer[ter.cpf] || [];
+    const inativo = x => x.status==="Cancelado" || x.status==="Remarcado";
+    const fimDe = x => x.hora_fim ? toMin(x.hora_fim) : toMin(x.hora_inicio)+60;
+    const sobrepoe = (x,y) => toMin(x.hora_inicio) < fimDe(y) && toMin(y.hora_inicio) < fimDe(x);
     ags.forEach(a => {
       if(!a.hora_inicio) return;
       const iniMin = toMin(a.hora_inicio);
@@ -1035,6 +1044,13 @@ function renderAgenda() {
       const block = document.createElement("div");
       block.className = `ag-block ${a.status}`;
       block.style.cssText = `top:${topPx}px;height:${hPx}px;`;
+      // Cancelado/Remarcado não ocupa mais o horário: vai para uma faixa estreita à direita
+      // e deixa o resto do espaço livre para clicar e marcar outro atendimento.
+      if(inativo(a)){
+        block.classList.add("ag-inativo");
+      } else if(ags.some(o => o!==a && inativo(o) && o.hora_inicio && sobrepoe(a,o))){
+        block.classList.add("ag-ao-lado"); // ativo no mesmo horário de um cancelado: divide a largura
+      }
       block.innerHTML = `
         <div class="b-hora">${fmtH(a.hora_inicio)}${a.hora_fim?" – "+fmtH(a.hora_fim):""}</div>
         <div class="b-cliente">${nomeC}${l4?" "+l4:""}</div>

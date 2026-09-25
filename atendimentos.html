@@ -333,6 +333,19 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 }
 
 @media print{body *{visibility:hidden;}#printArea,#printArea *{visibility:visible;}#printArea{position:fixed;top:0;left:0;width:100%;padding:28px;background:#fff;}.no-print{display:none!important;}}
+
+/* ── Visão da terapeuta: só a agenda dela, sem ferramentas de gestão ── */
+body.visao-terapeuta .view-toggle,
+body.visao-terapeuta .topbar-right .btn-ghost,
+body.visao-terapeuta .topbar-right .btn-yellow,
+body.visao-terapeuta .kpi-cell:nth-child(n+4){display:none !important;}
+body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
+@media (max-width: 768px){
+  /* a barra do topo fica vazia (o "+" é flutuante): some, e os totais sobem */
+  body.visao-terapeuta .topbar{height:0;min-height:0;padding:0;border:none;overflow:visible;}
+  body.visao-terapeuta .kpi-cell{padding:10px 6px;}
+  body.visao-terapeuta .kpi-val{font-size:18px;}
+}
 </style>
 </head>
 <body>
@@ -889,6 +902,15 @@ function irHoje() {
 }
 
 // ── VIEW TOGGLE ──
+// Terapeuta: tira as ferramentas de gestão, mostra só Total/Confirmados/Aguardando
+// e sobe os totais para cima da semana.
+function ativarVisaoTerapeuta(){
+  document.body.classList.add("visao-terapeuta");
+  const kpi=document.querySelector(".kpi-bar"), sem=document.querySelector(".semana-nav");
+  if(kpi&&sem&&sem.previousElementSibling!==kpi) sem.parentNode.insertBefore(kpi, sem);
+  if(typeof setView==="function") setView("agenda");
+}
+
 function setView(v) {
   viewAtual = v;
   document.getElementById("viewAgenda").style.display = v==="agenda" ? "block" : "none";
@@ -1400,6 +1422,7 @@ async function carregarDados(){
       .select("cargo").eq("cpf", u.cpf).single();
     if(funcLogado && ["Terapeuta Feminina","Terapeuta Masculino"].includes(funcLogado.cargo)) {
       todosTerapeutas = todosTerapeutas.filter(t => t.cpf === u.cpf);
+      ativarVisaoTerapeuta();
     }
   }
   aplicarColunasConfig();

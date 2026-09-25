@@ -339,7 +339,9 @@ body.visao-terapeuta .view-toggle,
 body.visao-terapeuta .topbar-right .btn-ghost,
 body.visao-terapeuta .topbar-right .btn-yellow,
 body.visao-terapeuta .topbar-right .btn-green,
-body.visao-terapeuta .kpi-cell:nth-child(n+4){display:none !important;}
+body.visao-terapeuta .kpi-cell:nth-child(n+4),
+body.visao-terapeuta .ag-acoes-l,
+body.visao-terapeuta .ag-valor-l{display:none !important;}
 body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
 @media (max-width: 768px){
   /* a barra do topo fica vazia (o "+" é flutuante): some, e os totais sobem */
@@ -912,6 +914,9 @@ function irHoje() {
 // ── VIEW TOGGLE ──
 // Terapeuta: tira as ferramentas de gestão, mostra só Total/Confirmados/Aguardando
 // e sobe os totais para cima da semana.
+// terapeuta só consulta a agenda: não edita, confirma, remarca, cancela nem fatura
+function ehTerapeuta(){ return document.body.classList.contains("visao-terapeuta"); }
+
 function ativarVisaoTerapeuta(){
   document.body.classList.add("visao-terapeuta");
   const kpi=document.querySelector(".kpi-bar"), sem=document.querySelector(".semana-nav");
@@ -1555,6 +1560,7 @@ async function salvarAg(){
 
 function abrirDetalhe(id){
   const a=agendamentos.find(x=>x.id===id);if(!a)return;
+  if(ehTerapeuta()) return abrirDetalheTerapeuta(a);
   const nomeC=a.cliente?.nome||"—";
   const tel=(a.cliente?.telefone_1||"").replace(/\D/g,"");
   const l4=tel.length>=4?tel.slice(-4):"";
@@ -1600,7 +1606,28 @@ function abrirDetalhe(id){
   document.getElementById("modalDet").classList.add("open");
 }
 
+// Visão da terapeuta: só horário, serviço e cliente — sem valores e sem botões de ação
+function abrirDetalheTerapeuta(a){
+  const nomeC=a.cliente?.nome||"—";
+  const nomeS=a.servico?nomeServico(a.servico):"—";
+  const extras=(a.clientes_extra||[]);
+  const linha=(ic,txt)=>`<div style="display:flex;gap:10px;font-size:15px;align-items:flex-start;"><i class="fa ${ic}" style="color:#9ca3af;width:18px;margin-top:3px"></i><span>${txt}</span></div>`;
+  document.getElementById("detTitulo").innerHTML=`<i class="fa fa-calendar" style="color:#2563eb"></i> Atendimento`;
+  document.getElementById("detConteudo").innerHTML=`
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div><span class="badge ${a.status}">${a.status}</span></div>
+      <div style="background:#f9fafb;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:12px;">
+        ${linha("fa-clock",`<strong>${fmtH(a.hora_inicio)}</strong>${a.hora_fim?" – "+fmtH(a.hora_fim):""} · ${fmtD(a.data)}`)}
+        ${linha("fa-user",`<strong>${nomeC}</strong>${extras.length?" + "+extras.map(e=>e.nome).join(", "):""}`)}
+        ${linha("fa-spa",nomeS)}
+      </div>
+    </div>`;
+  document.getElementById("detAcoes").innerHTML=`<button class="btn btn-ghost" onclick="fecharModal('modalDet')">Fechar</button>`;
+  document.getElementById("modalDet").classList.add("open");
+}
+
 async function editarAg(id){
+  if(ehTerapeuta()) return;
   const{data:a}=await client.from("atendimento")
     .select("*,cliente:cliente_id(id,nome,telefone_1),servico:servico_id(id,grupo,subgrupo,valor,comissao,tempo)")
     .eq("id",id).single();
@@ -1635,10 +1662,12 @@ async function editarAg(id){
 }
 
 async function confirmarPresenca(id){
+  if(ehTerapeuta()) return;
   await client.from("atendimento").update({status:"Confirmado"}).eq("id",id);carregar();
 }
 
 function abrirCancel(id){
+  if(ehTerapeuta()) return;
   cancelandoId=id;
   const a=agendamentos.find(x=>x.id===id);
   const sinal=a?.sinal_valor||0;
@@ -1658,6 +1687,7 @@ async function confirmarCancelamento(){
 }
 
 function abrirRemar(id){
+  if(ehTerapeuta()) return;
   remarcandoId=id;
   document.getElementById("remarData").value="";
   document.getElementById("remarHora").value="";
@@ -1686,6 +1716,7 @@ async function confirmarRemarcacao(){
 }
 
 function abrirFaturar(id){
+  if(ehTerapeuta()) return;
   faturandoId=id;
   const a=agendamentos.find(x=>x.id===id);if(!a)return;
   const sinal=a.sinal_valor||0,final=a.valor_final||0,restante=final-sinal;

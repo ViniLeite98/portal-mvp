@@ -78,8 +78,23 @@ function authBuildSidebar(role, nome) {
   '</div>';
 }
 
+// Ao sair, tira ESTE aparelho da lista de notificações (os outros aparelhos da pessoa continuam)
+function authRemoverPushAparelho() {
+  try {
+    if (!("serviceWorker" in navigator) || typeof client === "undefined") return Promise.resolve();
+    var tempo = new Promise(function(r){ setTimeout(r, 2500); }); // nunca trava a saída
+    var remover = navigator.serviceWorker.getRegistration().then(function(reg) {
+      return reg && reg.pushManager ? reg.pushManager.getSubscription() : null;
+    }).then(function(sub) {
+      if (!sub) return;
+      return client.from("push_subscriptions").delete().eq("subscription->>endpoint", sub.endpoint);
+    }).catch(function(){});
+    return Promise.race([remover, tempo]);
+  } catch (e) { return Promise.resolve(); }
+}
+
 function authLogout() {
-  client.auth.signOut().finally(function() {
+  authRemoverPushAparelho().then(function(){ return client.auth.signOut(); }).finally(function() {
     Object.keys(localStorage).forEach(function(k) {
       if (k.startsWith("sb-")) localStorage.removeItem(k);
     });

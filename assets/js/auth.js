@@ -117,6 +117,44 @@ function authAguardando() {
     '</div>';
 }
 
+// Quem ainda usa a senha padrão (hara2026) precisa criar uma senha própria antes de usar o sistema.
+// A checagem é feita no banco (preciso_trocar_senha), então vale até para quem já estava logado.
+function authTrocarSenha(session) {
+  var inp = 'width:100%;box-sizing:border-box;padding:12px 14px;border:1px solid #d1d5db;border-radius:10px;font-size:16px;margin-bottom:12px';
+  document.body.innerHTML =
+    '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#f5f7fb;font-family:Segoe UI,sans-serif">' +
+      '<form id="fTroca" style="max-width:380px;width:100%;background:#fff;border-radius:16px;padding:28px 24px;box-shadow:0 4px 20px rgba(0,0,0,.08)">' +
+        '<div style="font-size:40px;margin-bottom:10px;text-align:center">🔐</div>' +
+        '<h2 style="margin:0 0 8px;font-size:20px;color:#111827;text-align:center">Crie sua senha</h2>' +
+        '<p style="margin:0 0 20px;font-size:14px;color:#6b7280;line-height:1.6;text-align:center">Você está usando a senha padrão. Para proteger seus dados, crie uma senha só sua.</p>' +
+        '<input type="password" id="tsNova" placeholder="Nova senha (mínimo 8 caracteres)" autocomplete="new-password" style="' + inp + '">' +
+        '<input type="password" id="tsNova2" placeholder="Repita a nova senha" autocomplete="new-password" style="' + inp + '">' +
+        '<div id="tsMsg" style="display:none;font-size:13px;color:#b91c1c;margin:-4px 0 12px"></div>' +
+        '<button id="tsBtn" type="submit" style="width:100%;padding:12px;border:none;border-radius:10px;background:#1f2937;color:#fff;font-size:15px;font-weight:600;cursor:pointer">Salvar senha</button>' +
+        '<button type="button" onclick="authLogout()" style="width:100%;padding:10px;margin-top:8px;border:none;background:none;color:#6b7280;font-size:14px;cursor:pointer">Sair</button>' +
+      '</form>' +
+    '</div>';
+  document.getElementById("fTroca").onsubmit = async function(e) {
+    e.preventDefault();
+    var n1 = document.getElementById("tsNova").value, n2 = document.getElementById("tsNova2").value;
+    var msg = document.getElementById("tsMsg"), b = document.getElementById("tsBtn");
+    function erro(t){ msg.textContent = t; msg.style.display = "block"; }
+    if (n1.length < 8) return erro("A senha precisa ter pelo menos 8 caracteres.");
+    if (n1 !== n2) return erro("As duas senhas não são iguais.");
+    if (n1.toLowerCase().indexOf("hara2026") !== -1) return erro("Escolha uma senha diferente da senha padrão.");
+    b.disabled = true; b.textContent = "Salvando...";
+    var r = await client.auth.updateUser({ password: n1 });
+    if (r.error) {
+      b.disabled = false; b.textContent = "Salvar senha";
+      var m = r.error.message || "";
+      return erro(/weak|pwned|leaked|compromised/i.test(m) ? "Essa senha é muito fraca ou já vazou na internet. Escolha outra."
+                : /different|same/i.test(m) ? "A nova senha precisa ser diferente da atual."
+                : "Não foi possível salvar: " + m);
+    }
+    location.reload();
+  };
+}
+
 function authInit() {
   var paginaAtual = location.pathname.split("/").pop() || "";
 
@@ -131,6 +169,15 @@ function authInit() {
       return;
     }
 
+    // ainda com a senha padrão? então primeiro cria a senha dela
+    client.rpc("preciso_trocar_senha").then(function(rs) {
+      if (rs && rs.data === true) { authTrocarSenha(session); return; }
+      authCarregarPerfil(session);
+    });
+  });
+}
+
+function authCarregarPerfil(session) {
     client.from("perfis")
       .select("role,nome,email,cpf_terapeuta")
       .eq("id", session.user.id)
@@ -201,7 +248,6 @@ function authInit() {
           if (el) el.innerHTML = authBuildSidebar(role, nome);
         }
       });
-  });
 }
 
 if (document.readyState === "loading") {

@@ -22,7 +22,7 @@ var MENU = [
   { sep:true },
   { titulo:"OPERACIONAL" },
   { href:"atendimentos.html",     icon:"fa-calendar-check",       label:"Atendimentos",         roles:["admin","apoio","usuario"] },
-  { href:"escalas.html",          icon:"fa-calendar-days",        label:"Escalas",              roles:["admin","apoio","usuario"] },
+  { href:"escalas.html",          icon:"fa-calendar-days",        label:"Escalas",              roles:["admin","apoio"] },
   { href:"solicitacoes.html",     icon:"fa-file-lines",           label:"Solicitações",         roles:["admin","apoio","usuario"] },
   { href:"kanban.html",           icon:"fa-table-columns",        label:"Kanban",               roles:["admin","apoio","usuario"] },
   { sep:true,                                                                                    roles:["admin","apoio"] },

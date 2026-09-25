@@ -177,7 +177,9 @@
     var u = window.usuarioLogado;
     var usuario = u && u.role === "usuario";
     // Escalas e Kanban são só da gestão: terapeuta que abrir pelo link vai para Atendimentos
-    if (usuario && (paginaAtual === "escalas.html" || paginaAtual === "kanban.html" || paginaAtual === "lixeira.html" || paginaAtual === "ganhos.html")) { window.location.replace("atendimentos.html"); return; }
+    // telas só da gestão: terapeuta que abrir pelo link vai para Atendimentos
+    var SO_GESTAO = ["escalas.html","kanban.html","lixeira.html","ganhos.html","folha_pagamento.html","despesas.html","estoque.html","dashboard.html","clientes.html","servicos.html","parametros.html"];
+    if (usuario && SO_GESTAO.indexOf(paginaAtual) !== -1) { window.location.replace("atendimentos.html"); return; }
     var html = '<div class="sidebar">';
     html += '<div class="logo">Hara Spa</div>';
     if (!usuario) {

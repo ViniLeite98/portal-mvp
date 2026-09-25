@@ -24,6 +24,7 @@ var MENU = [
   { href:"atendimentos.html",     icon:"fa-calendar-check",       label:"Atendimentos",         roles:["admin","apoio","usuario"] },
   { href:"escalas.html",          icon:"fa-calendar-days",        label:"Escalas",              roles:["admin","apoio"] },
   { href:"solicitacoes.html",     icon:"fa-file-lines",           label:"Solicitações",         roles:["admin","apoio","usuario"] },
+  { href:"ganhos.html",           icon:"fa-wallet",               label:"Meus ganhos",          roles:["usuario"] },
   { href:"kanban.html",           icon:"fa-table-columns",        label:"Kanban",               roles:["admin","apoio"] },
   { sep:true,                                                                                    roles:["admin","apoio"] },
   { titulo:"FINANCEIRO",                                                                         roles:["admin","apoio"] },
@@ -33,7 +34,7 @@ var MENU = [
   { sep:true,                                                                                    roles:["admin"] },
   { titulo:"CONFIGURAÇÕES",                                                                      roles:["admin"] },
   { href:"parametros.html",       icon:"fa-sliders",              label:"Parâmetros",           roles:["admin"] },
-  { href:"logins.html",           icon:"fa-shield-halved",        label:"Logins",               roles:["admin"] },
+  { href:"lixeira.html",          icon:"fa-trash-can-arrow-up",   label:"Lixeira",              roles:["admin"] },
 ];
 
 function authBuildSidebar(role, nome) {

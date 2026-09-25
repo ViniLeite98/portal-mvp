@@ -188,6 +188,12 @@ body.visao-terapeuta .paginacao,
 body.visao-terapeuta #th-qtd,
 body.visao-terapeuta #lista td:nth-child(3){display:none !important;}
 body.visao-terapeuta .topbar-top{justify-content:flex-end;}
+body.visao-terapeuta table,
+body.visao-terapeuta #legenda{display:none !important;}
+#minhasCerts{display:none;}
+body.visao-terapeuta #minhasCerts{display:block;background:#fff;border-radius:14px;padding:6px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+#minhasCerts .mc-vazio{color:#9ca3af;text-align:center;padding:32px 8px;font-size:14px;line-height:1.6;}
+@media (max-width:768px){ body.visao-terapeuta #minhasCerts{padding:4px 14px;} }
 </style>
 </head>
 <body>
@@ -244,6 +250,9 @@ body.visao-terapeuta .topbar-top{justify-content:flex-end;}
   </thead>
   <tbody id="lista"></tbody>
 </table>
+
+<!-- Terapeuta: as certificações dela aparecem direto aqui (sem tabela e sem "Ver / Editar") -->
+<div id="minhasCerts"></div>
 
 <div class="paginacao">
   <div class="por-pagina-wrap">
@@ -540,6 +549,7 @@ async function carregarLista(){
     const sel=document.getElementById("porPagina"); if(sel) sel.value="9999";
   }
   const {data}=await q;dados=data||[];paginaAtual=0;aplicarFiltroEOrdem();
+  if(document.body.classList.contains("visao-terapeuta"))renderMinhasCerts();
 }
 
 function abrirVincular(){
@@ -566,10 +576,9 @@ async function vincular(){
   fecharVincular();carregarLista();
 }
 
-function abrirModal(nome){
-  const u=window.usuarioLogado;const registros=dados.filter(d=>d.funcionario?.nome_profissional===nome);
-  document.getElementById("tituloModal").textContent=nome;
-  const html=registros.map(r=>{
+function htmlCerts(registros,nome){
+  const u=window.usuarioLogado;
+  return registros.map(r=>{
     const icone=r.certificacao?.icone||"fa-certificate",cor=corIcone(icone);
     const dataFmt=r.data_obtencao?new Date(r.data_obtencao+"T00:00:00").toLocaleDateString("pt-BR"):"Sem data";
     const iconeHtml=renderIcone(icone,cor,20);
@@ -581,8 +590,20 @@ function abrirModal(nome){
       :'<button onclick="editarCert(\''+r.id+'\',\''+(r.data_obtencao||"")+'\')"><i class="fa fa-pencil"></i></button>';
     return '<div class="cert-row"><div style="display:flex;align-items:center;justify-content:space-between;width:100%"><div class="cert-row-left">'+iconeHtml+'<div class="cert-info"><span class="cert-nome">'+(r.certificacao?.nome||"")+'</span><span class="cert-data"><i class="fa fa-calendar-alt"></i> '+dataFmt+'</span></div></div><div class="cert-row-right">'+botoesAcao+'</div></div>'+arquivoHtml+'</div>';
   }).join("");
+}
+function abrirModal(nome){
+  // terapeuta vê tudo direto na página: em vez de abrir a janela, só atualiza a lista
+  if(document.body.classList.contains("visao-terapeuta")){renderMinhasCerts();return;}
+  const registros=dados.filter(d=>d.funcionario?.nome_profissional===nome);
+  document.getElementById("tituloModal").textContent=nome;
+  const html=htmlCerts(registros,nome);
   document.getElementById("listaCerts").innerHTML=html||'<p style="color:#9ca3af;text-align:center">Nenhuma certificação.</p>';
   document.getElementById("modalCerts").style.display="flex";
+}
+function renderMinhasCerts(){
+  const box=document.getElementById("minhasCerts");if(!box)return;
+  const nome=(dados[0]&&dados[0].funcionario?.nome_profissional)||"";
+  box.innerHTML=htmlCerts(dados,nome)||'<div class="mc-vazio"><i class="fa fa-certificate" style="font-size:28px;color:#d1d5db;display:block;margin-bottom:8px"></i>Você ainda não tem certificações cadastradas.<br>Use o botão <strong>Vincular Certificação</strong> (no celular, o <strong>+</strong> azul) para adicionar.</div>';
 }
 function fecharModal(){document.getElementById("modalCerts").style.display="none";}
 function editarCert(id,dataAtual){editandoId=id;document.getElementById("novaDataInput").value=dataAtual||"";document.getElementById("modalEditarData").style.display="flex";}

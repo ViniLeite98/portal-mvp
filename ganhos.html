@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
-<script src="assets/js/auth.js"></script>
+<script src="assets/js/auth.js" data-role="admin"></script>
 <script src="assets/js/tracker.js"></script>
 <script src="assets/sidebar/sidebar.js"></script>
 <style>
@@ -75,12 +75,13 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827
 
   <div class="periodos" id="periodos">
     <button data-p="semana" onclick="setPeriodo('semana')">Esta semana</button>
-    <button data-p="mes" onclick="setPeriodo('mes')" class="ativo">Mês</button>
+    <button data-p="quinzena" onclick="setPeriodo('quinzena')" class="ativo">Quinzena</button>
+    <button data-p="mes" onclick="setPeriodo('mes')">Mês</button>
   </div>
   <div class="nav-mes" id="navMes">
-    <button onclick="mudarMes(-1)" aria-label="Mês anterior"><i class="fa fa-chevron-left"></i></button>
+    <button id="btnAnt" onclick="navegar(-1)" aria-label="Anterior"><i class="fa fa-chevron-left"></i></button>
     <span id="mesLabel"></span>
-    <button id="btnProx" onclick="mudarMes(1)" aria-label="Próximo mês"><i class="fa fa-chevron-right"></i></button>
+    <button id="btnProx" onclick="navegar(1)" aria-label="Próximo"><i class="fa fa-chevron-right"></i></button>
   </div>
 
   <div class="cards">
@@ -98,19 +99,23 @@ body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827
     <h2><i class="fa fa-hand-holding-dollar vermelho"></i> Adiantamentos</h2>
     <div id="listaAdt"></div>
   </div>
-  <p class="nota">Entram nos ganhos os atendimentos em que você deu baixa ("Finalizei o atendimento") ou que a recepção já faturou. "Previsto" são os agendados ou confirmados do período que ainda estão sem baixa. O valor final do mês é o da folha de pagamento.</p>
+  <p class="nota">Entram nos ganhos os atendimentos em que você deu baixa ("Finalizei o atendimento") ou que a recepção já faturou. "Previsto" são os agendados ou confirmados do período que ainda estão sem baixa. O pagamento é feito por quinzena (dias 1 a 15 e 16 ao fim do mês); o valor final é o da folha de pagamento.</p>
 
 </main>
 </div>
 
 <script>
-let periodo = "mes";
-let mesRef = new Date(); mesRef.setDate(1);
+// O pagamento é quinzenal: 1ª quinzena = dias 1 a 15, 2ª quinzena = dia 16 ao fim do mês
+let periodo = "quinzena";
+const _hoje = new Date();
+let mesRef = new Date(_hoje.getFullYear(), _hoje.getMonth(), 1);
+let quinz = _hoje.getDate() <= 15 ? 1 : 2;
 
 function iso(d){ return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
 function fmtM(v){ return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
 function esc(v){ return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function diaMes(s){ const [y,m,d]=s.split("-"); return {d, m}; }
+function dm(d){ return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
 const MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
 
 function intervalo(){
@@ -118,20 +123,28 @@ function intervalo(){
     const hoje=new Date(); const dow=(hoje.getDay()+6)%7; // segunda = 0
     const ini=new Date(hoje); ini.setDate(hoje.getDate()-dow);
     const fim=new Date(ini); fim.setDate(ini.getDate()+6);
-    return {ini:iso(ini), fim:iso(fim), label:`${ini.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} a ${fim.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})}`};
+    return {ini:iso(ini), fim:iso(fim), dIni:ini, label:`${dm(ini)} a ${dm(fim)}`};
   }
-  const ini=new Date(mesRef.getFullYear(), mesRef.getMonth(), 1);
-  const fim=new Date(mesRef.getFullYear(), mesRef.getMonth()+1, 0);
-  return {ini:iso(ini), fim:iso(fim), label:`${MESES[ini.getMonth()]} de ${ini.getFullYear()}`};
+  const y=mesRef.getFullYear(), m=mesRef.getMonth();
+  if(periodo==="quinzena"){
+    const ini=new Date(y, m, quinz===1?1:16);
+    const fim=quinz===1?new Date(y, m, 15):new Date(y, m+1, 0);
+    return {ini:iso(ini), fim:iso(fim), dIni:ini, label:`${quinz}ª quinzena · ${dm(ini)} a ${dm(fim)}`};
+  }
+  const ini=new Date(y, m, 1), fim=new Date(y, m+1, 0);
+  return {ini:iso(ini), fim:iso(fim), dIni:ini, label:`${MESES[m]} de ${y}`};
 }
 function setPeriodo(p){
   periodo=p;
   document.querySelectorAll("#periodos button").forEach(b=>b.classList.toggle("ativo", b.dataset.p===p));
-  document.getElementById("navMes").style.display = "flex";
-  document.querySelectorAll("#navMes button").forEach(b=>b.style.visibility = p==="mes" ? "visible" : "hidden");
+  document.querySelectorAll("#navMes button").forEach(b=>b.style.visibility = p==="semana" ? "hidden" : "visible");
   carregar();
 }
-function mudarMes(n){ mesRef.setMonth(mesRef.getMonth()+n); carregar(); }
+function navegar_simular(n){
+  if(periodo==="quinzena"){ quinz+=n; if(quinz>2){quinz=1;mesRef.setMonth(mesRef.getMonth()+1);} if(quinz<1){quinz=2;mesRef.setMonth(mesRef.getMonth()-1);} }
+  else mesRef.setMonth(mesRef.getMonth()+n);
+}
+function navegar(n){ navegar_simular(n); carregar(); }
 
 function cpfAlvo(){
   const u=window.usuarioLogado;
@@ -152,8 +165,10 @@ async function carregar(){
   const cpf=cpfAlvo(); if(!cpf) return;
   const {ini,fim,label}=intervalo();
   document.getElementById("mesLabel").textContent=label;
-  const agora=new Date(); agora.setDate(1);
-  document.getElementById("btnProx").disabled = periodo==="mes" && mesRef>=agora;
+  // não deixa avançar para um período que ainda nem começou
+  const salvo={q:quinz, m:new Date(mesRef)}; navegar_simular(1);
+  document.getElementById("btnProx").disabled = periodo!=="semana" && intervalo().dIni > new Date();
+  quinz=salvo.q; mesRef=salvo.m;
 
   // Conta como ganho: atendimento em que ela é a terapeuta principal e que
   //  • a terapeuta deu baixa ("Finalizei o atendimento"), ou
@@ -207,7 +222,7 @@ async function carregar(){
 async function iniciar(){
   if(!window.usuarioLogado){ setTimeout(iniciar,100); return; }
   if(window.usuarioLogado.role!=="usuario") await prepararGestao();
-  setPeriodo("mes");
+  setPeriodo("quinzena");
 }
 document.addEventListener("DOMContentLoaded", iniciar);
 </script>

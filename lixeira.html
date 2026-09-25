@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lixeira | Hara Spa</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="assets/sidebar/sidebar.css">
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/js/supabase.js"></script>
+<script src="assets/js/auth.js" data-role="admin"></script>
+<script src="assets/js/tracker.js"></script>
+<script src="assets/sidebar/sidebar.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;}
+.app{display:flex;min-height:100vh;}
+#sidebar{width:260px;flex-shrink:0;}
+.content{flex:1;min-width:0;padding:24px 32px;}
+.cab{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px;}
+.cab h1{margin:0;font-size:22px;display:flex;align-items:center;gap:10px;}
+.cab h1 i{color:#6b7280;}
+.cab p{margin:6px 0 0;color:#6b7280;font-size:13px;max-width:560px;line-height:1.5;}
+.filtros{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+.filtros input,.filtros select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;}
+.filtros input{width:240px;}
+.filtros input:focus,.filtros select:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
+.contador{font-size:13px;color:#6b7280;margin-bottom:10px;}
+.lista{display:flex;flex-direction:column;gap:10px;}
+.item{background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:14px 16px;}
+.item-topo{display:flex;align-items:flex-start;gap:12px;}
+.item-ic{width:38px;height:38px;border-radius:10px;background:#f3f4f6;color:#6b7280;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.item-info{flex:1;min-width:0;}
+.item-tipo{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;}
+.item-resumo{font-size:15px;font-weight:600;margin-top:2px;word-break:break-word;}
+.item-meta{font-size:12px;color:#6b7280;margin-top:4px;}
+.item-acoes{display:flex;gap:8px;flex-shrink:0;}
+.btn{border:none;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+.btn-ghost{background:#f3f4f6;color:#374151;}
+.btn-ghost:hover{background:#e5e7eb;}
+.btn-verde{background:#16a34a;color:#fff;}
+.btn-verde:hover{background:#15803d;}
+.btn:disabled{opacity:.6;cursor:default;}
+.detalhes{display:none;margin-top:12px;border-top:1px solid #f3f4f6;padding-top:10px;}
+.item.aberto .detalhes{display:block;}
+.det-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px 16px;}
+.det-l{font-size:12px;line-height:1.4;min-width:0;}
+.det-l b{display:block;color:#9ca3af;font-weight:600;font-size:11px;}
+.det-l span{word-break:break-word;}
+.vazio{background:#fff;border-radius:12px;padding:40px 16px;text-align:center;color:#9ca3af;font-size:14px;}
+.vazio i{font-size:30px;display:block;margin-bottom:10px;color:#d1d5db;}
+.aviso{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:3000;display:none;max-width:calc(100% - 32px);}
+@media (max-width:768px){
+  .content{padding:16px;}
+  .filtros input,.filtros select{width:100%;font-size:16px;}
+  .filtros{flex-direction:column;}
+  .item-topo{flex-wrap:wrap;}
+  .item-acoes{width:100%;}
+  .item-acoes .btn{flex:1;justify-content:center;padding:11px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside id="sidebar"></aside>
+<main class="content">
+
+  <div class="cab">
+    <div>
+      <h1><i class="fa fa-trash-can-arrow-up"></i> Lixeira</h1>
+      <p>Tudo o que é excluído no sistema fica guardado aqui, com a data e quem excluiu. Se algo foi apagado por engano, é só restaurar.</p>
+    </div>
+  </div>
+
+  <div class="filtros">
+    <select id="fTabela" onchange="render()"><option value="">Tudo</option></select>
+    <input id="fBusca" placeholder="Buscar (nome, cliente, quem excluiu...)" oninput="render()">
+  </div>
+  <div class="contador" id="contador"></div>
+  <div class="lista" id="lista"><div class="vazio"><i class="fa fa-spinner fa-spin"></i>Carregando...</div></div>
+
+</main>
+</div>
+<div class="aviso" id="aviso"></div>
+
+<script>
+const NOMES = {
+  atendimento:"Atendimento", cliente:"Cliente", despesa:"Despesa", documentos:"Documento",
+  funcionario:"Ficha de funcionário", funcionario_horario:"Horário", funcionario_solicitacao:"Solicitação",
+  certificacao:"Certificação", kanban_cards:"Card do Kanban", fechamentos_caixa:"Fechamento de caixa",
+  caixa_movimentacoes:"Movimentação de caixa"
+};
+const ICONES = {
+  atendimento:"fa-calendar-check", cliente:"fa-user", despesa:"fa-receipt", documentos:"fa-file",
+  funcionario:"fa-id-card", funcionario_horario:"fa-clock", funcionario_solicitacao:"fa-file-lines",
+  certificacao:"fa-certificate", kanban_cards:"fa-table-columns", fechamentos_caixa:"fa-cash-register",
+  caixa_movimentacoes:"fa-money-bill-transfer"
+};
+let itens = [];
+
+function esc(v){ return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmtData(d){ if(!d) return ""; const m=String(d).match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:d; }
+function fmtQuando(ts){ const d=new Date(ts); return d.toLocaleDateString("pt-BR")+" às "+d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }
+function fmtM(v){ return Number(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"}); }
+
+// frase curta que identifica o registro
+function resumo(it){
+  const d = it.dados || {};
+  const nome = d.nome_profissional || d.nome || d.nome_arquivo || d.titulo || d.descricao || d.justificativa || d.tipo || "";
+  const partes = [];
+  if(nome) partes.push(nome);
+  if(it.tabela==="atendimento" && d.data) partes.push(fmtData(d.data)+(d.hora_inicio?" "+String(d.hora_inicio).slice(0,5):""));
+  else if(d.data || d.data_inicio) partes.push(fmtData(d.data || d.data_inicio));
+  if(d.valor_final!=null) partes.push(fmtM(d.valor_final)); else if(d.valor!=null && !isNaN(d.valor)) partes.push(fmtM(d.valor));
+  if(d.status) partes.push(d.status);
+  return partes.join(" · ") || ("Registro " + (it.registro_id || ""));
+}
+
+async function carregar(){
+  const {data, error} = await client.from("lixeira")
+    .select("id,tabela,registro_id,dados,deletado_em,deletado_por")
+    .order("deletado_em",{ascending:false}).limit(300);
+  if(error){ document.getElementById("lista").innerHTML='<div class="vazio"><i class="fa fa-triangle-exclamation"></i>'+esc(error.message)+'</div>'; return; }
+  itens = data || [];
+  const sel = document.getElementById("fTabela"), atual = sel.value;
+  const tabs = [...new Set(itens.map(i=>i.tabela))].sort((a,b)=>(NOMES[a]||a).localeCompare(NOMES[b]||b));
+  sel.innerHTML = '<option value="">Tudo</option>' + tabs.map(t=>`<option value="${esc(t)}">${esc(NOMES[t]||t)}</option>`).join("");
+  sel.value = tabs.includes(atual) ? atual : "";
+  render();
+}
+
+function render(){
+  const tab = document.getElementById("fTabela").value;
+  const busca = document.getElementById("fBusca").value.trim().toLowerCase();
+  const lista = itens.filter(i => (!tab || i.tabela===tab) &&
+    (!busca || (resumo(i)+" "+(i.deletado_por||"")+" "+JSON.stringify(i.dados)).toLowerCase().includes(busca)));
+  document.getElementById("contador").textContent = lista.length
+    ? `${lista.length} ${lista.length===1?"item":"itens"}${itens.length>=300?" (mostrando os 300 mais recentes)":""}` : "";
+  const box = document.getElementById("lista");
+  if(!lista.length){
+    box.innerHTML = '<div class="vazio"><i class="fa fa-trash-can"></i>'+(itens.length?"Nada encontrado com esse filtro.":"A lixeira está vazia.")+'</div>';
+    return;
+  }
+  box.innerHTML = lista.map(i => {
+    const det = Object.entries(i.dados||{})
+      .filter(([k,v]) => v!==null && v!=="" && !(typeof v==="object" && !Array.isArray(v) && !Object.keys(v).length))
+      .map(([k,v]) => `<div class="det-l"><b>${esc(k)}</b><span>${esc(typeof v==="object"?JSON.stringify(v):v)}</span></div>`).join("");
+    return `<div class="item" id="it-${i.id}">
+      <div class="item-topo">
+        <div class="item-ic"><i class="fa ${ICONES[i.tabela]||"fa-database"}"></i></div>
+        <div class="item-info">
+          <div class="item-tipo">${esc(NOMES[i.tabela]||i.tabela)}</div>
+          <div class="item-resumo">${esc(resumo(i))}</div>
+          <div class="item-meta"><i class="fa fa-clock"></i> Excluído em ${fmtQuando(i.deletado_em)}${i.deletado_por?" por "+esc(i.deletado_por):""}</div>
+        </div>
+        <div class="item-acoes">
+          <button class="btn btn-ghost" onclick="document.getElementById('it-${i.id}').classList.toggle('aberto')"><i class="fa fa-eye"></i> Detalhes</button>
+          <button class="btn btn-verde" onclick="restaurar(${i.id}, this)"><i class="fa fa-rotate-left"></i> Restaurar</button>
+        </div>
+      </div>
+      <div class="detalhes"><div class="det-grid">${det||'<span style="color:#9ca3af;font-size:12px">Sem detalhes.</span>'}</div></div>
+    </div>`;
+  }).join("");
+}
+
+async function restaurar(id, btn){
+  const it = itens.find(x=>x.id===id); if(!it) return;
+  if(!confirm(`Restaurar este ${NOMES[it.tabela]||"registro"}?\n\n${resumo(it)}`)) return;
+  btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Restaurando...';
+  const {error} = await client.rpc("restaurar_lixeira", { p_id: id });
+  if(error){ alert(error.message); btn.disabled=false; btn.innerHTML='<i class="fa fa-rotate-left"></i> Restaurar'; return; }
+  aviso("Restaurado! Já voltou para " + (NOMES[it.tabela]||it.tabela) + ".");
+  itens = itens.filter(x=>x.id!==id);
+  render();
+}
+
+function aviso(t){ const a=document.getElementById("aviso"); a.textContent=t; a.style.display="block"; clearTimeout(a._t); a._t=setTimeout(()=>a.style.display="none",3500); }
+
+function iniciar(){ if(!window.usuarioLogado){ setTimeout(iniciar,100); return; } carregar(); }
+document.addEventListener("DOMContentLoaded", iniciar);
+</script>
+</body>
+</html>

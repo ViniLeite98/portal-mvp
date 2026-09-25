@@ -338,6 +338,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 body.visao-terapeuta .view-toggle,
 body.visao-terapeuta .topbar-right .btn-ghost,
 body.visao-terapeuta .topbar-right .btn-yellow,
+body.visao-terapeuta .topbar-right .btn-green,
 body.visao-terapeuta .kpi-cell:nth-child(n+4){display:none !important;}
 body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
 @media (max-width: 768px){
@@ -1228,6 +1229,7 @@ function getUser(cb,n=20){if(window.usuarioLogado)return cb(window.usuarioLogado
 
 // ── AGENDAR ──
 async function abrirNovoComDados(data, hora, terCpf) {
+  if(document.body.classList.contains("visao-terapeuta")) return;
   await abrirNovo();
   document.getElementById("agData").value = data;
   document.getElementById("agHoraIni").value = hora;
@@ -1238,6 +1240,8 @@ async function abrirNovoComDados(data, hora, terCpf) {
 }
 
 async function abrirNovo() {
+  // agendamento é criado pela recepção; terapeuta só acompanha a própria agenda
+  if(document.body.classList.contains("visao-terapeuta")) return;
   editandoId=null; cliExtras=[];
   document.getElementById("agTitulo").innerHTML='<i class="fa fa-calendar-plus" style="color:#2563eb"></i> Novo Agendamento';
   document.getElementById("agData").value=dataSel;

@@ -146,6 +146,8 @@
       'estoque.html': 'Estoque',
       'folha_pagamento.html': 'Folha de Pagamento',
       'parametros.html': 'Parâmetros',
+      'lixeira.html': 'Lixeira',
+      'ganhos.html': 'Meus ganhos',
     };
     return labels[paginaAtual] || 'Hara Spa';
   }
@@ -175,7 +177,7 @@
     var u = window.usuarioLogado;
     var usuario = u && u.role === "usuario";
     // Escalas e Kanban são só da gestão: terapeuta que abrir pelo link vai para Atendimentos
-    if (usuario && (paginaAtual === "escalas.html" || paginaAtual === "kanban.html")) { window.location.replace("atendimentos.html"); return; }
+    if (usuario && (paginaAtual === "escalas.html" || paginaAtual === "kanban.html" || paginaAtual === "lixeira.html")) { window.location.replace("atendimentos.html"); return; }
     var html = '<div class="sidebar">';
     html += '<div class="logo">Hara Spa</div>';
     if (!usuario) {
@@ -194,6 +196,7 @@
     html += item("atendimentos.html", "fa-calendar-check", "Atendimentos");
     if (!usuario) html += item("escalas.html", "fa-calendar-days", "Escalas");
     html += item("solicitacoes.html", "fa-file-lines", "Solicitações");
+    if (usuario) html += item("ganhos.html", "fa-wallet", "Meus ganhos");
     if (!usuario) html += item("kanban.html", "fa-table-columns", "Kanban");
     if (!usuario) {
       html += hr();
@@ -204,6 +207,7 @@
       html += hr();
       html += titulo("CONFIGURAÇÕES");
       html += item("parametros.html", "fa-sliders", "Parâmetros");
+      if (u.role === "admin") html += item("lixeira.html", "fa-trash-can-arrow-up", "Lixeira");
     }
     html += hr();
     html += '<a href="#" class="menu-item" onclick="sairDoCaixa()" style="color:#f87171">' +

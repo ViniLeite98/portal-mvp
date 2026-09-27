@@ -267,3 +267,15 @@
     }
   };
 })();
+
+// ── Clique numa notificação com o app já aberto: vai direto ao destino ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', async function (ev) {
+    var m = ev.data || {};
+    if (m.tipo !== 'abrir-notificacao' || !m.url) return;
+    try {
+      if (typeof window.abrirDeNotificacao === 'function' && await window.abrirDeNotificacao(m.url)) return;
+    } catch (e) { console.warn('abrirDeNotificacao:', e); }
+    location.href = m.url;
+  });
+}

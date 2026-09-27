@@ -1,6 +1,6 @@
 // ⚠️ Troque a versão (v2 → v3 → v4...) sempre que subir mudanças grandes.
 //    Isso apaga o cache antigo de todo mundo na próxima abertura do app.
-const CACHE_NAME = 'hara-spa-v4';
+const CACHE_NAME = 'hara-spa-v5';
 
 // arquivos para cache offline
 const ASSETS = [
@@ -110,18 +110,20 @@ self.addEventListener('push', function(e) {
   );
 });
 
-// ── CLICK: abre o app ao clicar na notificação ───────────────────────────
+// ── CLICK: abre o app no lugar certo ao clicar na notificação ─────────────
 self.addEventListener('notificationclick', function(e) {
   e.notification.close();
   var url = (e.notification.data && e.notification.data.url) || '/atendimentos.html';
+  var destino = new URL(url, self.location.origin).href;
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(list) {
-      for (var i = 0; i < list.length; i++) {
-        if (list[i].url.includes(url) && 'focus' in list[i]) {
-          return list[i].focus();
-        }
+      var aberto = list.find(function(c) { return new URL(c.url).origin === self.location.origin; });
+      if (aberto) {
+        // app já aberto: traz para frente e manda ir até o atendimento
+        aberto.postMessage({ tipo: 'abrir-notificacao', url: destino });
+        return aberto.focus();
       }
-      if (clients.openWindow) return clients.openWindow(url);
+      if (clients.openWindow) return clients.openWindow(destino);
     })
   );
 });

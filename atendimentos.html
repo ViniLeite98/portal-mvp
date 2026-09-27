@@ -2225,12 +2225,42 @@ function ligarAoVivo(){
 // celular bloqueado derruba a conexão: ao voltar para o app, busca de novo
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible" && agendamentos) atualizarAoVivo(); });
 
+// ── ABRIR PELA NOTIFICAÇÃO: atendimentos.html?data=AAAA-MM-DD&id=123 ──
+function posicionarNaData(d){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d||"")) return false;
+  for(let o=-104;o<=104;o++){
+    if(getDiasSemana(o).includes(d)){ semanaOffset=o; dataSel=d; return true; }
+  }
+  return false;
+}
+async function abrirDeNotificacao(url){
+  let u; try{ u=new URL(url, location.origin); }catch(_){ return false; }
+  if(!/atendimentos\.html$/.test(u.pathname) && u.pathname!=="/atendimentos") return false;
+  const d=u.searchParams.get("data"), id=u.searchParams.get("id");
+  if(d && posicionarNaData(d)){ renderDiasSemana(); await carregar(); }
+  if(id){
+    const alvo=isNaN(id)?id:Number(id);
+    const a=(agendamentos||[]).find(x=>String(x.id)===String(alvo));
+    if(a) abrirDetalhe(a.id);
+  }
+  return true;
+}
+window.abrirDeNotificacao=abrirDeNotificacao;
+
 document.addEventListener("DOMContentLoaded",async()=>{
+  const qs=new URLSearchParams(location.search);
+  posicionarNaData(qs.get("data"));
   renderDiasSemana();
   await new Promise(res => getUser(res));
   await carregarDados();
   await carregar();
   try{ ligarAoVivo(); }catch(e){ console.warn("Ao vivo:",e); }
+  const idNotif=qs.get("id");
+  if(idNotif){
+    const a=(agendamentos||[]).find(x=>String(x.id)===String(idNotif));
+    if(a) abrirDetalhe(a.id);
+  }
+  if(qs.has("data")||qs.has("id")) history.replaceState(null,"",location.pathname);
 });
 </script>
 <script src="assets/js/push.js"></script>

@@ -125,7 +125,7 @@
       '</a>';
   }
   function hr() {
-    return '<hr style="border-color:#374151; margin:18px 0;">';
+    return '<hr style="border:0;border-top:1px solid #2f2b25; margin:18px 0;">';
   }
   function titulo(txt) {
     return '<div class="menu-title">' + txt + '</div>';
@@ -181,7 +181,7 @@
     var SO_GESTAO = ["escalas.html","kanban.html","lixeira.html","ganhos.html","folha_pagamento.html","despesas.html","estoque.html","dashboard.html","clientes.html","servicos.html","parametros.html"];
     if (usuario && SO_GESTAO.indexOf(paginaAtual) !== -1) { window.location.replace("atendimentos.html"); return; }
     var html = '<div class="sidebar">';
-    html += '<div class="logo">Hara Spa</div>';
+    html += '<div class="logo"><img src="assets/logo/hara-simbolo.png" alt="" onerror="this.remove()"><span>Hara Spa</span></div>';
     if (!usuario) {
       html += item("dashboard.html", "fa-chart-line", "Dashboard");
     }

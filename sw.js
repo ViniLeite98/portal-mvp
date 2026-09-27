@@ -1,6 +1,6 @@
 // ⚠️ Troque a versão (v2 → v3 → v4...) sempre que subir mudanças grandes.
 //    Isso apaga o cache antigo de todo mundo na próxima abertura do app.
-const CACHE_NAME = 'hara-spa-v3';
+const CACHE_NAME = 'hara-spa-v4';
 
 // arquivos para cache offline
 const ASSETS = [

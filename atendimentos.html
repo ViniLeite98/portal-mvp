@@ -334,11 +334,40 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
   .pgto-row input{width:110px;}
   .mf{flex-shrink:0;flex-wrap:wrap;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));}
   .mf .btn{flex:1 1 auto;justify-content:center;padding:11px 10px;}
-  #modalFech .mf{flex-direction:column;align-items:stretch;gap:8px;}
-  #modalFech .mf > span{text-align:center;}
-  #modalFech .mf > div{flex-wrap:wrap;}
 }
 
+/* ── Fechar caixa ── */
+.cx-topo{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin-bottom:12px;}
+.cx-aviso{background:#fef3c7;border:1px solid #fde68a;color:#92400e;border-radius:10px;padding:10px 12px;font-size:12px;line-height:1.5;margin-bottom:12px;}
+.cx-sec{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#374151;margin:6px 0 6px;}
+.cx-ajuda{font-size:12px;color:#6b7280;margin:0 0 8px;line-height:1.5;}
+.cx-tab{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:8px;}
+.cx-tab th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;text-align:right;padding:6px 6px;border-bottom:1px solid #e5e7eb;}
+.cx-tab th:first-child,.cx-tab td:first-child{text-align:left;}
+.cx-tab td{padding:8px 6px;border-bottom:1px solid #f3f4f6;text-align:right;vertical-align:middle;white-space:nowrap;}
+.cx-tab td:first-child{white-space:normal;font-weight:600;color:#374151;}
+.cx-tab td:nth-child(2){font-weight:700;}
+.cx-tab input{width:100px;padding:7px 8px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right;}
+.cx-mini{font-size:11px;color:#6b7280;font-weight:500;}
+.cx-ok{color:#15803d;font-weight:700;} .cx-sobra{color:#2563eb;font-weight:700;} .cx-falta{color:#b91c1c;font-weight:700;}
+.cx-resultado{border-radius:10px;padding:10px 12px;font-size:13px;font-weight:700;margin-bottom:12px;display:none;}
+.cx-resultado.ok{display:block;background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;}
+.cx-resultado.dif{display:block;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;}
+.cx-print{display:none;}
+.cx-botoes{justify-content:flex-end;gap:6px;flex-wrap:wrap;}
+.fech-item .fi-tipo{font-size:10px;font-weight:700;border-radius:6px;padding:1px 6px;background:#ede9fe;color:#6d28d9;white-space:nowrap;}
+.fech-item .fi-tipo.fat{background:#dcfce7;color:#15803d;}
+.fech-item.atrasado{background:#fffbeb;}
+.hist-cx{border:1px solid #e5e7eb;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;}
+.hist-cx .t{display:flex;justify-content:space-between;gap:8px;font-weight:700;}
+.hist-cx .s{font-size:12px;color:#6b7280;margin-top:3px;line-height:1.5;}
+@media print{ .cx-tab input{display:none;} .cx-print{display:inline;} #pRet,#pObs{display:block;font-size:12px;margin:6px 0;} }
+@media (max-width:768px){
+  .cx-topo{grid-template-columns:1fr;}
+  .cx-tab input{width:88px;font-size:16px;}
+  .cx-tab td,.cx-tab th{padding:7px 3px;}
+  .cx-botoes button{flex:1 1 45%;justify-content:center;}
+}
 @media print{body *{visibility:hidden;}#printArea,#printArea *{visibility:visible;}#printArea{position:fixed;top:0;left:0;width:100%;padding:28px;background:#fff;}.no-print{display:none!important;}}
 
 /* ── Visão da terapeuta: só a agenda dela, sem ferramentas de gestão ── */
@@ -382,7 +411,7 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
     <div class="topbar-right">
       <button class="btn btn-ghost" onclick="abrirDisponiveis()"><i class="fa fa-user-clock" style="color:#2563eb"></i> Disponíveis</button>
       <button class="btn btn-ghost" onclick="abrirGerenciarColunas()"><i class="fa fa-sliders"></i> Colunas</button>
-      <button class="btn btn-yellow" onclick="abrirFechamento()"><i class="fa fa-cash-register"></i> Fechar Turno</button>
+      <button class="btn btn-yellow" onclick="abrirFechamento()"><i class="fa fa-cash-register"></i> Fechar Caixa</button>
       <button class="btn btn-green" onclick="abrirNovo()"><i class="fa fa-plus"></i> Novo</button>
     </div>
   </div>
@@ -682,73 +711,81 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
 </div>
 </div>
 
-<!-- ═══ MODAL FECHAR TURNO ═══ -->
+<!-- ═══ MODAL FECHAR CAIXA (1 fechamento por dia) ═══ -->
 <div class="modal" id="modalFech">
 <div class="mc md">
   <div class="mh no-print">
-    <h2><i class="fa fa-cash-register" style="color:#d97706"></i> Fechar Turno</h2>
-    <button class="btn-x" onclick="fecharModal('modalFech')"><i class="fa fa-times"></i></button>
+    <h2><i class="fa fa-cash-register" style="color:#d97706"></i> Fechar Caixa</h2>
+    <div style="display:flex;gap:6px;align-items:center">
+      <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px" onclick="abrirHistoricoCaixa()"><i class="fa fa-clock-rotate-left"></i> Anteriores</button>
+      <button class="btn-x" onclick="fecharModal('modalFech')"><i class="fa fa-times"></i></button>
+    </div>
   </div>
   <div class="mb" style="max-height:80vh;overflow-y:auto;">
-    <div class="no-print" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:14px;">
-      <div class="grid2">
-        <div class="mfield" style="margin-bottom:0"><label>Recepcionista</label><select id="fechOp" onchange="calcFechamento()"><option value="">Todas</option></select></div>
-        <div class="mfield" style="margin-bottom:0"><label>Data</label><input type="date" id="fechData" onchange="calcFechamento()"></div>
-        <div class="mfield" style="margin-bottom:6px"><label>Hora início</label><input type="time" id="fechHoraIni"></div>
-        <div class="mfield" style="margin-bottom:6px"><label>Hora fim</label><input type="time" id="fechHoraFim"></div>
-        <div class="mfield span2" style="margin-bottom:0"><label>Fundo inicial (R$)</label><input type="number" id="fechFundo" value="0" step="0.01" oninput="calcFechamento()" placeholder="Ex: 100,00"></div>
-      </div>
+    <div class="no-print cx-topo">
+      <div class="mfield" style="margin-bottom:0"><label>Dia</label><input type="date" id="fechData" onchange="calcFechamento()"></div>
+      <div class="mfield" style="margin-bottom:0"><label>Troco que tinha na gaveta de manhã (R$)</label><input type="number" id="fechFundo" value="0" step="0.01" inputmode="decimal" oninput="calcConferencia()"></div>
     </div>
+    <div class="cx-aviso no-print" id="fechAviso" style="display:none"></div>
+
     <div id="printArea">
-      <div style="text-align:center;padding:8px 0 12px;">
-        <div style="font-size:16px;font-weight:800;color:#111827" id="fechTitulo">Fechamento de Turno</div>
+      <div style="text-align:center;padding:4px 0 12px;">
+        <div style="font-size:16px;font-weight:800;color:#111827">Fechamento de Caixa</div>
         <div style="font-size:12px;color:#6b7280" id="fechSubtitulo"></div>
       </div>
-      <div class="no-print" style="margin-bottom:10px">
-        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin-bottom:6px" id="fechListaTit">Atendimentos faturados</div>
-        <div class="fech-lista" id="fechLista"></div>
+
+      <div class="cx-sec">1. Confira com o que foi anotado</div>
+      <p class="cx-ajuda no-print">Na coluna <b>Anotado</b>, digite o que você contou na gaveta e os totais dos extratos da maquininha e do PIX. Deixe em branco o que não for conferir.</p>
+      <table class="cx-tab">
+        <thead><tr><th>Forma</th><th>Sistema</th><th>Anotado</th><th>Diferença</th></tr></thead>
+        <tbody>
+          <tr><td><i class="fa fa-money-bill-wave" style="color:#16a34a"></i> Dinheiro na gaveta<div class="cx-mini" id="fechDinDet"></div></td><td id="fechDinEsp">—</td><td><input type="number" step="0.01" inputmode="decimal" id="confDin" oninput="calcConferencia()" placeholder="contado"><span class="cx-print" id="pConfDin"></span></td><td id="difDin">—</td></tr>
+          <tr><td><i class="fa fa-qrcode" style="color:#06b6d4"></i> PIX</td><td id="fechPix">—</td><td><input type="number" step="0.01" inputmode="decimal" id="confPix" oninput="calcConferencia()" placeholder="extrato"><span class="cx-print" id="pConfPix"></span></td><td id="difPix">—</td></tr>
+          <tr><td><i class="fa fa-credit-card" style="color:#2563eb"></i> Débito</td><td id="fechDeb">—</td><td><input type="number" step="0.01" inputmode="decimal" id="confDeb" oninput="calcConferencia()" placeholder="maquininha"><span class="cx-print" id="pConfDeb"></span></td><td id="difDeb">—</td></tr>
+          <tr><td><i class="fa fa-credit-card" style="color:#7c3aed"></i> Crédito</td><td id="fechCre">—</td><td><input type="number" step="0.01" inputmode="decimal" id="confCre" oninput="calcConferencia()" placeholder="maquininha"><span class="cx-print" id="pConfCre"></span></td><td id="difCre">—</td></tr>
+          <tr id="fechOutLinha" style="display:none"><td><i class="fa fa-ellipsis" style="color:#9ca3af"></i> Outros</td><td id="fechOut">—</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="cx-resultado" id="fechResultado"></div>
+
+      <div class="cx-sec">2. Saídas de dinheiro da gaveta <span style="font-weight:500;text-transform:none;letter-spacing:0">(se houve)</span></div>
+      <div class="cx-topo no-print" style="margin-bottom:6px">
+        <div class="mfield" style="margin-bottom:0"><label>Valor retirado (R$)</label><input type="number" id="fechRet" step="0.01" inputmode="decimal" placeholder="0,00" oninput="calcConferencia()"></div>
+        <div class="mfield" style="margin-bottom:0"><label>Motivo</label><input type="text" id="fechRetMot" placeholder="Ex: pagamento lavanderia, depósito…"></div>
       </div>
-      <div style="margin-bottom:10px">
-        <div class="fech-linha"><span class="fl-label"><i class="fa fa-money-bill-wave" style="color:#16a34a"></i> Dinheiro</span><span class="fl-val" id="fechDin">R$ 0,00</span></div>
-        <div class="fech-linha"><span class="fl-label"><i class="fa fa-qrcode" style="color:#06b6d4"></i> PIX</span><span class="fl-val" id="fechPix">R$ 0,00</span></div>
-        <div class="fech-linha"><span class="fl-label"><i class="fa fa-credit-card" style="color:#2563eb"></i> Débito</span><span class="fl-val" id="fechDeb">R$ 0,00</span></div>
-        <div class="fech-linha"><span class="fl-label"><i class="fa fa-credit-card" style="color:#7c3aed"></i> Crédito</span><span class="fl-val" id="fechCre">R$ 0,00</span></div>
-        <div class="fech-linha" id="fechOutLinha" style="display:none"><span class="fl-label"><i class="fa fa-ellipsis" style="color:#9ca3af"></i> Outros</span><span class="fl-val" id="fechOut">R$ 0,00</span></div>
-        <div class="fech-linha" style="color:#dc2626"><span class="fl-label"><i class="fa fa-coins" style="color:#dc2626"></i> Trocos devolvidos</span><span class="fl-val" id="fechTroco">- R$ 0,00</span></div>
-      </div>
-      <div class="fech-total"><span>Total do Turno</span><span id="fechTotal">R$ 0,00</span></div>
-      <div class="fech-caixa">
-        <div>
-          <div style="font-size:12px;color:#16a34a;font-weight:600"><i class="fa fa-box"></i> Dinheiro em caixa</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:2px">Fundo + Dinheiro − Trocos</div>
-        </div>
-        <div style="font-size:20px;font-weight:900;color:#16a34a" id="fechCaixaDin">R$ 0,00</div>
-      </div>
-      <div class="fech-sinais">
-        <div>
-          <div style="font-size:12px;color:#d97706;font-weight:600"><i class="fa fa-hand-holding-dollar"></i> Sinais retidos (cancelamentos)</div>
-          <div style="font-size:11px;color:#b45309;margin-top:2px" id="fechSinaisSub">0 cancelamentos com sinal</div>
-        </div>
-        <div style="font-size:18px;font-weight:900;color:#d97706" id="fechSinaisVal">R$ 0,00</div>
-      </div>
-      <div style="margin-top:10px;font-size:11px;color:#9ca3af;text-align:center" id="fechRodape"></div>
+      <div class="cx-print" id="pRet"></div>
+
+      <div class="fech-total"><span>Total recebido no dia</span><span id="fechTotal">R$ 0,00</span></div>
+      <div class="cx-mini" id="fechTotalDet" style="text-align:right;margin-top:2px"></div>
+
+      <div class="cx-sec" style="margin-top:14px">3. Lançamentos <span id="fechContagem" style="font-weight:500;text-transform:none;letter-spacing:0"></span></div>
+      <div class="fech-lista" id="fechLista"></div>
+      <div class="cx-print" id="pObs"></div>
+      <div style="margin-top:8px;font-size:11px;color:#9ca3af;text-align:center" id="fechRodape"></div>
     </div>
+
     <div class="no-print" style="margin-top:12px">
       <div class="mfield" style="margin-bottom:0">
-        <label><i class="fa fa-comment" style="color:#9ca3af;margin-right:4px"></i> Recado para próxima recepcionista</label>
-        <textarea id="fechObs" rows="2" style="width:100%;padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:none;font-family:inherit" placeholder="Ex: Caixa com R$ 80, cliente X vai ligar..."></textarea>
+        <label><i class="fa fa-comment" style="color:#9ca3af;margin-right:4px"></i> Recado para o dia seguinte</label>
+        <textarea id="fechObs" rows="2" style="width:100%;padding:8px 11px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:none;font-family:inherit" placeholder="Ex: ficaram R$ 100 de troco na gaveta…"></textarea>
       </div>
     </div>
   </div>
-  <div class="mf no-print" style="justify-content:space-between">
-    <span style="font-size:12px;color:#9ca3af" id="fechContagem">0 faturamentos</span>
-    <div style="display:flex;gap:6px">
-      <button class="btn btn-ghost" onclick="fecharModal('modalFech')">Cancelar</button>
-      <button class="btn btn-ghost" onclick="window.print()"><i class="fa fa-print"></i> Imprimir</button>
-      <button class="btn" style="background:#25D366;color:#fff" onclick="enviarWA()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
-      <button class="btn btn-green" onclick="salvarFechamento()"><i class="fa fa-check"></i> Confirmar</button>
-    </div>
+  <div class="mf no-print cx-botoes">
+    <button class="btn btn-ghost" onclick="fecharModal('modalFech')">Cancelar</button>
+    <button class="btn btn-ghost" onclick="imprimirFechamento()"><i class="fa fa-print"></i> Imprimir</button>
+    <button class="btn" style="background:#25D366;color:#fff" onclick="enviarWA()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+    <button class="btn btn-green" id="btnFecharCaixa" onclick="salvarFechamento()"><i class="fa fa-check"></i> Fechar caixa</button>
   </div>
+</div>
+</div>
+
+<!-- ═══ MODAL FECHAMENTOS ANTERIORES ═══ -->
+<div class="modal" id="modalHistCx">
+<div class="mc md">
+  <div class="mh"><h2><i class="fa fa-clock-rotate-left" style="color:#6b7280"></i> Fechamentos anteriores</h2><button class="btn-x" onclick="fecharModal('modalHistCx')"><i class="fa fa-times"></i></button></div>
+  <div class="mb" style="max-height:75vh;overflow-y:auto" id="histCxLista"></div>
+</div>
 </div>
 </div>
 
@@ -1563,7 +1600,7 @@ async function salvarAg(){
     comissao_total:com,acrescimo:acr,
     sinal_valor:parseFloat(document.getElementById("agSinalVal").value||0),
     sinal_forma:document.getElementById("agSinalForma").value||null,
-    sinal_pago_em:parseFloat(document.getElementById("agSinalVal").value||0)>0?new Date().toISOString():null,
+    sinal_pago_em:parseFloat(document.getElementById("agSinalVal").value||0)>0?((editandoId&&agendamentos.find(x=>x.id===editandoId)?.sinal_pago_em)||new Date().toISOString()):null,
     origem_lead:document.getElementById("agOrigem").value||null,
     observacao:document.getElementById("agObs").value.trim()||null,
     clientes_extra:cliExtras.length?cliExtras:null,
@@ -1788,118 +1825,160 @@ function calcFatTroco(){
 
 async function confirmarFaturamento(){
   const a=agendamentos.find(x=>x.id===faturandoId);if(!a)return;
-  const p1v=parseFloat(document.getElementById("fatP1Val").value||0);
-  const p2v=parseFloat(document.getElementById("fatP2Val").value||0);
-  const sinal=a.sinal_valor||0,final=a.valor_final||0,restante=final-sinal;
-  const troco=(p1v+p2v)-restante;
-  await client.from("atendimento").update({
-    status:"Faturado",
-    forma_pgto_1:document.getElementById("fatP1Forma").value||null,valor_pgto_1:p1v,
-    forma_pgto_2:document.getElementById("fatP2Forma").value||null,valor_pgto_2:p2v,
-    troco,troco_destino:document.getElementById("fatTrocoDest").value,
-    faturado_em:new Date().toISOString(),
-    observacao:document.getElementById("fatObs").value.trim()||a.observacao||null
-  }).eq("id",faturandoId);
-  const{data:cli}=await client.from("cliente").select("nome,telefone_1").eq("id",a.cliente_id).limit(1);
-  const nomeC=cli?.[0]?.nome||"—";
-  await client.from("fluxo_caixa").insert({
-    data:a.data,cliente_id:a.cliente_id,cliente_nome:nomeC,
-    terapeuta_cpf:a.terapeuta1_cpf||null,
-    valor_bruto:a.valor||0,desconto:a.desconto||0,acrescimo:a.acrescimo||0,
-    valor_final:final,valor_pago:p1v+p2v+sinal,troco,comissao_total:a.comissao_total||0,
-    forma_pgto_1:document.getElementById("fatP1Forma").value||null,valor_pgto_1:p1v,
-    forma_pgto_2:document.getElementById("fatP2Forma").value||null,valor_pgto_2:p2v,
-    troco_destino:document.getElementById("fatTrocoDest").value,
-    observacao:`Faturado via atendimentos | Sinal: ${fmtM(sinal)}`
+  const btn=document.querySelector('#modalFat .btn-green, #modalFat [onclick="confirmarFaturamento()"]');
+  if(btn){ if(btn.disabled) return; btn.disabled=true; }
+  // atendimento + lançamento no caixa numa operação só: não duplica com clique duplo e não fica pela metade
+  const {error}=await client.rpc("faturar_atendimento",{
+    p_id:faturandoId,
+    p_forma1:document.getElementById("fatP1Forma").value||null, p_valor1:parseFloat(document.getElementById("fatP1Val").value||0),
+    p_forma2:document.getElementById("fatP2Forma").value||null, p_valor2:parseFloat(document.getElementById("fatP2Val").value||0),
+    p_troco_destino:document.getElementById("fatTrocoDest").value, p_obs:document.getElementById("fatObs").value.trim()||null
   });
+  if(btn) btn.disabled=false;
+  if(error){alert("Não foi possível faturar: "+error.message);return;}
   fecharModal("modalFat");carregar();
 }
 
+// ═══ FECHAR CAIXA (um fechamento por dia, com conferência) ═══
+let fechCalc = null;
 async function abrirFechamento(){
-  document.getElementById("fechData").value=dataSel;
-  document.getElementById("fechHoraIni").value="";document.getElementById("fechHoraFim").value="";
-  document.getElementById("fechFundo").value="0";document.getElementById("fechObs").value="";
-  getUser(u=>{if(u&&u.cpf&&opsMap[u.cpf])document.getElementById("fechOp").value=u.cpf;calcFechamento();});
+  document.getElementById("fechData").value=hoje();
+  ["confDin","confPix","confDeb","confCre","fechRet","fechRetMot","fechObs"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("fechFundo").value="0";
+  document.getElementById("btnFecharCaixa").disabled=false;
   document.getElementById("modalFech").classList.add("open");
+  await calcFechamento();
 }
 
 async function calcFechamento(){
-  const dataF=document.getElementById("fechData").value||dataSel;
-  const fundo=parseFloat(document.getElementById("fechFundo").value||0);
-  const{data:lancs}=await client.from("fluxo_caixa").select("*").eq("data",dataF).is("fechamento_id",null);
-  const{data:faturados}=await client.from("atendimento")
-    .select("*,cliente:cliente_id(nome,telefone_1)")
-    .eq("data",dataF).eq("status","Faturado").order("hora_inicio");
-  const{data:cancelados}=await client.from("atendimento").select("sinal_valor,sinal_forma").eq("data",dataF).eq("status","Cancelado");
+  const dataF=document.getElementById("fechData").value||hoje();
+  // tudo que entrou no caixa e ainda não foi fechado, até o dia escolhido (inclui atrasados)
+  const [{data:lancs},{data:jaFech}]=await Promise.all([
+    client.from("fluxo_caixa").select("*").is("fechamento_id",null).lte("data",dataF).order("data").order("recebido_em"),
+    client.from("fechamentos_caixa").select("fechado_por,created_at,total_geral").eq("data",dataF).order("created_at",{ascending:false})
+  ]);
   const lista=lancs||[];
-  let din=0,pix=0,deb=0,cre=0,out=0,trocos=0;
+  let din=0,pix=0,deb=0,cre=0,out=0,trocos=0,sinais=0;
+  const soma=(forma,v)=>{const t=classifPgto(forma);if(!v)return;if(t==="dinheiro")din+=v;else if(t==="debito")deb+=v;else if(t==="credito")cre+=v;else if(t==="pix")pix+=v;else out+=v;};
   lista.forEach(r=>{
-    const c=v=>parseFloat(v||0);
-    const t1=classifPgto(r.forma_pgto_1),v1=c(r.valor_pgto_1);
-    const t2=classifPgto(r.forma_pgto_2),v2=c(r.valor_pgto_2);
-    if(t1==="dinheiro")din+=v1;else if(t1==="debito")deb+=v1;else if(t1==="credito")cre+=v1;else if(t1==="pix")pix+=v1;else out+=v1;
-    if(r.forma_pgto_2){if(t2==="dinheiro")din+=v2;else if(t2==="debito")deb+=v2;else if(t2==="credito")cre+=v2;else if(t2==="pix")pix+=v2;else out+=v2;}
-    if(r.troco>0&&r.troco_destino!=="caixa")trocos+=r.troco;
+    const v1=parseFloat(r.valor_pgto_1||0),v2=parseFloat(r.valor_pgto_2||0);
+    soma(r.forma_pgto_1,v1); if(r.forma_pgto_2) soma(r.forma_pgto_2,v2);
+    if(parseFloat(r.troco||0)>0&&r.troco_destino!=="caixa") trocos+=parseFloat(r.troco);
+    if((r.tipo||"").startsWith("sinal")) sinais+=v1;
   });
-  const total=din+pix+deb+cre+out-trocos,caixaDin=fundo+din-trocos;
-  const sinaisRet=(cancelados||[]).reduce((s,a)=>s+(a.sinal_valor||0),0);
-  const nCancelSinal=(cancelados||[]).filter(a=>(a.sinal_valor||0)>0).length;
-  document.getElementById("fechDin").textContent=fmtM(din);
+  fechCalc={dataF,lista,din,pix,deb,cre,out,trocos,sinais,total:din+pix+deb+cre+out-trocos};
+
+  // aviso: já fechou hoje? tem coisa de dia anterior?
+  const av=[];
+  if((jaFech||[]).length){const u=jaFech[0];av.push(`<b>O caixa deste dia já foi fechado</b>${u.fechado_por?" por "+u.fechado_por:""} às ${new Date(u.created_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}. Se fechar de novo, entram só os lançamentos que chegaram depois.`);}
+  const atras=lista.filter(r=>r.data<dataF);
+  if(atras.length) av.push(`<b>${atras.length} lançamento${atras.length>1?"s":""} de dia${atras.length>1?"s":""} anterior${atras.length>1?"es":""}</b> ainda não tinha${atras.length>1?"m":""} entrado em nenhum fechamento e ${atras.length>1?"foram incluídos":"foi incluído"} aqui (marcado${atras.length>1?"s":""} em amarelo).`);
+  const avEl=document.getElementById("fechAviso"); avEl.innerHTML=av.join("<br>"); avEl.style.display=av.length?"":"none";
+
   document.getElementById("fechPix").textContent=fmtM(pix);
   document.getElementById("fechDeb").textContent=fmtM(deb);
   document.getElementById("fechCre").textContent=fmtM(cre);
   document.getElementById("fechOut").textContent=fmtM(out);
   document.getElementById("fechOutLinha").style.display=out>0?"":"none";
-  document.getElementById("fechTroco").textContent=`- ${fmtM(trocos)}`;
-  document.getElementById("fechTotal").textContent=fmtM(total);
-  document.getElementById("fechCaixaDin").textContent=fmtM(caixaDin);
-  document.getElementById("fechSinaisVal").textContent=fmtM(sinaisRet);
-  document.getElementById("fechSinaisSub").textContent=`${nCancelSinal} cancelamento${nCancelSinal!==1?"s":""} com sinal`;
-  document.getElementById("fechContagem").textContent=`${lista.length} lançamento${lista.length!==1?"s":""}`;
-  const opNome=document.getElementById("fechOp").value?opsMap[document.getElementById("fechOp").value]||"":"";
-  document.getElementById("fechTitulo").textContent="Fechamento"+(opNome?" — "+opNome:"");
-  document.getElementById("fechSubtitulo").textContent=dataF?fmtD(dataF):"";
+  document.getElementById("fechTotal").textContent=fmtM(fechCalc.total);
+  document.getElementById("fechTotalDet").textContent=(sinais?`inclui ${fmtM(sinais)} de sinais · `:"")+(trocos?`${fmtM(trocos)} de troco devolvido já descontado`:"");
+  document.getElementById("fechSubtitulo").textContent=fmtD(dataF)+(window.usuarioLogado?.nome?" · "+window.usuarioLogado.nome:"");
+  document.getElementById("fechContagem").textContent=`(${lista.length})`;
   document.getElementById("fechRodape").textContent="Gerado em "+new Date().toLocaleString("pt-BR");
-  const fat=faturados||[];
-  document.getElementById("fechListaTit").textContent=`${fat.length} atendimento${fat.length!==1?"s":""} faturados`;
-  document.getElementById("fechLista").innerHTML=fat.map(a=>`<div class="fech-item"><span class="fi-hora">${fmtH(a.hora_inicio)}</span><span class="fi-nome">${a.cliente?.nome||"—"}</span><span class="fi-pgto">${[a.forma_pgto_1,a.forma_pgto_2].filter(Boolean).join("+")||"—"}</span><span class="fi-val">${fmtM(a.valor_final)}</span></div>`).join("")||'<div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">Nenhum faturamento hoje</div>';
+  document.getElementById("fechLista").innerHTML=lista.map(r=>{
+    const sinal=(r.tipo||"").startsWith("sinal"), atr=r.data<dataF;
+    const hora=r.recebido_em?new Date(r.recebido_em).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):"";
+    const val=parseFloat(r.valor_pgto_1||0)+parseFloat(r.valor_pgto_2||0);
+    return `<div class="fech-item${atr?" atrasado":""}"><span class="fi-hora">${atr?fmtD(r.data).slice(0,5):hora}</span><span class="fi-tipo${sinal?"":" fat"}">${sinal?"Sinal":"Pagto"}</span><span class="fi-nome">${r.cliente_nome||"—"}</span><span class="fi-pgto">${[r.forma_pgto_1,r.forma_pgto_2].filter(Boolean).join(" + ")||"—"}</span><span class="fi-val">${fmtM(val)}</span></div>`;
+  }).join("")||'<div style="text-align:center;padding:16px;color:#9ca3af;font-size:12px">Nada recebido em aberto até este dia.</div>';
+  calcConferencia();
+}
+
+function calcConferencia(){
+  if(!fechCalc) return;
+  const num=id=>{const v=document.getElementById(id).value;return v===""?null:parseFloat(v);};
+  const fundo=num("fechFundo")||0, ret=num("fechRet")||0;
+  const dinEsp=fundo+fechCalc.din-fechCalc.trocos-ret;
+  fechCalc.fundo=fundo; fechCalc.ret=ret; fechCalc.dinEsp=dinEsp;
+  document.getElementById("fechDinEsp").textContent=fmtM(dinEsp);
+  document.getElementById("fechDinDet").textContent=`troco ${fmtM(fundo)} + recebido ${fmtM(fechCalc.din)}`+(fechCalc.trocos?` − trocos ${fmtM(fechCalc.trocos)}`:"")+(ret?` − retiradas ${fmtM(ret)}`:"");
+  const linhas=[["Din",dinEsp,"confDin"],["Pix",fechCalc.pix,"confPix"],["Deb",fechCalc.deb,"confDeb"],["Cre",fechCalc.cre,"confCre"]];
+  let conferidas=0,difTot=0,det=[];
+  linhas.forEach(([k,esp,id])=>{
+    const c=num(id), el=document.getElementById("dif"+k);
+    fechCalc["conf"+k]=c;
+    if(c===null){el.innerHTML="—";return;}
+    conferidas++; const d=Math.round((c-esp)*100)/100; difTot+=d;
+    el.innerHTML=d===0?'<span class="cx-ok">✓ bateu</span>':d>0?`<span class="cx-sobra">sobra ${fmtM(d)}</span>`:`<span class="cx-falta">falta ${fmtM(-d)}</span>`;
+    if(d!==0) det.push({Din:"dinheiro",Pix:"PIX",Deb:"débito",Cre:"crédito"}[k]);
+  });
+  fechCalc.dif=conferidas?Math.round(difTot*100)/100:null;
+  const r=document.getElementById("fechResultado");
+  if(!conferidas){r.className="cx-resultado";r.textContent="";}
+  else if(det.length===0){r.className="cx-resultado ok";r.innerHTML='<i class="fa fa-circle-check"></i> Tudo bateu com o que foi anotado.';}
+  else {r.className="cx-resultado dif";r.innerHTML=`<i class="fa fa-triangle-exclamation"></i> Não bateu em ${det.join(", ")}. Diferença total: ${difTot>0?"sobra":"falta"} ${fmtM(Math.abs(difTot))}. Confira antes de fechar.`;}
 }
 
 async function salvarFechamento(){
-  const dataF=document.getElementById("fechData").value;if(!dataF){alert("Informe a data.");return;}
-  const opCpf=document.getElementById("fechOp").value||null;
-  const obs=document.getElementById("fechObs").value.trim()||null;
-  const parse=id=>parseFloat(document.getElementById(id).textContent.replace(/[^\d,]/g,"").replace(",","."))||0;
-  const{data:novo,error}=await client.from("fechamentos_caixa").insert({
-    data:dataF,operador_cpf:opCpf,
-    hora_inicio:document.getElementById("fechHoraIni").value||null,
-    hora_fim:document.getElementById("fechHoraFim").value||null,
-    fundo_inicial:parseFloat(document.getElementById("fechFundo").value||0),
-    total_dinheiro:parse("fechDin"),total_debito:parse("fechDeb"),
-    total_credito:parse("fechCre"),total_pix:parse("fechPix"),
-    total_outros:parse("fechOut"),total_trocos:parse("fechTroco"),
-    troco_caixa:parse("fechCaixaDin"),total_geral:parse("fechTotal"),observacao:obs
-  }).select().single();
-  if(error){alert("Erro: "+error.message);return;}
-  if(novo?.id){
-    let q=client.from("fluxo_caixa").update({fechamento_id:novo.id}).is("fechamento_id",null).eq("data",dataF);
-    if(opCpf)q=q.eq("operador_cpf",opCpf);await q;
-  }
-  alert(`Turno fechado!\nTotal: ${document.getElementById("fechTotal").textContent}`);
-  fecharModal("modalFech");carregar();
+  if(!fechCalc) return;
+  const c=fechCalc;
+  if(!c.lista.length && !confirm("Não há nada recebido em aberto. Fechar mesmo assim (caixa zerado)?")) return;
+  if(c.ret && !document.getElementById("fechRetMot").value.trim()){alert("Informe o motivo da retirada de dinheiro.");return;}
+  let msg=`Fechar o caixa de ${fmtD(c.dataF)}?\n\nTotal recebido: ${fmtM(c.total)}\nDinheiro que deve ficar na gaveta: ${fmtM(c.dinEsp)}`;
+  if(c.dif!==null && c.dif!==0) msg+=`\n\n⚠️ A conferência não bateu (${c.dif>0?"sobra":"falta"} ${fmtM(Math.abs(c.dif))}).`;
+  if(!confirm(msg)) return;
+  const b=document.getElementById("btnFecharCaixa"); b.disabled=true; b.innerHTML='<i class="fa fa-spinner fa-spin"></i> Fechando…';
+  const {error}=await client.rpc("fechar_caixa",{p_data:c.dataF,p_dados:{
+    fechado_por:window.usuarioLogado?.nome||null, fundo:c.fundo,
+    dinheiro:c.din, pix:c.pix, debito:c.deb, credito:c.cre, outros:c.out, trocos:c.trocos, sinais:c.sinais,
+    retiradas:c.ret, retiradas_motivo:document.getElementById("fechRetMot").value.trim()||null,
+    caixa_esperado:c.dinEsp, total:c.total,
+    conf_dinheiro:c.confDin, conf_pix:c.confPix, conf_debito:c.confDeb, conf_credito:c.confCre,
+    diferenca:c.dif, obs:document.getElementById("fechObs").value.trim()||null }});
+  if(error){alert("Erro ao fechar: "+error.message);b.disabled=false;b.innerHTML='<i class="fa fa-check"></i> Fechar caixa';return;}
+  alert(`Caixa fechado!\nTotal do dia: ${fmtM(c.total)}`);
+  fecharModal("modalFech"); carregar();
+}
+
+function imprimirFechamento(){
+  const c=fechCalc||{};
+  const p=(id,v)=>{document.getElementById(id).textContent=v==null?"—":fmtM(v);};
+  p("pConfDin",c.confDin);p("pConfPix",c.confPix);p("pConfDeb",c.confDeb);p("pConfCre",c.confCre);
+  const mot=document.getElementById("fechRetMot").value.trim(), obs=document.getElementById("fechObs").value.trim();
+  document.getElementById("pRet").textContent=c.ret?`Retirado da gaveta: ${fmtM(c.ret)}${mot?" — "+mot:""}`:"Nenhuma retirada de dinheiro.";
+  document.getElementById("pObs").textContent=obs?"Recado: "+obs:"";
+  window.print();
 }
 
 function enviarWA(){
-  const din=document.getElementById("fechDin").textContent,pix=document.getElementById("fechPix").textContent;
-  const deb=document.getElementById("fechDeb").textContent,cre=document.getElementById("fechCre").textContent;
-  const tot=document.getElementById("fechTotal").textContent,cxa=document.getElementById("fechCaixaDin").textContent;
-  const sin=document.getElementById("fechSinaisVal").textContent,dt=document.getElementById("fechData").value;
-  const opNome=document.getElementById("fechOp").value?opsMap[document.getElementById("fechOp").value]||"":"";
-  const obs=document.getElementById("fechObs").value.trim();
-  let msg=`🏪 *Hara Spa — Fechamento de Turno*\n📅 ${fmtD(dt)}${opNome?" · "+opNome:""}\n\n💰 *Por forma de pagamento:*\n💵 Dinheiro: *${din}*\n📱 PIX: *${pix}*\n💳 Débito: *${deb}*\n💳 Crédito: *${cre}*\n\n✅ *Total do turno: ${tot}*\n🏦 Dinheiro em caixa: ${cxa}\n🤝 Sinais retidos: ${sin}`;
-  if(obs)msg+=`\n\n💬 *Recado:* ${obs}`;
-  msg+="\n\n_Enviado via Sistema Hara_";
-  window.open("https://wa.me/5511956589259?text="+encodeURIComponent(msg),"_blank");
+  const c=fechCalc; if(!c) return;
+  const f=v=>v==null?"não conferido":fmtM(v);
+  const d=(conf,esp)=>conf==null?"":conf===esp?" ✅":` ⚠️ (${conf>esp?"sobra":"falta"} ${fmtM(Math.abs(conf-esp))})`;
+  let msg=`🏪 *Hara Spa — Fechamento de Caixa*\n📅 ${fmtD(c.dataF)}${window.usuarioLogado?.nome?" · "+window.usuarioLogado.nome:""}\n\n`+
+    `💵 Dinheiro na gaveta: *${fmtM(c.dinEsp)}* · contado: ${f(c.confDin)}${d(c.confDin,c.dinEsp)}\n`+
+    `📱 PIX: *${fmtM(c.pix)}* · extrato: ${f(c.confPix)}${d(c.confPix,c.pix)}\n`+
+    `💳 Débito: *${fmtM(c.deb)}* · maquininha: ${f(c.confDeb)}${d(c.confDeb,c.deb)}\n`+
+    `💳 Crédito: *${fmtM(c.cre)}* · maquininha: ${f(c.confCre)}${d(c.confCre,c.cre)}\n`+
+    (c.out?`➕ Outros: ${fmtM(c.out)}\n`:"")+
+    `\n✅ *Total recebido: ${fmtM(c.total)}*`+(c.sinais?` (inclui ${fmtM(c.sinais)} de sinais)`:"")+
+    (c.ret?`\n🔻 Retirado da gaveta: ${fmtM(c.ret)} — ${document.getElementById("fechRetMot").value.trim()}`:"");
+  const obs=document.getElementById("fechObs").value.trim(); if(obs) msg+=`\n\n💬 *Recado:* ${obs}`;
+  // sem número fixo: o WhatsApp abre para escolher o contato ou grupo
+  window.open("https://wa.me/?text="+encodeURIComponent(msg),"_blank");
+}
+
+async function abrirHistoricoCaixa(){
+  const box=document.getElementById("histCxLista");
+  box.innerHTML='<div style="text-align:center;padding:20px;color:#9ca3af"><i class="fa fa-spinner fa-spin"></i></div>';
+  document.getElementById("modalHistCx").classList.add("open");
+  const {data}=await client.from("fechamentos_caixa").select("*").order("data",{ascending:false}).order("created_at",{ascending:false}).limit(40);
+  box.innerHTML=(data||[]).map(h=>{
+    const dif=h.diferenca_total;
+    const tag=dif==null?'<span class="cx-mini">sem conferência</span>':Number(dif)===0?'<span class="cx-ok">✓ bateu</span>':Number(dif)>0?`<span class="cx-sobra">sobra ${fmtM(dif)}</span>`:`<span class="cx-falta">falta ${fmtM(-dif)}</span>`;
+    return `<div class="hist-cx"><div class="t"><span>${fmtD(h.data)}</span><span>${fmtM(h.total_geral)}</span></div>
+      <div class="s">${h.fechado_por?"Fechado por "+h.fechado_por:"—"} às ${new Date(h.created_at).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})} · ${h.qtd_lancamentos??"—"} lançamentos · ${tag}<br>
+      Dinheiro ${fmtM(h.total_dinheiro)} · PIX ${fmtM(h.total_pix)} · Débito ${fmtM(h.total_debito)} · Crédito ${fmtM(h.total_credito)}${Number(h.retiradas)?` · retirado ${fmtM(h.retiradas)} (${h.retiradas_motivo||"—"})`:""}${h.observacao?`<br>💬 ${h.observacao}`:""}</div></div>`;
+  }).join("")||'<div style="text-align:center;padding:20px;color:#9ca3af">Nenhum fechamento ainda.</div>';
 }
 
 function abrirNC(nome,cb){

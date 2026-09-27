@@ -149,6 +149,8 @@
       'lixeira.html': 'Lixeira',
       'ganhos.html': 'Ganhos',
     };
+    var u = window.usuarioLogado;
+    if (paginaAtual === 'equipe.html' && u && u.role === 'usuario') return 'Meus dados';
     return labels[paginaAtual] || 'Hara Spa';
   }
 
@@ -187,7 +189,7 @@
     }
     html += hr();
     html += titulo("CADASTROS");
-    html += item("equipe.html", "fa-users", "Equipe");
+    html += usuario ? item("equipe.html", "fa-id-card", "Meus dados") : item("equipe.html", "fa-users", "Equipe");
     if (!usuario) {
       html += item("clientes.html", "fa-user", "Clientes");
       html += item("servicos.html", "fa-hand-holding-heart", "Serviços");

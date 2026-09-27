@@ -12,6 +12,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Hara Spa">
 <link rel="apple-touch-icon" href="/assets/icon-192.png">
+<script>window.__instalar=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__instalar=e;if(window.__mostrarInstalar)window.__mostrarInstalar();});</script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(e){console.warn('SW:',e);});});}</script>
 <!-- ── fim PWA ── -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -115,6 +116,13 @@ body{background:radial-gradient(ellipse at top,#26221d 0%,#1c1a17 55%,#161411 10
 .field-hint.error{color:#f3a08c;} .field-hint.success{color:#8fd4a8;}
 a{color:#c9a55c;}
 @media(max-width:768px){ .marca{margin-bottom:22px;} .marca-nome{font-size:26px;} }
+
+.inst-box{margin-top:18px;text-align:center}
+.inst-btn{width:100%;padding:14px;border-radius:12px;border:1px solid #c9a55c;background:transparent;color:#c9a55c;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px}
+.inst-btn:active{background:rgba(201,165,92,.12)}
+.inst-ajuda{display:none;margin-top:12px;padding:14px 16px;border-radius:12px;background:#24211d;border:1px solid #3a352e;color:#d8cfc0;font-size:13.5px;line-height:1.7;text-align:left}
+.inst-ajuda b{color:#efe7da}
+.inst-ajuda ol{margin:6px 0 0 18px;padding:0}
 </style>
 </head>
 <body>
@@ -254,6 +262,14 @@ a{color:#c9a55c;}
         </div>
         <button class="btn-main" id="bReset" onclick="resetSenha()">Enviar link de redefinição</button>
       </div>
+    </div>
+
+    <!-- ── INSTALAR APP ── -->
+    <div id="instalarBox" class="inst-box" style="display:none">
+      <button type="button" class="inst-btn" onclick="instalarApp()">
+        <i class="fa-solid fa-mobile-screen-button"></i> Instalar o app no celular
+      </button>
+      <div class="inst-ajuda" id="instalarAjuda"></div>
     </div>
 
   </div>
@@ -542,6 +558,33 @@ document.addEventListener("keydown",function(e){
   var active=document.activeElement;
   if(active&&(active.id==="lEmail"||active.id==="lSenha"))entrar();
 });
+</script>
+
+<script>
+(function(){
+  var box=document.getElementById('instalarBox'), ajuda=document.getElementById('instalarAjuda');
+  var ua=navigator.userAgent||'';
+  var jaApp=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
+  var ios=/iphone|ipad|ipod/i.test(ua)||(/macintosh/i.test(ua)&&'ontouchend' in document);
+  var android=/android/i.test(ua), samsung=/samsungbrowser/i.test(ua);
+  var dentroDeApp=/(FBAN|FBAV|Instagram|WhatsApp|Line\/|; wv\))/i.test(ua);
+  if(jaApp) return;
+  window.__mostrarInstalar=function(){ box.style.display=''; };
+  if(window.__instalar||ios||android) box.style.display='';
+  function mostrar(h){ ajuda.innerHTML=h; ajuda.style.display='block'; }
+  window.instalarApp=async function(){
+    if(window.__instalar){
+      var e=window.__instalar; e.prompt();
+      try{ var r=await e.userChoice; if(r.outcome==='accepted'){ window.__instalar=null; mostrar('<b>Pronto!</b> O app está sendo instalado. Abra pelo ícone <b>Hara Spa</b> na tela inicial.'); } }catch(_){}
+      return;
+    }
+    if(dentroDeApp){ mostrar('Você abriu o link dentro de outro app (WhatsApp, Instagram…). Toque nos <b>⋮</b> e escolha <b>Abrir no Chrome</b>'+(ios?' / <b>Abrir no Safari</b>':'')+', depois toque aqui de novo.'); return; }
+    if(ios){ mostrar('<b>No iPhone (pelo Safari):</b><ol><li>Toque em <b>Compartilhar</b> <i class="fa-solid fa-arrow-up-from-bracket"></i> (embaixo da tela)</li><li>Role e toque em <b>Adicionar à Tela de Início</b></li><li>Toque em <b>Adicionar</b></li></ol>'); return; }
+    if(samsung){ mostrar('Você está no <b>Samsung Internet</b>. Para instalar direitinho, abra <b>sistemahara.com</b> no <b>Chrome</b> e toque neste botão de novo.'); return; }
+    mostrar('<b>No Chrome:</b><ol><li>Toque nos <b>⋮</b> (canto de cima)</li><li>Toque em <b>Instalar app</b> ou <b>Adicionar à tela inicial → Instalar</b></li></ol><div style="margin-top:8px;color:#9d9383">Se aparecer <b>Abrir app</b>, ele já está instalado. Se quiser reinstalar, desinstale o <b>Hara Spa</b> em Configurações → Aplicativos.</div>');
+  };
+  window.addEventListener('appinstalled',function(){ window.__instalar=null; mostrar('<b>Pronto!</b> App instalado. Abra pelo ícone <b>Hara Spa</b> na tela inicial.'); });
+})();
 </script>
 </body>
 </html>

@@ -195,6 +195,18 @@ function authInit() {
 }
 
 function authCarregarPerfil(session) {
+    // registra o login uma vez por sessão (senha, Google ou link); repetições são ignoradas no banco
+    try {
+      var chave = "hara_acesso_" + (session.access_token || "").slice(-16);
+      var jaFoi = false;
+      try { jaFoi = sessionStorage.getItem(chave) === "1"; } catch (_) {}
+      if (!jaFoi) {
+        client.rpc("registrar_acesso", { p_user_agent: navigator.userAgent }).then(function (r) {
+          if (!r.error) { try { sessionStorage.setItem(chave, "1"); } catch (_) {} }
+        });
+      }
+    } catch (_) {}
+
     client.from("perfis")
       .select("role,nome,email,cpf_terapeuta")
       .eq("id", session.user.id)

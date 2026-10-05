@@ -75,7 +75,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 
 /* coluna de horas */
 .hora-col{width:56px;flex-shrink:0;position:sticky;left:0;z-index:10;background:#f9fafb;border-right:1px solid #e5e7eb;}
-.hora-col .h-header{height:40px;border-bottom:1px solid #e5e7eb;}
+.hora-col .h-header{height:62px;border-bottom:1px solid #e5e7eb;}
 .hora-slot{height:48px;border-bottom:1px solid #f3f4f6;display:flex;align-items:flex-start;justify-content:flex-end;padding:4px 8px 0 0;}
 .hora-slot span{font-size:10px;color:#9ca3af;font-weight:400;}
 
@@ -83,8 +83,11 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .ter-cols{display:flex;flex:1;}
 .ter-col{min-width:150px;flex:1;border-right:1px solid #e5e7eb;}
 .ter-col:last-child{border-right:none;}
-.ter-header{height:40px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:center;padding:0 8px;background:#f9fafb;position:sticky;top:0;z-index:5;}
-.ter-header span{font-size:11px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ter-header{height:62px;border-bottom:1px solid #e5e7eb;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:0 6px;background:#f9fafb;position:sticky;top:0;z-index:5;}
+.ter-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;overflow:hidden;box-shadow:0 0 0 2px #fff,0 0 0 3px #e5e7eb;}
+.ter-av{position:relative;}
+.ter-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+.ter-header span{font-size:11px;font-weight:700;color:#374151;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .ter-body{position:relative;}
 .slot-bg{height:48px;border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .1s;}
 .slot-bg:hover{background:#f0f9ff;}
@@ -977,6 +980,26 @@ function setView(v) {
   else renderLista();
 }
 
+// ── FOTO DA TERAPEUTA NO TOPO DA COLUNA (última foto da aba "Fotos" do cadastro; sem foto = iniciais) ──
+let fotosTer = {};
+async function carregarFotosTer(cpfs){
+  if(!cpfs.length) return;
+  const {data} = await client.from("documentos").select("equipe_id,url,created_at")
+    .eq("tipo","Foto").in("equipe_id",cpfs).order("created_at",{ascending:false});
+  fotosTer = {};
+  (data||[]).forEach(d => { if(!fotosTer[d.equipe_id] && d.url) fotosTer[d.equipe_id] = d.url; });
+  if(viewAtual==="agenda" && typeof renderAgenda==="function" && document.getElementById("agendaGrid").children.length) renderAgenda();
+}
+const CORES_AV = ["#7c3aed","#2563eb","#0d9488","#db2777","#ea580c","#16a34a","#9333ea","#0284c7","#c026d3","#b45309"];
+function avatarTer(ter){
+  const nome = (ter.nome_profissional||"?").trim();
+  const ini = nome.split(/\s+/).slice(0,2).map(p=>p[0]).join("").toUpperCase();
+  let h = 0; for(const c of (ter.cpf||nome)) h = (h*31 + c.charCodeAt(0)) >>> 0;
+  const cor = CORES_AV[h % CORES_AV.length];
+  const foto = fotosTer[ter.cpf];
+  return `<div class="ter-av" style="background:${cor}">${ini}${foto ? `<img src="${foto}" alt="" onerror="this.remove()">` : ""}</div>`;
+}
+
 // ── AGENDA GRID ──
 function renderAgenda() {
   const grid = document.getElementById("agendaGrid");
@@ -1028,7 +1051,7 @@ function renderAgenda() {
     // header
     const header = document.createElement("div");
     header.className = "ter-header";
-    header.innerHTML = `<span title="${ter.nome_profissional}">${ter.nome_profissional.split(" ")[0]}</span>`;
+    header.innerHTML = `${avatarTer(ter)}<span title="${ter.nome_profissional}">${ter.nome_profissional.split(" ")[0]}</span>`;
     col.appendChild(header);
 
     // body com slots
@@ -1487,6 +1510,7 @@ async function carregarDados(){
     .in("cargo",["Terapeuta Feminina","Terapeuta Masculino"])
     .order("nome_profissional");
   todosTerapeutas=ters||[];
+  carregarFotosTer(todosTerapeutas.map(t=>t.cpf));
   const u = window.usuarioLogado;
   // se o usuário logado é terapeuta, mostra só a coluna dela
   if(u && u.cpf) {

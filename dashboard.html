@@ -608,6 +608,29 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
     <button class="btn-limpar-login" onclick="limparFiltrosLogin()">Limpar</button>
   </div>
 
+  <div class="login-content" style="margin-bottom:16px">
+    <div class="login-table-wrap">
+      <div class="login-table-header">
+        <span>Quem já está usando o app</span>
+        <small id="aqResumo">—</small>
+      </div>
+      <div style="padding:10px 16px 0;display:flex;gap:8px;flex-wrap:wrap">
+        <select id="aqFiltro" onchange="renderAcessoEquipe()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px">
+          <option value="">Todos</option>
+          <option value="usuario">Terapeutas</option>
+          <option value="gestao">Recepção e admin</option>
+          <option value="sem">Sem notificação</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="login-table">
+          <thead><tr><th>Pessoa</th><th>Último acesso</th><th>Notificações</th></tr></thead>
+          <tbody id="aqTabela"><tr><td colspan="3" class="login-empty">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="login-content">
     <div class="login-table-wrap">
       <div class="login-table-header">
@@ -812,8 +835,40 @@ function tempoRelativo(ts){
   return Math.floor(diff/86400)+"d atrás";
 }
 
+
+// ── Quem já está usando: último acesso + aparelhos com notificação ──
+let acessoEquipe=[];
+async function carregarAcessoEquipe(){
+  const {data,error}=await client.rpc("acesso_equipe");
+  if(error){ document.getElementById("aqTabela").innerHTML='<tr><td colspan="3" class="login-empty">Não foi possível carregar.</td></tr>'; return; }
+  acessoEquipe=data||[];
+  renderAcessoEquipe();
+}
+function renderAcessoEquipe(){
+  const f=document.getElementById("aqFiltro").value;
+  const papel={usuario:"Terapeuta",apoio:"Recepção",admin:"Admin"};
+  const ter=acessoEquipe.filter(p=>p.role==="usuario");
+  const terOk=ter.filter(p=>(p.aparelhos||[]).length).length;
+  const gest=acessoEquipe.filter(p=>p.role!=="usuario");
+  const gestOk=gest.filter(p=>(p.aparelhos||[]).length).length;
+  document.getElementById("aqResumo").textContent=`Terapeutas com notificação: ${terOk} de ${ter.length} · Recepção/admin: ${gestOk} de ${gest.length}`;
+  let l=acessoEquipe;
+  if(f==="usuario") l=l.filter(p=>p.role==="usuario");
+  else if(f==="gestao") l=l.filter(p=>p.role!=="usuario");
+  else if(f==="sem") l=l.filter(p=>!(p.aparelhos||[]).length);
+  const icone={iPhone:"fa-brands fa-apple",Android:"fa-brands fa-android",Computador:"fa fa-desktop"};
+  const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  document.getElementById("aqTabela").innerHTML=l.length? l.map(p=>{
+    const ap=p.aparelhos||[];
+    const chips=ap.length? ap.map(a=>`<span style="display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#14532d;border-radius:999px;padding:3px 9px;font-size:12px;margin:2px 4px 2px 0;white-space:nowrap"><i class="${icone[a.tipo]||"fa fa-bell"}"></i>${a.tipo}</span>`).join("")
+      : '<span style="display:inline-block;background:#fef3c7;color:#92400e;border-radius:999px;padding:3px 9px;font-size:12px">Não ativou</span>';
+    const ult=p.ultimo_login? `${fmtDataHora(p.ultimo_login)}<div style="font-size:11px;color:#9ca3af">${tempoRelativo(p.ultimo_login)}</div>` : '<span style="color:#9ca3af">Nunca entrou</span>';
+    return `<tr><td><div class="login-usuario-nome">${esc(p.nome)}</div><div class="login-usuario-email">${papel[p.role]||esc(p.role)}</div></td><td style="white-space:nowrap;color:#6b7280">${ult}</td><td>${chips}</td></tr>`;
+  }).join("") : '<tr><td colspan="3" class="login-empty">Ninguém nesse filtro.</td></tr>';
+}
 async function carregarLogins(){
   loginsCarregados=true;
+  carregarAcessoEquipe();
   const status=document.getElementById("lFiltroStatus").value;
   const usuario=document.getElementById("lFiltroUsuario").value.trim();
   const ini=document.getElementById("lFiltroIni").value;
@@ -1469,8 +1524,8 @@ const AN = (() => {
         const h = pesos([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21], [2, 4, 5, 6, 8, 9, 10, 10, 9, 7, 4, 2]);
         const c = pesos(clientes, pesoC), futuro = d > hoje;
         let status, fin = false;
-        if (futuro) status = rnd() < .6 ? "Agendado" : "Confirmado";
-        else { const r = rnd(); if (r < .07) status = "Cancelado"; else if (r < .09) status = "Remarcado"; else if (r < .80 || diasEntre(d, hoje) > 20) status = "Faturado"; else { status = "Confirmado"; fin = rnd() < .75; } }
+        if (futuro) status = "Agendado";
+        else { const r = rnd(); if (r < .07) status = "Cancelado"; else if (r < .09) status = "Remarcado"; else if (r < .80 || diasEntre(d, hoje) > 20) status = "Faturado"; else { status = "Agendado"; fin = rnd() < .75; } }
         const desc = rnd() < .15 ? 0.9 : 1, valor = Math.round(s.valor * desc);
         const f1 = pesos(formas, pesoF), split = rnd() < .1;
         out.push({ id: "d" + out.length, data: d, hora: String(h).padStart(2, "0") + ":" + (rnd() < .5 ? "00" : "30"), status, valor, comissao: s.comissao, dur: parseInt((s.nome.match(/(\d+)\s*min/) || [0, 60])[1]),

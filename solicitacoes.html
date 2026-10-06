@@ -264,6 +264,11 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
   </div>
   <div class="modal-body">
     <div id="confirmarInfo" style="background:#f9fafb;border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;color:#374151;line-height:1.6"></div>
+    <div id="confirmarMotivoBox" style="display:none;margin-bottom:14px">
+      <label for="confirmarMotivo" style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px">Motivo da recusa *</label>
+      <textarea id="confirmarMotivo" rows="3" placeholder="Ex.: já temos duas terapeutas de folga nesse dia" style="width:100%;box-sizing:border-box;border:1px solid #e5e7eb;border-radius:8px;padding:10px;font:inherit;font-size:13px;resize:vertical"></textarea>
+      <div style="font-size:11px;color:#9ca3af;margin-top:4px">A terapeuta vê esse motivo na solicitação e na notificação.</div>
+    </div>
     <div id="confirmarNomeInfo" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;font-size:13px;color:#1d4ed8;display:flex;align-items:center;gap:8px;">
       <i class="fa fa-user-circle"></i>
       <span id="confirmarNomeTexto"></span>
@@ -289,12 +294,13 @@ select:disabled{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
       <div class="field"><label>Tipo *</label><select id="tipo" onchange="onTipoChange()"></select></div>
       <div class="field">
         <label>Status</label>
-        <select id="status">
+        <select id="status" onchange="mostrarMotivoEdicao()">
           <option value="Pendente">Pendente</option>
           <option value="Acordado">Acordado</option>
           <option value="Não Acordado">Não Acordado</option>
         </select>
       </div>
+      <div class="field span2" id="blocoMotivo" style="display:none"><label>Motivo da recusa *</label><textarea id="motivo_recusa" placeholder="Por que a solicitação não foi aceita?"></textarea></div>
       <div class="field"><label>Data Início *</label><input type="date" id="data_inicio"></div>
       <div class="field"><label>Data Fim *</label><input type="date" id="data_fim"></div>
       <div id="blocoHorario">
@@ -403,6 +409,8 @@ document.addEventListener("DOMContentLoaded",function(){
     checarBtnLimpar();renderTabela();
   }
 
+  function esc(t){return String(t??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
   function renderTabela(){
     const porPag=parseInt(document.getElementById("porPagina").value)||10;
     const total=solFiltradas.length;
@@ -430,7 +438,8 @@ document.addEventListener("DOMContentLoaded",function(){
           +"<td>"+s.tipo+"</td>"
           +"<td style='white-space:nowrap'>"+fmtData(s.data_inicio)+" → "+fmtData(s.data_fim)+"</td>"
           +"<td>"+horarioCol+"</td>"
-          +"<td><span class='badge "+badgeClass+"'><i class='fa "+iconeStatus+"'></i> "+s.status+"</span></td>"
+          +"<td><span class='badge "+badgeClass+"'><i class='fa "+iconeStatus+"'></i> "+s.status+"</span>"
+            +(s.status==="Não Acordado"&&s.motivo_recusa?"<div style='font-size:12px;color:#b91c1c;margin-top:4px;max-width:260px;white-space:normal'><i class='fa fa-comment'></i> "+esc(s.motivo_recusa)+"</div>":"")+"</td>"
           +"<td class='td-admin' style='font-size:12px;color:#6b7280'>"+(s.aprovado_por?"<i class='fa fa-user'></i> "+s.aprovado_por:"—")+"</td>"
           +"<td>"+arquivoCol+"</td>"
           +"<td style='white-space:nowrap;display:flex;gap:4px'>"
@@ -507,11 +516,17 @@ document.addEventListener("DOMContentLoaded",function(){
     document.getElementById("arquivoAtual").style.display="none";
   }
 
+  window.mostrarMotivoEdicao=function(){
+    const st=document.getElementById("status");
+    document.getElementById("blocoMotivo").style.display=(st.value==="Não Acordado"&&!st.disabled)?"block":"none";
+  };
+
   window.abrirNovo=function(){
     idEdicao=null;resetModal();
     document.getElementById("modalTitulo").textContent="Nova Solicitação";
     document.getElementById("status").value="Pendente";
     document.getElementById("status").disabled=true;
+    document.getElementById("motivo_recusa").value="";mostrarMotivoEdicao();
     getUser(u=>{const sel=document.getElementById("terapeuta");if(eUsuario(u)&&u.cpf){sel.value=u.cpf;sel.disabled=true;}else sel.disabled=false;});
     document.getElementById("modal").style.display="flex";
   };
@@ -527,6 +542,7 @@ document.addEventListener("DOMContentLoaded",function(){
     document.getElementById("data_inicio").value=s.data_inicio||"";
     document.getElementById("data_fim").value=s.data_fim||"";
     document.getElementById("justificativa").value=s.justificativa||"";
+    document.getElementById("motivo_recusa").value=s.motivo_recusa||"";
     if(s.tipo==="Alteração de Horário"){
       document.getElementById("blocoHorario").style.display="block";
       document.getElementById("hora_inicio").value=fmtHora(s.hora_inicio)||"";
@@ -540,6 +556,7 @@ document.addEventListener("DOMContentLoaded",function(){
     }
     document.getElementById("modalTitulo").textContent=mapaTerapeutas[s.terapeuta_cpf]||"Editar Solicitação";
     document.getElementById("status").disabled=false;
+    mostrarMotivoEdicao();
     getUser(u=>{const sel=document.getElementById("terapeuta");sel.disabled=eUsuario(u);});
     document.getElementById("modal").style.display="flex";
   };
@@ -558,10 +575,12 @@ document.addEventListener("DOMContentLoaded",function(){
     const dataInicio=document.getElementById("data_inicio").value;
     const dataFim=document.getElementById("data_fim").value;
     const justif=document.getElementById("justificativa").value.trim();
+    const motivoRecusa=document.getElementById("motivo_recusa").value.trim();
     const horaInicio=document.getElementById("hora_inicio").value||null;
     const horaFim=document.getElementById("hora_fim").value||null;
     const file=document.getElementById("arquivo").files[0];
     if(!terapeuta){alert("Selecione o profissional.");return;}
+    if(status==="Não Acordado"&&!document.getElementById("status").disabled&&!motivoRecusa){alert("Escreva o motivo da recusa.");document.getElementById("motivo_recusa").focus();return;}
     if(!dataInicio||!dataFim){alert("Preencha as datas.");return;}
     if(dataFim<dataInicio){alert("Data fim não pode ser menor que data início.");return;}
     if(tipo==="Alteração de Horário"){if(!horaInicio||!horaFim){alert("Informe o horário alterado.");return;}if(horaFim<=horaInicio){alert("Hora fim deve ser maior que hora início.");return;}}
@@ -575,6 +594,7 @@ document.addEventListener("DOMContentLoaded",function(){
     const nomeLogado=(window.usuarioLogado&&window.usuarioLogado.nome)||"Usuário";
     const payload={terapeuta_cpf:terapeuta,tipo,status,data_inicio:dataInicio,data_fim:dataFim,justificativa:justif||null,arquivo_url:arquivoAtualUrl||null,arquivo_nome:arquivoAtualNome||null,aprovado_por:statusMudou?nomeLogado:undefined,hora_inicio:(tipo==="Alteração de Horário"?horaInicio:null),hora_fim:(tipo==="Alteração de Horário"?horaFim:null)};
     if(status==="Pendente")payload.aprovado_por=null;
+    if(!document.getElementById("status").disabled) payload.motivo_recusa=status==="Não Acordado"?(motivoRecusa||null):null;
     Object.keys(payload).forEach(k=>payload[k]===undefined&&delete payload[k]);
     if(file){
       const statusEl=document.getElementById("uploadStatus");statusEl.style.display="block";
@@ -592,9 +612,11 @@ document.addEventListener("DOMContentLoaded",function(){
     fecharModal();carregar();
   };
 
-  window.alterarStatus=async function(id,novoStatus,aprovadoPor){
+  window.alterarStatus=async function(id,novoStatus,aprovadoPor,motivo){
     // funcionario_solicitacao (ex-solicitacoes)
-    await client.from("funcionario_solicitacao").update({status:novoStatus,aprovado_por:aprovadoPor||null}).eq("id",id);carregar();
+    const {error}=await client.from("funcionario_solicitacao").update({status:novoStatus,aprovado_por:aprovadoPor||null,motivo_recusa:novoStatus==="Não Acordado"?(motivo||null):null}).eq("id",id);
+    if(error){alert("Erro ao salvar: "+error.message);return;}
+    carregar();
   };
 
   let _confirmarId=null,_confirmarStatus=null;
@@ -613,12 +635,17 @@ document.addEventListener("DOMContentLoaded",function(){
     const btn=document.getElementById("confirmarBtn");btn.style.background=cor;btn.innerHTML="<i class='fa "+icone+"'></i> "+acao;
     const nomeLogado=(window.usuarioLogado&&window.usuarioLogado.nome)||"";
     document.getElementById("confirmarNomeTexto").textContent="Registrado por: "+(nomeLogado||"Usuário");
+    const recusa=novoStatus==="Não Acordado";
+    document.getElementById("confirmarMotivoBox").style.display=recusa?"block":"none";
+    document.getElementById("confirmarMotivo").value=recusa?(s?.motivo_recusa||""):"";
     document.getElementById("modalConfirmar").style.display="flex";
   };
   window.fecharConfirmar=function(){document.getElementById("modalConfirmar").style.display="none";};
   window.confirmarStatus=async function(){
     const nome=(window.usuarioLogado&&window.usuarioLogado.nome)||"Usuário";
-    await alterarStatus(_confirmarId,_confirmarStatus,nome);fecharConfirmar();
+    const motivo=document.getElementById("confirmarMotivo").value.trim();
+    if(_confirmarStatus==="Não Acordado"&&!motivo){alert("Escreva o motivo da recusa.");document.getElementById("confirmarMotivo").focus();return;}
+    await alterarStatus(_confirmarId,_confirmarStatus,nome,motivo);fecharConfirmar();
   };
 
   window.excluir=async function(id,arquivoUrl){

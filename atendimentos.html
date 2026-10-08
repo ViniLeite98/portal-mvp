@@ -395,6 +395,29 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
   .kpi-bar{position:sticky;top:var(--topo-mobile,52px);z-index:30;}
   body.visao-terapeuta .semana-nav{position:sticky;top:calc(var(--topo-mobile,52px) + var(--kpi-h,50px));z-index:29;background:#fff;}
 }
+
+/* ── Agenda "cabe na tela": todas as colunas sem rolar para o lado ── */
+.agenda-grid.encaixar{min-width:0;width:100%;}
+.agenda-grid.encaixar .ter-cols{min-width:0;}
+.agenda-grid.encaixar .ter-col{min-width:0 !important;flex:1 1 0;}
+.agenda-grid.compacto .ter-header,.agenda-grid.compacto .hora-col .h-header{height:46px;}
+.agenda-grid.compacto .ter-header{padding:0 1px;gap:2px;}
+.agenda-grid.compacto .ter-av{width:26px;height:26px;font-size:10px;box-shadow:none;}
+.agenda-grid.compacto .ter-header span{font-size:9px;}
+.agenda-grid.compacto .ter-header span em{display:none;}
+.agenda-grid.compacto .ag-block{left:1px;right:1px;padding:2px 2px 2px 3px;font-size:9.5px;line-height:1.12;border-radius:4px;}
+.agenda-grid.compacto .ag-block .b-hora,.agenda-grid.compacto .ag-block .b-servico{display:none;}
+.agenda-grid.compacto .ag-block .b-cliente{white-space:normal;word-break:break-all;overflow:hidden;height:100%;}
+.agenda-grid.compacto .ag-block.ag-inativo .b-cliente{display:none;}
+.agenda-grid.compacto .ag-block.ag-ao-lado{right:calc(34% + 2px);}
+.agenda-grid.ultra .ter-header span{display:none;}
+.agenda-grid.ultra .ter-av{width:20px;height:20px;font-size:8px;}
+.agenda-grid.ultra .ag-block{border-left-width:2px;padding:1px;font-size:8.5px;text-align:center;}
+.agenda-grid.ultra .ag-block .b-cliente i{display:block;margin-bottom:1px;}
+/* a legenda rola junto; assim a linha de fotos/nomes fica presa no topo sem ficar escondida */
+#agendaLegenda{position:static !important;}
+#btnEncaixar{border:1px solid #e5e7eb;background:#fff;border-radius:999px;padding:3px 10px;font-size:11px;color:#374151;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap;}
+#btnEncaixar.on{background:#111827;color:#fff;border-color:#111827;}
 </style>
 </head>
 <body>
@@ -452,6 +475,7 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#fee2e2;border-left:3px solid #dc2626;display:inline-block"></span> Cancelado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#f3f4f6;border-left:3px solid #9ca3af;display:inline-block"></span> Remarcado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#fee2e2,#fee2e2 3px,#fef2f2 3px,#fef2f2 7px);display:inline-block"></span> Fora do horário</span>
+      <button type="button" id="btnEncaixar" onclick="alternarEncaixe()" style="margin-left:auto"><i class="fa fa-table-columns"></i> <span>Todas na tela</span></button>
     </div>
     <div class="agenda-grid" id="agendaGrid"></div>
   </div>
@@ -1000,10 +1024,25 @@ function avatarTer(ter){
   return `<div class="ter-av" style="background:${cor}">${ini}${foto ? `<img src="${foto}" alt="" onerror="this.remove()">` : ""}</div>`;
 }
 
+// ── "Todas na tela" (padrão) x "Colunas largas"; a escolha fica guardada no aparelho ──
+function lerEncaixe(){ try{ return localStorage.getItem("hara_agenda_encaixe") !== "0"; }catch(_){ return true; } }
+function alternarEncaixe(){
+  const novo = !lerEncaixe();
+  try{ localStorage.setItem("hara_agenda_encaixe", novo ? "1" : "0"); }catch(_){}
+  renderAgenda();
+}
+let _tmrResize=null;
+window.addEventListener("resize", () => {
+  clearTimeout(_tmrResize);
+  _tmrResize = setTimeout(() => { if(viewAtual==="agenda" && document.getElementById("agendaGrid").children.length) renderAgenda(); }, 200);
+});
+
 // ── AGENDA GRID ──
 function renderAgenda() {
   const grid = document.getElementById("agendaGrid");
   grid.innerHTML = "";
+  grid.classList.remove("encaixar","compacto","ultra");
+  document.getElementById("viewAgenda").style.overflowX = "";
 
   const slotCount = (HORA_FIM - HORA_INI) * 2;
 
@@ -1039,6 +1078,19 @@ function renderAgenda() {
   const tersVisiveis = colunasConfig.length
     ? todosTerapeutas.filter(t => { const c = colunasConfig.find(x => x.cpf === t.cpf); return !c || c.visivel; })
     : todosTerapeutas;
+
+  // "Todas na tela": divide a largura disponível entre todas as colunas (sem rolar para o lado)
+  const encaixe = lerEncaixe();
+  const btnE = document.getElementById("btnEncaixar");
+  if(btnE){ btnE.classList.toggle("on", encaixe); btnE.querySelector("span").textContent = encaixe ? "Todas na tela" : "Colunas largas"; }
+  if(encaixe && tersVisiveis.length){
+    const largura = document.getElementById("viewAgenda").clientWidth || window.innerWidth;
+    const colW = (largura - (window.innerWidth <= 768 ? 44 : 56)) / tersVisiveis.length;
+    grid.classList.add("encaixar");
+    document.getElementById("viewAgenda").style.overflowX = "hidden";
+    if(colW < 72) grid.classList.add("compacto");
+    if(colW < 40) grid.classList.add("ultra");
+  }
 
   tersVisiveis.forEach(ter => {
     const col = document.createElement("div");

@@ -1109,7 +1109,8 @@ function renderAgenda() {
     const header = document.createElement("div");
     header.className = "ter-header";
     const deFolga = (horariosMap[ter.cpf]||{}).disponivel === false;
-    header.innerHTML = `${avatarTer(ter)}<span title="${ter.nome_profissional}">${ter.nome_profissional.split(" ")[0]}${deFolga?' <em style="font-style:normal;font-weight:600;color:#9ca3af">· folga</em>':''}</span>`;
+    const motivoDia = (horariosMap[ter.cpf]||{}).motivo || (deFolga ? "folga" : "");
+    header.innerHTML = `${avatarTer(ter)}<span title="${ter.nome_profissional}${motivoDia?" — "+motivoDia:""}">${ter.nome_profissional.split(" ")[0]}${motivoDia?` <em style="font-style:normal;font-weight:600;color:#9ca3af">· ${motivoDia}</em>`:''}</span>`;
     if(deFolga) header.style.opacity = ".6";
     col.appendChild(header);
 
@@ -1223,6 +1224,27 @@ async function carregar() {
       } else if(eFolga) {
         // tem registro no banco mas é dia de folga — força indisponível
         horariosMap[t.cpf].disponivel = false;
+      }
+    });
+
+    // solicitações APROVADAS do dia mandam na agenda: falta/férias/atestado/viagem fecham o dia;
+    // alteração de horário troca a entrada/saída
+    const {data:solsDia} = await client.from("funcionario_solicitacao")
+      .select("terapeuta_cpf,tipo,hora_inicio,hora_fim")
+      .eq("status","Acordado").lte("data_inicio",dataSel).gte("data_fim",dataSel)
+      .in("terapeuta_cpf", todosTerapeutas.map(t=>t.cpf));
+    (solsDia||[]).forEach(sol => {
+      const h = horariosMap[sol.terapeuta_cpf] || (horariosMap[sol.terapeuta_cpf] = {});
+      if(/altera/i.test(sol.tipo||"")) {
+        if(sol.hora_inicio && sol.hora_fim){
+          h.hora_entrada = sol.hora_inicio.slice(0,5);
+          h.hora_saida   = sol.hora_fim.slice(0,5);
+          h.disponivel   = true;
+          h.motivo       = "horário alterado";
+        }
+      } else {
+        h.disponivel = false;
+        h.motivo = (sol.tipo||"ausente").toLowerCase();
       }
     });
   }

@@ -1,6 +1,6 @@
 // ⚠️ Troque a versão (v2 → v3 → v4...) sempre que subir mudanças grandes.
 //    Isso apaga o cache antigo de todo mundo na próxima abertura do app.
-const CACHE_NAME = 'hara-spa-v5';
+const CACHE_NAME = 'hara-spa-v6';
 
 // arquivos para cache offline
 const ASSETS = [
@@ -56,6 +56,23 @@ self.addEventListener('fetch', function(e) {
   if (req.url.includes('api.iconify.design')) return;
 
   var mesmoSite = new URL(req.url).origin === self.location.origin;
+
+  // Bibliotecas de fora (Supabase, ícones, fontes): usa a cópia guardada na hora
+  // e atualiza por trás. Antes baixava tudo de novo a cada tela — era o que deixava lento no celular.
+  if (!mesmoSite && /unpkg\.com|cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|fonts\.googleapis\.com|fonts\.gstatic\.com/.test(req.url)) {
+    e.respondWith(
+      caches.open(CACHE_NAME).then(function(cache) {
+        return cache.match(req).then(function(guardado) {
+          var rede = fetch(req).then(function(resp) {
+            if (resp && (resp.ok || resp.type === 'opaque')) cache.put(req, resp.clone());
+            return resp;
+          }).catch(function() { return guardado || Response.error(); });
+          return guardado || rede;
+        });
+      })
+    );
+    return;
+  }
 
   // Arquivos do próprio site: pede ao servidor ignorando o cache do navegador.
   // Era isso que fazia a versão antiga continuar aparecendo depois do deploy.

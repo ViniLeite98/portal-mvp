@@ -2318,7 +2318,8 @@ function calcFatTroco(){
 }
 
 // ═══ MOEDA ESTRANGEIRA: cotação do dia + margem ═══
-const MARGEM_CAMBIO=0.20; // 20% em cima da cotação
+const MARGEM_CAMBIO=0.10; // 10% em cima da cotação
+const TIPO_COTACAO="comercial"; // "comercial" (dólar venda) ou "turismo"
 const MOEDAS={USD:{simb:"US$",nome:"dólar"},EUR:{simb:"€",nome:"euro"},GBP:{simb:"£",nome:"libra"}};
 let cotacoes=null, cotacoesHora=null, cotacoesPromessa=null;
 function moedaDaForma(f){
@@ -2342,6 +2343,9 @@ async function buscarCotacoes(){
       if(t){c[m]=t.v;quando[m]=t.quando;}
       else if(com){c[m]=com.v*spread;quando[m]=com.quando;estimada[m]=true;}
     });
+    if(TIPO_COTACAO==="comercial"){ // cotação comercial de venda, sem estimativa
+      [["USD",uC],["EUR",eC],["GBP",gC]].forEach(([m,com])=>{delete c[m];delete estimada[m];if(com){c[m]=com.v;quando[m]=com.quando;}});
+    }
     cotacoes=Object.keys(c).length?{...c,_quando:quando,_estimada:estimada}:null;
     if(cotacoes)cotacoesHora=Date.now();
     cotacoesPromessa=null;
@@ -2365,7 +2369,7 @@ async function mostrarCambio(idForma,idValor,idBox){
   const m=MOEDAS[moeda], c=calcCambio(moeda,reais);
   if(!c){box.innerHTML=`<i class="fa fa-triangle-exclamation"></i> Não consegui buscar a cotação do ${m.nome} agora. Confira a cotação manualmente.`;return;}
   box.innerHTML=`<i class="fa fa-coins"></i> Cobrar do cliente: <b>${m.simb} ${fmtNum(c.valor)}</b><br>`
-    +`<span style="opacity:.85">${m.nome[0].toUpperCase()+m.nome.slice(1)} turismo${cotacoes._estimada[moeda]?" (estimado)":""}: ${m.simb} 1 = R$ ${fmtNum(c.cot)}${horaCot(moeda)} · + ${Math.round(MARGEM_CAMBIO*100)}% sobre R$ ${fmtNum(reais)}</span>`;
+    +`<span style="opacity:.85">${m.nome[0].toUpperCase()+m.nome.slice(1)} ${TIPO_COTACAO==="turismo"?"turismo":"venda"}${cotacoes._estimada[moeda]?" (estimado)":""}: ${m.simb} 1 = R$ ${fmtNum(c.cot)}${horaCot(moeda)} · + ${Math.round(MARGEM_CAMBIO*100)}% sobre R$ ${fmtNum(reais)}</span>`;
 }
 // texto para guardar na observação do faturamento
 function horaCot(m){const q=cotacoes&&cotacoes._quando&&cotacoes._quando[m];if(!q)return "";const d=new Date(q.replace(" ","T")+"-03:00");return isNaN(d)?"":` (atualizada ${d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"})} ${d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})})`;}
@@ -2373,7 +2377,7 @@ function textoCambio(idForma,idValor){
   const moeda=moedaDaForma(document.getElementById(idForma).value);if(!moeda)return "";
   const reais=parseFloat(document.getElementById(idValor).value||0), c=calcCambio(moeda,reais);if(!c)return "";
   const m=MOEDAS[moeda];
-  return `Recebido ${m.simb} ${fmtNum(c.valor)} (R$ ${fmtNum(reais)}; turismo ${m.simb} 1 = R$ ${fmtNum(c.cot)} + ${Math.round(MARGEM_CAMBIO*100)}%)`;
+  return `Recebido ${m.simb} ${fmtNum(c.valor)} (R$ ${fmtNum(reais)}; ${TIPO_COTACAO==="turismo"?"turismo":"venda"} ${m.simb} 1 = R$ ${fmtNum(c.cot)} + ${Math.round(MARGEM_CAMBIO*100)}%)`;
 }
 
 async function confirmarFaturamento(){

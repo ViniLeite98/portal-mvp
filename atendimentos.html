@@ -1010,8 +1010,17 @@ async function carregarFotosTer(cpfs){
   if(!cpfs.length) return;
   const {data} = await client.from("documentos").select("equipe_id,url,created_at")
     .eq("tipo","Foto").in("equipe_id",cpfs).order("created_at",{ascending:false});
+  // as fotos ficam protegidas: gera um link temporário (1h) para cada uma antes de mostrar
+  const ultima = {};
+  (data||[]).forEach(d => { if(!ultima[d.equipe_id] && d.url) ultima[d.equipe_id] = d.url; });
+  const MARCA = "/object/public/documentos/";
+  const caminho = u => { const i = u.indexOf(MARCA); return i === -1 ? null : decodeURIComponent(u.slice(i + MARCA.length).split("?")[0]); };
+  const pares = Object.entries(ultima).map(([cpf,u]) => [cpf, caminho(u)]).filter(([,c]) => c);
   fotosTer = {};
-  (data||[]).forEach(d => { if(!fotosTer[d.equipe_id] && d.url) fotosTer[d.equipe_id] = d.url; });
+  if(pares.length){
+    const {data:ass} = await client.storage.from("documentos").createSignedUrls(pares.map(p=>p[1]), 3600);
+    (ass||[]).forEach((r,i) => { if(r && r.signedUrl) fotosTer[pares[i][0]] = r.signedUrl; });
+  }
   if(viewAtual==="agenda" && typeof renderAgenda==="function" && document.getElementById("agendaGrid").children.length) renderAgenda();
 }
 const CORES_AV = ["#7c3aed","#2563eb","#0d9488","#db2777","#ea580c","#16a34a","#9333ea","#0284c7","#c026d3","#b45309"];

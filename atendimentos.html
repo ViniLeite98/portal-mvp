@@ -1034,15 +1034,11 @@ function renderAgenda() {
     if(a.terapeuta2_cpf && agPorTer[a.terapeuta2_cpf]) agPorTer[a.terapeuta2_cpf].push(a);
   });
 
-  // ── FILTRO: só terapeutas visíveis E com agenda no dia (disponivel !== false) ──
-  const tersVisiveis = (colunasConfig.length
+  // ── Todas as terapeutas aparecem; quem está de folga no dia fica com a coluna toda bloqueada (cinza) ──
+  // (só some se alguém escondeu a coluna em "Gerenciar colunas")
+  const tersVisiveis = colunasConfig.length
     ? todosTerapeutas.filter(t => { const c = colunasConfig.find(x => x.cpf === t.cpf); return !c || c.visivel; })
-    : todosTerapeutas
-  ).filter(t => {
-    const h = horariosMap[t.cpf];
-    // mostra se: não tem registro de horário (sem restrição) OU disponivel não é explicitamente false
-    return !h || h.disponivel !== false;
-  });
+    : todosTerapeutas;
 
   tersVisiveis.forEach(ter => {
     const col = document.createElement("div");
@@ -1051,7 +1047,9 @@ function renderAgenda() {
     // header
     const header = document.createElement("div");
     header.className = "ter-header";
-    header.innerHTML = `${avatarTer(ter)}<span title="${ter.nome_profissional}">${ter.nome_profissional.split(" ")[0]}</span>`;
+    const deFolga = (horariosMap[ter.cpf]||{}).disponivel === false;
+    header.innerHTML = `${avatarTer(ter)}<span title="${ter.nome_profissional}">${ter.nome_profissional.split(" ")[0]}${deFolga?' <em style="font-style:normal;font-weight:600;color:#9ca3af">· folga</em>':''}</span>`;
+    if(deFolga) header.style.opacity = ".6";
     col.appendChild(header);
 
     // body com slots

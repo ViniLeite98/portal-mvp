@@ -1084,9 +1084,12 @@ function renderAgenda() {
 
   // ── Todas as terapeutas aparecem; quem está de folga no dia fica com a coluna toda bloqueada (cinza) ──
   // (só some se alguém escondeu a coluna em "Gerenciar colunas")
-  const tersVisiveis = colunasConfig.length
+  const tersVisiveis = (colunasConfig.length
     ? todosTerapeutas.filter(t => { const c = colunasConfig.find(x => x.cpf === t.cpf); return !c || c.visivel; })
-    : todosTerapeutas;
+    : todosTerapeutas
+  // ausência aprovada (férias, falta…): a coluna some nesses dias e volta sozinha depois.
+  // Se mesmo assim ela tiver atendimento marcado no dia, a coluna continua para não esconder o atendimento.
+  ).filter(t => !(horariosMap[t.cpf]||{}).ausente || (agPorTer[t.cpf]||[]).some(a => a.status!=="Cancelado" && a.status!=="Remarcado"));
 
   // "Todas na tela": divide a largura disponível entre todas as colunas (sem rolar para o lado)
   const encaixe = lerEncaixe();
@@ -1244,6 +1247,7 @@ async function carregar() {
         }
       } else {
         h.disponivel = false;
+        h.ausente = true; // férias/falta/atestado/viagem aprovados: some da agenda no período
         h.motivo = (sol.tipo||"ausente").toLowerCase();
       }
     });

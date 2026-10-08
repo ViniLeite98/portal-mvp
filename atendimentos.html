@@ -708,6 +708,11 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
       <div class="mfield"><label>Nova Data *</label><input type="date" id="remarData"></div>
       <div class="mfield"><label>Nova Hora *</label><input type="time" id="remarHora"></div>
     </div>
+    <div class="grid2">
+      <div class="mfield"><label>Terapeuta *</label><select id="remarTer1"></select></div>
+      <div class="mfield" id="remarTer2Box"><label>2ª terapeuta (four hands)</label><select id="remarTer2"></select></div>
+    </div>
+    <div id="remarAviso" style="display:none;background:#fee2e2;border:1px solid #fecaca;color:#991b1b;border-radius:10px;padding:10px 12px;font-size:12px;margin-bottom:10px"></div>
     <div class="mfield"><label>Observação</label><textarea id="remarObs" rows="2" placeholder="Motivo da remarcação..."></textarea></div>
   </div>
   <div class="mf">
@@ -1183,7 +1188,7 @@ function clicarSlot(ter, horaStr, slotMin, info){
   if(!info.pedido) b.push(aberto
     ? `<button class="btn btn-dark" onclick="salvarAjuste('${ter.cpf}','${horaStr}','fechar')"><i class="fa fa-lock"></i> Fechar horário</button>`
     : `<button class="btn btn-green" onclick="salvarAjuste('${ter.cpf}','${horaStr}','abrir')"><i class="fa fa-lock-open"></i> Abrir horário</button>`);
-  if(terapeuta && !info.pedido) b.push(`<div style="font-size:12px;color:#6b7280;text-align:center">A recepção recebe o pedido e aprova.</div>`);
+  if(terapeuta && !info.pedido) b.push(`<div style="font-size:12px;color:#6b7280;text-align:center">${aberto ? "Fechar precisa da aprovação da recepção." : "Abrir vale na hora; a recepção é avisada."}</div>`);
   if(info.aj && (!terapeuta || info.aj.terapeuta_cpf === ter.cpf))
     b.push(`<button class="btn btn-ghost" onclick="desfazerAjuste('${info.aj.id}')"><i class="fa fa-rotate-left"></i> Desfazer (${info.aj.tipo==="fechar"?"reabrir":"fechar de novo"})</button>`);
   if(!terapeuta)
@@ -1227,7 +1232,7 @@ async function salvarAjuste(cpf, _horaClicada, tipo){
   });
   if(error){ alert("Não foi possível salvar: " + error.message); return; }
   fecharModal("modalHorario");
-  if(terapeuta) alert("Pedido enviado! A recepção vai aprovar e você recebe uma notificação.");
+  if(terapeuta) alert(tipo === "fechar" ? "Pedido enviado! A recepção vai aprovar e você recebe uma notificação." : "Horário aberto! A recepção já foi avisada.");
   carregar();
 }
 async function responderPedido(id, status){
@@ -2118,9 +2123,17 @@ async function confirmarCancelamento(){
 function abrirRemar(id){
   if(ehTerapeuta()) return;
   remarcandoId=id;
-  document.getElementById("remarData").value="";
-  document.getElementById("remarHora").value="";
+  const a=agendamentos.find(x=>x.id===id)||{};
+  // já vem com o mesmo dia, hora e terapeuta: muda só o que precisar (ex.: trocar a terapeuta que vai faltar)
+  document.getElementById("remarData").value=a.data||"";
+  document.getElementById("remarHora").value=fmtH(a.hora_inicio)||"";
   document.getElementById("remarObs").value="";
+  const opts=(vazio)=>(vazio?'<option value="">Nenhuma</option>':'')+todosTerapeutas.map(t=>`<option value="${t.cpf}">${t.nome_profissional}</option>`).join("");
+  const s1=document.getElementById("remarTer1"), s2=document.getElementById("remarTer2");
+  s1.innerHTML=opts(false); s2.innerHTML=opts(true);
+  s1.value=a.terapeuta1_cpf||""; s2.value=a.terapeuta2_cpf||"";
+  document.getElementById("remarTer2Box").style.display=a.terapeuta2_cpf?"":"none";
+  document.getElementById("remarAviso").style.display="none";
   document.getElementById("modalRemar").classList.add("open");
 }
 
@@ -2130,17 +2143,43 @@ async function confirmarRemarcacao(){
   if(!novaData||!novaHora){alert("Informe data e hora.");return;}
   const a=agendamentos.find(x=>x.id===remarcandoId);if(!a)return;
   const obs=document.getElementById("remarObs").value.trim();
+  const ter1=document.getElementById("remarTer1").value, ter2=document.getElementById("remarTer2").value||null;
+  if(!ter1){alert("Escolha a terapeuta.");return;}
+  if(ter2 && ter2===ter1){alert("A 2ª terapeuta tem que ser outra pessoa.");return;}
+  // mantém a duração original
+  const dur=a.hora_fim?toMin(a.hora_fim)-toMin(a.hora_inicio):((a.servico&&a.servico.tempo)||60);
+  const fimMin=toMin(novaHora)+dur;
+  const novaFim=fimMin<24*60?String(Math.floor(fimMin/60)).padStart(2,"0")+":"+String(fimMin%60).padStart(2,"0"):null;
+  // confere se a terapeuta escolhida já tem atendimento nesse horário
+  const{data:doDia}=await client.from("atendimento").select("id,hora_inicio,hora_fim,terapeuta1_cpf,terapeuta2_cpf,status")
+    .eq("data",novaData).in("status",["Agendado","Confirmado","Faturado"]);
+  const ini=toMin(novaHora);
+  const choque=(doDia||[]).find(x=>x.id!==remarcandoId&&[ter1,ter2].filter(Boolean).some(c=>c===x.terapeuta1_cpf||c===x.terapeuta2_cpf)
+    &&toMin(x.hora_inicio)<ini+dur&&(x.hora_fim?toMin(x.hora_fim):toMin(x.hora_inicio)+60)>ini);
+  if(choque){
+    const quem=[ter1,ter2].find(c=>c===choque.terapeuta1_cpf||c===choque.terapeuta2_cpf);
+    const nomeQ=(todosTerapeutas.find(t=>t.cpf===quem)||{}).nome_profissional||"A terapeuta";
+    const av=document.getElementById("remarAviso");
+    av.innerHTML=`<i class="fa fa-triangle-exclamation"></i> ${nomeQ} já tem atendimento às ${fmtH(choque.hora_inicio)} nesse dia.`;
+    av.style.display="block";
+    if(!confirm(`${nomeQ} já tem atendimento às ${fmtH(choque.hora_inicio)} nesse dia. Remarcar mesmo assim?`))return;
+  }
+  const mesmoHorario=novaData===a.data&&novaHora===fmtH(a.hora_inicio);
+  const trocou=ter1!==a.terapeuta1_cpf||(ter2||null)!==(a.terapeuta2_cpf||null);
+  const nomeNovo=(todosTerapeutas.find(t=>t.cpf===ter1)||{}).nome_profissional||"";
+  const obsPadrao=mesmoHorario&&trocou?`Terapeuta trocada para ${nomeNovo}`:`Remarcado de ${fmtD(a.data)}${trocou?" (terapeuta: "+nomeNovo+")":""}`;
   const{data:novo}=await client.from("atendimento").insert({
-    data:novaData,hora_inicio:novaHora,hora_fim:null,
-    terapeuta1_cpf:a.terapeuta1_cpf,terapeuta2_cpf:a.terapeuta2_cpf,
+    data:novaData,hora_inicio:novaHora,hora_fim:novaFim,
+    terapeuta1_cpf:ter1,terapeuta2_cpf:ter2,
     cliente_id:a.cliente_id,servico_id:a.servico_id,
     status:"Agendado",valor:a.valor,desconto:a.desconto,valor_final:a.valor_final,
     comissao_total:a.comissao_total,acrescimo:a.acrescimo,
     sinal_valor:a.sinal_valor,sinal_forma:a.sinal_forma,sinal_pago_em:a.sinal_pago_em,
     origem_lead:a.origem_lead,clientes_extra:a.clientes_extra,
-    agendamento_pai:remarcandoId,observacao:obs||`Remarcado de ${fmtD(a.data)}`
+    agendamento_pai:remarcandoId,observacao:obs||obsPadrao
   }).select().single();
-  await client.from("atendimento").update({status:"Remarcado",remarcado_para:novo?.id||null,motivo_cancel:obs||"Remarcado"}).eq("id",remarcandoId);
+  if(!novo){alert("Não foi possível remarcar. Tente de novo.");return;}
+  await client.from("atendimento").update({status:"Remarcado",remarcado_para:novo.id,motivo_cancel:obs||obsPadrao}).eq("id",remarcandoId);
   fecharModal("modalRemar");carregar();
 }
 

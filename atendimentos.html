@@ -1179,7 +1179,9 @@ function clicarSlot(ter, horaStr, slotMin, info){
   document.getElementById("hmTitulo").innerHTML = `<i class="fa fa-clock"></i> ${terapeuta ? "Minha agenda" : nome} · ${horaStr}`;
   let txt = "";
   if(info.pedido) txt = `<div style="font-size:13px;background:#fef3c7;color:#92400e;border-radius:8px;padding:10px 12px;margin-bottom:10px"><b>${info.pedido.criado_por||nome}</b> pediu para <b>${info.pedido.tipo}</b> das ${fmtH(info.pedido.hora_inicio)} às ${fmtH(info.pedido.hora_fim)} — aguardando aprovação.</div>`;
-  else if(info.aj) txt = `<div style="font-size:13px;color:#6b7280;margin-bottom:10px">${info.aj.tipo==="fechar"?"Fechado":"Aberto"} das ${fmtH(info.aj.hora_inicio)} às ${fmtH(info.aj.hora_fim)}${info.aj.criado_por?" por <b>"+info.aj.criado_por+"</b>":""}.</div>`;
+  else if(info.aj) txt = `<div style="font-size:13px;color:#6b7280;margin-bottom:10px">${info.aj.tipo==="fechar"?"Fechado":"Aberto"} das ${fmtH(info.aj.hora_inicio)} às ${fmtH(info.aj.hora_fim)}${info.aj.criado_por?" — pedido por <b>"+info.aj.criado_por+"</b>":""}.`
+      + (info.aj.respondido_por ? `<div style="margin-top:6px;color:#166534"><i class="fa fa-check-double"></i> Aprovado por <b>${info.aj.respondido_por}</b>${info.aj.respondido_em?" às "+horaDe(info.aj.respondido_em):""}.</div>` : "")
+      + `</div>`;
   else if(info.pend) txt = `<div style="font-size:13px;color:#92400e;margin-bottom:10px">${nome} pediu ${info.jornadaTer.pendente} neste dia (aguardando aprovação).</div>`;
   else if(!aberto) txt = `<div style="font-size:13px;color:#6b7280;margin-bottom:10px">Fora do horário de trabalho.</div>`;
   const fimPadrao = aberto ? (info.jornadaTer.hora_saida || "") : "";
@@ -1524,6 +1526,9 @@ async function carregar() {
   renderKPIs();
   if(viewAtual==="agenda") renderAgenda();
   else { renderCards(); renderLista(); }
+  // atendimento aberto na tela: atualiza sozinho (ex.: recepção autorizou a liberação enquanto a terapeuta olhava)
+  const md=document.getElementById("modalDet");
+  if(md && md.classList.contains("open") && detAbertoId && agendamentos.some(x=>x.id===detAbertoId)) abrirDetalhe(detAbertoId);
 }
 
 function atualizarKPILabel() {}
@@ -2025,8 +2030,10 @@ async function salvarAg(){
   fecharModal("modalAg");carregar();
 }
 
+let detAbertoId=null;
 function abrirDetalhe(id){
   const a=agendamentos.find(x=>x.id===id);if(!a)return;
+  detAbertoId=id;
   if(ehTerapeuta()) return abrirDetalheTerapeuta(a);
   const nomeC=a.cliente?.nome||"—";
   const tel=(a.cliente?.telefone_1||"").replace(/\D/g,"");
@@ -2093,6 +2100,9 @@ function abrirDetalheTerapeuta(a){
   const podeFinalizar = !a.finalizado_em && (a.status==="Agendado"||a.status==="Confirmado") && a.data <= hoje();
   const selo = a.finalizado_em
     ? `<div class="selo-finalizado"><i class="fa fa-${a.liberado_em?"check-double":"check"}"></i> ${(!a.finalizado_por || a.finalizado_por===(window.usuarioLogado&&window.usuarioLogado.nome)) ? "Você finalizou" : a.finalizado_por+" finalizou"} às ${horaDe(a.finalizado_em)} — a recepção já foi avisada.</div>`
+      + (a.liberado_em
+          ? `<div class="selo-finalizado" style="background:#dbeafe;color:#1e3a8a;border-color:#bfdbfe"><i class="fa fa-check-double"></i> ${a.liberado_por||"A recepção"} autorizou a liberação às ${horaDe(a.liberado_em)}</div>`
+          : `<div style="margin-top:8px;font-size:13px;color:#6b7280;display:flex;gap:8px;align-items:center"><i class="fa fa-hourglass-half"></i> Aguardando a recepção autorizar a liberação.</div>`)
     : (!a.finalizado_em && (a.status==="Agendado"||a.status==="Confirmado") && a.data > hoje())
       ? `<div style="margin-top:10px;font-size:13px;color:#6b7280;display:flex;gap:8px;align-items:center"><i class="fa fa-circle-info"></i> O botão "Finalizei o atendimento" aparece no dia do atendimento.</div>` : "";
   document.getElementById("detConteudo").insertAdjacentHTML("beforeend", selo);

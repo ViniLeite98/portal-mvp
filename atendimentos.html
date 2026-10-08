@@ -92,6 +92,14 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .slot-bg:hover{background:#f0f9ff;}
 .slot-bg.meia{border-bottom:1px dashed #f3f4f6;}
 .slot-bg.bloqueado{background:repeating-linear-gradient(45deg,#fee2e2,#fee2e2 4px,#fef2f2 4px,#fef2f2 10px);cursor:pointer;}
+.slot-bg.fechado-ter{background:repeating-linear-gradient(45deg,#d1d5db,#d1d5db 4px,#e5e7eb 4px,#e5e7eb 10px);}
+.slot-bg.fechado-ter:hover{background:repeating-linear-gradient(45deg,#9ca3af,#9ca3af 4px,#d1d5db 4px,#d1d5db 10px);}
+.slot-bg.aberto-ter{background:#dcfce7;box-shadow:inset 3px 0 0 #16a34a;}
+.slot-bg.aberto-ter:hover{background:#bbf7d0;}
+.slot-bg.aberto-gestao{background:#fff;}
+.hm-sel{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-size:15px;margin-top:6px;}
+.hm-acoes{display:flex;flex-direction:column;gap:8px;}
+.hm-acoes .btn{justify-content:center;width:100%;padding:12px;font-size:14px;}
 .slot-bg.pendente{background:repeating-linear-gradient(45deg,#ecd27a,#ecd27a 4px,#f7ebc2 4px,#f7ebc2 10px);}
 .slot-bg.pendente:hover{background:repeating-linear-gradient(45deg,#e1bd4f,#e1bd4f 4px,#f1dd9c 4px,#f1dd9c 10px);}
 .slot-bg.bloqueado:hover{background:repeating-linear-gradient(45deg,#fecaca,#fecaca 4px,#fee2e2 4px,#fee2e2 10px);}
@@ -416,7 +424,8 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
 .agenda-grid.ultra .ag-block{border-left-width:2px;padding:1px;font-size:8.5px;text-align:center;}
 .agenda-grid.ultra .ag-block .b-cliente i{display:block;margin-bottom:1px;}
 /* a legenda rola junto; assim a linha de fotos/nomes fica presa no topo sem ficar escondida */
-#agendaLegenda{position:static !important;}
+#agendaLegenda{position:static !important;justify-content:flex-end;padding:4px 12px !important;}
+#agendaLegenda > span{display:none !important;} /* legenda escondida; fica só o botão "Todas na tela" */
 #btnEncaixar{border:1px solid #e5e7eb;background:#fff;border-radius:999px;padding:3px 10px;font-size:11px;color:#374151;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap;}
 #btnEncaixar.on{background:#111827;color:#fff;border-color:#111827;}
 </style>
@@ -477,6 +486,8 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#f3f4f6;border-left:3px solid #9ca3af;display:inline-block"></span> Remarcado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#fee2e2,#fee2e2 3px,#fef2f2 3px,#fef2f2 7px);display:inline-block"></span> Fora do horário</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#ecd27a,#ecd27a 3px,#f7ebc2 3px,#f7ebc2 7px);border:1px solid #c9a227;display:inline-block"></span> Ausência pedida</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#d1d5db,#d1d5db 3px,#e5e7eb 3px,#e5e7eb 7px);display:inline-block"></span> Fechado pela terapeuta</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#dcfce7;border-left:3px solid #16a34a;display:inline-block"></span> Aberto pela terapeuta</span>
       <button type="button" id="btnEncaixar" onclick="alternarEncaixe()" style="margin-left:auto"><i class="fa fa-table-columns"></i> <span>Todas na tela</span></button>
     </div>
     <div class="agenda-grid" id="agendaGrid"></div>
@@ -629,6 +640,17 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
 </div>
 
 <!-- ═══ MODAL DETALHE ═══ -->
+<div class="modal" id="modalHorario">
+<div class="mc" style="max-width:380px">
+  <div class="mh">
+    <h2 id="hmTitulo"><i class="fa fa-clock"></i> Horário</h2>
+    <button class="btn-x" onclick="fecharModal('modalHorario')"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="mb" id="hmCorpo"></div>
+  <div class="mf hm-acoes" id="hmAcoes"></div>
+</div>
+</div>
+
 <div class="modal" id="modalDet">
 <div class="mc md">
   <div class="mh">
@@ -1077,6 +1099,92 @@ function pintarAgendado(el, a, barra){
   if(a.status==="Faturado"){ el.style.border = "2px dashed #d4af37"; el.style.borderLeft = "4px solid #d4af37"; }
 }
 
+// ── ABRIR / FECHAR HORÁRIO (terapeuta na própria agenda; recepção em qualquer uma) ──
+let ajustesDia = [];
+function ajusteDoSlot(cpf, slotMin){
+  let r = null;
+  ajustesDia.forEach(a => { if(a.terapeuta_cpf===cpf && toMin(a.hora_inicio) <= slotMin && toMin(a.hora_fim) > slotMin) r = a; });
+  return r; // o mais recente vence (lista vem em ordem de criação)
+}
+// alguma parte do intervalo foi fechada / o intervalo inteiro foi aberto?
+function ajusteNoIntervalo(cpf, ini, fim){
+  let fechou = false, abriuTudo = true;
+  for(let m = ini; m < fim; m += 30){
+    const a = ajusteDoSlot(cpf, m);
+    if(a && a.tipo === "fechar") fechou = true;
+    if(!a || a.tipo !== "abrir") abriuTudo = false;
+  }
+  return { fechou, abriuTudo };
+}
+function opcoesAte(slotMin){
+  let h = "";
+  for(let m = slotMin + 30; m <= HORA_FIM*60; m += 30){
+    const hh = String(Math.floor(m/60)).padStart(2,"0"), mm = String(m%60).padStart(2,"0");
+    h += `<option value="${hh}:${mm}">${hh}:${mm}</option>`;
+  }
+  return h;
+}
+function clicarSlot(ter, horaStr, slotMin, info){
+  const terapeuta = ehTerapeuta();
+  const souEu = terapeuta && window.usuarioLogado && window.usuarioLogado.cpf === ter.cpf;
+  if(terapeuta && !souEu) return;
+  // recepção num horário normal: agenda direto, como sempre
+  if(!terapeuta && !info.aj && info.dentroJornada && !info.pend){ abrirNovoComDados(dataSel, horaStr, ter.cpf); return; }
+
+  const nome = ter.nome_profissional.split(" ")[0];
+  const aberto = info.dentroJornada;
+  document.getElementById("hmTitulo").innerHTML = `<i class="fa fa-clock"></i> ${terapeuta ? "Minha agenda" : nome} · ${horaStr}`;
+  let txt = "";
+  if(info.aj) txt = `<div style="font-size:13px;color:#6b7280;margin-bottom:10px">${info.aj.tipo==="fechar"?"Fechado":"Aberto"} das ${fmtH(info.aj.hora_inicio)} às ${fmtH(info.aj.hora_fim)}${info.aj.criado_por?" por <b>"+info.aj.criado_por+"</b>":""}.</div>`;
+  else if(info.pend) txt = `<div style="font-size:13px;color:#92400e;margin-bottom:10px">${nome} pediu ${info.jornadaTer.pendente} neste dia (aguardando aprovação).</div>`;
+  else if(!aberto) txt = `<div style="font-size:13px;color:#6b7280;margin-bottom:10px">Fora do horário de trabalho.</div>`;
+  const fimPadrao = aberto ? (info.jornadaTer.hora_saida || "") : "";
+  document.getElementById("hmCorpo").innerHTML = txt +
+    `<label style="font-size:12px;font-weight:700;color:#374151">${aberto ? "Fechar" : "Abrir"} das ${horaStr} até</label>
+     <select id="hmAte" class="hm-sel">${opcoesAte(slotMin)}</select>`;
+  const sel = document.getElementById("hmAte");
+  const alvo = fimPadrao && toMin(fimPadrao) > slotMin ? fimPadrao.slice(0,5) : null;
+  if(alvo && [...sel.options].some(o=>o.value===alvo)) sel.value = alvo; else if(sel.options.length > 1) sel.selectedIndex = 1;
+
+  const b = [];
+  b.push(aberto
+    ? `<button class="btn btn-dark" onclick="salvarAjuste('${ter.cpf}','${horaStr}','fechar')"><i class="fa fa-lock"></i> Fechar horário</button>`
+    : `<button class="btn btn-green" onclick="salvarAjuste('${ter.cpf}','${horaStr}','abrir')"><i class="fa fa-lock-open"></i> Abrir horário</button>`);
+  if(info.aj && (!terapeuta || info.aj.terapeuta_cpf === ter.cpf))
+    b.push(`<button class="btn btn-ghost" onclick="desfazerAjuste('${info.aj.id}')"><i class="fa fa-rotate-left"></i> Desfazer (${info.aj.tipo==="fechar"?"reabrir":"fechar de novo"})</button>`);
+  if(!terapeuta)
+    b.push(`<button class="btn btn-purple" onclick="fecharModal('modalHorario');abrirNovoComDados('${dataSel}','${horaStr}','${ter.cpf}')"><i class="fa fa-calendar-plus"></i> Agendar mesmo assim</button>`);
+  if(terapeuta)
+    b.push(`<a class="btn btn-ghost" href="solicitacoes.html" style="text-decoration:none"><i class="fa fa-file-lines"></i> Pedir folga, falta ou férias</a>`);
+  document.getElementById("hmAcoes").innerHTML = b.join("");
+  document.getElementById("modalHorario").classList.add("open");
+}
+async function salvarAjuste(cpf, horaIni, tipo){
+  const ate = document.getElementById("hmAte").value;
+  const terapeuta = ehTerapeuta();
+  // não deixa fechar por cima de atendimento marcado
+  if(tipo === "fechar"){
+    const ini = toMin(horaIni), fim = toMin(ate);
+    const choque = agendamentos.find(a => (a.terapeuta1_cpf===cpf || a.terapeuta2_cpf===cpf) && a.status!=="Cancelado" && a.status!=="Remarcado"
+      && toMin(a.hora_inicio) < fim && (a.hora_fim ? toMin(a.hora_fim) : toMin(a.hora_inicio)+60) > ini);
+    if(choque){ alert(`Já existe atendimento às ${fmtH(choque.hora_inicio)} nesse período.${terapeuta ? " Fale com a recepção." : " Remarque antes de fechar."}`); return; }
+  }
+  const u = window.usuarioLogado || {};
+  const {error} = await client.from("agenda_ajuste").insert({
+    terapeuta_cpf: cpf, data: dataSel, hora_inicio: horaIni, hora_fim: ate, tipo,
+    origem: terapeuta ? "terapeuta" : "gestao", criado_por: u.nome || null
+  });
+  if(error){ alert("Não foi possível salvar: " + error.message); return; }
+  fecharModal("modalHorario");
+  carregar();
+}
+async function desfazerAjuste(id){
+  const {error} = await client.from("agenda_ajuste").delete().eq("id", id);
+  if(error){ alert("Não foi possível desfazer: " + error.message); return; }
+  fecharModal("modalHorario");
+  carregar();
+}
+
 // ── AGENDA GRID ──
 function renderAgenda() {
   const grid = document.getElementById("agendaGrid");
@@ -1166,18 +1274,23 @@ function renderAgenda() {
       const slotMin = h*60 + (i%2===0?0:30);
       const horaStr = `${String(h).padStart(2,"0")}:${m}`;
 
-      const dentroJornada = !indisponivel
+      const jornadaNormal = !indisponivel
         && (entMin === null || slotMin >= entMin)
         && (saiMin === null || slotMin < saiMin);
+      const aj = ajusteDoSlot(ter.cpf, slotMin);        // último ajuste que cobre esse meio-hora
+      const dentroJornada = aj ? aj.tipo === "abrir" : jornadaNormal;
 
       const slotEl = document.createElement("div");
       const pend = jornadaTer.pendente && !indisponivel;
-      slotEl.className = "slot-bg" + (i%2===1?" meia":"") + (pend ? " pendente" : (!dentroJornada?" bloqueado":""));
+      let cls = "";
+      if(aj && aj.tipo === "fechar") cls = " fechado-ter";
+      else if(aj && aj.tipo === "abrir") cls = aj.origem === "terapeuta" ? " aberto-ter" : " aberto-gestao";
+      else if(pend) cls = " pendente";
+      else if(!dentroJornada) cls = " bloqueado";
+      slotEl.className = "slot-bg" + (i%2===1?" meia":"") + cls;
+      if(aj) slotEl.title = (aj.tipo==="fechar" ? "Fechado" : "Aberto") + (aj.criado_por ? " por " + aj.criado_por : "") + ` (${fmtH(aj.hora_inicio)}–${fmtH(aj.hora_fim)})`;
       slotEl.style.cssText = `position:absolute;top:${i*SLOT_H}px;left:0;right:0;height:${SLOT_H}px;`;
-      slotEl.addEventListener("click", () => {
-        if(pend && !confirm(`${ter.nome_profissional} pediu ${jornadaTer.pendente} neste dia (aguardando aprovação).\n\nMarcar mesmo assim?`)) return;
-        abrirNovoComDados(dataSel, horaStr, ter.cpf);
-      });
+      slotEl.addEventListener("click", () => clicarSlot(ter, horaStr, slotMin, { aj, dentroJornada, pend, jornadaTer }));
       body.appendChild(slotEl);
     }
 
@@ -1294,6 +1407,12 @@ async function carregar() {
       }
     });
   }
+
+  // horários abertos/fechados na mão (pela terapeuta ou pela recepção)
+  try {
+    const {data:aj} = await client.from("agenda_ajuste").select("*").eq("data",dataSel).order("created_at");
+    ajustesDia = aj || [];
+  } catch(_) { ajustesDia = []; }
 
   const{data,error}=await client.from("atendimento")
     .select("*,cliente:cliente_id(id,nome,telefone_1),servico:servico_id(id,grupo,subgrupo,valor,comissao,tempo)")
@@ -1525,6 +1644,12 @@ async function popularSelectsTerapeutas() {
       if(sol.status==="Pendente")return{disponivel:false,motivo:tipo+" pedida, aguardando aprovação"};
       if(["Férias","Falta","Atestado","Viagem"].includes(tipo))return{disponivel:false,motivo:tipo};
       if(tipo==="Alteração de Horário")return{disponivel:true,hora_entrada:sol.hora_inicio?.slice(0,5),hora_saida:sol.hora_fim?.slice(0,5),motivo:"Horário ajustado ⚡"};
+    }
+    // horário aberto/fechado na mão para este dia
+    if(data===dataSel && horaIni){
+      const aj=ajusteDoSlot(ter.cpf,toMin(horaIni));
+      if(aj&&aj.tipo==="fechar")return{disponivel:false,motivo:"Fechou a agenda nesse horário"};
+      if(aj&&aj.tipo==="abrir")return{disponivel:true,hora_entrada:fmtH(aj.hora_inicio),hora_saida:fmtH(aj.hora_fim),motivo:"Horário aberto ⚡"};
     }
     const h=horarioMap[ter.cpf];
     if(h){if(!h.disponivel)return{disponivel:false,motivo:"Folga (grade semanal)"};return{disponivel:true,hora_entrada:h.hora_entrada,hora_saida:h.hora_saida,motivo:null};}
@@ -2209,12 +2334,14 @@ async function calcDisponiveis() {
       let motivo = null, hEnt = null, hSai = null;
       if(sol && sol.status==="Pendente") motivo = sol.tipo + " pedida (aguardando aprovação)";
       else if(sol && ["Férias","Falta","Atestado","Viagem"].includes(sol.tipo)) motivo = sol.tipo;
-      else if(h.disponivel === false) motivo = "Folga";
+      else if(h.disponivel === false && !ajusteNoIntervalo(t.cpf, ini, fim).abriuTudo) motivo = "Folga";
       else {
         if(sol && sol.tipo === "Alteração de Horário") { hEnt = sol.hora_inicio?.slice(0,5); hSai = sol.hora_fim?.slice(0,5); }
         else { hEnt = h.hora_entrada; hSai = h.hora_saida; }
-        if(hEnt && ini < toMin(hEnt)) motivo = "Entra às " + hEnt;
-        else if(hSai && fim > toMin(hSai)) motivo = "Sai às " + hSai;
+        const aj = ajusteNoIntervalo(t.cpf, ini, fim);
+        if(aj.fechou) motivo = "Fechou a agenda nesse horário";
+        else if(!aj.abriuTudo && hEnt && ini < toMin(hEnt)) motivo = "Entra às " + hEnt;
+        else if(!aj.abriuTudo && hSai && fim > toMin(hSai)) motivo = "Sai às " + hSai;
         else {
           const conf = ativos.find(a =>
             (a.terapeuta1_cpf === t.cpf || a.terapeuta2_cpf === t.cpf)
@@ -2374,6 +2501,11 @@ function atualizarAoVivo(){
 function ligarAoVivo(){
   if(canalAoVivo || !client.channel) return;
   canalAoVivo=client.channel("agenda-ao-vivo")
+    .on("postgres_changes",{event:"*",schema:"public",table:"agenda_ajuste"},p=>{
+      const d=(p.new&&p.new.data)||(p.old&&p.old.data);
+      if(d && d!==dataSel) return;
+      atualizarAoVivo();
+    })
     .on("postgres_changes",{event:"*",schema:"public",table:"atendimento"},p=>{
       const d=(p.new&&p.new.data)||(p.old&&p.old.data);
       if(d && d!==dataSel) return; // mudança em outro dia: ignora

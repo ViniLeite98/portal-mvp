@@ -265,6 +265,8 @@ body.visao-terapeuta .kpi-liberar{display:none !important;}
 .rl.troco-neg{color:#dc2626;font-weight:700;}
 .pgto-row{display:flex;gap:8px;margin-bottom:8px;}
 .pgto-row select{flex:1;padding:8px 10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;}
+.cambio{display:none;margin:-2px 0 8px;padding:8px 10px;border-radius:8px;background:#fffbeb;border:1px solid #fcd34d;font-size:12px;color:#78350f;line-height:1.5}
+.cambio b{font-size:15px;color:#92400e}
 .pgto-row input{width:120px;padding:8px 10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;text-align:right;}
 .sinal-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:12px;}
 .sinal-box .sb-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#16a34a;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
@@ -628,9 +630,10 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
     <div class="sinal-box">
       <div class="sb-title"><i class="fa fa-circle-check"></i> Sinal recebido</div>
       <div class="grid2">
-        <div class="mfield" style="margin-bottom:0"><label>Valor do Sinal (R$)</label><input type="number" id="agSinalVal" value="" step="0.01" placeholder="0,00" oninput="calcAgRes()"></div>
-        <div class="mfield" style="margin-bottom:0"><label>Forma de Pagamento</label><select id="agSinalForma"><option value="">Selecione</option></select></div>
+        <div class="mfield" style="margin-bottom:0"><label>Valor do Sinal (R$)</label><input type="number" id="agSinalVal" value="" step="0.01" placeholder="0,00" oninput="calcAgRes();mostrarCambio('agSinalForma','agSinalVal','agSinalCambio')"></div>
+        <div class="mfield" style="margin-bottom:0"><label>Forma de Pagamento</label><select id="agSinalForma" onchange="mostrarCambio('agSinalForma','agSinalVal','agSinalCambio')"><option value="">Selecione</option></select></div>
       </div>
+      <div class="cambio" id="agSinalCambio" style="margin-top:8px"></div>
     </div>
     <div class="grid2" style="margin-top:12px;">
       <div class="mfield"><label>Origem do Lead</label>
@@ -761,16 +764,18 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
     <div style="margin-bottom:8px">
       <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Forma 1</div>
       <div class="pgto-row">
-        <select id="fatP1Forma"><option value="">Selecione</option></select>
+        <select id="fatP1Forma" onchange="calcFatTroco()"><option value="">Selecione</option></select>
         <input type="number" id="fatP1Val" step="0.01" placeholder="R$ 0,00" oninput="calcFatTroco()">
       </div>
+      <div class="cambio" id="fatP1Cambio"></div>
     </div>
     <div style="margin-bottom:10px">
       <div style="font-size:11px;font-weight:700;color:#374151;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em">Forma 2 <span style="font-weight:400;color:#9ca3af">— opcional</span></div>
       <div class="pgto-row">
-        <select id="fatP2Forma"><option value="">Selecione</option></select>
+        <select id="fatP2Forma" onchange="calcFatTroco()"><option value="">Selecione</option></select>
         <input type="number" id="fatP2Val" step="0.01" placeholder="R$ 0,00" oninput="calcFatTroco()">
       </div>
+      <div class="cambio" id="fatP2Cambio"></div>
     </div>
     <div class="resumo">
       <div class="rl"><span>Total do atendimento</span><span id="fatTotAl">R$ 0,00</span></div>
@@ -1725,7 +1730,7 @@ async function abrirNovo() {
   document.getElementById("agDesc").value="0";
   document.getElementById("agAcres").value="0";
   document.getElementById("agSinalVal").value="";
-  document.getElementById("agSinalForma").value="";
+  document.getElementById("agSinalForma").value="";setTimeout(()=>mostrarCambio("agSinalForma","agSinalVal","agSinalCambio"),0);
   document.getElementById("agOrigem").value="";
   document.getElementById("agStatus").value="Agendado";
   document.getElementById("agObs").value="";
@@ -2169,7 +2174,7 @@ async function editarAg(id){
   document.getElementById("agDesc").value=a.desconto||0;
   document.getElementById("agAcres").value=a.acrescimo||0;
   document.getElementById("agSinalVal").value=a.sinal_valor||0;
-  document.getElementById("agSinalForma").value=a.sinal_forma||"";
+  document.getElementById("agSinalForma").value=a.sinal_forma||"";setTimeout(()=>mostrarCambio("agSinalForma","agSinalVal","agSinalCambio"),0);
   document.getElementById("agOrigem").value=a.origem_lead||"";
   document.getElementById("agStatus").value=a.status||"Agendado";
   document.getElementById("agObs").value=a.observacao||"";
@@ -2308,6 +2313,71 @@ function calcFatTroco(){
   document.getElementById("fatTrocoVal").textContent=fmtM(Math.abs(troco));
   document.getElementById("fatTrocoLabel").textContent=troco>=0?"Troco":"Falta";
   document.getElementById("fatTrocoLinha").className=troco<0?"rl troco-neg":"rl troco-pos";
+  mostrarCambio("fatP1Forma","fatP1Val","fatP1Cambio");
+  mostrarCambio("fatP2Forma","fatP2Val","fatP2Cambio");
+}
+
+// ═══ MOEDA ESTRANGEIRA: cotação do dia + margem ═══
+const MARGEM_CAMBIO=0.10; // 10% em cima da cotação
+const MOEDAS={USD:{simb:"US$",nome:"dólar"},EUR:{simb:"€",nome:"euro"},GBP:{simb:"£",nome:"libra"}};
+let cotacoes=null, cotacoesHora=null, cotacoesPromessa=null;
+function moedaDaForma(f){
+  f=(f||"").toLowerCase();
+  if(!f.includes("moeda estrangeira"))return null;
+  if(f.includes("euro"))return "EUR";
+  if(f.includes("libra"))return "GBP";
+  return "USD";
+}
+async function buscarCotacoes(){
+  if(cotacoes&&Date.now()-cotacoesHora<30*60*1000)return cotacoes;
+  if(cotacoesPromessa)return cotacoesPromessa;
+  cotacoesPromessa=(async()=>{
+    try{
+      const r=await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL,EUR-BRL,GBP-BRL");
+      const j=await r.json();
+      const c={USD:parseFloat(j.USDBRL?.bid),EUR:parseFloat(j.EURBRL?.bid),GBP:parseFloat(j.GBPBRL?.bid)};
+      if(!c.USD||!c.EUR||!c.GBP)throw new Error("sem cotação");
+      cotacoes=c;
+    }catch(e){
+      try{ // reserva: Banco Central Europeu (via frankfurter)
+        const c={};
+        await Promise.all(Object.keys(MOEDAS).map(async m=>{
+          const j=await (await fetch(`https://api.frankfurter.app/latest?from=${m}&to=BRL`)).json();
+          c[m]=j.rates.BRL;
+        }));
+        cotacoes=c;
+      }catch(e2){console.warn("Cotação indisponível",e2);cotacoes=null;}
+    }
+    if(cotacoes)cotacoesHora=Date.now();
+    cotacoesPromessa=null;
+    return cotacoes;
+  })();
+  return cotacoesPromessa;
+}
+// valor em reais → quanto cobrar na moeda (cotação do dia + 10%)
+function calcCambio(moeda,reais){
+  const cot=cotacoes&&cotacoes[moeda];if(!cot)return null;
+  return {cot,valor:reais*(1+MARGEM_CAMBIO)/cot};
+}
+const fmtNum=v=>Number(v).toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2});
+async function mostrarCambio(idForma,idValor,idBox){
+  const box=document.getElementById(idBox);if(!box)return;
+  const moeda=moedaDaForma(document.getElementById(idForma).value);
+  if(!moeda){box.style.display="none";box.innerHTML="";return;}
+  box.style.display="block";
+  if(!cotacoes){box.innerHTML='<i class="fa fa-spinner fa-spin"></i> Buscando cotação do dia…';await buscarCotacoes();}
+  const reais=parseFloat(document.getElementById(idValor).value||0);
+  const m=MOEDAS[moeda], c=calcCambio(moeda,reais);
+  if(!c){box.innerHTML=`<i class="fa fa-triangle-exclamation"></i> Não consegui buscar a cotação do ${m.nome} agora. Confira a cotação manualmente.`;return;}
+  box.innerHTML=`<i class="fa fa-coins"></i> Cobrar do cliente: <b>${m.simb} ${fmtNum(c.valor)}</b><br>`
+    +`<span style="opacity:.85">Cotação de hoje: ${m.simb} 1 = R$ ${fmtNum(c.cot)} · + ${Math.round(MARGEM_CAMBIO*100)}% = R$ ${fmtNum(reais)} → ${m.simb} ${fmtNum(c.valor)}</span>`;
+}
+// texto para guardar na observação do faturamento
+function textoCambio(idForma,idValor){
+  const moeda=moedaDaForma(document.getElementById(idForma).value);if(!moeda)return "";
+  const reais=parseFloat(document.getElementById(idValor).value||0), c=calcCambio(moeda,reais);if(!c)return "";
+  const m=MOEDAS[moeda];
+  return `Recebido ${m.simb} ${fmtNum(c.valor)} (R$ ${fmtNum(reais)}; cotação ${m.simb} 1 = R$ ${fmtNum(c.cot)} + ${Math.round(MARGEM_CAMBIO*100)}%)`;
 }
 
 async function confirmarFaturamento(){
@@ -2319,7 +2389,8 @@ async function confirmarFaturamento(){
     p_id:faturandoId,
     p_forma1:document.getElementById("fatP1Forma").value||null, p_valor1:parseFloat(document.getElementById("fatP1Val").value||0),
     p_forma2:document.getElementById("fatP2Forma").value||null, p_valor2:parseFloat(document.getElementById("fatP2Val").value||0),
-    p_troco_destino:document.getElementById("fatTrocoDest").value, p_obs:document.getElementById("fatObs").value.trim()||null
+    p_troco_destino:document.getElementById("fatTrocoDest").value,
+    p_obs:[document.getElementById("fatObs").value.trim(),textoCambio("fatP1Forma","fatP1Val"),textoCambio("fatP2Forma","fatP2Val")].filter(Boolean).join(" · ")||null
   });
   if(btn) btn.disabled=false;
   if(error){alert("Não foi possível faturar: "+error.message);return;}

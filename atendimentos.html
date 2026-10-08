@@ -1092,12 +1092,13 @@ function misturaBranco(hex, quanto){ // quanto = 0..1 de branco
 // ícone na frente do nome: 🏃 terapeuta finalizou · 💵 faturado
 function iconeSit(a, noBloco){
   if(a.status==="Faturado") return `<i class="fa fa-money-bill-wave" title="Faturado"${noBloco?"":' style="color:#16a34a"'}></i> `;
-  if(a.finalizado_em && a.status!=="Cancelado" && a.status!=="Remarcado") return `<i class="fa fa-person-running" title="Terapeuta finalizou"${noBloco?"":' style="color:#a16207"'}></i> `;
+  if(a.liberado_em && a.status!=="Cancelado" && a.status!=="Remarcado") return `<i class="fa fa-check-double" title="Terapeuta finalizou e a recepção confirmou"${noBloco?"":' style="color:#2563eb"'}></i> `;
+  if(a.finalizado_em && a.status!=="Cancelado" && a.status!=="Remarcado") return `<i class="fa fa-check" title="Terapeuta finalizou — falta a recepção confirmar"${noBloco?"":' style="color:#6b7280"'}></i> `;
   return "";
 }
-// Agendado e Faturado usam a cor do grupo do serviço (Faturado se diferencia pelo ícone de dinheiro)
+// Agendado, Finalizado e Faturado usam a cor do grupo do serviço; a situação aparece pelos ícones (✓, ✓✓, 💵)
 function pintarAgendado(el, a, barra){
-  if(sit(a)!=="Agendado" && sit(a)!=="Faturado") return;
+  if(sit(a)!=="Agendado" && sit(a)!=="Faturado" && sit(a)!=="Finalizado") return;
   const cor = corDoServico(a.servico); if(!cor) return;
   if(barra){ el.style.background = cor; return; }
   // cor cheia do grupo (igual ao cadastro), com texto branco ou escuro conforme o fundo
@@ -1593,7 +1594,7 @@ function renderLista() {
     }
     return `<div class="ag-item" onclick="abrirDetalhe('${a.id}')">
       <div class="ag-hora-l"><span class="h-ini">${fmtH(a.hora_inicio)}</span><span class="h-fim">${fmtH(a.hora_fim)}</span></div>
-      <div class="ag-status-bar ${sit(a)}"${(sit(a)==="Agendado"||sit(a)==="Faturado")&&corDoServico(a.servico)?` style="background:${corDoServico(a.servico)}"`:""}></div>
+      <div class="ag-status-bar ${sit(a)}"${(sit(a)==="Agendado"||sit(a)==="Faturado"||sit(a)==="Finalizado")&&corDoServico(a.servico)?` style="background:${corDoServico(a.servico)}"`:""}></div>
       <div class="ag-body-l">
         <div class="ag-info-l">
           <div class="ag-cliente-l">${iconeSit(a,false)}${nomeC}${l4?" "+l4:""}${extras.length?` <span style="font-size:10px;color:#6b7280">+${extras.length}</span>`:""}</div>
@@ -2001,12 +2002,15 @@ function abrirDetalhe(id){
         ${sinal>0?`<div class="rl" style="color:#16a34a"><span>Sinal pago (${a.sinal_forma||"—"})</span><span style="font-weight:700">${fmtM(sinal)}</span></div>`:""}
         ${sinal>0?`<div class="rl" style="color:#dc2626"><span>Restante</span><span>${fmtM((a.valor_final||0)-sinal)}</span></div>`:""}
       </div>
-      ${a.finalizado_em?`<div class="selo-finalizado"><i class="fa fa-person-running"></i> ${a.finalizado_por||"Terapeuta"} finalizou às ${horaDe(a.finalizado_em)}</div>`:""}
+      ${a.finalizado_em?`<div class="selo-finalizado"><i class="fa fa-check"></i> ${a.finalizado_por||"Terapeuta"} finalizou às ${horaDe(a.finalizado_em)}</div>`:""}
+      ${a.liberado_em?`<div class="selo-finalizado" style="background:#dbeafe;color:#1e3a8a;border-color:#bfdbfe"><i class="fa fa-check-double"></i> ${a.liberado_por||"Recepção"} confirmou a saída às ${horaDe(a.liberado_em)}</div>`:""}
       ${a.motivo_cancel?`<div style="background:#fee2e2;border-radius:10px;padding:12px 14px;font-size:12px;color:#b91c1c"><i class="fa fa-ban"></i> <strong>Cancelamento:</strong> ${a.motivo_cancel}</div>`:""}
     </div>`;
   const acoes=[];
   acoes.push(`<button class="btn btn-ghost" onclick="fecharModal('modalDet')">Fechar</button>`);
   acoes.push(`<button class="btn btn-dark" onclick="fecharModal('modalDet');editarAg('${a.id}')"><i class="fa fa-pencil"></i> Editar</button>`);
+  if((a.status==="Agendado"||a.status==="Confirmado") && a.finalizado_em && !a.liberado_em)
+    acoes.push(`<button class="btn btn-blue" style="background:#2563eb;color:#fff" onclick="liberarCliente('${a.id}')"><i class="fa fa-check-double"></i> Confirmar saída do cliente</button>`);
   if(a.status==="Agendado"||a.status==="Confirmado"){
     if(!a.finalizado_em) acoes.push(`<button class="btn btn-yellow" onclick="fecharModal('modalDet');abrirRemar('${a.id}')"><i class="fa fa-calendar-plus"></i> Remarcar</button>`);
     acoes.push(`<button class="btn btn-red" onclick="fecharModal('modalDet');abrirCancel('${a.id}')"><i class="fa fa-ban"></i> Cancelar</button>`);
@@ -2034,18 +2038,29 @@ function abrirDetalheTerapeuta(a){
     </div>`;
   const podeFinalizar = !a.finalizado_em && (a.status==="Agendado"||a.status==="Confirmado") && a.data <= hoje();
   const selo = a.finalizado_em
-    ? `<div class="selo-finalizado"><i class="fa fa-person-running"></i> ${(!a.finalizado_por || a.finalizado_por===(window.usuarioLogado&&window.usuarioLogado.nome)) ? "Você finalizou" : a.finalizado_por+" finalizou"} às ${horaDe(a.finalizado_em)} — a recepção já foi avisada.</div>`
+    ? `<div class="selo-finalizado"><i class="fa fa-${a.liberado_em?"check-double":"check"}"></i> ${(!a.finalizado_por || a.finalizado_por===(window.usuarioLogado&&window.usuarioLogado.nome)) ? "Você finalizou" : a.finalizado_por+" finalizou"} às ${horaDe(a.finalizado_em)} — a recepção já foi avisada.</div>`
     : (!a.finalizado_em && (a.status==="Agendado"||a.status==="Confirmado") && a.data > hoje())
       ? `<div style="margin-top:10px;font-size:13px;color:#6b7280;display:flex;gap:8px;align-items:center"><i class="fa fa-circle-info"></i> O botão "Finalizei o atendimento" aparece no dia do atendimento.</div>` : "";
   document.getElementById("detConteudo").insertAdjacentHTML("beforeend", selo);
   document.getElementById("detAcoes").innerHTML =
     `<button class="btn btn-ghost" onclick="fecharModal('modalDet')">Fechar</button>` +
-    (podeFinalizar ? `<button class="btn btn-yellow" id="btnFinalizar" style="background:#eab308;color:#1c1a17" onclick="finalizarAtendimento('${a.id}')"><i class="fa fa-person-running"></i> Finalizei o atendimento</button>` : "");
+    (podeFinalizar ? `<button class="btn btn-yellow" id="btnFinalizar" style="background:#eab308;color:#1c1a17" onclick="finalizarAtendimento('${a.id}')"><i class="fa fa-check"></i> Finalizei o atendimento</button>` : "");
   document.getElementById("modalDet").classList.add("open");
 }
 
 // "2026-09-25T17:44:00+00:00" -> "14:44" (horário de Brasília do aparelho)
 function horaDe(ts){ try{ return new Date(ts).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
+
+// Recepção confere e confirma a saída do cliente (segundo ✓)
+async function liberarCliente(id){
+  const u=window.usuarioLogado||{};
+  const agora=new Date().toISOString();
+  const {error}=await client.from("atendimento").update({liberado_em:agora,liberado_por:u.nome||null}).eq("id",id);
+  if(error){ alert("Não foi possível confirmar: "+error.message); return; }
+  const a=agendamentos.find(x=>x.id===id); if(a){ a.liberado_em=agora; a.liberado_por=u.nome||null; }
+  if(viewAtual==="agenda") renderAgenda(); else renderLista();
+  abrirDetalhe(id);
+}
 
 // Terapeuta avisa que terminou → grava no banco e a recepção recebe notificação
 async function finalizarAtendimento(id){
@@ -2053,7 +2068,7 @@ async function finalizarAtendimento(id){
   if(!confirm(`Confirmar que você terminou o atendimento das ${fmtH(a.hora_inicio)}?\n\nA recepção vai receber um aviso.`)) return;
   const b=document.getElementById("btnFinalizar"); if(b){ b.disabled=true; b.innerHTML='<i class="fa fa-spinner fa-spin"></i> Enviando...'; }
   const {data,error}=await client.rpc("finalizar_atendimento",{p_id:id});
-  if(error){ alert(error.message||"Não foi possível finalizar."); if(b){ b.disabled=false; b.innerHTML='<i class="fa fa-person-running"></i> Finalizei o atendimento'; } return; }
+  if(error){ alert(error.message||"Não foi possível finalizar."); if(b){ b.disabled=false; b.innerHTML='<i class="fa fa-check"></i> Finalizei o atendimento'; } return; }
   a.finalizado_em=data||new Date().toISOString();
   if(viewAtual==="agenda") renderAgenda(); else renderLista();
   abrirDetalheTerapeuta(a);

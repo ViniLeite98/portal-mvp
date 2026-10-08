@@ -93,8 +93,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .slot-bg:hover{background:#f0f9ff;}
 .slot-bg.meia{border-bottom:1px dashed #f3f4f6;}
 .slot-bg.bloqueado{background:repeating-linear-gradient(45deg,#fee2e2,#fee2e2 4px,#fef2f2 4px,#fef2f2 10px);cursor:pointer;}
-.slot-bg.pendente{background:repeating-linear-gradient(45deg,#ffedd5,#ffedd5 4px,#fff7ed 4px,#fff7ed 10px);}
-.slot-bg.pendente:hover{background:repeating-linear-gradient(45deg,#fed7aa,#fed7aa 4px,#ffedd5 4px,#ffedd5 10px);}
+.slot-bg.pendente{background:repeating-linear-gradient(45deg,#ecd27a,#ecd27a 4px,#f7ebc2 4px,#f7ebc2 10px);}
+.slot-bg.pendente:hover{background:repeating-linear-gradient(45deg,#e1bd4f,#e1bd4f 4px,#f1dd9c 4px,#f1dd9c 10px);}
 .slot-bg.bloqueado:hover{background:repeating-linear-gradient(45deg,#fecaca,#fecaca 4px,#fee2e2 4px,#fee2e2 10px);}
 /* drag-and-drop colunas */
 .col-item{display:flex;align-items:center;gap:10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:9px 12px;cursor:grab;user-select:none;transition:box-shadow .15s;}
@@ -471,13 +471,13 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
   <div id="viewAgenda" class="agenda-wrap">
     <div id="agendaLegenda" style="display:flex;align-items:center;gap:16px;padding:6px 16px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;position:sticky;top:0;z-index:20;">
       <span style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;">Legenda:</span>
-      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#dbeafe;border-left:3px solid #2563eb;display:inline-block"></span> Agendado</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:conic-gradient(#29B6F6 0 25%,#8E44AD 0 50%,#FB8C00 0 75%,#4CAF50 0);display:inline-block"></span> Agendado (cor do serviço)</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#fef9c3;border-left:3px solid #eab308;display:inline-block"></span> <i class="fa fa-person-running" style="color:#a16207"></i> Finalizado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#ede9fe;border-left:3px solid #7c3aed;display:inline-block"></span> Faturado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#fee2e2;border-left:3px solid #dc2626;display:inline-block"></span> Cancelado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#f3f4f6;border-left:3px solid #9ca3af;display:inline-block"></span> Remarcado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#fee2e2,#fee2e2 3px,#fef2f2 3px,#fef2f2 7px);display:inline-block"></span> Fora do horário</span>
-      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#ffedd5,#ffedd5 3px,#fff7ed 3px,#fff7ed 7px);border:1px solid #fdba74;display:inline-block"></span> Ausência pedida</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#ecd27a,#ecd27a 3px,#f7ebc2 3px,#f7ebc2 7px);border:1px solid #c9a227;display:inline-block"></span> Ausência pedida</span>
       <button type="button" id="btnEncaixar" onclick="alternarEncaixe()" style="margin-left:auto"><i class="fa fa-table-columns"></i> <span>Todas na tela</span></button>
     </div>
     <div class="agenda-grid" id="agendaGrid"></div>
@@ -1049,6 +1049,24 @@ window.addEventListener("resize", () => {
   _tmrResize = setTimeout(() => { if(viewAtual==="agenda" && document.getElementById("agendaGrid").children.length) renderAgenda(); }, 200);
 });
 
+// ── Agendado usa a cor do GRUPO do serviço (Parâmetros → grupos de serviço) ──
+let corGrupos = {};
+function corDoServico(sv){ return sv ? (corGrupos[sv.grupo] || sv.cor || null) : null; }
+function misturaBranco(hex, quanto){ // quanto = 0..1 de branco
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex||""); if(!m) return null;
+  const n = parseInt(m[1],16), r=n>>16&255, g=n>>8&255, b=n&255;
+  const f = c => Math.round(c + (255-c)*quanto);
+  return `rgb(${f(r)},${f(g)},${f(b)})`;
+}
+function pintarAgendado(el, a, barra){
+  if(sit(a)!=="Agendado") return;
+  const cor = corDoServico(a.servico); if(!cor) return;
+  if(barra){ el.style.background = cor; return; }
+  el.style.background = misturaBranco(cor, .8);
+  el.style.borderLeftColor = cor;
+  el.style.color = "#1f2937";
+}
+
 // ── AGENDA GRID ──
 function renderAgenda() {
   const grid = document.getElementById("agendaGrid");
@@ -1175,6 +1193,7 @@ function renderAgenda() {
       const block = document.createElement("div");
       block.className = `ag-block ${sit(a)}`;
       block.style.cssText = `top:${topPx}px;height:${hPx}px;`;
+      pintarAgendado(block, a);
       // Cancelado/Remarcado não ocupa mais o horário: vai para uma faixa estreita à direita
       // e deixa o resto do espaço livre para clicar e marcar outro atendimento.
       if(inativo(a)){
@@ -1370,7 +1389,7 @@ function renderLista() {
     }
     return `<div class="ag-item" onclick="abrirDetalhe('${a.id}')">
       <div class="ag-hora-l"><span class="h-ini">${fmtH(a.hora_inicio)}</span><span class="h-fim">${fmtH(a.hora_fim)}</span></div>
-      <div class="ag-status-bar ${sit(a)}"></div>
+      <div class="ag-status-bar ${sit(a)}"${sit(a)==="Agendado"&&corDoServico(a.servico)?` style="background:${corDoServico(a.servico)}"`:""}></div>
       <div class="ag-body-l">
         <div class="ag-info-l">
           <div class="ag-cliente-l">${a.finalizado_em?'<i class="fa fa-person-running" title="Terapeuta finalizou" style="color:#a16207"></i> ':''}${nomeC}${l4?" "+l4:""}${extras.length?` <span style="font-size:10px;color:#6b7280">+${extras.length}</span>`:""}</div>
@@ -1601,6 +1620,8 @@ function mkSS({si,hi,drop,clr,onNovo,onSelect}){
 }
 
 async function carregarDados(){
+  const{data:gruposP}=await client.from("parametros").select("valor,cor").eq("tipo","grupos_servico").eq("ativo",true);
+  corGrupos={}; (gruposP||[]).forEach(g=>{ if(g.cor && !corGrupos[g.valor]) corGrupos[g.valor]=g.cor; });
   const{data:servs}=await client.from("servico").select("*").eq("status","ativo").order("grupo");
   dadosServicos=servs||[];dadosServicos.forEach(s=>servicosMap[s.id]=s);
   document.getElementById("fServ").innerHTML='<option value="">Todos</option>'+dadosServicos.map(s=>`<option value="${s.id}">${nomeServico(s)}</option>`).join("");

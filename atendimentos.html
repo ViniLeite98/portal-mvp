@@ -473,7 +473,7 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
       <span style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em;">Legenda:</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:conic-gradient(#29B6F6 0 25%,#8E44AD 0 50%,#FB8C00 0 75%,#4CAF50 0);display:inline-block"></span> Agendado (cor do serviço)</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#fef9c3;border-left:3px solid #eab308;display:inline-block"></span> <i class="fa fa-person-running" style="color:#a16207"></i> Finalizado</span>
-      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#ede9fe;border-left:3px solid #7c3aed;display:inline-block"></span> Faturado</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><i class="fa fa-money-bill-wave" style="color:#16a34a"></i> Faturado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#fee2e2;border-left:3px solid #dc2626;display:inline-block"></span> Cancelado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:#f3f4f6;border-left:3px solid #9ca3af;display:inline-block"></span> Remarcado</span>
       <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#374151;"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(45deg,#fee2e2,#fee2e2 3px,#fef2f2 3px,#fef2f2 7px);display:inline-block"></span> Fora do horário</span>
@@ -1058,13 +1058,23 @@ function misturaBranco(hex, quanto){ // quanto = 0..1 de branco
   const f = c => Math.round(c + (255-c)*quanto);
   return `rgb(${f(r)},${f(g)},${f(b)})`;
 }
+// ícone na frente do nome: 🏃 terapeuta finalizou · 💵 faturado
+function iconeSit(a, noBloco){
+  if(a.status==="Faturado") return `<i class="fa fa-money-bill-wave" title="Faturado"${noBloco?"":' style="color:#16a34a"'}></i> `;
+  if(a.finalizado_em && a.status!=="Cancelado" && a.status!=="Remarcado") return `<i class="fa fa-person-running" title="Terapeuta finalizou"${noBloco?"":' style="color:#a16207"'}></i> `;
+  return "";
+}
+// Agendado e Faturado usam a cor do grupo do serviço (Faturado se diferencia pelo ícone de dinheiro)
 function pintarAgendado(el, a, barra){
-  if(sit(a)!=="Agendado") return;
+  if(sit(a)!=="Agendado" && sit(a)!=="Faturado") return;
   const cor = corDoServico(a.servico); if(!cor) return;
   if(barra){ el.style.background = cor; return; }
-  el.style.background = misturaBranco(cor, .8);
-  el.style.borderLeftColor = cor;
-  el.style.color = "#1f2937";
+  // cor cheia do grupo (igual ao cadastro), com texto branco ou escuro conforme o fundo
+  const m = /^#?([0-9a-f]{6})$/i.exec(cor); if(!m) return;
+  const n = parseInt(m[1],16), lum = (0.299*(n>>16&255) + 0.587*(n>>8&255) + 0.114*(n&255)) / 255;
+  el.style.background = cor;
+  el.style.borderLeftColor = "rgba(0,0,0,.25)";
+  el.style.color = lum > 0.62 ? "#1f2937" : "#fff";
 }
 
 // ── AGENDA GRID ──
@@ -1203,7 +1213,7 @@ function renderAgenda() {
       }
       block.innerHTML = `
         <div class="b-hora">${fmtH(a.hora_inicio)}${a.hora_fim?" – "+fmtH(a.hora_fim):""}</div>
-        <div class="b-cliente">${a.finalizado_em?'<i class="fa fa-person-running" title="Terapeuta finalizou" style="color:#a16207"></i> ':''}${nomeC}${l4?" "+l4:""}</div>
+        <div class="b-cliente">${iconeSit(a,true)}${nomeC}${l4?" "+l4:""}</div>
         ${nomeS ? `<div class="b-servico">${nomeS}</div>` : ""}
       `;
       block.addEventListener("click", e => { e.stopPropagation(); abrirDetalhe(a.id); });
@@ -1389,10 +1399,10 @@ function renderLista() {
     }
     return `<div class="ag-item" onclick="abrirDetalhe('${a.id}')">
       <div class="ag-hora-l"><span class="h-ini">${fmtH(a.hora_inicio)}</span><span class="h-fim">${fmtH(a.hora_fim)}</span></div>
-      <div class="ag-status-bar ${sit(a)}"${sit(a)==="Agendado"&&corDoServico(a.servico)?` style="background:${corDoServico(a.servico)}"`:""}></div>
+      <div class="ag-status-bar ${sit(a)}"${(sit(a)==="Agendado"||sit(a)==="Faturado")&&corDoServico(a.servico)?` style="background:${corDoServico(a.servico)}"`:""}></div>
       <div class="ag-body-l">
         <div class="ag-info-l">
-          <div class="ag-cliente-l">${a.finalizado_em?'<i class="fa fa-person-running" title="Terapeuta finalizou" style="color:#a16207"></i> ':''}${nomeC}${l4?" "+l4:""}${extras.length?` <span style="font-size:10px;color:#6b7280">+${extras.length}</span>`:""}</div>
+          <div class="ag-cliente-l">${iconeSit(a,false)}${nomeC}${l4?" "+l4:""}${extras.length?` <span style="font-size:10px;color:#6b7280">+${extras.length}</span>`:""}</div>
           <div class="ag-servico-l">${nomeServ}</div>
           <div class="ag-ter-l">${teres}</div>
         </div>

@@ -30,6 +30,18 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .topbar-right{display:flex;gap:8px;align-items:center;}
 .btn{border:none;border-radius:7px;padding:7px 13px;cursor:pointer;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;transition:opacity .15s;}
 .btn:hover{opacity:.85;}
+.kpi-liberar{cursor:pointer;}
+.kpi-liberar .kpi-val{color:#9ca3af;}
+.kpi-liberar.tem{background:#2563eb;}
+.kpi-liberar.tem .kpi-label,.kpi-liberar.tem .kpi-val{color:#fff !important;}
+.kpi-liberar.tem .kpi-val{animation:pulsoLib 1.6s ease-in-out infinite;}
+@keyframes pulsoLib{50%{opacity:.55}}
+body.visao-terapeuta .kpi-liberar{display:none !important;}
+.lib-item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f3f4f6;}
+.lib-item:last-child{border-bottom:0;}
+.lib-info{flex:1;min-width:0;}
+.lib-info b{display:block;font-size:14px;color:#111827;}
+.lib-info span{font-size:12px;color:#6b7280;}
 .btn-dark{background:#1f2937;color:#fff;}
 .btn-green{background:#16a34a;color:#fff;}
 .btn-yellow{background:#d97706;color:#fff;}
@@ -392,7 +404,7 @@ body.visao-terapeuta .view-toggle,
 body.visao-terapeuta .topbar-right .btn-ghost,
 body.visao-terapeuta .topbar-right .btn-yellow,
 body.visao-terapeuta .topbar-right .btn-green,
-body.visao-terapeuta .kpi-cell:nth-child(n+4),
+body.visao-terapeuta .kpi-cell:nth-child(n+5),
 body.visao-terapeuta .ag-acoes-l,
 body.visao-terapeuta .ag-valor-l{display:none !important;}
 body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
@@ -469,6 +481,8 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
 
   <!-- KPI BAR -->
   <div class="kpi-bar">
+    <div class="kpi-cell kpi-liberar" id="kLibCell" onclick="abrirLiberacoes()" title="Clientes que a terapeuta finalizou e esperam a recepção autorizar a liberação">
+      <div class="kpi-label"><i class="fa fa-check-double"></i> Aguard. liberação</div><div class="kpi-val" id="kLib">0</div></div>
     <div class="kpi-cell"><div class="kpi-label">Total do Dia</div><div class="kpi-val blue" id="kTotal">0</div></div>
     <div class="kpi-cell"><div class="kpi-label">Finalizados</div><div class="kpi-val yellow" id="kConf">0</div></div>
     <div class="kpi-cell"><div class="kpi-label">Aguardando</div><div class="kpi-val blue" id="kAgend">0</div></div>
@@ -507,6 +521,7 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
           <option value="">Todos</option>
           <option value="Agendado">Agendado</option>
           <option value="Finalizado">Finalizado</option>
+          <option value="AguardLib">Aguardando liberação</option>
           <option value="Faturado">Faturado</option>
           <option value="Cancelado">Cancelado</option>
           <option value="Remarcado">Remarcado</option>
@@ -645,6 +660,16 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
 </div>
 
 <!-- ═══ MODAL DETALHE ═══ -->
+<div class="modal" id="modalLiberar">
+<div class="mc" style="max-width:460px">
+  <div class="mh">
+    <h2><i class="fa fa-check-double" style="color:#2563eb"></i> Aguardando liberação</h2>
+    <button class="btn-x" onclick="fecharModal('modalLiberar')"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="mb" id="libLista"></div>
+</div>
+</div>
+
 <div class="modal" id="modalHorario">
 <div class="mc" style="max-width:380px">
   <div class="mh">
@@ -1510,7 +1535,35 @@ function sit(a){
   return a.status||"Agendado";
 }
 
+function pendentesLiberacao(){
+  return agendamentos.filter(a => a.finalizado_em && !a.liberado_em && (a.status==="Agendado"||a.status==="Confirmado"))
+    .sort((x,y) => (x.finalizado_em||"").localeCompare(y.finalizado_em||""));
+}
+function atualizarIndicadorLib(){
+  const n = pendentesLiberacao().length;
+  const el = document.getElementById("kLib"), cel = document.getElementById("kLibCell");
+  if(el) el.textContent = n;
+  if(cel) cel.classList.toggle("tem", n > 0);
+}
+function abrirLiberacoes(){
+  const lista = pendentesLiberacao();
+  const cont = document.getElementById("libLista");
+  cont.innerHTML = lista.length ? lista.map(a => {
+    const ters = [tersMap[a.terapeuta1_cpf], tersMap[a.terapeuta2_cpf]].filter(Boolean).join(" + ");
+    const min = Math.max(0, Math.round((Date.now() - new Date(a.finalizado_em).getTime())/60000));
+    return `<div class="lib-item">
+      <div class="lib-info" onclick="fecharModal('modalLiberar');abrirDetalhe('${a.id}')" style="cursor:pointer">
+        <b>${fmtH(a.hora_inicio)} · ${a.cliente?.nome||"—"}</b>
+        <span>${ters||"—"} · finalizou ${min<1?"agora":"há "+min+" min"}</span>
+      </div>
+      <button class="btn" style="background:#2563eb;color:#fff;white-space:nowrap" onclick="liberarCliente('${a.id}',true)"><i class="fa fa-check-double"></i> Autorizar</button>
+    </div>`;
+  }).join("") : `<div class="empty-state" style="padding:24px"><i class="fa fa-circle-check"></i>Ninguém aguardando liberação.</div>`;
+  document.getElementById("modalLiberar").classList.add("open");
+}
+
 function renderKPIs() {
+  atualizarIndicadorLib();
   const conf=agendamentos.filter(a=>sit(a)==="Finalizado"||a.status==="Faturado");
   const receita=agendamentos.filter(a=>a.status==="Faturado").reduce((s,a)=>s+(a.valor_final||0),0);
   const sinais=agendamentos.filter(a=>a.status==="Cancelado"&&(a.sinal_valor||0)>0).reduce((s,a)=>s+(a.sinal_valor||0),0);
@@ -1565,7 +1618,8 @@ function renderLista() {
   const fTer=document.getElementById("fTer").value;
   const fServ=document.getElementById("fServ").value;
   let lista=[...agendamentos];
-  if(fStatus)lista=lista.filter(a=>sit(a)===fStatus);
+  if(fStatus==="AguardLib")lista=lista.filter(a=>a.finalizado_em&&!a.liberado_em&&(a.status==="Agendado"||a.status==="Confirmado"));
+  else if(fStatus)lista=lista.filter(a=>sit(a)===fStatus);
   if(fTer)lista=lista.filter(a=>a.terapeuta1_cpf===fTer||a.terapeuta2_cpf===fTer);
   if(fServ)lista=lista.filter(a=>a.servico_id===fServ);
 
@@ -2003,14 +2057,14 @@ function abrirDetalhe(id){
         ${sinal>0?`<div class="rl" style="color:#dc2626"><span>Restante</span><span>${fmtM((a.valor_final||0)-sinal)}</span></div>`:""}
       </div>
       ${a.finalizado_em?`<div class="selo-finalizado"><i class="fa fa-check"></i> ${a.finalizado_por||"Terapeuta"} finalizou às ${horaDe(a.finalizado_em)}</div>`:""}
-      ${a.liberado_em?`<div class="selo-finalizado" style="background:#dbeafe;color:#1e3a8a;border-color:#bfdbfe"><i class="fa fa-check-double"></i> ${a.liberado_por||"Recepção"} confirmou a saída às ${horaDe(a.liberado_em)}</div>`:""}
+      ${a.liberado_em?`<div class="selo-finalizado" style="background:#dbeafe;color:#1e3a8a;border-color:#bfdbfe"><i class="fa fa-check-double"></i> ${a.liberado_por||"Recepção"} autorizou a liberação às ${horaDe(a.liberado_em)}</div>`:""}
       ${a.motivo_cancel?`<div style="background:#fee2e2;border-radius:10px;padding:12px 14px;font-size:12px;color:#b91c1c"><i class="fa fa-ban"></i> <strong>Cancelamento:</strong> ${a.motivo_cancel}</div>`:""}
     </div>`;
   const acoes=[];
   acoes.push(`<button class="btn btn-ghost" onclick="fecharModal('modalDet')">Fechar</button>`);
   acoes.push(`<button class="btn btn-dark" onclick="fecharModal('modalDet');editarAg('${a.id}')"><i class="fa fa-pencil"></i> Editar</button>`);
   if((a.status==="Agendado"||a.status==="Confirmado") && a.finalizado_em && !a.liberado_em)
-    acoes.push(`<button class="btn btn-blue" style="background:#2563eb;color:#fff" onclick="liberarCliente('${a.id}')"><i class="fa fa-check-double"></i> Confirmar saída do cliente</button>`);
+    acoes.push(`<button class="btn btn-blue" style="background:#2563eb;color:#fff" onclick="liberarCliente('${a.id}')"><i class="fa fa-check-double"></i> Autorizar liberação</button>`);
   if(a.status==="Agendado"||a.status==="Confirmado"){
     if(!a.finalizado_em) acoes.push(`<button class="btn btn-yellow" onclick="fecharModal('modalDet');abrirRemar('${a.id}')"><i class="fa fa-calendar-plus"></i> Remarcar</button>`);
     acoes.push(`<button class="btn btn-red" onclick="fecharModal('modalDet');abrirCancel('${a.id}')"><i class="fa fa-ban"></i> Cancelar</button>`);
@@ -2052,14 +2106,15 @@ function abrirDetalheTerapeuta(a){
 function horaDe(ts){ try{ return new Date(ts).toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}); }catch(e){ return ""; } }
 
 // Recepção confere e confirma a saída do cliente (segundo ✓)
-async function liberarCliente(id){
+async function liberarCliente(id, daLista){
   const u=window.usuarioLogado||{};
   const agora=new Date().toISOString();
   const {error}=await client.from("atendimento").update({liberado_em:agora,liberado_por:u.nome||null}).eq("id",id);
   if(error){ alert("Não foi possível confirmar: "+error.message); return; }
   const a=agendamentos.find(x=>x.id===id); if(a){ a.liberado_em=agora; a.liberado_por=u.nome||null; }
   if(viewAtual==="agenda") renderAgenda(); else renderLista();
-  abrirDetalhe(id);
+  atualizarIndicadorLib();
+  if(daLista) abrirLiberacoes(); else abrirDetalhe(id);
 }
 
 // Terapeuta avisa que terminou → grava no banco e a recepção recebe notificação

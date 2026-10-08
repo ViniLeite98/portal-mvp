@@ -1820,7 +1820,23 @@ function validarHorarioTerapeutas(solMap,horarioMap){
     if(sol&&sol.tipo==="Alteração de Horário"){hEnt=sol.hora_inicio?.slice(0,5);hSai=sol.hora_fim?.slice(0,5);}
     else if(h){hEnt=h.hora_entrada;hSai=h.hora_saida;}
     else{hEnt=t.hora_entrada;hSai=t.hora_saida;}
-    if(horaIni&&hEnt&&hSai){const chk=terDisponivelNoHorario({hora_entrada:hEnt,hora_saida:hSai},horaIni);if(!chk.ok)avisos.push(`⚠️ ${t.nome_profissional}: ${chk.msg}`);}
+    const dataForm=document.getElementById("agData").value;
+    if(horaIni && dataForm===dataSel){
+      // confere cada meia hora do atendimento, levando em conta horários abertos/fechados na mão
+      const horaFimF=document.getElementById("agHoraFim").value;
+      const ini=toMin(horaIni), fim=horaFimF&&toMin(horaFimF)>ini?toMin(horaFimF):ini+60;
+      const ent=hEnt?toMin(hEnt):null, sai=hSai?toMin(hSai):null, folga=h&&h.disponivel===false;
+      let prob=null;
+      for(let m=ini;m<fim&&!prob;m+=30){
+        const aj=ajusteDoSlot(cpf,m);
+        if(aj&&aj.tipo==="fechar"){prob="fechou a agenda nesse horário";break;}
+        if(aj&&aj.tipo==="abrir")continue;
+        if(folga)prob="está de folga";
+        else if(ent!==null&&m<ent)prob=`entra às ${hEnt}`;
+        else if(sai!==null&&m>=sai)prob=`sai às ${hSai}`;
+      }
+      if(prob)avisos.push(`⚠️ ${t.nome_profissional}: ${prob}`);
+    } else if(horaIni&&hEnt&&hSai){const chk=terDisponivelNoHorario({hora_entrada:hEnt,hora_saida:hSai},horaIni);if(!chk.ok)avisos.push(`⚠️ ${t.nome_profissional}: ${chk.msg}`);}
   });
   let avEl=document.getElementById("aviso-ter");
   if(!avEl){avEl=document.createElement("div");avEl.id="aviso-ter";avEl.style.cssText="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;margin-top:6px;";document.getElementById("agTer2").closest(".grid2").after(avEl);}
@@ -2330,14 +2346,15 @@ async function calcFechamento(){
   ]);
   const lista=lancs||[];
   let din=0,pix=0,deb=0,cre=0,out=0,trocos=0,sinais=0;
-  const soma=(forma,v)=>{const t=classifPgto(forma);if(!v)return;if(t==="dinheiro")din+=v;else if(t==="debito")deb+=v;else if(t==="credito")cre+=v;else if(t==="pix")pix+=v;else out+=v;};
+  const outDet={};
+  const soma=(forma,v)=>{const t=classifPgto(forma);if(!v)return;if(t==="dinheiro")din+=v;else if(t==="debito")deb+=v;else if(t==="credito")cre+=v;else if(t==="pix")pix+=v;else{out+=v;const k=forma||"Outros";outDet[k]=(outDet[k]||0)+v;}};
   lista.forEach(r=>{
     const v1=parseFloat(r.valor_pgto_1||0),v2=parseFloat(r.valor_pgto_2||0);
     soma(r.forma_pgto_1,v1); if(r.forma_pgto_2) soma(r.forma_pgto_2,v2);
     if(parseFloat(r.troco||0)>0&&r.troco_destino!=="caixa") trocos+=parseFloat(r.troco);
     if((r.tipo||"").startsWith("sinal")) sinais+=v1;
   });
-  fechCalc={dataF,lista,din,pix,deb,cre,out,trocos,sinais,total:din+pix+deb+cre+out-trocos};
+  fechCalc={dataF,lista,din,pix,deb,cre,out,outDet,trocos,sinais,total:din+pix+deb+cre+out-trocos};
 
   // aviso: já fechou hoje? tem coisa de dia anterior?
   const av=[];
@@ -2349,7 +2366,7 @@ async function calcFechamento(){
   document.getElementById("fechPix").textContent=fmtM(pix);
   document.getElementById("fechDeb").textContent=fmtM(deb);
   document.getElementById("fechCre").textContent=fmtM(cre);
-  document.getElementById("fechOut").textContent=fmtM(out);
+  document.getElementById("fechOut").innerHTML=fmtM(out)+(Object.keys(outDet).length?`<div style="font-size:11px;color:#6b7280;font-weight:400">${Object.entries(outDet).map(([k,v])=>k+": "+fmtM(v)).join(" · ")}</div>`:"");
   document.getElementById("fechOutLinha").style.display=out>0?"":"none";
   document.getElementById("fechTotal").textContent=fmtM(fechCalc.total);
   document.getElementById("fechTotalDet").textContent=(sinais?`inclui ${fmtM(sinais)} de sinais · `:"")+(trocos?`${fmtM(trocos)} de troco devolvido já descontado`:"");
@@ -2430,7 +2447,7 @@ function enviarWA(){
     `📱 PIX: *${fmtM(c.pix)}* · extrato: ${f(c.confPix)}${d(c.confPix,c.pix)}\n`+
     `💳 Débito: *${fmtM(c.deb)}* · maquininha: ${f(c.confDeb)}${d(c.confDeb,c.deb)}\n`+
     `💳 Crédito: *${fmtM(c.cre)}* · maquininha: ${f(c.confCre)}${d(c.confCre,c.cre)}\n`+
-    (c.out?`➕ Outros: ${fmtM(c.out)}\n`:"")+
+    (c.out?`➕ Outros: ${fmtM(c.out)}${c.outDet&&Object.keys(c.outDet).length?" ("+Object.entries(c.outDet).map(([k,v])=>k+" "+fmtM(v)).join(", ")+")":""}\n`:"")+
     `\n✅ *Total recebido: ${fmtM(c.total)}*`+(c.sinais?` (inclui ${fmtM(c.sinais)} de sinais)`:"")+
     (c.ret?`\n🔻 Retirado da gaveta: ${fmtM(c.ret)} — ${document.getElementById("fechRetMot").value.trim()}`:"");
   const obs=document.getElementById("fechObs").value.trim(); if(obs) msg+=`\n\n💬 *Recado:* ${obs}`;

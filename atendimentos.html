@@ -37,6 +37,22 @@ body{font-family:'Segoe UI',sans-serif;background:#f0f2f5;font-size:13px;}
 .kpi-liberar.tem .kpi-val{animation:pulsoLib 1.6s ease-in-out infinite;}
 @keyframes pulsoLib{50%{opacity:.55}}
 body.visao-terapeuta .kpi-liberar{display:none !important;}
+.kpi-alterar{cursor:pointer;}
+.kpi-alterar .kpi-val{color:#9ca3af;}
+.kpi-alterar.tem{background:#d97706;}
+.kpi-alterar.tem .kpi-label,.kpi-alterar.tem .kpi-val{color:#fff !important;}
+.kpi-alterar.tem .kpi-val{animation:pulsoLib 1.6s ease-in-out infinite;}
+body.visao-terapeuta .kpi-alterar{display:none !important;}
+.alt-box{background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:12px 14px;font-size:13px;color:#78350f;line-height:1.5}
+.alt-box b{color:#92400e}
+.alt-box .alt-acoes{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.alt-box textarea{width:100%;margin-top:8px;padding:8px 10px;border:1.5px solid #fcd34d;border-radius:8px;font:inherit;resize:vertical}
+.atraso-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;font-size:13px;color:#1e3a8a}
+.alt-ok{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:10px;padding:10px 14px;font-size:13px}
+.alt-nao{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;border-radius:10px;padding:10px 14px;font-size:13px}
+.chips-min{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}
+.chips-min button{padding:8px 12px;border:1.5px solid #d1d5db;border-radius:20px;background:#fff;font-weight:600;cursor:pointer}
+.chips-min button.on{background:#2563eb;border-color:#2563eb;color:#fff}
 .lib-item{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #f3f4f6;}
 .lib-item:last-child{border-bottom:0;}
 .lib-info{flex:1;min-width:0;}
@@ -406,7 +422,7 @@ body.visao-terapeuta .view-toggle,
 body.visao-terapeuta .topbar-right .btn-ghost,
 body.visao-terapeuta .topbar-right .btn-yellow,
 body.visao-terapeuta .topbar-right .btn-green,
-body.visao-terapeuta .kpi-cell:nth-child(n+5),
+body.visao-terapeuta .kpi-cell:nth-child(n+6),
 body.visao-terapeuta .ag-acoes-l,
 body.visao-terapeuta .ag-valor-l{display:none !important;}
 body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
@@ -485,6 +501,8 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
   <div class="kpi-bar">
     <div class="kpi-cell kpi-liberar" id="kLibCell" onclick="abrirLiberacoes()" title="Clientes que a terapeuta finalizou e esperam a recepção autorizar a liberação">
       <div class="kpi-label"><i class="fa fa-check-double"></i> Aguard. liberação</div><div class="kpi-val" id="kLib">0</div></div>
+    <div class="kpi-cell kpi-alterar" id="kAltCell" onclick="abrirAlteracoes()" title="Pedidos das terapeutas para alterar o serviço, esperando a recepção aprovar">
+      <div class="kpi-label"><i class="fa fa-pen-to-square"></i> Alter. serviço</div><div class="kpi-val" id="kAlt">0</div></div>
     <div class="kpi-cell"><div class="kpi-label">Total do Dia</div><div class="kpi-val blue" id="kTotal">0</div></div>
     <div class="kpi-cell"><div class="kpi-label">Finalizados</div><div class="kpi-val yellow" id="kConf">0</div></div>
     <div class="kpi-cell"><div class="kpi-label">Aguardando</div><div class="kpi-val blue" id="kAgend">0</div></div>
@@ -524,6 +542,7 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
           <option value="Agendado">Agendado</option>
           <option value="Finalizado">Finalizado</option>
           <option value="AguardLib">Aguardando liberação</option>
+          <option value="AltPend">Alteração de serviço pendente</option>
           <option value="Faturado">Faturado</option>
           <option value="Cancelado">Cancelado</option>
           <option value="Remarcado">Remarcado</option>
@@ -577,6 +596,7 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
     <button class="btn-x" onclick="fecharModal('modalAg')"><i class="fa fa-times"></i></button>
   </div>
   <div class="mb" style="max-height:80vh;overflow-y:auto;">
+    <div id="agAltAviso" class="alt-box" style="display:none;margin-bottom:12px"></div>
     <div class="grid3">
       <div class="mfield"><label>Data *</label><input type="date" id="agData" oninput="popularSelectsTerapeutas()"></div>
       <div class="mfield"><label>Hora Início *</label><input type="time" id="agHoraIni" oninput="recalcHoraFim();popularSelectsTerapeutas()"></div>
@@ -670,6 +690,60 @@ body.visao-terapeuta .kpi-cell{flex:1 1 0 !important;min-width:0 !important;}
     <button class="btn-x" onclick="fecharModal('modalLiberar')"><i class="fa fa-times"></i></button>
   </div>
   <div class="mb" id="libLista"></div>
+</div>
+</div>
+
+<div class="modal" id="modalAlts">
+<div class="mc" style="max-width:480px">
+  <div class="mh">
+    <h2><i class="fa fa-pen-to-square" style="color:#d97706"></i> Alterações de serviço</h2>
+    <button class="btn-x" onclick="fecharModal('modalAlts')"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="mb" id="altsLista"></div>
+</div>
+</div>
+
+<div class="modal" id="modalAlt">
+<div class="mc" style="max-width:420px">
+  <div class="mh">
+    <h2><i class="fa fa-pen-to-square" style="color:#d97706"></i> Alterar serviço</h2>
+    <button class="btn-x" onclick="fecharModal('modalAlt')"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="mb">
+    <div style="font-size:13px;color:#6b7280;margin-bottom:10px">Serviço atual: <b id="altAtual" style="color:#374151"></b></div>
+    <div class="mfield"><label>Novo serviço</label><select id="altServ"></select></div>
+    <div class="mfield"><label>Observação <span style="font-weight:400;color:#9ca3af">— opcional</span></label><input type="text" id="altObs" placeholder="Ex.: cliente pediu para estender 30 min"></div>
+    <div style="font-size:12px;color:#6b7280"><i class="fa fa-circle-info"></i> A recepção recebe um aviso e confirma a alteração.</div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-ghost" onclick="fecharModal('modalAlt')">Cancelar</button>
+    <button class="btn btn-yellow" id="btnAltEnviar" onclick="enviarAlteracao()"><i class="fa fa-paper-plane"></i> Enviar para a recepção</button>
+  </div>
+</div>
+</div>
+
+<div class="modal" id="modalAtraso">
+<div class="mc" style="max-width:420px">
+  <div class="mh">
+    <h2><i class="fa fa-clock" style="color:#2563eb"></i> Cliente vai atrasar</h2>
+    <button class="btn-x" onclick="fecharModal('modalAtraso')"><i class="fa fa-times"></i></button>
+  </div>
+  <div class="mb">
+    <div id="atrInfo" style="font-size:13px;color:#374151;margin-bottom:8px"></div>
+    <label style="font-size:12px;font-weight:700;color:#374151">Quanto tempo de atraso?</label>
+    <div class="chips-min" id="atrChips"></div>
+    <div class="mfield"><label>Outro (minutos)</label><input type="number" id="atrMin" min="1" step="5" oninput="atrSel(this.value,true)"></div>
+    <label style="display:flex;gap:8px;align-items:flex-start;font-size:13px;cursor:pointer;margin-top:4px">
+      <input type="checkbox" id="atrEmpurrar" onchange="atrPrever()" style="margin-top:3px">
+      <span>Empurrar o horário na agenda <span style="color:#6b7280">(mantém a duração do serviço)</span></span>
+    </label>
+    <div id="atrPrevia" style="font-size:12px;margin-top:8px"></div>
+    <div style="font-size:12px;color:#6b7280;margin-top:10px"><i class="fa fa-bell"></i> A terapeuta recebe uma notificação no celular.</div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-ghost" onclick="fecharModal('modalAtraso')">Cancelar</button>
+    <button class="btn btn-blue" style="background:#2563eb;color:#fff" id="btnAtraso" onclick="salvarAtraso()"><i class="fa fa-bell"></i> Avisar a terapeuta</button>
+  </div>
 </div>
 </div>
 
@@ -1121,6 +1195,12 @@ function misturaBranco(hex, quanto){ // quanto = 0..1 de branco
 }
 // ícone na frente do nome: 🏃 terapeuta finalizou · 💵 faturado
 function iconeSit(a, noBloco){
+  let extra="";
+  if(altPendente(a)) extra+=`<i class="fa fa-pen-to-square" title="Terapeuta pediu alteração de serviço"${noBloco?"":' style="color:#d97706"'}></i> `;
+  if(a.atraso_em && a.status==="Agendado" && !a.finalizado_em) extra+=`<i class="fa fa-clock" title="Cliente avisou atraso${a.atraso_min?" de "+a.atraso_min+" min":""}"${noBloco?"":' style="color:#2563eb"'}></i> `;
+  return extra + iconeSitBase(a, noBloco);
+}
+function iconeSitBase(a, noBloco){
   if(a.status==="Faturado") return `<i class="fa fa-money-bill-wave" title="Faturado"${noBloco?"":' style="color:#16a34a"'}></i> `;
   if(a.liberado_em && a.status!=="Cancelado" && a.status!=="Remarcado") return `<i class="fa fa-check-double" title="Terapeuta finalizou e a recepção confirmou"${noBloco?"":' style="color:#2563eb"'}></i> `;
   if(a.finalizado_em && a.status!=="Cancelado" && a.status!=="Remarcado") return `<i class="fa fa-check" title="Terapeuta finalizou — falta a recepção confirmar"${noBloco?"":' style="color:#6b7280"'}></i> `;
@@ -1142,6 +1222,8 @@ function pintarAgendado(el, a, barra){
 
 // ── ABRIR / FECHAR HORÁRIO (terapeuta na própria agenda; recepção em qualquer uma) ──
 let ajustesDia = [];
+let alteracoesDia = [];   // pedidos de alteração de serviço dos atendimentos do dia
+let aprovandoAltId = null; // pedido sendo aprovado pela tela de edição
 // ajuste APROVADO que vale para esse meio-hora (o mais recente vence)
 function ajusteDoSlot(cpf, slotMin){
   let r = null;
@@ -1528,6 +1610,14 @@ async function carregar() {
     .order("hora_inicio");
   if(error){console.error(error);return;}
   agendamentos=data||[];
+  alteracoesDia=[];
+  if(agendamentos.length){
+    try{
+      const {data:al}=await client.from("atendimento_alteracao").select("*")
+        .in("atendimento_id",agendamentos.map(a=>a.id)).order("created_at");
+      alteracoesDia=al||[];
+    }catch(_){}
+  }
   renderKPIs();
   if(viewAtual==="agenda") renderAgenda();
   else { renderCards(); renderLista(); }
@@ -1554,6 +1644,10 @@ function atualizarIndicadorLib(){
   const el = document.getElementById("kLib"), cel = document.getElementById("kLibCell");
   if(el) el.textContent = n;
   if(cel) cel.classList.toggle("tem", n > 0);
+  const na = pendentesAlteracao().length;
+  const ea = document.getElementById("kAlt"), ca = document.getElementById("kAltCell");
+  if(ea) ea.textContent = na;
+  if(ca) ca.classList.toggle("tem", na > 0);
 }
 function abrirLiberacoes(){
   const lista = pendentesLiberacao();
@@ -1570,6 +1664,169 @@ function abrirLiberacoes(){
     </div>`;
   }).join("") : `<div class="empty-state" style="padding:24px"><i class="fa fa-circle-check"></i>Ninguém aguardando liberação.</div>`;
   document.getElementById("modalLiberar").classList.add("open");
+}
+
+// ═══ ALTERAÇÃO DE SERVIÇO (terapeuta pede → recepção aprova) ═══
+function altPendente(a){ return alteracoesDia.find(x=>x.atendimento_id===a.id && x.status==="pendente") || null; }
+function altRespondida(a){ return alteracoesDia.filter(x=>x.atendimento_id===a.id && x.status!=="pendente").slice(-1)[0] || null; }
+function pendentesAlteracao(){
+  return agendamentos.filter(a=>altPendente(a) && (a.status==="Agendado"||a.status==="Confirmado"));
+}
+const escH = t => String(t??"").replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const nomeServId = id => servicosMap[id] ? nomeServico(servicosMap[id]) : "—";
+const m2h = m => `${String(Math.floor(m/60)%24).padStart(2,"0")}:${String(m%60).padStart(2,"0")}`;
+
+function abrirAlteracoes(){
+  const lista = pendentesAlteracao();
+  document.getElementById("altsLista").innerHTML = lista.length ? lista.map(a=>{
+    const p = altPendente(a);
+    return `<div class="lib-item">
+      <div class="lib-info" onclick="fecharModal('modalAlts');abrirDetalhe('${a.id}')" style="cursor:pointer;flex:1">
+        <b>${fmtH(a.hora_inicio)} · ${escH(a.cliente?.nome||"—")}</b>
+        <span>${escH(p.solicitado_por||"Terapeuta")}: ${escH(nomeServId(p.servico_anterior_id||a.servico_id))} → <b>${escH(nomeServId(p.servico_id))}</b>${p.observacao?` · "${escH(p.observacao)}"`:""}</span>
+      </div>
+      <button class="btn" style="background:#d97706;color:#fff;white-space:nowrap" onclick="fecharModal('modalAlts');abrirDetalhe('${a.id}')">Ver</button>
+    </div>`;
+  }).join("") : `<div class="empty-state" style="padding:24px"><i class="fa fa-circle-check"></i>Nenhum pedido de alteração esperando.</div>`;
+  document.getElementById("modalAlts").classList.add("open");
+}
+
+// caixas que aparecem no detalhe (recepção e terapeuta)
+function blocosAlteracao(a, gestao){
+  let h = "";
+  const p = altPendente(a), r = altRespondida(a);
+  if(p){
+    h += `<div class="alt-box" id="altBox"><i class="fa fa-pen-to-square"></i> <b>${escH(p.solicitado_por||"Terapeuta")}</b> pediu alteração de serviço às ${horaDe(p.created_at)}:<br>
+      ${escH(nomeServId(p.servico_anterior_id||a.servico_id))} → <b>${escH(nomeServId(p.servico_id))}</b>${p.observacao?`<br><i>"${escH(p.observacao)}"</i>`:""}
+      ${gestao
+        ? `<div class="alt-acoes">
+             <button class="btn btn-green" onclick="aprovarAlt('${p.id}')"><i class="fa fa-check"></i> Aprovar e conferir valores</button>
+             <button class="btn btn-red" onclick="recusarAlt('${p.id}')"><i class="fa fa-xmark"></i> Recusar</button>
+           </div><div id="altRecusa"></div>`
+        : `<div style="margin-top:6px"><i class="fa fa-hourglass-half"></i> Aguardando a recepção aprovar.</div>
+           <div class="alt-acoes"><button class="btn btn-ghost" onclick="cancelarPedidoAlt('${p.id}')"><i class="fa fa-trash"></i> Cancelar pedido</button></div>`}
+    </div>`;
+  } else if(r){
+    h += r.status==="aprovado"
+      ? `<div class="alt-ok"><i class="fa fa-check"></i> Alteração para <b>${escH(nomeServId(r.servico_id))}</b> aprovada${r.respondido_por?" por "+escH(r.respondido_por):""}${r.respondido_em?" às "+horaDe(r.respondido_em):""}.</div>`
+      : `<div class="alt-nao"><i class="fa fa-xmark"></i> Alteração para <b>${escH(nomeServId(r.servico_id))}</b> recusada${r.respondido_por?" por "+escH(r.respondido_por):""}${r.respondido_em?" às "+horaDe(r.respondido_em):""}.${r.motivo?` Motivo: ${escH(r.motivo)}`:""}</div>`;
+  }
+  if(a.atraso_em && a.status==="Agendado" && !a.finalizado_em){
+    h += `<div class="atraso-box"><i class="fa fa-clock"></i> Cliente avisou atraso${a.atraso_min?` de <b>~${a.atraso_min} min</b>`:""}${a.atraso_por?" (avisado por "+escH(a.atraso_por)+" às "+horaDe(a.atraso_em)+")":" (às "+horaDe(a.atraso_em)+")"}.</div>`;
+  }
+  return h ? `<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">${h}</div>` : "";
+}
+
+// terapeuta: abre o pedido
+let altAtendId = null;
+function abrirPedidoAlt(id){
+  const a = agendamentos.find(x=>x.id===id); if(!a) return;
+  altAtendId = id;
+  document.getElementById("altAtual").textContent = a.servico ? nomeServico(a.servico) : "—";
+  const sel = document.getElementById("altServ");
+  sel.innerHTML = '<option value="">Selecione o novo serviço</option>' + dadosServicos
+    .filter(s=>s.id!==a.servico_id).map(s=>`<option value="${s.id}">${escH(nomeServico(s))}</option>`).join("");
+  document.getElementById("altObs").value = "";
+  const b=document.getElementById("btnAltEnviar"); b.disabled=false; b.innerHTML='<i class="fa fa-paper-plane"></i> Enviar para a recepção';
+  document.getElementById("modalAlt").classList.add("open");
+}
+async function enviarAlteracao(){
+  const a = agendamentos.find(x=>x.id===altAtendId); if(!a) return;
+  const serv = document.getElementById("altServ").value;
+  if(!serv){ alert("Escolha o novo serviço."); return; }
+  const b=document.getElementById("btnAltEnviar"); b.disabled=true; b.innerHTML='<i class="fa fa-spinner fa-spin"></i> Enviando...';
+  const u = window.usuarioLogado||{};
+  const {error} = await client.from("atendimento_alteracao").insert({
+    atendimento_id:a.id, servico_id:serv, servico_anterior_id:a.servico_id||null,
+    observacao:document.getElementById("altObs").value.trim()||null,
+    solicitado_cpf:u.cpf||null, solicitado_por:u.nome||null
+  });
+  if(error){ alert("Não foi possível enviar: "+error.message); b.disabled=false; b.innerHTML='<i class="fa fa-paper-plane"></i> Enviar para a recepção'; return; }
+  fecharModal("modalAlt");
+  await carregar(); abrirDetalhe(a.id);
+}
+async function cancelarPedidoAlt(altId){
+  if(!confirm("Cancelar o pedido de alteração de serviço?")) return;
+  const {error} = await client.from("atendimento_alteracao").delete().eq("id",altId);
+  if(error){ alert("Não foi possível cancelar: "+error.message); return; }
+  await carregar(); if(detAbertoId) abrirDetalhe(detAbertoId);
+}
+// recepção: aprovar abre a edição já com o serviço novo, para conferir valor/horário e salvar
+async function aprovarAlt(altId){
+  const p = alteracoesDia.find(x=>x.id===altId); if(!p) return;
+  fecharModal("modalDet");
+  await editarAg(p.atendimento_id);
+  const row = document.getElementById("agServItens").querySelector(".serv-row");
+  if(row){ const sel=row.querySelector("select"); sel.value=p.servico_id; sel.dispatchEvent(new Event("change")); }
+  aprovandoAltId = altId;
+  const av = document.getElementById("agAltAviso");
+  av.innerHTML = `<i class="fa fa-pen-to-square"></i> Aprovando o pedido de <b>${escH(p.solicitado_por||"terapeuta")}</b>: ${escH(nomeServId(p.servico_anterior_id))} → <b>${escH(nomeServId(p.servico_id))}</b>.<br>Confira o valor e o horário de término e clique em <b>Salvar</b>. A terapeuta recebe o aviso.`;
+  av.style.display = "block";
+}
+function recusarAlt(altId){
+  document.getElementById("altRecusa").innerHTML = `<textarea id="altMotivo" rows="2" placeholder="Motivo da recusa (a terapeuta vai ver)"></textarea>
+    <div class="alt-acoes"><button class="btn btn-red" onclick="confirmarRecusaAlt('${altId}')">Confirmar recusa</button></div>`;
+  document.getElementById("altMotivo").focus();
+}
+async function confirmarRecusaAlt(altId){
+  const motivo = (document.getElementById("altMotivo")?.value||"").trim();
+  if(!motivo){ alert("Escreva o motivo da recusa."); return; }
+  const u = window.usuarioLogado||{};
+  const {error} = await client.from("atendimento_alteracao").update({status:"recusado",motivo,respondido_por:u.nome||null,respondido_em:new Date().toISOString()}).eq("id",altId);
+  if(error){ alert("Não foi possível recusar: "+error.message); return; }
+  await carregar(); if(detAbertoId) abrirDetalhe(detAbertoId);
+}
+
+// ═══ CLIENTE VAI ATRASAR (recepção avisa a terapeuta) ═══
+let atrasoId=null, atrasoMin=0;
+function abrirAtraso(id){
+  const a = agendamentos.find(x=>x.id===id); if(!a) return;
+  atrasoId=id; atrasoMin=0;
+  document.getElementById("atrInfo").innerHTML = `<b>${escH(a.cliente?.nome||"Cliente")}</b> · ${fmtH(a.hora_inicio)}${a.hora_fim?" – "+fmtH(a.hora_fim):""} · ${escH([tersMap[a.terapeuta1_cpf],tersMap[a.terapeuta2_cpf]].filter(Boolean).join(" + "))}`;
+  document.getElementById("atrChips").innerHTML = [5,10,15,20,30,45].map(m=>`<button type="button" data-m="${m}" onclick="atrSel(${m})">${m} min</button>`).join("");
+  document.getElementById("atrMin").value="";
+  document.getElementById("atrEmpurrar").checked=false;
+  document.getElementById("btnAtraso").disabled=false;
+  atrPrever();
+  document.getElementById("modalAtraso").classList.add("open");
+}
+function atrSel(m, doCampo){
+  atrasoMin = parseInt(m)||0;
+  document.querySelectorAll("#atrChips button").forEach(b=>b.classList.toggle("on", parseInt(b.dataset.m)===atrasoMin));
+  if(!doCampo) document.getElementById("atrMin").value = atrasoMin||"";
+  atrPrever();
+}
+function atrNovoHorario(a){
+  const ini = toMin(fmtH(a.hora_inicio)) + atrasoMin;
+  const dur = a.hora_fim ? toMin(fmtH(a.hora_fim)) - toMin(fmtH(a.hora_inicio)) : 60;
+  return {ini, fim: ini + Math.max(dur, 0)};
+}
+function atrPrever(){
+  const a = agendamentos.find(x=>x.id===atrasoId), el=document.getElementById("atrPrevia");
+  if(!a || !atrasoMin || !document.getElementById("atrEmpurrar").checked){ el.innerHTML=""; return; }
+  const {ini, fim} = atrNovoHorario(a);
+  const cpfs = [a.terapeuta1_cpf, a.terapeuta2_cpf].filter(Boolean);
+  const choque = agendamentos.filter(o => o.id!==a.id && (o.status==="Agendado"||o.status==="Confirmado")
+    && (cpfs.includes(o.terapeuta1_cpf)||cpfs.includes(o.terapeuta2_cpf))
+    && toMin(fmtH(o.hora_inicio)) < fim && (o.hora_fim ? toMin(fmtH(o.hora_fim)) : toMin(fmtH(o.hora_inicio))+60) > ini);
+  el.innerHTML = `<span style="color:#1e3a8a"><i class="fa fa-arrow-right"></i> Novo horário: <b>${m2h(ini)} – ${m2h(fim)}</b></span>`
+    + (choque.length ? `<div style="color:#b45309;margin-top:4px">⚠️ Vai encostar no atendimento das ${choque.map(o=>fmtH(o.hora_inicio)).join(", ")}.</div>` : "");
+}
+async function salvarAtraso(){
+  const a = agendamentos.find(x=>x.id===atrasoId); if(!a) return;
+  if(!atrasoMin){ alert("Escolha quantos minutos de atraso."); return; }
+  const u = window.usuarioLogado||{};
+  const upd = {atraso_min:atrasoMin, atraso_em:new Date().toISOString(), atraso_por:u.nome||null};
+  if(document.getElementById("atrEmpurrar").checked){
+    const {ini, fim} = atrNovoHorario(a);
+    if(fim > 24*60){ alert("O novo horário passaria da meia-noite."); return; }
+    upd.hora_inicio = m2h(ini); if(a.hora_fim) upd.hora_fim = m2h(fim);
+  }
+  document.getElementById("btnAtraso").disabled=true;
+  const {error} = await client.from("atendimento").update(upd).eq("id",a.id);
+  if(error){ alert("Não foi possível avisar: "+error.message); document.getElementById("btnAtraso").disabled=false; return; }
+  fecharModal("modalAtraso");
+  await carregar(); abrirDetalhe(a.id);
 }
 
 function renderKPIs() {
@@ -1628,6 +1885,7 @@ function renderLista() {
   const fTer=document.getElementById("fTer").value;
   const fServ=document.getElementById("fServ").value;
   let lista=[...agendamentos];
+  if(fStatus==="AltPend")lista=lista.filter(a=>altPendente(a));
   if(fStatus==="AguardLib")lista=lista.filter(a=>a.finalizado_em&&!a.liberado_em&&(a.status==="Agendado"||a.status==="Confirmado"));
   else if(fStatus)lista=lista.filter(a=>sit(a)===fStatus);
   if(fTer)lista=lista.filter(a=>a.terapeuta1_cpf===fTer||a.terapeuta2_cpf===fTer);
@@ -2048,6 +2306,11 @@ async function salvarAg(){
   if(editandoId){({error}=await client.from("atendimento").update(payload).eq("id",editandoId));}
   else{({error}=await client.from("atendimento").insert(payload));}
   if(error){alert("Erro: "+error.message);return;}
+  if(aprovandoAltId && editandoId){
+    const u=window.usuarioLogado||{};
+    await client.from("atendimento_alteracao").update({status:"aprovado",respondido_por:u.nome||null,respondido_em:new Date().toISOString()}).eq("id",aprovandoAltId);
+    aprovandoAltId=null;
+  }
   fecharModal("modalAg");carregar();
 }
 
@@ -2087,7 +2350,7 @@ function abrirDetalhe(id){
       ${a.finalizado_em?`<div class="selo-finalizado"><i class="fa fa-check"></i> ${a.finalizado_por||"Terapeuta"} finalizou às ${horaDe(a.finalizado_em)}</div>`:""}
       ${a.liberado_em?`<div class="selo-finalizado" style="background:#dbeafe;color:#1e3a8a;border-color:#bfdbfe"><i class="fa fa-check-double"></i> ${a.liberado_por||"Recepção"} autorizou a liberação às ${horaDe(a.liberado_em)}</div>`:""}
       ${a.motivo_cancel?`<div style="background:#fee2e2;border-radius:10px;padding:12px 14px;font-size:12px;color:#b91c1c"><i class="fa fa-ban"></i> <strong>Cancelamento:</strong> ${a.motivo_cancel}</div>`:""}
-    </div>`;
+    </div>${blocosAlteracao(a, true)}`;
   const acoes=[];
   acoes.push(`<button class="btn btn-ghost" onclick="fecharModal('modalDet')">Fechar</button>`);
   acoes.push(`<button class="btn btn-dark" onclick="fecharModal('modalDet');editarAg('${a.id}')"><i class="fa fa-pencil"></i> Editar</button>`);
@@ -2095,6 +2358,7 @@ function abrirDetalhe(id){
     acoes.push(`<button class="btn btn-blue" style="background:#2563eb;color:#fff" onclick="liberarCliente('${a.id}')"><i class="fa fa-check-double"></i> Autorizar liberação</button>`);
   if(a.status==="Agendado"||a.status==="Confirmado"){
     if(!a.finalizado_em) acoes.push(`<button class="btn btn-yellow" onclick="fecharModal('modalDet');abrirRemar('${a.id}')"><i class="fa fa-calendar-plus"></i> Remarcar</button>`);
+    if(!a.finalizado_em) acoes.push(`<button class="btn" style="background:#2563eb;color:#fff" onclick="fecharModal('modalDet');abrirAtraso('${a.id}')"><i class="fa fa-clock"></i> Cliente vai atrasar</button>`);
     acoes.push(`<button class="btn btn-red" onclick="fecharModal('modalDet');abrirCancel('${a.id}')"><i class="fa fa-ban"></i> Cancelar</button>`);
     acoes.push(`<button class="btn btn-purple" onclick="fecharModal('modalDet');abrirFaturar('${a.id}')"><i class="fa fa-money-bill-wave"></i> Faturar</button>`);
   }
@@ -2126,9 +2390,11 @@ function abrirDetalheTerapeuta(a){
           : `<div style="margin-top:8px;font-size:13px;color:#6b7280;display:flex;gap:8px;align-items:center"><i class="fa fa-hourglass-half"></i> Aguardando a recepção autorizar a liberação.</div>`)
     : (!a.finalizado_em && (a.status==="Agendado"||a.status==="Confirmado") && a.data > hoje())
       ? `<div style="margin-top:10px;font-size:13px;color:#6b7280;display:flex;gap:8px;align-items:center"><i class="fa fa-circle-info"></i> O botão "Finalizei o atendimento" aparece no dia do atendimento.</div>` : "";
-  document.getElementById("detConteudo").insertAdjacentHTML("beforeend", selo);
+  document.getElementById("detConteudo").insertAdjacentHTML("beforeend", selo + blocosAlteracao(a, false));
+  const podeAlterar = (a.status==="Agendado"||a.status==="Confirmado") && !altPendente(a) && !a.liberado_em;
   document.getElementById("detAcoes").innerHTML =
     `<button class="btn btn-ghost" onclick="fecharModal('modalDet')">Fechar</button>` +
+    (podeAlterar ? `<button class="btn btn-ghost" style="border-color:#d97706;color:#b45309" onclick="fecharModal('modalDet');abrirPedidoAlt('${a.id}')"><i class="fa fa-pen-to-square"></i> Alterar serviço</button>` : "") +
     (podeFinalizar ? `<button class="btn btn-yellow" id="btnFinalizar" style="background:#eab308;color:#1c1a17" onclick="finalizarAtendimento('${a.id}')"><i class="fa fa-check"></i> Finalizei o atendimento</button>` : "");
   document.getElementById("modalDet").classList.add("open");
 }
@@ -2166,6 +2432,7 @@ async function editarAg(id){
     .select("*,cliente:cliente_id(id,nome,telefone_1),servico:servico_id(id,grupo,subgrupo,valor,comissao,tempo)")
     .eq("id",id).single();
   if(!a)return;
+  aprovandoAltId=null; const _av=document.getElementById("agAltAviso"); if(_av){_av.style.display="none";_av.innerHTML="";}
   editandoId=id;cliExtras=a.clientes_extra||[];
   document.getElementById("agTitulo").innerHTML='<i class="fa fa-pencil" style="color:#d97706"></i> Editar Agendamento';
   document.getElementById("agData").value=a.data||"";
@@ -2777,6 +3044,7 @@ function ligarAoVivo(){
       if(d && d!==dataSel) return;
       atualizarAoVivo();
     })
+    .on("postgres_changes",{event:"*",schema:"public",table:"atendimento_alteracao"},()=>atualizarAoVivo())
     .on("postgres_changes",{event:"*",schema:"public",table:"atendimento"},p=>{
       const d=(p.new&&p.new.data)||(p.old&&p.old.data);
       if(d && d!==dataSel) return; // mudança em outro dia: ignora

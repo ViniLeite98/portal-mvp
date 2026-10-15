@@ -6,7 +6,7 @@
 <title>Dashboard | Hara Spa</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="assets/sidebar/sidebar.css">
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <script src="assets/js/auth.js"></script>
 <script src="assets/js/tracker.js"></script>
@@ -631,6 +631,30 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
     </div>
   </div>
 
+  <div class="login-content" style="margin-bottom:16px">
+    <div class="login-table-wrap">
+      <div class="login-table-header">
+        <span><i class="fa fa-graduation-cap" style="color:#c9a55c"></i> Trilha de treinamento</span>
+        <small id="trResumo">—</small>
+      </div>
+      <div style="padding:10px 16px 0;display:flex;gap:8px;flex-wrap:wrap">
+        <select id="trFiltro" onchange="renderTrilhaEquipe()" style="padding:7px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px">
+          <option value="">Todos</option>
+          <option value="falta">Ainda não concluíram</option>
+          <option value="ok">Concluíram tudo</option>
+          <option value="usuario">Terapeutas</option>
+          <option value="gestao">Recepção e admin</option>
+        </select>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="login-table">
+          <thead><tr><th>Pessoa</th><th>Progresso</th><th>Módulos</th></tr></thead>
+          <tbody id="trTabela"><tr><td colspan="3" class="login-empty">Carregando…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="login-content">
     <div class="login-table-wrap">
       <div class="login-table-header">
@@ -866,9 +890,40 @@ function renderAcessoEquipe(){
     return `<tr><td><div class="login-usuario-nome">${esc(p.nome)}</div><div class="login-usuario-email">${papel[p.role]||esc(p.role)}</div></td><td style="white-space:nowrap;color:#6b7280">${ult}</td><td>${chips}</td></tr>`;
   }).join("") : '<tr><td colspan="3" class="login-empty">Ninguém nesse filtro.</td></tr>';
 }
+// ── Trilha de treinamento: quem já concluiu cada módulo ──
+let trilhaEquipe=[];
+async function carregarTrilhaEquipe(){
+  const {data,error}=await client.rpc("trilha_painel");
+  if(error){ document.getElementById("trTabela").innerHTML='<tr><td colspan="3" class="login-empty">Não foi possível carregar.</td></tr>'; return; }
+  trilhaEquipe=data||[];
+  renderTrilhaEquipe();
+}
+function renderTrilhaEquipe(){
+  const f=document.getElementById("trFiltro").value;
+  const papel={usuario:"Terapeuta",apoio:"Recepção",admin:"Admin"};
+  const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const tudo=trilhaEquipe.filter(p=>p.total>0&&p.concluidos>=p.total).length;
+  document.getElementById("trResumo").textContent=`Concluíram a trilha: ${tudo} de ${trilhaEquipe.length}`;
+  let l=trilhaEquipe;
+  if(f==="falta") l=l.filter(p=>p.concluidos<p.total);
+  else if(f==="ok") l=l.filter(p=>p.total>0&&p.concluidos>=p.total);
+  else if(f==="usuario") l=l.filter(p=>p.role==="usuario");
+  else if(f==="gestao") l=l.filter(p=>p.role!=="usuario");
+  document.getElementById("trTabela").innerHTML=l.length? l.map(p=>{
+    const pc=p.total?Math.round(p.concluidos*100/p.total):0;
+    const barra=`<div style="display:flex;align-items:center;gap:8px;min-width:150px"><div style="flex:1;height:8px;background:#f3f4f6;border-radius:99px;overflow:hidden"><div style="width:${pc}%;height:100%;background:${pc===100?"#16a34a":"#c9a55c"}"></div></div><b style="font-size:12px;color:#374151;white-space:nowrap">${p.concluidos}/${p.total}</b></div>`;
+    const chips=(p.modulos||[]).map(m=>{
+      const [bg,cor,ic,tit]=m.concluido_em?["#dcfce7","#14532d","fa-check",`Concluído em ${new Date(m.concluido_em).toLocaleDateString("pt-BR")}${m.tentativas>1?" · "+m.tentativas+" tentativas":""}`]
+        : m.assistiu?["#fef3c7","#92400e","fa-pen-to-square","Assistiu, falta o teste"]:["#f3f4f6","#6b7280","fa-circle","Ainda não assistiu"];
+      return `<span title="${esc(tit)}" style="display:inline-flex;align-items:center;gap:5px;background:${bg};color:${cor};border-radius:999px;padding:3px 9px;font-size:12px;margin:2px 4px 2px 0;white-space:nowrap"><i class="fa ${ic}"></i>${esc(m.titulo)}</span>`;
+    }).join("");
+    return `<tr><td><div class="login-usuario-nome">${esc(p.nome)}</div><div class="login-usuario-email">${papel[p.role]||esc(p.role)}</div></td><td>${barra}</td><td>${chips}</td></tr>`;
+  }).join("") : '<tr><td colspan="3" class="login-empty">Ninguém nesse filtro.</td></tr>';
+}
 async function carregarLogins(){
   loginsCarregados=true;
   carregarAcessoEquipe();
+  carregarTrilhaEquipe();
   const status=document.getElementById("lFiltroStatus").value;
   const usuario=document.getElementById("lFiltroUsuario").value.trim();
   const ini=document.getElementById("lFiltroIni").value;

@@ -134,6 +134,7 @@
   function getPaginaLabel() {
     var labels = {
       'dashboard.html': 'Dashboard',
+      'trilha.html': 'Trilha',
       'equipe.html': 'Equipe',
       'clientes.html': 'Clientes',
       'servicos.html': 'Serviços',
@@ -201,6 +202,7 @@
     if (!usuario) html += item("escalas.html", "fa-calendar-days", "Escalas");
     html += item("solicitacoes.html", "fa-file-lines", "Solicitações");
     if (!usuario) html += item("kanban.html", "fa-table-columns", "Kanban");
+    html += item("trilha.html", "fa-graduation-cap", "Trilha");
     if (!usuario) {
       html += hr();
       html += titulo("FINANCEIRO");
@@ -221,6 +223,28 @@
       '</a>';
     html += '</div>';
     document.getElementById("sidebar").innerHTML = html;
+
+    // Trilha: mostra quantos módulos faltam (só um lembrete, não bloqueia nada)
+    window.atualizarSeloTrilha = function () {
+      if (typeof client === "undefined" || !client.rpc) return;
+      client.rpc("trilha_pendentes").then(function (r) {
+        var n = r && !r.error ? r.data : 0;
+        document.querySelectorAll('.menu-item[href="trilha.html"]').forEach(function (a) {
+          var b = a.querySelector(".selo-trilha");
+          if (!n) { if (b) b.remove(); return; }
+          if (!b) { b = document.createElement("span"); b.className = "selo-trilha"; a.appendChild(b); }
+          b.textContent = n;
+          b.title = n === 1 ? "1 módulo para assistir" : n + " módulos para assistir";
+        });
+        document.querySelectorAll(".hamburger").forEach(function (h) { h.classList.toggle("tem-trilha", !!n); });
+      });
+    };
+    if (!document.getElementById("estiloSeloTrilha")) {
+      var st = document.createElement("style"); st.id = "estiloSeloTrilha";
+      st.textContent = ".selo-trilha{margin-left:auto;background:#c9a55c;color:#1c1a17;font-size:11px;font-weight:800;min-width:20px;height:20px;padding:0 6px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center}.hamburger{position:relative}.hamburger.tem-trilha::after{content:'';position:absolute;top:6px;right:4px;width:9px;height:9px;border-radius:50%;background:#c9a55c;border:2px solid #1c1a17}";
+      document.head.appendChild(st);
+    }
+    window.atualizarSeloTrilha();
 
     // Injeta topbar mobile após renderizar sidebar
     injetarMobileTopbar();

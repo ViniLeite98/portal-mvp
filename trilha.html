@@ -225,6 +225,11 @@ async function marcarAssistido(){
   $("trava").animate([{ transform: "scale(1)" }, { transform: "scale(1.02)" }, { transform: "scale(1)" }], { duration: 500 });
 }
 $("video").addEventListener("ended", marcarAssistido);
+$("video").addEventListener("error", () => {
+  if(!atual) return;
+  $("travaIc").className = "fa fa-triangle-exclamation"; $("travaIc").style.color = "#dc2626";
+  $("travaTx").innerHTML = "<b>Não foi possível carregar o vídeo.</b> Avise o administrador (arquivo: " + esc(atual.video_url) + ").";
+});
 $("video").addEventListener("timeupdate", e => { const v = e.target; if(v.duration && v.currentTime >= v.duration - 1.5) marcarAssistido(); });
 
 async function abrirTeste(){

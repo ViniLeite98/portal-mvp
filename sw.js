@@ -1,6 +1,6 @@
 // ⚠️ Troque a versão (v2 → v3 → v4...) sempre que subir mudanças grandes.
 //    Isso apaga o cache antigo de todo mundo na próxima abertura do app.
-const CACHE_NAME = 'hara-spa-v6';
+const CACHE_NAME = 'hara-spa-v7';
 
 // arquivos para cache offline
 const ASSETS = [
@@ -54,6 +54,8 @@ self.addEventListener('fetch', function(e) {
   if (req.method !== 'GET') return;
   if (req.url.includes('supabase.co')) return;
   if (req.url.includes('api.iconify.design')) return;
+  // vídeos da trilha: o navegador baixa em pedaços (range); deixa passar direto, sem cache
+  if (req.url.includes('/videos/') || req.headers.has('range')) return;
 
   var mesmoSite = new URL(req.url).origin === self.location.origin;
 

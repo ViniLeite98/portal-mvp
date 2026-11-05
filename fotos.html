@@ -129,6 +129,13 @@ label.campo input:focus,label.campo textarea:focus{outline:none;border-color:rgb
 .lang-btn{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 11px 0 9px;border-radius:999px;border:1px solid rgba(42,163,216,.45);background:rgba(42,163,216,.05);color:var(--ink);font:600 11.5px var(--sans);letter-spacing:.06em;cursor:pointer;box-shadow:0 0 10px rgba(42,163,216,.12)}
 .lang-btn:hover{background:rgba(42,163,216,.12)}
 .lang-btn svg{width:20px;height:14px;border-radius:2px;display:block}
+.lang-wrap{position:relative}
+.lang-menu{display:none;position:absolute;right:0;top:40px;min-width:170px;background:#0a0f1e;border:1px solid var(--line2);border-radius:12px;padding:6px;box-shadow:0 18px 50px rgba(0,0,0,.55);z-index:41}
+.lang-menu.aberto{display:block}
+.lang-menu button{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:none;background:none;color:var(--ink);font:400 14px var(--sans);border-radius:8px;cursor:pointer;text-align:left}
+.lang-menu button:hover{background:rgba(255,255,255,.05)}
+.lang-menu button.atual{color:var(--gold)}
+.lang-menu svg{width:22px;height:15px;border-radius:2px;flex-shrink:0}
 .menu-btn{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:9px;border:1px solid var(--line2);background:rgba(255,255,255,.02);color:var(--muted);cursor:pointer;font-size:14px}
 .menu-btn:hover{color:var(--ink);border-color:#33405e}
 .menu-btn .fa-chevron-down{font-size:9px;transition:transform .2s}
@@ -231,6 +238,10 @@ label.campo input:focus,label.campo textarea:focus{outline:none;border-color:rgb
 .tog input:checked{background:#16a34a}.tog input:checked::after{transform:translateX(16px);background:#fff}
 .ses .fb{flex:none;padding:7px 12px}
 .ses-txt{margin-top:12px;font-size:14px;color:var(--muted)}
+.lang-bloco{margin-top:18px;padding-top:16px;border-top:1px dashed #1e293b}
+.lang-tit{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.lang-tit svg{width:20px;height:14px;border-radius:2px}
+.ses-trad{font-size:11px;color:var(--dim);margin-left:8px}
 .ses-txt i{color:#7fa8d1}
 .lista-cab{display:flex;align-items:baseline;justify-content:space-between;margin:34px 0 16px}
 .lista-cab h4{font-family:var(--serif);font-weight:400;font-size:24px;margin:0}
@@ -300,7 +311,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;co
       <a href="#galeria" id="navGaleria" style="display:none"><i class="fa-regular fa-images"></i><span>Galeria</span></a>
     </nav>
     <div class="direita">
-      <button class="lang-btn" id="langBtn" aria-label="Mudar idioma"></button>
+      <div class="lang-wrap"><button class="lang-btn" id="langBtn" aria-label="Idioma"></button><div class="lang-menu" id="langMenu"></div></div>
       <button class="menu-btn" id="menuBtn" aria-label="Menu"><i class="fa-solid fa-bars"></i><i class="fa-solid fa-chevron-down"></i></button>
       <div class="menu-drop" id="menuDrop">
         <div class="tit" data-i18n="m_tit">Acesso admin</div>
@@ -415,37 +426,59 @@ var I18N = {
   en: { nav_ter:"Therapists", nav_ses:"Sessions", pill_ter:"Our therapists", pill_ses:"Our sessions",
         flut:"Meet our therapists", voltar:"Back", em_breve:"Coming soon.", mais_fotos:"+ Photos",
         wa_btn:"Chat on WhatsApp", wa_msg:"Hi! I saw the catalog and would like to know more about {nome}.", duracao:"Duration & pricing",
-        m_tit:"Admin access", m_entrar:"Sign in", m_painel:"Admin panel", m_sistema:"Go to the system", m_sair:"Sign out" }
+        m_tit:"Admin access", m_entrar:"Sign in", m_painel:"Admin panel", m_sistema:"Go to the system", m_sair:"Sign out" },
+  es: { nav_ter:"Terapeutas", nav_ses:"Sesiones", pill_ter:"Nuestras terapeutas", pill_ses:"Nuestras sesiones",
+        flut:"Conoce a nuestras terapeutas", voltar:"Volver", em_breve:"Próximamente.", mais_fotos:"+ Fotos",
+        wa_btn:"Hablar por WhatsApp", wa_msg:"¡Hola! Vi el catálogo y quiero saber más sobre {nome}.", duracao:"Duración e inversión",
+        m_tit:"Acceso admin", m_entrar:"Entrar", m_painel:"Panel admin", m_sistema:"Ir al sistema", m_sair:"Salir" }
 };
 // Textos padrão do banco que ganham versão em inglês (se você mudar o texto no painel, ele aparece como escreveu)
 var I18N_BANCO = {
-  "Catálogo":"Catalog",
-  "Conheça o portfólio completo da nossa equipe":"Discover our team's complete portfolio",
-  "Nossas Sessões":"Our Sessions",
-  "Experiências pensadas para o seu bem-estar e relaxamento":"Experiences designed for your well-being and relaxation"
+  en: { "Catálogo":"Catalog",
+        "Conheça o portfólio completo da nossa equipe":"Discover our team's complete portfolio",
+        "Nossas Sessões":"Our Sessions",
+        "Experiências pensadas para o seu bem-estar e relaxamento":"Experiences designed for your well-being and relaxation" },
+  es: { "Catálogo":"Catálogo",
+        "Conheça o portfólio completo da nossa equipe":"Conoce el portafolio completo de nuestro equipo",
+        "Nossas Sessões":"Nuestras Sesiones",
+        "Experiências pensadas para o seu bem-estar e relaxamento":"Experiencias pensadas para tu bienestar y relajación" }
 };
 var idioma = (function(){
   try {
     var q = new URLSearchParams(location.search).get("lang");
-    if (q === "en" || q === "pt") return q;
-    return localStorage.getItem("hara_idioma") === "en" ? "en" : "pt";
+    if (q === "en" || q === "pt" || q === "es") return q;
+    var g = localStorage.getItem("hara_idioma");
+    return g === "en" || g === "es" ? g : "pt";
   } catch (e) { return "pt"; }
 })();
 function t(k){ return (I18N[idioma] && I18N[idioma][k]) || I18N.pt[k] || k; }
-function tc(txt){ return idioma === "en" && I18N_BANCO[txt] ? I18N_BANCO[txt] : txt; }
+function tc(txt){ var m = I18N_BANCO[idioma]; return m && m[txt] ? m[txt] : txt; }
+// campo do banco no idioma atual (titulo_en, descricao_es…), com o português como reserva
+function campoIdioma(obj, nome){ return (idioma !== "pt" && obj[nome + "_" + idioma]) || obj[nome]; }
 var BANDEIRA = {
   uk: '<svg viewBox="0 0 60 30" aria-hidden="true"><clipPath id="ukc"><path d="M0,0 v30 h60 v-30 z"/></clipPath><clipPath id="ukt"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath><g clip-path="url(#ukc)"><path d="M0,0 v30 h60 v-30 z" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" clip-path="url(#ukt)" stroke="#C8102E" stroke-width="4"/><path d="M30,0 v30 M0,15 h60" stroke="#fff" stroke-width="10"/><path d="M30,0 v30 M0,15 h60" stroke="#C8102E" stroke-width="6"/></g></svg>',
+  es: '<svg viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#AA151B"/><rect y="10" width="60" height="20" fill="#F1BF00"/></svg>',
   br: '<svg viewBox="0 0 60 42" aria-hidden="true"><rect width="60" height="42" fill="#009c3b"/><path d="M30 5 L55 21 L30 37 L5 21 Z" fill="#ffdf00"/><circle cx="30" cy="21" r="9" fill="#002776"/><path d="M21.3 19.2 Q30 16.5 38.7 22.4" stroke="#fff" stroke-width="1.6" fill="none"/></svg>'
 };
+var IDIOMAS = [ { cod:"pt", sigla:"PT", nome:"Português", band:"br" }, { cod:"en", sigla:"EN", nome:"English", band:"uk" }, { cod:"es", sigla:"ES", nome:"Español", band:"es" } ];
 function aplicarIdioma(){
-  document.documentElement.lang = idioma === "en" ? "en" : "pt-BR";
+  document.documentElement.lang = { pt:"pt-BR", en:"en", es:"es" }[idioma];
   document.querySelectorAll("[data-i18n]").forEach(function(el){ el.textContent = t(el.getAttribute("data-i18n")); });
-  // o botão mostra o OUTRO idioma (para onde vai ao clicar)
-  document.getElementById("langBtn").innerHTML = idioma === "en" ? BANDEIRA.br + "PT" : BANDEIRA.uk + "EN";
-  document.getElementById("langBtn").title = idioma === "en" ? "Ver em português" : "View in English";
+  var atual = IDIOMAS.find(function(x){ return x.cod === idioma; });
+  document.getElementById("langBtn").innerHTML = BANDEIRA[atual.band] + atual.sigla + ' <i class="fa-solid fa-chevron-down" style="font-size:8px;opacity:.7"></i>';
+  document.getElementById("langMenu").innerHTML = IDIOMAS.map(function(x){
+    return '<button data-lang="' + x.cod + '"' + (x.cod === idioma ? ' class="atual"' : '') + '>' + BANDEIRA[x.band] + '<span>' + x.nome + '</span></button>';
+  }).join("");
 }
-function trocarIdioma(){
-  idioma = idioma === "en" ? "pt" : "en";
+document.addEventListener("click", function(e){
+  var menu = document.getElementById("langMenu");
+  if (e.target.closest("#langBtn")){ menu.classList.toggle("aberto"); return; }
+  var op = e.target.closest("#langMenu [data-lang]");
+  menu.classList.remove("aberto");
+  if (op && op.getAttribute("data-lang") !== idioma) trocarIdioma(op.getAttribute("data-lang"));
+});
+function trocarIdioma(novo){
+  idioma = novo;
   try { localStorage.setItem("hara_idioma", idioma); } catch (e) {}
   aplicarIdioma();
   if (siteCfg) aplicarConfig(siteCfg);
@@ -456,7 +489,6 @@ function trocarIdioma(){
   if (aberto) abrirPerfil(location.hash.slice(3), true);
 }
 aplicarIdioma();
-document.getElementById("langBtn").onclick = trocarIdioma;
 
 // ═══ CONFIG ═══════════════════════════════════════════════════════════════
 var CONFIG = {
@@ -596,9 +628,10 @@ async function carregarSessoesPublicas(){
   if (!itens.length){ lista.innerHTML = '<div class="ss-vazio">' + t('em_breve') + '</div>'; return; }
   lista.innerHTML = itens.map(function(x){
     var precos = x.precos || [];
-    return '<article class="ss-card"><h2>' + esc(x.titulo) + '</h2>' +
-      (x.chamada ? '<p class="chamada">' + esc(x.chamada) + '</p>' : '') +
-      (x.descricao ? '<p class="desc">' + esc(x.descricao) + '</p>' : '') +
+    var tit = campoIdioma(x, "titulo"), cha = campoIdioma(x, "chamada"), des = campoIdioma(x, "descricao");
+    return '<article class="ss-card"><h2>' + esc(tit) + '</h2>' +
+      (cha ? '<p class="chamada">' + esc(cha) + '</p>' : '') +
+      (des ? '<p class="desc">' + esc(des) + '</p>' : '') +
       (precos.length ? '<div class="ss-precos"><div class="tit">' + t('duracao') + '</div>' +
         precos.map(function(p){ return '<div class="ss-preco"><span>' + p.tempo + 'min</span><b>' + brlPub(p.valor) + '</b></div>'; }).join("") + '</div>' : '') +
     '</article>';
@@ -873,10 +906,21 @@ async function renderSessoes(){
         '<span class="k">Título</span><input id="sesTit" maxlength="80" value="' + esc(t ? t.titulo : g.grupo) + '">' +
         '<span class="k">Chamada</span><input id="sesCha" maxlength="160" placeholder="frase curta em itálico" value="' + esc(t ? t.chamada : "") + '">' +
         '<span class="k">Descrição</span><textarea id="sesDes" rows="7" maxlength="3000">' + esc(t ? t.descricao : "") + '</textarea>' +
-        '</div><div class="cfg-rod"><button class="fb" data-ses="cancelar">Cancelar</button><button class="fb ok" data-ses="salvar" data-k="' + esc(g.k) + '">Salvar</button></div></div>';
+        '</div>' +
+        ['en','es'].map(function(l){
+          var nomeL = l === "en" ? "Inglês" : "Espanhol";
+          return '<div class="lang-bloco"><div class="lang-tit">' + BANDEIRA[l === "en" ? "uk" : "es"] + nomeL + '</div><div class="cfg-linhas">' +
+            '<span class="k">Título</span><input id="sesTit_' + l + '" maxlength="120" value="' + esc(t ? t["titulo_" + l] : "") + '">' +
+            '<span class="k">Chamada</span><input id="sesCha_' + l + '" maxlength="240" value="' + esc(t ? t["chamada_" + l] : "") + '">' +
+            '<span class="k">Descrição</span><textarea id="sesDes_' + l + '" rows="5" maxlength="4500">' + esc(t ? t["descricao_" + l] : "") + '</textarea>' +
+          '</div></div>';
+        }).join("") +
+        '<div class="dica" style="margin-top:10px">Ao salvar, os campos em inglês e espanhol que estiverem <b>vazios</b> são traduzidos automaticamente do português. Revise se quiser.</div>' +
+        '<div class="cfg-rod"><button class="fb" data-ses="traduzir"><i class="fa-solid fa-language"></i> Traduzir de novo</button><span style="flex:1"></span><button class="fb" data-ses="cancelar">Cancelar</button><button class="fb ok" data-ses="salvar" data-k="' + esc(g.k) + '">Salvar</button></div></div>';
     }
     return '<div class="ses' + (vis ? ' on' : '') + '"><div class="ses-cab">' +
-      '<div><span class="nome">' + esc(t ? t.titulo : nomeOrig) + '</span>' + (t && t.titulo !== nomeOrig ? ' <span class="orig">(' + esc(nomeOrig) + ')</span>' : '') + '</div>' +
+      '<div><span class="nome">' + esc(t ? t.titulo : nomeOrig) + '</span>' + (t && t.titulo !== nomeOrig ? ' <span class="orig">(' + esc(nomeOrig) + ')</span>' : '') +
+        (t ? '<span class="ses-trad">' + (t.descricao_en || t.titulo_en ? 'EN ✓' : 'EN —') + ' · ' + (t.descricao_es || t.titulo_es ? 'ES ✓' : 'ES —') + '</span>' : '') + '</div>' +
       '<div class="dir">' +
         (vis ? '<button class="fb" data-ses="subir" data-k="' + esc(g.k) + '" title="Subir"><i class="fa-solid fa-arrow-up"></i></button><button class="fb" data-ses="descer" data-k="' + esc(g.k) + '" title="Descer"><i class="fa-solid fa-arrow-down"></i></button>' : '') +
         '<button class="fb" data-ses="editar" data-k="' + esc(g.k) + '"><i class="fa-solid fa-pen"></i> Textos</button>' +
@@ -886,6 +930,56 @@ async function renderSessoes(){
     '</div>';
   }).join("");
   area.innerHTML = h;
+}
+// ── Tradução automática (português → inglês / espanhol) ──
+// Usa o tradutor gratuito do Google; se falhar, tenta o MyMemory. O resultado fica salvo no banco
+// e pode ser corrigido à mão — o visitante nunca espera tradução.
+async function traduzirTrecho(txt, alvo){
+  try {
+    var r = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=pt&tl=" + alvo + "&dt=t&q=" + encodeURIComponent(txt));
+    if (!r.ok) throw new Error(r.status);
+    var j = await r.json();
+    return (j[0] || []).map(function(p){ return p[0]; }).join("");
+  } catch (e) {
+    var partes = txt.match(/[^.!?]+[.!?]*\s*/g) || [txt], out = "";
+    for (var i = 0; i < partes.length; i++){
+      var r2 = await fetch("https://api.mymemory.translated.net/get?langpair=pt|" + alvo + "&q=" + encodeURIComponent(partes[i].slice(0, 480)));
+      var j2 = await r2.json();
+      out += (j2.responseData && j2.responseData.translatedText ? j2.responseData.translatedText : partes[i]) + " ";
+    }
+    return out.trim();
+  }
+}
+async function traduzir(txt, alvo){
+  if (!txt) return "";
+  var paragrafos = txt.split(/\n/), saida = [];
+  for (var i = 0; i < paragrafos.length; i++){
+    var p = paragrafos[i];
+    if (!p.trim()){ saida.push(""); continue; }
+    var pedacos = [], atual = "";
+    (p.match(/[^.!?]+[.!?]*\s*/g) || [p]).forEach(function(f){
+      if ((atual + f).length > 1500 && atual){ pedacos.push(atual); atual = ""; }
+      atual += f;
+    });
+    if (atual) pedacos.push(atual);
+    var trad = "";
+    for (var k = 0; k < pedacos.length; k++) trad += await traduzirTrecho(pedacos[k], alvo);
+    saida.push(trad.trim());
+  }
+  return saida.join("\n");
+}
+async function preencherTraducoes(forcar){
+  var origem = { Tit: document.getElementById("sesTit").value.trim(), Cha: document.getElementById("sesCha").value.trim(), Des: document.getElementById("sesDes").value.trim() };
+  var falhou = false;
+  for (var l of ["en","es"]){
+    for (var c of ["Tit","Cha","Des"]){
+      var el = document.getElementById("ses" + c + "_" + l);
+      if (!origem[c] || (!forcar && el.value.trim())) continue;
+      try { el.value = await traduzir(origem[c], l); }
+      catch (e) { falhou = true; }
+    }
+  }
+  if (falhou) alert("Não consegui traduzir tudo agora. Os campos em branco podem ser preenchidos à mão ou com \"Traduzir de novo\".");
 }
 async function salvarSessao(g, campos){
   campos.atualizado_em = new Date().toISOString();
@@ -900,11 +994,25 @@ document.getElementById("painelArea").addEventListener("click", async function(e
   var gs = gruposSessao(), g = gs.find(function(x){ return x.k === k; });
   if (a === "editar"){ ses.editando = k; renderSessoes(); }
   else if (a === "cancelar"){ ses.editando = null; renderSessoes(); }
+  else if (a === "traduzir"){
+    b.disabled = true; b.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traduzindo…';
+    await preencherTraducoes(true);
+    b.disabled = false; b.innerHTML = '<i class="fa-solid fa-language"></i> Traduzir de novo';
+  }
   else if (a === "salvar"){
     var tit = document.getElementById("sesTit").value.trim();
     if (!tit) return alert("Preencha o título.");
-    b.disabled = true;
-    if (await salvarSessao(g, { titulo:tit, chamada:document.getElementById("sesCha").value.trim() || null, descricao:document.getElementById("sesDes").value.trim() || null })) ses.editando = null;
+    b.disabled = true; b.textContent = "Traduzindo…";
+    await preencherTraducoes(false);
+    b.textContent = "Salvando…";
+    var dados = { titulo:tit, chamada:document.getElementById("sesCha").value.trim() || null, descricao:document.getElementById("sesDes").value.trim() || null };
+    ["en","es"].forEach(function(l){
+      ["titulo","chamada","descricao"].forEach(function(c){
+        var el = document.getElementById("ses" + { titulo:"Tit", chamada:"Cha", descricao:"Des" }[c] + "_" + l);
+        dados[c + "_" + l] = el.value.trim() || null;
+      });
+    });
+    if (await salvarSessao(g, dados)) ses.editando = null;
     renderSessoes();
   }
   else if (a === "subir" || a === "descer"){

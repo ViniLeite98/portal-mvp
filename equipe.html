@@ -147,6 +147,17 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .foto-card-info{padding:7px 10px;font-size:11px;color:#6b7280;}
 .foto-card-del{position:absolute;top:6px;right:6px;background:rgba(220,38,38,.85);color:#fff;border:none;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:12px;}
 .foto-card-del:hover{background:#dc2626;}
+.foto-grid{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));}
+.foto-card img{height:230px;}
+.foto-status{position:absolute;top:8px;left:8px;font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:rgba(17,24,39,.82);z-index:1}
+.foto-status.fs-pend{color:#fbbf24}.foto-status.fs-ace{color:#fcd34d}.foto-status.fs-pub{color:#4ade80}
+.foto-acoes{padding:0 8px 8px;display:flex;flex-direction:column;gap:6px}
+.fx-linha{display:flex;gap:6px}
+.fx-btn{flex:1;background:#fff;border:1px solid #e5e7eb;color:#111827;border-radius:7px;padding:7px 6px;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.fx-btn:hover{background:#f3f4f6}
+.fx-btn.fx-largo{width:100%}
+.fx-btn.fx-aceitar{color:#15803d}.fx-btn.fx-guardar{color:#b45309}.fx-btn.fx-excluir{color:#dc2626}
+.fx-capa-ok{font-size:12px;font-weight:600;color:#b45309;text-align:center;padding:6px 0}
 .cargo-dropdown-btn{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;cursor:pointer;min-width:200px;display:flex;align-items:center;justify-content:space-between;gap:8px;user-select:none;transition:border-color .15s;}
 .cargo-dropdown-btn:hover{border-color:#9ca3af;}
 .cargo-dropdown-btn.ativo{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
@@ -1377,24 +1388,98 @@ async function enviarFotos() {
   }
   setTimeout(() => { filaFotos = filaFotos.filter(i => i.status !== "ok"); atualizarBtnFotos(); carregarFotos(cpfAtual); if(btn) btn.disabled = false; }, 1600);
 }
+// Fotos do cadastro → catálogo público (fotos.html).
+// Fluxo: Pendente (enviada pela profissional) → Aceita (pronta para publicar) → Publicada.
+// Publicar copia a foto para o bucket público "loja-catalogo" com nome aleatório (o caminho original tem o CPF).
+var fotosCache = [];
+const SITE_BADGE = {
+  pendente:  {txt:"Aguardando aprovação",        cls:"fs-pend"},
+  aceita:    {txt:"Aceita • pronta para publicar", cls:"fs-ace"},
+  publicada: {txt:"Publicada no catálogo",       cls:"fs-pub"}
+};
+function ehGestorFotos(){ const r = window.usuarioLogado && window.usuarioLogado.role; return r === "admin" || r === "apoio"; }
+function caminhoDocumento(url){
+  const marca = "/storage/v1/object/public/documentos/";
+  const i = url ? url.indexOf(marca) : -1;
+  return i === -1 ? null : decodeURIComponent(url.slice(i + marca.length).split("?")[0]);
+}
 async function carregarFotos(cpf) {
   const {data, error} = await client.from("documentos").select("*").eq("equipe_id", cpf).eq("tipo", "Foto").order("created_at", {ascending: false});
   const lista = document.getElementById("fotoLista");
   const badge = document.getElementById("fotoBadge");
-  if(error || !data || data.length === 0) { lista.innerHTML = '<div class="doc-empty">Nenhuma foto anexada.</div>'; badge.style.display = "none"; return; }
+  if(error || !data || data.length === 0) { fotosCache = []; lista.innerHTML = '<div class="doc-empty">Nenhuma foto anexada.</div>'; badge.style.display = "none"; return; }
+  fotosCache = data;
   badge.textContent = data.length; badge.style.display = "";
-  lista.innerHTML = '<div class="foto-grid">' + data.map(d =>
-    '<div class="foto-card" id="foto-'+d.id+'">'+
-    '<img src="'+d.url+'" alt="'+d.nome_arquivo+'" onclick="abrirArquivo(\''+d.url+'\',\'Foto\')">'+
-    '<button class="foto-card-del" onclick="excluirFoto(\''+d.id+'\')"><i class="fa fa-trash"></i></button>'+
-    '<div class="foto-card-info">'+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div>'+
-    '</div>'
-  ).join("") + '</div>';
+  const gestor = ehGestorFotos();
+  lista.innerHTML = '<div class="foto-grid">' + data.map(d => {
+    const st = SITE_BADGE[d.site_status || "pendente"];
+    let acoes = "";
+    if (gestor) {
+      if (d.site_status === "publicada") {
+        acoes = (d.site_capa ? '<div class="fx-capa-ok"><i class="fa fa-star"></i> Capa do catálogo</div>'
+                             : '<button class="fx-btn fx-largo" onclick="fotoCapa(\''+d.id+'\')"><i class="fa fa-crop-simple"></i> Usar como capa</button>') +
+                '<div class="fx-linha"><button class="fx-btn fx-guardar" onclick="fotoGuardar(\''+d.id+'\')">Guardar</button>' +
+                '<button class="fx-btn fx-excluir" onclick="excluirFoto(\''+d.id+'\')">Excluir</button></div>';
+      } else {
+        acoes = '<div class="fx-linha">' +
+                (d.site_status === "aceita"
+                  ? '<button class="fx-btn" onclick="fotoPublicar(\''+d.id+'\')">Publicar</button>'
+                  : '<button class="fx-btn fx-aceitar" onclick="fotoAceitar(\''+d.id+'\')">Aceitar</button>') +
+                '<button class="fx-btn fx-excluir" onclick="excluirFoto(\''+d.id+'\')">Excluir</button></div>';
+      }
+    } else {
+      acoes = '<div class="fx-linha"><button class="fx-btn fx-excluir" onclick="excluirFoto(\''+d.id+'\')">Excluir</button></div>';
+    }
+    return '<div class="foto-card" id="foto-'+d.id+'">'+
+      '<span class="foto-status '+st.cls+'">'+st.txt+'</span>'+
+      '<img src="'+d.url+'" alt="" onclick="abrirArquivo(\''+d.url+'\',\'Foto\')">'+
+      '<div class="foto-card-info">'+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div>'+
+      '<div class="foto-acoes">'+acoes+'</div>'+
+    '</div>';
+  }).join("") + '</div>';
+}
+async function fotoAtualizar(id, campos, msgErro) {
+  const {error} = await client.from("documentos").update(campos).eq("id", id);
+  if (error) { alert(msgErro + ": " + error.message); return false; }
+  return true;
+}
+async function fotoAceitar(id) {
+  if (await fotoAtualizar(id, {site_status: "aceita"}, "Erro ao aceitar")) carregarFotos(cpfAtual);
+}
+async function fotoPublicar(id) {
+  const d = fotosCache.find(x => x.id === id); if (!d) return;
+  const origem = caminhoDocumento(d.url);
+  if (!origem) { alert("Não encontrei o arquivo desta foto."); return; }
+  const ext = (origem.split(".").pop() || "jpg").toLowerCase();
+  const destino = "equipe/" + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "_" + Math.random().toString(36).slice(2)) + "." + ext;
+  const card = document.getElementById("foto-" + id); if (card) card.style.opacity = ".5";
+  const {data: blob, error: dlErr} = await client.storage.from("documentos").download(origem);
+  if (dlErr) { if (card) card.style.opacity = ""; alert("Erro ao ler a foto: " + dlErr.message); return; }
+  const {error: upErr} = await client.storage.from("loja-catalogo").upload(destino, blob, {contentType: blob.type || "image/jpeg", upsert: false});
+  if (upErr) { if (card) card.style.opacity = ""; alert("Erro ao publicar: " + upErr.message); return; }
+  const jaTemCapa = fotosCache.some(x => x.site_status === "publicada" && x.site_capa);
+  const ok = await fotoAtualizar(id, {site_status: "publicada", site_path: destino, site_capa: !jaTemCapa}, "Erro ao publicar");
+  if (!ok) await client.storage.from("loja-catalogo").remove([destino]);
+  carregarFotos(cpfAtual);
+}
+async function fotoGuardar(id) {
+  const d = fotosCache.find(x => x.id === id); if (!d) return;
+  if (!confirm("Tirar esta foto do catálogo? Ela continua guardada aqui no cadastro.")) return;
+  const ok = await fotoAtualizar(id, {site_status: "aceita", site_path: null, site_capa: false}, "Erro ao guardar");
+  if (ok && d.site_path) await client.storage.from("loja-catalogo").remove([d.site_path]);
+  carregarFotos(cpfAtual);
+}
+async function fotoCapa(id) {
+  const outras = fotosCache.filter(x => x.site_capa && x.id !== id).map(x => x.id);
+  if (outras.length) await client.from("documentos").update({site_capa: false}).in("id", outras);
+  if (await fotoAtualizar(id, {site_capa: true}, "Erro ao definir capa")) carregarFotos(cpfAtual);
 }
 async function excluirFoto(id) {
   if(!confirm("Excluir esta foto?")) return;
+  const d = fotosCache.find(x => x.id === id);
   const {error} = await client.from("documentos").delete().eq("id", id);
   if(error) { alert("Erro ao excluir: " + error.message); return; }
+  if (d && d.site_path) await client.storage.from("loja-catalogo").remove([d.site_path]);
   carregarFotos(cpfAtual);
 }
 

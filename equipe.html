@@ -157,7 +157,12 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 .fx-btn:hover{background:#f3f4f6}
 .fx-btn.fx-largo{width:100%}
 .fx-btn.fx-aceitar{color:#15803d}.fx-btn.fx-guardar{color:#b45309}.fx-btn.fx-excluir{color:#dc2626}
-.fx-capa-ok{font-size:12px;font-weight:600;color:#b45309;text-align:center;padding:6px 0}
+.fx-btn[disabled]{opacity:.4;cursor:default;background:#fff}
+.fx-linha .fx-btn{min-width:0;padding:7px 2px;font-size:11.5px}
+.fx-btn.fx-publicar{color:#1d4ed8}
+.fx-btn.fx-capa{color:#92400e}
+.fx-btn.fx-capa-on{opacity:1;background:#fffbeb;border-color:#fcd34d;color:#b45309}
+.foto-card-info{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cargo-dropdown-btn{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;background:#fff;color:#111827;cursor:pointer;min-width:200px;display:flex;align-items:center;justify-content:space-between;gap:8px;user-select:none;transition:border-color .15s;}
 .cargo-dropdown-btn:hover{border-color:#9ca3af;}
 .cargo-dropdown-btn.ativo{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1);}
@@ -1412,28 +1417,29 @@ async function carregarFotos(cpf) {
   badge.textContent = data.length; badge.style.display = "";
   const gestor = ehGestorFotos();
   lista.innerHTML = '<div class="foto-grid">' + data.map(d => {
-    const st = SITE_BADGE[d.site_status || "pendente"];
+    const status = d.site_status || "pendente";
+    const st = SITE_BADGE[status];
+    const nome = (d.nome_arquivo || "").replace(/[<>&"]/g, "");
     let acoes = "";
     if (gestor) {
-      if (d.site_status === "publicada") {
-        acoes = (d.site_capa ? '<div class="fx-capa-ok"><i class="fa fa-star"></i> Capa do catálogo</div>'
-                             : '<button class="fx-btn fx-largo" onclick="fotoCapa(\''+d.id+'\')"><i class="fa fa-crop-simple"></i> Usar como capa</button>') +
-                '<div class="fx-linha"><button class="fx-btn fx-guardar" onclick="fotoGuardar(\''+d.id+'\')">Guardar</button>' +
-                '<button class="fx-btn fx-excluir" onclick="excluirFoto(\''+d.id+'\')">Excluir</button></div>';
-      } else {
-        acoes = '<div class="fx-linha">' +
-                (d.site_status === "aceita"
-                  ? '<button class="fx-btn" onclick="fotoPublicar(\''+d.id+'\')">Publicar</button>'
-                  : '<button class="fx-btn fx-aceitar" onclick="fotoAceitar(\''+d.id+'\')">Aceitar</button>') +
-                '<button class="fx-btn fx-excluir" onclick="excluirFoto(\''+d.id+'\')">Excluir</button></div>';
-      }
+      const capa = status !== "publicada"
+        ? '<button class="fx-btn fx-largo fx-capa" disabled title="Publique a foto para poder usar como capa"><i class="fa fa-crop-simple"></i> Usar como capa</button>'
+        : d.site_capa
+          ? '<button class="fx-btn fx-largo fx-capa fx-capa-on" disabled><i class="fa fa-crop-simple"></i> Foto usada como capa</button>'
+          : '<button class="fx-btn fx-largo fx-capa" onclick="fotoCapa(\''+d.id+'\')"><i class="fa fa-crop-simple"></i> Usar como capa</button>';
+      acoes = capa +
+        '<div class="fx-linha">' +
+          '<button class="fx-btn fx-publicar" '+(status==="publicada"?'disabled':'')+' onclick="fotoPublicar(\''+d.id+'\')">Publicar</button>' +
+          '<button class="fx-btn fx-guardar" '+(status==="aceita"?'disabled':'')+' onclick="fotoGuardar(\''+d.id+'\')">Guardar</button>' +
+          '<button class="fx-btn fx-excluir" onclick="excluirFoto(\''+d.id+'\')">Excluir</button>' +
+        '</div>';
     } else {
       acoes = '<div class="fx-linha"><button class="fx-btn fx-excluir" onclick="excluirFoto(\''+d.id+'\')">Excluir</button></div>';
     }
     return '<div class="foto-card" id="foto-'+d.id+'">'+
       '<span class="foto-status '+st.cls+'">'+st.txt+'</span>'+
       '<img src="'+d.url+'" alt="" onclick="abrirArquivo(\''+d.url+'\',\'Foto\')">'+
-      '<div class="foto-card-info">'+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div>'+
+      '<div class="foto-card-info" title="'+nome+'">'+nome+'<br>'+new Date(d.created_at).toLocaleDateString('pt-BR')+'</div>'+
       '<div class="foto-acoes">'+acoes+'</div>'+
     '</div>';
   }).join("") + '</div>';
@@ -1464,7 +1470,7 @@ async function fotoPublicar(id) {
 }
 async function fotoGuardar(id) {
   const d = fotosCache.find(x => x.id === id); if (!d) return;
-  if (!confirm("Tirar esta foto do catálogo? Ela continua guardada aqui no cadastro.")) return;
+  if (d.site_status === "publicada" && !confirm("Tirar esta foto do catálogo? Ela continua guardada aqui no cadastro.")) return;
   const ok = await fotoAtualizar(id, {site_status: "aceita", site_path: null, site_capa: false}, "Erro ao guardar");
   if (ok && d.site_path) await client.storage.from("loja-catalogo").remove([d.site_path]);
   carregarFotos(cpfAtual);

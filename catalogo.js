@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
     const cfg = cfgResp.ok ? (await cfgResp.json())[0] : null;
 
     if (cfg) {
-      const url = origem + "/catalogo";
+      const url = origem + (String(host).startsWith("catalogo.") ? "/" : "/catalogo");
       const img = cfg.og_imagem_path
         ? SUPABASE_URL + "/storage/v1/object/public/loja-catalogo/" + cfg.og_imagem_path.split("/").map(encodeURIComponent).join("/")
         : "";

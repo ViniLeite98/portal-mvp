@@ -6,9 +6,18 @@
 <title>Catálogo | Hara Spa</title>
 <meta name="description" content="Conheça o portfólio completo da nossa equipe.">
 <meta name="theme-color" content="#050814">
+<!--OG-->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Catálogo Hara Spa">
+<meta property="og:description" content="Conheça o portfólio completo das nossas terapeutas.">
+<meta name="twitter:card" content="summary_large_image">
+<!--/OG-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- Vercel Web Analytics: conta visitas (ativar em vercel.com → projeto → Analytics) -->
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="assets/js/supabase.js"></script>
 <style>
@@ -180,6 +189,35 @@ label.campo input:focus,label.campo textarea:focus{outline:none;border-color:rgb
 .fb.capa-on{opacity:1;background:#2a2410;border-color:#3f3514;color:#fbbf24}
 .fcard.ocupado{opacity:.5;pointer-events:none}
 .msg-adm{color:var(--muted);font-size:14px;padding:30px 0}
+.logo img{height:30px;width:auto;display:block}
+.cfg{background:#06101a;border:1px solid #13202e;border-radius:16px;padding:22px 22px 20px;margin-bottom:22px}
+.cfg-cab{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.cfg-cab h4{font-family:var(--serif);font-weight:400;font-size:20px;margin:0;display:flex;align-items:center;gap:10px}
+.cfg-cab h4 i{font-size:14px;color:var(--muted)}
+.cfg-cab .fb{flex:none;margin-left:auto;padding:8px 14px;background:transparent;border-color:transparent;font-size:14px}
+.cfg-cab .fb:hover{background:#0f172a}
+.cfg-linhas{display:grid;grid-template-columns:110px 1fr;gap:12px 20px;align-items:center}
+.cfg-linhas .k{font-size:12px;letter-spacing:.08em;color:var(--dim);text-transform:uppercase}
+.cfg-linhas .v{font-size:15px;color:var(--ink)}
+.cfg-linhas .v.serif{font-family:var(--serif);font-size:21px}
+.cfg-linhas input,.cfg-linhas textarea{width:100%;font:15px var(--sans);padding:10px 12px;border-radius:9px;border:1px solid var(--line2);background:#070c1a;color:var(--ink);resize:vertical}
+.cfg-linhas input:focus,.cfg-linhas textarea:focus{outline:none;border-color:rgba(42,163,216,.6)}
+.cfg-rod{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.cfg-rod .fb{flex:none;padding:9px 18px}
+.cfg-rod .fb.ok{background:#e8ebf2;color:#0b1020;border-color:#e8ebf2}
+.cfg-logo{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo-box{width:96px;height:56px;border-radius:10px;background:#0b1424;border:1px solid #13202e;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.logo-box img{max-width:84px;max-height:44px}
+.logo-box span{font-family:var(--serif);font-size:15px;letter-spacing:.06em;background:#0d0f2a;padding:12px 8px}
+.btn-up{position:relative;display:inline-flex;align-items:center;gap:9px;padding:9px 14px;border-radius:8px;background:#0b1424;border:1px solid #13202e;color:var(--ink);font:500 14px var(--sans);cursor:pointer;overflow:hidden}
+.btn-up:hover{background:#0f1b30}
+.btn-up input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.dica{font-size:12px;color:var(--dim);margin-top:6px}
+.og-img{width:44px;height:44px;border-radius:6px;object-fit:cover;border:1px solid var(--line2);background:#0d1426}
+.lista-cab{display:flex;align-items:baseline;justify-content:space-between;margin:34px 0 16px}
+.lista-cab h4{font-family:var(--serif);font-weight:400;font-size:24px;margin:0}
+.lista-cab span{font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+@media (max-width:640px){ .cfg-linhas{grid-template-columns:1fr;gap:4px} .cfg-linhas .k{margin-top:8px} }
 
 footer{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;color:var(--dim);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
 
@@ -235,7 +273,7 @@ footer{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;co
 </section>
 
 <section class="capa" id="capa">
-  <p class="eyebrow">Catálogo</p>
+  <p class="eyebrow" id="eyebrowCapa">Catálogo</p>
   <h1 id="tituloCapa">HARA SPA</h1>
   <div class="traco"></div>
   <p id="subtituloCapa">Conheça o portfólio completo da nossa equipe</p>
@@ -325,6 +363,23 @@ if (CONFIG.linkSessoes){
 }
 
 function esc(s){ var d=document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+
+// ── Textos e logo vindos do banco (editáveis no painel admin) ──
+var siteCfg = null;
+function aplicarConfig(c){
+  siteCfg = c;
+  document.getElementById("eyebrowCapa").textContent = c.eyebrow;
+  document.getElementById("tituloCapa").textContent = c.titulo;
+  document.getElementById("subtituloCapa").textContent = c.slogan;
+  document.getElementById("rodape").textContent = "© " + new Date().getFullYear() + " " + c.titulo;
+  document.title = c.eyebrow + " | " + c.titulo;
+  var logo = document.getElementById("logo");
+  logo.innerHTML = c.logo_path ? '<img src="' + esc(urlCatalogo(c.logo_path)) + '" alt="' + esc(c.titulo) + '">' : "HARA";
+}
+async function carregarConfig(){
+  var r = await client.from("catalogo_config").select("*").eq("id", 1).maybeSingle();
+  if (r.data) aplicarConfig(r.data);
+}
 function urlCatalogo(path){ return client.storage.from(BUCKET_CATALOGO).getPublicUrl(path).data.publicUrl; }
 
 // ── Profissionais (fotos publicadas na aba Fotos do cadastro) ──────────────
@@ -586,8 +641,9 @@ function renderAdmin(){
     document.getElementById("detUpload").onchange = function(){ subirFotos(cpf, this.files); };
     return;
   }
-  if (!adm.terapeutas.length){ area.innerHTML = '<div class="msg-adm">Nenhuma terapeuta ativa.</div>'; return; }
-  area.innerHTML = '<div class="lista-ter">' + adm.terapeutas.map(function(t){
+  var topo = htmlConfig() + '<div class="lista-cab"><h4>Terapeutas cadastradas</h4><span>' + adm.terapeutas.length + (adm.terapeutas.length === 1 ? ' terapeuta' : ' terapeutas') + '</span></div>';
+  if (!adm.terapeutas.length){ area.innerHTML = topo + '<div class="msg-adm">Nenhuma terapeuta ativa.</div>'; ligarConfig(); return; }
+  area.innerHTML = topo + '<div class="lista-ter">' + adm.terapeutas.map(function(t){
     var fs = adm.fotos.filter(function(x){ return x.equipe_id === t.cpf; });
     var pub = fs.filter(function(x){ return x.site_status === "publicada"; });
     var nP = fs.filter(function(x){ return (x.site_status || "pendente") === "pendente"; }).length;
@@ -596,7 +652,111 @@ function renderAdmin(){
       '<div class="tx"><b>' + esc(t.nome_profissional || "Sem nome") + '</b><div class="cont">' + pub.length + ' publicada' + (pub.length === 1 ? '' : 's') + ' · ' + fs.length + ' no total' +
       (nP ? ' · <span class="pend">' + nP + ' para revisar</span>' : '') + '</div></div></div>';
   }).join("") + '</div>';
+  ligarConfig();
 }
+
+// ── Cards de configuração do site ──
+var editando = null; // "textos" | "share"
+function htmlConfig(){
+  var c = siteCfg || {};
+  var logo = c.logo_path ? '<img src="' + esc(urlCatalogo(c.logo_path)) + '" alt="">' : '<span>HARA</span>';
+  var ogImg = c.og_imagem_path ? '<img class="og-img" src="' + esc(urlCatalogo(c.og_imagem_path)) + '" alt="">' : '<span class="dica" style="margin:0">Sem imagem (usa só o texto)</span>';
+  var h = '<div class="cfg"><div class="cfg-cab"><h4><i class="fa-regular fa-image"></i> Logo do site</h4></div>' +
+    '<div class="cfg-logo"><div class="logo-box">' + logo + '</div><div>' +
+    '<label class="btn-up"><i class="fa-solid fa-arrow-up-from-bracket"></i> Substituir logo<input type="file" id="cfgLogo" accept="image/png,image/jpeg,image/webp,image/svg+xml"></label>' +
+    (c.logo_path ? ' <button class="fb" id="cfgLogoTirar" style="flex:none;display:inline-flex;padding:9px 12px;margin-left:6px">Voltar ao texto</button>' : '') +
+    '<div class="dica">PNG, JPG ou SVG recomendado</div></div></div></div>';
+
+  if (editando === "textos"){
+    h += '<div class="cfg"><div class="cfg-cab"><h4><i class="fa-solid fa-pen"></i> Textos da galeria</h4></div><div class="cfg-linhas">' +
+      '<span class="k">Subtítulo</span><input id="cfgEyebrow" maxlength="40" value="' + esc(c.eyebrow) + '">' +
+      '<span class="k">Título</span><input id="cfgTitulo" maxlength="60" value="' + esc(c.titulo) + '">' +
+      '<span class="k">Slogan</span><input id="cfgSlogan" maxlength="160" value="' + esc(c.slogan) + '">' +
+      '</div><div class="cfg-rod"><button class="fb" data-cfg="cancelar">Cancelar</button><button class="fb ok" data-cfg="salvarTextos">Salvar</button></div></div>';
+  } else {
+    h += '<div class="cfg"><div class="cfg-cab"><h4><i class="fa-solid fa-pen"></i> Textos da galeria</h4><button class="fb" data-cfg="editarTextos"><i class="fa-solid fa-pen"></i> Editar</button></div><div class="cfg-linhas">' +
+      '<span class="k">Subtítulo</span><span class="v">' + esc(c.eyebrow) + '</span>' +
+      '<span class="k">Título</span><span class="v serif">' + esc(c.titulo) + '</span>' +
+      '<span class="k">Slogan</span><span class="v">' + esc(c.slogan) + '</span></div></div>';
+  }
+
+  if (editando === "share"){
+    h += '<div class="cfg"><div class="cfg-cab"><h4><i class="fa-solid fa-arrow-right"></i> Preview de partilha (WhatsApp / redes sociais)</h4></div><div class="cfg-linhas">' +
+      '<span class="k">Título</span><input id="cfgOgTitulo" maxlength="80" value="' + esc(c.og_titulo) + '">' +
+      '<span class="k">Descrição</span><textarea id="cfgOgDesc" rows="2" maxlength="200">' + esc(c.og_descricao) + '</textarea>' +
+      '<span class="k">Imagem</span><div class="cfg-logo">' + ogImg +
+        '<label class="btn-up"><i class="fa-solid fa-arrow-up-from-bracket"></i> ' + (c.og_imagem_path ? 'Trocar' : 'Escolher') + ' imagem<input type="file" id="cfgOgImg" accept="image/png,image/jpeg,image/webp"></label>' +
+        (c.og_imagem_path ? '<button class="fb" data-cfg="tirarOg" style="flex:none;padding:9px 12px">Remover</button>' : '') + '</div>' +
+      '</div><div class="dica" style="margin-top:12px">Vale para o link <b>sistemahara.com/catalogo</b>. WhatsApp e Instagram guardam o preview por um tempo; mudanças podem demorar a aparecer em links já enviados.</div>' +
+      '<div class="cfg-rod"><button class="fb" data-cfg="cancelar">Cancelar</button><button class="fb ok" data-cfg="salvarShare">Salvar</button></div></div>';
+  } else {
+    h += '<div class="cfg"><div class="cfg-cab"><h4><i class="fa-solid fa-arrow-right"></i> Preview de partilha (WhatsApp / redes sociais)</h4><button class="fb" data-cfg="editarShare"><i class="fa-solid fa-pen"></i> Editar</button></div><div class="cfg-linhas">' +
+      '<span class="k">Título</span><span class="v">' + esc(c.og_titulo) + '</span>' +
+      '<span class="k">Descrição</span><span class="v">' + esc(c.og_descricao) + '</span>' +
+      '<span class="k">Imagem</span><span>' + ogImg + '</span></div></div>';
+  }
+  return h;
+}
+async function salvarCfg(campos){
+  campos.atualizado_em = new Date().toISOString(); campos.atualizado_por = adm.sessao.user.id;
+  var r = await client.from("catalogo_config").update(campos).eq("id", 1).select().maybeSingle();
+  if (r.error){ alert("Não deu para salvar: " + r.error.message); return false; }
+  if (r.data) aplicarConfig(r.data);
+  return true;
+}
+async function subirImgSite(file, prefixo){
+  if (!file) return null;
+  if (file.size > 5 * 1024 * 1024){ alert("Imagem acima de 5 MB."); return null; }
+  var ext = file.type === "image/svg+xml" ? "svg" : (file.type.split("/")[1] || "png").replace("jpeg","jpg");
+  var caminho = "site/" + prefixo + "-" + uuid() + "." + ext;
+  var up = await client.storage.from(BUCKET_CATALOGO).upload(caminho, file, { contentType: file.type, upsert: false });
+  if (up.error){ alert("Não deu para enviar a imagem: " + up.error.message); return null; }
+  return caminho;
+}
+function ligarConfig(){
+  var lg = document.getElementById("cfgLogo");
+  if (lg) lg.onchange = async function(){
+    var antigo = siteCfg && siteCfg.logo_path;
+    var cam = await subirImgSite(this.files[0], "logo"); if (!cam) return;
+    if (await salvarCfg({ logo_path: cam }) && antigo) client.storage.from(BUCKET_CATALOGO).remove([antigo]);
+    renderAdmin();
+  };
+  var lt = document.getElementById("cfgLogoTirar");
+  if (lt) lt.onclick = async function(){
+    var antigo = siteCfg.logo_path;
+    if (await salvarCfg({ logo_path: null })) client.storage.from(BUCKET_CATALOGO).remove([antigo]);
+    renderAdmin();
+  };
+  var og = document.getElementById("cfgOgImg");
+  if (og) og.onchange = async function(){
+    var antigo = siteCfg && siteCfg.og_imagem_path;
+    var cam = await subirImgSite(this.files[0], "share"); if (!cam) return;
+    if (await salvarCfg({ og_imagem_path: cam }) && antigo) client.storage.from(BUCKET_CATALOGO).remove([antigo]);
+    renderAdmin();
+  };
+}
+document.getElementById("painelArea").addEventListener("click", async function(e){
+  var b = e.target.closest("button[data-cfg]"); if (!b) return;
+  var a = b.getAttribute("data-cfg");
+  if (a === "editarTextos"){ editando = "textos"; renderAdmin(); }
+  else if (a === "editarShare"){ editando = "share"; renderAdmin(); }
+  else if (a === "cancelar"){ editando = null; renderAdmin(); }
+  else if (a === "salvarTextos"){
+    var t = { eyebrow: document.getElementById("cfgEyebrow").value.trim(), titulo: document.getElementById("cfgTitulo").value.trim(), slogan: document.getElementById("cfgSlogan").value.trim() };
+    if (!t.eyebrow || !t.titulo || !t.slogan) return alert("Preencha os três campos.");
+    b.disabled = true; if (await salvarCfg(t)) editando = null; renderAdmin();
+  }
+  else if (a === "salvarShare"){
+    var o = { og_titulo: document.getElementById("cfgOgTitulo").value.trim(), og_descricao: document.getElementById("cfgOgDesc").value.trim() };
+    if (!o.og_titulo || !o.og_descricao) return alert("Preencha título e descrição.");
+    b.disabled = true; if (await salvarCfg(o)) editando = null; renderAdmin();
+  }
+  else if (a === "tirarOg"){
+    var antigo = siteCfg.og_imagem_path;
+    if (await salvarCfg({ og_imagem_path: null })) client.storage.from(BUCKET_CATALOGO).remove([antigo]);
+    renderAdmin();
+  }
+});
 
 function cardFoto(x, mostrarNome){
   var st = x.site_status || "pendente", selo = SELO[st];
@@ -681,6 +841,7 @@ async function subirFotos(cpf, files){
   await carregarAdmin();
 }
 
+carregarConfig();
 carregarCatalogo();
 iniciarAcesso();
 if (CONFIG.galeriaClientes){

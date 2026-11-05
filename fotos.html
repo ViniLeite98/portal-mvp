@@ -626,6 +626,29 @@ async function carregarSessoesPublicas(){
   if (r.error){ lista.innerHTML = '<div class="ss-vazio">Não foi possível carregar as sessões agora. Tente de novo em instantes.</div>'; sessoesCarregadas = false; return; }
   var itens = r.data || [];
   if (!itens.length){ lista.innerHTML = '<div class="ss-vazio">' + t('em_breve') + '</div>'; return; }
+  desenharSessoes(itens);
+  // Sessão sem tradução salva? Traduz no navegador do visitante (e guarda) e redesenha.
+  if (idioma !== "pt") traduzirFaltantes(itens).then(function(mudou){ if (mudou) desenharSessoes(itens); });
+}
+async function traduzirFaltantes(itens){
+  var mudou = false, alvo = idioma;
+  for (var i = 0; i < itens.length; i++){
+    for (var c of ["titulo","chamada","descricao"]){
+      var x = itens[i];
+      if (!x[c] || x[c + "_" + alvo]) continue;
+      var chaveCache = "hara_tr_" + alvo + "_" + x.id + "_" + c + "_" + x[c].length;
+      var guardado = null; try { guardado = localStorage.getItem(chaveCache); } catch (e) {}
+      if (guardado){ x[c + "_" + alvo] = guardado; mudou = true; continue; }
+      try {
+        var tr = await traduzir(x[c], alvo);
+        if (tr && idioma === alvo){ x[c + "_" + alvo] = tr; mudou = true; try { localStorage.setItem(chaveCache, tr); } catch (e) {} }
+      } catch (e) {}
+    }
+  }
+  return mudou && idioma === alvo;
+}
+function desenharSessoes(itens){
+  var lista = document.getElementById("ssLista");
   lista.innerHTML = itens.map(function(x){
     var precos = x.precos || [];
     var tit = campoIdioma(x, "titulo"), cha = campoIdioma(x, "chamada"), des = campoIdioma(x, "descricao");

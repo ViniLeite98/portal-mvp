@@ -363,7 +363,17 @@ function buscarPerfil(uid,tentativas,cb){
   });
 }
 
-function irPara(role){window.location.href="atendimentos.html";}
+// ?volta=pagina.html → depois de entrar, volta para a página de onde a pessoa veio (ex.: catálogo)
+(function(){
+  try{
+    var v=new URLSearchParams(location.search).get("volta");
+    if(v&&/^[a-z0-9_\-]+\.html(#[a-z0-9_\-]*)?$/i.test(v)) sessionStorage.setItem("hara_volta",v);
+  }catch(e){}
+})();
+function irPara(role){
+  var v=null; try{ v=sessionStorage.getItem("hara_volta"); sessionStorage.removeItem("hara_volta"); }catch(e){}
+  window.location.href = v || "atendimentos.html";
+}
 
 // ─── Registro de login ───────────────────────────────────────────────────────
 

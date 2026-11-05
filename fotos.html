@@ -633,7 +633,7 @@ async function carregarSessoesPublicas(){
       (cha ? '<p class="chamada">' + esc(cha) + '</p>' : '') +
       (des ? '<p class="desc">' + esc(des) + '</p>' : '') +
       (precos.length ? '<div class="ss-precos"><div class="tit">' + t('duracao') + '</div>' +
-        precos.map(function(p){ return '<div class="ss-preco"><span>' + p.tempo + 'min</span><b>' + brlPub(p.valor) + '</b></div>'; }).join("") + '</div>' : '') +
+        precos.map(function(p){ return '<div class="ss-preco"><span>' + esc(p.rotulo || (p.tempo + 'min')) + '</span><b>' + brlPub(p.valor) + '</b></div>'; }).join("") + '</div>' : '') +
     '</article>';
   }).join("");
 }
@@ -900,12 +900,15 @@ async function renderSessoes(){
     var nomeOrig = g.grupo + (g.subgrupo ? " · " + g.subgrupo : "");
     var t = g.txt, vis = !!(t && t.visivel);
     var precos = g.precos.length ? g.precos.map(function(p){ return p.tempo + "min " + brlAdm(p.valor); }).join(" · ") : "sem valor cadastrado";
+    var precosSite = g.txt && g.txt.precos_site && g.txt.precos_site.length ? "No site: " + g.txt.precos_site.map(function(p){ return p.rotulo + " " + brlAdm(p.valor); }).join(" · ") : "";
     if (ses.editando === g.k){
       return '<div class="ses on"><div class="ses-cab"><span class="nome">' + esc(nomeOrig) + '</span><span class="pr">' + esc(precos) + '</span></div>' +
         '<div class="cfg-linhas" style="margin-top:14px">' +
         '<span class="k">Título</span><input id="sesTit" maxlength="80" value="' + esc(t ? t.titulo : g.grupo) + '">' +
         '<span class="k">Chamada</span><input id="sesCha" maxlength="160" placeholder="frase curta em itálico" value="' + esc(t ? t.chamada : "") + '">' +
         '<span class="k">Descrição</span><textarea id="sesDes" rows="7" maxlength="3000">' + esc(t ? t.descricao : "") + '</textarea>' +
+        '<span class="k">Preços no site</span><div><textarea id="sesPre" rows="4" placeholder="60min = 380\n90min = 480\n120min = 690">' + esc(precosParaTexto(t && t.precos_site)) + '</textarea>' +
+          '<div class="dica">Um por linha: <b>nome = valor</b>. Vazio = usa os valores do cadastro de Serviços (' + esc(precos) + ').</div></div>' +
         '</div>' +
         ['en','es'].map(function(l){
           var nomeL = l === "en" ? "Inglês" : "Espanhol";
@@ -925,7 +928,7 @@ async function renderSessoes(){
         (vis ? '<button class="fb" data-ses="subir" data-k="' + esc(g.k) + '" title="Subir"><i class="fa-solid fa-arrow-up"></i></button><button class="fb" data-ses="descer" data-k="' + esc(g.k) + '" title="Descer"><i class="fa-solid fa-arrow-down"></i></button>' : '') +
         '<button class="fb" data-ses="editar" data-k="' + esc(g.k) + '"><i class="fa-solid fa-pen"></i> Textos</button>' +
         '<label class="tog"><input type="checkbox" data-ses="vis" data-k="' + esc(g.k) + '"' + (vis ? ' checked' : '') + '> Mostrar no site</label>' +
-      '</div><span class="pr">' + esc(precos) + '</span></div>' +
+      '</div><span class="pr">' + esc(precosSite || precos) + (precosSite ? ' <span style="color:var(--dim)">(sistema: ' + esc(precos) + ')</span>' : '') + '</span></div>' +
       (t && (t.chamada || t.descricao) ? '<div class="ses-txt">' + (t.chamada ? '<i>' + esc(t.chamada) + '</i> ' : '') + (t.descricao ? esc(t.descricao.slice(0, 140)) + (t.descricao.length > 140 ? '…' : '') : '') + '</div>' : '') +
     '</div>';
   }).join("");
@@ -981,6 +984,21 @@ async function preencherTraducoes(forcar){
   }
   if (falhou) alert("Não consegui traduzir tudo agora. Os campos em branco podem ser preenchidos à mão ou com \"Traduzir de novo\".");
 }
+function precosParaTexto(lista){
+  return (lista || []).map(function(p){ return (p.rotulo || (p.tempo + "min")) + " = " + String(p.valor).replace(".", ","); }).join("\n");
+}
+function textoParaPrecos(txt){
+  var linhas = (txt || "").split(/\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+  if (!linhas.length) return null;
+  var out = [];
+  for (var i = 0; i < linhas.length; i++){
+    var m = linhas[i].match(/^(.+?)\s*[=:]\s*R?\$?\s*([\d.,]+)$/);
+    if (!m) throw new Error('Linha de preço inválida: "' + linhas[i] + '". Use o formato 60min = 380');
+    var v = m[2].replace(/\./g, "").replace(",", ".");
+    out.push({ rotulo: m[1].trim(), valor: Number(v) });
+  }
+  return out;
+}
 async function salvarSessao(g, campos){
   campos.atualizado_em = new Date().toISOString();
   var r = g.txt ? await client.from("catalogo_sessao").update(campos).eq("id", g.txt.id)
@@ -1006,6 +1024,8 @@ document.getElementById("painelArea").addEventListener("click", async function(e
     await preencherTraducoes(false);
     b.textContent = "Salvando…";
     var dados = { titulo:tit, chamada:document.getElementById("sesCha").value.trim() || null, descricao:document.getElementById("sesDes").value.trim() || null };
+    try { dados.precos_site = textoParaPrecos(document.getElementById("sesPre").value); }
+    catch (err) { alert(err.message); b.disabled = false; b.textContent = "Salvar"; return; }
     ["en","es"].forEach(function(l){
       ["titulo","chamada","descricao"].forEach(function(c){
         var el = document.getElementById("ses" + { titulo:"Tit", chamada:"Cha", descricao:"Des" }[c] + "_" + l);

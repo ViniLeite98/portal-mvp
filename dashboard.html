@@ -1004,6 +1004,10 @@ const AN = (() => {
   const ABAS = ["atend","prof","fin","exec","aus"];
   let demo = false, carregado = false, abaAtual = "atend";
   let atds = [], despesas = [], profs = [], servs = [], folhaFix = [], sols = [], nomesTodos = {};
+  // ── Histórico importado do sistema anterior (tabela historico_agendamento) ──
+  // Antes desta data o dashboard usa o HISTÓRICO; a partir dela, os atendimentos do sistema novo.
+  // (assim o mesmo atendimento não conta duas vezes). Mude quando o sistema novo virar a fonte oficial.
+  const HIST_CORTE = "2026-11-07";
   let periodo = null;      // {ini, fim, pIni, pFim} (p = período anterior, para comparar)
   const st = { limCli: 25, limProf: 10, limServ: 10 };
 
@@ -1088,7 +1092,7 @@ const AN = (() => {
     try {
       const rows = await buscarTudo(() => {
         let q = client.from("atendimento").select("id,data,hora_inicio,hora_fim,status,valor_final,comissao_total,terapeuta1_cpf,terapeuta2_cpf,cliente_id,servico_id,finalizado_em,forma_pagamento,forma_pgto_1,valor_pgto_1,forma_pgto_2,valor_pgto_2,cliente:cliente_id(nome),servico:servico_id(grupo,subgrupo,tempo)").order("data").order("id");
-        if (de) q = q.gte("data", de); if (ate) q = q.lte("data", ate);
+        q = q.gte("data", de && de > HIST_CORTE ? de : HIST_CORTE); if (ate) q = q.lte("data", ate);
         return q;
       });
       atds = rows.map(a => ({
@@ -1101,6 +1105,43 @@ const AN = (() => {
         formas: [[a.forma_pgto_1, a.valor_pgto_1], [a.forma_pgto_2, a.valor_pgto_2]].filter(x => x[0] && Number(x[1]) > 0).map(x => ({ forma: x[0], valor: Number(x[1]) }))
           .concat(!a.forma_pgto_1 && a.forma_pagamento ? [{ forma: a.forma_pagamento, valor: Number(a.valor_final || 0) }] : [])
       }));
+      // histórico (só admin/apoio conseguem ler; se não tiver acesso, segue só com o sistema)
+      {
+        try {
+          const hojeH = iso(new Date());
+          const hr = (de && de >= HIST_CORTE) ? [] : await buscarTudo(() => {
+            let q = client.from("historico_agendamento").select("id,data,hora_inicio,hora_fim,profissional,cliente,servico,preco,situacao,comissao_est,terapeuta_cpf,cliente_id,servico_id,serv:servico_id(grupo,subgrupo,tempo)").lt("data", HIST_CORTE).order("data").order("id");
+            if (de) q = q.gte("data", de); if (ate) q = q.lte("data", ate);
+            return q;
+          });
+          const normH = t => (t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ").trim();
+          hr.forEach(h => {
+            const pid = h.terapeuta_cpf || ("h:" + normH(h.profissional));
+            if (!h.terapeuta_cpf && !profs.some(p => p.cpf === pid)) { profs.push({ cpf: pid, nome: (h.profissional || "—").trim(), ativo: false, hist: true }); nomesTodos[pid] = (h.profissional || "—").trim(); }
+          });
+          atds = hr.map(h => {
+            const hi = (h.hora_inicio || "").slice(0, 5), hf = (h.hora_fim || "").slice(0, 5);
+            const mins = t => parseInt(t) * 60 + parseInt(t.slice(3, 5));
+            let dur = hi && hf ? mins(hf) - mins(hi) : 60; if (dur <= 0) dur += 1440;
+            const naoVeio = /n[aã]o comparec/i.test(h.situacao || "");
+            return {
+              id: "h" + h.id, data: h.data, hora: hi, hist: true,
+              status: naoVeio ? "Cancelado" : (h.data < hojeH ? "Faturado" : "Agendado"),
+              dur, valor: Number(h.preco || 0), comissao: Number(h.comissao_est || 0),
+              t1: h.terapeuta_cpf || ("h:" + normH(h.profissional)), t2: null,
+              cliId: h.cliente_id != null ? h.cliente_id : (h.cliente ? "h:" + normH(h.cliente) : null), cliNome: h.cliente || "Sem cliente",
+              servId: h.servico_id || ("h:" + normH(h.servico)),
+              servNome: h.serv ? [h.serv.grupo, h.serv.tempo ? h.serv.tempo + "min" : null, h.serv.subgrupo].filter(Boolean).join(" ") : (h.servico || "Sem serviço"),
+              finalizado: h.data < hojeH, formas: []
+            };
+          }).concat(atds).sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora));
+        } catch (e) { console.warn("Histórico não carregado:", e); }
+      }
+      const temHist = atds.some(a => a.hist);
+      let av = document.getElementById("avisoHist");
+      if (!av){ av = document.createElement("span"); av.id = "avisoHist"; av.style.cssText = "font-size:11.5px;color:#9ca3af;align-self:center;margin-left:auto"; document.getElementById("anFiltros").appendChild(av); }
+      const ultDia = new Date(HIST_CORTE + "T12:00:00"); ultDia.setDate(ultDia.getDate() - 1);
+      av.textContent = temHist ? "Inclui histórico importado até " + ultDia.toLocaleDateString("pt-BR") + " · comissão do histórico estimada" : "";
       const dq = await buscarTudo(() => {
         let q = client.from("despesa").select("id,descricao,categoria,valor,data_vencimento,data_pagamento,status").order("id");
         return q;

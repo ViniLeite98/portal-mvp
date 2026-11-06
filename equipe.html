@@ -1499,6 +1499,29 @@ async function fotoMassa(acao) {
   fotosSelecionadas.clear();
   carregarFotos(cpfAtual);
 }
+// ── Reduz imagens antes de enviar (fotos de celular têm 3–10 MB) ──
+// Redimensiona para no máximo `maxLado` px e regrava em JPEG. SVG e imagens já pequenas passam direto.
+function prepararImagem(arquivo, maxLado, qualidade){
+  maxLado = maxLado || 2000; qualidade = qualidade || 0.85;
+  return new Promise(function(ok){
+    if (!arquivo || arquivo.type === "image/svg+xml") return ok(arquivo);
+    var url = URL.createObjectURL(arquivo), img = new Image();
+    img.onload = function(){
+      URL.revokeObjectURL(url);
+      var w = img.naturalWidth, h = img.naturalHeight, f = Math.min(1, maxLado / Math.max(w, h));
+      if (f === 1 && arquivo.size < 900 * 1024) return ok(arquivo);
+      var c = document.createElement("canvas"); c.width = Math.round(w * f); c.height = Math.round(h * f);
+      var ctx = c.getContext("2d");
+      if (arquivo.type !== "image/png"){ ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); }
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      var tipo = arquivo.type === "image/png" ? "image/png" : "image/jpeg";
+      c.toBlob(function(b){ ok(b && b.size < arquivo.size ? b : arquivo); }, tipo, qualidade);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); ok(arquivo); }; // formato que o navegador não abre (ex.: HEIC): envia como está
+    img.src = url;
+  });
+}
+function extDe(blob){ return blob.type === "image/svg+xml" ? "svg" : blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg"; }
 async function fotoAtualizar(id, campos, msgErro) {
   const {error} = await client.from("documentos").update(campos).eq("id", id);
   if (error) { alert(msgErro + ": " + error.message); return false; }
@@ -1511,11 +1534,12 @@ async function fotoPublicar(id, emMassa) {
   const d = fotosCache.find(x => x.id === id); if (!d) return;
   const origem = caminhoDocumento(d.url);
   if (!origem) { alert("Não encontrei o arquivo desta foto."); return; }
-  const ext = (origem.split(".").pop() || "jpg").toLowerCase();
-  const destino = "equipe/" + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "_" + Math.random().toString(36).slice(2)) + "." + ext;
+  const uid = (crypto.randomUUID ? crypto.randomUUID() : Date.now() + "_" + Math.random().toString(36).slice(2));
   const card = document.getElementById("foto-" + id); if (card) card.style.opacity = ".5";
-  const {data: blob, error: dlErr} = await client.storage.from("documentos").download(origem);
+  const {data: original, error: dlErr} = await client.storage.from("documentos").download(origem);
   if (dlErr) { if (card) card.style.opacity = ""; alert("Erro ao ler a foto: " + dlErr.message); return; }
+  const blob = await prepararImagem(original, 2000, 0.85); // cópia do site reduzida (carrega rápido no celular)
+  const destino = "equipe/" + uid + "." + extDe(blob);
   const {error: upErr} = await client.storage.from("loja-catalogo").upload(destino, blob, {contentType: blob.type || "image/jpeg", upsert: false});
   if (upErr) { if (card) card.style.opacity = ""; alert("Erro ao publicar: " + upErr.message); return; }
   const jaTemCapa = fotosCache.some(x => x.site_status === "publicada" && x.site_capa);

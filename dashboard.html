@@ -321,7 +321,8 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
 .pf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;padding:18px 28px 32px;}
 .pf{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
 .pf-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.pf-av{width:38px;height:38px;border-radius:10px;background:#1f2937;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;}
+.pf-av{width:38px;height:38px;border-radius:10px;background:#1f2937;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;overflow:hidden;}
+.pf-av img{width:100%;height:100%;object-fit:cover;object-position:center 20%;display:block;}
 .pf-nome{font-weight:700;font-size:15px;color:var(--txt);}
 .pf-pos{font-size:11px;color:var(--txt3);}
 .pf-kp{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;}
@@ -1326,7 +1327,7 @@ const AN = (() => {
     document.getElementById("kpCancS").textContent = `${N(totC)} de ${N(totAt + totC)} agendamentos`;
     document.getElementById("pfGrid").innerHTML = lista.length ? lista.map((o, i) => {
       const h = top(o.horas), d = top(o.dias);
-      return `<div class="pf" onclick="AN.abrirProf('${esc(o.cpf)}')"><div class="pf-top"><div class="pf-av">${esc(iniciaisN(o.n))}</div><div><div class="pf-nome">${esc(o.n)}</div><div class="pf-pos">${i + 1}º em atendimentos · toque para ver tudo</div></div></div>
+      return `<div class="pf" onclick="AN.abrirProf('${esc(o.cpf)}')"><div class="pf-top"><div class="pf-av">${avProf(o.cpf, o.n)}</div><div><div class="pf-nome">${esc(o.n)}</div><div class="pf-pos">${i + 1}º em atendimentos · toque para ver tudo</div></div></div>
         <div class="pf-kp"><div><span>Atend.</span><b>${N(o.at)}</b></div><div><span>Receita</span><b>${R(o.rec)}</b></div><div><span>Comissão</span><b>${R(o.com)}</b></div></div>
         <div class="pf-l"><span>Ticket médio</span><b>${o.at ? R(o.rec / o.at) : "—"}</b></div>
         <div class="pf-l"><span>Clientes · retornos</span><b>${N(Object.keys(o.cli).length)} · ${N(o.ret)} (${o.at ? P(o.ret / o.at) : "0%"})</b></div>
@@ -1335,7 +1336,22 @@ const AN = (() => {
         <div class="pf-l"><span>Serviço mais feito</span><b style="max-width:60%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(top(o.serv) || "—")}</b></div></div>`;
     }).join("") : '<div class="an-card" style="padding:28px;text-align:center;color:#9ca3af">Nenhum atendimento no período.</div>';
   }
-  const iniciaisN = n => (n || "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  var iniciaisN = n => (n || "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
+  // Foto de capa do catálogo (a mesma do site); sem foto publicada, fica a inicial
+  var fotosProf = null;
+  async function carregarFotosProf() {
+    fotosProf = {};
+    const r = await client.from("documentos").select("equipe_id,site_path,site_capa").eq("tipo", "Foto").eq("site_status", "publicada").not("site_path", "is", null);
+    (r.data || []).forEach(d => {
+      if (!fotosProf[d.equipe_id] || d.site_capa) fotosProf[d.equipe_id] = client.storage.from("loja-catalogo").getPublicUrl(d.site_path).data.publicUrl;
+    });
+    if (Object.keys(fotosProf).length) render();
+  }
+  function avProf(cpf, nome) {
+    if (fotosProf === null) carregarFotosProf();
+    const u = fotosProf && fotosProf[cpf];
+    return u ? `<img src="${esc(u)}" alt="" loading="lazy">` : esc(iniciaisN(nome));
+  }
   function abrirProf(cpf) { const s = document.getElementById("fProf"); s.value = cpf; render(); window.scrollTo(0, 0); }
   function voltarProf() { document.getElementById("fProf").value = ""; render(); }
 
@@ -1388,7 +1404,7 @@ const AN = (() => {
       <div class="dias-x">${ultDias.map(d => `<span>${DS[new Date(d + "T12:00:00").getDay()]}<br>${d.slice(8)}</span>`).join("")}</div></div>`
       : '<div style="color:#9ca3af;font-size:13px;padding:14px 0;text-align:center">Nenhum dia trabalhado no período.</div>';
 
-    box.innerHTML = `<div class="pd-cab"><div class="pf-av">${esc(iniciaisN(nomeProf(cpf)))}</div><div><h2>${esc(nomeProf(cpf))}</h2><small>${primeiro ? "Primeiro atendimento em " + dm(primeiro) + "/" + primeiro.slice(0, 4) : "Sem atendimentos registrados"}</small></div>
+    box.innerHTML = `<div class="pd-cab"><div class="pf-av">${avProf(cpf, nomeProf(cpf))}</div><div><h2>${esc(nomeProf(cpf))}</h2><small>${primeiro ? "Primeiro atendimento em " + dm(primeiro) + "/" + primeiro.slice(0, 4) : "Sem atendimentos registrados"}</small></div>
         <button class="pd-voltar" onclick="AN.voltarProf()"><i class="fa fa-arrow-left"></i> Todas as profissionais</button></div>
       <div class="an-kpis k6b">${kp("Atendimentos", N(L.length), `${N(real.length)} realizados`)}${kp("Retornos", N(ret), L.length ? P(ret / L.length) + " dos atendimentos" : "")}
         ${kp("Ganho no período", R(comReal), com > comReal ? "+ " + R(com - comReal) + " previsto" : "comissão realizada")}${kp("Ganhos desde o início", R(ganhoTotal), primeiro ? "desde " + dm(primeiro) + "/" + primeiro.slice(0, 4) : "")}

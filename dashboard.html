@@ -256,6 +256,19 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
 .an{--s1:#2a78d6;--s2:#eb6834;--txt:#111827;--txt2:#6b7280;--txt3:#9ca3af;--grid:#eef0f3;--surf:#fff;}
 .an-filtros{display:flex;gap:8px;align-items:center;padding:12px 28px;background:#fff;border-bottom:1px solid #e5e7eb;flex-wrap:wrap;}
 .an-filtros select,.an-filtros input{padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;font-size:13px;font-weight:600;color:#374151;font-family:inherit;min-width:0;}
+.ms{position:relative;min-width:0;}
+.ms-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-width:170px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb;font:600 13px inherit;font-family:inherit;color:#374151;cursor:pointer;text-align:left;white-space:nowrap;}
+.ms-btn span{overflow:hidden;text-overflow:ellipsis;max-width:240px;}
+.ms-btn.sel{border-color:#93c5fd;background:#eff6ff;color:#1d4ed8;}
+.ms-btn i{font-size:10px;color:#9ca3af;}
+.ms-pan{display:none;position:absolute;z-index:60;top:calc(100% + 4px);left:0;min-width:260px;max-width:340px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.12);padding:8px;}
+.ms.aberto .ms-pan{display:block;}
+.ms-pan input[type=search]{width:100%;box-sizing:border-box;padding:7px 9px;border:1px solid #e5e7eb;border-radius:7px;font-size:13px;margin-bottom:6px;font-family:inherit;}
+.ms-lista{max-height:300px;overflow:auto;}
+.ms-op{display:flex;align-items:center;gap:8px;padding:6px 6px;border-radius:6px;font-size:13px;color:#374151;cursor:pointer;}
+.ms-op:hover{background:#f3f4f6;} .ms-op input{margin:0;accent-color:#2563eb;}
+.ms-rod{display:flex;justify-content:space-between;border-top:1px solid #f1f3f6;margin-top:6px;padding-top:6px;}
+.ms-rod button{border:none;background:none;color:#2563eb;font:600 12px inherit;font-family:inherit;cursor:pointer;padding:4px 6px;}
 .an-filtros .datas{display:none;gap:6px;align-items:center;}
 .an-filtros .datas.on{display:flex;}
 .an-demo-btn{margin-left:auto;background:#fff;border:1px dashed #9ca3af;color:#374151;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;gap:6px;align-items:center;}
@@ -378,6 +391,7 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
 @media (max-width:768px){
   .an-filtros{padding:10px 12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
   .an-filtros select,.an-filtros input{font-size:15px;padding:9px 8px;width:100%;}
+  .ms-btn{font-size:15px;padding:9px 8px;min-width:0;} .ms-pan{left:0;right:0;max-width:none;min-width:0;}
   .an-filtros .datas{grid-column:1/-1;} .an-filtros .datas input{flex:1;}
   .an-demo-btn{grid-column:1/-1;margin-left:0;justify-content:center;padding:10px;}
   .an-banner,.an-vazio{margin:10px 12px 0;}
@@ -431,14 +445,9 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
     <option value="tudo">Tudo</option>
     <option value="custom">Escolher datas…</option>
   </select>
-  <select id="fProf" onchange="AN.render()"><option value="">Todas as profissionais</option></select>
-  <select id="fServ" onchange="AN.render()"><option value="">Todos os serviços</option></select>
-  <select id="fSit" onchange="AN.render()">
-    <option value="validos">Sem cancelados</option>
-    <option value="realizados">Só realizados (baixa/faturado)</option>
-    <option value="todos">Todos, com cancelados</option>
-    <option value="cancelados">Só cancelados</option>
-  </select>
+  <div class="ms" id="fProf" data-todos="Todas as profissionais" data-um="profissional" data-uns="profissionais" data-busca="1"></div>
+  <div class="ms" id="fServ" data-todos="Todos os serviços" data-um="serviço" data-uns="serviços" data-busca="1"></div>
+  <div class="ms" id="fSit" data-todos="Todos, com cancelados"></div>
   <span class="datas" id="fDatas"><input type="date" id="fIni" onchange="AN.carregar()"><span style="color:#9ca3af">a</span><input type="date" id="fFim" onchange="AN.carregar()"></span>
   <button class="an-demo-btn" id="btnDemo" onclick="AN.alternarDemo()"><i class="fa fa-flask"></i> Ver com dados de exemplo</button>
 </div>
@@ -1000,6 +1009,51 @@ function limparFiltrosLogin(){
    na memória do navegador (nada é gravado no banco).
    ══════════════════════════════════════════════════════════════════════ */
 const AN = (() => {
+  // ── Filtros de múltipla escolha (profissionais, serviços, situação) ──
+  const MS = {};
+  const SIT_OPC = [["realizados", "Realizados (baixa/faturado)"], ["agendados", "Agendados (sem baixa)"], ["cancelados", "Cancelados"]];
+  function msMontar(id, opcoes, padrao) {
+    const el = document.getElementById(id), st = MS[id] ||= { sel: new Set(padrao || []), busca: "" };
+    st.opcoes = opcoes;
+    const validos = new Set(opcoes.map(o => o[0])); st.sel.forEach(v => { if (!validos.has(v)) st.sel.delete(v); });
+    if (!el.dataset.pronto) {
+      el.dataset.pronto = "1";
+      el.innerHTML = `<button type="button" class="ms-btn"><span></span><i class="fa fa-chevron-down"></i></button>
+        <div class="ms-pan">${el.dataset.busca ? '<input type="search" placeholder="Buscar…">' : ""}<div class="ms-lista"></div>
+        <div class="ms-rod"><button type="button" data-a="todos">Marcar todos</button><button type="button" data-a="limpar">Limpar</button></div></div>`;
+      el.querySelector(".ms-btn").onclick = e => { e.stopPropagation(); const ab = !el.classList.contains("aberto"); document.querySelectorAll(".ms.aberto").forEach(x => x.classList.remove("aberto")); el.classList.toggle("aberto", ab); const b = el.querySelector("input[type=search]"); if (ab && b) b.focus(); };
+      el.querySelector(".ms-pan").onclick = e => e.stopPropagation();
+      const b = el.querySelector("input[type=search]"); if (b) b.oninput = () => { st.busca = b.value; msLista(id); };
+      el.querySelector(".ms-lista").onchange = e => { const v = e.target.value; e.target.checked ? st.sel.add(v) : st.sel.delete(v); msRotulo(id); render(); };
+      el.querySelector(".ms-rod").onclick = e => { const a = e.target.dataset.a; if (!a) return;
+        if (a === "limpar") st.sel.clear(); else msVisiveis(id).forEach(o => st.sel.add(o[0]));
+        msLista(id); msRotulo(id); render(); };
+    }
+    msLista(id); msRotulo(id);
+  }
+  const normB = t => (t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  function msVisiveis(id) { const st = MS[id], q = normB(st.busca); return st.opcoes.filter(o => !q || normB(o[1]).includes(q)); }
+  function msLista(id) {
+    const st = MS[id], vis = msVisiveis(id);
+    document.querySelector(`#${id} .ms-lista`).innerHTML = vis.length ? vis.map(o => `<label class="ms-op"><input type="checkbox" value="${esc(o[0])}"${st.sel.has(o[0]) ? " checked" : ""}> ${esc(o[1])}</label>`).join("") : '<div style="color:#9ca3af;font-size:13px;padding:8px">Nada encontrado.</div>';
+  }
+  function msRotulo(id) {
+    const el = document.getElementById(id), st = MS[id], n = st.sel.size, d = el.dataset;
+    let t;
+    if (id === "fSit") {
+      const s = st.sel;
+      t = (!n || n === 3) ? "Todos, com cancelados" : (n === 2 && s.has("realizados") && s.has("agendados")) ? "Sem cancelados"
+        : n === 1 ? (s.has("realizados") ? "Só realizados" : s.has("agendados") ? "Só agendados" : "Só cancelados")
+        : SIT_OPC.filter(o => s.has(o[0])).map(o => o[1].split(" ")[0]).join(" + ");
+    } else t = !n ? d.todos : n === 1 ? (st.opcoes.find(o => st.sel.has(o[0])) || [, "1 " + d.um])[1] : n + " " + d.uns;
+    el.querySelector(".ms-btn span").textContent = t;
+    el.querySelector(".ms-btn").classList.toggle("sel", id === "fSit" ? !(n === 2 && st.sel.has("realizados") && st.sel.has("agendados")) : n > 0);
+  }
+  const msValor = id => MS[id] ? [...MS[id].sel] : [];
+  function msDefinir(id, vals) { if (!MS[id]) return; MS[id].sel = new Set(vals); msLista(id); msRotulo(id); }
+  document.addEventListener("click", () => document.querySelectorAll(".ms.aberto").forEach(x => x.classList.remove("aberto")));
+  const selProf = () => msValor("fProf");
+
   const DIAS_C = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
   const MES_C = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
   const ABAS = ["atend","prof","fin","exec","aus"];
@@ -1160,15 +1214,12 @@ const AN = (() => {
   }
 
   function preencherSelects() {
-    const sp = document.getElementById("fProf"), ss = document.getElementById("fServ");
-    const vp = sp.value, vs = ss.value;
     const cpfs = new Set(atds.flatMap(a => [a.t1, a.t2]).filter(Boolean));
-    const lp = profs.filter(p => p.ativo || cpfs.has(p.cpf));
-    sp.innerHTML = '<option value="">Todas as profissionais</option>' + lp.map(p => `<option value="${esc(p.cpf)}">${esc(p.nome)}</option>`).join("");
-    const nomesS = [...new Set(atds.map(a => a.servNome).concat(servs.map(s => s.nome)))].filter(Boolean).sort();
-    ss.innerHTML = '<option value="">Todos os serviços</option>' + nomesS.map(n => `<option>${esc(n)}</option>`).join("");
-    sp.value = [...sp.options].some(o => o.value === vp) ? vp : "";
-    ss.value = [...ss.options].some(o => o.value === vs) ? vs : "";
+    const lp = profs.filter(p => p.ativo || cpfs.has(p.cpf)).slice().sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+    msMontar("fProf", lp.map(p => [p.cpf, p.nome]));
+    const nomesS = [...new Set(atds.map(a => a.servNome).concat(servs.map(s => s.nome)))].filter(Boolean).sort((a, b) => a.localeCompare(b, "pt-BR"));
+    msMontar("fServ", nomesS.map(n => [n, n]));
+    msMontar("fSit", SIT_OPC, ["realizados", "agendados"]);
   }
 
   // Retorno = atendimento de um cliente que JÁ tinha sido atendido antes pela MESMA profissional
@@ -1181,21 +1232,32 @@ const AN = (() => {
       if (a.t2) { const k = a.cliId + "|" + a.t2; a.ret2 = visto.has(k); visto.add(k); }
     });
   }
-  const ehRet = (a, cpf) => cpf ? (a.t1 === cpf ? a.ret1 : a.t2 === cpf ? a.ret2 : false) : (a.ret1 || a.ret2);
+  const ehRet = (a, sel) => {
+    if (typeof sel === "string") sel = sel ? [sel] : [];
+    if (!sel || !sel.length) return a.ret1 || a.ret2;
+    return (sel.includes(a.t1) && a.ret1) || (sel.includes(a.t2) && a.ret2);
+  };
 
   // ── filtros ──
   function filtrar(lista, ini, fim, { ignorarSit = false } = {}) {
-    const fp = document.getElementById("fProf").value, fs = document.getElementById("fServ").value, sit = document.getElementById("fSit").value;
+    const fp = new Set(selProf()), fs = new Set(msValor("fServ")), sit = new Set(msValor("fSit"));
+    const todasSit = !sit.size || sit.size === 3;
+    const sitDe = a => ehCancel(a) ? "cancelados" : ehRealizado(a) ? "realizados" : "agendados";
     return lista.filter(a => (!ini || (a.data >= ini && a.data <= fim))
-      && (!fp || a.t1 === fp || a.t2 === fp)
-      && (!fs || a.servNome === fs)
-      && (ignorarSit || (sit === "validos" ? !ehCancel(a) : sit === "realizados" ? ehRealizado(a) : sit === "cancelados" ? ehCancel(a) : true)));
+      && (!fp.size || fp.has(a.t1) || fp.has(a.t2))
+      && (!fs.size || fs.has(a.servNome))
+      && (ignorarSit || todasSit || sit.has(sitDe(a))));
   }
   // quanto de cada atendimento é da profissional (four hands = metade)
-  const parte = (a, cpf) => (!cpf ? 1 : (a.t1 === cpf || a.t2 === cpf) ? (a.t2 ? 0.5 : 1) : 0);
+  const parte = (a, sel) => {
+    if (typeof sel === "string") sel = sel ? [sel] : [];
+    if (!sel || !sel.length) return 1;
+    const n = [a.t1, a.t2].filter(c => c && sel.includes(c)).length;
+    return n / (a.t2 ? 2 : 1);
+  };
 
   function resumo(lista) {
-    const fp = document.getElementById("fProf").value;
+    const fp = selProf();
     const at = lista.length, rec = lista.reduce((s, a) => s + a.valor * parte(a, fp), 0), com = lista.reduce((s, a) => s + a.comissao * parte(a, fp), 0);
     const porCli = {}; lista.forEach(a => { if (a.cliId != null) porCli[a.cliId] = (porCli[a.cliId] || 0) + 1; });
     const cli = Object.keys(porCli).length, ret = lista.filter(a => ehRet(a, fp)).length;
@@ -1300,13 +1362,14 @@ const AN = (() => {
 
   // ══ ABA PROFISSIONAIS (lista de cartões) ══
   function renderProf() {
-    const fp = document.getElementById("fProf").value;
+    const sel = selProf(), fp = sel.length === 1 ? sel[0] : "";
     document.getElementById("pfLista").style.display = fp ? "none" : "";
     document.getElementById("pfDet").style.display = fp ? "" : "none";
     if (fp) return renderProfDet(fp);
     const Ltodos = filtrar(atds, periodo.ini, periodo.fim, { ignorarSit: true });
     const por = {};
     Ltodos.forEach(a => [a.t1, a.t2].filter(Boolean).forEach(c => {
+      if (sel.length && !sel.includes(c)) return;
       const o = por[c] ||= { cpf: c, n: nomeProf(c), at: 0, canc: 0, rec: 0, com: 0, ret: 0, cli: {}, horas: {}, serv: {}, dias: {} };
       if (ehCancel(a)) { o.canc++; return; }
       const k = a.t2 ? .5 : 1; o.at++; o.rec += a.valor * k; o.com += a.comissao * k; if (ehRet(a, c)) o.ret++;
@@ -1352,8 +1415,9 @@ const AN = (() => {
     const u = fotosProf && fotosProf[cpf];
     return u ? `<img src="${esc(u)}" alt="" loading="lazy">` : esc(iniciaisN(nome));
   }
-  function abrirProf(cpf) { const s = document.getElementById("fProf"); s.value = cpf; render(); window.scrollTo(0, 0); }
-  function voltarProf() { document.getElementById("fProf").value = ""; render(); }
+  let selAntesDoPerfil = null;
+  function abrirProf(cpf) { selAntesDoPerfil = selProf(); msDefinir("fProf", [cpf]); render(); window.scrollTo(0, 0); }
+  function voltarProf() { msDefinir("fProf", selAntesDoPerfil && selAntesDoPerfil.length > 1 ? selAntesDoPerfil : []); selAntesDoPerfil = null; render(); }
 
   // ══ DETALHE DE UMA PROFISSIONAL (página "Atendentes" do Power BI) ══
   let histCache = {};
@@ -1447,10 +1511,10 @@ const AN = (() => {
   function renderFin() {
     const L = filtrar(atds, periodo.ini, periodo.fim, { ignorarSit: true }).filter(a => !ehCancel(a));
     const real = L.filter(ehRealizado);
-    const fp = document.getElementById("fProf").value;
+    const fp = selProf();
     const soma = (arr, k) => arr.reduce((s, a) => s + a[k] * parte(a, fp), 0);
     const noPer = d => !periodo.ini || (d.data >= periodo.ini && d.data <= periodo.fim);
-    const D = fp ? [] : despesas.filter(noPer), F = fp ? [] : folhaFix.filter(noPer);
+    const D = fp.length ? [] : despesas.filter(noPer), F = fp.length ? [] : folhaFix.filter(noPer);
     const rec = soma(real, "valor"), com = soma(real, "comissao"), folha = F.reduce((s, f) => s + f.valor, 0), outras = D.reduce((s, d) => s + d.valor, 0);
     const despT = com + folha + outras, liq = rec - despT;
     const cli = new Set(real.map(a => a.cliId).filter(x => x != null)).size;
@@ -1459,7 +1523,7 @@ const AN = (() => {
     set("kfCli", N(cli), `${N(real.length)} atendimentos realizados`);
     set("kfRec", R(rec), variacao(rec, soma(Lp, "valor")) || (L.length > real.length ? R(soma(L.filter(a => !ehRealizado(a)), "valor")) + " ainda a realizar" : ""));
     set("kfCom", R(com), rec ? P(com / rec) + " da receita" : "");
-    set("kfDesp", R(despT), rec ? P(despT / rec) + " da receita" + (fp ? " (só comissão)" : "") : "");
+    set("kfDesp", R(despT), rec ? P(despT / rec) + " da receita" + (fp.length ? " (só comissão)" : "") : "");
     set("kfRes", R(liq), rec ? "margem " + P(liq / rec) : "", liq < 0 ? "#b91c1c" : liq > 0 ? "#15803d" : "");
 
     // despesas por tipo, com o grupo "Funcionários" (comissão + folha salarial)
@@ -1474,7 +1538,7 @@ const AN = (() => {
     // receita × despesas por mês (barras deitadas, cabem no celular)
     const M = meses12(), E = filtrar(atds, null, null, { ignorarSit: true }).filter(a => !ehCancel(a) && ehRealizado(a));
     const dM = M.map(m => { const x = E.filter(a => a.data.slice(0, 7) === m.k); const r = soma(x, "valor"), c = soma(x, "comissao");
-      const o = fp ? 0 : despesas.filter(d => d.data.slice(0, 7) === m.k).reduce((s, d) => s + d.valor, 0) + folhaFix.filter(f => f.data.slice(0, 7) === m.k).reduce((s, f) => s + f.valor, 0);
+      const o = fp.length ? 0 : despesas.filter(d => d.data.slice(0, 7) === m.k).reduce((s, d) => s + d.valor, 0) + folhaFix.filter(f => f.data.slice(0, 7) === m.k).reduce((s, f) => s + f.valor, 0);
       return { lbl: m.lbl, rec: r, desp: c + o }; }).filter(d => d.rec || d.desp);
     const mxM = Math.max(1, ...dM.map(d => Math.max(d.rec, d.desp)));
     document.getElementById("evoFin").innerHTML = dM.length ? `<div class="leg"><span><i style="background:var(--s1)"></i>Receita</span><span><i style="background:var(--s2)"></i>Despesas</span></div><div class="hb">` +
@@ -1485,7 +1549,7 @@ const AN = (() => {
       : '<div style="color:#9ca3af;font-size:13px;padding:14px 0;text-align:center">Sem dados.</div>';
 
     // por profissional
-    const pp = {}; real.forEach(a => [a.t1, a.t2].filter(Boolean).forEach(c => { if (fp && c !== fp) return; const o = pp[c] ||= { n: nomeProf(c), cli: new Set(), at: 0, rec: 0, com: 0 }; const k = a.t2 ? .5 : 1; o.at++; o.rec += a.valor * k; o.com += a.comissao * k; if (a.cliId != null) o.cli.add(a.cliId); }));
+    const pp = {}; real.forEach(a => [a.t1, a.t2].filter(Boolean).forEach(c => { if (fp.length && !fp.includes(c)) return; const o = pp[c] ||= { n: nomeProf(c), cli: new Set(), at: 0, rec: 0, com: 0 }; const k = a.t2 ? .5 : 1; o.at++; o.rec += a.valor * k; o.com += a.comissao * k; if (a.cliId != null) o.cli.add(a.cliId); }));
     const lp = Object.values(pp).sort((a, b) => b.rec - a.rec), tt = lp.reduce((t, o) => ({ at: t.at + o.at, rec: t.rec + o.rec, com: t.com + o.com }), { at: 0, rec: 0, com: 0 });
     document.getElementById("tbFinProf").innerHTML = `<thead><tr><th>Profissional</th><th>Clientes</th><th>Atend.</th><th>Receita</th><th>Comissão</th></tr></thead><tbody>` +
       (lp.length ? lp.map(o => `<tr><td>${esc(o.n)}</td><td>${N(o.cli.size)}</td><td>${N(o.at)}</td><td>${R(o.rec)}</td><td>${R(o.com)}</td></tr>`).join("")
@@ -1499,7 +1563,7 @@ const AN = (() => {
   // ══ ABA EXECUTIVO (página "Executivo" do Power BI + destaques) ══
   function renderExec() {
     const L = filtrar(atds, periodo.ini, periodo.fim);
-    const fp = document.getElementById("fProf").value;
+    const fp = selProf();
     // destaques
     const Lp = periodo.pIni ? filtrar(atds, periodo.pIni, periodo.pFim) : [];
     const cnt = (arr, f) => { const o = {}; arr.forEach(a => { const k = f(a); if (k != null) o[k] = (o[k] || 0) + 1; }); return o; };
@@ -1519,7 +1583,7 @@ const AN = (() => {
 
     // por profissional
     const pp = {};
-    L.forEach(a => [a.t1, a.t2].filter(Boolean).forEach(c => { if (fp && c !== fp) return; const o = pp[c] ||= { n: nomeProf(c), at: 0, com: 0, rec: 0, ret: 0, cli: new Set() }; const k = a.t2 ? .5 : 1; o.at++; o.com += a.comissao * k; o.rec += a.valor * k; if (ehRet(a, c)) o.ret++; if (a.cliId != null) o.cli.add(a.cliId); }));
+    L.forEach(a => [a.t1, a.t2].filter(Boolean).forEach(c => { if (fp.length && !fp.includes(c)) return; const o = pp[c] ||= { n: nomeProf(c), at: 0, com: 0, rec: 0, ret: 0, cli: new Set() }; const k = a.t2 ? .5 : 1; o.at++; o.com += a.comissao * k; o.rec += a.valor * k; if (ehRet(a, c)) o.ret++; if (a.cliId != null) o.cli.add(a.cliId); }));
     const lp = Object.values(pp).sort((a, b) => b.at - a.at);
     const T = lp.reduce((t, o) => ({ at: t.at + o.at, com: t.com + o.com, rec: t.rec + o.rec, ret: t.ret + o.ret }), { at: 0, com: 0, rec: 0, ret: 0 });
     const barra = (v, max) => `<span style="display:inline-block;vertical-align:middle;width:46px;height:6px;background:#f1f3f6;border-radius:4px;margin-right:6px;overflow:hidden"><i style="display:block;height:100%;width:${max ? v / max * 100 : 0}%;background:#2a78d6"></i></span>`;
@@ -1545,8 +1609,8 @@ const AN = (() => {
     return b >= a ? diasEntre(a, b) : 0;
   }
   function renderAus() {
-    const fp = document.getElementById("fProf").value, hoje = hojeS();
-    const S = sols.filter(s => !fp || s.cpf === fp);
+    const fp = selProf(), hoje = hojeS();
+    const S = sols.filter(s => !fp.length || fp.includes(s.cpf));
     const noPer = S.filter(s => !periodo.ini || (s.ini <= periodo.fim && s.fim >= periodo.ini));
     const aprov = noPer.filter(s => s.status === "Acordado");
     const pend = S.filter(s => s.status === "Pendente").sort((a, b) => a.ini.localeCompare(b.ini));

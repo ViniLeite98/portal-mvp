@@ -87,6 +87,36 @@ h1{margin:0 0 6px;font-size:26px;}
 .acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 .vazio{background:#fff;border-radius:14px;padding:30px;text-align:center;color:#6b7280}
 
+/* gerenciar (só admin) */
+.topo-lista{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+#vAdmin,#vEditor{display:none}
+.adm-mod{background:#fff;border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:10px}
+.adm-mod.off{opacity:.55}
+.adm-mod .info{flex:1;min-width:0}.adm-mod .tt{font-weight:700;font-size:14px}.adm-mod .ds{font-size:12px;color:#6b7280;margin-top:2px}
+.adm-mod .ord{display:flex;flex-direction:column;gap:2px}
+.ib{border:1px solid #e5e7eb;background:#fff;border-radius:8px;padding:6px 9px;cursor:pointer;color:#374151;font-size:12px;font-weight:600}
+.ib:hover{background:#f9fafb}.ib:disabled{opacity:.35;cursor:default}
+.tag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:#f3f4f6;color:#4b5563;margin-right:4px}
+.tag.on{background:#dcfce7;color:#15803d}.tag.off{background:#fee2e2;color:#b91c1c}.tag.av{background:#fef3c7;color:#b45309}
+.ed{background:#fff;border-radius:14px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:14px}
+.ed h3{margin:0 0 14px;font-size:15px}
+.ed label.cp{display:block;font-size:12px;font-weight:700;color:#4b5563;margin:0 0 5px}
+.ed input[type=text],.ed textarea{width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:9px;font:inherit;font-size:14px;margin-bottom:14px}
+.ed textarea{resize:vertical;min-height:60px}
+.chks{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:14px}
+.chks label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.vid-box{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.vid-box video{width:280px;max-width:100%;border-radius:10px;background:#000}
+.vid-up{display:inline-flex;gap:8px;align-items:center;border:1.5px dashed #c9a55c;color:#7a5a1c;background:#fffbf2;border-radius:10px;padding:11px 16px;font-weight:700;font-size:14px;cursor:pointer}
+.vid-up input{display:none}
+.nota{font-size:12px;color:#6b7280;line-height:1.45}
+.q-ed{border:1px solid #e5e7eb;border-radius:12px;padding:14px;margin-bottom:12px}
+.q-ed .q-cab{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-weight:700;font-size:13px;color:#a07d3b}
+.q-op{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.q-op input[type=radio]{accent-color:#16a34a;width:18px;height:18px;flex-shrink:0}
+.q-op input[type=text]{margin:0}
+.barra-salvar{position:sticky;bottom:0;background:#f5f7fb;padding:12px 0;display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
 @media (max-width:768px){
   html,body{overflow-x:hidden}
   #sidebar{width:auto}
@@ -109,7 +139,7 @@ h1{margin:0 0 6px;font-size:26px;}
 <main class="content">
 
 <div id="vLista">
-  <h1>Trilha de treinamento</h1>
+  <div class="topo-lista"><h1>Trilha de treinamento</h1><button class="btn btn-claro" id="btnGerenciar" style="display:none" onclick="abrirAdmin()"><i class="fa fa-gear"></i> Gerenciar trilha</button></div>
   <p class="sub">Vídeos curtos mostrando como usar o sistema no dia a dia. Assista e responda o teste para concluir cada módulo.</p>
   <div class="resumo">
     <div class="anel" id="anel"><span id="anelTx">0%</span></div>
@@ -129,6 +159,41 @@ h1{margin:0 0 6px;font-size:26px;}
     <button class="btn btn-ouro" id="btnTeste" onclick="abrirTeste()" disabled><i class="fa fa-pen-to-square"></i> Fazer o teste</button>
   </div>
   <div id="teste"></div>
+</div>
+
+<div id="vAdmin">
+  <button class="voltar" onclick="fecharAdmin()"><i class="fa fa-arrow-left"></i> Voltar para a trilha</button>
+  <div class="topo-lista"><h1>Gerenciar trilha</h1><button class="btn btn-ouro" onclick="editarModulo(null)"><i class="fa fa-plus"></i> Novo módulo</button></div>
+  <p class="sub">Suba os vídeos, escreva as perguntas e escolha quem vê cada módulo. Só aparece para a equipe o que estiver <b>ativo</b>.</p>
+  <div id="admLista"></div>
+</div>
+
+<div id="vEditor">
+  <button class="voltar" onclick="voltarAdmin()"><i class="fa fa-arrow-left"></i> Voltar sem salvar</button>
+  <h1 id="edTit">Novo módulo</h1>
+  <p class="sub">Cada módulo é um vídeo curto + um teste. Para concluir, a pessoa precisa acertar todas as perguntas.</p>
+  <div class="ed">
+    <label class="cp">Título</label><input type="text" id="edTitulo" maxlength="80" placeholder="Ex.: Cadastro de terapeuta nova">
+    <label class="cp">Descrição curta</label><textarea id="edDesc" maxlength="200" placeholder="Uma frase sobre o que o vídeo ensina"></textarea>
+    <label class="cp">Quem vê este módulo</label>
+    <div class="chks"><label><input type="checkbox" value="usuario"> Terapeutas</label><label><input type="checkbox" value="apoio"> Recepção / apoio</label><label><input type="checkbox" value="admin"> Administradores</label></div>
+    <label class="chks" style="margin-bottom:0"><label><input type="checkbox" id="edAtivo"> <b>Ativo</b> — aparece na trilha da equipe</label></label>
+  </div>
+  <div class="ed">
+    <h3>Vídeo</h3>
+    <div class="vid-box"><video id="edVideo" controls playsinline preload="metadata" style="display:none"></video>
+      <div><label class="vid-up"><i class="fa fa-arrow-up-from-bracket"></i> <span id="edVidTx">Escolher vídeo</span><input type="file" id="edArquivo" accept="video/mp4,video/webm,video/quicktime"></label>
+      <div class="nota" style="margin-top:8px">MP4 de até 50 MB. A duração é lida sozinha.<br><span id="edVidInfo"></span></div></div></div>
+    <label class="chks" id="edVersaoBox" style="display:none;margin:10px 0 0"><label><input type="checkbox" id="edVersao" checked> Pedir para todo mundo assistir de novo e refazer o teste</label></label>
+  </div>
+  <div class="ed">
+    <h3>Perguntas do teste</h3>
+    <p class="nota" style="margin:-6px 0 12px">Marque a bolinha da alternativa certa. A explicação aparece depois que a pessoa responde.</p>
+    <div id="edPerg"></div>
+    <button class="btn btn-claro" onclick="addPergunta()"><i class="fa fa-plus"></i> Adicionar pergunta</button>
+  </div>
+  <div class="barra-salvar"><button class="btn btn-claro" id="edExcluir" onclick="excluirModulo()" style="margin-right:auto;color:#b91c1c;display:none"><i class="fa fa-trash"></i> Excluir módulo</button>
+    <button class="btn btn-claro" onclick="voltarAdmin()">Cancelar</button><button class="btn btn-esc" id="edSalvar" onclick="salvarModulo()"><i class="fa fa-floppy-disk"></i> Salvar módulo</button></div>
 </div>
 
 </main>
@@ -179,7 +244,7 @@ function renderLista(){
 
 function voltarLista(){
   const v = $("video"); v.pause();
-  atual = null; $("vModulo").style.display = "none"; $("vLista").style.display = "block";
+  atual = null; verView("vLista");
   history.replaceState(null, "", location.pathname);
   carregar(); window.scrollTo(0, 0);
 }
@@ -203,7 +268,7 @@ function atualizarTrava(){
 
 function abrirModulo(id){
   atual = modulos.find(m => m.id === id); if(!atual) return;
-  $("vLista").style.display = "none"; $("vModulo").style.display = "block";
+  verView("vModulo");
   $("mTit").textContent = atual.titulo; $("mDesc").textContent = atual.descricao || "";
   $("teste").style.display = "none"; $("teste").innerHTML = "";
   const v = $("video");
@@ -296,7 +361,134 @@ async function enviar(){
 const _abrir = abrirModulo;
 abrirModulo = function(id){ respostas = {}; _abrir(id); };
 
-document.addEventListener("DOMContentLoaded", () => getUser(() => carregar()));
+// ══ GERENCIAR TRILHA (só administrador) ══
+let admMods = [], ed = null;
+const VIEWS = ["vLista", "vModulo", "vAdmin", "vEditor"];
+function verView(v){ VIEWS.forEach(x => $(x).style.display = x === v ? "block" : "none"); window.scrollTo(0, 0); }
+async function abrirAdmin(){ $("video").pause(); verView("vAdmin"); await carregarAdmin(); }
+function fecharAdmin(){ verView("vLista"); carregar(); }
+function voltarAdmin(){ verView("vAdmin"); carregarAdmin(); }
+const PAPEL = { usuario: "Terapeutas", apoio: "Recepção", admin: "Admin" };
+async function carregarAdmin(){
+  const { data, error } = await client.from("trilha_modulo").select("*, trilha_pergunta(count)").order("ordem").order("titulo");
+  if(error){ $("admLista").innerHTML = `<div class="vazio">${esc(error.message)}</div>`; return; }
+  admMods = data || [];
+  $("admLista").innerHTML = admMods.length ? admMods.map((m, i) => {
+    const np = (m.trilha_pergunta && m.trilha_pergunta[0] && m.trilha_pergunta[0].count) || 0;
+    return `<div class="adm-mod ${m.ativo ? "" : "off"}">
+      <div class="ord"><button class="ib" ${i ? "" : "disabled"} onclick="moverModulo(${i},-1)" title="Subir"><i class="fa fa-chevron-up"></i></button><button class="ib" ${i < admMods.length - 1 ? "" : "disabled"} onclick="moverModulo(${i},1)" title="Descer"><i class="fa fa-chevron-down"></i></button></div>
+      <div class="info"><div class="tt">${i + 1}. ${esc(m.titulo)}</div>
+        <div class="ds"><span class="tag ${m.ativo ? "on" : "off"}">${m.ativo ? "Ativo" : "Inativo"}</span>${(m.papeis || []).map(p => `<span class="tag">${PAPEL[p] || p}</span>`).join("")}
+        ${m.video_url ? "" : '<span class="tag av">sem vídeo</span>'}${np ? "" : '<span class="tag av">sem perguntas</span>'} · ${minutos(m.duracao_seg) || "—"} · ${np} pergunta${np === 1 ? "" : "s"} · versão ${m.versao}</div></div>
+      <button class="ib" onclick="alternarAtivo('${m.id}',${!m.ativo})">${m.ativo ? "Desativar" : "Ativar"}</button>
+      <button class="ib" onclick="editarModulo('${m.id}')"><i class="fa fa-pen"></i> Editar</button></div>`;
+  }).join("") : '<div class="vazio">Nenhum módulo ainda. Clique em <b>Novo módulo</b>.</div>';
+}
+async function moverModulo(i, d){
+  const a = admMods[i], b = admMods[i + d]; if(!a || !b) return;
+  const lista = admMods.slice(); lista[i] = b; lista[i + d] = a;
+  await Promise.all(lista.map((m, k) => client.from("trilha_modulo").update({ ordem: k + 1 }).eq("id", m.id)));
+  carregarAdmin();
+}
+async function alternarAtivo(id, ativo){
+  const m = admMods.find(x => x.id === id);
+  if(ativo && !m.video_url) return alert("Suba o vídeo antes de ativar o módulo.");
+  const { error } = await client.from("trilha_modulo").update({ ativo }).eq("id", id);
+  if(error) return alert(error.message);
+  carregarAdmin(); if(window.atualizarSeloTrilha) window.atualizarSeloTrilha();
+}
+async function editarModulo(id){
+  const m = id ? admMods.find(x => x.id === id) : null;
+  let perg = [];
+  if(id){ const r = await client.from("trilha_pergunta").select("*").eq("modulo_id", id).order("ordem"); perg = r.data || []; }
+  ed = { id, m, arquivo: null, duracao: m ? m.duracao_seg : null,
+    perg: perg.map(q => ({ enunciado: q.enunciado, opcoes: (q.opcoes || []).slice(), correta: q.correta, explicacao: q.explicacao || "" })) };
+  if(!ed.perg.length) ed.perg.push(novaPergunta());
+  $("edTit").textContent = m ? "Editar módulo" : "Novo módulo";
+  $("edTitulo").value = m ? m.titulo : ""; $("edDesc").value = m ? (m.descricao || "") : "";
+  const papeis = m ? (m.papeis || []) : ["usuario", "apoio", "admin"];
+  document.querySelectorAll('#vEditor .chks input[type=checkbox][value]').forEach(c => c.checked = papeis.includes(c.value));
+  $("edAtivo").checked = m ? m.ativo : false;
+  $("edArquivo").value = ""; $("edVersaoBox").style.display = "none";
+  const v = $("edVideo");
+  if(m && m.video_url){ v.src = m.video_url; v.style.display = ""; $("edVidTx").textContent = "Trocar vídeo"; $("edVidInfo").textContent = "Duração: " + (minutos(m.duracao_seg) || "—"); }
+  else { v.removeAttribute("src"); v.style.display = "none"; $("edVidTx").textContent = "Escolher vídeo"; $("edVidInfo").textContent = m ? "Este módulo ainda não tem vídeo." : ""; }
+  $("edExcluir").style.display = m ? "" : "none";
+  renderPerguntas(); verView("vEditor");
+}
+const novaPergunta = () => ({ enunciado: "", opcoes: ["", "", "", ""], correta: 0, explicacao: "" });
+function renderPerguntas(){
+  $("edPerg").innerHTML = ed.perg.map((q, i) => `<div class="q-ed">
+    <div class="q-cab">Pergunta ${i + 1}<button class="ib" onclick="tirarPergunta(${i})" ${ed.perg.length > 1 ? "" : "disabled"}><i class="fa fa-trash"></i></button></div>
+    <input type="text" value="${esc(q.enunciado)}" placeholder="Escreva a pergunta" oninput="ed.perg[${i}].enunciado=this.value">
+    ${q.opcoes.map((o, j) => `<div class="q-op"><input type="radio" name="cq${i}" ${q.correta === j ? "checked" : ""} onchange="ed.perg[${i}].correta=${j}" title="Alternativa certa">
+      <input type="text" value="${esc(o)}" placeholder="Alternativa ${"ABCD"[j]}" oninput="ed.perg[${i}].opcoes[${j}]=this.value"></div>`).join("")}
+    <input type="text" value="${esc(q.explicacao)}" placeholder="Explicação (aparece depois da resposta)" oninput="ed.perg[${i}].explicacao=this.value" style="margin:6px 0 0"></div>`).join("");
+}
+function addPergunta(){ ed.perg.push(novaPergunta()); renderPerguntas(); }
+function tirarPergunta(i){ ed.perg.splice(i, 1); renderPerguntas(); }
+$("edArquivo").addEventListener("change", e => {
+  const f = e.target.files[0]; if(!f) return;
+  if(f.size > 50 * 1024 * 1024){ alert("O vídeo tem " + (f.size / 1048576).toFixed(0) + " MB. O limite é 50 MB — exporte em qualidade menor (720p costuma bastar)."); e.target.value = ""; return; }
+  ed.arquivo = f;
+  const v = $("edVideo"); v.src = URL.createObjectURL(f); v.style.display = "";
+  v.onloadedmetadata = () => { ed.duracao = Math.round(v.duration); $("edVidInfo").textContent = f.name + " · " + (f.size / 1048576).toFixed(1) + " MB · " + minutos(ed.duracao); };
+  $("edVidTx").textContent = "Trocar vídeo";
+  $("edVersaoBox").style.display = ed.m && ed.m.video_url ? "" : "none";
+});
+const slugDe = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50) || "modulo";
+async function salvarModulo(){
+  const titulo = $("edTitulo").value.trim();
+  const papeis = [...document.querySelectorAll('#vEditor .chks input[type=checkbox][value]:checked')].map(c => c.value);
+  if(!titulo) return alert("Dê um título ao módulo.");
+  if(!papeis.length) return alert("Escolha quem vê este módulo.");
+  const perg = ed.perg.map(q => ({ ...q, enunciado: q.enunciado.trim(), opcoes: q.opcoes.map(o => o.trim()).filter(Boolean), explicacao: q.explicacao.trim() }));
+  for(let i = 0; i < perg.length; i++){
+    const q = perg[i];
+    if(!q.enunciado) return alert(`A pergunta ${i + 1} está sem texto.`);
+    if(q.opcoes.length < 2) return alert(`A pergunta ${i + 1} precisa de pelo menos 2 alternativas.`);
+    if(!ed.perg[i].opcoes[ed.perg[i].correta] || !ed.perg[i].opcoes[ed.perg[i].correta].trim()) return alert(`Na pergunta ${i + 1}, a alternativa marcada como certa está vazia.`);
+    q.correta = q.opcoes.indexOf(ed.perg[i].opcoes[ed.perg[i].correta].trim());
+  }
+  const ativo = $("edAtivo").checked;
+  if(ativo && !ed.arquivo && !(ed.m && ed.m.video_url)) return alert("Para ativar, suba o vídeo.");
+  const b = $("edSalvar"); b.disabled = true; b.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + (ed.arquivo ? "Enviando vídeo…" : "Salvando…");
+  try {
+    const dados = { titulo, descricao: $("edDesc").value.trim(), papeis, ativo };
+    if(ed.arquivo){
+      const ext = (ed.arquivo.name.split(".").pop() || "mp4").toLowerCase();
+      const cam = slugDe(titulo) + "-" + Date.now() + "." + ext;
+      const up = await client.storage.from("trilha").upload(cam, ed.arquivo, { contentType: ed.arquivo.type || "video/mp4", cacheControl: "31536000" });
+      if(up.error) throw new Error("Erro ao enviar o vídeo: " + up.error.message);
+      dados.video_url = client.storage.from("trilha").getPublicUrl(cam).data.publicUrl;
+      dados.duracao_seg = ed.duracao || null;
+      if(ed.m && ed.m.video_url && $("edVersao").checked) dados.versao = (ed.m.versao || 1) + 1;
+    }
+    let id = ed.id;
+    if(id){
+      const r = await client.from("trilha_modulo").update(dados).eq("id", id); if(r.error) throw r.error;
+    } else {
+      dados.slug = slugDe(titulo) + "-" + Math.random().toString(36).slice(2, 6);
+      dados.ordem = admMods.length + 1; dados.versao = 1;
+      const r = await client.from("trilha_modulo").insert(dados).select("id").single(); if(r.error) throw r.error; id = r.data.id;
+    }
+    const del = await client.from("trilha_pergunta").delete().eq("modulo_id", id); if(del.error) throw del.error;
+    const ins = await client.from("trilha_pergunta").insert(perg.map((q, k) => ({ modulo_id: id, ordem: k + 1, enunciado: q.enunciado, opcoes: q.opcoes, correta: q.correta, explicacao: q.explicacao || null })));
+    if(ins.error) throw ins.error;
+    if(window.atualizarSeloTrilha) window.atualizarSeloTrilha();
+    voltarAdmin();
+  } catch(e){ alert(e.message || e); }
+  finally { b.disabled = false; b.innerHTML = '<i class="fa fa-floppy-disk"></i> Salvar módulo'; }
+}
+async function excluirModulo(){
+  if(!ed.id || !confirm("Excluir este módulo, as perguntas e o progresso de todos nele?")) return;
+  await client.from("trilha_pergunta").delete().eq("modulo_id", ed.id);
+  const r = await client.from("trilha_modulo").delete().eq("id", ed.id);
+  if(r.error) return alert(r.error.message);
+  voltarAdmin();
+}
+
+document.addEventListener("DOMContentLoaded", () => getUser(u => { if(u && u.role === "admin") $("btnGerenciar").style.display = ""; carregar(); }));
 </script>
 </body>
 </html>

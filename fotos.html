@@ -65,7 +65,7 @@ a{color:inherit;text-decoration:none}
 .card .info{padding:16px 16px 14px}
 .card h3{font-family:var(--serif);font-weight:500;font-size:20px;margin:0 0 6px;letter-spacing:.01em}
 .card .local{font-size:11.5px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;gap:8px}
-.card .local::before{content:"";width:14px;height:1px;background:var(--muted)}
+.card .local::before{content:"";width:14px;height:1px;background:currentColor}
 .esqueleto{aspect-ratio:3/4.6;border-radius:12px;background:linear-gradient(90deg,#0a1020 0%,#111a30 50%,#0a1020 100%);background-size:200% 100%;animation:brilho 1.4s infinite}
 @keyframes brilho{to{background-position:-200% 0}}
 .vazio{grid-column:1/-1;padding:56px 20px;text-align:center;color:var(--muted);border:1px dashed var(--line2);border-radius:12px;font-size:14px}
@@ -79,7 +79,9 @@ a{color:inherit;text-decoration:none}
 .voltar:hover{color:var(--ink)}
 .perfil h2{font-family:var(--serif);font-weight:400;font-size:clamp(40px,5vw,60px);margin:34px 0 6px;letter-spacing:.02em}
 .perfil .local{font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:30px;display:flex;gap:10px;align-items:center}
-.perfil .local::before{content:"";width:18px;height:1px;background:var(--muted)}
+.perfil .local::before{content:"";width:18px;height:1px;background:currentColor}
+.medidas{display:flex;flex-wrap:wrap;gap:8px 22px;margin:-14px 0 30px;font-size:13px;color:var(--muted);letter-spacing:.04em}
+.medidas b{color:var(--ink);font-weight:500;margin-left:4px}
 .fotos-perfil{columns:3 300px;column-gap:18px;padding-bottom:30px}
 .fotos-perfil figure{margin:0 0 18px;break-inside:avoid;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card);cursor:zoom-in}
 .fotos-perfil img{width:100%}
@@ -243,6 +245,75 @@ label.campo input:focus,label.campo textarea:focus{outline:none;border-color:rgb
 .lang-tit svg{width:20px;height:14px;border-radius:2px}
 .ses-trad{font-size:11px;color:var(--dim);margin-left:8px}
 .ses-txt i{color:#7fa8d1}
+/* lista de modelos */
+.mrow{display:flex;align-items:center;gap:16px;background:#06101a;border:1px solid #13202e;border-radius:14px;padding:0 20px 0 10px;margin-bottom:14px;overflow:hidden;min-height:104px;transition:opacity .15s,border-color .15s}
+.mrow.off{opacity:.55}
+.mrow.arrastando{opacity:.4;border-color:#2aa3d8}
+#listaModelos.salvando{opacity:.6;pointer-events:none}
+.alca{color:#3b4a63;cursor:grab;padding:8px 4px;font-size:13px}
+.alca:active{cursor:grabbing}
+.mth{width:80px;align-self:stretch;flex-shrink:0;background:#0d1426;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:22px}
+.mth img{width:100%;height:100%;object-fit:cover}
+.mtx{flex:1;min-width:0;padding:14px 0}
+.mtx b{font-family:var(--serif);font-weight:500;font-size:22px}
+.mmeta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--muted);margin:4px 0 6px}
+.mvis{font-size:12.5px;color:#2aa3d8}
+.mvis .mpub{color:var(--dim)} .mvis .pend{color:#f5c542}
+.tag-d,.tag-f{font:500 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;vertical-align:middle;margin-left:6px}
+.tag-d{background:rgba(212,160,23,.12);color:#f5c542}.tag-f{background:rgba(148,163,184,.12);color:#94a3b8}
+.macoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.pill-st{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:99px;border:1px solid #3b4a63;background:transparent;color:#94a3b8;font:500 13px var(--sans);cursor:pointer}
+.pill-st span{width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill-st.on{border-color:#14532d;color:#4ade80;background:rgba(34,197,94,.06)}
+.btn-fotos{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:7px;border:none;background:#0e5e78;color:#e6f6fb;font:600 14px var(--sans);cursor:pointer}
+.btn-fotos:hover{background:#127391}
+.btn-lnk{display:inline-flex;align-items:center;gap:7px;padding:8px 10px;border:none;background:none;color:var(--ink);font:500 14px var(--sans);cursor:pointer;border-radius:7px}
+.btn-lnk:hover{background:rgba(255,255,255,.04)}
+.btn-lnk.rem{color:#64748b}.btn-lnk.rem:hover{color:#ef4444}
+@media (max-width:860px){ .mrow{flex-wrap:wrap;padding:12px} .mth{width:64px;height:80px;align-self:auto;border-radius:8px} .macoes{width:100%;justify-content:flex-start} .alca{display:none} }
+
+/* janela Editar Modelo */
+.mm{display:none;position:fixed;inset:0;background:rgba(2,4,10,.72);z-index:90;align-items:flex-start;justify-content:center;padding:4vh 16px;overflow-y:auto}
+.mm.aberto{display:flex}
+.mm-box{position:relative;width:100%;max-width:520px;background:#0a1220;border:1px solid #1a2a3c;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);display:flex;flex-direction:column;max-height:92vh}
+.mm-box h2{font-family:var(--serif);font-weight:400;font-size:28px;margin:22px 24px 10px}
+.mm-x{position:absolute;top:16px;right:16px;width:34px;height:34px;border:none;background:none;color:var(--muted);font-size:18px;cursor:pointer;border-radius:8px}
+.mm-x:hover{color:var(--ink);background:rgba(255,255,255,.05)}
+.mm-corpo{padding:6px 24px 10px;overflow-y:auto}
+.mm-capa{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:18px}
+.mm-capa > img,.mm-semcapa{width:110px;height:140px;border-radius:10px;object-fit:cover;border:1px solid #1a2a3c}
+.mm-semcapa{display:flex;align-items:center;justify-content:center;background:#0d1426;color:var(--dim);font-size:26px}
+.mm-trocar{position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:8px;font:500 13px var(--sans);color:var(--ink);padding:7px 12px;border-radius:8px;border:1px solid #1a2a3c;cursor:pointer}
+.mm-trocar input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.mm-mini{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.mm-mini img{width:38px;height:48px;object-fit:cover;border-radius:6px;cursor:pointer;opacity:.6;border:2px solid transparent}
+.mm-mini img.sel,.mm-mini img:hover{opacity:1;border-color:#d4b483}
+.mm-leg{font-size:12px;color:var(--muted)}
+.mm-campo{display:flex;flex-direction:column;gap:7px;font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.mm-campo{min-width:0}
+.mm-campo input{width:100%;min-width:0;box-sizing:border-box;font:15px var(--sans);padding:11px 12px;border-radius:7px;border:1px solid #1a2a3c;background:#0d1828;color:var(--ink);letter-spacing:0;text-transform:none}
+.mm-campo input:focus{outline:none;border-color:#e8ebf2}
+.mm-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mm-cores{background:#0d1828;border:1px solid #1a2a3c;border-radius:10px;padding:14px;margin-bottom:16px}
+.mm-cores b{display:block;font-size:13px;font-weight:600}
+.mm-cores > span{font-size:11.5px;color:var(--muted)}
+.mm-sw{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:12px 0}
+.mm-sw button{height:32px;border-radius:7px;border:2px solid transparent;cursor:pointer}
+.mm-sw button.sel{border-color:#e8ebf2;box-shadow:inset 0 0 0 2px #0d1828}
+.mm-hex{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}
+.mm-hex em{font-style:normal;color:var(--dim)}
+.mm-hex input{flex:1;font:600 13px var(--sans);padding:8px 10px;border-radius:7px;border:1px solid #1a2a3c;background:#0a1220;color:var(--ink);text-transform:uppercase}
+.mm-hex i{width:20px;height:20px;border-radius:5px;border:1px solid #1a2a3c}
+.mm-info{display:flex;gap:12px;background:#0d1828;border:1px solid #1a2a3c;border-radius:10px;padding:14px;margin:4px 0 16px;font-size:12.5px;color:var(--muted)}
+.mm-info i{color:#d4b483;margin-top:2px}.mm-info strong{display:block;color:var(--ink);font-size:13.5px;margin-bottom:3px}.mm-info b{color:var(--ink);font-weight:600}
+.mm-chk{display:flex;align-items:center;gap:10px;font-size:14px;padding:12px;border:1px solid #1a2a3c;border-radius:8px;cursor:pointer}
+.mm-chk input{width:16px;height:16px;accent-color:#d4b483}
+.mm-nota{font-size:12px;color:var(--muted);margin:8px 0 16px;line-height:1.5}
+.mm-rod{display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #13202e}
+.mm-cancel{border:none;background:none;color:var(--ink);font:600 14px var(--sans);padding:10px 16px;cursor:pointer}
+.mm-ok{display:inline-flex;align-items:center;gap:8px;border:none;background:#e8ebf2;color:#0b1020;font:600 14px var(--sans);padding:10px 18px;border-radius:7px;cursor:pointer}
+.mm-ok[disabled]{opacity:.5}
+
 .lista-cab{display:flex;align-items:baseline;justify-content:space-between;margin:34px 0 16px}
 .lista-cab h4{font-family:var(--serif);font-weight:400;font-size:24px;margin:0}
 .lista-cab span{font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
@@ -325,10 +396,10 @@ footer{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;co
   <div class="painel-topo">
     <div><p class="eyebrow">Painel</p><h2>Administração</h2></div>
     <button class="alerta-rev" id="alertaRev"><i class="fa-regular fa-bell"></i> <span id="alertaRevTxt"></span></button>
-    <a class="btn-claro" href="equipe.html"><i class="fa-solid fa-plus"></i> Nova terapeuta</a>
+    <a class="btn-claro" href="equipe.html"><i class="fa-solid fa-plus"></i> Nova Modelo</a>
   </div>
   <div class="abas">
-    <button class="aba ativa" data-aba="terapeutas"><i class="fa-solid fa-user-group"></i> Terapeutas</button>
+    <button class="aba ativa" data-aba="terapeutas"><i class="fa-solid fa-user-group"></i> Modelos</button>
     <button class="aba" data-aba="revisar"><i class="fa-regular fa-image"></i> Galerias <span class="n" id="nRevisar">0</span></button>
     <button class="aba" data-aba="sessoes"><i class="fa-solid fa-wand-magic-sparkles"></i> Sessões</button>
     <a class="aba" href="atendimentos.html"><i class="fa-solid fa-arrow-up-right-from-square"></i> Sistema</a>
@@ -406,10 +477,13 @@ footer{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;co
   <div class="wrap">
     <h2 id="perfilNome"></h2>
     <div class="local" id="perfilLocal"></div>
+    <div class="medidas" id="perfilMedidas"></div>
     <div class="fotos-perfil" id="perfilFotos"></div>
     <div class="acao" id="perfilAcao"></div>
   </div>
 </div>
+
+<div class="mm" id="modalModelo" role="dialog" aria-modal="true"></div>
 
 <div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
   <button type="button" class="fechar" id="fecharLb" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>
@@ -421,15 +495,15 @@ footer{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;co
 var I18N = {
   pt: { nav_ter:"Terapeutas", nav_ses:"Sessões", pill_ter:"Nossas terapeutas", pill_ses:"Nossas sessões",
         flut:"Conheça nossas terapeutas", voltar:"Voltar", em_breve:"Em breve novidades por aqui.", mais_fotos:"+ Fotos",
-        wa_btn:"Falar no WhatsApp", wa_msg:"Olá! Vi o catálogo e quero saber sobre {nome}.", duracao:"Duração e investimento",
+        m_alt:"Altura", m_peso:"Peso", m_pes:"Pés", m_idade:"Idade", wa_btn:"Falar no WhatsApp", wa_msg:"Olá! Vi o catálogo e quero saber sobre {nome}.", duracao:"Duração e investimento",
         m_tit:"Acesso admin", m_entrar:"Entrar", m_painel:"Painel admin", m_sistema:"Ir para o sistema", m_sair:"Sair" },
   en: { nav_ter:"Therapists", nav_ses:"Sessions", pill_ter:"Our therapists", pill_ses:"Our sessions",
         flut:"Meet our therapists", voltar:"Back", em_breve:"Coming soon.", mais_fotos:"+ Photos",
-        wa_btn:"Chat on WhatsApp", wa_msg:"Hi! I saw the catalog and would like to know more about {nome}.", duracao:"Duration & pricing",
+        m_alt:"Height", m_peso:"Weight", m_pes:"Shoe size", m_idade:"Age", wa_btn:"Chat on WhatsApp", wa_msg:"Hi! I saw the catalog and would like to know more about {nome}.", duracao:"Duration & pricing",
         m_tit:"Admin access", m_entrar:"Sign in", m_painel:"Admin panel", m_sistema:"Go to the system", m_sair:"Sign out" },
   es: { nav_ter:"Terapeutas", nav_ses:"Sesiones", pill_ter:"Nuestras terapeutas", pill_ses:"Nuestras sesiones",
         flut:"Conoce a nuestras terapeutas", voltar:"Volver", em_breve:"Próximamente.", mais_fotos:"+ Fotos",
-        wa_btn:"Hablar por WhatsApp", wa_msg:"¡Hola! Vi el catálogo y quiero saber más sobre {nome}.", duracao:"Duración e inversión",
+        m_alt:"Altura", m_peso:"Peso", m_pes:"Pies", m_idade:"Edad", wa_btn:"Hablar por WhatsApp", wa_msg:"¡Hola! Vi el catálogo y quiero saber más sobre {nome}.", duracao:"Duración e inversión",
         m_tit:"Acceso admin", m_entrar:"Entrar", m_painel:"Panel admin", m_sistema:"Ir al sistema", m_sair:"Salir" }
 };
 // Textos padrão do banco que ganham versão em inglês (se você mudar o texto no painel, ele aparece como escreveu)
@@ -543,14 +617,16 @@ async function carregarCatalogo(){
   if (r.error){ grade.innerHTML = '<div class="vazio">Não foi possível carregar o catálogo agora. Tente de novo em instantes.</div>'; return; }
   var mapa = {};
   (r.data || []).forEach(function(f){
-    var p = mapa[f.profissional_id] || (mapa[f.profissional_id] = {id:f.profissional_id, nome:f.profissional, fotos:[]});
+    var p = mapa[f.profissional_id] || (mapa[f.profissional_id] = {id:f.profissional_id, nome:f.profissional, fotos:[],
+      unidade:f.unidade, cor:f.cor, altura:f.altura, peso:f.peso, pes:f.pes, idade:f.idade, destaque:f.destaque, fixar:f.fixar_final, ordem:f.ordem});
     p.fotos.push(f);
   });
   profissionais = Object.keys(mapa).map(function(k){
     var p = mapa[k];
     p.fotos.sort(function(a,b){ return (b.capa?1:0)-(a.capa?1:0) || new Date(b.publicado_em)-new Date(a.publicado_em); });
     return p;
-  }).sort(function(a,b){ return a.nome.localeCompare(b.nome, "pt-BR"); });
+  });
+  profissionais = ordenarCatalogo(profissionais);
 
   if (!profissionais.length){ grade.innerHTML = '<div class="vazio">' + t('em_breve') + '</div>'; return; }
 
@@ -559,7 +635,7 @@ async function carregarCatalogo(){
       '<div class="foto"><img loading="lazy" src="' + esc(urlCatalogo(p.fotos[0].imagem_path)) + '" alt="' + esc(p.nome) + '">' +
       (p.fotos.length > 1 ? '<span class="chip">' + t('mais_fotos') + '</span>' : '') + '</div>' +
       '<div class="info"><h3>' + esc(p.nome) + '</h3>' +
-      (CONFIG.unidade ? '<div class="local">' + esc(CONFIG.unidade) + '</div>' : '') + '</div>' +
+      (p.unidade ? '<div class="local"' + (p.cor ? ' style="color:' + p.cor + '"' : '') + '>' + esc(p.unidade) + '</div>' : '') + '</div>' +
     '</article>';
   }).join("");
 
@@ -567,12 +643,34 @@ async function carregarCatalogo(){
   if (location.hash.indexOf("#p-") === 0) abrirPerfil(location.hash.slice(3), true);
 }
 
+// Ordem: até 3 destaques (revezando a cada visita) → ordem do painel → "fixar ao final"
+var sorteioDestaque = {}; // um sorteio por visita (não muda ao trocar de idioma)
+function ordenarCatalogo(lista){
+  var porOrdem = function(a,b){ return (a.ordem - b.ordem) || a.nome.localeCompare(b.nome, "pt-BR"); };
+  var dest = lista.filter(function(p){ return p.destaque && !p.fixar; }).sort(porOrdem).slice(0, 3);
+  dest.forEach(function(p){ if (sorteioDestaque[p.id] == null) sorteioDestaque[p.id] = Math.random(); });
+  dest.sort(function(a,b){ return sorteioDestaque[a.id] - sorteioDestaque[b.id]; });
+  var resto = lista.filter(function(p){ return dest.indexOf(p) < 0 && !p.fixar; }).sort(porOrdem);
+  var fim = lista.filter(function(p){ return p.fixar; }).sort(porOrdem);
+  return dest.concat(resto, fim);
+}
+function contarVisualizacao(id){
+  var k = "hara_vis_" + id;
+  try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); } catch (e) {}
+  client.rpc("catalogo_visualizar", { p_id: id });
+}
+
 var perfilEl = document.getElementById("perfil");
 function abrirPerfil(id, semHistorico){
   var p = profissionais.find(function(x){ return x.id === id; }); if (!p) return;
   document.getElementById("perfilNome").textContent = p.nome;
   var loc = document.getElementById("perfilLocal");
-  loc.textContent = CONFIG.unidade || ""; loc.style.display = CONFIG.unidade ? "" : "none";
+  loc.textContent = p.unidade || ""; loc.style.display = p.unidade ? "" : "none"; loc.style.color = p.cor || "";
+  var med = [["m_alt", p.altura], ["m_peso", p.peso], ["m_pes", p.pes], ["m_idade", p.idade]].filter(function(x){ return x[1]; });
+  var medEl = document.getElementById("perfilMedidas");
+  medEl.innerHTML = med.map(function(x){ return '<span>' + t(x[0]) + ':<b>' + esc(x[1]) + '</b></span>'; }).join("");
+  medEl.style.display = med.length ? "" : "none";
+  contarVisualizacao(id);
   document.getElementById("perfilFotos").innerHTML = p.fotos.map(function(f){
     var u = urlCatalogo(f.imagem_path);
     return '<figure data-src="' + esc(u) + '"><img loading="lazy" src="' + esc(u) + '" alt="' + esc(p.nome) + '"></figure>';
@@ -766,7 +864,7 @@ document.getElementById("formEnvio").onsubmit = async function(e){
 };
 
 // ═══ ACESSO ADMIN (login do sistema Hara) ══════════════════════════════════
-var adm = { sessao:null, perfil:null, gestor:false, terapeutas:[], fotos:[], aba:"terapeutas", aberta:null };
+var adm = { sessao:null, perfil:null, gestor:false, terapeutas:[], fotos:[], perfis:{}, aba:"terapeutas", aberta:null };
 var menuBtn = document.getElementById("menuBtn"), menuDrop = document.getElementById("menuDrop");
 menuBtn.onclick = function(e){ e.stopPropagation(); menuDrop.classList.toggle("aberto"); menuBtn.classList.toggle("aberto"); };
 document.addEventListener("click", function(e){ if (!menuDrop.contains(e.target)){ menuDrop.classList.remove("aberto"); menuBtn.classList.remove("aberto"); } });
@@ -821,7 +919,9 @@ function urlFoto(f){ var c = caminhoDoc(f.url); return (c && cacheAss[c]) || f.u
 async function carregarAdmin(){
   var area = document.getElementById("painelArea");
   if (!adm.terapeutas.length) area.innerHTML = '<div class="msg-adm"><i class="fa-solid fa-spinner fa-spin"></i> Carregando…</div>';
-  var t = await client.from("funcionario").select("cpf,nome_profissional,cargo,status").eq("status","Ativo").ilike("cargo","Terapeuta%").order("nome_profissional");
+  var t = await client.from("funcionario").select("cpf,nome_profissional,cargo,status,nascimento,altura,peso").eq("status","Ativo").ilike("cargo","Terapeuta%").order("nome_profissional");
+  var pf = await client.from("catalogo_perfil").select("*");
+  adm.perfis = {}; (pf.data || []).forEach(function(x){ adm.perfis[x.cpf] = x; });
   if (t.error){ area.innerHTML = '<div class="msg-adm">Erro ao carregar: ' + esc(t.error.message) + '</div>'; return; }
   adm.terapeutas = t.data || [];
   var cpfs = adm.terapeutas.map(function(x){ return x.cpf; });
@@ -834,7 +934,10 @@ async function carregarAdmin(){
   document.getElementById("alertaRevTxt").textContent = nPend + (nPend === 1 ? " foto nova para revisar" : " fotos novas para revisar");
   renderAdmin();
 }
-function nomeTer(cpf){ var t = adm.terapeutas.find(function(x){ return x.cpf === cpf; }); return t ? (t.nome_profissional || "Sem nome") : ""; }
+function nomeTer(cpf){
+  var pf = adm.perfis && adm.perfis[cpf]; if (pf && pf.nome_exibicao) return pf.nome_exibicao;
+  var t = adm.terapeutas.find(function(x){ return x.cpf === cpf; }); return t ? (t.nome_profissional || "Sem nome") : "";
+}
 
 function renderAdmin(){
   document.querySelectorAll(".aba[data-aba]").forEach(function(b){ b.classList.toggle("ativa", b.getAttribute("data-aba") === adm.aba); });
@@ -848,7 +951,7 @@ function renderAdmin(){
   }
   if (adm.aberta){
     var cpf = adm.aberta, fotos = adm.fotos.filter(function(x){ return x.equipe_id === cpf; });
-    area.innerHTML = '<div class="det-topo"><button class="btn-sec" id="detVoltar"><i class="fa-solid fa-chevron-left"></i> Terapeutas</button>' +
+    area.innerHTML = '<div class="det-topo"><button class="btn-sec" id="detVoltar"><i class="fa-solid fa-chevron-left"></i> Modelos</button>' +
       '<h3>' + esc(nomeTer(cpf)) + '</h3>' +
       '<label class="btn-sec subir"><i class="fa-solid fa-plus"></i> Adicionar fotos<input type="file" id="detUpload" accept="image/jpeg,image/png,image/webp" multiple></label></div>' +
       (fotos.length ? '<div class="grade-adm">' + fotos.map(function(x){ return cardFoto(x, false); }).join("") + '</div>' : '<div class="msg-adm">Nenhuma foto ainda. Use "Adicionar fotos".</div>');
@@ -856,19 +959,221 @@ function renderAdmin(){
     document.getElementById("detUpload").onchange = function(){ subirFotos(cpf, this.files); };
     return;
   }
-  var topo = htmlConfig() + '<div class="lista-cab"><h4>Terapeutas cadastradas</h4><span>' + adm.terapeutas.length + (adm.terapeutas.length === 1 ? ' terapeuta' : ' terapeutas') + '</span></div>';
-  if (!adm.terapeutas.length){ area.innerHTML = topo + '<div class="msg-adm">Nenhuma terapeuta ativa.</div>'; ligarConfig(); return; }
-  area.innerHTML = topo + '<div class="lista-ter">' + adm.terapeutas.map(function(t){
-    var fs = adm.fotos.filter(function(x){ return x.equipe_id === t.cpf; });
+  var lista = modelosOrdenadas();
+  var topo = htmlConfig() + '<div class="lista-cab"><h4>Modelos Cadastradas</h4><span>' + lista.length + (lista.length === 1 ? ' modelo' : ' modelos') + '</span></div>' +
+    '<div class="dica" style="margin:-6px 0 14px"><i class="fa-solid fa-grip-vertical"></i>&nbsp; Arraste para reordenar a posição das modelos na galeria</div>';
+  if (!lista.length){ area.innerHTML = topo + '<div class="msg-adm">Nenhuma terapeuta ativa no cadastro.</div>'; ligarConfig(); return; }
+  area.innerHTML = topo + '<div id="listaModelos">' + lista.map(function(t){
+    var pf = perfilDe(t), fs = adm.fotos.filter(function(x){ return x.equipe_id === t.cpf; });
     var pub = fs.filter(function(x){ return x.site_status === "publicada"; });
     var nP = fs.filter(function(x){ return (x.site_status || "pendente") === "pendente"; }).length;
     var capa = pub.find(function(x){ return x.site_capa; }) || pub[0] || fs[0];
-    return '<div class="ter" data-ter="' + esc(t.cpf) + '"><div class="th">' + (capa ? '<img loading="lazy" src="' + esc(urlFoto(capa)) + '" alt="">' : '<i class="fa-regular fa-user"></i>') + '</div>' +
-      '<div class="tx"><b>' + esc(t.nome_profissional || "Sem nome") + '</b><div class="cont">' + pub.length + ' publicada' + (pub.length === 1 ? '' : 's') + ' · ' + fs.length + ' no total' +
-      (nP ? ' · <span class="pend">' + nP + ' para revisar</span>' : '') + '</div></div></div>';
+    var meta = [["Altura", pf.altura], ["Peso", pf.peso], ["Pés", pf.pes], ["Idade", pf.idade]].filter(function(m){ return m[1]; })
+      .map(function(m){ return '<span>' + m[0] + ': ' + esc(m[1]) + '</span>'; }).join("");
+    return '<div class="mrow' + (pf.ativo ? '' : ' off') + '" draggable="true" data-cpf="' + esc(t.cpf) + '">' +
+      '<span class="alca" title="Arrastar"><i class="fa-solid fa-grip-vertical"></i></span>' +
+      '<div class="mth">' + (capa ? '<img loading="lazy" src="' + esc(urlFoto(capa)) + '" alt="">' : '<i class="fa-regular fa-user"></i>') + '</div>' +
+      '<div class="mtx"><b>' + esc(pf.nome_exibicao) + '</b>' + (pf.destaque ? ' <span class="tag-d">Destaque</span>' : '') + (pf.fixar_final ? ' <span class="tag-f">No final</span>' : '') +
+        '<div class="mmeta">' + meta + '</div>' +
+        '<div class="mvis"><i class="fa-regular fa-eye"></i> ' + Number(pf.visualizacoes || 0).toLocaleString("pt-BR") + ' visualizações' +
+          ' <span class="mpub">· ' + pub.length + ' foto' + (pub.length === 1 ? '' : 's') + ' no site' + (nP ? ' · <span class="pend">' + nP + ' para revisar</span>' : '') + '</span></div></div>' +
+      '<div class="macoes">' +
+        '<button class="pill-st' + (pf.ativo ? ' on' : '') + '" data-m="ativo" title="Mostrar ou esconder no catálogo"><span></span>' + (pf.ativo ? 'Ativa' : 'Inativa') + '</button>' +
+        '<button class="btn-fotos" data-m="fotos"><i class="fa-regular fa-images"></i> Fotos</button>' +
+        '<button class="btn-lnk" data-m="editar"><i class="fa-solid fa-pen"></i> Editar</button>' +
+        '<button class="btn-lnk rem" data-m="remover"><i class="fa-regular fa-trash-can"></i> Remover</button>' +
+      '</div></div>';
   }).join("") + '</div>';
   ligarConfig();
+  ligarArrastar();
 }
+
+// ── Modelos: perfil de exibição no catálogo ──
+var CORES_UNIDADE = ["#C27C8E","#C98B74","#C9A86A","#829C7D","#5E9E95","#6E8FB8","#8F7DB8","#A86E8F"];
+function idadeDe(nasc){
+  if (!nasc) return null;
+  var d = new Date(nasc + "T12:00:00"), h = new Date(), i = h.getFullYear() - d.getFullYear();
+  if (h.getMonth() < d.getMonth() || (h.getMonth() === d.getMonth() && h.getDate() < d.getDate())) i--;
+  return i;
+}
+function perfilDe(t){
+  var pf = adm.perfis[t.cpf] || {};
+  var idadeCad = idadeDe(t.nascimento);
+  return {
+    cpf: t.cpf, existe: !!adm.perfis[t.cpf],
+    nome_exibicao: pf.nome_exibicao || t.nome_profissional || "Sem nome",
+    unidade: pf.unidade != null ? pf.unidade : "Jardins",
+    cor: pf.cor || "",
+    altura: pf.altura || (t.altura ? (t.altura > 3 ? (t.altura / 100) : t.altura).toFixed(2).replace(".", ",") : ""),
+    peso: pf.peso || (t.peso ? String(t.peso).replace(".", ",") + "KG" : ""),
+    pes: pf.pes || "",
+    idade: pf.idade || (idadeCad && idadeCad >= 18 ? idadeCad : ""),
+    destaque: !!pf.destaque, fixar_final: !!pf.fixar_final,
+    ativo: pf.ativo == null ? true : pf.ativo,
+    ordem: pf.ordem == null ? 9999 : pf.ordem,
+    visualizacoes: pf.visualizacoes || 0
+  };
+}
+function modelosOrdenadas(){
+  return adm.terapeutas.slice().sort(function(a, b){
+    var pa = perfilDe(a), pb = perfilDe(b);
+    return (pa.ordem - pb.ordem) || pa.nome_exibicao.localeCompare(pb.nome_exibicao, "pt-BR");
+  });
+}
+async function salvarPerfil(cpf, campos){
+  campos.cpf = cpf; campos.atualizado_em = new Date().toISOString();
+  var r = await client.from("catalogo_perfil").upsert(campos, { onConflict: "cpf" }).select().maybeSingle();
+  if (r.error){ alert("Não deu para salvar: " + r.error.message); return false; }
+  if (r.data) adm.perfis[cpf] = r.data;
+  return true;
+}
+
+// arrastar para reordenar
+function ligarArrastar(){
+  var box = document.getElementById("listaModelos"); if (!box) return;
+  var arrastando = null;
+  box.querySelectorAll(".mrow").forEach(function(row){
+    row.addEventListener("dragstart", function(e){ arrastando = row; row.classList.add("arrastando"); e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", row.dataset.cpf); } catch (x) {} });
+    row.addEventListener("dragend", async function(){
+      row.classList.remove("arrastando"); if (!arrastando) return; arrastando = null;
+      var cpfs = Array.prototype.map.call(box.querySelectorAll(".mrow"), function(r){ return r.dataset.cpf; });
+      var mudou = cpfs.some(function(c, i){ return perfilDe(adm.terapeutas.find(function(t){ return t.cpf === c; })).ordem !== i; });
+      if (!mudou) return;
+      box.classList.add("salvando");
+      var linhas = cpfs.map(function(c, i){ return { cpf: c, ordem: i, atualizado_em: new Date().toISOString() }; });
+      var r = await client.from("catalogo_perfil").upsert(linhas, { onConflict: "cpf" }).select();
+      box.classList.remove("salvando");
+      if (r.error){ alert("Não deu para salvar a ordem: " + r.error.message); renderAdmin(); return; }
+      (r.data || []).forEach(function(x){ adm.perfis[x.cpf] = x; });
+      carregarCatalogo();
+    });
+    row.addEventListener("dragover", function(e){
+      e.preventDefault(); if (!arrastando || arrastando === row) return;
+      var ret = row.getBoundingClientRect(), depois = (e.clientY - ret.top) > ret.height / 2;
+      box.insertBefore(arrastando, depois ? row.nextSibling : row);
+    });
+  });
+}
+
+// ações das linhas
+document.getElementById("painelArea").addEventListener("click", async function(e){
+  var b = e.target.closest(".mrow [data-m]"); if (!b) return;
+  var cpf = b.closest(".mrow").dataset.cpf, t = adm.terapeutas.find(function(x){ return x.cpf === cpf; }); if (!t) return;
+  var pf = perfilDe(t), acao = b.getAttribute("data-m");
+  if (acao === "fotos"){ adm.aberta = cpf; renderAdmin(); window.scrollTo({ top: document.getElementById("painel").offsetTop, behavior: "smooth" }); }
+  else if (acao === "editar") abrirEditor(t);
+  else if (acao === "ativo"){
+    b.disabled = true;
+    if (await salvarPerfil(cpf, { ativo: !pf.ativo })){ renderAdmin(); carregarCatalogo(); } else b.disabled = false;
+  }
+  else if (acao === "remover"){
+    if (!confirm("Remover " + pf.nome_exibicao + " do catálogo?\n\nEla some do site e as fotos publicadas voltam para \"guardadas\" (continuam no cadastro). Para voltar, ative de novo e publique as fotos.")) return;
+    b.disabled = true;
+    var pubs = adm.fotos.filter(function(x){ return x.equipe_id === cpf && x.site_status === "publicada"; });
+    for (var i = 0; i < pubs.length; i++){ try { await admGuardar(pubs[i]); } catch (err) {} }
+    await salvarPerfil(cpf, { ativo: false, destaque: false });
+    await carregarAdmin(); carregarCatalogo();
+  }
+});
+
+// ── Janela "Editar Modelo" ──
+function abrirEditor(t){
+  var pf = perfilDe(t);
+  var pubs = adm.fotos.filter(function(x){ return x.equipe_id === t.cpf && x.site_status === "publicada"; });
+  var capa = pubs.find(function(x){ return x.site_capa; }) || pubs[0];
+  var corAtual = pf.cor || "";
+  var nDest = Object.keys(adm.perfis).filter(function(c){ return c !== t.cpf && adm.perfis[c].destaque && adm.perfis[c].ativo !== false; }).length;
+  var m = document.getElementById("modalModelo");
+  m.innerHTML = '<div class="mm-box"><button class="mm-x" data-mm="fechar" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button>' +
+    '<h2>Editar Modelo</h2><div class="mm-corpo">' +
+    '<div class="mm-capa">' + (capa ? '<img src="' + esc(urlFoto(capa)) + '" alt="">' : '<div class="mm-semcapa"><i class="fa-regular fa-image"></i></div>') +
+      '<label class="mm-trocar"><i class="fa-solid fa-arrow-up-from-bracket"></i> ' + (capa ? 'Nova foto de capa' : 'Enviar foto de capa') + '<input type="file" id="mmCapaArq" accept="image/jpeg,image/png,image/webp"></label>' +
+      (pubs.length > 1 ? '<div class="mm-mini">' + pubs.map(function(x){ return '<img src="' + esc(urlFoto(x)) + '" data-mm-capa="' + x.id + '"' + (capa && x.id === capa.id ? ' class="sel"' : '') + ' title="Usar como capa">'; }).join("") + '</div>' : '') +
+      '<span class="mm-leg">Foto de capa (opcional)</span></div>' +
+    '<label class="mm-campo">Nome *<input id="mmNome" maxlength="60" value="' + esc(pf.nome_exibicao) + '"></label>' +
+    '<label class="mm-campo">Unidade<input id="mmUnid" maxlength="40" value="' + esc(pf.unidade) + '"></label>' +
+    '<div class="mm-cores"><b>Cor da unidade</b><span>Escolha um tom discreto para o marcador e o nome no cartão público.</span>' +
+      '<div class="mm-sw">' + CORES_UNIDADE.map(function(c){ return '<button type="button" data-cor="' + c + '" style="background:' + c + '"' + (corAtual.toUpperCase() === c ? ' class="sel"' : '') + '></button>'; }).join("") + '</div>' +
+      '<div class="mm-hex"><span>Personalizada</span><em>#</em><input id="mmCor" maxlength="6" value="' + esc(corAtual.replace("#", "")) + '" placeholder="sem cor"><i id="mmCorPrev" style="background:' + (corAtual || "transparent") + '"></i></div></div>' +
+    '<div class="mm-2"><label class="mm-campo">Altura<input id="mmAlt" maxlength="12" value="' + esc(pf.altura) + '" placeholder="1,65"></label>' +
+      '<label class="mm-campo">Tamanho dos pés<input id="mmPes" maxlength="8" value="' + esc(pf.pes) + '" placeholder="36"></label></div>' +
+    '<div class="mm-2"><label class="mm-campo">Peso<input id="mmPeso" maxlength="12" value="' + esc(pf.peso) + '" placeholder="59KG"></label>' +
+      '<label class="mm-campo">Idade<input id="mmIdade" type="number" min="18" max="99" value="' + esc(pf.idade) + '" placeholder="18+"></label></div>' +
+    '<div class="mm-info"><i class="fa-solid fa-key"></i><div><strong>Acesso da modelo</strong><span>Ela entra com o próprio login do sistema e envia fotos pela aba <b>Fotos</b> em "Meus dados". As fotos chegam aqui como "aguardando aprovação". O login é criado no cadastro da Equipe.</span></div></div>' +
+    '<label class="mm-chk"><input type="checkbox" id="mmDest"' + (pf.destaque ? ' checked' : '') + '> Destacar entre as 3 primeiras posições</label>' +
+    '<div class="mm-nota">Podem existir até três destaques. Elas alternam entre as primeiras posições a cada visita; se houver uma ou duas, as vagas restantes seguem a ordem normal do catálogo.' + (nDest >= 3 && !pf.destaque ? ' <b style="color:#f5c542">Já existem 3 destaques.</b>' : '') + '</div>' +
+    '<label class="mm-chk"><input type="checkbox" id="mmFim"' + (pf.fixar_final ? ' checked' : '') + '> Fixar ao final do catálogo</label>' +
+    '<div class="mm-nota">Quando ativado, esta modelo aparece sempre após as demais.</div>' +
+    '<label class="mm-campo"><span><i class="fa-regular fa-eye"></i> Visualizações</span><input id="mmVis" type="number" min="0" value="' + (pf.visualizacoes || 0) + '"></label>' +
+    '<div class="mm-nota">Edite apenas para correções manuais.</div>' +
+    '</div><div class="mm-rod"><button class="mm-cancel" data-mm="fechar">Cancelar</button><button class="mm-ok" data-mm="salvar"><i class="fa-regular fa-floppy-disk"></i> Salvar</button></div></div>';
+  m.dataset.cpf = t.cpf;
+  m.classList.add("aberto"); document.body.style.overflow = "hidden";
+}
+function fecharEditor(){ var m = document.getElementById("modalModelo"); m.classList.remove("aberto"); m.innerHTML = ""; document.body.style.overflow = ""; }
+document.getElementById("modalModelo").addEventListener("click", async function(e){
+  var m = this, cpf = m.dataset.cpf;
+  if (e.target === m || e.target.closest("[data-mm=fechar]")) return fecharEditor();
+  var sw = e.target.closest("[data-cor]");
+  if (sw){
+    m.querySelectorAll("[data-cor]").forEach(function(x){ x.classList.toggle("sel", x === sw); });
+    document.getElementById("mmCor").value = sw.dataset.cor.slice(1);
+    document.getElementById("mmCorPrev").style.background = sw.dataset.cor; return;
+  }
+  var mini = e.target.closest("[data-mm-capa]");
+  if (mini){
+    var x = adm.fotos.find(function(f){ return f.id === mini.getAttribute("data-mm-capa"); }); if (!x) return;
+    try { await admCapa(x); } catch (err) { return alert("Não deu: " + err.message); }
+    await carregarAdmin(); carregarCatalogo();
+    abrirEditor(adm.terapeutas.find(function(t){ return t.cpf === cpf; })); return;
+  }
+  if (e.target.closest("[data-mm=salvar]")){
+    var nome = document.getElementById("mmNome").value.trim();
+    if (!nome) return alert("Preencha o nome.");
+    var hex = document.getElementById("mmCor").value.trim().replace("#", "");
+    if (hex && !/^[0-9a-fA-F]{6}$/.test(hex)) return alert("Cor personalizada inválida. Use 6 caracteres, ex.: 829C7D");
+    var idade = document.getElementById("mmIdade").value.trim();
+    if (idade && Number(idade) < 18) return alert("A idade precisa ser 18 ou mais.");
+    var dest = document.getElementById("mmDest").checked;
+    var nDest = Object.keys(adm.perfis).filter(function(c){ return c !== cpf && adm.perfis[c].destaque && adm.perfis[c].ativo !== false; }).length;
+    if (dest && nDest >= 3 && !(adm.perfis[cpf] && adm.perfis[cpf].destaque)) return alert("Já existem 3 modelos em destaque. Tire o destaque de uma delas antes.");
+    var campos = {
+      nome_exibicao: nome, unidade: document.getElementById("mmUnid").value.trim() || null,
+      cor: hex ? "#" + hex.toUpperCase() : null,
+      altura: document.getElementById("mmAlt").value.trim() || null, peso: document.getElementById("mmPeso").value.trim() || null,
+      pes: document.getElementById("mmPes").value.trim() || null, idade: idade ? Number(idade) : null,
+      destaque: dest, fixar_final: document.getElementById("mmFim").checked,
+      visualizacoes: Math.max(0, parseInt(document.getElementById("mmVis").value || "0", 10) || 0)
+    };
+    if (!adm.perfis[cpf]) campos.ativo = true;
+    var bt = e.target.closest("[data-mm=salvar]"); bt.disabled = true;
+    if (await salvarPerfil(cpf, campos)){ fecharEditor(); renderAdmin(); carregarCatalogo(); }
+    else bt.disabled = false;
+  }
+});
+document.getElementById("modalModelo").addEventListener("input", function(e){
+  if (e.target.id !== "mmCor") return;
+  var v = e.target.value.replace("#", "");
+  document.getElementById("mmCorPrev").style.background = /^[0-9a-fA-F]{6}$/.test(v) ? "#" + v : "transparent";
+  this.querySelectorAll("[data-cor]").forEach(function(x){ x.classList.toggle("sel", x.dataset.cor.slice(1).toUpperCase() === v.toUpperCase()); });
+});
+document.getElementById("modalModelo").addEventListener("change", async function(e){
+  if (e.target.id !== "mmCapaArq" || !e.target.files[0]) return;
+  var cpf = this.dataset.cpf, f = e.target.files[0];
+  var lab = e.target.closest("label"); lab.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando…';
+  try {
+    var nomeArq = cpf + "/fotos/" + Date.now() + "_" + limparNomeArq(f.name);
+    var up = await client.storage.from("documentos").upload(nomeArq, f); if (up.error) throw up.error;
+    var url = client.storage.from("documentos").getPublicUrl(nomeArq).data.publicUrl;
+    var ins = await client.from("documentos").insert({ equipe_id: cpf, tipo: "Foto", nome_arquivo: f.name, url: url }).select().single();
+    if (ins.error) throw ins.error;
+    await carregarAdmin();
+    var nova = adm.fotos.find(function(x){ return x.id === ins.data.id; });
+    if (nova){ await admPublicar(nova); await carregarAdmin(); nova = adm.fotos.find(function(x){ return x.id === ins.data.id; }); if (nova) await admCapa(nova); }
+    await carregarAdmin(); carregarCatalogo();
+  } catch (err) { alert("Não deu para enviar: " + (err.message || err)); }
+  abrirEditor(adm.terapeutas.find(function(t){ return t.cpf === cpf; }));
+});
 
 // ── Sessões (textos no catálogo; duração e preço vêm do cadastro de serviços) ──
 var ses = { servicos:[], textos:[], editando:null, carregado:false };

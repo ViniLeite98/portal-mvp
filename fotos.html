@@ -269,6 +269,34 @@ label.campo input:focus,label.campo textarea:focus{outline:none;border-color:rgb
 .mtab{padding:10px 14px;border-radius:9px;border:1px solid transparent;background:none;color:var(--muted);font:500 12.5px var(--sans);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .mtab:hover{color:var(--ink)}
 .mtab.on{border-color:#1e3a4c;background:#0a1a26;color:var(--ink)}
+.mtab[data-mtab=pendentes]{color:#f5c542}
+/* aba Galerias */
+.gal-cab .eyebrow,.mid-topo .eyebrow{letter-spacing:.3em;color:var(--ink);font-size:11px}
+.gal-cab h3{font-family:var(--serif);font-weight:400;font-size:34px;margin:0;display:flex;align-items:center;gap:12px}
+.gal-cab h3 i{font-size:26px;color:var(--muted)}
+.gal-cab p{color:var(--muted);font-size:14px;max-width:780px;line-height:1.6;margin:10px 0 22px}
+.gal-alerta{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border:1px solid #6b5418;border-radius:12px;background:rgba(212,160,23,.05);margin-bottom:22px}
+.gal-alerta > i{color:#f5c542;font-size:18px;margin-top:2px}
+.gal-alerta b{color:#f5c542;font-weight:600;font-size:14.5px}
+.gal-quem{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.gal-quem button{border:1px solid #3a3115;background:rgba(212,160,23,.08);color:#e9d8a6;font:500 13px var(--sans);padding:5px 12px;border-radius:99px;cursor:pointer}
+.gal-quem button:hover{background:rgba(212,160,23,.18);color:#fff}
+.gal-quem em{font-style:normal;color:#f5c542}
+.gal-filtro{margin-bottom:18px}
+.gal-chip{display:inline-flex;align-items:center;gap:9px;padding:9px 14px;border-radius:8px;border:1px solid #1e293b;background:#06101a;color:var(--ink);font:500 14px var(--sans);cursor:pointer}
+.gal-chip span{min-width:20px;height:20px;border-radius:99px;background:#2a2410;color:#f5c542;font-size:11px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+.gal-chip.on{border-color:#6b5418;background:rgba(212,160,23,.08)}
+.gal-grade{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.gal-card{background:#06101a;border:1px solid #13202e;border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
+.gal-card:hover{border-color:#33405e;transform:translateY(-2px)}
+.gal-img{position:relative;aspect-ratio:3/4;background:#0d1426;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:30px}
+.gal-img img{width:100%;height:100%;object-fit:cover}
+.gal-pend{position:absolute;top:10px;left:10px;background:rgba(42,36,16,.92);border:1px solid #6b5418;color:#f5c542;font:600 11.5px var(--sans);padding:4px 10px;border-radius:99px}
+.gal-rod{display:flex;justify-content:space-between;align-items:center;padding:13px 14px}
+.gal-rod b{font-weight:600;font-size:15px}
+.gal-rod span{font-size:13px;color:var(--ink)}
+@media (max-width:1100px){ .gal-grade{grid-template-columns:repeat(3,1fr)} }
+@media (max-width:700px){ .gal-grade{grid-template-columns:repeat(2,1fr);gap:10px} }
 .mid-grade{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
 #midGrade.salvando{opacity:.6;pointer-events:none}
 .mid-card{border-radius:12px}
@@ -1034,17 +1062,12 @@ function nomeTer(cpf){
 
 function renderAdmin(){
   // Gestão de mídia ocupa a tela inteira (sem o cabeçalho "Administração" e as abas)
-  document.getElementById("painel").classList.toggle("em-midia", !!adm.aberta && adm.aba === "terapeutas");
+  document.getElementById("painel").classList.toggle("em-midia", !!adm.aberta);
   document.querySelectorAll(".aba[data-aba]").forEach(function(b){ b.classList.toggle("ativa", b.getAttribute("data-aba") === adm.aba); });
   var area = document.getElementById("painelArea");
+  if (adm.aberta){ renderMidia(adm.aberta); return; } // Gestão de mídia (vinda de Modelos ou de Galerias)
   if (adm.aba === "sessoes"){ renderSessoes(); return; }
-  if (adm.aba === "revisar"){
-    var pend = adm.fotos.filter(function(x){ return (x.site_status || "pendente") === "pendente"; });
-    area.innerHTML = pend.length ? '<div class="grade-adm">' + pend.map(function(x){ return cardFoto(x, true); }).join("") + '</div>'
-                                 : '<div class="msg-adm">Nenhuma foto nova para revisar.</div>';
-    return;
-  }
-  if (adm.aberta){ renderMidia(adm.aberta); return; }
+  if (adm.aba === "revisar"){ renderGalerias(); return; }
   var lista = modelosOrdenadas();
   var topo = htmlConfig() + '<div class="lista-cab"><h4>Modelos Cadastradas</h4><span>' + lista.length + (lista.length === 1 ? ' modelo' : ' modelos') + '</span></div>' +
     '<div class="dica" style="margin:-6px 0 14px"><i class="fa-solid fa-grip-vertical"></i>&nbsp; Arraste para definir a ordem dos destaques e das fixadas no final. As demais aparecem em ordem aleatória no site</div>';
@@ -1075,6 +1098,50 @@ function renderAdmin(){
   ligarArrastar();
 }
 
+// ── Aba Galerias: todas as modelos + quem tem foto aguardando revisão ──
+adm.soPendentes = false;
+function pendentesDe(cpf){ return adm.fotos.filter(function(x){ return x.equipe_id === cpf && (x.site_status || "pendente") === "pendente"; }); }
+function renderGalerias(){
+  var area = document.getElementById("painelArea");
+  var todas = modelosOrdenadas();
+  var comPend = todas.filter(function(t){ return pendentesDe(t.cpf).length; })
+    .sort(function(a, b){ return pendentesDe(b.cpf).length - pendentesDe(a.cpf).length; });
+  var nPend = comPend.reduce(function(a, t){ return a + pendentesDe(t.cpf).length; }, 0);
+  var lista = adm.soPendentes ? comPend : todas;
+  var h = '<div class="gal-cab"><p class="eyebrow" style="margin:0 0 6px">Equipe</p>' +
+    '<h3><i class="fa-regular fa-images"></i> Galerias das modelos</h3>' +
+    '<p>Selecione qualquer modelo para ver todas as fotos e vídeos dela, aprovar o que foi enviado e escolher o que vai para o catálogo.</p></div>';
+  if (nPend){
+    h += '<div class="gal-alerta"><i class="fa-regular fa-bell"></i><div><b>' + nPend + (nPend === 1 ? ' nova foto aguarda revisão' : ' novas fotos aguardam revisão') + '</b>' +
+      '<div class="gal-quem">' + comPend.map(function(t){
+        var n = pendentesDe(t.cpf).length;
+        return '<button data-gal="' + esc(t.cpf) + '">' + esc(nomeTer(t.cpf)) + (n > 1 ? ' <em>(' + n + ')</em>' : '') + '</button>';
+      }).join("") + '</div></div></div>';
+  }
+  h += '<div class="gal-filtro"><button class="gal-chip' + (adm.soPendentes ? ' on' : '') + '" id="galFiltro"><i class="fa-solid fa-filter"></i> Com fotos pendentes <span>' + comPend.length + '</span></button></div>';
+  if (!lista.length){
+    h += '<div class="msg-adm">' + (adm.soPendentes ? 'Nenhuma modelo com foto aguardando revisão.' : 'Nenhuma terapeuta ativa no cadastro.') + '</div>';
+  } else {
+    h += '<div class="gal-grade">' + lista.map(function(t){
+      var fs = midiasDe(t.cpf), fotos = fs.filter(function(x){ return x.tipo !== "Video"; });
+      var capa = fotos.find(function(x){ return x.site_capa; }) || fotos.find(function(x){ return x.site_status === "publicada"; }) || fotos[0];
+      var n = pendentesDe(t.cpf).length;
+      return '<div class="gal-card" data-gal="' + esc(t.cpf) + '">' +
+        '<div class="gal-img">' + (capa ? '<img loading="lazy" src="' + esc(urlFoto(capa)) + '" alt="">' : '<i class="fa-regular fa-user"></i>') +
+          (n ? '<span class="gal-pend"><i class="fa-regular fa-bell"></i> ' + n + (n === 1 ? ' pendente' : ' pendentes') + '</span>' : '') + '</div>' +
+        '<div class="gal-rod"><b>' + esc(nomeTer(t.cpf)) + '</b><span>Ver galeria</span></div></div>';
+    }).join("") + '</div>';
+  }
+  area.innerHTML = h;
+  document.getElementById("galFiltro").onclick = function(){ adm.soPendentes = !adm.soPendentes; renderGalerias(); };
+}
+document.getElementById("painelArea").addEventListener("click", function(e){
+  var g = e.target.closest("[data-gal]"); if (!g) return;
+  adm.aberta = g.getAttribute("data-gal");
+  adm.midiaAba = pendentesDe(adm.aberta).length ? "pendentes" : "todos"; // abre direto nas fotos que esperam aprovação
+  renderAdmin(); window.scrollTo(0, 0);
+});
+
 // ── Gestão de mídia (fotos e vídeos de uma modelo) ──
 adm.midiaAba = "todos";
 function midiasDe(cpf){
@@ -1088,7 +1155,9 @@ function renderMidia(cpf){
   var todas = midiasDe(cpf);
   var fotos = todas.filter(function(x){ return x.tipo !== "Video"; }), videos = todas.filter(function(x){ return x.tipo === "Video"; });
   var aba = adm.midiaAba;
-  var lista = aba === "fotos" ? fotos : aba === "videos" ? videos : todas;
+  var pendentes = todas.filter(function(x){ return (x.site_status || "pendente") === "pendente"; });
+  if (aba === "pendentes" && !pendentes.length) aba = adm.midiaAba = "todos";
+  var lista = aba === "fotos" ? fotos : aba === "videos" ? videos : aba === "pendentes" ? pendentes : todas;
   var abaBtn = function(k, rot, n){ return '<button class="mtab' + (aba === k ? ' on' : '') + '" data-mtab="' + k + '">' + rot + (n == null ? '' : ' (' + n + ')') + '</button>'; };
   var h = '<div class="mid-topo"><button class="mid-voltar" id="midVoltar"><i class="fa-solid fa-chevron-left"></i> Voltar</button>' +
       '<div><p class="eyebrow" style="margin:0 0 4px">Gestão de mídia</p><h3>' + esc(nomeTer(cpf)) + '</h3></div></div>' +
@@ -1098,7 +1167,7 @@ function renderMidia(cpf){
       '<label class="mid-drop" data-drop="video"><input type="file" id="midVideos" accept="video/mp4,video/quicktime,video/webm" multiple>' +
         '<span class="ic"><i class="fa-solid fa-film"></i></span><b>Adicionar Vídeos</b><small>MP4, MOV, WEBM — múltiplos · até 50 MB</small></label>' +
     '</div>' +
-    '<div class="mtabs">' + abaBtn("todos", "Todos", todas.length) + abaBtn("fotos", "Fotos", fotos.length) + abaBtn("videos", "Vídeos", videos.length) + abaBtn("engajamento", "Engagement") + '</div>';
+    '<div class="mtabs">' + (pendentes.length ? abaBtn("pendentes", "Aguardando aprovação", pendentes.length) : '') + abaBtn("todos", "Todos", todas.length) + abaBtn("fotos", "Fotos", fotos.length) + abaBtn("videos", "Vídeos", videos.length) + abaBtn("engajamento", "Engagement") + '</div>';
 
   if (aba === "engajamento"){
     var t = adm.terapeutas.find(function(x){ return x.cpf === cpf; }), pf = t ? perfilDe(t) : {};
@@ -1147,7 +1216,7 @@ function renderMidia(cpf){
     (aba === "todos" ? '<div class="dica" style="margin-top:12px"><i class="fa-solid fa-grip-vertical"></i>&nbsp; Arraste os cards para mudar a ordem em que aparecem no perfil público.</div>' : '');
   }
   area.innerHTML = h;
-  document.getElementById("midVoltar").onclick = function(){ adm.aberta = null; adm.midiaAba = "todos"; renderAdmin(); window.scrollTo(0, 0); };
+  document.getElementById("midVoltar").onclick = function(){ adm.aberta = null; adm.midiaAba = "todos"; renderAdmin(); window.scrollTo(0, 0); }; // volta para a aba de onde veio (Modelos ou Galerias)
   document.getElementById("midFotos").onchange = function(){ subirFotos(cpf, this.files); };
   document.getElementById("midVideos").onchange = function(){ subirVideos(cpf, this.files); };
   area.querySelectorAll("[data-mtab]").forEach(function(b){ b.onclick = function(){ adm.midiaAba = b.getAttribute("data-mtab"); renderMidia(cpf); }; });
@@ -1810,7 +1879,7 @@ document.getElementById("painelArea").addEventListener("click", async function(e
 document.querySelectorAll(".aba[data-aba]").forEach(function(b){
   b.onclick = function(){ adm.aba = b.getAttribute("data-aba"); adm.aberta = null; editando = null; ses.editando = null; renderAdmin(); };
 });
-document.getElementById("alertaRev").onclick = function(){ adm.aba = "revisar"; adm.aberta = null; renderAdmin(); };
+document.getElementById("alertaRev").onclick = function(){ adm.aba = "revisar"; adm.aberta = null; adm.soPendentes = true; renderAdmin(); };
 
 function limparNomeArq(n){ return n.normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-zA-Z0-9.\-_]/g,"_"); }
 async function subirFotos(cpf, files){

@@ -919,7 +919,7 @@ function urlFoto(f){ var c = caminhoDoc(f.url); return (c && cacheAss[c]) || f.u
 async function carregarAdmin(){
   var area = document.getElementById("painelArea");
   if (!adm.terapeutas.length) area.innerHTML = '<div class="msg-adm"><i class="fa-solid fa-spinner fa-spin"></i> Carregando…</div>';
-  var t = await client.from("funcionario").select("cpf,nome_profissional,cargo,status,nascimento,altura,peso").eq("status","Ativo").ilike("cargo","Terapeuta%").order("nome_profissional");
+  var t = await client.from("funcionario").select("cpf,nome_profissional,cargo,status,nascimento,altura,peso,tamanho_pe").eq("status","Ativo").ilike("cargo","Terapeuta%").order("nome_profissional");
   var pf = await client.from("catalogo_perfil").select("*");
   adm.perfis = {}; (pf.data || []).forEach(function(x){ adm.perfis[x.cpf] = x; });
   if (t.error){ area.innerHTML = '<div class="msg-adm">Erro ao carregar: ' + esc(t.error.message) + '</div>'; return; }
@@ -996,18 +996,27 @@ function idadeDe(nasc){
   if (h.getMonth() < d.getMonth() || (h.getMonth() === d.getMonth() && h.getDate() < d.getDate())) i--;
   return i;
 }
+function doCadastro(t){
+  var idadeCad = idadeDe(t.nascimento);
+  return {
+    altura: t.altura ? (t.altura > 3 ? (t.altura / 100) : t.altura).toFixed(2).replace(".", ",") : "",
+    peso: t.peso ? String(t.peso).replace(".", ",") + "KG" : "",
+    pes: t.tamanho_pe ? String(t.tamanho_pe).replace(/\.0$/, "").replace(".", ",") : "",
+    idade: idadeCad && idadeCad >= 18 ? idadeCad : ""
+  };
+}
 function perfilDe(t){
   var pf = adm.perfis[t.cpf] || {};
-  var idadeCad = idadeDe(t.nascimento);
+  var cad = doCadastro(t);
   return {
     cpf: t.cpf, existe: !!adm.perfis[t.cpf],
     nome_exibicao: pf.nome_exibicao || t.nome_profissional || "Sem nome",
     unidade: pf.unidade != null ? pf.unidade : "Jardins",
     cor: pf.cor || "",
-    altura: pf.altura || (t.altura ? (t.altura > 3 ? (t.altura / 100) : t.altura).toFixed(2).replace(".", ",") : ""),
-    peso: pf.peso || (t.peso ? String(t.peso).replace(".", ",") + "KG" : ""),
-    pes: pf.pes || "",
-    idade: pf.idade || (idadeCad && idadeCad >= 18 ? idadeCad : ""),
+    altura: pf.altura || cad.altura,
+    peso: pf.peso || cad.peso,
+    pes: pf.pes || cad.pes,
+    idade: pf.idade || cad.idade,
     destaque: !!pf.destaque, fixar_final: !!pf.fixar_final,
     ativo: pf.ativo == null ? true : pf.ativo,
     ordem: pf.ordem == null ? 9999 : pf.ordem,
@@ -1095,6 +1104,7 @@ function abrirEditor(t){
     '<div class="mm-cores"><b>Cor da unidade</b><span>Escolha um tom discreto para o marcador e o nome no cartão público.</span>' +
       '<div class="mm-sw">' + CORES_UNIDADE.map(function(c){ return '<button type="button" data-cor="' + c + '" style="background:' + c + '"' + (corAtual.toUpperCase() === c ? ' class="sel"' : '') + '></button>'; }).join("") + '</div>' +
       '<div class="mm-hex"><span>Personalizada</span><em>#</em><input id="mmCor" maxlength="6" value="' + esc(corAtual.replace("#", "")) + '" placeholder="sem cor"><i id="mmCorPrev" style="background:' + (corAtual || "transparent") + '"></i></div></div>' +
+    '<div class="mm-nota" style="margin:0 0 10px">Altura, peso, pés e idade vêm do cadastro da Equipe. Só mude aqui se quiser mostrar algo diferente no site.</div>' +
     '<div class="mm-2"><label class="mm-campo">Altura<input id="mmAlt" maxlength="12" value="' + esc(pf.altura) + '" placeholder="1,65"></label>' +
       '<label class="mm-campo">Tamanho dos pés<input id="mmPes" maxlength="8" value="' + esc(pf.pes) + '" placeholder="36"></label></div>' +
     '<div class="mm-2"><label class="mm-campo">Peso<input id="mmPeso" maxlength="12" value="' + esc(pf.peso) + '" placeholder="59KG"></label>' +
@@ -1145,6 +1155,10 @@ document.getElementById("modalModelo").addEventListener("click", async function(
       destaque: dest, fixar_final: document.getElementById("mmFim").checked,
       visualizacoes: Math.max(0, parseInt(document.getElementById("mmVis").value || "0", 10) || 0)
     };
+    // Valor igual ao do cadastro da Equipe não é gravado aqui: assim o catálogo continua seguindo o cadastro.
+    var cad = doCadastro(adm.terapeutas.find(function(x){ return x.cpf === cpf; }));
+    ["altura","peso","pes"].forEach(function(k){ if (campos[k] && String(campos[k]).toUpperCase() === String(cad[k]).toUpperCase()) campos[k] = null; });
+    if (campos.idade && campos.idade === cad.idade) campos.idade = null;
     if (!adm.perfis[cpf]) campos.ativo = true;
     var bt = e.target.closest("[data-mm=salvar]"); bt.disabled = true;
     if (await salvarPerfil(cpf, campos)){ fecharEditor(); renderAdmin(); carregarCatalogo(); }

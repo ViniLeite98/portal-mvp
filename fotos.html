@@ -346,6 +346,11 @@ label.campo input:focus,label.campo textarea:focus{outline:none;border-color:rgb
 .mmeta{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--muted);margin:4px 0 6px}
 .mvis{font-size:12.5px;color:#2aa3d8}
 .mvis .mpub{color:var(--dim)} .mvis .pend{color:#f5c542}
+.dest-modo{display:flex;gap:8px;margin:4px 0 6px}.dest-modo .fb{flex:none;padding:8px 16px}
+.dest-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-top:12px}
+.dest-it{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line,#2a2a2a);border-radius:8px;font-size:13px}
+.dest-it span:last-child{margin-left:auto;color:var(--dim);font-size:12px}.dest-it .dp{width:22px;color:#f5c542;font-weight:600}
+.dest-it.top{border-color:rgba(245,197,66,.5);background:rgba(212,160,23,.08)}.dest-it.aus{opacity:.5}
 .tag-d,.tag-f{font:500 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;vertical-align:middle;margin-left:6px}
 .tag-d{background:rgba(212,160,23,.12);color:#f5c542}.tag-f{background:rgba(148,163,184,.12);color:#94a3b8}
 .macoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
@@ -1060,6 +1065,8 @@ function nomeTer(cpf){
   var t = adm.terapeutas.find(function(x){ return x.cpf === cpf; }); return t ? (t.nome_profissional || "Sem nome") : "";
 }
 
+function modoAuto(){ return !!(siteCfg && siteCfg.destaque_modo === "auto"); }
+function destAutoPos(cpf){ var d = (destAuto || []).find(function(x){ return x.cpf === cpf; }); return d && d.posicao && d.posicao <= 3 ? d.posicao : 0; }
 function renderAdmin(){
   // Gestão de mídia ocupa a tela inteira (sem o cabeçalho "Administração" e as abas)
   document.getElementById("painel").classList.toggle("em-midia", !!adm.aberta);
@@ -1082,7 +1089,7 @@ function renderAdmin(){
     return '<div class="mrow' + (pf.ativo ? '' : ' off') + '" draggable="true" data-cpf="' + esc(t.cpf) + '">' +
       '<span class="alca" title="Arrastar"><i class="fa-solid fa-grip-vertical"></i></span>' +
       '<div class="mth">' + (capa ? '<img loading="lazy" src="' + esc(urlFoto(capa)) + '" alt="">' : '<i class="fa-regular fa-user"></i>') + '</div>' +
-      '<div class="mtx"><b>' + esc(pf.nome_exibicao) + '</b>' + (pf.destaque ? ' <span class="tag-d">Destaque</span>' : '') + (pf.fixar_final ? ' <span class="tag-f">No final</span>' : '') +
+      '<div class="mtx"><b>' + esc(pf.nome_exibicao) + '</b>' + (modoAuto() ? (destAutoPos(t.cpf) ? ' <span class="tag-d">Destaque ' + destAutoPos(t.cpf) + 'º · auto</span>' : '') : (pf.destaque ? ' <span class="tag-d">Destaque</span>' : '')) + (pf.fixar_final ? ' <span class="tag-f">No final</span>' : '') +
         '<div class="mmeta">' + meta + '</div>' +
         '<div class="mvis"><i class="fa-regular fa-eye"></i> ' + Number(pf.visualizacoes || 0).toLocaleString("pt-BR") + ' visualizações' +
           ' <span class="mpub">· ' + pub.reduce(function(a, x){ return a + (x.site_views || 0); }, 0).toLocaleString("pt-BR") + ' nas fotos</span>' +
@@ -1096,6 +1103,7 @@ function renderAdmin(){
   }).join("") + '</div>';
   ligarConfig();
   ligarArrastar();
+  if (siteCfg && siteCfg.destaque_modo === "auto" && !destAuto) carregarDestAuto();
 }
 
 // ── Aba Galerias: todas as modelos + quem tem foto aguardando revisão ──
@@ -1397,6 +1405,7 @@ function abrirEditor(t){
       '<label class="mm-campo">Idade<input id="mmIdade" type="number" min="18" max="99" value="' + esc(pf.idade) + '" placeholder="18+"></label></div>' +
     '<div class="mm-info"><i class="fa-solid fa-key"></i><div><strong>Acesso da modelo</strong><span>Ela entra com o próprio login do sistema e envia fotos pela aba <b>Fotos</b> em "Meus dados". As fotos chegam aqui como "aguardando aprovação". O login é criado no cadastro da Equipe.</span></div></div>' +
     '<label class="mm-chk"><input type="checkbox" id="mmDest"' + (pf.destaque ? ' checked' : '') + '> Destacar entre as 3 primeiras posições</label>' +
+    (modoAuto() ? '<div class="mm-nota" style="color:#f5c542">O destaque está no modo <b>automático</b> (as 3 com menos atendimentos no mês). Esta marcação só vale se voltar para o modo manual.</div>' : '') +
     '<div class="mm-nota">Até três destaques. Elas ficam fixas nas primeiras posições, na ordem da lista de modelos. As demais aparecem em ordem aleatória a cada visita.' + (nDest >= 3 && !pf.destaque ? ' <b style="color:#f5c542">Já existem 3 destaques.</b>' : '') + '</div>' +
     '<label class="mm-chk"><input type="checkbox" id="mmFim"' + (pf.fixar_final ? ' checked' : '') + '> Fixar ao final do catálogo</label>' +
     '<div class="mm-nota">Quando ativado, esta modelo aparece sempre após as demais.</div>' +
@@ -1721,7 +1730,32 @@ function htmlConfig(){
       '<span class="k">Descrição</span><span class="v">' + esc(c.og_descricao) + '</span>' +
       '<span class="k">Imagem</span><span>' + ogImg + '</span></div></div>';
   }
+  h += htmlDestaqueAuto();
   return h;
+}
+// ── Destaque automático: as 3 com menos atendimentos no mês ──
+var destAuto = null; // lista vinda de catalogo_destaques_painel()
+function htmlDestaqueAuto(){
+  var auto = siteCfg && siteCfg.destaque_modo === "auto";
+  var h = '<div class="cfg"><div class="cfg-cab"><h4><i class="fa-solid fa-star"></i> Destaques do catálogo (3 primeiras)</h4></div>' +
+    '<div class="dest-modo"><button class="fb' + (!auto ? ' ok' : '') + '" data-cfg="destManual">Manual</button><button class="fb' + (auto ? ' ok' : '') + '" data-cfg="destAuto">Automático</button></div>' +
+    '<div class="dica">' + (auto
+      ? 'As 3 modelos com <b>menos atendimentos no mês</b> ficam no topo, recalculado a cada acesso. Quem está de férias ou falta aprovada hoje fica de fora. Quem está "fixada no final" não entra.'
+      : 'Os destaques são os marcados em <b>Editar</b> de cada modelo, na ordem da lista abaixo.') + '</div>';
+  if (auto){
+    if (!destAuto) h += '<div class="dica">Calculando…</div>';
+    else h += '<div class="dest-lista">' + destAuto.map(function(d){
+      return '<div class="dest-it' + (d.posicao && d.posicao <= 3 ? ' top' : '') + (d.ausente_hoje ? ' aus' : '') + '">' +
+        '<span class="dp">' + (d.posicao && d.posicao <= 3 ? d.posicao + 'º' : '') + '</span><b>' + esc(d.nome) + '</b>' +
+        '<span>' + (d.ausente_hoje ? 'ausente hoje' : d.atendimentos + ' atend. no mês') + '</span></div>';
+    }).join("") + '</div>';
+  }
+  return h + '</div>';
+}
+async function carregarDestAuto(){
+  var r = await client.rpc("catalogo_destaques_painel");
+  destAuto = r.error ? [] : (r.data || []);
+  if (!adm.aberta && adm.aba !== "sessoes" && adm.aba !== "revisar") renderAdmin();
 }
 async function salvarCfg(campos){
   campos.atualizado_em = new Date().toISOString(); campos.atualizado_por = adm.sessao.user.id;
@@ -1791,6 +1825,9 @@ document.getElementById("painelArea").addEventListener("click", async function(e
   var a = b.getAttribute("data-cfg");
   if (a === "editarTextos"){ editando = "textos"; renderAdmin(); }
   else if (a === "editarShare"){ editando = "share"; renderAdmin(); }
+  else if (a === "destAuto" || a === "destManual"){
+    if (await salvarCfg({ destaque_modo: a === "destAuto" ? "auto" : "manual" })){ renderAdmin(); if (a === "destAuto") carregarDestAuto(); }
+  }
   else if (a === "editarSesTextos"){ editando = "sesTextos"; renderAdmin(); }
   else if (a === "salvarSesTextos"){
     var st = { sessoes_titulo: document.getElementById("cfgSesTit").value.trim(), sessoes_slogan: document.getElementById("cfgSesSlo").value.trim() };

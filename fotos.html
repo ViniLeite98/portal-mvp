@@ -713,14 +713,14 @@ async function carregarCatalogo(){
   if (location.hash.indexOf("#p-") === 0) abrirPerfil(location.hash.slice(3), true);
 }
 
-// Ordem: até 3 destaques (revezando a cada visita) → ordem do painel → "fixar ao final"
-var sorteioDestaque = {}; // um sorteio por visita (não muda ao trocar de idioma)
+// Ordem: destaques fixos no topo (na ordem do painel) → demais em ordem aleatória a cada visita → "fixar ao final"
+var sorteioVisita = {}; // um sorteio por visita (não muda ao trocar de idioma)
 function ordenarCatalogo(lista){
   var porOrdem = function(a,b){ return (a.ordem - b.ordem) || a.nome.localeCompare(b.nome, "pt-BR"); };
   var dest = lista.filter(function(p){ return p.destaque && !p.fixar; }).sort(porOrdem).slice(0, 3);
-  dest.forEach(function(p){ if (sorteioDestaque[p.id] == null) sorteioDestaque[p.id] = Math.random(); });
-  dest.sort(function(a,b){ return sorteioDestaque[a.id] - sorteioDestaque[b.id]; });
-  var resto = lista.filter(function(p){ return dest.indexOf(p) < 0 && !p.fixar; }).sort(porOrdem);
+  var resto = lista.filter(function(p){ return dest.indexOf(p) < 0 && !p.fixar; });
+  resto.forEach(function(p){ if (sorteioVisita[p.id] == null) sorteioVisita[p.id] = Math.random(); });
+  resto.sort(function(a,b){ return sorteioVisita[a.id] - sorteioVisita[b.id]; });
   var fim = lista.filter(function(p){ return p.fixar; }).sort(porOrdem);
   return dest.concat(resto, fim);
 }
@@ -1047,7 +1047,7 @@ function renderAdmin(){
   if (adm.aberta){ renderMidia(adm.aberta); return; }
   var lista = modelosOrdenadas();
   var topo = htmlConfig() + '<div class="lista-cab"><h4>Modelos Cadastradas</h4><span>' + lista.length + (lista.length === 1 ? ' modelo' : ' modelos') + '</span></div>' +
-    '<div class="dica" style="margin:-6px 0 14px"><i class="fa-solid fa-grip-vertical"></i>&nbsp; Arraste para reordenar a posição das modelos na galeria</div>';
+    '<div class="dica" style="margin:-6px 0 14px"><i class="fa-solid fa-grip-vertical"></i>&nbsp; Arraste para definir a ordem dos destaques e das fixadas no final. As demais aparecem em ordem aleatória no site</div>';
   if (!lista.length){ area.innerHTML = topo + '<div class="msg-adm">Nenhuma terapeuta ativa no cadastro.</div>'; ligarConfig(); return; }
   area.innerHTML = topo + '<div id="listaModelos">' + lista.map(function(t){
     var pf = perfilDe(t), fs = adm.fotos.filter(function(x){ return x.equipe_id === t.cpf; });
@@ -1328,7 +1328,7 @@ function abrirEditor(t){
       '<label class="mm-campo">Idade<input id="mmIdade" type="number" min="18" max="99" value="' + esc(pf.idade) + '" placeholder="18+"></label></div>' +
     '<div class="mm-info"><i class="fa-solid fa-key"></i><div><strong>Acesso da modelo</strong><span>Ela entra com o próprio login do sistema e envia fotos pela aba <b>Fotos</b> em "Meus dados". As fotos chegam aqui como "aguardando aprovação". O login é criado no cadastro da Equipe.</span></div></div>' +
     '<label class="mm-chk"><input type="checkbox" id="mmDest"' + (pf.destaque ? ' checked' : '') + '> Destacar entre as 3 primeiras posições</label>' +
-    '<div class="mm-nota">Podem existir até três destaques. Elas alternam entre as primeiras posições a cada visita; se houver uma ou duas, as vagas restantes seguem a ordem normal do catálogo.' + (nDest >= 3 && !pf.destaque ? ' <b style="color:#f5c542">Já existem 3 destaques.</b>' : '') + '</div>' +
+    '<div class="mm-nota">Até três destaques. Elas ficam fixas nas primeiras posições, na ordem da lista de modelos. As demais aparecem em ordem aleatória a cada visita.' + (nDest >= 3 && !pf.destaque ? ' <b style="color:#f5c542">Já existem 3 destaques.</b>' : '') + '</div>' +
     '<label class="mm-chk"><input type="checkbox" id="mmFim"' + (pf.fixar_final ? ' checked' : '') + '> Fixar ao final do catálogo</label>' +
     '<div class="mm-nota">Quando ativado, esta modelo aparece sempre após as demais.</div>' +
     '<label class="mm-campo"><span><i class="fa-regular fa-eye"></i> Visualizações</span><input id="mmVis" type="number" min="0" value="' + (pf.visualizacoes || 0) + '"></label>' +

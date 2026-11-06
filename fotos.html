@@ -77,16 +77,21 @@ a{color:inherit;text-decoration:none}
 .perfil .barra .wrap{height:56px;display:flex;align-items:center}
 .voltar{background:none;border:none;color:var(--muted);font:400 14px var(--sans);cursor:pointer;display:inline-flex;gap:10px;align-items:center;padding:0;letter-spacing:.04em}
 .voltar:hover{color:var(--ink)}
-.perfil h2{font-family:var(--serif);font-weight:400;font-size:clamp(40px,5vw,60px);margin:34px 0 6px;letter-spacing:.02em}
-.perfil .local{font-size:12px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;margin-bottom:30px;display:flex;gap:10px;align-items:center}
-.perfil .local::before{content:"";width:18px;height:1px;background:currentColor}
-.medidas{display:flex;flex-wrap:wrap;gap:8px 22px;margin:-14px 0 30px;font-size:13px;color:var(--muted);letter-spacing:.04em}
+.perfil-cab{text-align:center;padding:34px 0 30px;border-bottom:1px solid var(--line);margin:0 -32px}
+.perfil h2{font-family:var(--serif);font-weight:400;font-size:clamp(46px,6vw,76px);margin:0;letter-spacing:.02em;line-height:1.05}
+.enfeite-p{display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 12px}
+.enfeite-p::before,.enfeite-p::after{content:"";width:48px;height:1px;background:#3b4a63}
+.enfeite-p i{width:5px;height:5px;border-radius:50%;background:#8a93a8}
+.perfil .local{font-size:11px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;justify-content:center;display:flex}
+.medidas{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 20px;margin-top:10px;font-size:12.5px;color:var(--muted);letter-spacing:.04em}
 .medidas b{color:var(--ink);font-weight:500;margin-left:4px}
-.fotos-perfil{columns:3 300px;column-gap:18px;padding-bottom:30px}
-.fotos-perfil figure{margin:0 0 18px;break-inside:avoid;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--card);cursor:zoom-in}
-.fotos-perfil img{width:100%}
-.fotos-perfil figure.vid{cursor:default}
-.fotos-perfil video{width:100%;display:block;background:#000}
+.qtd-midia{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;color:#4b6382;margin:28px 0 14px}
+.fotos-perfil{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,350px));gap:18px;padding-bottom:30px}
+.fotos-perfil figure{margin:0;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--card);cursor:zoom-in;aspect-ratio:3/4}
+.fotos-perfil img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+.fotos-perfil figure:hover img{transform:scale(1.02)}
+.fotos-perfil figure.vid{cursor:default;background:#000}
+.fotos-perfil video{width:100%;height:100%;object-fit:cover;display:block;background:#000}
 .perfil .acao{padding-bottom:60px}
 .btn-wa{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:999px;background:#128c4a;color:#fff;font:500 13px var(--sans);letter-spacing:.14em;text-transform:uppercase}
 .btn-wa i{font-size:17px}
@@ -409,8 +414,8 @@ footer{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;co
   .nav a{font-size:10.5px;letter-spacing:.16em}
   .pill{padding:13px 22px;font-size:12px;letter-spacing:.16em}
   .capa{padding-bottom:44px}
-  .fotos-perfil{columns:2 160px;column-gap:10px}
-  .fotos-perfil figure{margin-bottom:10px}
+  .fotos-perfil{grid-template-columns:repeat(2,1fr);gap:10px}
+  .perfil-cab{margin:0 -16px}
 }
 @media (max-width:420px){ .nav a span{display:none} }
 </style>
@@ -519,9 +524,13 @@ footer{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;co
 <div class="perfil" id="perfil" role="dialog" aria-modal="true">
   <div class="barra"><div class="wrap"><button class="voltar" id="perfilVoltar"><i class="fa-solid fa-chevron-left"></i> <span data-i18n="voltar">Voltar</span></button></div></div>
   <div class="wrap">
-    <h2 id="perfilNome"></h2>
-    <div class="local" id="perfilLocal"></div>
-    <div class="medidas" id="perfilMedidas"></div>
+    <div class="perfil-cab">
+      <h2 id="perfilNome"></h2>
+      <div class="enfeite-p"><i></i></div>
+      <div class="local" id="perfilLocal"></div>
+      <div class="medidas" id="perfilMedidas"></div>
+    </div>
+    <div class="qtd-midia" id="perfilQtd"></div>
     <div class="fotos-perfil" id="perfilFotos"></div>
     <div class="acao" id="perfilAcao"></div>
   </div>
@@ -540,15 +549,15 @@ footer{border-top:1px solid var(--line);padding:30px 0 40px;text-align:center;co
 var I18N = {
   pt: { nav_ter:"Terapeutas", nav_ses:"Sessões", pill_ter:"Nossas terapeutas", pill_ses:"Nossas sessões",
         flut:"Conheça nossas terapeutas", voltar:"Voltar", em_breve:"Em breve novidades por aqui.", mais_fotos:"+ Fotos",
-        m_alt:"Altura", m_peso:"Peso", m_pes:"Pés", m_idade:"Idade", wa_btn:"Falar no WhatsApp", wa_msg:"Olá! Vi o catálogo e quero saber sobre {nome}.", duracao:"Duração e investimento",
+        m_alt:"Altura", m_peso:"Peso", m_pes:"Pés", m_idade:"Idade", foto1:"foto", fotosN:"fotos", video1:"vídeo", videosN:"vídeos", wa_btn:"Falar no WhatsApp", wa_msg:"Olá! Vi o catálogo e quero saber sobre {nome}.", duracao:"Duração e investimento",
         m_tit:"Acesso admin", m_entrar:"Entrar", m_painel:"Painel admin", m_ver:"Ver catálogo", m_sistema:"Ir para o sistema", m_sair:"Sair" },
   en: { nav_ter:"Therapists", nav_ses:"Sessions", pill_ter:"Our therapists", pill_ses:"Our sessions",
         flut:"Meet our therapists", voltar:"Back", em_breve:"Coming soon.", mais_fotos:"+ Photos",
-        m_alt:"Height", m_peso:"Weight", m_pes:"Shoe size", m_idade:"Age", wa_btn:"Chat on WhatsApp", wa_msg:"Hi! I saw the catalog and would like to know more about {nome}.", duracao:"Duration & pricing",
+        m_alt:"Height", m_peso:"Weight", m_pes:"Shoe size", m_idade:"Age", foto1:"photo", fotosN:"photos", video1:"video", videosN:"videos", wa_btn:"Chat on WhatsApp", wa_msg:"Hi! I saw the catalog and would like to know more about {nome}.", duracao:"Duration & pricing",
         m_tit:"Admin access", m_entrar:"Sign in", m_painel:"Admin panel", m_ver:"View catalog", m_sistema:"Go to the system", m_sair:"Sign out" },
   es: { nav_ter:"Terapeutas", nav_ses:"Sesiones", pill_ter:"Nuestras terapeutas", pill_ses:"Nuestras sesiones",
         flut:"Conoce a nuestras terapeutas", voltar:"Volver", em_breve:"Próximamente.", mais_fotos:"+ Fotos",
-        m_alt:"Altura", m_peso:"Peso", m_pes:"Pies", m_idade:"Edad", wa_btn:"Hablar por WhatsApp", wa_msg:"¡Hola! Vi el catálogo y quiero saber más sobre {nome}.", duracao:"Duración e inversión",
+        m_alt:"Altura", m_peso:"Peso", m_pes:"Pies", m_idade:"Edad", foto1:"foto", fotosN:"fotos", video1:"video", videosN:"videos", wa_btn:"Hablar por WhatsApp", wa_msg:"¡Hola! Vi el catálogo y quiero saber más sobre {nome}.", duracao:"Duración e inversión",
         m_tit:"Acceso admin", m_entrar:"Entrar", m_painel:"Panel admin", m_ver:"Ver catálogo", m_sistema:"Ir al sistema", m_sair:"Salir" }
 };
 // Textos padrão do banco que ganham versão em inglês (se você mudar o texto no painel, ele aparece como escreveu)
@@ -721,6 +730,8 @@ function abrirPerfil(id, semHistorico){
   var medEl = document.getElementById("perfilMedidas");
   medEl.innerHTML = med.map(function(x){ return '<span>' + t(x[0]) + ':<b>' + esc(x[1]) + '</b></span>'; }).join("");
   medEl.style.display = med.length ? "" : "none";
+  var nF = p.fotos.filter(function(f){ return f.tipo !== "Video"; }).length, nV = p.fotos.length - nF;
+  document.getElementById("perfilQtd").textContent = [nF ? nF + " " + (nF === 1 ? t("foto1") : t("fotosN")) : "", nV ? nV + " " + (nV === 1 ? t("video1") : t("videosN")) : ""].filter(Boolean).join(" · ");
   contarVisualizacao(id);
   document.getElementById("perfilFotos").innerHTML = p.fotos.map(function(f){
     var u = urlCatalogo(f.imagem_path);

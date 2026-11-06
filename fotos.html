@@ -757,16 +757,51 @@ function ordenarCatalogo(lista){
   var fim = lista.filter(function(p){ return p.fixar; }).sort(porOrdem);
   return dest.concat(resto, fim);
 }
-function contarVisualizacao(id){
-  var k = "hara_v2_vis_" + id; // "v2": ignora marcas antigas da versão que não enviava a contagem
-  try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); } catch (e) {}
-  client.rpc("catalogo_visualizar", { p_id: id }).then(function(){}); // o .then() é o que envia o pedido
+// ── Métricas do catálogo (aba Catálogo do dashboard) ──
+// Cada visita recebe um código aleatório (nada pessoal). Quem está logado no sistema (equipe) não conta.
+var sessaoVisita = (function(){
+  try { var s = sessionStorage.getItem("hara_sessao"); if (s) return s; } catch (e) {}
+  var s2 = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : "xxxxxxxx-xxxx-4xxx-8xxx-xxxxxxxxxxxx".replace(/x/g, function(){ return (Math.random() * 16 | 0).toString(16); });
+  try { sessionStorage.setItem("hara_sessao", s2); } catch (e) {}
+  return s2;
+})();
+var rastrear = null, filaEventos = []; // null = ainda verificando se é alguém da equipe
+function registrar(tipo, extra, aoSair){
+  if (rastrear === false) return;
+  var corpo = Object.assign({ p_sessao: sessaoVisita, p_tipo: tipo }, extra || {});
+  if (rastrear === null){ filaEventos.push(corpo); return; }
+  if (aoSair){ // ao fechar a página: fetch com keepalive chega mesmo com a aba fechando
+    try { fetch(SUPABASE_URL + "/rest/v1/rpc/catalogo_registrar", { method: "POST", keepalive: true,
+      headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }, body: JSON.stringify(corpo) }); } catch (e) {}
+    return;
+  }
+  client.rpc("catalogo_registrar", corpo).then(function(){}); // o .then() é o que envia o pedido
 }
-function contarMidia(fotoId){
+function liberarRastreio(sim){
+  rastrear = !!sim;
+  var f = filaEventos; filaEventos = [];
+  if (sim) f.forEach(function(c){ client.rpc("catalogo_registrar", c).then(function(){}); });
+}
+registrar("visita");
+var perfilAberto = null; // { id, t0 } para medir o tempo no perfil
+function fecharTempoPerfil(aoSair){
+  if (!perfilAberto) return;
+  var seg = Math.round((Date.now() - perfilAberto.t0) / 1000), id = perfilAberto.id; perfilAberto = null;
+  if (seg >= 1) registrar("tempo", { p_perfil: id, p_segundos: seg }, aoSair);
+}
+document.addEventListener("visibilitychange", function(){
+  if (document.visibilityState === "hidden"){ if (perfilAberto){ var id = perfilAberto.id; fecharTempoPerfil(true); perfilAberto = { id: id, t0: Infinity }; } }
+  else if (perfilAberto && perfilAberto.t0 === Infinity) perfilAberto.t0 = Date.now(); // voltou para a aba: recomeça a contar
+});
+window.addEventListener("pagehide", function(){ fecharTempoPerfil(true); });
+function contarVisualizacao(id){
+  fecharTempoPerfil();
+  perfilAberto = { id: id, t0: Date.now() };
+  registrar("perfil", { p_perfil: id });
+}
+function contarMidia(fotoId, ehVideo){
   if (!fotoId) return;
-  var k = "hara_vm_" + fotoId;
-  try { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); } catch (e) {}
-  client.rpc("catalogo_midia_visualizar", { p_foto: fotoId }).then(function(){});
+  registrar(ehVideo ? "video" : "foto", { p_foto: fotoId });
 }
 
 var perfilEl = document.getElementById("perfil");
@@ -782,14 +817,14 @@ function abrirPerfil(id, semHistorico){
   var nF = p.fotos.filter(function(f){ return f.tipo !== "Video"; }).length, nV = p.fotos.length - nF;
   document.getElementById("perfilQtd").textContent = [nF ? nF + " " + (nF === 1 ? t("foto1") : t("fotosN")) : "", nV ? nV + " " + (nV === 1 ? t("video1") : t("videosN")) : ""].filter(Boolean).join(" · ");
   contarVisualizacao(id);
-  document.querySelectorAll("#perfilFotos video[data-foto]").forEach(function(v){
-    v.addEventListener("play", function(){ contarMidia(v.getAttribute("data-foto")); }, { once: true });
-  });
   document.getElementById("perfilFotos").innerHTML = p.fotos.map(function(f){
     var u = urlCatalogo(f.imagem_path);
     if (f.tipo === "Video") return '<figure class="vid"><video src="' + esc(u) + '#t=0.1" controls playsinline preload="metadata" data-foto="' + esc(f.foto_id) + '"></video></figure>';
     return '<figure data-src="' + esc(u) + '" data-foto="' + esc(f.foto_id) + '"><img loading="lazy" src="' + esc(u) + '" alt="' + esc(p.nome) + '"></figure>';
   }).join("");
+  document.querySelectorAll("#perfilFotos video[data-foto]").forEach(function(v){
+    v.addEventListener("play", function(){ contarMidia(v.getAttribute("data-foto"), true); }, { once: true });
+  });
   var acao = document.getElementById("perfilAcao");
   if (CONFIG.whatsapp){
     var txt = encodeURIComponent(t("wa_msg").replace("{nome}", p.nome));
@@ -798,7 +833,7 @@ function abrirPerfil(id, semHistorico){
   perfilEl.classList.add("aberto"); perfilEl.scrollTop = 0; document.body.style.overflow = "hidden";
   if (!semHistorico) history.pushState({perfil:id}, "", "#p-" + id);
 }
-function fecharPerfil(){ perfilEl.classList.remove("aberto"); document.body.style.overflow = ""; }
+function fecharPerfil(){ fecharTempoPerfil(); perfilEl.classList.remove("aberto"); document.body.style.overflow = ""; }
 document.getElementById("grade").addEventListener("click", function(e){
   var c = e.target.closest("[data-perfil]"); if (c) abrirPerfil(c.getAttribute("data-perfil"));
 });
@@ -879,7 +914,7 @@ var lb = document.getElementById("lightbox");
 document.addEventListener("click", function(e){
   var alvo = e.target.closest("[data-src]");
   if (!alvo || alvo.closest(".lightbox")) return;
-  if (alvo.closest("#perfilFotos")) contarMidia(alvo.getAttribute("data-foto")); // foto ampliada no perfil público
+  if (alvo.closest("#perfilFotos")) contarMidia(alvo.getAttribute("data-foto"), alvo.getAttribute("data-video") === "1"); // foto ampliada no perfil público
   var ehVideo = alvo.getAttribute("data-video") === "1";
   var im = document.getElementById("lbImg"), vd = document.getElementById("lbVid");
   im.style.display = ehVideo ? "none" : ""; vd.style.display = ehVideo ? "" : "none";
@@ -1010,6 +1045,7 @@ function montarMenu(){
 async function iniciarAcesso(){
   var r = await client.auth.getSession();
   adm.sessao = r.data && r.data.session;
+  liberarRastreio(!adm.sessao); // equipe logada não entra nas métricas
   if (adm.sessao){
     var p = await client.from("perfis").select("role,nome,email").eq("id", adm.sessao.user.id).maybeSingle();
     adm.perfil = p.data || null;
@@ -1328,6 +1364,7 @@ async function salvarPerfil(cpf, campos){
   var r = await client.from("catalogo_perfil").upsert(campos, { onConflict: "cpf" }).select().maybeSingle();
   if (r.error){ alert("Não deu para salvar: " + r.error.message); return false; }
   if (r.data) adm.perfis[cpf] = r.data;
+  client.rpc("catalogo_destaques_snapshot").then(function(){}); // histórico de destaques (antes × depois no dashboard)
   return true;
 }
 
@@ -1826,7 +1863,7 @@ document.getElementById("painelArea").addEventListener("click", async function(e
   if (a === "editarTextos"){ editando = "textos"; renderAdmin(); }
   else if (a === "editarShare"){ editando = "share"; renderAdmin(); }
   else if (a === "destAuto" || a === "destManual"){
-    if (await salvarCfg({ destaque_modo: a === "destAuto" ? "auto" : "manual" })){ renderAdmin(); if (a === "destAuto") carregarDestAuto(); }
+    if (await salvarCfg({ destaque_modo: a === "destAuto" ? "auto" : "manual" })){ client.rpc("catalogo_destaques_snapshot").then(function(){}); renderAdmin(); if (a === "destAuto") carregarDestAuto(); }
   }
   else if (a === "editarSesTextos"){ editando = "sesTextos"; renderAdmin(); }
   else if (a === "salvarSesTextos"){

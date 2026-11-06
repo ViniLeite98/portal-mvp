@@ -1174,6 +1174,7 @@ document.getElementById("modalModelo").addEventListener("input", function(e){
 document.getElementById("modalModelo").addEventListener("change", async function(e){
   if (e.target.id !== "mmCapaArq" || !e.target.files[0]) return;
   var cpf = this.dataset.cpf, f = e.target.files[0];
+  if (!/^image\/(jpeg|png|webp)$/.test(f.type)){ alert("Use uma imagem JPG, PNG ou WEBP. (Fotos HEIC do iPhone: exporte como JPG.)"); e.target.value = ""; return; }
   var lab = e.target.closest("label"); lab.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando…';
   try {
     var nomeArq = cpf + "/fotos/" + Date.now() + "_" + limparNomeArq(f.name);
@@ -1443,12 +1444,37 @@ async function salvarCfg(campos){
   if (r.data) aplicarConfig(r.data);
   return true;
 }
+// ── Reduz imagens antes de enviar (fotos de celular têm 3–10 MB) ──
+// Redimensiona para no máximo `maxLado` px e regrava em JPEG. SVG e imagens já pequenas passam direto.
+function prepararImagem(arquivo, maxLado, qualidade){
+  maxLado = maxLado || 2000; qualidade = qualidade || 0.85;
+  return new Promise(function(ok){
+    if (!arquivo || arquivo.type === "image/svg+xml") return ok(arquivo);
+    var url = URL.createObjectURL(arquivo), img = new Image();
+    img.onload = function(){
+      URL.revokeObjectURL(url);
+      var w = img.naturalWidth, h = img.naturalHeight, f = Math.min(1, maxLado / Math.max(w, h));
+      if (f === 1 && arquivo.size < 900 * 1024) return ok(arquivo);
+      var c = document.createElement("canvas"); c.width = Math.round(w * f); c.height = Math.round(h * f);
+      var ctx = c.getContext("2d");
+      if (arquivo.type !== "image/png"){ ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); }
+      ctx.drawImage(img, 0, 0, c.width, c.height);
+      var tipo = arquivo.type === "image/png" ? "image/png" : "image/jpeg";
+      c.toBlob(function(b){ ok(b && b.size < arquivo.size ? b : arquivo); }, tipo, qualidade);
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); ok(arquivo); }; // formato que o navegador não abre (ex.: HEIC): envia como está
+    img.src = url;
+  });
+}
+function extDe(blob){ return blob.type === "image/svg+xml" ? "svg" : blob.type === "image/png" ? "png" : blob.type === "image/webp" ? "webp" : "jpg"; }
 async function subirImgSite(file, prefixo){
   if (!file) return null;
-  if (file.size > 5 * 1024 * 1024){ alert("Imagem acima de 5 MB."); return null; }
-  var ext = file.type === "image/svg+xml" ? "svg" : (file.type.split("/")[1] || "png").replace("jpeg","jpg");
-  var caminho = "site/" + prefixo + "-" + uuid() + "." + ext;
-  var up = await client.storage.from(BUCKET_CATALOGO).upload(caminho, file, { contentType: file.type, upsert: false });
+  if (!/^image\/(jpeg|png|webp|svg\+xml)$/.test(file.type)){ alert("Use uma imagem JPG, PNG, WEBP ou SVG. (Fotos HEIC do iPhone: exporte como JPG.)"); return null; }
+  // logo: até 800px; imagem de partilha: 1200px (tamanho que o WhatsApp usa)
+  var img = await prepararImagem(file, prefixo === "logo" ? 800 : 1200, 0.86);
+  if (img.size > 9 * 1024 * 1024){ alert("Imagem muito grande mesmo depois de reduzir. Tente outra."); return null; }
+  var caminho = "site/" + prefixo + "-" + uuid() + "." + extDe(img);
+  var up = await client.storage.from(BUCKET_CATALOGO).upload(caminho, img, { contentType: img.type || file.type, upsert: false });
   if (up.error){ alert("Não deu para enviar a imagem: " + up.error.message); return null; }
   return caminho;
 }
@@ -1522,10 +1548,10 @@ function cardFoto(x, mostrarNome){
 // ── ações (mesmas regras da aba Fotos do cadastro) ──
 async function admPublicar(x){
   var origem = caminhoDoc(x.url); if (!origem) throw new Error("arquivo não encontrado");
-  var ext = (origem.split(".").pop() || "jpg").toLowerCase();
-  var destino = "equipe/" + uuid() + "." + ext;
   var dl = await client.storage.from("documentos").download(origem); if (dl.error) throw dl.error;
-  var up = await client.storage.from(BUCKET_CATALOGO).upload(destino, dl.data, { contentType: dl.data.type || "image/jpeg", upsert: false }); if (up.error) throw up.error;
+  var img = await prepararImagem(dl.data, 2000, 0.85); // cópia do site reduzida (carrega rápido no celular)
+  var destino = "equipe/" + uuid() + "." + extDe(img);
+  var up = await client.storage.from(BUCKET_CATALOGO).upload(destino, img, { contentType: img.type || "image/jpeg", upsert: false }); if (up.error) throw up.error;
   var temCapa = adm.fotos.some(function(f){ return f.equipe_id === x.equipe_id && f.site_status === "publicada" && f.site_capa; });
   var r = await client.from("documentos").update({ site_status:"publicada", site_path:destino, site_capa:!temCapa }).eq("id", x.id);
   if (r.error){ await client.storage.from(BUCKET_CATALOGO).remove([destino]); throw r.error; }

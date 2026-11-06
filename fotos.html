@@ -540,15 +540,15 @@ var I18N = {
   pt: { nav_ter:"Terapeutas", nav_ses:"Sessões", pill_ter:"Nossas terapeutas", pill_ses:"Nossas sessões",
         flut:"Conheça nossas terapeutas", voltar:"Voltar", em_breve:"Em breve novidades por aqui.", mais_fotos:"+ Fotos",
         m_alt:"Altura", m_peso:"Peso", m_pes:"Pés", m_idade:"Idade", wa_btn:"Falar no WhatsApp", wa_msg:"Olá! Vi o catálogo e quero saber sobre {nome}.", duracao:"Duração e investimento",
-        m_tit:"Acesso admin", m_entrar:"Entrar", m_painel:"Painel admin", m_sistema:"Ir para o sistema", m_sair:"Sair" },
+        m_tit:"Acesso admin", m_entrar:"Entrar", m_painel:"Painel admin", m_ver:"Ver catálogo", m_sistema:"Ir para o sistema", m_sair:"Sair" },
   en: { nav_ter:"Therapists", nav_ses:"Sessions", pill_ter:"Our therapists", pill_ses:"Our sessions",
         flut:"Meet our therapists", voltar:"Back", em_breve:"Coming soon.", mais_fotos:"+ Photos",
         m_alt:"Height", m_peso:"Weight", m_pes:"Shoe size", m_idade:"Age", wa_btn:"Chat on WhatsApp", wa_msg:"Hi! I saw the catalog and would like to know more about {nome}.", duracao:"Duration & pricing",
-        m_tit:"Admin access", m_entrar:"Sign in", m_painel:"Admin panel", m_sistema:"Go to the system", m_sair:"Sign out" },
+        m_tit:"Admin access", m_entrar:"Sign in", m_painel:"Admin panel", m_ver:"View catalog", m_sistema:"Go to the system", m_sair:"Sign out" },
   es: { nav_ter:"Terapeutas", nav_ses:"Sesiones", pill_ter:"Nuestras terapeutas", pill_ses:"Nuestras sesiones",
         flut:"Conoce a nuestras terapeutas", voltar:"Volver", em_breve:"Próximamente.", mais_fotos:"+ Fotos",
         m_alt:"Altura", m_peso:"Peso", m_pes:"Pies", m_idade:"Edad", wa_btn:"Hablar por WhatsApp", wa_msg:"¡Hola! Vi el catálogo y quiero saber más sobre {nome}.", duracao:"Duración e inversión",
-        m_tit:"Acceso admin", m_entrar:"Entrar", m_painel:"Panel admin", m_sistema:"Ir al sistema", m_sair:"Salir" }
+        m_tit:"Acceso admin", m_entrar:"Entrar", m_painel:"Panel admin", m_ver:"Ver catálogo", m_sistema:"Ir al sistema", m_sair:"Salir" }
 };
 // Textos padrão do banco que ganham versão em inglês (se você mudar o texto no painel, ele aparece como escreveu)
 var I18N_BANCO = {
@@ -931,9 +931,14 @@ function montarMenu(){
   }
   var nome = (adm.perfil && (adm.perfil.nome || adm.perfil.email)) || adm.sessao.user.email || "";
   el.innerHTML = '<div class="quem">' + esc(nome) + '</div>' +
-    (adm.gestor ? '<button id="mPainel"><i class="fa-solid fa-shield-halved"></i> ' + t("m_painel") + '</button>' : '') +
+    (adm.gestor ? (document.getElementById("painel").classList.contains("ativo")
+        ? '<button id="mPainel" data-ver="site"><i class="fa-regular fa-eye"></i> ' + t("m_ver") + '</button>'
+        : '<button id="mPainel"><i class="fa-solid fa-shield-halved"></i> ' + t("m_painel") + '</button>') : '') +
     '<hr><button class="sair" id="mSair"><i class="fa-solid fa-arrow-right-from-bracket"></i> ' + t("m_sair") + '</button>';
-  if (adm.gestor) document.getElementById("mPainel").onclick = function(){ mostrarPainel(true); menuDrop.classList.remove("aberto"); window.scrollTo({top:0,behavior:"smooth"}); };
+  if (adm.gestor) document.getElementById("mPainel").onclick = function(){
+    mostrarPainel(this.getAttribute("data-ver") !== "site");
+    menuDrop.classList.remove("aberto"); menuBtn.classList.remove("aberto"); window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   document.getElementById("mSair").onclick = async function(){ await client.auth.signOut(); location.reload(); };
 }
 
@@ -951,7 +956,9 @@ async function iniciarAcesso(){
 function mostrarPainel(sim){
   document.getElementById("painel").classList.toggle("ativo", sim);
   document.getElementById("capa").style.display = sim ? "none" : "";
-  document.getElementById("previaTit").classList.toggle("vis", sim);
+  document.getElementById("equipe").style.display = sim ? "none" : ""; // com o painel aberto, não mostra a grade do site embaixo
+  document.getElementById("previaTit").classList.remove("vis");
+  if (typeof montarMenu === "function") montarMenu();
 }
 
 // ── dados ──

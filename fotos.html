@@ -248,6 +248,7 @@ label.campo input:focus,label.campo textarea:focus{outline:none;border-color:rgb
 .ses-trad{font-size:11px;color:var(--dim);margin-left:8px}
 .ses-txt i{color:#7fa8d1}
 /* gestão de mídia */
+.painel.em-midia .painel-topo,.painel.em-midia .abas{display:none}
 .mid-topo{display:flex;align-items:flex-end;gap:22px;margin-bottom:24px}
 .mid-topo h3{font-family:var(--serif);font-weight:400;font-size:34px;margin:0;line-height:1}
 .mid-voltar{display:inline-flex;align-items:center;gap:8px;border:none;background:none;color:var(--muted);font:400 15px var(--sans);cursor:pointer;padding:6px 0}
@@ -1001,6 +1002,8 @@ function nomeTer(cpf){
 }
 
 function renderAdmin(){
+  // Gestão de mídia ocupa a tela inteira (sem o cabeçalho "Administração" e as abas)
+  document.getElementById("painel").classList.toggle("em-midia", !!adm.aberta && adm.aba === "terapeutas");
   document.querySelectorAll(".aba[data-aba]").forEach(function(b){ b.classList.toggle("ativa", b.getAttribute("data-aba") === adm.aba); });
   var area = document.getElementById("painelArea");
   if (adm.aba === "sessoes"){ renderSessoes(); return; }
@@ -1099,7 +1102,7 @@ function renderMidia(cpf){
     (aba === "todos" ? '<div class="dica" style="margin-top:12px"><i class="fa-solid fa-grip-vertical"></i>&nbsp; Arraste os cards para mudar a ordem em que aparecem no perfil público.</div>' : '');
   }
   area.innerHTML = h;
-  document.getElementById("midVoltar").onclick = function(){ adm.aberta = null; adm.midiaAba = "todos"; renderAdmin(); };
+  document.getElementById("midVoltar").onclick = function(){ adm.aberta = null; adm.midiaAba = "todos"; renderAdmin(); window.scrollTo(0, 0); };
   document.getElementById("midFotos").onchange = function(){ subirFotos(cpf, this.files); };
   document.getElementById("midVideos").onchange = function(){ subirVideos(cpf, this.files); };
   area.querySelectorAll("[data-mtab]").forEach(function(b){ b.onclick = function(){ adm.midiaAba = b.getAttribute("data-mtab"); renderMidia(cpf); }; });
@@ -1238,7 +1241,7 @@ document.getElementById("painelArea").addEventListener("click", async function(e
   var b = e.target.closest(".mrow [data-m]"); if (!b) return;
   var cpf = b.closest(".mrow").dataset.cpf, t = adm.terapeutas.find(function(x){ return x.cpf === cpf; }); if (!t) return;
   var pf = perfilDe(t), acao = b.getAttribute("data-m");
-  if (acao === "fotos"){ adm.aberta = cpf; renderAdmin(); window.scrollTo({ top: document.getElementById("painel").offsetTop, behavior: "smooth" }); }
+  if (acao === "fotos"){ adm.aberta = cpf; adm.midiaAba = "todos"; renderAdmin(); window.scrollTo(0, 0); }
   else if (acao === "editar") abrirEditor(t);
   else if (acao === "ativo"){
     b.disabled = true;

@@ -351,6 +351,7 @@ label.campo input:focus,label.campo textarea:focus{outline:none;border-color:rgb
 .dest-it{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line,#2a2a2a);border-radius:8px;font-size:13px}
 .dest-it span:last-child{margin-left:auto;color:var(--dim);font-size:12px}.dest-it .dp{width:22px;color:#f5c542;font-weight:600}
 .dest-it.top{border-color:rgba(245,197,66,.5);background:rgba(212,160,23,.08)}.dest-it.aus{opacity:.5}
+.mid-motivo{margin:8px 10px 0;padding:7px 9px;border-radius:8px;background:rgba(248,113,113,.12);color:#fca5a5;font-size:12px;line-height:1.4}
 .tag-d,.tag-f{font:500 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:99px;vertical-align:middle;margin-left:6px}
 .tag-d{background:rgba(212,160,23,.12);color:#f5c542}.tag-f{background:rgba(148,163,184,.12);color:#94a3b8}
 .macoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
@@ -1087,7 +1088,7 @@ async function carregarAdmin(){
   if (t.error){ area.innerHTML = '<div class="msg-adm">Erro ao carregar: ' + esc(t.error.message) + '</div>'; return; }
   adm.terapeutas = t.data || [];
   var cpfs = adm.terapeutas.map(function(x){ return x.cpf; });
-  var f = cpfs.length ? await client.from("documentos").select("id,equipe_id,tipo,nome_arquivo,url,created_at,site_status,site_capa,site_path,site_ordem,site_views").in("tipo",["Foto","Video"]).in("equipe_id", cpfs).order("created_at",{ascending:false}) : {data:[]};
+  var f = cpfs.length ? await client.from("documentos").select("id,equipe_id,tipo,nome_arquivo,url,created_at,site_status,site_capa,site_path,site_ordem,site_views,site_motivo").in("tipo",["Foto","Video"]).in("equipe_id", cpfs).order("created_at",{ascending:false}) : {data:[]};
   adm.fotos = f.data || [];
   await assinar(adm.fotos);
   var nPend = adm.fotos.filter(function(x){ return (x.site_status || "pendente") === "pendente"; }).length;
@@ -1242,7 +1243,7 @@ function renderMidia(cpf){
       var st = x.site_status || "pendente", u = urlFoto(x), ehV = x.tipo === "Video";
       var midia = ehV ? '<video src="' + esc(u) + '#t=0.1" preload="metadata" muted playsinline></video><span class="play"><i class="fa-solid fa-play"></i></span>'
                       : '<img loading="lazy" src="' + esc(u) + '" alt="">';
-      var estado = st === "publicada" ? "" : '<span class="mid-st ' + (st === "pendente" ? "pend" : "ace") + '">' + (st === "pendente" ? "Aguardando aprovação" : "Guardada") + '</span>';
+      var estado = st === "publicada" ? "" : '<span class="mid-st ' + (st === "pendente" ? "pend" : "ace") + '"' + (x.site_motivo ? ' title="' + esc(x.site_motivo) + '"' : '') + '>' + (st === "pendente" ? "Aguardando aprovação" : x.site_motivo ? "Não publicada" : "Guardada") + '</span>';
       var capa = (!ehV && st === "publicada") ? '<button class="mid-ic' + (x.site_capa ? ' capa-on' : '') + '" data-acao="capa" data-id="' + x.id + '" title="' + (x.site_capa ? 'Foto de capa' : 'Usar como capa') + '"' + (x.site_capa ? ' disabled' : '') + '><i class="fa-' + (x.site_capa ? 'solid' : 'regular') + ' fa-star"></i></button>' : '';
       return '<div class="mid-card fcard" id="fc-' + x.id + '" draggable="true" data-mid="' + x.id + '">' +
         '<div class="mid-m">' + midia +
@@ -1251,6 +1252,7 @@ function renderMidia(cpf){
           '<button class="mid-ic mid-zoom" data-src="' + esc(u) + '"' + (ehV ? ' data-video="1"' : '') + ' title="Ampliar"><i class="fa-solid fa-up-right-and-down-left-from-center"></i></button>' +
           (st === "publicada" ? '<span class="mid-views" title="' + (ehV ? 'Vezes que o vídeo foi tocado' : 'Vezes que a foto foi ampliada') + ' no site"><i class="fa-regular fa-eye"></i> ' + Number(x.site_views || 0).toLocaleString("pt-BR") + '</span>' : '') +
         '</div>' +
+        (st === "aceita" && x.site_motivo ? '<div class="mid-motivo"><i class="fa-regular fa-comment"></i> ' + esc(x.site_motivo) + '</div>' : '') +
         '<div class="flinha mid-ac">' +
           '<button class="fb" data-acao="publicar" data-id="' + x.id + '"' + (st === "publicada" ? ' disabled' : '') + '>Publicar</button>' +
           '<button class="fb guardar" data-acao="guardar" data-id="' + x.id + '"' + (st === "aceita" ? ' disabled' : '') + '>Guardar</button>' +
@@ -1906,6 +1908,36 @@ function cardFoto(x, mostrarNome){
     '</div></div></div>';
 }
 
+// ── Motivo de não publicar uma foto (a terapeuta vê no cadastro dela) ──
+var MOTIVOS_PRONTOS = ["Já tem muitas parecidas", "Roupa/cor repetida", "Iluminação ou foco", "Enquadramento", "Fundo/ambiente"];
+function perguntarMotivo(qtd){
+  return new Promise(function(ok){
+    var fundo = document.createElement("div");
+    fundo.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit";
+    fundo.innerHTML =
+      '<div style="background:#fff;color:#111827;border-radius:14px;max-width:440px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35)">' +
+        '<div style="font-weight:700;font-size:16px;margin-bottom:4px">Não publicar ' + (qtd > 1 ? qtd + ' fotos' : 'esta foto') + '</div>' +
+        '<div style="font-size:13px;color:#6b7280;margin-bottom:12px">Se quiser, diga o motivo. A terapeuta vê no cadastro dela. A foto fica guardada.</div>' +
+        '<div class="mtv-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">' + MOTIVOS_PRONTOS.map(function(m){
+          return '<button type="button" data-m="' + m + '" style="border:1px solid #d1d5db;background:#f9fafb;border-radius:99px;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer;color:#374151">' + m + '</button>'; }).join("") + '</div>' +
+        '<textarea rows="3" maxlength="200" placeholder="Ex.: já tem muitas de amarelo" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:9px;padding:10px;font:inherit;font-size:14px;resize:vertical"></textarea>' +
+        '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">' +
+          '<button type="button" data-a="cancelar" style="border:1px solid #d1d5db;background:#fff;border-radius:9px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer;color:#374151">Cancelar</button>' +
+          '<button type="button" data-a="ok" style="border:none;background:#1f2937;color:#fff;border-radius:9px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer">Guardar foto</button>' +
+        '</div></div>';
+    document.body.appendChild(fundo);
+    var ta = fundo.querySelector("textarea");
+    function fim(v){ fundo.remove(); ok(v); }
+    fundo.addEventListener("click", function(e){
+      if (e.target === fundo) return fim(null);
+      var c = e.target.closest("button[data-m]");
+      if (c){ var m = c.getAttribute("data-m"); ta.value = ta.value.trim() ? ta.value.trim().replace(/[.;,]?$/, "") + "; " + m.toLowerCase() : m; ta.focus(); return; }
+      var a = e.target.closest("button[data-a]"); if (!a) return;
+      fim(a.getAttribute("data-a") === "ok" ? ta.value.trim() : null);
+    });
+    setTimeout(function(){ ta.focus(); }, 50);
+  });
+}
 // ── ações (mesmas regras da aba Fotos do cadastro) ──
 async function admPublicar(x){
   var origem = caminhoDoc(x.url); if (!origem) throw new Error("arquivo não encontrado");
@@ -1917,11 +1949,13 @@ async function admPublicar(x){
   var destino = "equipe/" + uuid() + "." + (ehVideo ? extV : extDe(img));
   var up = await client.storage.from(BUCKET_CATALOGO).upload(destino, img, { contentType: img.type || "image/jpeg", upsert: false }); if (up.error) throw up.error;
   var temCapa = adm.fotos.some(function(f){ return f.equipe_id === x.equipe_id && f.site_status === "publicada" && f.site_capa; });
-  var r = await client.from("documentos").update({ site_status:"publicada", site_path:destino, site_capa: !ehVideo && !temCapa }).eq("id", x.id);
+  var r = await client.from("documentos").update({ site_status:"publicada", site_path:destino, site_capa: !ehVideo && !temCapa, site_motivo:null }).eq("id", x.id);
   if (r.error){ await client.storage.from(BUCKET_CATALOGO).remove([destino]); throw r.error; }
 }
-async function admGuardar(x){
-  var r = await client.from("documentos").update({ site_status:"aceita", site_path:null, site_capa:false }).eq("id", x.id); if (r.error) throw r.error;
+async function admGuardar(x, motivo){
+  var campos = { site_status:"aceita", site_path:null, site_capa:false };
+  if (motivo !== undefined) campos.site_motivo = motivo || null;
+  var r = await client.from("documentos").update(campos).eq("id", x.id); if (r.error) throw r.error;
   if (x.site_path) await client.storage.from(BUCKET_CATALOGO).remove([x.site_path]);
 }
 async function admExcluir(x){
@@ -1940,11 +1974,12 @@ document.getElementById("painelArea").addEventListener("click", async function(e
   var x = adm.fotos.find(function(f){ return f.id === b.getAttribute("data-id"); }); if (!x) return;
   var acao = b.getAttribute("data-acao");
   if (acao === "excluir" && !confirm("Excluir esta foto? Ela sai do cadastro e do catálogo.")) return;
-  if (acao === "guardar" && x.site_status === "publicada" && !confirm("Tirar esta foto do catálogo? Ela continua guardada no cadastro.")) return;
+  var motivo;
+  if (acao === "guardar"){ motivo = await perguntarMotivo(1); if (motivo === null) return; }
   var card = document.getElementById("fc-" + x.id); if (card) card.classList.add("ocupado");
   try {
     if (acao === "publicar") await admPublicar(x);
-    else if (acao === "guardar") await admGuardar(x);
+    else if (acao === "guardar") await admGuardar(x, motivo);
     else if (acao === "excluir") await admExcluir(x);
     else if (acao === "capa") await admCapa(x);
   } catch (err) { alert("Não deu certo: " + (err.message || err)); }

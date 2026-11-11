@@ -153,6 +153,8 @@ input[readonly]{background:#f3f4f6;color:#6b7280;cursor:not-allowed;}
 #tab-fotos .foto-card.sel{border-color:#3b82f6;box-shadow:0 0 0 2px rgba(59,130,246,.5)}
 #tab-fotos .foto-card img{width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;border-radius:16px 16px 0 0}
 .foto-status{position:absolute;top:10px;left:10px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:99px;background:rgba(15,23,42,.88);z-index:2;pointer-events:none}
+.foto-status.fs-nao{color:#f87171}
+.foto-motivo{margin:8px 14px 0;padding:8px 10px;border-radius:8px;background:rgba(248,113,113,.12);color:#fca5a5;font-size:12px;line-height:1.4;white-space:normal}
 .foto-status.fs-pend{color:#fb923c}.foto-status.fs-ace{color:#fbbf24}.foto-status.fs-pub{color:#4ade80}
 .foto-check{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:9px;background:rgba(15,23,42,.88);display:flex;align-items:center;justify-content:center;z-index:2;cursor:pointer}
 .foto-check input{appearance:none;-webkit-appearance:none;width:16px;height:16px;border:2px solid #cbd5e1;border-radius:4px;margin:0;padding:0;cursor:pointer;background:transparent}
@@ -1413,6 +1415,36 @@ async function enviarFotos() {
 // Fluxo: Pendente (enviada pela profissional) → Aceita (pronta para publicar) → Publicada.
 // Publicar copia a foto para o bucket público "loja-catalogo" com nome aleatório (o caminho original tem o CPF).
 var fotosCache = [];
+// ── Motivo de não publicar uma foto (a terapeuta vê no cadastro dela) ──
+var MOTIVOS_PRONTOS = ["Já tem muitas parecidas", "Roupa/cor repetida", "Iluminação ou foco", "Enquadramento", "Fundo/ambiente"];
+function perguntarMotivo(qtd){
+  return new Promise(function(ok){
+    var fundo = document.createElement("div");
+    fundo.style.cssText = "position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit";
+    fundo.innerHTML =
+      '<div style="background:#fff;color:#111827;border-radius:14px;max-width:440px;width:100%;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.35)">' +
+        '<div style="font-weight:700;font-size:16px;margin-bottom:4px">Não publicar ' + (qtd > 1 ? qtd + ' fotos' : 'esta foto') + '</div>' +
+        '<div style="font-size:13px;color:#6b7280;margin-bottom:12px">Se quiser, diga o motivo. A terapeuta vê no cadastro dela. A foto fica guardada.</div>' +
+        '<div class="mtv-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">' + MOTIVOS_PRONTOS.map(function(m){
+          return '<button type="button" data-m="' + m + '" style="border:1px solid #d1d5db;background:#f9fafb;border-radius:99px;padding:6px 11px;font:inherit;font-size:12px;cursor:pointer;color:#374151">' + m + '</button>'; }).join("") + '</div>' +
+        '<textarea rows="3" maxlength="200" placeholder="Ex.: já tem muitas de amarelo" style="width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:9px;padding:10px;font:inherit;font-size:14px;resize:vertical"></textarea>' +
+        '<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">' +
+          '<button type="button" data-a="cancelar" style="border:1px solid #d1d5db;background:#fff;border-radius:9px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer;color:#374151">Cancelar</button>' +
+          '<button type="button" data-a="ok" style="border:none;background:#1f2937;color:#fff;border-radius:9px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer">Guardar foto</button>' +
+        '</div></div>';
+    document.body.appendChild(fundo);
+    var ta = fundo.querySelector("textarea");
+    function fim(v){ fundo.remove(); ok(v); }
+    fundo.addEventListener("click", function(e){
+      if (e.target === fundo) return fim(null);
+      var c = e.target.closest("button[data-m]");
+      if (c){ var m = c.getAttribute("data-m"); ta.value = ta.value.trim() ? ta.value.trim().replace(/[.;,]?$/, "") + "; " + m.toLowerCase() : m; ta.focus(); return; }
+      var a = e.target.closest("button[data-a]"); if (!a) return;
+      fim(a.getAttribute("data-a") === "ok" ? ta.value.trim() : null);
+    });
+    setTimeout(function(){ ta.focus(); }, 50);
+  });
+}
 const SITE_BADGE = {
   pendente:  {txt:"Aguardando aprovação",        cls:"fs-pend"},
   aceita:    {txt:"Aceita • pronta para publicar", cls:"fs-ace"},
@@ -1435,7 +1467,8 @@ async function carregarFotos(cpf) {
   fotosSelecionadas = new Set([...fotosSelecionadas].filter(id => data.some(d => d.id === id)));
   lista.innerHTML = '<div class="foto-grid">' + data.map(d => {
     const status = d.site_status || "pendente";
-    const st = SITE_BADGE[status];
+    const st = (status === "aceita" && d.site_motivo) ? {txt:"Não publicada", cls:"fs-nao"} : (status === "aceita" && !ehGestorFotos()) ? {txt:"Aprovada • aguardando publicação", cls:"fs-ace"} : SITE_BADGE[status];
+    const motivoHtml = (status === "aceita" && d.site_motivo) ? '<div class="foto-motivo"><i class="fa fa-comment"></i> ' + String(d.site_motivo).replace(/[<>&"]/g, "") + '</div>' : "";
     const nome = (d.nome_arquivo || "").replace(/[<>&"]/g, "");
     const marcado = fotosSelecionadas.has(d.id);
     let acoes = "";
@@ -1457,7 +1490,7 @@ async function carregarFotos(cpf) {
       '<span class="foto-status '+st.cls+'">'+st.txt+'</span>'+
       (gestor ? '<label class="foto-check" title="Selecionar"><input type="checkbox" '+(marcado?'checked':'')+' onchange="fotoSelecionar(\''+d.id+'\',this.checked)"></label>' : '')+
       '<img src="'+d.url+'" alt="" onclick="abrirArquivo(\''+d.url+'\',\'Foto\')">'+
-      '<div class="foto-card-info" title="'+nome+'">'+nome+'</div>'+
+      '<div class="foto-card-info" title="'+nome+'">'+nome+'</div>'+motivoHtml+
       '<div class="foto-acoes">'+acoes+'</div>'+
     '</div>';
   }).join("") + '</div>';
@@ -1487,12 +1520,13 @@ async function fotoMassa(acao) {
   const ids = [...fotosSelecionadas]; if (!ids.length) return;
   const n = ids.length + (ids.length === 1 ? " foto" : " fotos");
   if (acao === "excluir" && !confirm("Excluir " + n + "? Não dá para desfazer.")) return;
-  if (acao === "guardar" && !confirm("Guardar " + n + "? As que estiverem publicadas saem do catálogo.")) return;
+  let motivo = null;
+  if (acao === "guardar") { motivo = await perguntarMotivo(ids.length); if (motivo === null) return; }
   document.querySelectorAll("#fotoMassa button").forEach(b => b.disabled = true);
   for (const id of ids) {
     const d = fotosCache.find(x => x.id === id); if (!d) continue;
     if (acao === "publicar" && d.site_status !== "publicada") await fotoPublicar(id, true);
-    if (acao === "guardar" && d.site_status !== "aceita") await fotoGuardar(id, true);
+    if (acao === "guardar") await fotoGuardar(id, true, motivo);
     if (acao === "excluir") await excluirFoto(id, true);
   }
   document.querySelectorAll("#fotoMassa button").forEach(b => b.disabled = false);
@@ -1543,15 +1577,15 @@ async function fotoPublicar(id, emMassa) {
   const {error: upErr} = await client.storage.from("loja-catalogo").upload(destino, blob, {contentType: blob.type || "image/jpeg", upsert: false});
   if (upErr) { if (card) card.style.opacity = ""; alert("Erro ao publicar: " + upErr.message); return; }
   const jaTemCapa = fotosCache.some(x => x.site_status === "publicada" && x.site_capa);
-  const ok = await fotoAtualizar(id, {site_status: "publicada", site_path: destino, site_capa: !jaTemCapa}, "Erro ao publicar");
+  const ok = await fotoAtualizar(id, {site_status: "publicada", site_path: destino, site_capa: !jaTemCapa, site_motivo: null}, "Erro ao publicar");
   if (!ok) await client.storage.from("loja-catalogo").remove([destino]);
   else d.site_status = "publicada", d.site_capa = !jaTemCapa;
   if (!emMassa) carregarFotos(cpfAtual);
 }
-async function fotoGuardar(id, emMassa) {
+async function fotoGuardar(id, emMassa, motivo) {
   const d = fotosCache.find(x => x.id === id); if (!d) return;
-  if (!emMassa && d.site_status === "publicada" && !confirm("Tirar esta foto do catálogo? Ela continua guardada aqui no cadastro.")) return;
-  const ok = await fotoAtualizar(id, {site_status: "aceita", site_path: null, site_capa: false}, "Erro ao guardar");
+  if (!emMassa) { motivo = await perguntarMotivo(1); if (motivo === null) return; }
+  const ok = await fotoAtualizar(id, {site_status: "aceita", site_path: null, site_capa: false, site_motivo: motivo || null}, "Erro ao guardar");
   if (ok && d.site_path) await client.storage.from("loja-catalogo").remove([d.site_path]);
   if (ok) { d.site_status = "aceita"; d.site_path = null; d.site_capa = false; }
   if (!emMassa) carregarFotos(cpfAtual);

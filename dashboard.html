@@ -472,7 +472,6 @@ body{font-family:'Segoe UI',sans-serif;background:#f5f7fb;color:#111827;min-heig
   <div class="ms" id="fServ" data-todos="Todos os serviços" data-um="serviço" data-uns="serviços" data-busca="1"></div>
   <div class="ms" id="fSit" data-todos="Todos, com cancelados"></div>
   <span class="datas" id="fDatas"><input type="date" id="fIni" onchange="AN.carregar()"><span style="color:#9ca3af">a</span><input type="date" id="fFim" onchange="AN.carregar()"></span>
-  <button class="an-demo-btn" id="btnDemo" onclick="AN.alternarDemo()"><i class="fa fa-flask"></i> Ver com dados de exemplo</button>
 </div>
 <div class="an an-banner" id="anBanner"><i class="fa fa-flask"></i> <b>Dados de exemplo.</b> Números inventados só para ver como a tela fica — nada foi gravado no sistema. Toque em "Sair do exemplo" para voltar aos dados reais.</div>
 <div class="an an-vazio" id="anVazio"></div>
@@ -1716,7 +1715,7 @@ const AN = (() => {
     const L = filtrar(atds, periodo.ini, periodo.fim, { ignorarSit: true });
     const vazio = document.getElementById("anVazio");
     if (!demo && atds.length < 20) {
-      vazio.innerHTML = `<i class="fa fa-circle-info"></i> Ainda há poucos atendimentos no sistema (${atds.length} no intervalo), então os gráficos ficam vazios. Eles se preenchem sozinhos conforme a agenda for usada. Para ver como fica com volume, toque em <b>"Ver com dados de exemplo"</b>.`;
+      vazio.innerHTML = `<i class="fa fa-circle-info"></i> Ainda há poucos atendimentos no sistema (${atds.length} no intervalo), então os gráficos ficam vazios. Eles se preenchem sozinhos conforme a agenda for usada.`;
       vazio.classList.add("on");
     } else vazio.classList.remove("on");
     if (abaAtual === "atend") renderAtend(); else if (abaAtual === "prof") renderProf(); else if (abaAtual === "exec") renderExec(); else if (abaAtual === "aus") renderAus(); else renderFin();
@@ -1778,8 +1777,8 @@ const AN = (() => {
   function alternarDemo() {
     demo = !demo;
     const b = document.getElementById("btnDemo");
-    b.classList.toggle("on", demo);
-    b.innerHTML = demo ? '<i class="fa fa-xmark"></i> Sair do exemplo' : '<i class="fa fa-flask"></i> Ver com dados de exemplo';
+    if (b) b.classList.toggle("on", demo);
+    if (b) b.innerHTML = demo ? '<i class="fa fa-xmark"></i> Sair do exemplo' : '<i class="fa fa-flask"></i> Ver com dados de exemplo';
     document.getElementById("anBanner").classList.toggle("on", demo);
     if (!demo) profs = profs.filter(p => !String(p.cpf).startsWith("demo"));
     carregar();
